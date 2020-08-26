@@ -4,7 +4,13 @@
 \alias{cluster_vdj}
 \title{Cluster cells based on receptor sequence}
 \usage{
-cluster_vdj(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1, ...)
+cluster_vdj(
+  sobj_in,
+  cdr3_col = "cdr3s_aa",
+  resolution = 0.1,
+  prefix = "vdj_",
+  ...
+)
 }
 \arguments{
 \item{sobj_in}{Seurat object}
@@ -14,10 +20,12 @@ calculating Levenshtein distance}
 
 \item{resolution}{Clustering resolution to pass to FindClusters}
 
+\item{prefix}{Prefix to add to graph name}
+
 \item{...}{Additional parameters to pass to FindClusters}
 }
 \value{
-Seurat object with an added shared nearest neighbor graph (vdj_snn)
+Seurat object with an added shared nearest neighbors graph (vdj_snn)
 and a meta.data column containing cluster ids
 }
 \description{

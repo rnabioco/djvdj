@@ -241,24 +241,34 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #' @param cdr3_col meta.data column containing CDR3 sequences to use for
 #' calculating Levenshtein distance
 #' @param resolution Clustering resolution to pass to FindClusters
+#' @param prefix Prefix to add to graph name
 #' @param ... Additional parameters to pass to FindClusters
-#' @return Seurat object with an added shared nearest neighbor graph (vdj_snn)
+#' @return Seurat object with an added shared nearest neighbors graph (vdj_snn)
 #' and a meta.data column containing cluster ids
-cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1, ...) {
+cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1, prefix = "vdj_", ...) {
 
+  # Extract sequences
+  # Only include cells with VDJ data
   seqs <- Seurat::FetchData(sobj_in, cdr3_col)
   seqs <- purrr::set_names(pull(seqs, cdr3_col), rownames(seqs))
-  seqs <- purrr::map_chr(seqs, stringr::str_remove_all, ";*(IGH|IGK|IGL):")
+  seqs <- purrr::map_chr(seqs, stringr::str_remove_all, ";*(TRA|TRB|IGH|IGK|IGL):")
+  seqs <- na.omit(seqs)
 
+  # Create Levenshtein distance matrix
   vdj_dist <- adist(seqs)
+
+  # Create nearest neighbors graph
+  # Add graph this way or error thrown due to differing number of cells
   vdj_snn  <- Seurat::FindNeighbors(vdj_dist, distance.matrix = T)
+  snn_name <- str_c(prefix, "snn")
 
-  sobj_in[["vdj_snn"]] <- vdj_snn$snn
+  sobj_in@graphs[[snn_name]] <- vdj_snn$snn
 
+  # Find clusters
   res <- Seurat::FindClusters(
     object     = sobj_in,
     resolution = resolution,
-    graph.name = "vdj_snn",
+    graph.name = snn_name,
     ...
   )
 
@@ -266,8 +276,49 @@ cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1, ...) {
 }
 
 
+#' Run UMAP using Seurat object containing VDJ nearest neighbors graph
+#'
+#' @param sobj_in Seurat object containing shared nearest neighbors graph for
+#' for VDJ data
+#' @param umap_name Name to give new dimensional reduction object
+#' @param umap_key Key to use for UMAP columns in meta.data
+#' @param vdj_graph Name of shared nearest neighbors graph stored in Seurat
+#' object
+#' @param add_meta Should UMAP coordinates be added to meta.data
+#' @return Seurat object containing UMAP coordinates
+run_umap_vdj <- function(sobj_in, umap_name = "vdj_umap", umap_key = "vdjUMAP_",
+                         vdj_graph = "vdj_snn", add_meta = T) {
 
+  # Subset sobj_in to only include VDJ cells and add vdj_snn graph
+  # RunUMAP does not like running with a graph that does not include results
+  # for all cells in the object
+  vdj_cells <- rownames(sobj_in[[vdj_graph]])
 
+  tmp_so <- subset(sobj_in, cells = vdj_cells)
+  tmp_so[[vdj_graph]] <- sobj_in[[vdj_graph]]
+
+  # Run UMAP and add reduction object back to original object
+  tmp_so <- Seurat::RunUMAP(
+    object         = tmp_so,
+    reduction.name = umap_name,
+    reduction.key  = umap_key,
+    graph          = vdj_graph
+  )
+
+  sobj_in@reductions[[umap_name]] <- tmp_so[[umap_name]]
+
+  if (add_meta) {
+    umap_cols <- str_c(umap_key, c("1", "2"))
+
+    sobj_in <- Seurat::AddMetaData(
+      object   = sobj_in,
+      metadata = Seurat::Embeddings(sobj_in, reduction = umap_name),
+      col.name = umap_cols
+    )
+  }
+
+  sobj_in
+}
 
 
 
@@ -349,14 +400,18 @@ cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1, ...) {
 # so_vdj <- cluster_vdj(
 #   sobj_in    = so_vdj,
 #   cdr3_col   = "cdr3s_aa",
-#   resolution = 0.1
+#   resolution = 0.6
 # )
 #
-# so_vdj <- so_vdj %>%
-#   RunUMAP(
-#     reduction.name = "vdj_umap",
-#     reduction.key  = "vdjUMAP_",
-#     graph          = "vdj_snn",
-#     verbose        = F
-#   )
+# # Run UMAP
+# so_vdj <- run_umap_vdj(
+#   sobj_in   = so_vdj,
+#   umap_name = "vdj_umap",
+#   umap_key  = "vdjUMAP_",
+#   vdj_graph = "vdj_snn",
+#   add_meta  = T
+# )
+
+
+
 
