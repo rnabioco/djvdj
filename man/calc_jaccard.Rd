@@ -4,14 +4,21 @@
 \alias{calc_jaccard}
 \title{Calculate Jaccard index for cell identities}
 \usage{
-calc_jaccard(sobj_in, clonotype_col = "clonotype_id", cell_ident = NULL)
+calc_jaccard(
+  sobj_in,
+  clonotype_col = "clonotype_id",
+  cluster_col,
+  ref_cluster = NULL
+)
 }
 \arguments{
 \item{sobj_in}{Seurat object}
 
 \item{clonotype_col}{meta.data column containing clonotype ids}
 
-\item{cell_ident}{Cell identity to use as a reference for calculating Jaccard index}
+\item{cluster_col}{meta.data column containing cell clusters}
+
+\item{ref_cluster}{Cell identity to use as a reference for calculating Jaccard index}
 }
 \value{
 Seurat object with Jaccard index added to meta.data

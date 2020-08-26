@@ -64,7 +64,8 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", productive_pair = F) {
 #' diversity. If cluster_col is omitted, diversity index will be calculated for
 #' all clonotypes
 #' @return Seurat object with inverse Simpson index added to meta.data
-calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL) {
+calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
+                           cluster_col = NULL) {
 
   # meta.data
   vdj_cols      <- clonotype_col
@@ -112,9 +113,11 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #'
 #' @param sobj_in Seurat object
 #' @param clonotype_col meta.data column containing clonotype ids
-#' @param cell_ident Cell identity to use as a reference for calculating Jaccard index
+#' @param cluster_col meta.data column containing cell clusters
+#' @param ref_cluster Cell identity to use as a reference for calculating Jaccard index
 #' @return Seurat object with Jaccard index added to meta.data
-calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cell_ident = NULL) {
+calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
+                         ref_cluster = NULL) {
 
   # Helper to calculate jaccard index
   calc_jidx <- function(df_in, comparison, clonotype_col) {
@@ -156,8 +159,11 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cell_ident = N
   }
 
   # Fetch clonotypes and cell identities
-  so_idents   <- Seurat::Idents(sobj_in)
-  uniq_idents <- levels(so_idents)
+  # so_idents   <- Seurat::Idents(sobj_in)
+  so_idents   <- Seurat::FetchData(sobj_in, cluster_col)
+  so_idents   <- so_idents[, cluster_col]
+  so_idents   <- as.character(so_idents)
+  uniq_idents <- unique(so_idents)
 
   ctypes   <- Seurat::FetchData(sobj_in, clonotype_col)
   vdj_meta <- dplyr::bind_cols(ctypes, idents = so_idents)
@@ -188,9 +194,9 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cell_ident = N
     stringsAsFactors = F
   )
 
-  if (!is.null(cell_ident)) {
+  if (!is.null(ref_cluster)) {
     comps <- data.frame(
-      Var1 = cell_ident,
+      Var1 = ref_cluster,
       Var2 = uniq_idents,
       stringsAsFactors = F
     )
@@ -233,46 +239,29 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cell_ident = N
 
 # TEST ----
 
-# so <- Read10X("~/Projects/Rincon_scVDJseq/results/KI_DN4_GE/outs/filtered_feature_bc_matrix/") %>%
-#   CreateSeuratObject()
+# # data_dir <- "~/Projects/Rincon_scVDJseq/results/KI_DN4_GE/outs"
+# data_dir <- "~/Projects/Smith_AVIDseq/2020-07-17"
+# so_list  <- Read10X(file.path(data_dir, "JH191_GEX/outs/filtered_feature_bc_matrix"))
+# so       <- CreateSeuratObject(so_list$`Gene Expression`)
 #
-# so_vdj <- so %>%
-#   import_vdj("~/Projects/Rincon_scVDJseq/results/KI_DN4_TCR/outs/", productive_pair = T)
+# # Add VDJ data to meta.data
+# so_vdj <- import_vdj(
+#   sobj_in         = so,
+#   vdj_dir         = file.path(data_dir, "BCR/outs"),
+#   productive_pair = F,
+#   prefix          = ""
+# )
 #
-# so_vdj@meta.data <- so_vdj@meta.data %>%
-#   rownames_to_column("cell_id") %>%
-#   mutate(orig.ident = if_else(row_number() < 1000, "grp1", "grp2")) %>%
-#   mutate(orig.ident = if_else(row_number() > 2000, "grp3", orig.ident)) %>%
-#   column_to_rownames("cell_id")
+# # Calculate repertoire diversity
 #
-# Idents(so_vdj) <- FetchData(so_vdj, "orig.ident")
+#
+# # Calculate repertoire overlap
+# so_vdj <- calc_jaccard(
+#   sobj_in       = so_vdj,
+#   clonotype_col = "clonotype_id",
+#   cluster_col   = "orig.ident"
+# )
 
-# trb_aa <- so_vdj@meta.data %>%
-#   as_tibble() %>%
-#   mutate(
-#     TRA = str_extract(cdr3s_aa, "TRA:[A-Z]+"),
-#     TRA = str_remove(TRA, "^TRA:"),
-#     TRB = str_extract(cdr3s_aa, "TRB:[A-Z]+"),
-#     TRB = str_remove(TRB, "^TRB:")
-#   ) %>%
-#   pull(TRB) %>%
-#   na.omit()
 
-# ctypes <- so_vdj@meta.data %>%
-#   select(raw_clonotype_id) %>%
-#   na.omit() %>%
-#   as_tibble(rownames = "cell_id") %>%
-#
-#   group_by(raw_clonotype_id) %>%
-#
-#   summarize(n = n_distinct(cell_id)) %>%
-#
-#   arrange(desc(n))
-#
-# ctypes %>%
-#   mutate(
-#     freq  = n / sum(n),
-#     sq    = freq ^ 2,
-#     total = sum(sq),
-#     D     = 1 / total
-#   )
+
+
