@@ -90,6 +90,7 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
     frac      = num / sum(num),
     sum_frac  = sum(frac ^ 2),
     diversity = 1 / sum_frac
+    # diversity = sum_frac
   )
 
   vdj_df <- dplyr::select(vdj_df, all_of(c(vdj_cols, "diversity")))
@@ -105,6 +106,119 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 }
 
 
+#' Calculate Jaccard index for cell identities
+#'
+#' @param sobj_in Seurat object
+#' @param clonotype_col meta.data column containing clonotype ids
+#' @param cell_ident Cell identity to use as a reference for calculating Jaccard index
+#' @return Seurat object with Jaccard index added to meta.data
+calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cell_ident = NULL) {
+
+  # Helper to calculate jaccard index
+  calc_jidx <- function(df_in, comparison, clonotype_col) {
+
+    if (length(comparison) != 2) {
+      stop("comparison must be a character vector containing two elements")
+    }
+
+    uniq_vars     <- unique(comparison)
+    clonotype_col <- dplyr::sym(clonotype_col)
+
+    if (length(uniq_vars) == 1) {
+      dup_var       <- stringr::str_c(uniq_vars, "_dup")
+      comparison[3] <- dup_var
+      dup_var       <- dplyr::sym(dup_var)
+      uniq_vars     <- dplyr::sym(uniq_vars)
+
+      df_in <- dplyr::mutate(df_in, !!dup_var := !!uniq_vars)
+    }
+
+    row_sums <- dplyr::select(df_in, !!clonotype_col, dplyr::all_of(comparison))
+    row_sums <- tidyr::pivot_longer(row_sums, cols = -!!clonotype_col)
+    row_sums <- dplyr::group_by(row_sums, !!clonotype_col)
+    row_sums <- dplyr::summarize(row_sums, row_sum = sum(value), .groups = "drop")
+    row_sums <- row_sums$row_sum
+
+    a     <- length(row_sums[row_sums == 2])      # Similarity
+    a_b_c <- length(row_sums[row_sums == 1]) + a  # Total
+
+    jaccard <- a / a_b_c
+
+    res <- tibble::tibble(
+      Var1 = comparison[1],
+      Var2 = comparison[2],
+      jaccard
+    )
+
+    res
+  }
+
+  # Fetch clonotypes and cell identities
+  so_idents   <- Seurat::Idents(sobj_in)
+  uniq_idents <- levels(so_idents)
+
+  ctypes   <- Seurat::FetchData(sobj_in, clonotype_col)
+  vdj_meta <- dplyr::bind_cols(ctypes, idents = so_idents)
+  vdj_meta <- filter(vdj_meta, !is.na(!!dplyr::sym(clonotype_col)))
+
+  # Create data.frame for calculating Jaccard index
+  j_df <- dplyr::mutate(vdj_meta, num = 1)
+  j_df <- tidyr::pivot_wider(
+    data        = j_df,
+    names_from  = idents,
+    values_from = num,
+    values_fn   = list
+  )
+
+  j_df <- tidyr::unnest(j_df, cols = -!!dplyr::sym(clonotype_col))
+  j_df <- dplyr::mutate_all(j_df, replace_na, replace = 0)
+
+  # Create data.frame of comparisons
+  comps <- expand.grid(
+    uniq_idents, uniq_idents,
+    stringsAsFactors = F
+  )
+
+  if (!is.null(cell_ident)) {
+    comps <- data.frame(
+      Var1 = cell_ident,
+      Var2 = uniq_idents,
+      stringsAsFactors = F
+    )
+  }
+
+  # Calculate Jaccard index for comparisons
+  res <- purrr::map2_dfr(
+    .x = comps$Var1,
+    .y = comps$Var2,
+    .f = ~ calc_jidx(so_df, c(.x, .y), clonotype_col = clonotype_col)
+  )
+
+  res <- dplyr::mutate(res, Var1 = str_c(Var1, "_jaccard"))
+  res <- tidyr::pivot_wider(res, names_from = Var1, values_from = jaccard)
+
+  # Add jaccard index to meta.data
+  vdj_meta <- tibble::as_tibble(vdj_meta, rownames = "cell_id")
+
+  vdj_meta <- dplyr::left_join(vdj_meta, res, by = c("idents" = "Var2"))
+  vdj_meta <- dplyr::select(vdj_meta, -idents)
+  vdj_meta <- tibble::column_to_rownames(vdj_meta, "cell_id")
+  vdj_meta <- as.data.frame(vdj_meta)
+
+  res <- Seurat::AddMetaData(sobj_in, vdj_meta)
+
+  res
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -114,7 +228,15 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #   CreateSeuratObject()
 #
 # so_vdj <- so %>%
-#   import_vdj("~/Projects/Rincon_scVDJseq/results/KI_DN4_TCR/outs/", productive_vj_pair = T)
+#   import_vdj("~/Projects/Rincon_scVDJseq/results/KI_DN4_TCR/outs/", productive_pair = T)
+#
+# so_vdj@meta.data <- so_vdj@meta.data %>%
+#   rownames_to_column("cell_id") %>%
+#   mutate(orig.ident = if_else(row_number() < 1000, "grp1", "grp2")) %>%
+#   mutate(orig.ident = if_else(row_number() > 2000, "grp3", orig.ident)) %>%
+#   column_to_rownames("cell_id")
+#
+# Idents(so_vdj) <- FetchData(so_vdj, "orig.ident")
 
 # trb_aa <- so_vdj@meta.data %>%
 #   as_tibble() %>%

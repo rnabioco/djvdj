@@ -17,4 +17,6 @@ Imports:
     readr,
     dplyr,
     Seurat,
-    tibble
+    tibble,
+    stringr,
+    purrr
