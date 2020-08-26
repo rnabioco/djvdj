@@ -2,11 +2,11 @@
 #'
 #' @param sobj_in Seurat object
 #' @param vdj_dir cellranger vdj output directory
+#' @param productive_pair Only add clonotypes with at least one productive V-J
+#' spanning contig for each chain of receptor pair
 #' @param prefix Prefix to add to new meta.data columns
-#' @param productive_pair Only add clonotypes with at least one
-#' productive V-J spanning contig for each chain of receptor pair
 #' @return Seurat object with VDJ data added to meta.data
-import_vdj <- function(sobj_in, vdj_dir, prefix = "", productive_pair = F) {
+import_vdj <- function(sobj_in, vdj_dir, productive_pair = F, prefix = "") {
 
   # Filtered contigs
   ctypes <- readr::read_csv(file.path(vdj_dir, "filtered_contig_annotations.csv"))
@@ -60,12 +60,13 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", productive_pair = F) {
 #'
 #' @param sobj_in Seurat object
 #' @param clonotype_col meta.data column containing clonotype ids
-#' @param cluster_col meta.data column containing cluster ids used for calculating
-#' diversity. If cluster_col is omitted, diversity index will be calculated for
-#' all clonotypes
+#' @param cluster_col meta.data column containing cluster ids used for
+#' calculating receptor diversity. If cluster_col is omitted, diversity index
+#' will be calculated for all clonotypes.
+#' @param prefix Prefix to add to new meta.data columns
 #' @return Seurat object with inverse Simpson index added to meta.data
 calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
-                           cluster_col = NULL) {
+                           cluster_col = NULL, prefix = "") {
 
   # meta.data
   vdj_cols      <- clonotype_col
@@ -88,15 +89,16 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
     vdj_df <- dplyr::group_by(vdj_df, !!cluster_col)
   }
 
+  div_col <- str_c(prefix, "diversity")
+
   vdj_df <- dplyr::mutate(
     vdj_df,
-    frac      = num / sum(num),
-    sum_frac  = sum(frac ^ 2),
-    diversity = 1 / sum_frac
-    # diversity = sum_frac
+    frac     = num / sum(num),
+    sum_frac = sum(frac ^ 2),
+    !!dplyr::sym(div_col) := 1 / sum_frac
   )
 
-  vdj_df <- dplyr::select(vdj_df, all_of(c(vdj_cols, "diversity")))
+  vdj_df <- dplyr::select(vdj_df, all_of(c(vdj_cols, div_col)))
 
   # Add resuts to meta.data
   meta_df <- dplyr::left_join(meta_df, vdj_df, by = vdj_cols)
@@ -114,10 +116,13 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
 #' @param sobj_in Seurat object
 #' @param clonotype_col meta.data column containing clonotype ids
 #' @param cluster_col meta.data column containing cell clusters
-#' @param ref_cluster Cell identity to use as a reference for calculating Jaccard index
+#' @param ref_cluster Cluster id to use as a reference for calculating Jaccard
+#' index. If ref_cluster is omitted, Jaccard index will be calculated for all
+#' combinations of clusters.
+#' @param prefix Prefix to add to new meta.data columns
 #' @return Seurat object with Jaccard index added to meta.data
 calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
-                         ref_cluster = NULL) {
+                         ref_cluster = NULL, prefix = "") {
 
   # Helper to calculate jaccard index
   calc_jidx <- function(df_in, comparison, clonotype_col) {
@@ -209,7 +214,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
     .f = ~ calc_jidx(j_df, c(.x, .y), clonotype_col = clonotype_col)
   )
 
-  res <- dplyr::mutate(res, Var1 = str_c(Var1, "_jaccard"))
+  res <- dplyr::mutate(res, Var1 = str_c(prefix, Var1, "_jaccard"))
   res <- tidyr::pivot_wider(res, names_from = Var1, values_from = jaccard)
 
   # Add jaccard index to meta.data
@@ -237,13 +242,47 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 
 
 
-# TEST ----
+# STANDARD WORKFLOW ----
 
+# # Load data
 # # data_dir <- "~/Projects/Rincon_scVDJseq/results/KI_DN4_GE/outs"
-# data_dir <- "~/Projects/Smith_AVIDseq/2020-07-17"
-# so_list  <- Read10X(file.path(data_dir, "JH191_GEX/outs/filtered_feature_bc_matrix"))
-# so       <- CreateSeuratObject(so_list$`Gene Expression`)
+# data_dir    <- "~/Projects/Smith_AVIDseq/2020-07-17"
+# so_list     <- Read10X(file.path(data_dir, "JH191_GEX/outs/filtered_feature_bc_matrix"))
+# so          <- CreateSeuratObject(so_list$`Gene Expression`)
+# so[["ADT"]] <- CreateAssayObject(so_list$`Antibody Capture`)
 #
+# # QC filtering
+# so <- so %>%
+#   PercentageFeatureSet(
+#     pattern  = "^mt-",
+#     col.name = "Percent_mito"
+#   ) %>%
+#   subset(
+#     nFeature_RNA > 200 &
+#     nFeature_RNA < 5000 &
+#     Percent_mito < 15
+#   )
+#
+# # Normalize
+# so <- so %>%
+#   NormalizeData() %>%
+#   NormalizeData(
+#     assay = "ADT",
+#     normalization.method = "CLR"
+#   ) %>%
+#   FindVariableFeatures() %>%
+#   ScaleData()
+#
+# # Cluster
+# so <- so %>%
+#   RunPCA() %>%
+#   RunUMAP(dims = 1:40) %>%
+#   FindNeighbors(dims = 1:40) %>%
+#   FindClusters(resolution = 0.2)
+
+
+# VDJ WORKFLOW ----
+
 # # Add VDJ data to meta.data
 # so_vdj <- import_vdj(
 #   sobj_in         = so,
@@ -253,15 +292,29 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 # )
 #
 # # Calculate repertoire diversity
-#
+# so_vdj <- calc_diversity(
+#   sobj_in       = so_vdj,
+#   clonotype_col = "clonotype_id",
+#   cluster_col   = "seurat_clusters",
+#   prefix        = ""
+# )
 #
 # # Calculate repertoire overlap
 # so_vdj <- calc_jaccard(
 #   sobj_in       = so_vdj,
 #   clonotype_col = "clonotype_id",
-#   cluster_col   = "orig.ident"
+#   cluster_col   = "seurat_clusters",
+#   # ref_cluster   = "5",
+#   prefix = "test_"
 # )
-
+#
+# so_vdj@meta.data <- so_vdj@meta.data %>%
+#   rownames_to_column("cell_id") %>%
+#   mutate(X5_jaccard = ifelse(seurat_clusters == 5, NA, X5_jaccard)) %>%
+#   column_to_rownames("cell_id")
+#
+# so_vdj %>%
+#   plot_features(feature = "")
 
 
 

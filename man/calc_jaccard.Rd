@@ -8,7 +8,8 @@ calc_jaccard(
   sobj_in,
   clonotype_col = "clonotype_id",
   cluster_col,
-  ref_cluster = NULL
+  ref_cluster = NULL,
+  prefix = ""
 )
 }
 \arguments{
@@ -18,7 +19,11 @@ calc_jaccard(
 
 \item{cluster_col}{meta.data column containing cell clusters}
 
-\item{ref_cluster}{Cell identity to use as a reference for calculating Jaccard index}
+\item{ref_cluster}{Cluster id to use as a reference for calculating Jaccard
+index. If ref_cluster is omitted, Jaccard index will be calculated for all
+combinations of clusters.}
+
+\item{prefix}{Prefix to add to new meta.data columns}
 }
 \value{
 Seurat object with Jaccard index added to meta.data

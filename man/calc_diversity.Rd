@@ -4,16 +4,23 @@
 \alias{calc_diversity}
 \title{Calculate receptor diversity (inverse Simpson Index)}
 \usage{
-calc_diversity(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL)
+calc_diversity(
+  sobj_in,
+  clonotype_col = "clonotype_id",
+  cluster_col = NULL,
+  prefix = ""
+)
 }
 \arguments{
 \item{sobj_in}{Seurat object}
 
 \item{clonotype_col}{meta.data column containing clonotype ids}
 
-\item{cluster_col}{meta.data column containing cluster ids used for calculating
-diversity. If cluster_col is omitted, diversity index will be calculated for
-all clonotypes}
+\item{cluster_col}{meta.data column containing cluster ids used for
+calculating receptor diversity. If cluster_col is omitted, diversity index
+will be calculated for all clonotypes.}
+
+\item{prefix}{Prefix to add to new meta.data columns}
 }
 \value{
 Seurat object with inverse Simpson index added to meta.data
