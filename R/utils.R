@@ -2,10 +2,11 @@
 #'
 #' @param sobj_in Seurat object
 #' @param vdj_dir cellranger vdj output directory
+#' @param prefix Prefix to add to new meta.data columns
 #' @param productive_pair Only add clonotypes with at least one
 #' productive V-J spanning contig for each chain of receptor pair
 #' @return Seurat object with VDJ data added to meta.data
-import_vdj <- function(sobj_in, vdj_dir, productive_pair = F) {
+import_vdj <- function(sobj_in, vdj_dir, prefix = "", productive_pair = F) {
 
   # Filtered contigs
   ctypes <- readr::read_csv(file.path(vdj_dir, "filtered_contig_annotations.csv"))
@@ -46,6 +47,7 @@ import_vdj <- function(sobj_in, vdj_dir, productive_pair = F) {
   cells   <- data.frame(cell_id = Cells(sobj_in))
   meta_df <- dplyr::left_join(cells, ctypes, by = c("cell_id" = "barcode"))
   meta_df <- tibble::column_to_rownames(meta_df, "cell_id")
+  meta_df <- dplyr::rename_all(meta_df, ~ str_c(prefix, .))
 
   # Add to meta.data
   res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
