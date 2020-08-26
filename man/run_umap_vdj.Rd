@@ -14,7 +14,7 @@ run_umap_vdj(
 }
 \arguments{
 \item{sobj_in}{Seurat object containing shared nearest neighbors graph for
-for VDJ data}
+VDJ data}
 
 \item{umap_name}{Name to give new dimensional reduction object}
 

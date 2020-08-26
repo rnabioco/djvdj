@@ -99,7 +99,9 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
     vdj_df,
     frac     = num / sum(num),
     sum_frac = sum(frac ^ 2),
-    !!dplyr::sym(div_col) := 1 / sum_frac
+
+    !!dplyr::sym(div_col) := sum_frac
+    # !!dplyr::sym(div_col) := 1 / sum_frac
   )
 
   vdj_df <- dplyr::select(vdj_df, all_of(c(vdj_cols, div_col)))
@@ -173,6 +175,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
   so_idents   <- so_idents[, cluster_col]
   so_idents   <- as.character(so_idents)
   uniq_idents <- unique(so_idents)
+  uniq_idents <- na.omit(uniq_idents)
 
   ctypes   <- Seurat::FetchData(sobj_in, clonotype_col)
   vdj_meta <- dplyr::bind_cols(ctypes, idents = so_idents)
@@ -198,6 +201,15 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
   j_df <- dplyr::mutate_all(j_df, tidyr::replace_na, replace = 0)
 
   # Create data.frame of comparisons
+  # Currently combinations include duplicates
+  # comps <- combinations(
+  #   n = length(uniq_idents),
+  #   r = 2,
+  #   v = uniq_idents
+  # ) %>%
+  #   as.data.frame(stringsAsFactors = F) %>%
+  #   dplyr::bind_rows(data.frame(V1 = uniq_idents, V2 = uniq_idents))
+
   comps <- expand.grid(
     uniq_idents, uniq_idents,
     stringsAsFactors = F
@@ -279,7 +291,7 @@ cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1, prefix
 #' Run UMAP using Seurat object containing VDJ nearest neighbors graph
 #'
 #' @param sobj_in Seurat object containing shared nearest neighbors graph for
-#' for VDJ data
+#' VDJ data
 #' @param umap_name Name to give new dimensional reduction object
 #' @param umap_key Key to use for UMAP columns in meta.data
 #' @param vdj_graph Name of shared nearest neighbors graph stored in Seurat
@@ -323,94 +335,6 @@ run_umap_vdj <- function(sobj_in, umap_name = "vdj_umap", umap_key = "vdjUMAP_",
 
 
 
-
-
-
-
-# STANDARD WORKFLOW ----
-
-# # Load data
-# library(tidyverse)
-# library(Seurat)
-#
-# # data_dir <- "~/Projects/Rincon_scVDJseq/results/KI_DN4_GE/outs"
-# data_dir    <- "~/Projects/Smith_AVIDseq/2020-07-17"
-# so_list     <- Read10X(file.path(data_dir, "JH191_GEX/outs/filtered_feature_bc_matrix"))
-# so          <- CreateSeuratObject(so_list$`Gene Expression`)
-# so[["ADT"]] <- CreateAssayObject(so_list$`Antibody Capture`)
-#
-# # QC filtering
-# so <- so %>%
-#   PercentageFeatureSet(
-#     pattern  = "^mt-",
-#     col.name = "Percent_mito"
-#   ) %>%
-#   subset(
-#     nFeature_RNA > 200 &
-#     nFeature_RNA < 5000 &
-#     Percent_mito < 15
-#   )
-#
-# # Normalize
-# so <- so %>%
-#   NormalizeData() %>%
-#   NormalizeData(
-#     assay = "ADT",
-#     normalization.method = "CLR"
-#   ) %>%
-#   FindVariableFeatures() %>%
-#   ScaleData()
-#
-# # Cluster
-# so <- so %>%
-#   RunPCA() %>%
-#   RunUMAP(dims = 1:40) %>%
-#   FindNeighbors(dims = 1:40) %>%
-#   FindClusters(resolution = 0.2)
-
-
-# VDJ WORKFLOW ----
-
-# # Add VDJ data to meta.data
-# so_vdj <- import_vdj(
-#   sobj_in         = so,
-#   vdj_dir         = file.path(data_dir, "BCR/outs"),
-#   productive_pair = F,
-#   prefix          = ""
-# )
-#
-# # Calculate repertoire diversity
-# so_vdj <- calc_diversity(
-#   sobj_in       = so_vdj,
-#   clonotype_col = "clonotype_id",
-#   cluster_col   = "seurat_clusters",
-#   prefix        = ""
-# )
-#
-# # Calculate repertoire overlap
-# so_vdj <- calc_jaccard(
-#   sobj_in       = so_vdj,
-#   clonotype_col = "clonotype_id",
-#   cluster_col   = "seurat_clusters",
-#   ref_cluster   = "5",
-#   prefix        = "x"
-# )
-#
-# # Cluster based on receptor sequence
-# so_vdj <- cluster_vdj(
-#   sobj_in    = so_vdj,
-#   cdr3_col   = "cdr3s_aa",
-#   resolution = 0.6
-# )
-#
-# # Run UMAP
-# so_vdj <- run_umap_vdj(
-#   sobj_in   = so_vdj,
-#   umap_name = "vdj_umap",
-#   umap_key  = "vdjUMAP_",
-#   vdj_graph = "vdj_snn",
-#   add_meta  = T
-# )
 
 
 
