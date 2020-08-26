@@ -191,7 +191,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cell_ident = N
   res <- purrr::map2_dfr(
     .x = comps$Var1,
     .y = comps$Var2,
-    .f = ~ calc_jidx(so_df, c(.x, .y), clonotype_col = clonotype_col)
+    .f = ~ calc_jidx(j_df, c(.x, .y), clonotype_col = clonotype_col)
   )
 
   res <- dplyr::mutate(res, Var1 = str_c(Var1, "_jaccard"))
