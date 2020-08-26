@@ -163,15 +163,22 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cell_ident = N
 
   # Create data.frame for calculating Jaccard index
   j_df <- dplyr::mutate(vdj_meta, num = 1)
-  j_df <- tidyr::pivot_wider(
-    data        = j_df,
+  j_df <- dplyr::mutate(j_df, num = 1)
+
+  j_df <- dplyr::group_by(j_df, idents)
+  j_df <- dplyr::group_split(j_df)
+  j_df <- purrr::map(
+    .x          = j_df,
+    .f          = pivot_wider,
     names_from  = idents,
     values_from = num,
     values_fn   = list
   )
 
-  j_df <- tidyr::unnest(j_df, cols = -!!dplyr::sym(clonotype_col))
-  j_df <- dplyr::mutate_all(j_df, replace_na, replace = 0)
+  j_df <- purrr::map(j_df, tidyr::unnest, cols = -!!dplyr::sym(clonotype_col))
+  j_df <- purrr::map(j_df, unique)
+  j_df <- purrr::reduce(j_df, dplyr::full_join, by = clonotype_col)
+  j_df <- dplyr::mutate_all(j_df, tidyr::replace_na, replace = 0)
 
   # Create data.frame of comparisons
   comps <- expand.grid(
