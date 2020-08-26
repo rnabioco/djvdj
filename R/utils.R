@@ -82,7 +82,11 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
   }
 
   vdj_df <- dplyr::group_by(vdj_df, !!clonotype_col, .add = T)
-  vdj_df <- dplyr::summarize(vdj_df, num = dplyr::n_distinct(cell_id))
+  vdj_df <- dplyr::summarize(
+    .data   = vdj_df,
+    num     = dplyr::n_distinct(cell_id),
+    .groups = "drop"
+  )
 
   # Calculate diversity
   if (!is.null(cluster_col)) {
@@ -231,6 +235,36 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 }
 
 
+#' Cluster cells based on receptor sequence
+#'
+#' @param sobj_in Seurat object
+#' @param cdr3_col meta.data column containing CDR3 sequences to use for
+#' calculating Levenshtein distance
+#' @param resolution Clustering resolution to pass to FindClusters
+#' @param ... Additional parameters to pass to FindClusters
+#' @return Seurat object with an added shared nearest neighbor graph (vdj_snn)
+#' and a meta.data column containing cluster ids
+cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1, ...) {
+
+  seqs <- Seurat::FetchData(sobj_in, cdr3_col)
+  seqs <- purrr::set_names(pull(seqs, cdr3_col), rownames(seqs))
+  seqs <- purrr::map_chr(seqs, stringr::str_remove_all, ";*(IGH|IGK|IGL):")
+
+  vdj_dist <- adist(seqs)
+  vdj_snn  <- Seurat::FindNeighbors(vdj_dist, distance.matrix = T)
+
+  sobj_in[["vdj_snn"]] <- vdj_snn$snn
+
+  res <- Seurat::FindClusters(
+    object     = sobj_in,
+    resolution = resolution,
+    graph.name = "vdj_snn",
+    ...
+  )
+
+  res
+}
+
 
 
 
@@ -245,6 +279,9 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 # STANDARD WORKFLOW ----
 
 # # Load data
+# library(tidyverse)
+# library(Seurat)
+#
 # # data_dir <- "~/Projects/Rincon_scVDJseq/results/KI_DN4_GE/outs"
 # data_dir    <- "~/Projects/Smith_AVIDseq/2020-07-17"
 # so_list     <- Read10X(file.path(data_dir, "JH191_GEX/outs/filtered_feature_bc_matrix"))
@@ -304,17 +341,22 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #   sobj_in       = so_vdj,
 #   clonotype_col = "clonotype_id",
 #   cluster_col   = "seurat_clusters",
-#   # ref_cluster   = "5",
-#   prefix = "test_"
+#   ref_cluster   = "5",
+#   prefix        = "x"
 # )
 #
-# so_vdj@meta.data <- so_vdj@meta.data %>%
-#   rownames_to_column("cell_id") %>%
-#   mutate(X5_jaccard = ifelse(seurat_clusters == 5, NA, X5_jaccard)) %>%
-#   column_to_rownames("cell_id")
+# # Cluster based on receptor sequence
+# so_vdj <- cluster_vdj(
+#   sobj_in    = so_vdj,
+#   cdr3_col   = "cdr3s_aa",
+#   resolution = 0.1
+# )
 #
-# so_vdj %>%
-#   plot_features(feature = "")
-
-
+# so_vdj <- so_vdj %>%
+#   RunUMAP(
+#     reduction.name = "vdj_umap",
+#     reduction.key  = "vdjUMAP_",
+#     graph          = "vdj_snn",
+#     verbose        = F
+#   )
 
