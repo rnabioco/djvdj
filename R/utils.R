@@ -2,54 +2,55 @@
 #'
 #' @param sobj_in Seurat object
 #' @param vdj_dir cellranger vdj output directory
-#' @param productive_pair Only add clonotypes with at least one productive V-J
-#' spanning contig for each chain of receptor pair
+#' @param include_chains Only inlude clonotypes that have the indicated chains
 #' @param prefix Prefix to add to new meta.data columns
 #' @return Seurat object with VDJ data added to meta.data
-import_vdj <- function(sobj_in, vdj_dir, productive_pair = F, prefix = "") {
+import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "") {
 
-  # Filtered contigs
-  ctypes <- readr::read_csv(file.path(vdj_dir, "filtered_contig_annotations.csv"))
+  # Load contigs
+  contigs <- readr::read_csv(file.path(vdj_dir, "filtered_contig_annotations.csv"))
+  contigs <- dplyr::select(contigs, barcode, raw_clonotype_id)
+  contigs <- unique(contigs)
 
-  # Only include clonotypes with productive V-J spanning contigs
-  if (productive_pair) {
-    TCR_chains <- c("TRA", "TRB")
-    BCR_chains <- c("IGH", "IGL", "IGK")
+  # Load CDR3 sequences for clonotypes
+  ctypes <- readr::read_csv(file.path(vdj_dir, "clonotypes.csv"))
 
-    if (any(TCR_chains %in% ctypes$chain)) {
-      all_chains <- TCR_chains
-
-    } else {
-      all_chains <- BCR_chains
-    }
-
-    ctypes <- dplyr::filter(ctypes, productive)
-    ctypes <- dplyr::group_by(ctypes, raw_clonotype_id)
-    ctypes <- dplyr::filter(ctypes, all(all_chains %in% chain))  # FIX THIS FOR BCRs
-    ctypes <- dplyr::ungroup(ctypes)
-  }
-
-  ctypes <- dplyr::select(ctypes, barcode, raw_clonotype_id)
-  ctypes <- unique(ctypes)
-
-  # Retrieve CDR3 sequences for clonotypes passing filters
-  consensus_ctypes <- readr::read_csv(file.path(vdj_dir, "clonotypes.csv"))
-
-  ctypes <- dplyr::left_join(
-    ctypes, consensus_ctypes,
+  meta_df <- dplyr::left_join(
+    contigs, ctypes,
     by = c("raw_clonotype_id" = "clonotype_id")
   )
 
-  ctypes <- dplyr::rename(ctypes, clonotype_id = raw_clonotype_id)
-  ctypes <- dplyr::select(ctypes, -frequency, -proportion)
+  # Filter for cells present in sobj_in
+  cells   <- Seurat::Cells(sobj_in)
+  meta_df <- dplyr::filter(meta_df, barcode %in% cells)
+  meta_df <- dplyr::rename(meta_df, clonotype_id = raw_clonotype_id)
+  meta_df <- dplyr::select(meta_df, -frequency, -proportion)
 
-  # Create data.frame with clonotype info
-  cells   <- data.frame(cell_id = Cells(sobj_in))
-  meta_df <- dplyr::left_join(cells, ctypes, by = c("cell_id" = "barcode"))
-  meta_df <- tibble::column_to_rownames(meta_df, "cell_id")
+  # Filter for clonotypes that include the given chains
+  if (!is.null(include_chains)) {
+    re <- purrr::map_chr(include_chains, ~ str_c("(?=.*", .x, ":)"))
+    re <- purrr::reduce(re, str_c)
+
+    meta_df <- dplyr::filter(meta_df, stringr::str_detect(cdr3s_aa, re))
+  }
+
+  # Calculate stats
+  meta_df <- dplyr::mutate(
+    meta_df,
+    chains   = str_split(cdr3s_aa, ";"),
+    n_chains = purrr::map_dbl(chains, length)
+  )
+
+  meta_df <- dplyr::group_by(meta_df, clonotype_id)
+  meta_df <- dplyr::mutate(meta_df, clone_freq = dplyr::n_distinct(barcode))
+  meta_df <- dplyr::ungroup(meta_df)
+  meta_df <- dplyr::mutate(meta_df, clone_frac = clone_freq / nrow(meta_df))
+  meta_df <- dplyr::select(meta_df, -chains)
+
+  # Add meta.data to Seurat object
+  meta_df <- tibble::column_to_rownames(meta_df, "barcode")
   meta_df <- dplyr::rename_all(meta_df, ~ str_c(prefix, .))
 
-  # Add to meta.data
   res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
 
   res
@@ -126,6 +127,7 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
 #' index. If ref_cluster is omitted, Jaccard index will be calculated for all
 #' combinations of clusters.
 #' @param prefix Prefix to add to new meta.data columns
+#' @param return_matrix Return matrix instead of Seurat object
 #' @return Seurat object with Jaccard index added to meta.data
 calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
                          ref_cluster = NULL, prefix = "") {
@@ -155,8 +157,8 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
     row_sums <- dplyr::summarize(row_sums, row_sum = sum(value), .groups = "drop")
     row_sums <- row_sums$row_sum
 
-    a     <- length(row_sums[row_sums == 2])      # Similarity
-    a_b_c <- length(row_sums[row_sums == 1]) + a  # Total
+    a     <- length(row_sums[row_sums == 2])      # Intersection
+    a_b_c <- length(row_sums[row_sums == 1]) + a  # Union
 
     jaccard <- a / a_b_c
 
@@ -331,9 +333,6 @@ run_umap_vdj <- function(sobj_in, umap_name = "vdj_umap", umap_key = "vdjUMAP_",
 
   sobj_in
 }
-
-
-
 
 
 

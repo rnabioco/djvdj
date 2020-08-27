@@ -4,15 +4,14 @@
 \alias{import_vdj}
 \title{Add VDJ data to Seurat object}
 \usage{
-import_vdj(sobj_in, vdj_dir, productive_pair = F, prefix = "")
+import_vdj(sobj_in, vdj_dir, include_chains = NULL, prefix = "")
 }
 \arguments{
 \item{sobj_in}{Seurat object}
 
 \item{vdj_dir}{cellranger vdj output directory}
 
-\item{productive_pair}{Only add clonotypes with at least one productive V-J
-spanning contig for each chain of receptor pair}
+\item{include_chains}{Only inlude clonotypes that have the indicated chains}
 
 \item{prefix}{Prefix to add to new meta.data columns}
 }
