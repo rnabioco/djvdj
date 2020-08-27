@@ -29,7 +29,7 @@ import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "") {
   # Filter for clonotypes that include the given chains
   if (!is.null(include_chains)) {
     re <- purrr::map_chr(include_chains, ~ str_c("(?=.*", .x, ":)"))
-    re <- purrr::reduce(re, str_c)
+    re <- purrr::reduce(re, stringr::str_c)
 
     meta_df <- dplyr::filter(meta_df, stringr::str_detect(cdr3s_aa, re))
   }
@@ -126,8 +126,8 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
 #' @param ref_cluster Cluster id to use as a reference for calculating Jaccard
 #' index. If ref_cluster is omitted, Jaccard index will be calculated for all
 #' combinations of clusters.
-#' @param prefix Prefix to add to new meta.data columns
 #' @param return_matrix Return matrix instead of Seurat object
+#' @param prefix Prefix to add to new meta.data columns
 #' @return Seurat object with Jaccard index added to meta.data
 calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
                          ref_cluster = NULL, prefix = "") {
@@ -255,26 +255,53 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #' @param cdr3_col meta.data column containing CDR3 sequences to use for
 #' calculating Levenshtein distance
 #' @param resolution Clustering resolution to pass to FindClusters
+#' @param use_chains Chains to use for calculating Levenshtein distance. If
+#' multiple sequences are present for a chain, the first sequence is used.
 #' @param prefix Prefix to add to graph name
 #' @param ... Additional parameters to pass to FindClusters
 #' @return Seurat object with an added shared nearest neighbors graph (vdj_snn)
 #' and a meta.data column containing cluster ids
-cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1, prefix = "vdj_", ...) {
+cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1,
+                        use_chains = NULL, prefix = "vdj_", ...) {
 
   # Extract sequences
   # Only include cells with VDJ data
   seqs <- Seurat::FetchData(sobj_in, cdr3_col)
-  seqs <- purrr::set_names(pull(seqs, cdr3_col), rownames(seqs))
-  seqs <- purrr::map_chr(seqs, stringr::str_remove_all, ";*(TRA|TRB|IGH|IGK|IGL):")
+  seqs <- tibble::rownames_to_column(seqs, "cell_id")
   seqs <- na.omit(seqs)
 
+  # Select chains to used for calculating distance
+  if (!is.null(use_chains)) {
+    re       <- stringr::str_c("(?<=", use_chains, ":)[A-Z]+")
+    seq_cols <- stringr::str_c("V", seq_along(use_chains))
+
+    seqs <- purrr::map2(re, seq_cols, ~ {
+      n_col <- dplyr::sym(.y)
+      c_col <- dplyr::sym(cdr3_col)
+
+      dplyr::mutate(seqs, !!n_col := stringr::str_extract(!!c_col, .x))
+    })
+
+    seqs <- purrr::reduce(seqs, dplyr::left_join, by = c("cell_id", cdr3_col))
+    seqs <- na.omit(seqs)
+    seqs <- dplyr::mutate(seqs, seq_c = stringr::str_c(!!!dplyr::syms(seq_cols)))
+
+  } else {
+    seqs <- mutate(
+      seqs,
+      seq_c = stringr::str_extract_all(!!dplyr::sym(cdr3_col), "(?<=:)[A-Z]+"),
+      seq_c = purrr::map(seq_c, purrr::reduce, stringr::str_c)
+    )
+  }
+
   # Create Levenshtein distance matrix
+  seqs     <- purrr::set_names(seqs$seq_c, seqs$cell_id)
   vdj_dist <- adist(seqs)
 
   # Create nearest neighbors graph
   # Add graph this way or error thrown due to differing number of cells
   vdj_snn  <- Seurat::FindNeighbors(vdj_dist, distance.matrix = T)
-  snn_name <- str_c(prefix, "snn")
+  snn_name <- stringr::str_c(prefix, "snn")
 
   sobj_in@graphs[[snn_name]] <- vdj_snn$snn
 
@@ -333,7 +360,6 @@ run_umap_vdj <- function(sobj_in, umap_name = "vdj_umap", umap_key = "vdjUMAP_",
 
   sobj_in
 }
-
 
 
 

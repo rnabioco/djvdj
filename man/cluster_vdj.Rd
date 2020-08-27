@@ -8,6 +8,7 @@ cluster_vdj(
   sobj_in,
   cdr3_col = "cdr3s_aa",
   resolution = 0.1,
+  use_chains = NULL,
   prefix = "vdj_",
   ...
 )
@@ -19,6 +20,9 @@ cluster_vdj(
 calculating Levenshtein distance}
 
 \item{resolution}{Clustering resolution to pass to FindClusters}
+
+\item{use_chains}{Chains to use for calculating Levenshtein distance. If
+multiple sequences are present for a chain, the first sequence is used.}
 
 \item{prefix}{Prefix to add to graph name}
 
