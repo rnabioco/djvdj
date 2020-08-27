@@ -266,6 +266,8 @@ cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1,
 
   # Extract sequences
   # Only include cells with VDJ data
+  orig_idents <- Idents(sobj_in)
+
   seqs <- Seurat::FetchData(sobj_in, cdr3_col)
   seqs <- tibble::rownames_to_column(seqs, "cell_id")
   seqs <- na.omit(seqs)
@@ -313,6 +315,8 @@ cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1,
     ...
   )
 
+  Idents(res) <- orig_idents
+
   res
 }
 
@@ -359,6 +363,60 @@ run_umap_vdj <- function(sobj_in, umap_name = "vdj_umap", umap_key = "vdjUMAP_",
   }
 
   sobj_in
+}
+
+
+#' Subset Seurat object based on VDJ meta.data
+#'
+#' @param sobj_in Seurat object containing CDR3 sequences
+#' @param ... Expression to use for filtering object. To filter based on
+#' receptor chains and CDR3 sequences use the terms `.chains` and `.seqs`.
+#' @param cdr3_col meta.data column containing CDR3 sequences to use for
+#' filtering
+#' @return Subsetted Seurat object
+filter_vdj <- function(sobj_in, ..., cdr3_col = "cdr3s_aa") {
+
+  cdr3_col <- dplyr::sym(cdr3_col)
+
+  # Format meta.data for filtering
+  meta_df <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
+  meta_df <- dplyr::mutate(
+    meta_df,
+    .chains = stringr::str_extract_all(!!cdr3_col, "[A-Z]+(?=:)"),
+    .seqs   = stringr::str_extract_all(!!cdr3_col, "(?<=:)[A-Z]+")
+  )
+
+  # meta.data columns for filtering
+  meta_cols <- colnames(meta_df)
+  meta_cols <- purrr::set_names(
+    x  = stringr::str_c("..", seq_along(meta_cols)),
+    nm = meta_cols
+  )
+
+  # Expression for filtering
+  filt <- lazyeval::lazy_dots(...)
+  filt <- unlist(filt)
+  filt <- as.character(filt)[1]
+  filt <- stringr::str_replace_all(filt, meta_cols)
+
+  # Filter meta.data
+  meta_cols <- dplyr::syms(names(meta_cols))
+
+  meta_df <- dplyr::mutate(
+    meta_df,
+    .KEEP = purrr::pmap_lgl(
+      list(!!!meta_cols),
+      ~ any(eval(parse(text = filt)))  # FIX THIS
+    )
+  )
+
+  # Subset Seurat object
+  meta_df    <- dplyr::filter(meta_df, .KEEP | is.na(!!cdr3_col))
+  keep_cells <- meta_df$.cell_id
+
+  res <- subset(sobj_in, cells = keep_cells)
+
+  res
 }
 
 
