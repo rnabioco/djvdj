@@ -4,29 +4,19 @@
 \alias{run_umap_vdj}
 \title{Run UMAP using Seurat object containing VDJ nearest neighbors graph}
 \usage{
-run_umap_vdj(
-  sobj_in,
-  umap_name = "vdj_umap",
-  umap_key = "vdjUMAP_",
-  vdj_graph = "vdj_snn",
-  add_meta = T
-)
+run_umap_vdj(sobj_in, umap_key = "vdjUMAP_", vdj_graph = "vdj_snn")
 }
 \arguments{
 \item{sobj_in}{Seurat object containing shared nearest neighbors graph for
 VDJ data}
 
-\item{umap_name}{Name to give new dimensional reduction object}
-
 \item{umap_key}{Key to use for UMAP columns in meta.data}
 
 \item{vdj_graph}{Name of shared nearest neighbors graph stored in Seurat
 object}
-
-\item{add_meta}{Should UMAP coordinates be added to meta.data}
 }
 \value{
-Seurat object containing UMAP coordinates
+Seurat object containing UMAP coordinates in meta.data
 }
 \description{
 Run UMAP using Seurat object containing VDJ nearest neighbors graph

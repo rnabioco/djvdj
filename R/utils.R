@@ -325,44 +325,38 @@ cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1,
 #'
 #' @param sobj_in Seurat object containing shared nearest neighbors graph for
 #' VDJ data
-#' @param umap_name Name to give new dimensional reduction object
 #' @param umap_key Key to use for UMAP columns in meta.data
 #' @param vdj_graph Name of shared nearest neighbors graph stored in Seurat
 #' object
-#' @param add_meta Should UMAP coordinates be added to meta.data
-#' @return Seurat object containing UMAP coordinates
-run_umap_vdj <- function(sobj_in, umap_name = "vdj_umap", umap_key = "vdjUMAP_",
-                         vdj_graph = "vdj_snn", add_meta = T) {
+#' @return Seurat object containing UMAP coordinates in meta.data
+run_umap_vdj <- function(sobj_in, umap_key = "vdjUMAP_", vdj_graph = "vdj_snn") {
 
   # Subset sobj_in to only include VDJ cells and add vdj_snn graph
   # RunUMAP does not like running with a graph that does not include results
   # for all cells in the object
   vdj_cells <- rownames(sobj_in[[vdj_graph]])
 
-  tmp_so <- subset(sobj_in, cells = vdj_cells)
-  tmp_so[[vdj_graph]] <- sobj_in[[vdj_graph]]
+  vdj_so <- subset(sobj_in, cells = vdj_cells)
+  vdj_so[[vdj_graph]] <- sobj_in[[vdj_graph]]
 
   # Run UMAP and add reduction object back to original object
-  tmp_so <- Seurat::RunUMAP(
-    object         = tmp_so,
-    reduction.name = umap_name,
+  vdj_so <- Seurat::RunUMAP(
+    object         = vdj_so,
+    reduction.name = "vdj_umap",
     reduction.key  = umap_key,
     graph          = vdj_graph
   )
 
-  sobj_in@reductions[[umap_name]] <- tmp_so[[umap_name]]
+  umap_coords <- Seurat::Embeddings(vdj_so, reduction = "vdj_umap")
+  umap_cols   <- str_c(umap_key, c("1", "2"))
 
-  if (add_meta) {
-    umap_cols <- str_c(umap_key, c("1", "2"))
+  res <- Seurat::AddMetaData(
+    object   = sobj_in,
+    metadata = umap_coords,
+    col.name = umap_cols
+  )
 
-    sobj_in <- Seurat::AddMetaData(
-      object   = sobj_in,
-      metadata = Seurat::Embeddings(sobj_in, reduction = umap_name),
-      col.name = umap_cols
-    )
-  }
-
-  sobj_in
+  res
 }
 
 
