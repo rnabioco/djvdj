@@ -101,7 +101,7 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
     frac     = num / sum(num),
     sum_frac = sum(frac ^ 2),
 
-    !!dplyr::sym(div_col) := sum_frac
+    !!dplyr::sym(div_col) := 1 - sum_frac
     # !!dplyr::sym(div_col) := 1 / sum_frac
   )
 
