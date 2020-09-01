@@ -12,7 +12,7 @@ alongside single-cell VDJ sequencing data.
 
 <br>
 
-## Installation
+### Installation
 
 You can install the development version of AVIDtools from
 [GitHub](https://github.com/rnabioco/AVIDtools) with:

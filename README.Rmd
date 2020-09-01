@@ -27,7 +27,7 @@ The goal of AVIDtools is to provide tools to analyze AVID-seq signals alongside 
 
 <br>
 
-## Installation
+### Installation
 
 You can install the development version of AVIDtools from [GitHub](https://github.com/rnabioco/AVIDtools) with:
 
