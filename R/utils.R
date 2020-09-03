@@ -5,6 +5,7 @@
 #' @param include_chains Only inlude clonotypes that have the indicated chains
 #' @param prefix Prefix to add to new meta.data columns
 #' @return Seurat object with VDJ data added to meta.data
+#' @export
 import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "") {
 
   # Load contigs
@@ -66,6 +67,7 @@ import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "") {
 #' will be calculated for all clonotypes.
 #' @param prefix Prefix to add to new meta.data columns
 #' @return Seurat object with inverse Simpson index added to meta.data
+#' @export
 calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
                            cluster_col = NULL, prefix = "") {
 
@@ -129,6 +131,7 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
 #' @param return_matrix Return matrix instead of Seurat object
 #' @param prefix Prefix to add to new meta.data columns
 #' @return Seurat object with Jaccard index added to meta.data
+#' @export
 calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
                          ref_cluster = NULL, prefix = "") {
 
@@ -261,6 +264,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #' @param ... Additional parameters to pass to FindClusters
 #' @return Seurat object with an added shared nearest neighbors graph (vdj_snn)
 #' and a meta.data column containing cluster ids
+#' @export
 cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1,
                         use_chains = NULL, prefix = "vdj_", ...) {
 
@@ -329,6 +333,7 @@ cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1,
 #' @param vdj_graph Name of shared nearest neighbors graph stored in Seurat
 #' object
 #' @return Seurat object containing UMAP coordinates in meta.data
+#' @export
 run_umap_vdj <- function(sobj_in, umap_key = "vdjUMAP_", vdj_graph = "vdj_snn") {
 
   # Subset sobj_in to only include VDJ cells and add vdj_snn graph
@@ -368,6 +373,7 @@ run_umap_vdj <- function(sobj_in, umap_key = "vdjUMAP_", vdj_graph = "vdj_snn") 
 #' @param cdr3_col meta.data column containing CDR3 sequences to use for
 #' filtering
 #' @return Subsetted Seurat object
+#' @export
 filter_vdj <- function(sobj_in, ..., cdr3_col = "cdr3s_aa") {
 
   cdr3_col <- dplyr::sym(cdr3_col)
