@@ -21,6 +21,7 @@ knitr::opts_chunk$set(
 # djvdj <img src="man/figures/djvdj-logo.png" align="right" height="139">
 
 <!-- badges: start -->
+[![Codecov test coverage](https://codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg)](https://codecov.io/gh/rnabioco/djvdj?branch=master)
 <!-- badges: end -->
 
 The goal of djvdj is to provide tools to analyze AVID-seq signals alongside single-cell VDJ sequencing data.
