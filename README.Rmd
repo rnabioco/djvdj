@@ -18,22 +18,22 @@ knitr::opts_chunk$set(
 )
 ```
 
-# AVIDtools
+# djvdj <img src="man/figures/djvdj-logo.png" align="right" height="139">
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of AVIDtools is to provide tools to analyze AVID-seq signals alongside single-cell VDJ sequencing data.
+The goal of djvdj is to provide tools to analyze AVID-seq signals alongside single-cell VDJ sequencing data.
 
 <br>
 
 ### Installation
 
-You can install the development version of AVIDtools from [GitHub](https://github.com/rnabioco/AVIDtools) with:
+You can install the development version of djvdj from [GitHub](https://github.com/rnabioco/djvdj) with:
 
 ```{r, eval = F}
 # install.packages("devtools")
-devtools::install_github("rnabioco/AVIDtools")
+devtools::install_github("rnabioco/djvdj")
 ```
 
 ```{r "Setup", include = FALSE}
@@ -43,10 +43,9 @@ library(cowplot)
 library(colorblindr)
 library(Seurat)
 library(here)
+library(djvdj)
 
-source(here("R/utils.R"))
 source(here("funs.R"))
-
 
 # Themes
 base_theme <- theme_cowplot() +
@@ -96,7 +95,7 @@ get_cols <- create_col_fun(ito_cols)
 
 Splenocytes from MD4 transgenic mice which have monoclonal B cells that all bind hen egg lysozyme (HEL) antigen were mixed with splenocytes from C57BL/6 mice at a 1:1 ratio. The cells were stained with the HEL AVID-tag and sequencing libraries were prepared to capture gene expression, B/T cell receptor sequences, and AVID-tag signals using the 10x Genomics 5’ immune profiling kit.
 
-```{r "RNA UMAP", fig.width = 12.5, fig.height = 5, echo = FALSE}
+```{r "rna_umap", fig.width = 12.5, fig.height = 5, echo = FALSE}
 so <- read_rds(here("data/so_1.rds"))
 
 key_gg <- so %>%
@@ -228,7 +227,7 @@ so_vdj <- run_umap_vdj(
 )
 ```
 
-```{r, fig.width = 11, fig.height = 5, echo = FALSE}
+```{r "vdj_umap", fig.width = 11, fig.height = 5, echo = FALSE}
 rna_gg <- so_vdj %>%
   plot_features(
     feature    = "seurat_clusters",
@@ -276,14 +275,14 @@ Calculate repertoire diversity with `calc_diversity`. The inverse Simpson index 
 
 ```{r}
 so_vdj <- calc_diversity(
-  sobj_in       = so_vdj,             # Seurat object
-  clonotype_col = "clonotype_id",     # meta.data column containing clonotype ids
-  cluster_col   = "seurat_clusters",  # meta.data column containing cell labels
-  prefix        = ""                  # Prefix to add to new meta.data columns
+  sobj_in       = so_vdj,          # Seurat object
+  clonotype_col = "clonotype_id",  # meta.data column containing clonotype ids
+  cluster_col   = NULL,            # meta.data column containing cell labels
+  prefix        = ""               # Prefix to add to new meta.data columns
 )
 ```
 
-```{r, fig.width = 12, fig.height = 5, echo = FALSE}
+```{r "calc_diversity", fig.width = 12, fig.height = 5, echo = FALSE}
 div_gg <- so_vdj %>%
   plot_features(
     x          = "vdjUMAP_1",
@@ -333,7 +332,7 @@ so_vdj <- calc_jaccard(
 )
 ```
 
-```{r, fig.width = 12.5, fig.height = 5, echo = FALSE}
+```{r "calc_jaccard", fig.width = 12.5, fig.height = 5, echo = FALSE}
 j_gg <- so_vdj %>%
   plot_features(
     x          = "vdjUMAP_1",
@@ -371,7 +370,7 @@ so_vdj <- so_vdj %>%
   )
 ```
 
-```{r, fig.width = 11, fig.height = 5.5, echo = F}
+```{r "bcr_tcr", fig.width = 10, fig.height = 5.5, echo = F}
 key_gg <- so %>%
   plot_features(
     feature    = "key",

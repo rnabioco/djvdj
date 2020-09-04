@@ -1,25 +1,25 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# AVIDtools
+# djvdj <img src="man/figures/djvdj-logo.png" align="right" height="139">
 
 <!-- badges: start -->
 
 <!-- badges: end -->
 
-The goal of AVIDtools is to provide tools to analyze AVID-seq signals
+The goal of djvdj is to provide tools to analyze AVID-seq signals
 alongside single-cell VDJ sequencing data.
 
 <br>
 
 ### Installation
 
-You can install the development version of AVIDtools from
-[GitHub](https://github.com/rnabioco/AVIDtools) with:
+You can install the development version of djvdj from
+[GitHub](https://github.com/rnabioco/djvdj) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("rnabioco/AVIDtools")
+devtools::install_github("rnabioco/djvdj")
 ```
 
 <br>
@@ -33,7 +33,7 @@ AVID-tag and sequencing libraries were prepared to capture gene
 expression, B/T cell receptor sequences, and AVID-tag signals using the
 10x Genomics 5’ immune profiling kit.
 
-<img src="man/figures/README-RNA UMAP-1.png" width="100%" />
+<img src="man/figures/README-rna_umap-1.png" width="100%" />
 
 <br>
 
@@ -225,7 +225,7 @@ so_vdj <- run_umap_vdj(
 )
 ```
 
-<img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
+<img src="man/figures/README-vdj_umap-1.png" width="100%" />
 
 <br>
 
@@ -241,14 +241,14 @@ Simpson index is used to measure diversity for each cluster.
 
 ``` r
 so_vdj <- calc_diversity(
-  sobj_in       = so_vdj,             # Seurat object
-  clonotype_col = "clonotype_id",     # meta.data column containing clonotype ids
-  cluster_col   = "seurat_clusters",  # meta.data column containing cell labels
-  prefix        = ""                  # Prefix to add to new meta.data columns
+  sobj_in       = so_vdj,          # Seurat object
+  clonotype_col = "clonotype_id",  # meta.data column containing clonotype ids
+  cluster_col   = NULL,            # meta.data column containing cell labels
+  prefix        = ""               # Prefix to add to new meta.data columns
 )
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" />
+<img src="man/figures/README-calc_diversity-1.png" width="100%" />
 
 <br>
 
@@ -267,7 +267,7 @@ so_vdj <- calc_jaccard(
 )
 ```
 
-<img src="man/figures/README-unnamed-chunk-12-1.png" width="100%" />
+<img src="man/figures/README-calc_jaccard-1.png" width="100%" />
 
 <br>
 
@@ -290,4 +290,4 @@ so_vdj <- so_vdj %>%
   )
 ```
 
-<img src="man/figures/README-unnamed-chunk-14-1.png" width="100%" />
+<img src="man/figures/README-bcr_tcr-1.png" width="100%" />
