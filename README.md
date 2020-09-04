@@ -90,9 +90,9 @@ Filter to only include cells with both IGH and IGK chains
 
 ``` r
 so_filt <- filter_vdj(
-  sobj_in  = so_vdj,                             # Seurat object
-  ...      = all(c("IGH", "IGK") %in% .chains),  # Expression to use for filtering
-  cdr3_col = "cdr3s_aa"                          # meta.data column containing CDR3 sequences
+  sobj_in  = so_vdj,                  # Seurat object
+  cdr3_col = "cdr3s_aa",              # meta.data column containing CDR3 sequences
+  all(c("IGH", "IGK") %in% .chains),  # Expression to use for filtering
 )
 
 so_filt@meta.data %>%

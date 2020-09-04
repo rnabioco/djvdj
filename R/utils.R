@@ -29,7 +29,7 @@ import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "") {
 
   # Filter for clonotypes that include the given chains
   if (!is.null(include_chains)) {
-    re <- purrr::map_chr(include_chains, ~ str_c("(?=.*", .x, ":)"))
+    re <- purrr::map_chr(include_chains, ~ stringr::str_c("(?=.*", .x, ":)"))
     re <- purrr::reduce(re, stringr::str_c)
 
     meta_df <- dplyr::filter(meta_df, stringr::str_detect(cdr3s_aa, re))
@@ -38,7 +38,7 @@ import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "") {
   # Calculate stats
   meta_df <- dplyr::mutate(
     meta_df,
-    chains   = str_split(cdr3s_aa, ";"),
+    chains   = stringr::str_split(cdr3s_aa, ";"),
     n_chains = purrr::map_dbl(chains, length)
   )
 
@@ -50,7 +50,7 @@ import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "") {
 
   # Add meta.data to Seurat object
   meta_df <- tibble::column_to_rownames(meta_df, "barcode")
-  meta_df <- dplyr::rename_all(meta_df, ~ str_c(prefix, .))
+  meta_df <- dplyr::rename_all(meta_df, ~ stringr::str_c(prefix, .))
 
   res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
 
@@ -266,7 +266,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #' and a meta.data column containing cluster ids
 #' @export
 cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1,
-                        use_chains = NULL, prefix = "vdj_", ...) {
+                        use_chains = NULL, prefix = "vdj_") {
 
   # Extract sequences
   # Only include cells with VDJ data
@@ -380,41 +380,21 @@ filter_vdj <- function(sobj_in, ..., cdr3_col = "cdr3s_aa") {
 
   # Format meta.data for filtering
   meta_df <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
-  meta_df <- dplyr::mutate(
+
+  vdj_df <- dplyr::mutate(
     meta_df,
     .chains = stringr::str_extract_all(!!cdr3_col, "[A-Z]+(?=:)"),
     .seqs   = stringr::str_extract_all(!!cdr3_col, "(?<=:)[A-Z]+")
   )
-
-  # meta.data columns for filtering
-  meta_cols <- colnames(meta_df)
-  meta_cols <- purrr::set_names(
-    x  = stringr::str_c("..", seq_along(meta_cols)),
-    nm = meta_cols
-  )
-
-  # Expression for filtering
-  filt <- lazyeval::lazy_dots(...)
-  filt <- unlist(filt)
-  filt <- as.character(filt)[1]
-  filt <- stringr::str_replace_all(filt, meta_cols)
-
-  # Filter meta.data
-  meta_cols <- dplyr::syms(names(meta_cols))
-
-  meta_df <- dplyr::mutate(
-    meta_df,
-    .KEEP = purrr::pmap_lgl(
-      list(!!!meta_cols),
-      ~ any(eval(parse(text = filt)))  # FIX THIS
-    )
-  )
+  vdj_df <- tidyr::unnest(vdj_df, cols = c(.chains, .seqs))
+  vdj_df <- dplyr::group_by(vdj_df, .cell_id)
+  vdj_df <- dplyr::filter(vdj_df, ...)
 
   # Subset Seurat object
-  meta_df    <- dplyr::filter(meta_df, .KEEP | is.na(!!cdr3_col))
-  keep_cells <- meta_df$.cell_id
+  vdj_cells <- unique(vdj_df$.cell_id)
+  meta_df   <- dplyr::filter(meta_df, .cell_id %in% vdj_cells | is.na(!!cdr3_col))
 
-  res <- subset(sobj_in, cells = keep_cells)
+  res <- subset(sobj_in, cells = meta_df$.cell_id)
 
   res
 }
