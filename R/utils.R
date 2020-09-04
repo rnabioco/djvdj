@@ -389,11 +389,9 @@ filter_vdj <- function(sobj_in, ..., cdr3_col = "cdr3s_aa") {
   vdj_df <- tidyr::unnest(vdj_df, cols = c(.chains, .seqs))
   vdj_df <- dplyr::group_by(vdj_df, .cell_id)
   vdj_df <- dplyr::filter(vdj_df, ...)
-  vdj_df <- dplyr::select(vdj_df, -.chains, -.seqs)
-  vdj_df <- unique(vdj_df)
 
   # Subset Seurat object
-  vdj_cells <- vdj_df$.cell_id
+  vdj_cells <- unique(vdj_df$.cell_id)
   meta_df   <- dplyr::filter(meta_df, .cell_id %in% vdj_cells | is.na(!!cdr3_col))
 
   res <- subset(sobj_in, cells = meta_df$.cell_id)
