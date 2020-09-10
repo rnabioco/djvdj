@@ -421,6 +421,75 @@ filter_vdj <- function(sobj_in, ..., cdr3_col = "cdr3s_aa") {
   res
 }
 
+#' Calculate gene usage
+#'
+#' @param sobj_in Seurat object containing VDJ data
+#' @param gene_col meta.data column containing genes used for each clonotype
+#' @param cluster_col meta.data column containing cell clusters to use when
+#' calculating gene usage
+#' @param n_genes Number of top genes to include in output
+#' @return tibble containing gene usage summary
+#' @export
+calc_usage <- function(sobj_in, gene_col, cluster_col = "orig.ident",
+                       n_genes = NULL) {
+
+  # data.frame to calculate usage
+  vdj_cols <- c("cell_id", gene_col, cluster_col)
+
+  meta_data <- sobj_in@meta.data
+  meta_data <- as_tibble(meta_data, rownames = "cell_id")
+  meta_data <- dplyr::select(meta_data, dplyr::all_of(vdj_cols))
+  meta_data <- dplyr::filter(meta_data, !is.na(!!dplyr::sym(gene_col)))
+  meta_data <- dplyr::group_by(meta_data, !!dplyr::sym(cluster_col))
+  meta_data <- dplyr::mutate(
+    meta_data,
+    !!dplyr::sym(gene_col) := stringr::str_split(!!dplyr::sym(gene_col), ";"),
+    n_cells = n_distinct(cell_id)
+  )
+  meta_data <- dplyr::ungroup(meta_data)
+
+  # All genes used
+  vdj_genes <- pull(meta_data, gene_col)
+  vdj_genes <- unlist(vdj_genes)
+  vdj_genes <- unique(vdj_genes)
+  vdj_genes <- sort(vdj_genes)
+
+  # Create data.frame with gene usage
+  res <- map(vdj_genes, ~ {
+    gene_name <- .x
+
+    res <- mutate(
+      meta_data,
+      used = purrr::map_lgl(!!dplyr::sym(gene_col), ~ gene_name %in% .x)
+    )
+
+    res <- dplyr::group_by(res, !!dplyr::sym(cluster_col), n_cells)
+    res <- dplyr::tally(res, used)
+    res <- dplyr::ungroup(res)
+    res <- dplyr::mutate(res, !!dplyr::sym(gene_name) := n / n_cells)
+    res <- dplyr::select(res, -n, -n_cells)
+
+    res
+  })
+
+  res <- purrr::reduce(res, dplyr::left_join, by = cluster_col)
+  res <- tidyr::pivot_longer(
+    res,
+    cols      = c(-!!dplyr::sym(cluster_col)),
+    names_to  = gene_col,
+    values_to = "usage"
+  )
+  res <- dplyr::group_by(res, !!dplyr::sym(gene_col))
+  res <- dplyr::mutate(res, ave_usage = mean(usage))
+  res <- dplyr::ungroup(res)
+
+  # Filter for top used genes
+  if (!is.null(n_genes)) {
+    res <- top_n(res, n = n_genes, wt = ave_usage)
+  }
+
+  res
+}
 
 
 
