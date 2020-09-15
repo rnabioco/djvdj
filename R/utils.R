@@ -4,18 +4,41 @@
 #' @param vdj_dir cellranger vdj output directory
 #' @param include_chains Only inlude clonotypes that have the indicated chains
 #' @param prefix Prefix to add to new meta.data columns
+#' @param cell_prefix Prefix to add to cell barcodes
 #' @return Seurat object with VDJ data added to meta.data
 #' @export
-import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "") {
+import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "",
+                       cell_prefix = "") {
 
   # Load contigs
+  vdj_cols <- c(
+    "barcode",    "raw_clonotype_id",
+    "v_gene",     "d_gene",
+    "j_gene",     "c_gene",
+    "productive", "full_length"
+  )
+
   contigs <- readr::read_csv(file.path(vdj_dir, "filtered_contig_annotations.csv"))
-  contigs <- dplyr::select(contigs, barcode, raw_clonotype_id)
+  contigs <- dplyr::select(contigs, all_of(vdj_cols))
+  contigs <- filter(contigs, productive, full_length)
   contigs <- unique(contigs)
+  contigs <- mutate(contigs, barcode = str_c(cell_prefix, barcode))
+
+  contigs <- group_by(contigs, barcode, raw_clonotype_id)
+
+  contigs <- summarize(
+    contigs,
+    dplyr::across(
+      dplyr::ends_with("_gene"),
+      ~ purrr::reduce(.x, stringr::str_c, sep = ";")
+    ),
+    .groups = "drop"
+  )
 
   # Load CDR3 sequences for clonotypes
   ctypes <- readr::read_csv(file.path(vdj_dir, "clonotypes.csv"))
 
+  # Merge clonotype and contig info
   meta_df <- dplyr::left_join(
     contigs, ctypes,
     by = c("raw_clonotype_id" = "clonotype_id")
@@ -38,19 +61,18 @@ import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "") {
   # Calculate stats
   meta_df <- dplyr::mutate(
     meta_df,
-    chains   = stringr::str_split(cdr3s_aa, ";"),
-    n_chains = purrr::map_dbl(chains, length)
+    n_chains = stringr::str_split(cdr3s_aa, ";"),
+    n_chains = purrr::map_dbl(n_chains, length)
   )
 
   meta_df <- dplyr::group_by(meta_df, clonotype_id)
   meta_df <- dplyr::mutate(meta_df, clone_freq = dplyr::n_distinct(barcode))
   meta_df <- dplyr::ungroup(meta_df)
-  meta_df <- dplyr::mutate(meta_df, clone_frac = clone_freq / nrow(meta_df))
-  meta_df <- dplyr::select(meta_df, -chains)
+  meta_df <- dplyr::mutate(meta_df, clone_prop = clone_freq / nrow(meta_df))
 
   # Add meta.data to Seurat object
   meta_df <- tibble::column_to_rownames(meta_df, "barcode")
-  meta_df <- dplyr::rename_all(meta_df, ~ stringr::str_c(prefix, .))
+  meta_df <- dplyr::rename_with(meta_df, ~ stringr::str_c(prefix, .x))
 
   res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
 
@@ -399,6 +421,75 @@ filter_vdj <- function(sobj_in, ..., cdr3_col = "cdr3s_aa") {
   res
 }
 
+#' Calculate gene usage
+#'
+#' @param sobj_in Seurat object containing VDJ data
+#' @param gene_col meta.data column containing genes used for each clonotype
+#' @param cluster_col meta.data column containing cell clusters to use when
+#' calculating gene usage
+#' @param n_genes Number of top genes to include in output
+#' @return tibble containing gene usage summary
+#' @export
+calc_usage <- function(sobj_in, gene_col, cluster_col = "orig.ident",
+                       n_genes = NULL) {
+
+  # data.frame to calculate usage
+  vdj_cols <- c("cell_id", gene_col, cluster_col)
+
+  meta_data <- sobj_in@meta.data
+  meta_data <- as_tibble(meta_data, rownames = "cell_id")
+  meta_data <- dplyr::select(meta_data, dplyr::all_of(vdj_cols))
+  meta_data <- dplyr::filter(meta_data, !is.na(!!dplyr::sym(gene_col)))
+  meta_data <- dplyr::group_by(meta_data, !!dplyr::sym(cluster_col))
+  meta_data <- dplyr::mutate(
+    meta_data,
+    !!dplyr::sym(gene_col) := stringr::str_split(!!dplyr::sym(gene_col), ";"),
+    n_cells = n_distinct(cell_id)
+  )
+  meta_data <- dplyr::ungroup(meta_data)
+
+  # All genes used
+  vdj_genes <- pull(meta_data, gene_col)
+  vdj_genes <- unlist(vdj_genes)
+  vdj_genes <- unique(vdj_genes)
+  vdj_genes <- sort(vdj_genes)
+
+  # Create data.frame with gene usage
+  res <- map(vdj_genes, ~ {
+    gene_name <- .x
+
+    res <- mutate(
+      meta_data,
+      used = purrr::map_lgl(!!dplyr::sym(gene_col), ~ gene_name %in% .x)
+    )
+
+    res <- dplyr::group_by(res, !!dplyr::sym(cluster_col), n_cells)
+    res <- dplyr::tally(res, used)
+    res <- dplyr::ungroup(res)
+    res <- dplyr::mutate(res, !!dplyr::sym(gene_name) := n / n_cells)
+    res <- dplyr::select(res, -n, -n_cells)
+
+    res
+  })
+
+  res <- purrr::reduce(res, dplyr::left_join, by = cluster_col)
+  res <- tidyr::pivot_longer(
+    res,
+    cols      = c(-!!dplyr::sym(cluster_col)),
+    names_to  = gene_col,
+    values_to = "usage"
+  )
+  res <- dplyr::group_by(res, !!dplyr::sym(gene_col))
+  res <- dplyr::mutate(res, ave_usage = mean(usage))
+  res <- dplyr::ungroup(res)
+
+  # Filter for top used genes
+  if (!is.null(n_genes)) {
+    res <- top_n(res, n = n_genes, wt = ave_usage)
+  }
+
+  res
+}
 
 
 

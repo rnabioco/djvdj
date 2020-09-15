@@ -4,7 +4,13 @@
 \alias{import_vdj}
 \title{Add VDJ data to Seurat object}
 \usage{
-import_vdj(sobj_in, vdj_dir, include_chains = NULL, prefix = "")
+import_vdj(
+  sobj_in,
+  vdj_dir,
+  include_chains = NULL,
+  prefix = "",
+  cell_prefix = ""
+)
 }
 \arguments{
 \item{sobj_in}{Seurat object}
@@ -14,6 +20,8 @@ import_vdj(sobj_in, vdj_dir, include_chains = NULL, prefix = "")
 \item{include_chains}{Only inlude clonotypes that have the indicated chains}
 
 \item{prefix}{Prefix to add to new meta.data columns}
+
+\item{cell_prefix}{Prefix to add to cell barcodes}
 }
 \value{
 Seurat object with VDJ data added to meta.data
