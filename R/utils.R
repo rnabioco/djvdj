@@ -2,13 +2,11 @@
 #'
 #' @param sobj_in Seurat object
 #' @param vdj_dir cellranger vdj output directory
-#' @param include_chains Only inlude clonotypes that have the indicated chains
 #' @param prefix Prefix to add to new meta.data columns
 #' @param cell_prefix Prefix to add to cell barcodes
 #' @return Seurat object with VDJ data added to meta.data
 #' @export
-import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "",
-                       cell_prefix = "") {
+import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "") {
 
   # Load contigs
   grp_cols <- c(
@@ -56,14 +54,6 @@ import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "",
   cells   <- Seurat::Cells(sobj_in)
   meta_df <- dplyr::filter(meta_df, barcode %in% cells)
   meta_df <- dplyr::rename(meta_df, clonotype_id = raw_clonotype_id)
-
-  # Filter for clonotypes that include the given chains
-  # if (!is.null(include_chains)) {
-  #   re <- purrr::map_chr(include_chains, ~ stringr::str_c("(?=.*", .x, ":)"))
-  #   re <- purrr::reduce(re, stringr::str_c)
-  #
-  #   meta_df <- dplyr::filter(meta_df, stringr::str_detect(cdr3s_aa, re))
-  # }
 
   # Calculate stats
   meta_df <- dplyr::group_by(meta_df, clonotype_id)
@@ -288,7 +278,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #' @return Seurat object with an added shared nearest neighbors graph (vdj_snn)
 #' and a meta.data column containing cluster ids
 #' @export
-cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1,
+cluster_vdj <- function(sobj_in, cdr3_col = "cdr3", resolution = 0.1,
                         use_chains = NULL, prefix = "vdj_") {
 
   # Extract sequences
@@ -406,18 +396,18 @@ run_umap_vdj <- function(sobj_in, umap_key = "vdjUMAP_", vdj_graph = "vdj_snn") 
 #' @return Subsetted Seurat object
 #' @export
 filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE,
-                       cdr3_col = "cdr3s_aa", return_seurat = T) {
+                       split_cols = c("chain", "cdr3"), sep = ";", return_seurat = T) {
 
   cdr3_col <- dplyr::sym(cdr3_col)
 
   # Format meta.data for filtering
   meta_df <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
 
-  vdj_df <- dplyr::mutate(
-    meta_df,
-    .chains = stringr::str_extract_all(!!cdr3_col, "[A-Z]+(?=:)"),
-    .seqs   = stringr::str_extract_all(!!cdr3_col, "(?<=:)[A-Z]+")
-  )
+  # vdj_df <- dplyr::mutate(
+  #   meta_df,
+  #   .chains = stringr::str_extract_all(!!cdr3_col, "[A-Z]+(?=:)"),
+  #   .seqs   = stringr::str_extract_all(!!cdr3_col, "(?<=:)[A-Z]+")
+  # )
 
   vdj_df <- tidyr::unnest(vdj_df, cols = c(.chains, .seqs))
   vdj_df <- dplyr::group_by(vdj_df, .cell_id)
