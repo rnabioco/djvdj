@@ -11,60 +11,61 @@ import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "",
                        cell_prefix = "") {
 
   # Load contigs
-  vdj_cols <- c(
-    "barcode",    "raw_clonotype_id",
-    "v_gene",     "d_gene",
-    "j_gene",     "c_gene",
-    "productive", "full_length"
+  grp_cols <- c(
+    "reads",  "umis",
+    "v_gene", "d_gene",
+    "j_gene", "c_gene",
+    "chain",  "cdr3",
+    "cdr3_nt"
   )
 
-  contigs <- readr::read_csv(file.path(vdj_dir, "filtered_contig_annotations.csv"))
-  contigs <- dplyr::select(contigs, all_of(vdj_cols))
-  contigs <- filter(contigs, productive, full_length)
-  contigs <- unique(contigs)
-  contigs <- mutate(contigs, barcode = str_c(cell_prefix, barcode))
+  vdj_cols <- c(
+    "barcode", "raw_clonotype_id",
+    grp_cols
+  )
 
-  contigs <- group_by(contigs, barcode, raw_clonotype_id)
+  vdj_dir <- file.path(vdj_dir, "filtered_contig_annotations.csv")
+  contigs <- readr::read_csv(vdj_dir)
 
-  contigs <- summarize(
+  # Extract chain from v_gene, add cell barcode prefix
+  contigs <- dplyr::mutate(
     contigs,
+    chain   = stringr::str_extract(v_gene, "^[A-Z]{3}"),
+    barcode = str_c(cell_prefix, barcode)
+  )
+
+  # Filter for productive full length contigs
+  contigs <- dplyr::filter(contigs, productive, full_length)
+  contigs <- dplyr::select(contigs, all_of(vdj_cols))
+
+  # Merge rows for each cell
+  contigs <- dplyr::arrange(contigs, barcode, raw_clonotype_id, chain)
+  contigs <- dplyr::group_by(contigs, barcode, raw_clonotype_id)
+
+  meta_df <- summarize(
+    contigs,
+    n_chains = n(),
     dplyr::across(
-      dplyr::ends_with("_gene"),
-      ~ purrr::reduce(.x, stringr::str_c, sep = ";")
+      all_of(grp_cols),
+      ~ purrr::reduce(as.character(.x), stringr::str_c, sep = ";")
     ),
     .groups = "drop"
-  )
-
-  # Load CDR3 sequences for clonotypes
-  ctypes <- readr::read_csv(file.path(vdj_dir, "clonotypes.csv"))
-
-  # Merge clonotype and contig info
-  meta_df <- dplyr::left_join(
-    contigs, ctypes,
-    by = c("raw_clonotype_id" = "clonotype_id")
   )
 
   # Filter for cells present in sobj_in
   cells   <- Seurat::Cells(sobj_in)
   meta_df <- dplyr::filter(meta_df, barcode %in% cells)
   meta_df <- dplyr::rename(meta_df, clonotype_id = raw_clonotype_id)
-  meta_df <- dplyr::select(meta_df, -frequency, -proportion)
 
   # Filter for clonotypes that include the given chains
-  if (!is.null(include_chains)) {
-    re <- purrr::map_chr(include_chains, ~ stringr::str_c("(?=.*", .x, ":)"))
-    re <- purrr::reduce(re, stringr::str_c)
-
-    meta_df <- dplyr::filter(meta_df, stringr::str_detect(cdr3s_aa, re))
-  }
+  # if (!is.null(include_chains)) {
+  #   re <- purrr::map_chr(include_chains, ~ stringr::str_c("(?=.*", .x, ":)"))
+  #   re <- purrr::reduce(re, stringr::str_c)
+  #
+  #   meta_df <- dplyr::filter(meta_df, stringr::str_detect(cdr3s_aa, re))
+  # }
 
   # Calculate stats
-  meta_df <- dplyr::mutate(
-    meta_df,
-    n_chains = stringr::str_split(cdr3s_aa, ";"),
-    n_chains = purrr::map_dbl(n_chains, length)
-  )
-
   meta_df <- dplyr::group_by(meta_df, clonotype_id)
   meta_df <- dplyr::mutate(meta_df, clone_freq = dplyr::n_distinct(barcode))
   meta_df <- dplyr::ungroup(meta_df)
@@ -390,13 +391,22 @@ run_umap_vdj <- function(sobj_in, umap_key = "vdjUMAP_", vdj_graph = "vdj_snn") 
 #' Subset Seurat object based on VDJ meta.data
 #'
 #' @param sobj_in Seurat object containing CDR3 sequences
-#' @param ... Expression to use for filtering object. To filter based on
+#' @param filt Expression to use for filtering object. To filter based on
 #' receptor chains and CDR3 sequences use the terms `.chains` and `.seqs`.
+#' @param new_col Instead of filtering object, create a new column with values
+#' based on the filtering expression
+#' @param true Value to include in new_col when the filtering expression
+#' evaluates to TRUE
+#' @param false Value to include in new_col when the filtering expression
+#' evaluates to FALSE
 #' @param cdr3_col meta.data column containing CDR3 sequences to use for
 #' filtering
+#' @param return_seurat Return a Seurat object. If set to FALSE, a tibble is
+#' returned
 #' @return Subsetted Seurat object
 #' @export
-filter_vdj <- function(sobj_in, ..., cdr3_col = "cdr3s_aa") {
+filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE,
+                       cdr3_col = "cdr3s_aa", return_seurat = T) {
 
   cdr3_col <- dplyr::sym(cdr3_col)
 
@@ -408,15 +418,38 @@ filter_vdj <- function(sobj_in, ..., cdr3_col = "cdr3s_aa") {
     .chains = stringr::str_extract_all(!!cdr3_col, "[A-Z]+(?=:)"),
     .seqs   = stringr::str_extract_all(!!cdr3_col, "(?<=:)[A-Z]+")
   )
+
   vdj_df <- tidyr::unnest(vdj_df, cols = c(.chains, .seqs))
   vdj_df <- dplyr::group_by(vdj_df, .cell_id)
-  vdj_df <- dplyr::filter(vdj_df, ...)
 
-  # Subset Seurat object
-  vdj_cells <- unique(vdj_df$.cell_id)
-  meta_df   <- dplyr::filter(meta_df, .cell_id %in% vdj_cells | is.na(!!cdr3_col))
+  # Add new column instead of filtering
+  if (!is.null(new_col)) {
+    vdj_df <- dplyr::mutate(
+      vdj_df,
+      !!sym(new_col) := if_else({{filt}}, true = true, false = false),
+      !!sym(new_col) := ifelse(is.na(!!sym(cdr3_col)), NA, !!sym(new_col))
+    )
 
-  res <- subset(sobj_in, cells = meta_df$.cell_id)
+    vdj_df <- dplyr::select(vdj_df, -.chains, -.seqs)
+    vdj_df <- dplyr::ungroup(vdj_df)
+    vdj_df <- dplyr::distinct(vdj_df)
+    vdj_df <- tibble::column_to_rownames(vdj_df, ".cell_id")
+
+    res <- Seurat::AddMetaData(sobj_in, vdj_df)
+
+  # Filter meta.data
+  } else {
+    vdj_df    <- dplyr::filter(vdj_df, {{filt}})
+    vdj_cells <- unique(vdj_df$.cell_id)
+    meta_df   <- dplyr::filter(meta_df, .cell_id %in% vdj_cells | is.na(!!cdr3_col))
+
+    res <- subset(sobj_in, cells = meta_df$.cell_id)
+  }
+
+  # Return meta.data
+  if (!return_seurat) {
+    res <- res@meta.data
+  }
 
   res
 }
