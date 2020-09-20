@@ -381,65 +381,113 @@ run_umap_vdj <- function(sobj_in, umap_key = "vdjUMAP_", vdj_graph = "vdj_snn") 
 #' Subset Seurat object based on VDJ meta.data
 #'
 #' @param sobj_in Seurat object containing CDR3 sequences
-#' @param filt Expression to use for filtering object. To filter based on
-#' receptor chains and CDR3 sequences use the terms `.chains` and `.seqs`.
-#' @param new_col Instead of filtering object, create a new column with values
+#' @param filt Expression to use for filtering object
+#' @param new_col Instead of filtering object create a new column with values
 #' based on the filtering expression
 #' @param true Value to include in new_col when the filtering expression
 #' evaluates to TRUE
 #' @param false Value to include in new_col when the filtering expression
 #' evaluates to FALSE
-#' @param cdr3_col meta.data column containing CDR3 sequences to use for
-#' filtering
-#' @param return_seurat Return a Seurat object. If set to FALSE, a tibble is
-#' returned
-#' @return Subsetted Seurat object
+#' @param clonotype_col meta.data column containing clonotype IDs. This column
+#' is used to determine which cells have VDJ data. If the clonotype_col is set
+#' to NULL, filtering is performed regardless of whether VDJ data is present
+#' for the cell.
+#' @param split_cols The names of meta.data columns to split into vectors. This
+#' allows for filtering based on multiple terms present in the column.
+#' @param split_sep Separator to use for splitting columns provided by the
+#' split_cols argument
+#' @param return_seurat Return a Seurat object. If set to FALSE, the meta.data
+#' table is returned
+#' @return Filtered Seurat object
 #' @export
-filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE,
-                       split_cols = c("chain", "cdr3"), sep = ";", return_seurat = T) {
-
-  cdr3_col <- dplyr::sym(cdr3_col)
-
-  # Format meta.data for filtering
+filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE, clonotype_col = "clonotype_id",
+                       split_cols = c("chain", "cdr3"), split_sep = ";", return_seurat = T) {
+  
   meta_df <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
 
-  # vdj_df <- dplyr::mutate(
-  #   meta_df,
-  #   .chains = stringr::str_extract_all(!!cdr3_col, "[A-Z]+(?=:)"),
-  #   .seqs   = stringr::str_extract_all(!!cdr3_col, "(?<=:)[A-Z]+")
-  # )
-
-  vdj_df <- tidyr::unnest(vdj_df, cols = c(.chains, .seqs))
-  vdj_df <- dplyr::group_by(vdj_df, .cell_id)
-
-  # Add new column instead of filtering
-  if (!is.null(new_col)) {
-    vdj_df <- dplyr::mutate(
-      vdj_df,
-      !!sym(new_col) := if_else({{filt}}, true = true, false = false),
-      !!sym(new_col) := ifelse(is.na(!!sym(cdr3_col)), NA, !!sym(new_col))
+  # Split columns into vectors
+  if (!is.null(split_cols)) {
+    
+    # Save original columns
+    split_names <- purrr::set_names(
+      x  = split_cols,
+      nm = str_c(".", split_cols)
     )
-
-    vdj_df <- dplyr::select(vdj_df, -.chains, -.seqs)
-    vdj_df <- dplyr::ungroup(vdj_df)
-    vdj_df <- dplyr::distinct(vdj_df)
-    vdj_df <- tibble::column_to_rownames(vdj_df, ".cell_id")
-
-    res <- Seurat::AddMetaData(sobj_in, vdj_df)
-
-  # Filter meta.data
+    
+    meta_df <- dplyr::mutate(meta_df, !!!dplyr::syms(split_names))
+    
+    # Split into vectors
+    meta_df <- dplyr::mutate(meta_df, dplyr::across(
+      dplyr::all_of(split_cols),
+      ~ str_split(.x, split_sep)
+    ))
+    
+    meta_df <- tidyr::unnest(meta_df, cols = dplyr::all_of(split_cols))
+    
+    # Convert to numeric if possible
+    meta_df <- dplyr::mutate(meta_df, across(
+      dplyr::all_of(split_names),
+      ~ ifelse(!is.na(suppressWarnings(as.numeric(.x))), as.numeric(.x), .x)
+    ))
+    
+    meta_df <- dplyr::group_by(meta_df, .cell_id)
+  }
+  
+  # Store results from filtering expression
+  meta_df <- dplyr::mutate(meta_df, .KEEP = {{filt}})
+  
+  # Add new column with values based on filtering expression
+  if (!is.null(new_col)) {
+    meta_df <- dplyr::mutate(
+      meta_df,
+      !!dplyr::sym(new_col) := dplyr::if_else(.KEEP, true = true, false = false)
+    )
+    
+    if (!is.null(clonotype_col)) {
+      meta_df <- dplyr::mutate(
+        meta_df,
+        !!dplyr::sym(new_col) := ifelse(
+          is.na(!!dplyr::sym(clonotype_col)),
+          NA,
+          !!dplyr::sym(new_col)
+        )
+      )
+    }
+    
   } else {
-    vdj_df    <- dplyr::filter(vdj_df, {{filt}})
-    vdj_cells <- unique(vdj_df$.cell_id)
-    meta_df   <- dplyr::filter(meta_df, .cell_id %in% vdj_cells | is.na(!!cdr3_col))
-
-    res <- subset(sobj_in, cells = meta_df$.cell_id)
+    if (!is.null(clonotype_col)) {
+      meta_df <- dplyr::mutate(
+        meta_df,
+        .KEEP = dplyr::if_else(is.na(!!dplyr::sym(clonotype_col)), TRUE, .KEEP)
+      )
+    }
+    
+    meta_df <- dplyr::filter(meta_df, .KEEP)
   }
-
-  # Return meta.data
+  
+  # Remove columns created for filtering
+  if (!is.null(split_cols)) {
+    split_names <- purrr::set_names(
+      x  = names(split_names),
+      nm = unname(split_names)
+    )
+    
+    meta_df <- dplyr::select(meta_df, !dplyr::all_of(c(split_cols, ".KEEP")))
+    meta_df <- dplyr::rename(meta_df, !!!dplyr::syms(split_names))
+    meta_df <- dplyr::distinct(meta_df)
+    meta_df <- dplyr::ungroup(meta_df)
+  }
+  
+  # Add meta.data to Seurat object
+  meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
+  
   if (!return_seurat) {
-    res <- res@meta.data
+    return(meta_df)
   }
+  
+  cells <- rownames(meta_df)
+  res   <- subset(sobj_in, cells = cells)
+  res   <- Seurat::AddMetaData(res, meta_df)
 
   res
 }

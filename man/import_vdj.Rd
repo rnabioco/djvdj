@@ -4,20 +4,12 @@
 \alias{import_vdj}
 \title{Add VDJ data to Seurat object}
 \usage{
-import_vdj(
-  sobj_in,
-  vdj_dir,
-  include_chains = NULL,
-  prefix = "",
-  cell_prefix = ""
-)
+import_vdj(sobj_in, vdj_dir, prefix = "", cell_prefix = "")
 }
 \arguments{
 \item{sobj_in}{Seurat object}
 
 \item{vdj_dir}{cellranger vdj output directory}
-
-\item{include_chains}{Only inlude clonotypes that have the indicated chains}
 
 \item{prefix}{Prefix to add to new meta.data columns}
 

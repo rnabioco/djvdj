@@ -6,7 +6,7 @@
 \usage{
 cluster_vdj(
   sobj_in,
-  cdr3_col = "cdr3s_aa",
+  cdr3_col = "cdr3",
   resolution = 0.1,
   use_chains = NULL,
   prefix = "vdj_"
