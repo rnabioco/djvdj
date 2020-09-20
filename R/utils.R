@@ -37,7 +37,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "") {
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
   # Merge rows for each cell
-  contigs <- dplyr::arrange(contigs, barcode, raw_clonotype_id, .data$chain)
+  contigs <- dplyr::arrange(contigs, .data$barcode, .data$raw_clonotype_id, .data$chain)
   contigs <- dplyr::group_by(contigs, .data$barcode, .data$raw_clonotype_id)
 
   meta_df <- summarize(
@@ -208,7 +208,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
   j_df <- purrr::map(
     .x          = j_df,
     .f          = tidyr::pivot_wider,
-    names_from  = idents,
+    names_from  = .data$idents,
     values_from = .data$num,
     values_fn   = list
   )
@@ -249,7 +249,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
   )
 
   res <- dplyr::mutate(res, Var1 = stringr::str_c(prefix, .data$Var1, "_jaccard"))
-  res <- tidyr::pivot_wider(res, names_from = Var1, values_from = .data$jaccard)
+  res <- tidyr::pivot_wider(res, names_from = .data$Var1, values_from = .data$jaccard)
 
   # Add jaccard index to meta.data
   vdj_meta <- tibble::as_tibble(vdj_meta, rownames = "cell_id")
@@ -287,7 +287,7 @@ cluster_vdj <- function(sobj_in, cdr3_col = "cdr3", resolution = 0.1,
 
   seqs <- Seurat::FetchData(sobj_in, cdr3_col)
   seqs <- tibble::rownames_to_column(seqs, "cell_id")
-  seqs <- na.omit(seqs)
+  seqs <- stats::na.omit(seqs)
 
   # Select chains to used for calculating distance
   if (!is.null(use_chains)) {
@@ -440,7 +440,7 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
   if (!is.null(new_col)) {
     meta_df <- dplyr::mutate(
       meta_df,
-      !!dplyr::sym(new_col) := dplyr::if_else(.KEEP, true = true, false = false)
+      !!dplyr::sym(new_col) := dplyr::if_else(.data$.KEEP, true = true, false = false)
     )
 
     if (!is.null(clonotype_col)) {
