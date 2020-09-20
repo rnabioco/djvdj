@@ -29,7 +29,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "") {
   contigs <- dplyr::mutate(
     contigs,
     chain   = stringr::str_extract(v_gene, "^[A-Z]{3}"),
-    barcode = str_c(cell_prefix, barcode)
+    barcode = stringr::str_c(cell_prefix, barcode)
   )
 
   # Filter for productive full length contigs
@@ -100,7 +100,7 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
   vdj_df <- dplyr::group_by(vdj_df, !!clonotype_col, .add = T)
   vdj_df <- dplyr::summarize(
     .data   = vdj_df,
-    num     = dplyr::n_distinct(cell_id),
+    num     = dplyr::n_distinct(.data$cell_id),
     .groups = "drop"
   )
 
@@ -109,14 +109,14 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
     vdj_df <- dplyr::group_by(vdj_df, !!cluster_col)
   }
 
-  div_col <- str_c(prefix, "diversity")
+  div_col <- stringr::str_c(prefix, "diversity")
 
   vdj_df <- dplyr::mutate(
     vdj_df,
-    frac     = num / sum(num),
-    sum_frac = sum(frac ^ 2),
+    frac     = .data$num / sum(.data$num),
+    sum_frac = sum(.data$frac ^ 2),
 
-    !!dplyr::sym(div_col) := 1 - sum_frac
+    !!dplyr::sym(div_col) := 1 - .data$sum_frac
     # !!dplyr::sym(div_col) := 1 / sum_frac
   )
 
@@ -170,7 +170,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
     row_sums <- dplyr::select(df_in, !!clonotype_col, dplyr::all_of(comparison))
     row_sums <- tidyr::pivot_longer(row_sums, cols = -!!clonotype_col)
     row_sums <- dplyr::group_by(row_sums, !!clonotype_col)
-    row_sums <- dplyr::summarize(row_sums, row_sum = sum(value), .groups = "drop")
+    row_sums <- dplyr::summarize(row_sums, row_sum = sum(.data$value), .groups = "drop")
     row_sums <- row_sums$row_sum
 
     a     <- length(row_sums[row_sums == 2])      # Intersection
@@ -193,7 +193,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
   so_idents   <- so_idents[, cluster_col]
   so_idents   <- as.character(so_idents)
   uniq_idents <- unique(so_idents)
-  uniq_idents <- na.omit(uniq_idents)
+  uniq_idents <- stats::na.omit(uniq_idents)
 
   ctypes   <- Seurat::FetchData(sobj_in, clonotype_col)
   vdj_meta <- dplyr::bind_cols(ctypes, idents = so_idents)
@@ -207,9 +207,9 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
   j_df <- dplyr::group_split(j_df)
   j_df <- purrr::map(
     .x          = j_df,
-    .f          = pivot_wider,
-    names_from  = idents,
-    values_from = num,
+    .f          = tidyr::pivot_wider,
+    names_from  = .data$idents,
+    values_from = .data$num,
     values_fn   = list
   )
 
@@ -248,8 +248,8 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
     .f = ~ calc_jidx(j_df, c(.x, .y), clonotype_col = clonotype_col)
   )
 
-  res <- dplyr::mutate(res, Var1 = str_c(prefix, Var1, "_jaccard"))
-  res <- tidyr::pivot_wider(res, names_from = Var1, values_from = jaccard)
+  res <- dplyr::mutate(res, Var1 = stringr::str_c(prefix, Var1, "_jaccard"))
+  res <- tidyr::pivot_wider(res, names_from = .data$Var1, values_from = .data$jaccard)
 
   # Add jaccard index to meta.data
   vdj_meta <- tibble::as_tibble(vdj_meta, rownames = "cell_id")
@@ -279,7 +279,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #' and a meta.data column containing cluster ids
 #' @export
 cluster_vdj <- function(sobj_in, cdr3_col = "cdr3", resolution = 0.1,
-                        use_chains = NULL, prefix = "vdj_") {
+                        use_chains = NULL, prefix = "vdj_", ...) {
 
   # Extract sequences
   # Only include cells with VDJ data
@@ -302,20 +302,20 @@ cluster_vdj <- function(sobj_in, cdr3_col = "cdr3", resolution = 0.1,
     })
 
     seqs <- purrr::reduce(seqs, dplyr::left_join, by = c("cell_id", cdr3_col))
-    seqs <- na.omit(seqs)
+    seqs <- stats::na.omit(seqs)
     seqs <- dplyr::mutate(seqs, seq_c = stringr::str_c(!!!dplyr::syms(seq_cols)))
 
   } else {
     seqs <- mutate(
       seqs,
       seq_c = stringr::str_extract_all(!!dplyr::sym(cdr3_col), "(?<=:)[A-Z]+"),
-      seq_c = purrr::map(seq_c, purrr::reduce, stringr::str_c)
+      seq_c = purrr::map(.data$seq_c, purrr::reduce, stringr::str_c)
     )
   }
 
   # Create Levenshtein distance matrix
   seqs     <- purrr::set_names(seqs$seq_c, seqs$cell_id)
-  vdj_dist <- adist(seqs)
+  vdj_dist <- utils::adist(seqs)
 
   # Create nearest neighbors graph
   # Add graph this way or error thrown due to differing number of cells
@@ -366,7 +366,7 @@ run_umap_vdj <- function(sobj_in, umap_key = "vdjUMAP_", vdj_graph = "vdj_snn") 
   )
 
   umap_coords <- Seurat::Embeddings(vdj_so, reduction = "vdj_umap")
-  umap_cols   <- str_c(umap_key, c("1", "2"))
+  umap_cols   <- stringr::str_c(umap_key, c("1", "2"))
 
   res <- Seurat::AddMetaData(
     object   = sobj_in,
@@ -402,47 +402,47 @@ run_umap_vdj <- function(sobj_in, umap_key = "vdjUMAP_", vdj_graph = "vdj_snn") 
 #' @export
 filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE, clonotype_col = "clonotype_id",
                        split_cols = c("chain", "cdr3"), split_sep = ";", return_seurat = T) {
-  
+
   meta_df <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
 
   # Split columns into vectors
   if (!is.null(split_cols)) {
-    
+
     # Save original columns
     split_names <- purrr::set_names(
       x  = split_cols,
-      nm = str_c(".", split_cols)
+      nm = stringr::str_c(".", split_cols)
     )
-    
+
     meta_df <- dplyr::mutate(meta_df, !!!dplyr::syms(split_names))
-    
+
     # Split into vectors
     meta_df <- dplyr::mutate(meta_df, dplyr::across(
       dplyr::all_of(split_cols),
       ~ str_split(.x, split_sep)
     ))
-    
+
     meta_df <- tidyr::unnest(meta_df, cols = dplyr::all_of(split_cols))
-    
+
     # Convert to numeric if possible
     meta_df <- dplyr::mutate(meta_df, across(
       dplyr::all_of(split_names),
       ~ ifelse(!is.na(suppressWarnings(as.numeric(.x))), as.numeric(.x), .x)
     ))
-    
+
     meta_df <- dplyr::group_by(meta_df, .cell_id)
   }
-  
+
   # Store results from filtering expression
   meta_df <- dplyr::mutate(meta_df, .KEEP = {{filt}})
-  
+
   # Add new column with values based on filtering expression
   if (!is.null(new_col)) {
     meta_df <- dplyr::mutate(
       meta_df,
       !!dplyr::sym(new_col) := dplyr::if_else(.KEEP, true = true, false = false)
     )
-    
+
     if (!is.null(clonotype_col)) {
       meta_df <- dplyr::mutate(
         meta_df,
@@ -453,7 +453,7 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
         )
       )
     }
-    
+
   } else {
     if (!is.null(clonotype_col)) {
       meta_df <- dplyr::mutate(
@@ -461,30 +461,30 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
         .KEEP = dplyr::if_else(is.na(!!dplyr::sym(clonotype_col)), TRUE, .KEEP)
       )
     }
-    
+
     meta_df <- dplyr::filter(meta_df, .KEEP)
   }
-  
+
   # Remove columns created for filtering
   if (!is.null(split_cols)) {
     split_names <- purrr::set_names(
       x  = names(split_names),
       nm = unname(split_names)
     )
-    
+
     meta_df <- dplyr::select(meta_df, !dplyr::all_of(c(split_cols, ".KEEP")))
     meta_df <- dplyr::rename(meta_df, !!!dplyr::syms(split_names))
     meta_df <- dplyr::distinct(meta_df)
     meta_df <- dplyr::ungroup(meta_df)
   }
-  
+
   # Add meta.data to Seurat object
   meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
-  
+
   if (!return_seurat) {
     return(meta_df)
   }
-  
+
   cells <- rownames(meta_df)
   res   <- subset(sobj_in, cells = cells)
   res   <- Seurat::AddMetaData(res, meta_df)
@@ -515,7 +515,7 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = "orig.ident",
   meta_data <- dplyr::mutate(
     meta_data,
     !!dplyr::sym(gene_col) := stringr::str_split(!!dplyr::sym(gene_col), ";"),
-    n_cells = n_distinct(cell_id)
+    n_cells = n_distinct(.data$cell_id)
   )
   meta_data <- dplyr::ungroup(meta_data)
 
@@ -551,12 +551,12 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = "orig.ident",
     values_to = "usage"
   )
   res <- dplyr::group_by(res, !!dplyr::sym(gene_col))
-  res <- dplyr::mutate(res, ave_usage = mean(usage))
+  res <- dplyr::mutate(res, ave_usage = mean(.data$usage))
   res <- dplyr::ungroup(res)
 
   # Filter for top used genes
   if (!is.null(n_genes)) {
-    res <- top_n(res, n = n_genes, wt = ave_usage)
+    res <- dplyr::top_n(res, n = n_genes, wt = .data$ave_usage)
   }
 
   res

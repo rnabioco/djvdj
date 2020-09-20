@@ -9,7 +9,8 @@ cluster_vdj(
   cdr3_col = "cdr3",
   resolution = 0.1,
   use_chains = NULL,
-  prefix = "vdj_"
+  prefix = "vdj_",
+  ...
 )
 }
 \arguments{
