@@ -28,17 +28,17 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "") {
   # Extract chain from v_gene, add cell barcode prefix
   contigs <- dplyr::mutate(
     contigs,
-    chain   = stringr::str_extract(v_gene, "^[A-Z]{3}"),
+    chain   = stringr::str_extract(.data$v_gene, "^[A-Z]{3}"),
     barcode = stringr::str_c(cell_prefix, barcode)
   )
 
   # Filter for productive full length contigs
-  contigs <- dplyr::filter(contigs, productive, full_length)
+  contigs <- dplyr::filter(contigs, .data$productive, .data$full_length)
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
   # Merge rows for each cell
-  contigs <- dplyr::arrange(contigs, barcode, raw_clonotype_id, chain)
-  contigs <- dplyr::group_by(contigs, barcode, raw_clonotype_id)
+  contigs <- dplyr::arrange(contigs, barcode, raw_clonotype_id, .data$chain)
+  contigs <- dplyr::group_by(contigs, .data$barcode, .data$raw_clonotype_id)
 
   meta_df <- summarize(
     contigs,
@@ -56,10 +56,10 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "") {
   meta_df <- dplyr::rename(meta_df, clonotype_id = raw_clonotype_id)
 
   # Calculate stats
-  meta_df <- dplyr::group_by(meta_df, clonotype_id)
+  meta_df <- dplyr::group_by(meta_df, .data$clonotype_id)
   meta_df <- dplyr::mutate(meta_df, clone_freq = dplyr::n_distinct(barcode))
   meta_df <- dplyr::ungroup(meta_df)
-  meta_df <- dplyr::mutate(meta_df, clone_prop = clone_freq / nrow(meta_df))
+  meta_df <- dplyr::mutate(meta_df, clone_prop = .data$clone_freq / nrow(meta_df))
 
   # Add meta.data to Seurat object
   meta_df <- tibble::column_to_rownames(meta_df, "barcode")
@@ -203,12 +203,12 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
   j_df <- dplyr::mutate(vdj_meta, num = 1)
   j_df <- dplyr::mutate(j_df, num = 1)
 
-  j_df <- dplyr::group_by(j_df, idents)
+  j_df <- dplyr::group_by(j_df, .data$idents)
   j_df <- dplyr::group_split(j_df)
   j_df <- purrr::map(
     .x          = j_df,
     .f          = tidyr::pivot_wider,
-    names_from  = .data$idents,
+    names_from  = idents,
     values_from = .data$num,
     values_fn   = list
   )
@@ -248,8 +248,8 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
     .f = ~ calc_jidx(j_df, c(.x, .y), clonotype_col = clonotype_col)
   )
 
-  res <- dplyr::mutate(res, Var1 = stringr::str_c(prefix, Var1, "_jaccard"))
-  res <- tidyr::pivot_wider(res, names_from = .data$Var1, values_from = .data$jaccard)
+  res <- dplyr::mutate(res, Var1 = stringr::str_c(prefix, .data$Var1, "_jaccard"))
+  res <- tidyr::pivot_wider(res, names_from = Var1, values_from = .data$jaccard)
 
   # Add jaccard index to meta.data
   vdj_meta <- tibble::as_tibble(vdj_meta, rownames = "cell_id")
@@ -430,7 +430,7 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
       ~ ifelse(!is.na(suppressWarnings(as.numeric(.x))), as.numeric(.x), .x)
     ))
 
-    meta_df <- dplyr::group_by(meta_df, .cell_id)
+    meta_df <- dplyr::group_by(meta_df, .data$.cell_id)
   }
 
   # Store results from filtering expression
@@ -458,7 +458,7 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
     if (!is.null(clonotype_col)) {
       meta_df <- dplyr::mutate(
         meta_df,
-        .KEEP = dplyr::if_else(is.na(!!dplyr::sym(clonotype_col)), TRUE, .KEEP)
+        .KEEP = dplyr::if_else(is.na(!!dplyr::sym(clonotype_col)), TRUE, .data$.KEEP)
       )
     }
 
