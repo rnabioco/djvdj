@@ -29,7 +29,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "") {
   contigs <- dplyr::mutate(
     contigs,
     chain   = stringr::str_extract(.data$v_gene, "^[A-Z]{3}"),
-    barcode = stringr::str_c(cell_prefix, barcode)
+    barcode = stringr::str_c(cell_prefix, .data$barcode)
   )
 
   # Filter for productive full length contigs
@@ -53,11 +53,11 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "") {
   # Filter for cells present in sobj_in
   cells   <- Seurat::Cells(sobj_in)
   meta_df <- dplyr::filter(meta_df, barcode %in% cells)
-  meta_df <- dplyr::rename(meta_df, clonotype_id = raw_clonotype_id)
+  meta_df <- dplyr::rename(meta_df, clonotype_id = .data$raw_clonotype_id)
 
   # Calculate stats
   meta_df <- dplyr::group_by(meta_df, .data$clonotype_id)
-  meta_df <- dplyr::mutate(meta_df, clone_freq = dplyr::n_distinct(barcode))
+  meta_df <- dplyr::mutate(meta_df, clone_freq = dplyr::n_distinct(.data$barcode))
   meta_df <- dplyr::ungroup(meta_df)
   meta_df <- dplyr::mutate(meta_df, clone_prop = .data$clone_freq / nrow(meta_df))
 
@@ -255,7 +255,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
   vdj_meta <- tibble::as_tibble(vdj_meta, rownames = "cell_id")
 
   vdj_meta <- dplyr::left_join(vdj_meta, res, by = c("idents" = "Var2"))
-  vdj_meta <- dplyr::select(vdj_meta, -idents)
+  vdj_meta <- dplyr::select(vdj_meta, -.data$idents)
   vdj_meta <- tibble::column_to_rownames(vdj_meta, "cell_id")
   vdj_meta <- as.data.frame(vdj_meta)
 
@@ -462,7 +462,7 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
       )
     }
 
-    meta_df <- dplyr::filter(meta_df, .KEEP)
+    meta_df <- dplyr::filter(meta_df, .data$.KEEP)
   }
 
   # Remove columns created for filtering
