@@ -52,7 +52,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "") {
 
   # Filter for cells present in sobj_in
   cells   <- Seurat::Cells(sobj_in)
-  meta_df <- dplyr::filter(meta_df, barcode %in% cells)
+  meta_df <- dplyr::filter(meta_df, .data$barcode %in% cells)
   meta_df <- dplyr::rename(meta_df, clonotype_id = .data$raw_clonotype_id)
 
   # Calculate stats
