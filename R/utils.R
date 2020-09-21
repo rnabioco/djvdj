@@ -141,7 +141,6 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
 #' @param ref_cluster Cluster id to use as a reference for calculating Jaccard
 #' index. If ref_cluster is omitted, Jaccard index will be calculated for all
 #' combinations of clusters.
-#' @param return_matrix Return matrix instead of Seurat object
 #' @param prefix Prefix to add to new meta.data columns
 #' @return Seurat object with Jaccard index added to meta.data
 #' @export
