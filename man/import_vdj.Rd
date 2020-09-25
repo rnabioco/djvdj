@@ -4,7 +4,13 @@
 \alias{import_vdj}
 \title{Add VDJ data to Seurat object}
 \usage{
-import_vdj(sobj_in, vdj_dir, prefix = "", cell_prefix = "")
+import_vdj(
+  sobj_in,
+  vdj_dir,
+  prefix = "",
+  cell_prefix = "",
+  filter_contigs = TRUE
+)
 }
 \arguments{
 \item{sobj_in}{Seurat object}
@@ -14,6 +20,9 @@ import_vdj(sobj_in, vdj_dir, prefix = "", cell_prefix = "")
 \item{prefix}{Prefix to add to new meta.data columns}
 
 \item{cell_prefix}{Prefix to add to cell barcodes}
+
+\item{filter_contigs}{Only include chains with at least one productive full
+length contig}
 }
 \value{
 Seurat object with VDJ data added to meta.data

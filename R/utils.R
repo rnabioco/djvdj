@@ -4,36 +4,51 @@
 #' @param vdj_dir cellranger vdj output directory
 #' @param prefix Prefix to add to new meta.data columns
 #' @param cell_prefix Prefix to add to cell barcodes
+#' @param filter_contigs Only include chains with at least one productive full
+#' length contig
 #' @return Seurat object with VDJ data added to meta.data
 #' @export
-import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "") {
+import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
+                       filter_contigs = TRUE) {
 
   # Load contigs
-  grp_cols <- c(
-    "reads",  "umis",
-    "v_gene", "d_gene",
-    "j_gene", "c_gene",
-    "chain",  "cdr3",
-    "cdr3_nt"
+  split_cols <- c(
+    "v_gene",  "d_gene",
+    "j_gene",  "c_gene",
+    "chain",   "cdr3",
+    "cdr3_nt", "reads",
+    "umis",    "productive",
+    "full_length"
   )
 
   vdj_cols <- c(
     "barcode", "raw_clonotype_id",
-    grp_cols
+    split_cols
   )
 
   vdj_dir <- file.path(vdj_dir, "filtered_contig_annotations.csv")
   contigs <- readr::read_csv(vdj_dir)
 
-  # Extract chain from v_gene, add cell barcode prefix
+  # Extract chain, add cell barcode prefix
+  pat <- "^[A-Z]{3}"
+
   contigs <- dplyr::mutate(
     contigs,
-    chain   = stringr::str_extract(.data$v_gene, "^[A-Z]{3}"),
-    barcode = stringr::str_c(cell_prefix, .data$barcode)
+    barcode = stringr::str_c(cell_prefix, .data$barcode),
+    chain   = case_when(
+      str_detect(.data$v_gene, pat) ~ str_extract(.data$v_gene, pat),
+      str_detect(.data$d_gene, pat) ~ str_extract(.data$d_gene, pat),
+      str_detect(.data$j_gene, pat) ~ str_extract(.data$j_gene, pat),
+      str_detect(.data$c_gene, pat) ~ str_extract(.data$c_gene, pat),
+      TRUE ~ "None"
+    )
   )
 
   # Filter for productive full length contigs
-  contigs <- dplyr::filter(contigs, .data$productive, .data$full_length)
+  if (filter_contigs) {
+    contigs <- dplyr::filter(contigs, .data$productive, .data$full_length)
+  }
+
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
   # Merge rows for each cell
@@ -44,7 +59,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "") {
     contigs,
     n_chains = n(),
     dplyr::across(
-      all_of(grp_cols),
+      all_of(split_cols),
       ~ purrr::reduce(as.character(.x), stringr::str_c, sep = ";")
     ),
     .groups = "drop"
@@ -399,8 +414,9 @@ run_umap_vdj <- function(sobj_in, umap_key = "vdjUMAP_", vdj_graph = "vdj_snn") 
 #' table is returned
 #' @return Filtered Seurat object
 #' @export
-filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE, clonotype_col = "clonotype_id",
-                       split_cols = c("chain", "cdr3"), split_sep = ";", return_seurat = T) {
+filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE,
+                       clonotype_col = "clonotype_id", split_cols = c("chain", "cdr3"),
+                       split_sep = ";", return_seurat = TRUE) {
 
   meta_df <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
 
@@ -423,11 +439,22 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
 
     meta_df <- tidyr::unnest(meta_df, cols = dplyr::all_of(split_cols))
 
-    # Convert to numeric if possible
-    meta_df <- dplyr::mutate(meta_df, across(
-      dplyr::all_of(split_names),
-      ~ ifelse(!is.na(suppressWarnings(as.numeric(.x))), as.numeric(.x), .x)
-    ))
+    # Convert to numeric or logical if possible
+    convert_type <- function(x, fun) {
+      suppressWarnings(ifelse(!is.na(fun(x)) | is.na(x), fun(x), x))
+    }
+
+    meta_df <- dplyr::mutate(
+      meta_df,
+      across(
+        dplyr::all_of(split_cols),
+        ~ convert_type(.x, as.numeric)
+      ),
+      across(
+        dplyr::all_of(split_cols),
+        ~ convert_type(.x, as.logical)
+      )
+    )
 
     meta_df <- dplyr::group_by(meta_df, .data$.cell_id)
   }

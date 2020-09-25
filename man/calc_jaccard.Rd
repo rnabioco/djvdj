@@ -24,8 +24,6 @@ index. If ref_cluster is omitted, Jaccard index will be calculated for all
 combinations of clusters.}
 
 \item{prefix}{Prefix to add to new meta.data columns}
-
-\item{return_matrix}{Return matrix instead of Seurat object}
 }
 \value{
 Seurat object with Jaccard index added to meta.data

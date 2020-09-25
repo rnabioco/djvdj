@@ -13,7 +13,7 @@ filter_vdj(
   clonotype_col = "clonotype_id",
   split_cols = c("chain", "cdr3"),
   split_sep = ";",
-  return_seurat = T
+  return_seurat = TRUE
 )
 }
 \arguments{

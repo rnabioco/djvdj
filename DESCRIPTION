@@ -28,3 +28,5 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Remotes:
     tidyverse/magrittr
+Depends: 
+    R (>= 2.10)
