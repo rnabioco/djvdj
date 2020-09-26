@@ -17,7 +17,8 @@ Imports:
     rlang (>= 0.1.2),
     Seurat,
     stringr,
-    tibble
+    tibble,
+    tidyr
 Suggests: 
     roxygen2,
     testthat,
