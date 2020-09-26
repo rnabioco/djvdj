@@ -12,13 +12,14 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
                        filter_contigs = TRUE) {
 
   # Load contigs
+  count_cols <- c("reads", "umis")
+
   split_cols <- c(
     "v_gene",  "d_gene",
     "j_gene",  "c_gene",
     "chain",   "cdr3",
-    "cdr3_nt", "reads",
-    "umis",    "productive",
-    "full_length"
+    "cdr3_nt", count_cols,
+    "productive", "full_length"
   )
 
   vdj_cols <- c(
@@ -50,6 +51,15 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   }
 
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
+
+  # Sum contig reads and UMIs for clonotype chains
+  grp_cols <- vdj_cols[!vdj_cols %in% count_cols]
+  contigs  <- dplyr::group_by(contigs, !!!syms(grp_cols))
+  contigs  <- dplyr::summarize(
+    contigs,
+    across(all_of(count_cols), sum),
+    .groups = "drop"
+  )
 
   # Merge rows for each cell
   contigs <- dplyr::arrange(contigs, .data$barcode, .data$raw_clonotype_id, .data$chain)
