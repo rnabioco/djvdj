@@ -9,6 +9,7 @@ cluster_vdj(
   cdr3_col = "cdr3",
   resolution = 0.1,
   use_chains = NULL,
+  chain_col = "chain",
   prefix = "vdj_",
   ...
 )
@@ -23,6 +24,8 @@ calculating Levenshtein distance}
 
 \item{use_chains}{Chains to use for calculating Levenshtein distance. If
 multiple sequences are present for a chain, the first sequence is used.}
+
+\item{chain_col}{meta.data column containing chains detected for each cell.}
 
 \item{prefix}{Prefix to add to graph name}
 

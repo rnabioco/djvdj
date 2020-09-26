@@ -14,7 +14,7 @@ hto_ids <- list(
   MD4 = "HTO2"
 )
 
-hto_cutoffs <- list(
+hto_lims <- list(
   BL6 = 0.3,
   MD4 = 2
 )
@@ -59,6 +59,21 @@ so <- so %>%
   FindVariableFeatures(assay = "RNA") %>%
   ScaleData(assay = "RNA")
 
+# Divide into BL6 and MD4 based on HTO signal
+so@meta.data <- so %>%
+  AddMetaData(metadata = FetchData(., c("hto_BL6", "hto_MD4"))) %>%
+  .@meta.data %>%
+  as_tibble(rownames = "cell_id") %>%
+  mutate(
+    mouse = case_when(
+      hto_MD4 > hto_lims$MD4 & hto_BL6 < hto_lims$BL6 ~ "MD4",
+      hto_BL6 > hto_lims$BL6 & hto_MD4 < hto_lims$MD4 ~ "BL6",
+      hto_MD4 > hto_lims$MD4 & hto_BL6 > hto_lims$BL6 ~ "dbl_pos",
+      TRUE                                            ~ "dbl_neg"
+    )
+  ) %>%
+  column_to_rownames("cell_id")
+
 # Filter object
 so <- so %>%
   PercentageFeatureSet(
@@ -68,7 +83,8 @@ so <- so %>%
   subset(
     nFeature_RNA > gene_min &
     nFeature_RNA < gene_max &
-    Percent_mito < mito_max
+    Percent_mito < mito_max &
+    mouse %in% names(hto_lims)
   )
 
 # Run PCA, cluster, run UMAP
@@ -88,18 +104,6 @@ so <- so %>%
     dims = 1:40
   )
 
-# Divide into BL6 and MD4 based on HTO signal
-so@meta.data <- so %>%
-  AddMetaData(metadata = FetchData(., c("hto_BL6", "hto_MD4"))) %>%
-  .@meta.data %>%
-  as_tibble(rownames = "cell_id") %>%
-  mutate(
-    mouse = ifelse(hto_MD4 > hto_cutoffs$MD4 & hto_BL6 < hto_cutoffs$BL6, "MD4", "dbl_neg"),
-    mouse = ifelse(hto_BL6 > hto_cutoffs$BL6 & hto_MD4 < hto_cutoffs$MD4, "BL6", mouse),
-    mouse = ifelse(hto_MD4 > hto_cutoffs$MD4 & hto_BL6 > hto_cutoffs$BL6, "dbl_pos", mouse)
-  ) %>%
-  column_to_rownames("cell_id")
-
 # Clustify cells
 so <- so %>%
   clustify(
@@ -109,11 +113,15 @@ so <- so %>%
 
 so@meta.data <- so@meta.data %>%
   as_tibble(rownames = "cell_id") %>%
-  mutate(type = if_else(
-    str_detect(type, "B cell|T cell"),
-    str_extract(type, "B cell|T cell"),
-    type
-  )) %>%
+  mutate(
+    type = if_else(
+      str_detect(type, "B cell|T cell"),
+      str_extract(type, "B cell|T cell"),
+      type
+    ),
+    type_mouse = if_else(str_detect(type, "^B cell$|^T cell$"), type, "other"),
+    type_mouse = str_c(type_mouse, " ", mouse)
+  ) %>%
   mutate(type = str_remove(type, "-[a-zA-Z]+$")) %>%
   column_to_rownames("cell_id")
 
@@ -124,7 +132,7 @@ test_cells <- colnames(so) %>%
 test_so <- so %>%
   subset(cells = test_cells)
 
-# Add object to package
+# Save objects
 usethis::use_data(
   so,
   compress = "xz",
@@ -135,12 +143,4 @@ usethis::use_data(
   test_so,
   overwrite = "TRUE"
 )
-
-
-
-
-
-
-
-
 
