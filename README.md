@@ -5,9 +5,7 @@
 
 <!-- badges: start -->
 
-[![R build
-status](https://github.com/rnabioco/djvdj/workflows/R-CMD-check/badge.svg)](https://github.com/rnabioco/djvdj/actions)
-[![codecov](https://codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg)](https://codecov.io/gh/vjvdj/clustifyr)
+![R-CMD-check-bioc](https://github.com/rnabioco/djvdj/workflows/R-CMD-check-bioc/badge.svg)
 <!-- badges: end -->
 
 The goal of djvdj is to provide tools to analyze AVID-seq signals
