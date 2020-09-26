@@ -287,48 +287,56 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #' @param resolution Clustering resolution to pass to FindClusters
 #' @param use_chains Chains to use for calculating Levenshtein distance. If
 #' multiple sequences are present for a chain, the first sequence is used.
+#' @param chain_col meta.data column containing chains detected for each cell.
 #' @param prefix Prefix to add to graph name
 #' @param ... Additional parameters to pass to FindClusters
 #' @return Seurat object with an added shared nearest neighbors graph (vdj_snn)
 #' and a meta.data column containing cluster ids
 #' @export
-cluster_vdj <- function(sobj_in, cdr3_col = "cdr3", resolution = 0.1,
-                        use_chains = NULL, prefix = "vdj_", ...) {
+cluster_vdj <- function(sobj_in, cdr3_col = "cdr3", resolution = 0.1, use_chains = NULL,
+                        chain_col = "chain", prefix = "vdj_", ...) {
 
   # Extract sequences
   # Only include cells with VDJ data
   orig_idents <- Idents(sobj_in)
 
-  seqs <- Seurat::FetchData(sobj_in, cdr3_col)
-  seqs <- tibble::rownames_to_column(seqs, "cell_id")
+  seqs <- Seurat::FetchData(sobj_in, c(chain_col, cdr3_col))
+  seqs <- tibble::rownames_to_column(seqs, ".cell_id")
   seqs <- stats::na.omit(seqs)
+  seqs <- dplyr::rename(seqs, "cdr3" = !!dplyr::sym(cdr3_col))
 
-  # Select chains to used for calculating distance
+  # Select chains to use for calculating distance
   if (!is.null(use_chains)) {
-    re       <- stringr::str_c("(?<=", use_chains, ":)[A-Z]+")
-    seq_cols <- stringr::str_c("V", seq_along(use_chains))
 
-    seqs <- purrr::map2(re, seq_cols, ~ {
-      n_col <- dplyr::sym(.y)
-      c_col <- dplyr::sym(cdr3_col)
+    split_cols <- c("cdr3", chain_col)
 
-      dplyr::mutate(seqs, !!n_col := stringr::str_extract(!!c_col, .x))
-    })
-
-    seqs <- purrr::reduce(seqs, dplyr::left_join, by = c("cell_id", cdr3_col))
-    seqs <- stats::na.omit(seqs)
-    seqs <- dplyr::mutate(seqs, seq_c = stringr::str_c(!!!dplyr::syms(seq_cols)))
-
-  } else {
-    seqs <- mutate(
+    seqs <- dplyr::mutate(
       seqs,
-      seq_c = stringr::str_extract_all(!!dplyr::sym(cdr3_col), "(?<=:)[A-Z]+"),
-      seq_c = purrr::map(.data$seq_c, purrr::reduce, stringr::str_c)
+      dplyr::across(
+        dplyr::all_of(split_cols),
+        ~ str_split(.x, ";")
+      )
+    )
+
+    seqs <- tidyr::unnest(seqs, cols = dplyr::all_of(split_cols))
+    seqs <- dplyr::filter(seqs, chain %in% use_chains)
+    seqs <- dplyr::group_by(seqs, .cell_id)
+
+    seqs <- dplyr::summarize(
+      seqs,
+      cdr3 = purrr::map_chr(
+        list(cdr3),
+        purrr::reduce,
+        stringr::str_c,
+        sep = ""
+      ),
+      .groups = "drop"
     )
   }
 
   # Create Levenshtein distance matrix
-  seqs     <- purrr::set_names(seqs$seq_c, seqs$cell_id)
+  seqs     <- mutate(seqs, cdr3 = stringr::str_remove_all(cdr3, ";"))
+  seqs     <- purrr::set_names(seqs$cdr3, seqs$.cell_id)
   vdj_dist <- utils::adist(seqs)
 
   # Create nearest neighbors graph
