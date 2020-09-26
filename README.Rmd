@@ -471,12 +471,17 @@ so_vdj <- run_umap_vdj(
 ```
 
 ```{r "vdj_umap", fig.width = 11, fig.height = 5, echo = FALSE}
+clust_cols <- set_names(
+  x  = get_cols(),
+  nm = seq_along(get_cols()) - 1
+)
+
 rna_gg <- so_vdj %>%
   plot_features(
     feature    = "seurat_clusters",
     pt_size    = 0.02,
     pt_outline = 0.2,
-    plot_cols  = get_cols()
+    plot_cols  = clust_cols
   ) +
   ggtitle("RNA") +
   guides(color = outline_guide) +
@@ -495,7 +500,7 @@ vdj_gg <- so_vdj %>%
     feature    = "seurat_clusters",
     pt_size    = 0.02,
     pt_outline = 0.2,
-    plot_cols  = get_cols()
+    plot_cols  = clust_cols
   ) +
   ggtitle("VDJ") +
   umap_theme +
@@ -580,7 +585,7 @@ j_gg <- so_vdj %>%
   plot_features(
     x          = "vdjUMAP_1",
     y          = "vdjUMAP_2",
-    feature    = "x8_jaccard",
+    feature    = "x5_jaccard",
     pt_size    = 0.02,
     pt_outline = 0.2,
     plot_cols  = c("grey90", get_cols()[2])

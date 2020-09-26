@@ -133,18 +133,18 @@ so_filt@meta.data %>%
   filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols))
 #> # A tibble: 133 x 5
-#>    chain   cdr3                    clone_freq clone_prop n_chains
-#>    <chr>   <chr>                        <int>      <dbl>    <int>
-#>  1 IGK     CQQSNSWPYTF                    121     0.0317        1
-#>  2 IGK     CQQSNSWPYTF                    121     0.0317        1
-#>  3 IGK;IGK CQQSNSWPYTF;CQQSNSWPYTF        121     0.0317        2
-#>  4 IGK     CQQSNSWPYTF                    121     0.0317        1
-#>  5 IGK     CQQSNSWPYTF                    121     0.0317        1
-#>  6 IGK     CQQSNSWPYTF                    121     0.0317        1
-#>  7 IGK     CQQSNSWPYTF                    121     0.0317        1
-#>  8 IGK     CQQSNSWPYTF                    121     0.0317        1
-#>  9 IGK     CQQSNSWPYTF                    121     0.0317        1
-#> 10 IGK     CQQSNSWPYTF                    121     0.0317        1
+#>    chain cdr3        clone_freq clone_prop n_chains
+#>    <chr> <chr>            <int>      <dbl>    <int>
+#>  1 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  2 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  3 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  4 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  5 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  6 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  7 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  8 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  9 IGK   CQQSNSWPYTF        121     0.0317        1
+#> 10 IGK   CQQSNSWPYTF        121     0.0317        1
 #> # … with 123 more rows
 ```
 
@@ -190,11 +190,11 @@ so_vdj <- cluster_vdj(
 #> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 #> 
 #> Number of nodes: 3820
-#> Number of edges: 145293
+#> Number of edges: 148477
 #> 
 #> Running Louvain algorithm...
-#> Maximum modularity in 10 random starts: 0.9473
-#> Number of communities: 11
+#> Maximum modularity in 10 random starts: 0.9451
+#> Number of communities: 10
 #> Elapsed time: 0 seconds
 
 so_vdj@meta.data %>%
