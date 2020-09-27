@@ -141,6 +141,6 @@ usethis::use_data(
 
 usethis::use_data(
   test_so,
-  overwrite = "TRUE"
+  overwrite = TRUE
 )
 
