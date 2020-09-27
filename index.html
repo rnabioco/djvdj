@@ -38,12 +38,6 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="reference/index.html">Reference</a>
 </li>
 <li>
@@ -76,7 +70,8 @@
 <p>You can install the development version of djvdj from <a href="https://github.com/rnabioco/djvdj">GitHub</a> with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit">
 <span class="co"># install.packages("devtools")</span>
-<span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"rnabioco/djvdj"</span><span class="op">)</span></pre></div>
+<span class="kw">devtools</span>::<span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">"rnabioco/djvdj"</span>)
+</pre></div>
 <p><br></p>
 </div>
 <div id="vignette" class="section level2">
@@ -90,23 +85,23 @@
 <a href="#import-vdj-data" class="anchor"></a>Import VDJ data</h3>
 <p><code>import_vdj</code> takes the output files from <code>cellranger vdj</code> and adds clonotype information to the meta.data for an existing Seurat object. For cells that do not have any VDJ sequencing data, NAs will be included in the meta.data.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit">
-<span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/import_vdj.html">import_vdj</a></span><span class="op">(</span>
-  sobj_in        <span class="op">=</span> <span class="va">so</span>,              <span class="co"># Seurat object                         </span>
-  vdj_dir        <span class="op">=</span> <span class="va">params</span><span class="op">$</span><span class="va">vdj_dir</span>,  <span class="co"># Directory containing cellranger output files</span>
-  prefix         <span class="op">=</span> <span class="st">""</span>,              <span class="co"># Prefix to add to new meta.data columns</span>
-  cell_prefix    <span class="op">=</span> <span class="st">""</span>,              <span class="co"># Prefix to add to cell barcodes</span>
-  filter_contigs <span class="op">=</span> <span class="cn">TRUE</span>             <span class="co"># Only include chains with at least one productive contig</span>
-<span class="op">)</span>
+<span class="kw">so_vdj</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/import_vdj.html">import_vdj</a></span>(
+  sobj_in        = <span class="kw">so</span>,              <span class="co"># Seurat object                         </span>
+  vdj_dir        = <span class="kw">params</span><span class="op">$</span><span class="kw">vdj_dir</span>,  <span class="co"># Directory containing cellranger output files</span>
+  prefix         = <span class="st">""</span>,              <span class="co"># Prefix to add to new meta.data columns</span>
+  cell_prefix    = <span class="st">""</span>,              <span class="co"># Prefix to add to cell barcodes</span>
+  filter_contigs = <span class="fl">TRUE</span>             <span class="co"># Only include chains with at least one productive contig</span>
+)
 
-<span class="va">vdj_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>
+<span class="kw">vdj_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(
   <span class="st">"chain"</span>,      <span class="st">"cdr3"</span>,
   <span class="st">"clone_freq"</span>, <span class="st">"clone_prop"</span>,
    <span class="st">"n_chains"</span>
-<span class="op">)</span>
+)
 
-<span class="va">so_vdj</span><span class="op">@</span><span class="va">meta.data</span> <span class="op">%&gt;%</span>
-  <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu">select</span><span class="op">(</span><span class="va">orig.ident</span>, <span class="va">nCount_RNA</span>, <span class="va">nFeature_RNA</span>, <span class="fu">all_of</span><span class="op">(</span><span class="va">vdj_cols</span><span class="op">)</span><span class="op">)</span>
+<span class="kw">so_vdj</span><span class="op">@</span>meta.data <span class="op">%&gt;%</span>
+  <span class="fu">as_tibble</span>() <span class="op">%&gt;%</span>
+  <span class="fu">select</span>(<span class="kw">orig.ident</span>, <span class="kw">nCount_RNA</span>, <span class="kw">nFeature_RNA</span>, <span class="fu">all_of</span>(<span class="kw">vdj_cols</span>))
 <span class="co">#&gt; # A tibble: 7,137 x 8</span>
 <span class="co">#&gt;    orig.ident nCount_RNA nFeature_RNA chain cdr3  clone_freq clone_prop n_chains</span>
 <span class="co">#&gt;    &lt;fct&gt;           &lt;dbl&gt;        &lt;int&gt; &lt;chr&gt; &lt;chr&gt;      &lt;int&gt;      &lt;dbl&gt;    &lt;int&gt;</span>
@@ -120,7 +115,8 @@
 <span class="co">#&gt;  8 AVID-seq          909          489 IGH;… CTVS…          1   0.000262        2</span>
 <span class="co">#&gt;  9 AVID-seq         1072          588 IGH;… CARS…          1   0.000262        2</span>
 <span class="co">#&gt; 10 AVID-seq         1143          594 IGH;… CARS…          1   0.000262        2</span>
-<span class="co">#&gt; # … with 7,127 more rows</span></pre></div>
+<span class="co">#&gt; # … with 7,127 more rows</span>
+</pre></div>
 <p><br></p>
 </div>
 <div id="filtering" class="section level3">
@@ -129,15 +125,15 @@
 <p><code>filter_vdj</code> allows you to filter a Seurat object using the added clonotype information or any other columns present in the meta.data. For cells with multiple chains, the information for each chain is stored as a single row, separated by a “;”. When filtering, columns with VDJ data will be expanded based on the delimiter “;”. The columns that are expanded for filtering can be specified with the <code>split_cols</code> argument. By default filtering is only performed on cells that include VDJ data.</p>
 <p>Filter to only include cells with both IGH and IGK chains</p>
 <div class="sourceCode" id="cb3"><pre class="downlit">
-<span class="va">so_filt</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span>
-  sobj_in <span class="op">=</span> <span class="va">so_vdj</span>,                           <span class="co"># Seurat object</span>
-  filt    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"IGH"</span>, <span class="st">"IGK"</span><span class="op">)</span> <span class="op">%in%</span> <span class="va">chain</span><span class="op">)</span>,  <span class="co"># Expression to use for filtering</span>
-<span class="op">)</span>
+<span class="kw">so_filt</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/filter_vdj.html">filter_vdj</a></span>(
+  sobj_in = <span class="kw">so_vdj</span>,                           <span class="co"># Seurat object</span>
+  filt    = <span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"IGH"</span>, <span class="st">"IGK"</span>) <span class="op">%in%</span> <span class="kw">chain</span>),  <span class="co"># Expression to use for filtering</span>
+)
 
-<span class="va">so_filt</span><span class="op">@</span><span class="va">meta.data</span> <span class="op">%&gt;%</span>
-  <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">clonotype_id</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu">select</span><span class="op">(</span><span class="fu">all_of</span><span class="op">(</span><span class="va">vdj_cols</span><span class="op">)</span><span class="op">)</span>
+<span class="kw">so_filt</span><span class="op">@</span>meta.data <span class="op">%&gt;%</span>
+  <span class="fu">as_tibble</span>() <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span>(<span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span>(<span class="kw">clonotype_id</span>)) <span class="op">%&gt;%</span>
+  <span class="fu">select</span>(<span class="fu">all_of</span>(<span class="kw">vdj_cols</span>))
 <span class="co">#&gt; # A tibble: 3,174 x 5</span>
 <span class="co">#&gt;    chain       cdr3                               clone_freq clone_prop n_chains</span>
 <span class="co">#&gt;    &lt;chr&gt;       &lt;chr&gt;                                   &lt;int&gt;      &lt;dbl&gt;    &lt;int&gt;</span>
@@ -151,17 +147,18 @@
 <span class="co">#&gt;  8 IGH;IGK     CARSYGYAMDYW;CWQGTHFPYTF                    1   0.000262        2</span>
 <span class="co">#&gt;  9 IGH;IGK     CARWVYGSAWFAYW;CMQHLEYPFTF                  1   0.000262        2</span>
 <span class="co">#&gt; 10 IGH;IGK     CARSHGYDFYAMDYW;CQHFWGTPRTF                 1   0.000262        2</span>
-<span class="co">#&gt; # … with 3,164 more rows</span></pre></div>
+<span class="co">#&gt; # … with 3,164 more rows</span>
+</pre></div>
 <p><br></p>
 <p>Filter for cells with an IGL chain and at least two cells or &gt;1% that share the clonotype</p>
 <div class="sourceCode" id="cb4"><pre class="downlit">
-<span class="va">so_filt</span> <span class="op">&lt;-</span> <span class="va">so_vdj</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span><span class="va">chain</span> <span class="op">==</span> <span class="st">"IGL"</span> <span class="op">&amp;&amp;</span> <span class="va">clone_freq</span> <span class="op">&gt;</span> <span class="fl">1</span> <span class="op">||</span> <span class="va">clone_prop</span> <span class="op">&gt;</span> <span class="fl">0.01</span><span class="op">)</span>
+<span class="kw">so_filt</span> <span class="op">&lt;-</span> <span class="kw">so_vdj</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="reference/filter_vdj.html">filter_vdj</a></span>(<span class="kw">chain</span> <span class="op">==</span> <span class="st">"IGL"</span> <span class="op">&amp;&amp;</span> <span class="kw">clone_freq</span> <span class="op">&gt;</span> <span class="fl">1</span> <span class="op">||</span> <span class="kw">clone_prop</span> <span class="op">&gt;</span> <span class="fl">0.01</span>)
 
-<span class="va">so_filt</span><span class="op">@</span><span class="va">meta.data</span> <span class="op">%&gt;%</span>
-  <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">clonotype_id</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu">select</span><span class="op">(</span><span class="fu">all_of</span><span class="op">(</span><span class="va">vdj_cols</span><span class="op">)</span><span class="op">)</span>
+<span class="kw">so_filt</span><span class="op">@</span>meta.data <span class="op">%&gt;%</span>
+  <span class="fu">as_tibble</span>() <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span>(<span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span>(<span class="kw">clonotype_id</span>)) <span class="op">%&gt;%</span>
+  <span class="fu">select</span>(<span class="fu">all_of</span>(<span class="kw">vdj_cols</span>))
 <span class="co">#&gt; # A tibble: 133 x 5</span>
 <span class="co">#&gt;    chain cdr3        clone_freq clone_prop n_chains</span>
 <span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;            &lt;int&gt;      &lt;dbl&gt;    &lt;int&gt;</span>
@@ -175,25 +172,27 @@
 <span class="co">#&gt;  8 IGK   CQQSNSWPYTF        121     0.0317        1</span>
 <span class="co">#&gt;  9 IGK   CQQSNSWPYTF        121     0.0317        1</span>
 <span class="co">#&gt; 10 IGK   CQQSNSWPYTF        121     0.0317        1</span>
-<span class="co">#&gt; # … with 123 more rows</span></pre></div>
+<span class="co">#&gt; # … with 123 more rows</span>
+</pre></div>
 <p><br></p>
 <p>Other examples</p>
 <div class="sourceCode" id="cb5"><pre class="downlit">
 <span class="co"># Cells with CDR3 amino acid sequence of 'CQQSNSWPYTF'</span>
-<span class="va">so_filt</span> <span class="op">&lt;-</span> <span class="va">so_vdj</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span><span class="va">cdr3</span> <span class="op">==</span> <span class="st">'CQQSNSWPYTF'</span><span class="op">)</span>
+<span class="kw">so_filt</span> <span class="op">&lt;-</span> <span class="kw">so_vdj</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="reference/filter_vdj.html">filter_vdj</a></span>(<span class="kw">cdr3</span> <span class="op">==</span> <span class="st">'CQQSNSWPYTF'</span>)
 
 <span class="co"># Cells with IGH, IGK, and IGL chains</span>
-<span class="va">so_filt</span> <span class="op">&lt;-</span> <span class="va">so_vdj</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"IGH"</span>, <span class="st">"IGK"</span>, <span class="st">"IGL"</span><span class="op">)</span> <span class="op">%in%</span> <span class="va">chain</span><span class="op">)</span><span class="op">)</span>
+<span class="kw">so_filt</span> <span class="op">&lt;-</span> <span class="kw">so_vdj</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="reference/filter_vdj.html">filter_vdj</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"IGH"</span>, <span class="st">"IGK"</span>, <span class="st">"IGL"</span>) <span class="op">%in%</span> <span class="kw">chain</span>))
 
 <span class="co"># Cells with two IGK chains and no other chains and &gt;1000 RNA counts</span>
-<span class="va">so_filt</span> <span class="op">&lt;-</span> <span class="va">so_vdj</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span><span class="op">(</span><span class="va">chain</span> <span class="op">==</span> <span class="st">"IGK"</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="va">n_chains</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;&amp;</span> <span class="va">nCount_RNA</span> <span class="op">&gt;</span> <span class="fl">1000</span><span class="op">)</span>
+<span class="kw">so_filt</span> <span class="op">&lt;-</span> <span class="kw">so_vdj</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="reference/filter_vdj.html">filter_vdj</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span>(<span class="kw">chain</span> <span class="op">==</span> <span class="st">"IGK"</span>) <span class="op">&amp;&amp;</span> <span class="kw">n_chains</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;&amp;</span> <span class="kw">nCount_RNA</span> <span class="op">&gt;</span> <span class="fl">1000</span>)
 
 <span class="co"># Cells with at least two unique chains and no IGH chain</span>
-<span class="va">so_filt</span> <span class="op">&lt;-</span> <span class="va">so_vdj</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span><span class="op">(</span><span class="va">chain</span> <span class="op">!=</span> <span class="st">"IGH"</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html">unique</a></span><span class="op">(</span><span class="va">chain</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span></pre></div>
+<span class="kw">so_filt</span> <span class="op">&lt;-</span> <span class="kw">so_vdj</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="reference/filter_vdj.html">filter_vdj</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span>(<span class="kw">chain</span> != <span class="st">"IGH"</span>) <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>(<span class="kw">chain</span>)) <span class="op">&gt;</span> <span class="fl">1</span>)
+</pre></div>
 <p><br></p>
 </div>
 <div id="clustering" class="section level3">
@@ -201,13 +200,13 @@
 <a href="#clustering" class="anchor"></a>Clustering</h3>
 <p>Cells can be clustered based on the Levenshtein distance between CDR3 sequences using <code>cluster_vdj</code>. The <code>use_chains</code> argument can be used to select the chains that should be used when performing distance calculations.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit">
-<span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cluster_vdj.html">cluster_vdj</a></span><span class="op">(</span>
-  sobj_in    <span class="op">=</span> <span class="va">so_vdj</span>,            <span class="co"># Seurat object</span>
-  cdr3_col   <span class="op">=</span> <span class="st">"cdr3"</span>,            <span class="co"># meta.data column containing CDR3 sequences</span>
-  resolution <span class="op">=</span> <span class="va">params</span><span class="op">$</span><span class="va">clust_res</span>,  <span class="co"># Clustering resolution</span>
-  use_chains <span class="op">=</span> <span class="cn">NULL</span>,              <span class="co"># Chains to use for distance calculations</span>
-  prefix     <span class="op">=</span> <span class="st">"vdj_"</span>             <span class="co"># Prefix to add to new graph</span>
-<span class="op">)</span>
+<span class="kw">so_vdj</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cluster_vdj.html">cluster_vdj</a></span>(
+  sobj_in    = <span class="kw">so_vdj</span>,            <span class="co"># Seurat object</span>
+  cdr3_col   = <span class="st">"cdr3"</span>,            <span class="co"># meta.data column containing CDR3 sequences</span>
+  resolution = <span class="kw">params</span><span class="op">$</span><span class="kw">clust_res</span>,  <span class="co"># Clustering resolution</span>
+  use_chains = <span class="kw">NULL</span>,              <span class="co"># Chains to use for distance calculations</span>
+  prefix     = <span class="st">"vdj_"</span>             <span class="co"># Prefix to add to new graph</span>
+)
 <span class="co">#&gt; Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Number of nodes: 3820</span>
@@ -218,9 +217,9 @@
 <span class="co">#&gt; Number of communities: 10</span>
 <span class="co">#&gt; Elapsed time: 0 seconds</span>
 
-<span class="va">so_vdj</span><span class="op">@</span><span class="va">meta.data</span> <span class="op">%&gt;%</span>
-  <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu">select</span><span class="op">(</span><span class="fu">all_of</span><span class="op">(</span><span class="va">vdj_cols</span><span class="op">)</span>, <span class="va">seurat_clusters</span><span class="op">)</span>
+<span class="kw">so_vdj</span><span class="op">@</span>meta.data <span class="op">%&gt;%</span>
+  <span class="fu">as_tibble</span>() <span class="op">%&gt;%</span>
+  <span class="fu">select</span>(<span class="fu">all_of</span>(<span class="kw">vdj_cols</span>), <span class="kw">seurat_clusters</span>)
 <span class="co">#&gt; # A tibble: 7,137 x 6</span>
 <span class="co">#&gt;    chain   cdr3                   clone_freq clone_prop n_chains seurat_clusters</span>
 <span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;                       &lt;int&gt;      &lt;dbl&gt;    &lt;int&gt; &lt;fct&gt;          </span>
@@ -234,15 +233,17 @@
 <span class="co">#&gt;  8 IGH;IGK CTVSYTKDWYFDVW;CAQNLE…          1   0.000262        2 0              </span>
 <span class="co">#&gt;  9 IGH;IGK CARSYDYDPLYYAMDYW;CLQ…          1   0.000262        2 2              </span>
 <span class="co">#&gt; 10 IGH;IGK CARSRLAYW;CLQYASSPFTF           1   0.000262        2 0              </span>
-<span class="co">#&gt; # … with 7,127 more rows</span></pre></div>
+<span class="co">#&gt; # … with 7,127 more rows</span>
+</pre></div>
 <p><br></p>
 <p>The Seurat <code>RunUMAP</code> function will not run with the hybrid VDJ object, but the wrapper function <code>run_umap_vdj</code> can be used.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit">
-<span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_umap_vdj.html">run_umap_vdj</a></span><span class="op">(</span>
-  sobj_in   <span class="op">=</span> <span class="va">so_vdj</span>,      <span class="co"># Seurat object</span>
-  umap_key  <span class="op">=</span> <span class="st">"vdjUMAP_"</span>,  <span class="co"># Prefix for UMAP columns</span>
-  vdj_graph <span class="op">=</span> <span class="st">"vdj_snn"</span>    <span class="co"># Name of VDJ graph to use for UMAP</span>
-<span class="op">)</span></pre></div>
+<span class="kw">so_vdj</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_umap_vdj.html">run_umap_vdj</a></span>(
+  sobj_in   = <span class="kw">so_vdj</span>,      <span class="co"># Seurat object</span>
+  umap_key  = <span class="st">"vdjUMAP_"</span>,  <span class="co"># Prefix for UMAP columns</span>
+  vdj_graph = <span class="st">"vdj_snn"</span>    <span class="co"># Name of VDJ graph to use for UMAP</span>
+)
+</pre></div>
 <p><img src="reference/figures/README-vdj_umap-1.png" width="100%"></p>
 <p><br></p>
 </div>
@@ -252,23 +253,25 @@
 <p>The functions <code>calc_diversity</code> and <code>calc_jaccard</code> will calculate repertoire diversity and repertoire overlap on a per-cluster basis. These functions can be given any meta.data column containing cell labels to use for calculations.</p>
 <p>Calculate repertoire diversity with <code>calc_diversity</code>. The inverse Simpson index is used to measure diversity for each cluster.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit">
-<span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/calc_diversity.html">calc_diversity</a></span><span class="op">(</span>
-  sobj_in       <span class="op">=</span> <span class="va">so_vdj</span>,          <span class="co"># Seurat object</span>
-  clonotype_col <span class="op">=</span> <span class="st">"clonotype_id"</span>,  <span class="co"># meta.data column containing clonotype ids</span>
-  cluster_col   <span class="op">=</span> <span class="st">"type_mouse"</span>,    <span class="co"># meta.data column containing cell labels</span>
-  prefix        <span class="op">=</span> <span class="st">""</span>               <span class="co"># Prefix to add to new meta.data columns</span>
-<span class="op">)</span></pre></div>
+<span class="kw">so_vdj</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/calc_diversity.html">calc_diversity</a></span>(
+  sobj_in       = <span class="kw">so_vdj</span>,          <span class="co"># Seurat object</span>
+  clonotype_col = <span class="st">"clonotype_id"</span>,  <span class="co"># meta.data column containing clonotype ids</span>
+  cluster_col   = <span class="st">"type_mouse"</span>,    <span class="co"># meta.data column containing cell labels</span>
+  prefix        = <span class="st">""</span>               <span class="co"># Prefix to add to new meta.data columns</span>
+)
+</pre></div>
 <p><img src="reference/figures/README-calc_diversity-1.png" width="100%"></p>
 <p><br></p>
 <p>Calculate repertoire overlap with <code>calc_jaccard</code>. A reference cell label can be given to calculate Jaccard index for the reference vs all other cell groups. If no reference is given overlap is calculated for all combinations of cell labels.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit">
-<span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/calc_jaccard.html">calc_jaccard</a></span><span class="op">(</span>
-  sobj_in       <span class="op">=</span> <span class="va">so_vdj</span>,             <span class="co"># Seurat object</span>
-  clonotype_col <span class="op">=</span> <span class="st">"clonotype_id"</span>,     <span class="co"># meta.data column containing clonotype ids</span>
-  cluster_col   <span class="op">=</span> <span class="st">"seurat_clusters"</span>,  <span class="co"># meta.data column containing cell labels</span>
-  ref_cluster   <span class="op">=</span> <span class="cn">NULL</span>,               <span class="co"># Cell label to use as a reference for Jaccard index</span>
-  prefix        <span class="op">=</span> <span class="st">"x"</span>                 <span class="co"># Prefix to add to new meta.data columns </span>
-<span class="op">)</span></pre></div>
+<span class="kw">so_vdj</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/calc_jaccard.html">calc_jaccard</a></span>(
+  sobj_in       = <span class="kw">so_vdj</span>,             <span class="co"># Seurat object</span>
+  clonotype_col = <span class="st">"clonotype_id"</span>,     <span class="co"># meta.data column containing clonotype ids</span>
+  cluster_col   = <span class="st">"seurat_clusters"</span>,  <span class="co"># meta.data column containing cell labels</span>
+  ref_cluster   = <span class="kw">NULL</span>,               <span class="co"># Cell label to use as a reference for Jaccard index</span>
+  prefix        = <span class="st">"x"</span>                 <span class="co"># Prefix to add to new meta.data columns </span>
+)
+</pre></div>
 <p><img src="reference/figures/README-calc_jaccard-1.png" width="100%"></p>
 </div>
 </div>
@@ -305,7 +308,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.9000.</p>
 </div>
 
       </footer>
