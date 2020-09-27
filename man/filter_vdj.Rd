@@ -4,19 +4,48 @@
 \alias{filter_vdj}
 \title{Subset Seurat object based on VDJ meta.data}
 \usage{
-filter_vdj(sobj_in, ..., cdr3_col = "cdr3s_aa")
+filter_vdj(
+  sobj_in,
+  filt,
+  new_col = NULL,
+  true = TRUE,
+  false = FALSE,
+  clonotype_col = "clonotype_id",
+  split_cols = c("chain", "cdr3"),
+  split_sep = ";",
+  return_seurat = TRUE
+)
 }
 \arguments{
 \item{sobj_in}{Seurat object containing CDR3 sequences}
 
-\item{...}{Expression to use for filtering object. To filter based on
-receptor chains and CDR3 sequences use the terms \code{.chains} and \code{.seqs}.}
+\item{filt}{Expression to use for filtering object}
 
-\item{cdr3_col}{meta.data column containing CDR3 sequences to use for
-filtering}
+\item{new_col}{Instead of filtering object create a new column with values
+based on the filtering expression}
+
+\item{true}{Value to include in new_col when the filtering expression
+evaluates to TRUE}
+
+\item{false}{Value to include in new_col when the filtering expression
+evaluates to FALSE}
+
+\item{clonotype_col}{meta.data column containing clonotype IDs. This column
+is used to determine which cells have VDJ data. If the clonotype_col is set
+to NULL, filtering is performed regardless of whether VDJ data is present
+for the cell.}
+
+\item{split_cols}{The names of meta.data columns to split into vectors. This
+allows for filtering based on multiple terms present in the column.}
+
+\item{split_sep}{Separator to use for splitting columns provided by the
+split_cols argument}
+
+\item{return_seurat}{Return a Seurat object. If set to FALSE, the meta.data
+table is returned}
 }
 \value{
-Subsetted Seurat object
+Filtered Seurat object
 }
 \description{
 Subset Seurat object based on VDJ meta.data

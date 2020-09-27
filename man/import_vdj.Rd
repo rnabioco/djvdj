@@ -7,9 +7,9 @@
 import_vdj(
   sobj_in,
   vdj_dir,
-  include_chains = NULL,
   prefix = "",
-  cell_prefix = ""
+  cell_prefix = "",
+  filter_contigs = TRUE
 )
 }
 \arguments{
@@ -17,11 +17,12 @@ import_vdj(
 
 \item{vdj_dir}{cellranger vdj output directory}
 
-\item{include_chains}{Only inlude clonotypes that have the indicated chains}
-
 \item{prefix}{Prefix to add to new meta.data columns}
 
 \item{cell_prefix}{Prefix to add to cell barcodes}
+
+\item{filter_contigs}{Only include chains with at least one productive full
+length contig}
 }
 \value{
 Seurat object with VDJ data added to meta.data

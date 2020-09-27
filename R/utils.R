@@ -2,73 +2,89 @@
 #'
 #' @param sobj_in Seurat object
 #' @param vdj_dir cellranger vdj output directory
-#' @param include_chains Only inlude clonotypes that have the indicated chains
 #' @param prefix Prefix to add to new meta.data columns
 #' @param cell_prefix Prefix to add to cell barcodes
+#' @param filter_contigs Only include chains with at least one productive full
+#' length contig
 #' @return Seurat object with VDJ data added to meta.data
 #' @export
-import_vdj <- function(sobj_in, vdj_dir, include_chains = NULL, prefix = "",
-                       cell_prefix = "") {
+import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
+                       filter_contigs = TRUE) {
 
   # Load contigs
-  vdj_cols <- c(
-    "barcode",    "raw_clonotype_id",
-    "v_gene",     "d_gene",
-    "j_gene",     "c_gene",
+  count_cols <- c("reads", "umis")
+
+  split_cols <- c(
+    "v_gene",  "d_gene",
+    "j_gene",  "c_gene",
+    "chain",   "cdr3",
+    "cdr3_nt", count_cols,
     "productive", "full_length"
   )
 
-  contigs <- readr::read_csv(file.path(vdj_dir, "filtered_contig_annotations.csv"))
-  contigs <- dplyr::select(contigs, all_of(vdj_cols))
-  contigs <- filter(contigs, productive, full_length)
-  contigs <- unique(contigs)
-  contigs <- mutate(contigs, barcode = str_c(cell_prefix, barcode))
+  vdj_cols <- c(
+    "barcode", "raw_clonotype_id",
+    split_cols
+  )
 
-  contigs <- group_by(contigs, barcode, raw_clonotype_id)
+  vdj_dir <- file.path(vdj_dir, "filtered_contig_annotations.csv")
+  contigs <- readr::read_csv(vdj_dir)
 
-  contigs <- summarize(
+  # Extract chain, add cell barcode prefix
+  pat <- "^[A-Z]{3}"
+
+  contigs <- dplyr::mutate(
     contigs,
+    barcode = stringr::str_c(cell_prefix, .data$barcode),
+    chain   = case_when(
+      str_detect(.data$v_gene, pat) ~ str_extract(.data$v_gene, pat),
+      str_detect(.data$d_gene, pat) ~ str_extract(.data$d_gene, pat),
+      str_detect(.data$j_gene, pat) ~ str_extract(.data$j_gene, pat),
+      str_detect(.data$c_gene, pat) ~ str_extract(.data$c_gene, pat),
+      TRUE ~ "None"
+    )
+  )
+
+  # Filter for productive full length contigs
+  if (filter_contigs) {
+    contigs <- dplyr::filter(contigs, .data$productive, .data$full_length)
+  }
+
+  contigs <- dplyr::select(contigs, all_of(vdj_cols))
+
+  # Sum contig reads and UMIs for clonotype chains
+  grp_cols <- vdj_cols[!vdj_cols %in% count_cols]
+  contigs  <- dplyr::group_by(contigs, !!!syms(grp_cols))
+  contigs  <- dplyr::summarize(
+    contigs,
+    across(all_of(count_cols), sum),
+    .groups = "drop"
+  )
+
+  # Merge rows for each cell
+  contigs <- dplyr::arrange(contigs, .data$barcode, .data$raw_clonotype_id, .data$chain)
+  contigs <- dplyr::group_by(contigs, .data$barcode, .data$raw_clonotype_id)
+
+  meta_df <- summarize(
+    contigs,
+    n_chains = n(),
     dplyr::across(
-      dplyr::ends_with("_gene"),
-      ~ purrr::reduce(.x, stringr::str_c, sep = ";")
+      all_of(split_cols),
+      ~ purrr::reduce(as.character(.x), stringr::str_c, sep = ";")
     ),
     .groups = "drop"
   )
 
-  # Load CDR3 sequences for clonotypes
-  ctypes <- readr::read_csv(file.path(vdj_dir, "clonotypes.csv"))
-
-  # Merge clonotype and contig info
-  meta_df <- dplyr::left_join(
-    contigs, ctypes,
-    by = c("raw_clonotype_id" = "clonotype_id")
-  )
-
   # Filter for cells present in sobj_in
   cells   <- Seurat::Cells(sobj_in)
-  meta_df <- dplyr::filter(meta_df, barcode %in% cells)
-  meta_df <- dplyr::rename(meta_df, clonotype_id = raw_clonotype_id)
-  meta_df <- dplyr::select(meta_df, -frequency, -proportion)
-
-  # Filter for clonotypes that include the given chains
-  if (!is.null(include_chains)) {
-    re <- purrr::map_chr(include_chains, ~ stringr::str_c("(?=.*", .x, ":)"))
-    re <- purrr::reduce(re, stringr::str_c)
-
-    meta_df <- dplyr::filter(meta_df, stringr::str_detect(cdr3s_aa, re))
-  }
+  meta_df <- dplyr::filter(meta_df, .data$barcode %in% cells)
+  meta_df <- dplyr::rename(meta_df, clonotype_id = .data$raw_clonotype_id)
 
   # Calculate stats
-  meta_df <- dplyr::mutate(
-    meta_df,
-    n_chains = stringr::str_split(cdr3s_aa, ";"),
-    n_chains = purrr::map_dbl(n_chains, length)
-  )
-
-  meta_df <- dplyr::group_by(meta_df, clonotype_id)
-  meta_df <- dplyr::mutate(meta_df, clone_freq = dplyr::n_distinct(barcode))
+  meta_df <- dplyr::group_by(meta_df, .data$clonotype_id)
+  meta_df <- dplyr::mutate(meta_df, clone_freq = dplyr::n_distinct(.data$barcode))
   meta_df <- dplyr::ungroup(meta_df)
-  meta_df <- dplyr::mutate(meta_df, clone_prop = clone_freq / nrow(meta_df))
+  meta_df <- dplyr::mutate(meta_df, clone_prop = .data$clone_freq / nrow(meta_df))
 
   # Add meta.data to Seurat object
   meta_df <- tibble::column_to_rownames(meta_df, "barcode")
@@ -109,7 +125,7 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
   vdj_df <- dplyr::group_by(vdj_df, !!clonotype_col, .add = T)
   vdj_df <- dplyr::summarize(
     .data   = vdj_df,
-    num     = dplyr::n_distinct(cell_id),
+    num     = dplyr::n_distinct(.data$cell_id),
     .groups = "drop"
   )
 
@@ -118,14 +134,14 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
     vdj_df <- dplyr::group_by(vdj_df, !!cluster_col)
   }
 
-  div_col <- str_c(prefix, "diversity")
+  div_col <- stringr::str_c(prefix, "diversity")
 
   vdj_df <- dplyr::mutate(
     vdj_df,
-    frac     = num / sum(num),
-    sum_frac = sum(frac ^ 2),
+    frac     = .data$num / sum(.data$num),
+    sum_frac = sum(.data$frac ^ 2),
 
-    !!dplyr::sym(div_col) := 1 - sum_frac
+    !!dplyr::sym(div_col) := 1 - .data$sum_frac
     # !!dplyr::sym(div_col) := 1 / sum_frac
   )
 
@@ -150,7 +166,6 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
 #' @param ref_cluster Cluster id to use as a reference for calculating Jaccard
 #' index. If ref_cluster is omitted, Jaccard index will be calculated for all
 #' combinations of clusters.
-#' @param return_matrix Return matrix instead of Seurat object
 #' @param prefix Prefix to add to new meta.data columns
 #' @return Seurat object with Jaccard index added to meta.data
 #' @export
@@ -179,7 +194,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
     row_sums <- dplyr::select(df_in, !!clonotype_col, dplyr::all_of(comparison))
     row_sums <- tidyr::pivot_longer(row_sums, cols = -!!clonotype_col)
     row_sums <- dplyr::group_by(row_sums, !!clonotype_col)
-    row_sums <- dplyr::summarize(row_sums, row_sum = sum(value), .groups = "drop")
+    row_sums <- dplyr::summarize(row_sums, row_sum = sum(.data$value), .groups = "drop")
     row_sums <- row_sums$row_sum
 
     a     <- length(row_sums[row_sums == 2])      # Intersection
@@ -202,7 +217,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
   so_idents   <- so_idents[, cluster_col]
   so_idents   <- as.character(so_idents)
   uniq_idents <- unique(so_idents)
-  uniq_idents <- na.omit(uniq_idents)
+  uniq_idents <- stats::na.omit(uniq_idents)
 
   ctypes   <- Seurat::FetchData(sobj_in, clonotype_col)
   vdj_meta <- dplyr::bind_cols(ctypes, idents = so_idents)
@@ -212,13 +227,13 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
   j_df <- dplyr::mutate(vdj_meta, num = 1)
   j_df <- dplyr::mutate(j_df, num = 1)
 
-  j_df <- dplyr::group_by(j_df, idents)
+  j_df <- dplyr::group_by(j_df, .data$idents)
   j_df <- dplyr::group_split(j_df)
   j_df <- purrr::map(
     .x          = j_df,
-    .f          = pivot_wider,
-    names_from  = idents,
-    values_from = num,
+    .f          = tidyr::pivot_wider,
+    names_from  = .data$idents,
+    values_from = .data$num,
     values_fn   = list
   )
 
@@ -257,14 +272,14 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
     .f = ~ calc_jidx(j_df, c(.x, .y), clonotype_col = clonotype_col)
   )
 
-  res <- dplyr::mutate(res, Var1 = str_c(prefix, Var1, "_jaccard"))
-  res <- tidyr::pivot_wider(res, names_from = Var1, values_from = jaccard)
+  res <- dplyr::mutate(res, Var1 = stringr::str_c(prefix, .data$Var1, "_jaccard"))
+  res <- tidyr::pivot_wider(res, names_from = .data$Var1, values_from = .data$jaccard)
 
   # Add jaccard index to meta.data
   vdj_meta <- tibble::as_tibble(vdj_meta, rownames = "cell_id")
 
   vdj_meta <- dplyr::left_join(vdj_meta, res, by = c("idents" = "Var2"))
-  vdj_meta <- dplyr::select(vdj_meta, -idents)
+  vdj_meta <- dplyr::select(vdj_meta, -.data$idents)
   vdj_meta <- tibble::column_to_rownames(vdj_meta, "cell_id")
   vdj_meta <- as.data.frame(vdj_meta)
 
@@ -282,49 +297,57 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #' @param resolution Clustering resolution to pass to FindClusters
 #' @param use_chains Chains to use for calculating Levenshtein distance. If
 #' multiple sequences are present for a chain, the first sequence is used.
+#' @param chain_col meta.data column containing chains detected for each cell.
 #' @param prefix Prefix to add to graph name
 #' @param ... Additional parameters to pass to FindClusters
 #' @return Seurat object with an added shared nearest neighbors graph (vdj_snn)
 #' and a meta.data column containing cluster ids
 #' @export
-cluster_vdj <- function(sobj_in, cdr3_col = "cdr3s_aa", resolution = 0.1,
-                        use_chains = NULL, prefix = "vdj_") {
+cluster_vdj <- function(sobj_in, cdr3_col = "cdr3", resolution = 0.1, use_chains = NULL,
+                        chain_col = "chain", prefix = "vdj_", ...) {
 
   # Extract sequences
   # Only include cells with VDJ data
   orig_idents <- Idents(sobj_in)
 
-  seqs <- Seurat::FetchData(sobj_in, cdr3_col)
-  seqs <- tibble::rownames_to_column(seqs, "cell_id")
-  seqs <- na.omit(seqs)
+  seqs <- Seurat::FetchData(sobj_in, c(chain_col, cdr3_col))
+  seqs <- tibble::rownames_to_column(seqs, ".cell_id")
+  seqs <- stats::na.omit(seqs)
+  seqs <- dplyr::rename(seqs, "cdr3" = !!dplyr::sym(cdr3_col))
 
-  # Select chains to used for calculating distance
+  # Select chains to use for calculating distance
   if (!is.null(use_chains)) {
-    re       <- stringr::str_c("(?<=", use_chains, ":)[A-Z]+")
-    seq_cols <- stringr::str_c("V", seq_along(use_chains))
 
-    seqs <- purrr::map2(re, seq_cols, ~ {
-      n_col <- dplyr::sym(.y)
-      c_col <- dplyr::sym(cdr3_col)
+    split_cols <- c("cdr3", chain_col)
 
-      dplyr::mutate(seqs, !!n_col := stringr::str_extract(!!c_col, .x))
-    })
-
-    seqs <- purrr::reduce(seqs, dplyr::left_join, by = c("cell_id", cdr3_col))
-    seqs <- na.omit(seqs)
-    seqs <- dplyr::mutate(seqs, seq_c = stringr::str_c(!!!dplyr::syms(seq_cols)))
-
-  } else {
-    seqs <- mutate(
+    seqs <- dplyr::mutate(
       seqs,
-      seq_c = stringr::str_extract_all(!!dplyr::sym(cdr3_col), "(?<=:)[A-Z]+"),
-      seq_c = purrr::map(seq_c, purrr::reduce, stringr::str_c)
+      dplyr::across(
+        dplyr::all_of(split_cols),
+        ~ str_split(.x, ";")
+      )
+    )
+
+    seqs <- tidyr::unnest(seqs, cols = dplyr::all_of(split_cols))
+    seqs <- dplyr::filter(seqs, chain %in% use_chains)
+    seqs <- dplyr::group_by(seqs, .cell_id)
+
+    seqs <- dplyr::summarize(
+      seqs,
+      cdr3 = purrr::map_chr(
+        list(cdr3),
+        purrr::reduce,
+        stringr::str_c,
+        sep = ""
+      ),
+      .groups = "drop"
     )
   }
 
   # Create Levenshtein distance matrix
-  seqs     <- purrr::set_names(seqs$seq_c, seqs$cell_id)
-  vdj_dist <- adist(seqs)
+  seqs     <- mutate(seqs, cdr3 = stringr::str_remove_all(cdr3, ";"))
+  seqs     <- purrr::set_names(seqs$cdr3, seqs$.cell_id)
+  vdj_dist <- utils::adist(seqs)
 
   # Create nearest neighbors graph
   # Add graph this way or error thrown due to differing number of cells
@@ -375,7 +398,7 @@ run_umap_vdj <- function(sobj_in, umap_key = "vdjUMAP_", vdj_graph = "vdj_snn") 
   )
 
   umap_coords <- Seurat::Embeddings(vdj_so, reduction = "vdj_umap")
-  umap_cols   <- str_c(umap_key, c("1", "2"))
+  umap_cols   <- stringr::str_c(umap_key, c("1", "2"))
 
   res <- Seurat::AddMetaData(
     object   = sobj_in,
@@ -390,33 +413,125 @@ run_umap_vdj <- function(sobj_in, umap_key = "vdjUMAP_", vdj_graph = "vdj_snn") 
 #' Subset Seurat object based on VDJ meta.data
 #'
 #' @param sobj_in Seurat object containing CDR3 sequences
-#' @param ... Expression to use for filtering object. To filter based on
-#' receptor chains and CDR3 sequences use the terms `.chains` and `.seqs`.
-#' @param cdr3_col meta.data column containing CDR3 sequences to use for
-#' filtering
-#' @return Subsetted Seurat object
+#' @param filt Expression to use for filtering object
+#' @param new_col Instead of filtering object create a new column with values
+#' based on the filtering expression
+#' @param true Value to include in new_col when the filtering expression
+#' evaluates to TRUE
+#' @param false Value to include in new_col when the filtering expression
+#' evaluates to FALSE
+#' @param clonotype_col meta.data column containing clonotype IDs. This column
+#' is used to determine which cells have VDJ data. If the clonotype_col is set
+#' to NULL, filtering is performed regardless of whether VDJ data is present
+#' for the cell.
+#' @param split_cols The names of meta.data columns to split into vectors. This
+#' allows for filtering based on multiple terms present in the column.
+#' @param split_sep Separator to use for splitting columns provided by the
+#' split_cols argument
+#' @param return_seurat Return a Seurat object. If set to FALSE, the meta.data
+#' table is returned
+#' @return Filtered Seurat object
 #' @export
-filter_vdj <- function(sobj_in, ..., cdr3_col = "cdr3s_aa") {
+filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE,
+                       clonotype_col = "clonotype_id", split_cols = c("chain", "cdr3"),
+                       split_sep = ";", return_seurat = TRUE) {
 
-  cdr3_col <- dplyr::sym(cdr3_col)
-
-  # Format meta.data for filtering
   meta_df <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
 
-  vdj_df <- dplyr::mutate(
-    meta_df,
-    .chains = stringr::str_extract_all(!!cdr3_col, "[A-Z]+(?=:)"),
-    .seqs   = stringr::str_extract_all(!!cdr3_col, "(?<=:)[A-Z]+")
-  )
-  vdj_df <- tidyr::unnest(vdj_df, cols = c(.chains, .seqs))
-  vdj_df <- dplyr::group_by(vdj_df, .cell_id)
-  vdj_df <- dplyr::filter(vdj_df, ...)
+  # Split columns into vectors
+  if (!is.null(split_cols)) {
 
-  # Subset Seurat object
-  vdj_cells <- unique(vdj_df$.cell_id)
-  meta_df   <- dplyr::filter(meta_df, .cell_id %in% vdj_cells | is.na(!!cdr3_col))
+    # Save original columns
+    split_names <- purrr::set_names(
+      x  = split_cols,
+      nm = stringr::str_c(".", split_cols)
+    )
 
-  res <- subset(sobj_in, cells = meta_df$.cell_id)
+    meta_df <- dplyr::mutate(meta_df, !!!dplyr::syms(split_names))
+
+    # Split into vectors
+    meta_df <- dplyr::mutate(meta_df, dplyr::across(
+      dplyr::all_of(split_cols),
+      ~ str_split(.x, split_sep)
+    ))
+
+    meta_df <- tidyr::unnest(meta_df, cols = dplyr::all_of(split_cols))
+
+    # Convert to numeric or logical if possible
+    convert_type <- function(x, fun) {
+      suppressWarnings(ifelse(!is.na(fun(x)) | is.na(x), fun(x), x))
+    }
+
+    meta_df <- dplyr::mutate(
+      meta_df,
+      across(
+        dplyr::all_of(split_cols),
+        ~ convert_type(.x, as.numeric)
+      ),
+      across(
+        dplyr::all_of(split_cols),
+        ~ convert_type(.x, as.logical)
+      )
+    )
+
+    meta_df <- dplyr::group_by(meta_df, .data$.cell_id)
+  }
+
+  # Store results from filtering expression
+  meta_df <- dplyr::mutate(meta_df, .KEEP = {{filt}})
+
+  # Add new column with values based on filtering expression
+  if (!is.null(new_col)) {
+    meta_df <- dplyr::mutate(
+      meta_df,
+      !!dplyr::sym(new_col) := dplyr::if_else(.data$.KEEP, true = true, false = false)
+    )
+
+    if (!is.null(clonotype_col)) {
+      meta_df <- dplyr::mutate(
+        meta_df,
+        !!dplyr::sym(new_col) := ifelse(
+          is.na(!!dplyr::sym(clonotype_col)),
+          NA,
+          !!dplyr::sym(new_col)
+        )
+      )
+    }
+
+  } else {
+    if (!is.null(clonotype_col)) {
+      meta_df <- dplyr::mutate(
+        meta_df,
+        .KEEP = dplyr::if_else(is.na(!!dplyr::sym(clonotype_col)), TRUE, .data$.KEEP)
+      )
+    }
+
+    meta_df <- dplyr::filter(meta_df, .data$.KEEP)
+  }
+
+  # Remove columns created for filtering
+  if (!is.null(split_cols)) {
+    split_names <- purrr::set_names(
+      x  = names(split_names),
+      nm = unname(split_names)
+    )
+
+    meta_df <- dplyr::select(meta_df, !dplyr::all_of(c(split_cols, ".KEEP")))
+    meta_df <- dplyr::rename(meta_df, !!!dplyr::syms(split_names))
+    meta_df <- dplyr::distinct(meta_df)
+    meta_df <- dplyr::ungroup(meta_df)
+  }
+
+  # Add meta.data to Seurat object
+  meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
+
+  if (!return_seurat) {
+    return(meta_df)
+  }
+
+  cells <- rownames(meta_df)
+  res   <- subset(sobj_in, cells = cells)
+  res   <- Seurat::AddMetaData(res, meta_df)
 
   res
 }
@@ -444,7 +559,7 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = "orig.ident",
   meta_data <- dplyr::mutate(
     meta_data,
     !!dplyr::sym(gene_col) := stringr::str_split(!!dplyr::sym(gene_col), ";"),
-    n_cells = n_distinct(cell_id)
+    n_cells = n_distinct(.data$cell_id)
   )
   meta_data <- dplyr::ungroup(meta_data)
 
@@ -480,12 +595,12 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = "orig.ident",
     values_to = "usage"
   )
   res <- dplyr::group_by(res, !!dplyr::sym(gene_col))
-  res <- dplyr::mutate(res, ave_usage = mean(usage))
+  res <- dplyr::mutate(res, ave_usage = mean(.data$usage))
   res <- dplyr::ungroup(res)
 
   # Filter for top used genes
   if (!is.null(n_genes)) {
-    res <- top_n(res, n = n_genes, wt = ave_usage)
+    res <- dplyr::top_n(res, n = n_genes, wt = .data$ave_usage)
   }
 
   res

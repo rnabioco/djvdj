@@ -5,6 +5,8 @@
 
 <!-- badges: start -->
 
+[![R build
+status](https://github.com/rnabioco/djvdj/workflows/R-CMD-check/badge.svg)](https://github.com/rnabioco/djvdj/actions)
 <!-- badges: end -->
 
 The goal of djvdj is to provide tools to analyze AVID-seq signals
@@ -45,34 +47,37 @@ For cells that do not have any VDJ sequencing data, NAs will be included
 in the meta.data.
 
 ``` r
-vdj_dir <- file.path(params$data_dir, "results/JH180_BCR/outs")
-
 so_vdj <- import_vdj(
-  sobj_in        = so,       # Seurat object                         
-  vdj_dir        = vdj_dir,  # Directory containing cellranger output files
-  include_chains = NULL,     # Filter clonotypes that are added based on the given receptor chains
-  prefix         = ""        # Prefix to add to new meta.data columns
+  sobj_in        = so,              # Seurat object                         
+  vdj_dir        = params$vdj_dir,  # Directory containing cellranger output files
+  prefix         = "",              # Prefix to add to new meta.data columns
+  cell_prefix    = "",              # Prefix to add to cell barcodes
+  filter_contigs = TRUE             # Only include chains with at least one productive contig
 )
 
-vdj_cols <- c("cdr3s_aa", "n_chains", "clone_freq", "clone_frac")
+vdj_cols <- c(
+  "chain",      "cdr3",
+  "clone_freq", "clone_prop",
+   "n_chains"
+)
 
 so_vdj@meta.data %>%
   as_tibble() %>%
   select(orig.ident, nCount_RNA, nFeature_RNA, all_of(vdj_cols))
-#> # A tibble: 8,020 x 7
-#>    orig.ident nCount_RNA nFeature_RNA cdr3s_aa    n_chains clone_freq clone_frac
-#>    <fct>           <dbl>        <int> <chr>          <dbl>      <int>      <dbl>
-#>  1 Exp-2             745          470 <NA>              NA         NA  NA       
-#>  2 Exp-2             498          271 <NA>              NA         NA  NA       
-#>  3 Exp-2             441          219 IGH:CAKGDY…        2          1   0.000358
-#>  4 Exp-2             504          264 <NA>              NA         NA  NA       
-#>  5 Exp-2             516          306 IGK:CQQYNS…        2          1   0.000358
-#>  6 Exp-2             493          263 <NA>              NA         NA  NA       
-#>  7 Exp-2             422          292 <NA>              NA         NA  NA       
-#>  8 Exp-2             497          297 <NA>              NA         NA  NA       
-#>  9 Exp-2             463          264 <NA>              NA         NA  NA       
-#> 10 Exp-2             601          327 <NA>              NA         NA  NA       
-#> # … with 8,010 more rows
+#> # A tibble: 7,137 x 8
+#>    orig.ident nCount_RNA nFeature_RNA chain cdr3  clone_freq clone_prop n_chains
+#>    <fct>           <dbl>        <int> <chr> <chr>      <int>      <dbl>    <int>
+#>  1 AVID-seq          884          551 IGH;… CVKG…          1   0.000262        2
+#>  2 AVID-seq         3061          970 <NA>  <NA>          NA  NA              NA
+#>  3 AVID-seq         1297          677 IGH;… CARG…          1   0.000262        2
+#>  4 AVID-seq         1570          848 <NA>  <NA>          NA  NA              NA
+#>  5 AVID-seq         2277          818 <NA>  <NA>          NA  NA              NA
+#>  6 AVID-seq         1320          566 <NA>  <NA>          NA  NA              NA
+#>  7 AVID-seq          570          348 <NA>  <NA>          NA  NA              NA
+#>  8 AVID-seq          909          489 IGH;… CTVS…          1   0.000262        2
+#>  9 AVID-seq         1072          588 IGH;… CARS…          1   0.000262        2
+#> 10 AVID-seq         1143          594 IGH;… CARS…          1   0.000262        2
+#> # … with 7,127 more rows
 ```
 
 <br>
@@ -80,39 +85,39 @@ so_vdj@meta.data %>%
 ### Filtering
 
 `filter_vdj` allows you to filter a Seurat object using the added
-clonotype information or any other columns present in the meta.data. The
-terms `.chains` and `.seqs` can be used to filter based on the chains
-detected for the cell or the sequence of the chain. Filtering is only
-performed on cells that include VDJ data, all other cells will remain in
-the object.
+clonotype information or any other columns present in the meta.data. For
+cells with multiple chains, the information for each chain is stored as
+a single row, separated by a “;”. When filtering, columns with VDJ data
+will be expanded based on the delimiter “;”. The columns that are
+expanded for filtering can be specified with the `split_cols` argument.
+By default filtering is only performed on cells that include VDJ data.
 
 Filter to only include cells with both IGH and IGK chains
 
 ``` r
 so_filt <- filter_vdj(
-  sobj_in  = so_vdj,                  # Seurat object
-  cdr3_col = "cdr3s_aa",              # meta.data column containing CDR3 sequences
-  all(c("IGH", "IGK") %in% .chains),  # Expression to use for filtering
+  sobj_in = so_vdj,                           # Seurat object
+  filt    = all(c("IGH", "IGK") %in% chain),  # Expression to use for filtering
 )
 
 so_filt@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols))
-#> # A tibble: 560 x 4
-#>    cdr3s_aa                                       n_chains clone_freq clone_frac
-#>    <chr>                                             <dbl>      <int>      <dbl>
-#>  1 IGH:CARSYGSSYGYFDVW;IGK:CHQYHRSPPMLTF;IGK:CQH…        3          1   0.000358
-#>  2 IGH:CARNYGSSYGFAYW;IGK:CQNDYSYPLTF                    2          1   0.000358
-#>  3 IGH:CAGYYGSSYNYW;IGK:CQQDYSSPLTF                      2          1   0.000358
-#>  4 IGH:CARELGPLYYYAMDYW;IGK:CQQSNSWPYTF                  2          2   0.000716
-#>  5 IGH:CARPYYYGSSYWYFDVW;IGK:CHQYLSSWTF;IGK:CLQY…        3          1   0.000358
-#>  6 IGH:CAGDSHGYWYFDVW;IGK:CQQGSSIPLTF                    2          1   0.000358
-#>  7 IGH:CTRCRWAWAMDYW;IGK:CLQYDNLWTF                      2          1   0.000358
-#>  8 IGH:CARGYSNYAMDYW;IGK:CWQGTHFPLTF                     2          1   0.000358
-#>  9 IGH:CARHGSSPHYYAMDYW;IGH:CARESYYYGSSPYAMDYW;I…        4          1   0.000358
-#> 10 IGH:CARGVFDYW;IGK:CQNDHSYPYTF;IGK:CLQYASSLTF          3          1   0.000358
-#> # … with 550 more rows
+#> # A tibble: 3,174 x 5
+#>    chain       cdr3                               clone_freq clone_prop n_chains
+#>    <chr>       <chr>                                   <int>      <dbl>    <int>
+#>  1 IGH;IGK     CVKGYDYDWYFDVW;CLQYDNLWTF                   1   0.000262        2
+#>  2 IGH;IGK     CARGRLGYAMDYW;CQHFWSTPWTF                   1   0.000262        2
+#>  3 IGH;IGK     CTVSYTKDWYFDVW;CAQNLELPLTF                  1   0.000262        2
+#>  4 IGH;IGK     CARSYDYDPLYYAMDYW;CLQSDNLPLTF               1   0.000262        2
+#>  5 IGH;IGK     CARSRLAYW;CLQYASSPFTF                       1   0.000262        2
+#>  6 IGH;IGK;IGL CAKRGYSNSLDYW;CQHFWSTPYTF;CALWYSN…          1   0.000262        3
+#>  7 IGH;IGK     CANPITTAEGWYFDVW;CLQHGESPYTF                1   0.000262        2
+#>  8 IGH;IGK     CARSYGYAMDYW;CWQGTHFPYTF                    1   0.000262        2
+#>  9 IGH;IGK     CARWVYGSAWFAYW;CMQHLEYPFTF                  1   0.000262        2
+#> 10 IGH;IGK     CARSHGYDFYAMDYW;CQHFWGTPRTF                 1   0.000262        2
+#> # … with 3,164 more rows
 ```
 
 <br>
@@ -122,26 +127,26 @@ share the clonotype
 
 ``` r
 so_filt <- so_vdj %>%
-  filter_vdj(.chains == "IGL" && clone_freq > 1 || clone_frac > 0.01)
+  filter_vdj(chain == "IGL" && clone_freq > 1 || clone_prop > 0.01)
 
 so_filt@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols))
-#> # A tibble: 1,419 x 4
-#>    cdr3s_aa        n_chains clone_freq clone_frac
-#>    <chr>              <dbl>      <int>      <dbl>
-#>  1 IGK:CQQSNSWPYTF        1       1381      0.494
-#>  2 IGK:CQQSNSWPYTF        1       1381      0.494
-#>  3 IGK:CQQSNSWPYTF        1       1381      0.494
-#>  4 IGK:CQQSNSWPYTF        1       1381      0.494
-#>  5 IGK:CQQSNSWPYTF        1       1381      0.494
-#>  6 IGK:CQQSNSWPYTF        1       1381      0.494
-#>  7 IGK:CQQSNSWPYTF        1       1381      0.494
-#>  8 IGK:CQQSNSWPYTF        1       1381      0.494
-#>  9 IGK:CQQSNSWPYTF        1       1381      0.494
-#> 10 IGK:CQQSNSWPYTF        1       1381      0.494
-#> # … with 1,409 more rows
+#> # A tibble: 133 x 5
+#>    chain cdr3        clone_freq clone_prop n_chains
+#>    <chr> <chr>            <int>      <dbl>    <int>
+#>  1 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  2 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  3 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  4 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  5 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  6 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  7 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  8 IGK   CQQSNSWPYTF        121     0.0317        1
+#>  9 IGK   CQQSNSWPYTF        121     0.0317        1
+#> 10 IGK   CQQSNSWPYTF        121     0.0317        1
+#> # … with 123 more rows
 ```
 
 <br>
@@ -151,19 +156,19 @@ Other examples
 ``` r
 # Cells with CDR3 amino acid sequence of 'CQQSNSWPYTF'
 so_filt <- so_vdj %>%
-  filter_vdj(.seqs == 'CQQSNSWPYTF')
+  filter_vdj(cdr3 == 'CQQSNSWPYTF')
 
 # Cells with IGH, IGK, and IGL chains
 so_filt <- so_vdj %>%
-  filter_vdj(all(c("IGH", "IGK", "IGL") %in% .chains))
+  filter_vdj(all(c("IGH", "IGK", "IGL") %in% chain))
 
 # Cells with two IGK chains and no other chains and >1000 RNA counts
 so_filt <- so_vdj %>%
-  filter_vdj(all(.chains == "IGK") && n_chains == 2 && nCount_RNA > 1000)
+  filter_vdj(all(chain == "IGK") && n_chains == 2 && nCount_RNA > 1000)
 
 # Cells with at least two unique chains and no IGH chain
 so_filt <- so_vdj %>%
-  filter_vdj(all(.chains != "IGH") && length(unique(.chains)) > 1)
+  filter_vdj(all(chain != "IGH") && length(unique(chain)) > 1)
 ```
 
 <br>
@@ -178,38 +183,38 @@ calculations.
 ``` r
 so_vdj <- cluster_vdj(
   sobj_in    = so_vdj,            # Seurat object
-  cdr3_col   = "cdr3s_aa",        # meta.data column containing CDR3 sequences
+  cdr3_col   = "cdr3",            # meta.data column containing CDR3 sequences
   resolution = params$clust_res,  # Clustering resolution
   use_chains = NULL,              # Chains to use for distance calculations
   prefix     = "vdj_"             # Prefix to add to new graph
 )
 #> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 #> 
-#> Number of nodes: 2793
-#> Number of edges: 1047168
+#> Number of nodes: 3820
+#> Number of edges: 148477
 #> 
 #> Running Louvain algorithm...
-#> Maximum modularity in 10 random starts: 0.0073
-#> Number of communities: 1413
-#> Elapsed time: 1 seconds
+#> Maximum modularity in 10 random starts: 0.9451
+#> Number of communities: 10
+#> Elapsed time: 0 seconds
 
 so_vdj@meta.data %>%
   as_tibble() %>%
   select(all_of(vdj_cols), seurat_clusters)
-#> # A tibble: 8,020 x 5
-#>    cdr3s_aa                       n_chains clone_freq clone_frac seurat_clusters
-#>    <chr>                             <dbl>      <int>      <dbl> <fct>          
-#>  1 <NA>                                 NA         NA  NA        <NA>           
-#>  2 <NA>                                 NA         NA  NA        <NA>           
-#>  3 IGH:CAKGDYGSSWFAYW;IGL:CALWYS…        2          1   0.000358 0              
-#>  4 <NA>                                 NA         NA  NA        <NA>           
-#>  5 IGK:CQQYNSYPYTF;IGK:CLQHGESPY…        2          1   0.000358 0              
-#>  6 <NA>                                 NA         NA  NA        <NA>           
-#>  7 <NA>                                 NA         NA  NA        <NA>           
-#>  8 <NA>                                 NA         NA  NA        <NA>           
-#>  9 <NA>                                 NA         NA  NA        <NA>           
-#> 10 <NA>                                 NA         NA  NA        <NA>           
-#> # … with 8,010 more rows
+#> # A tibble: 7,137 x 6
+#>    chain   cdr3                   clone_freq clone_prop n_chains seurat_clusters
+#>    <chr>   <chr>                       <int>      <dbl>    <int> <fct>          
+#>  1 IGH;IGK CVKGYDYDWYFDVW;CLQYDN…          1   0.000262        2 2              
+#>  2 <NA>    <NA>                           NA  NA              NA <NA>           
+#>  3 IGH;IGK CARGRLGYAMDYW;CQHFWST…          1   0.000262        2 0              
+#>  4 <NA>    <NA>                           NA  NA              NA <NA>           
+#>  5 <NA>    <NA>                           NA  NA              NA <NA>           
+#>  6 <NA>    <NA>                           NA  NA              NA <NA>           
+#>  7 <NA>    <NA>                           NA  NA              NA <NA>           
+#>  8 IGH;IGK CTVSYTKDWYFDVW;CAQNLE…          1   0.000262        2 0              
+#>  9 IGH;IGK CARSYDYDPLYYAMDYW;CLQ…          1   0.000262        2 2              
+#> 10 IGH;IGK CARSRLAYW;CLQYASSPFTF           1   0.000262        2 0              
+#> # … with 7,127 more rows
 ```
 
 <br>
@@ -243,7 +248,7 @@ Simpson index is used to measure diversity for each cluster.
 so_vdj <- calc_diversity(
   sobj_in       = so_vdj,          # Seurat object
   clonotype_col = "clonotype_id",  # meta.data column containing clonotype ids
-  cluster_col   = NULL,            # meta.data column containing cell labels
+  cluster_col   = "type_mouse",    # meta.data column containing cell labels
   prefix        = ""               # Prefix to add to new meta.data columns
 )
 ```
@@ -268,26 +273,3 @@ so_vdj <- calc_jaccard(
 ```
 
 <img src="man/figures/README-calc_jaccard-1.png" width="100%" />
-
-<br>
-
-### Combine with TCR data
-
-BCR and TCR data can be added to the same Seurat object
-
-``` r
-vdj_dir <- file.path(params$data_dir, "results/JH180_TCR/outs")
-
-so_vdj <- so_vdj %>%
-  import_vdj(
-    vdj_dir = vdj_dir,
-    prefix  = "tcr_"
-  ) %>%
-  calc_diversity(
-    clonotype_col = "tcr_clonotype_id",
-    cluster_col   = "RNA_clusters",
-    prefix        = "tcr_"
-  )
-```
-
-<img src="man/figures/README-bcr_tcr-1.png" width="100%" />
