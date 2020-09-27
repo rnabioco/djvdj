@@ -85,11 +85,12 @@ so_vdj@meta.data %>%
 ### Filtering
 
 `filter_vdj` allows you to filter a Seurat object using the added
-clonotype information or any other columns present in the meta.data. The
-terms `.chains` and `.seqs` can be used to filter based on the chains
-detected for the cell or the sequence of the chain. Filtering is only
-performed on cells that include VDJ data, all other cells will remain in
-the object.
+clonotype information or any other columns present in the meta.data. For
+cells with multiple chains, the information for each chain is stored as
+a single row, separated by a “;”. When filtering, columns with VDJ data
+will be expanded based on the delimiter “;”. The columns that are
+expanded for filtering can be specified with the `split_cols` argument.
+By default filtering is only performed on cells that include VDJ data.
 
 Filter to only include cells with both IGH and IGK chains
 

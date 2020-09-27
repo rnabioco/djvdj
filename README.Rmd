@@ -386,7 +386,7 @@ so_vdj@meta.data %>%
 
 ### Filtering
 
-`filter_vdj` allows you to filter a Seurat object using the added clonotype information or any other columns present in the meta.data. The terms `.chains` and `.seqs` can be used to filter based on the chains detected for the cell or the sequence of the chain. Filtering is only performed on cells that include VDJ data, all other cells will remain in the object.
+`filter_vdj` allows you to filter a Seurat object using the added clonotype information or any other columns present in the meta.data. For cells with multiple chains, the information for each chain is stored as a single row, separated by a ";". When filtering, columns with VDJ data will be expanded based on the delimiter ";". The columns that are expanded for filtering can be specified with the `split_cols` argument. By default filtering is only performed on cells that include VDJ data.
 
 Filter to only include cells with both IGH and IGK chains
 
@@ -596,4 +596,58 @@ j_gg <- so_vdj %>%
 
 plot_grid(j_gg, NA)
 ```
+
+```{r "enclone_test", eval = FALSE, echo = FALSE}
+# To run enclone
+#enclone \
+#    BCR=BCR/outs \
+#    REF=ref/refdata-cellranger-vdj-GRCm38-alts-ensembl-3.1.0/fasta/regions.fa \
+#    POUT="enclone_out.csv" \
+#    PCOLS=group_id,group_ncells,clonotype_id,clonotype_ncells,barcodes
+
+# Import enclone results
+en_df <- read_csv("~/Projects/Smith_AVIDseq/2020-07-17/enclone_out.csv") %>%
+  mutate(barcodes = str_split(barcodes, ",")) %>%
+  unnest(barcodes) %>%
+  select(cell_id = barcodes, group_id, group_ncells) %>%
+  filter(group_ncells > 1)
+
+# Merge enclone groups with meta.data
+en_df <- so_vdj@meta.data %>%
+  as_tibble(rownames = "cell_id") %>%
+  left_join(en_df, by = "cell_id") %>%
+  mutate(
+    group_id = as.character(group_id),
+    group_id = replace_na(group_id, "NA")
+  )
+
+# Group colors
+grp_cols <- en_df %>%
+  pull(group_id) %>%
+  unique()
+
+grp_cols <- set_names(
+  x  = c(ito_cols, darken(ito_cols, 0.2))[seq_along(grp_cols)],
+  nm = grp_cols
+)
+
+grp_cols["NA"] <- "white"
+
+# Overlay enclone groups on UMAP
+en_df %>%
+  mutate(group_id = fct_relevel(group_id, names(grp_cols))) %>%
+  plot_features(
+    x          = "vdjUMAP_1",
+    y          = "vdjUMAP_2",
+    feature    = "group_id",
+    pt_outline = 0.3,
+    plot_cols  = grp_cols
+  ) +
+  umap_theme +
+  guides(color = guide_legend(override.aes = list(size = 3))
+```
+
+
+
+
 
