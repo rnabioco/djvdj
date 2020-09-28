@@ -19,16 +19,16 @@ filter_vdj(
 \arguments{
 \item{sobj_in}{Seurat object containing CDR3 sequences}
 
-\item{filt}{Expression to use for filtering object}
+\item{filt}{Condition to use for filtering object}
 
 \item{new_col}{Instead of filtering object create a new column with values
-based on the filtering expression}
+based on filtering condition}
 
-\item{true}{Value to include in new_col when the filtering expression
-evaluates to TRUE}
+\item{true}{Value to use for new_col when filtering condition evaluates to
+TRUE}
 
-\item{false}{Value to include in new_col when the filtering expression
-evaluates to FALSE}
+\item{false}{Value to use for new_col when filtering condition evaluates to
+FALSE}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs. This column
 is used to determine which cells have VDJ data. If the clonotype_col is set
