@@ -681,7 +681,7 @@ so_vdj <- filter_vdj(
   false   = "other"                                   # Value when condition is FALSE
 )
 
-vdj_cols <- c(vdj_cols, "uniq_chains")
+vdj_cols <- c(vdj_cols, "IGK_seq")
 
 so_vdj@meta.data %>%
   as_tibble() %>%

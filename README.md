@@ -217,25 +217,25 @@ so_vdj <- filter_vdj(
   false   = "other"                                   # Value when condition is FALSE
 )
 
-vdj_cols <- c(vdj_cols, "uniq_chains")
+vdj_cols <- c(vdj_cols, "IGK_seq")
 
 so_vdj@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id), n_chains > 2) %>%
   select(all_of(vdj_cols))
-#> # A tibble: 526 x 7
-#>    chain    cdr3               clone_freq clone_prop n_chains Paired uniq_chains
-#>    <chr>    <chr>                   <int>      <dbl>    <int> <chr>  <chr>      
-#>  1 IGH;IGK… CAKRGYSNSLDYW;CQH…          1   0.000262        3 paired IGH_IGK_IGL
-#>  2 IGH;IGH… CARGDYW;CTTWLRLRS…          1   0.000262        4 paired IGH_IGK    
-#>  3 IGH;IGK… CAKPRYYYGSSFYAMDY…          1   0.000262        3 paired IGH_IGK    
-#>  4 IGH;IGK… CARGPYYTNGGAMDYW;…          1   0.000262        3 paired IGH_IGK    
-#>  5 IGH;IGH… CARSYPYFDYW;CARSS…          1   0.000262        4 paired IGH_IGK    
-#>  6 IGH;IGK… CALDSSGFAYW;CQQYW…          1   0.000262        3 paired IGH_IGK    
-#>  7 IGH;IGH… CARHDGLPGAMDYW;CA…          1   0.000262        4 paired IGH_IGK    
-#>  8 IGH;IGH… CAEGSSNWYFDVW;CAR…          1   0.000262        4 paired IGH_IGK    
-#>  9 IGH;IGK… CTSPPYEGYYAMDYW;C…          1   0.000262        3 paired IGH_IGK    
-#> 10 IGH;IGH… CTRLLTGYYFDYW;CAR…          1   0.000262        4 paired IGH_IGK    
+#> # A tibble: 526 x 8
+#>    chain   cdr3        clone_freq clone_prop n_chains Paired uniq_chains IGK_seq
+#>    <chr>   <chr>            <int>      <dbl>    <int> <chr>  <chr>       <chr>  
+#>  1 IGH;IG… CAKRGYSNSL…          1   0.000262        3 paired IGH_IGK_IGL other  
+#>  2 IGH;IG… CARGDYW;CT…          1   0.000262        4 paired IGH_IGK     other  
+#>  3 IGH;IG… CAKPRYYYGS…          1   0.000262        3 paired IGH_IGK     other  
+#>  4 IGH;IG… CARGPYYTNG…          1   0.000262        3 paired IGH_IGK     other  
+#>  5 IGH;IG… CARSYPYFDY…          1   0.000262        4 paired IGH_IGK     other  
+#>  6 IGH;IG… CALDSSGFAY…          1   0.000262        3 paired IGH_IGK     other  
+#>  7 IGH;IG… CARHDGLPGA…          1   0.000262        4 paired IGH_IGK     other  
+#>  8 IGH;IG… CAEGSSNWYF…          1   0.000262        4 paired IGH_IGK     other  
+#>  9 IGH;IG… CTSPPYEGYY…          1   0.000262        3 paired IGH_IGK     other  
+#> 10 IGH;IG… CTRLLTGYYF…          1   0.000262        4 paired IGH_IGK     other  
 #> # … with 516 more rows
 ```
 
