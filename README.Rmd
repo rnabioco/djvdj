@@ -359,9 +359,10 @@ library(djvdj)
 
 # Themes
 text_theme <- theme(
-  legend.text = element_text(size = 10),
-  axis.title  = element_text(size = 12),
-  axis.text   = element_text(size = 10)
+  legend.title = element_text(size = 10),
+  legend.text  = element_text(size = 10),
+  axis.title   = element_text(size = 12),
+  axis.text    = element_text(size = 10)
 )
 
 base_theme <- theme_cowplot() +
@@ -425,6 +426,7 @@ key_gg <- so %>%
     pt_outline = 0.2,
     plot_cols  = get_cols()
   ) +
+  ggtitle("Cell type") +
   guides(color = create_guide()) +
   umap_theme +
   theme(
@@ -432,7 +434,27 @@ key_gg <- so %>%
     legend.title = element_blank()
   )
 
-plot_grid(key_gg, NA)
+clust_gg <- so %>%
+  plot_features(
+    feature    = "seurat_clusters",
+    pt_size    = 0.02,
+    pt_outline = 0.2,
+    plot_cols  = get_cols(22)
+  ) +
+  ggtitle("Cluster") +
+  guides(color = create_guide()) +
+  umap_theme +
+  theme(
+    panel.border = element_blank(),
+    legend.title = element_blank()
+  )
+
+plot_grid(
+  key_gg, clust_gg,
+  rel_widths = c(1, 0.9),
+  align      = "h",
+  axis       = "tb"
+)
 ```
 
 <br>
@@ -472,7 +494,7 @@ Filter to only include cells with paired light and heavy chains.
 ```{r}
 so_filt <- filter_vdj(
   sobj_in = so_vdj,                                              # Seurat object
-  filt    = "IGH" %in% chain && any(c("IGK", "IGL") %in% chain)  # Expression to use for filtering
+  filt    = "IGH" %in% chain && any(c("IGK", "IGL") %in% chain)  # Expression for filtering
 )
 
 so_filt@meta.data %>%
@@ -490,8 +512,8 @@ so_vdj <- filter_vdj(
   sobj_in = so_vdj,                                               # Seurat object
   filt    = "IGH" %in% chain && any(c("IGK", "IGL") %in% chain),  # Condition to use for filtering
   new_col = "Paired",                                             # Name of new column
-  true    = "paired",                                             # Value to use when condition evaluates to TRUE
-  false   = "unpaired"                                            # Value to use when condition evaluates to FALSE
+  true    = "paired",                                             # Value when condition is TRUE
+  false   = "unpaired"                                            # Value when condition is FALSE
 )
 
 vdj_cols <- c(vdj_cols, "Paired")
@@ -573,8 +595,8 @@ so_vdj <- filter_vdj(
   sobj_in = so_vdj,                                # Seurat object
   filt    = length(unique(chain)) < 4,             # Condition to use for filtering
   new_col = "uniq_chains",                         # Name of new column
-  true    = str_c(unique(chain), collapse = "_"),  # Value to use when condition evaluates to TRUE
-  false   = "other"                                # Value to use when condition evaluates to FALSE
+  true    = str_c(unique(chain), collapse = "_"),  # Value when condition is TRUE
+  false   = "other"                                # Value when condition is FALSE
 )
 
 vdj_cols <- c(vdj_cols, "uniq_chains")
@@ -655,8 +677,8 @@ so_vdj <- filter_vdj(
   sobj_in = so_vdj,                                   # Seurat object
   filt    = "CQQSNSWPYTF" %in% cdr3[chain == "IGK"],  # Condition to use for filtering
   new_col = "IGK_seq",                                # Name of new column
-  true    = "CQQSNSWPYTF",                            # Value to use when condition evaluates to TRUE
-  false   = "other"                                   # Value to use when condition evaluates to FALSE
+  true    = "CQQSNSWPYTF",                            # Value when condition is TRUE
+  false   = "other"                                   # Value when condition is FALSE
 )
 
 vdj_cols <- c(vdj_cols, "uniq_chains")
@@ -779,7 +801,7 @@ plot_grid(
 
 <br>
 
-Calculate repertoire overlap with `calc_jaccard`. A reference cell label can be given to calculate Jaccard index for the reference vs all other cell groups. If no reference is given overlap is calculated for all combinations of cell labels.
+Calculate repertoire overlap with `calc_jaccard`. A reference cell label can be given to calculate Jaccard index for the reference vs all other cell groups. If no reference is given overlap is calculated for all combinations of cell labels. Using the `return_seurat` argument, `calc_jaccard` can also output a matrix for plotting.
 
 ```{r}
 so_vdj <- calc_jaccard(
@@ -792,6 +814,7 @@ so_vdj <- calc_jaccard(
 ```
 
 ```{r "jaccard_umap", fig.width = 12.5, fig.height = 5, echo = FALSE}
+# Jaccard UMAP
 j_gg <- so_vdj %>%
   plot_features(
     feature    = "x8_jaccard",
@@ -802,9 +825,57 @@ j_gg <- so_vdj %>%
   ) +
   ggtitle("Repertoire Overlap") +
   guides(color = guide_colorbar(barwidth = unit(5, "pt"))) +
-  umap_theme
+  umap_theme +
+  theme(legend.text = element_text(size = 8))
 
-plot_grid(j_gg, NULL)
+# Matrix for heatmap
+j_mat <- calc_jaccard(
+  sobj_in       = so_vdj,
+  clonotype_col = "clonotype_id",
+  cluster_col   = "seurat_clusters",
+  prefix        = "x",
+  return_seurat = FALSE
+)
+
+heat_data <- j_mat %>%
+  as_tibble(rownames = "Var1") %>%
+  pivot_longer(cols = -Var1, names_to = "Var2", values_to = "jaccard") %>%
+  mutate(
+    jaccard = ifelse(jaccard == 1, NA, jaccard),
+    across(
+      all_of(c("Var1", "Var2")),
+      ~ str_extract(.x, "(?<=x)[0-9]+")
+    )
+  ) %>%
+  rowwise() %>%  
+  mutate(key = str_c(sort(c(Var1, Var2)), collapse = "_")) %>%
+  group_by(key) %>%
+  mutate(jaccard = ifelse(row_number() == 2, NA, jaccard))
+
+# Jaccard heatmap  
+j_heat <- heat_data %>%
+  ggplot(aes(Var1, rev(Var2), fill = jaccard)) +
+  geom_tile(size = 1, color = "white") +
+  scale_fill_gradient(
+    low      = "grey90",
+    high     = get_cols()[2],
+    na.value = "white"
+  ) +
+  guides(fill = guide_colorbar(barwidth = unit(5, "pt"))) +
+  base_theme +
+  theme(
+    legend.text = element_text(size = 8),
+    axis.title  = element_blank(),
+    axis.line   = element_blank(),
+    axis.ticks  = element_blank()
+  )
+
+# Final figure
+plot_grid(
+  j_gg, j_heat,
+  align = "h",
+  axis  = "tb"
+  )
 ```
 
 ```{r "enclone_test", eval = FALSE, echo = FALSE}

@@ -98,7 +98,7 @@ Filter to only include cells with paired light and heavy chains.
 ``` r
 so_filt <- filter_vdj(
   sobj_in = so_vdj,                                              # Seurat object
-  filt    = "IGH" %in% chain && any(c("IGK", "IGL") %in% chain)  # Expression to use for filtering
+  filt    = "IGH" %in% chain && any(c("IGK", "IGL") %in% chain)  # Expression for filtering
 )
 
 so_filt@meta.data %>%
@@ -133,8 +133,8 @@ so_vdj <- filter_vdj(
   sobj_in = so_vdj,                                               # Seurat object
   filt    = "IGH" %in% chain && any(c("IGK", "IGL") %in% chain),  # Condition to use for filtering
   new_col = "Paired",                                             # Name of new column
-  true    = "paired",                                             # Value to use when condition evaluates to TRUE
-  false   = "unpaired"                                            # Value to use when condition evaluates to FALSE
+  true    = "paired",                                             # Value when condition is TRUE
+  false   = "unpaired"                                            # Value when condition is FALSE
 )
 
 vdj_cols <- c(vdj_cols, "Paired")
@@ -173,8 +173,8 @@ so_vdj <- filter_vdj(
   sobj_in = so_vdj,                                # Seurat object
   filt    = length(unique(chain)) < 4,             # Condition to use for filtering
   new_col = "uniq_chains",                         # Name of new column
-  true    = str_c(unique(chain), collapse = "_"),  # Value to use when condition evaluates to TRUE
-  false   = "other"                                # Value to use when condition evaluates to FALSE
+  true    = str_c(unique(chain), collapse = "_"),  # Value when condition is TRUE
+  false   = "other"                                # Value when condition is FALSE
 )
 
 vdj_cols <- c(vdj_cols, "uniq_chains")
@@ -213,8 +213,8 @@ so_vdj <- filter_vdj(
   sobj_in = so_vdj,                                   # Seurat object
   filt    = "CQQSNSWPYTF" %in% cdr3[chain == "IGK"],  # Condition to use for filtering
   new_col = "IGK_seq",                                # Name of new column
-  true    = "CQQSNSWPYTF",                            # Value to use when condition evaluates to TRUE
-  false   = "other"                                   # Value to use when condition evaluates to FALSE
+  true    = "CQQSNSWPYTF",                            # Value when condition is TRUE
+  false   = "other"                                   # Value when condition is FALSE
 )
 
 vdj_cols <- c(vdj_cols, "uniq_chains")
@@ -269,7 +269,8 @@ so_vdj <- calc_diversity(
 Calculate repertoire overlap with `calc_jaccard`. A reference cell label
 can be given to calculate Jaccard index for the reference vs all other
 cell groups. If no reference is given overlap is calculated for all
-combinations of cell labels.
+combinations of cell labels. Using the `return_seurat` argument,
+`calc_jaccard` can also output a matrix for plotting.
 
 ``` r
 so_vdj <- calc_jaccard(
