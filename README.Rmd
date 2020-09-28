@@ -502,7 +502,7 @@ so_vdj@meta.data %>%
   select(all_of(vdj_cols))
 ```
 
-```{r "pair_umap", fig.width = 7, fig.height = 5, echo = FALSE}
+```{r "pair_umap", fig.width = 12, fig.height = 5, echo = FALSE}
 # Plot colors
 pairs_cols <- so_vdj@meta.data %>%
   pull(Paired) %>%
@@ -549,10 +549,15 @@ pairs_bars <- so_vdj %>%
     axis.title.x    = element_blank()
   )
 
+pairs_bars <- plot_grid(
+  pairs_bars, NULL,
+  rel_widths = c(0.4, 1)
+)
+
 # Final figure
 plot_grid(
   pairs_umap, pairs_bars,
-  rel_widths = c(1, 0.4),
+  rel_widths = c(0.65, 1),
   nrow  = 1,
   align = "h",
   axis  = "tb"
@@ -580,7 +585,7 @@ so_vdj@meta.data %>%
   select(all_of(vdj_cols))
 ```
 
-```{r "chains_umap", fig.width = 7, fig.height = 5, echo = FALSE}
+```{r "chains_umap", fig.width = 12, fig.height = 5, echo = FALSE}
 # Plot colors
 chains_cols <- so_vdj@meta.data %>%
   pull(uniq_chains) %>%
@@ -625,10 +630,15 @@ chains_bars <- so_vdj %>%
     axis.title.x    = element_blank()
   )
 
+chains_bars <- plot_grid(
+  chains_bars, NULL,
+  rel_widths = c(0.4, 1)
+)
+
 # Final figure
 plot_grid(
   chains_umap, chains_bars,
-  rel_widths = c(1, 0.4),
+  rel_widths = c(0.65, 1),
   nrow  = 1,
   align = "h",
   axis  = "tb"
@@ -657,7 +667,7 @@ so_vdj@meta.data %>%
   select(all_of(vdj_cols))
 ```
 
-```{r "seq_umap", fig.width = 7, fig.height = 5, echo = FALSE}
+```{r "seq_umap", fig.width = 12, fig.height = 5, echo = FALSE}
 # Plot colors
 seq_cols <- so_vdj@meta.data %>%
   pull(IGK_seq) %>%
@@ -702,10 +712,15 @@ seq_bars <- so_vdj %>%
     axis.title.x    = element_blank()
   )
 
+seq_bars <- plot_grid(
+  seq_bars, NULL,
+  rel_widths = c(0.4, 1)
+)
+
 # Final figure
 plot_grid(
   seq_umap, seq_bars,
-  rel_widths = c(1, 0.4),
+  rel_widths = c(0.65, 1),
   nrow  = 1,
   align = "h",
   axis  = "tb"
@@ -789,7 +804,7 @@ j_gg <- so_vdj %>%
   guides(color = guide_colorbar(barwidth = unit(5, "pt"))) +
   umap_theme
 
-plot_grid(j_gg, NA)
+plot_grid(j_gg, NULL)
 ```
 
 ```{r "enclone_test", eval = FALSE, echo = FALSE}
