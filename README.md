@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# djvdj <img src="man/figures/djvdj-logo.png" align="right" height="139">
+# djvdj <img src="man/figures/djvdj-logo.png" align="right" height="145">
 
 <!-- badges: start -->
 
@@ -14,7 +14,7 @@ alongside single-cell VDJ sequencing data.
 
 <br>
 
-### Installation
+## Installation
 
 You can install the development version of djvdj from
 [GitHub](https://github.com/rnabioco/djvdj) with:
@@ -30,9 +30,9 @@ devtools::install_github("rnabioco/djvdj")
 
 Splenocytes from MD4 transgenic mice which have monoclonal B cells that
 all bind hen egg lysozyme (HEL) antigen were mixed with splenocytes from
-C57BL/6 mice at a 1:1 ratio. The cells were stained with the HEL
+C57BL/6 mice at a 1:20 ratio. The cells were stained with the HEL
 AVID-tag and sequencing libraries were prepared to capture gene
-expression, B/T cell receptor sequences, and AVID-tag signals using the
+expression, B cell receptor sequences, and AVID-tag signals using the
 10x Genomics 5’ immune profiling kit.
 
 <img src="man/figures/README-rna_umap-1.png" width="100%" />
@@ -44,7 +44,8 @@ expression, B/T cell receptor sequences, and AVID-tag signals using the
 `import_vdj` takes the output files from `cellranger vdj` and adds
 clonotype information to the meta.data for an existing Seurat object.
 For cells that do not have any VDJ sequencing data, NAs will be included
-in the meta.data.
+in the meta.data. The `filter_contigs` argument will only include chains
+that have at least one contig that is full length and productive.
 
 ``` r
 so_vdj <- import_vdj(
@@ -58,7 +59,7 @@ so_vdj <- import_vdj(
 vdj_cols <- c(
   "chain",      "cdr3",
   "clone_freq", "clone_prop",
-   "n_chains"
+  "n_chains"
 )
 
 so_vdj@meta.data %>%
@@ -92,19 +93,19 @@ will be expanded based on the delimiter “;”. The columns that are
 expanded for filtering can be specified with the `split_cols` argument.
 By default filtering is only performed on cells that include VDJ data.
 
-Filter to only include cells with both IGH and IGK chains
+Filter to only include cells with paired light and heavy chains.
 
 ``` r
 so_filt <- filter_vdj(
-  sobj_in = so_vdj,                           # Seurat object
-  filt    = all(c("IGH", "IGK") %in% chain),  # Expression to use for filtering
+  sobj_in = so_vdj,                                              # Seurat object
+  filt    = "IGH" %in% chain && any(c("IGK", "IGL") %in% chain)  # Expression to use for filtering
 )
 
 so_filt@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols))
-#> # A tibble: 3,174 x 5
+#> # A tibble: 3,353 x 5
 #>    chain       cdr3                               clone_freq clone_prop n_chains
 #>    <chr>       <chr>                                   <int>      <dbl>    <int>
 #>  1 IGH;IGK     CVKGYDYDWYFDVW;CLQYDNLWTF                   1   0.000262        2
@@ -117,120 +118,128 @@ so_filt@meta.data %>%
 #>  8 IGH;IGK     CARSYGYAMDYW;CWQGTHFPYTF                    1   0.000262        2
 #>  9 IGH;IGK     CARWVYGSAWFAYW;CMQHLEYPFTF                  1   0.000262        2
 #> 10 IGH;IGK     CARSHGYDFYAMDYW;CQHFWGTPRTF                 1   0.000262        2
-#> # … with 3,164 more rows
+#> # … with 3,343 more rows
 ```
 
 <br>
 
-Filter for cells with an IGL chain and at least two cells or \>1% that
-share the clonotype
+Instead of filtering, `filter_vdj` can also add new cell labels to the
+object meta.data using the `new_col` argument. Here a new column is
+added indicating whether each cell has a paired heavy and light chain.
+This is useful for plotting.
 
 ``` r
-so_filt <- so_vdj %>%
-  filter_vdj(chain == "IGL" && clone_freq > 1 || clone_prop > 0.01)
-
-so_filt@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols))
-#> # A tibble: 133 x 5
-#>    chain cdr3        clone_freq clone_prop n_chains
-#>    <chr> <chr>            <int>      <dbl>    <int>
-#>  1 IGK   CQQSNSWPYTF        121     0.0317        1
-#>  2 IGK   CQQSNSWPYTF        121     0.0317        1
-#>  3 IGK   CQQSNSWPYTF        121     0.0317        1
-#>  4 IGK   CQQSNSWPYTF        121     0.0317        1
-#>  5 IGK   CQQSNSWPYTF        121     0.0317        1
-#>  6 IGK   CQQSNSWPYTF        121     0.0317        1
-#>  7 IGK   CQQSNSWPYTF        121     0.0317        1
-#>  8 IGK   CQQSNSWPYTF        121     0.0317        1
-#>  9 IGK   CQQSNSWPYTF        121     0.0317        1
-#> 10 IGK   CQQSNSWPYTF        121     0.0317        1
-#> # … with 123 more rows
-```
-
-<br>
-
-Other examples
-
-``` r
-# Cells with CDR3 amino acid sequence of 'CQQSNSWPYTF'
-so_filt <- so_vdj %>%
-  filter_vdj(cdr3 == 'CQQSNSWPYTF')
-
-# Cells with IGH, IGK, and IGL chains
-so_filt <- so_vdj %>%
-  filter_vdj(all(c("IGH", "IGK", "IGL") %in% chain))
-
-# Cells with two IGK chains and no other chains and >1000 RNA counts
-so_filt <- so_vdj %>%
-  filter_vdj(all(chain == "IGK") && n_chains == 2 && nCount_RNA > 1000)
-
-# Cells with at least two unique chains and no IGH chain
-so_filt <- so_vdj %>%
-  filter_vdj(all(chain != "IGH") && length(unique(chain)) > 1)
-```
-
-<br>
-
-### Clustering
-
-Cells can be clustered based on the Levenshtein distance between CDR3
-sequences using `cluster_vdj`. The `use_chains` argument can be used to
-select the chains that should be used when performing distance
-calculations.
-
-``` r
-so_vdj <- cluster_vdj(
-  sobj_in    = so_vdj,            # Seurat object
-  cdr3_col   = "cdr3",            # meta.data column containing CDR3 sequences
-  resolution = params$clust_res,  # Clustering resolution
-  use_chains = NULL,              # Chains to use for distance calculations
-  prefix     = "vdj_"             # Prefix to add to new graph
+so_vdj <- filter_vdj(
+  sobj_in = so_vdj,                                               # Seurat object
+  filt    = "IGH" %in% chain && any(c("IGK", "IGL") %in% chain),  # Condition to use for filtering
+  new_col = "Paired",                                             # Name of new column
+  true    = "paired",                                             # Value to use when condition evaluates to TRUE
+  false   = "unpaired"                                            # Value to use when condition evaluates to FALSE
 )
-#> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
-#> 
-#> Number of nodes: 3820
-#> Number of edges: 148477
-#> 
-#> Running Louvain algorithm...
-#> Maximum modularity in 10 random starts: 0.9451
-#> Number of communities: 10
-#> Elapsed time: 0 seconds
+
+vdj_cols <- c(vdj_cols, "Paired")
 
 so_vdj@meta.data %>%
   as_tibble() %>%
-  select(all_of(vdj_cols), seurat_clusters)
-#> # A tibble: 7,137 x 6
-#>    chain   cdr3                   clone_freq clone_prop n_chains seurat_clusters
-#>    <chr>   <chr>                       <int>      <dbl>    <int> <fct>          
-#>  1 IGH;IGK CVKGYDYDWYFDVW;CLQYDN…          1   0.000262        2 2              
-#>  2 <NA>    <NA>                           NA  NA              NA <NA>           
-#>  3 IGH;IGK CARGRLGYAMDYW;CQHFWST…          1   0.000262        2 0              
-#>  4 <NA>    <NA>                           NA  NA              NA <NA>           
-#>  5 <NA>    <NA>                           NA  NA              NA <NA>           
-#>  6 <NA>    <NA>                           NA  NA              NA <NA>           
-#>  7 <NA>    <NA>                           NA  NA              NA <NA>           
-#>  8 IGH;IGK CTVSYTKDWYFDVW;CAQNLE…          1   0.000262        2 0              
-#>  9 IGH;IGK CARSYDYDPLYYAMDYW;CLQ…          1   0.000262        2 2              
-#> 10 IGH;IGK CARSRLAYW;CLQYASSPFTF           1   0.000262        2 0              
-#> # … with 7,127 more rows
+  filter(!is.na(clonotype_id)) %>%
+  select(all_of(vdj_cols))
+#> # A tibble: 3,820 x 6
+#>    chain      cdr3                        clone_freq clone_prop n_chains Paired 
+#>    <chr>      <chr>                            <int>      <dbl>    <int> <chr>  
+#>  1 IGH;IGK    CVKGYDYDWYFDVW;CLQYDNLWTF            1   0.000262        2 paired 
+#>  2 IGH;IGK    CARGRLGYAMDYW;CQHFWSTPWTF            1   0.000262        2 paired 
+#>  3 IGH;IGK    CTVSYTKDWYFDVW;CAQNLELPLTF           1   0.000262        2 paired 
+#>  4 IGH;IGK    CARSYDYDPLYYAMDYW;CLQSDNLP…          1   0.000262        2 paired 
+#>  5 IGH;IGK    CARSRLAYW;CLQYASSPFTF                1   0.000262        2 paired 
+#>  6 IGH;IGK;I… CAKRGYSNSLDYW;CQHFWSTPYTF;…          1   0.000262        3 paired 
+#>  7 IGK        CQQWSSNPLTF                          3   0.000785        1 unpair…
+#>  8 IGH;IGK    CANPITTAEGWYFDVW;CLQHGESPY…          1   0.000262        2 paired 
+#>  9 IGH;IGK    CARSYGYAMDYW;CWQGTHFPYTF             1   0.000262        2 paired 
+#> 10 IGH;IGK    CARWVYGSAWFAYW;CMQHLEYPFTF           1   0.000262        2 paired 
+#> # … with 3,810 more rows
 ```
+
+<img src="man/figures/README-pair_umap-1.png" width="100%" />
 
 <br>
 
-The Seurat `RunUMAP` function will not run with the hybrid VDJ object,
-but the wrapper function `run_umap_vdj` can be used.
+More complicated statements referring to meta.data columns can be used
+for the `filt`, `true`, and `false` arguments. For more detailed
+analysis of the chains detected for each cell, a new cell label can be
+created for only the unique chains.
 
 ``` r
-so_vdj <- run_umap_vdj(
-  sobj_in   = so_vdj,      # Seurat object
-  umap_key  = "vdjUMAP_",  # Prefix for UMAP columns
-  vdj_graph = "vdj_snn"    # Name of VDJ graph to use for UMAP
+so_vdj <- filter_vdj(
+  sobj_in = so_vdj,                                # Seurat object
+  filt    = length(unique(chain)) < 4,             # Condition to use for filtering
+  new_col = "uniq_chains",                         # Name of new column
+  true    = str_c(unique(chain), collapse = "_"),  # Value to use when condition evaluates to TRUE
+  false   = "other"                                # Value to use when condition evaluates to FALSE
 )
+
+vdj_cols <- c(vdj_cols, "uniq_chains")
+
+so_vdj@meta.data %>%
+  as_tibble() %>%
+  filter(!is.na(clonotype_id), n_chains > 2) %>%
+  select(all_of(vdj_cols))
+#> # A tibble: 526 x 7
+#>    chain    cdr3               clone_freq clone_prop n_chains Paired uniq_chains
+#>    <chr>    <chr>                   <int>      <dbl>    <int> <chr>  <chr>      
+#>  1 IGH;IGK… CAKRGYSNSLDYW;CQH…          1   0.000262        3 paired IGH_IGK_IGL
+#>  2 IGH;IGH… CARGDYW;CTTWLRLRS…          1   0.000262        4 paired IGH_IGK    
+#>  3 IGH;IGK… CAKPRYYYGSSFYAMDY…          1   0.000262        3 paired IGH_IGK    
+#>  4 IGH;IGK… CARGPYYTNGGAMDYW;…          1   0.000262        3 paired IGH_IGK    
+#>  5 IGH;IGH… CARSYPYFDYW;CARSS…          1   0.000262        4 paired IGH_IGK    
+#>  6 IGH;IGK… CALDSSGFAYW;CQQYW…          1   0.000262        3 paired IGH_IGK    
+#>  7 IGH;IGH… CARHDGLPGAMDYW;CA…          1   0.000262        4 paired IGH_IGK    
+#>  8 IGH;IGH… CAEGSSNWYFDVW;CAR…          1   0.000262        4 paired IGH_IGK    
+#>  9 IGH;IGK… CTSPPYEGYYAMDYW;C…          1   0.000262        3 paired IGH_IGK    
+#> 10 IGH;IGH… CTRLLTGYYFDYW;CAR…          1   0.000262        4 paired IGH_IGK    
+#> # … with 516 more rows
 ```
 
-<img src="man/figures/README-vdj_umap-1.png" width="100%" />
+<img src="man/figures/README-chains_umap-1.png" width="100%" />
+
+<br>
+
+MD4 B cells are expected to have IGK chains with the CDR3 amino acid
+sequence CQQSNSWPYTF. Using `filter_vdj` we can visualize which cells
+have this sequence.
+
+``` r
+# Add new cell labels to meta.data
+so_vdj <- filter_vdj(
+  sobj_in = so_vdj,                                   # Seurat object
+  filt    = "CQQSNSWPYTF" %in% cdr3[chain == "IGK"],  # Condition to use for filtering
+  new_col = "IGK_seq",                                # Name of new column
+  true    = "CQQSNSWPYTF",                            # Value to use when condition evaluates to TRUE
+  false   = "other"                                   # Value to use when condition evaluates to FALSE
+)
+
+vdj_cols <- c(vdj_cols, "uniq_chains")
+
+so_vdj@meta.data %>%
+  as_tibble() %>%
+  filter(!is.na(clonotype_id), n_chains > 2) %>%
+  select(all_of(vdj_cols))
+#> # A tibble: 526 x 7
+#>    chain    cdr3               clone_freq clone_prop n_chains Paired uniq_chains
+#>    <chr>    <chr>                   <int>      <dbl>    <int> <chr>  <chr>      
+#>  1 IGH;IGK… CAKRGYSNSLDYW;CQH…          1   0.000262        3 paired IGH_IGK_IGL
+#>  2 IGH;IGH… CARGDYW;CTTWLRLRS…          1   0.000262        4 paired IGH_IGK    
+#>  3 IGH;IGK… CAKPRYYYGSSFYAMDY…          1   0.000262        3 paired IGH_IGK    
+#>  4 IGH;IGK… CARGPYYTNGGAMDYW;…          1   0.000262        3 paired IGH_IGK    
+#>  5 IGH;IGH… CARSYPYFDYW;CARSS…          1   0.000262        4 paired IGH_IGK    
+#>  6 IGH;IGK… CALDSSGFAYW;CQQYW…          1   0.000262        3 paired IGH_IGK    
+#>  7 IGH;IGH… CARHDGLPGAMDYW;CA…          1   0.000262        4 paired IGH_IGK    
+#>  8 IGH;IGH… CAEGSSNWYFDVW;CAR…          1   0.000262        4 paired IGH_IGK    
+#>  9 IGH;IGK… CTSPPYEGYYAMDYW;C…          1   0.000262        3 paired IGH_IGK    
+#> 10 IGH;IGH… CTRLLTGYYFDYW;CAR…          1   0.000262        4 paired IGH_IGK    
+#> # … with 516 more rows
+```
+
+<img src="man/figures/README-seq_umap-1.png" width="100%" />
 
 <br>
 
@@ -253,7 +262,7 @@ so_vdj <- calc_diversity(
 )
 ```
 
-<img src="man/figures/README-calc_diversity-1.png" width="100%" />
+<img src="man/figures/README-div_umap-1.png" width="100%" />
 
 <br>
 
@@ -267,9 +276,9 @@ so_vdj <- calc_jaccard(
   sobj_in       = so_vdj,             # Seurat object
   clonotype_col = "clonotype_id",     # meta.data column containing clonotype ids
   cluster_col   = "seurat_clusters",  # meta.data column containing cell labels
-  ref_cluster   = NULL,               # Cell label to use as a reference for Jaccard index
-  prefix        = "x"                 # Prefix to add to new meta.data columns 
+  prefix        = "x",                # Prefix to add to new meta.data columns 
+  return_seurat = TRUE                # Return Seurat object with results added to meta.data
 )
 ```
 
-<img src="man/figures/README-calc_jaccard-1.png" width="100%" />
+<img src="man/figures/README-jaccard_umap-1.png" width="100%" />
