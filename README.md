@@ -266,10 +266,8 @@ so_vdj <- calc_diversity(
 
 <br>
 
-Calculate repertoire overlap with `calc_jaccard`. A reference cell label
-can be given to calculate Jaccard index for the reference vs all other
-cell groups. If no reference is given overlap is calculated for all
-combinations of cell labels. Using the `return_seurat` argument,
+Calculate repertoire overlap with `calc_jaccard` for the cell groups
+present in the `cluster_col`. Using the `return_seurat` argument,
 `calc_jaccard` can also output a matrix for plotting.
 
 ``` r
