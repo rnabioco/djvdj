@@ -685,7 +685,7 @@ vdj_cols <- c(vdj_cols, "IGK_seq")
 
 so_vdj@meta.data %>%
   as_tibble() %>%
-  filter(!is.na(clonotype_id), n_chains > 2) %>%
+  filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols))
 ```
 

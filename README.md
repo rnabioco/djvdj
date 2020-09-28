@@ -221,22 +221,22 @@ vdj_cols <- c(vdj_cols, "IGK_seq")
 
 so_vdj@meta.data %>%
   as_tibble() %>%
-  filter(!is.na(clonotype_id), n_chains > 2) %>%
+  filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols))
-#> # A tibble: 526 x 8
+#> # A tibble: 3,820 x 8
 #>    chain   cdr3        clone_freq clone_prop n_chains Paired uniq_chains IGK_seq
 #>    <chr>   <chr>            <int>      <dbl>    <int> <chr>  <chr>       <chr>  
-#>  1 IGH;IG… CAKRGYSNSL…          1   0.000262        3 paired IGH_IGK_IGL other  
-#>  2 IGH;IG… CARGDYW;CT…          1   0.000262        4 paired IGH_IGK     other  
-#>  3 IGH;IG… CAKPRYYYGS…          1   0.000262        3 paired IGH_IGK     other  
-#>  4 IGH;IG… CARGPYYTNG…          1   0.000262        3 paired IGH_IGK     other  
-#>  5 IGH;IG… CARSYPYFDY…          1   0.000262        4 paired IGH_IGK     other  
-#>  6 IGH;IG… CALDSSGFAY…          1   0.000262        3 paired IGH_IGK     other  
-#>  7 IGH;IG… CARHDGLPGA…          1   0.000262        4 paired IGH_IGK     other  
-#>  8 IGH;IG… CAEGSSNWYF…          1   0.000262        4 paired IGH_IGK     other  
-#>  9 IGH;IG… CTSPPYEGYY…          1   0.000262        3 paired IGH_IGK     other  
-#> 10 IGH;IG… CTRLLTGYYF…          1   0.000262        4 paired IGH_IGK     other  
-#> # … with 516 more rows
+#>  1 IGH;IGK CVKGYDYDWY…          1   0.000262        2 paired IGH_IGK     other  
+#>  2 IGH;IGK CARGRLGYAM…          1   0.000262        2 paired IGH_IGK     other  
+#>  3 IGH;IGK CTVSYTKDWY…          1   0.000262        2 paired IGH_IGK     other  
+#>  4 IGH;IGK CARSYDYDPL…          1   0.000262        2 paired IGH_IGK     other  
+#>  5 IGH;IGK CARSRLAYW;…          1   0.000262        2 paired IGH_IGK     other  
+#>  6 IGH;IG… CAKRGYSNSL…          1   0.000262        3 paired IGH_IGK_IGL other  
+#>  7 IGK     CQQWSSNPLTF          3   0.000785        1 unpai… IGK         other  
+#>  8 IGH;IGK CANPITTAEG…          1   0.000262        2 paired IGH_IGK     other  
+#>  9 IGH;IGK CARSYGYAMD…          1   0.000262        2 paired IGH_IGK     other  
+#> 10 IGH;IGK CARWVYGSAW…          1   0.000262        2 paired IGH_IGK     other  
+#> # … with 3,810 more rows
 ```
 
 <img src="man/figures/README-seq_umap-1.png" width="100%" />
