@@ -512,7 +512,10 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
   if (!is.null(new_col)) {
     meta_df <- dplyr::mutate(
       meta_df,
-      !!dplyr::sym(new_col) := dplyr::if_else(.data$.KEEP, true = {{true}}, false = {{false}})
+      !!dplyr::sym(new_col) := dplyr::ifelse(
+        .data$.KEEP,
+        yes = {{true}},
+        no  = {{false}})
     )
 
     if (!is.null(clonotype_col)) {
