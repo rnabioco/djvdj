@@ -15,10 +15,10 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   count_cols <- c("reads", "umis")
 
   split_cols <- c(
-    "v_gene",  "d_gene",
-    "j_gene",  "c_gene",
-    "chain",   "cdr3",
-    "cdr3_nt", count_cols,
+    "v_gene",     "d_gene",
+    "j_gene",     "c_gene",
+    "chain",      "cdr3",
+    "cdr3_nt",    count_cols,
     "productive", "full_length"
   )
 
@@ -96,351 +96,9 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 }
 
 
-#' Calculate receptor diversity (inverse Simpson Index)
-#'
-#' @param sobj_in Seurat object
-#' @param clonotype_col meta.data column containing clonotype ids
-#' @param cluster_col meta.data column containing cluster ids used for
-#' calculating receptor diversity. If cluster_col is omitted, diversity index
-#' will be calculated for all clonotypes.
-#' @param prefix Prefix to add to new meta.data columns
-#' @return Seurat object with inverse Simpson index added to meta.data
-#' @export
-calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
-                           cluster_col = NULL, prefix = "") {
-
-  # meta.data
-  vdj_cols      <- clonotype_col
-  clonotype_col <- dplyr::sym(clonotype_col)
-  meta_df       <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
-  vdj_df        <- dplyr::filter(meta_df, !is.na(!!clonotype_col))
-
-  # Count clonotypes
-  if (!is.null(cluster_col)) {
-    vdj_cols    <- c(cluster_col, vdj_cols)
-    cluster_col <- dplyr::sym(cluster_col)
-    vdj_df      <- dplyr::group_by(vdj_df, !!cluster_col)
-  }
-
-  vdj_df <- dplyr::group_by(vdj_df, !!clonotype_col, .add = TRUE)
-
-  vdj_df <- dplyr::summarize(
-    .data   = vdj_df,
-    num     = dplyr::n_distinct(.data$.cell_id),
-    .groups = "drop"
-  )
-
-  # Calculate diversity
-  if (!is.null(cluster_col)) {
-    vdj_df <- dplyr::group_by(vdj_df, !!cluster_col)
-  }
-
-  div_col <- stringr::str_c(prefix, "diversity")
-
-  vdj_df <- dplyr::mutate(
-    vdj_df,
-    frac     = .data$num / sum(.data$num),
-    sum_frac = sum(.data$frac ^ 2),
-
-    !!dplyr::sym(div_col) := 1 - .data$sum_frac
-    # !!dplyr::sym(div_col) := 1 / sum_frac
-  )
-
-  vdj_df <- dplyr::select(vdj_df, all_of(c(vdj_cols, div_col)))
-
-  # Add resuts to meta.data
-  meta_df <- dplyr::left_join(meta_df, vdj_df, by = vdj_cols)
-  meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
-  meta_df <- as.data.frame(meta_df)
-
-  res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
-
-  res
-}
-
-
-#' Calculate Jaccard index for cell identities
-#'
-#' @param sobj_in Seurat object
-#' @param clonotype_col meta.data column containing clonotype ids
-#' @param cluster_col meta.data column containing cell clusters
-#' @param prefix Prefix to add to new meta.data columns
-#' @param return_seurat Return a Seurat object. If set to FALSE, a matrix is
-#' returned
-#' @return Seurat object with Jaccard index added to meta.data
-#' @export
-calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
-                         prefix = "", return_seurat = TRUE) {
-
-  # Helper to calculate jaccard index
-  calc_jidx <- function(df_in, comparison, ctype_col) {
-
-    if (length(comparison) != 2) {
-      stop("comparison must be a character vector with two column names")
-    }
-
-    if (length(unique(df_in[, ctype_col])) != length(df_in[, ctype_col])) {
-      stop("duplicate clonotype IDs are present")
-    }
-
-    uniq_vars <- unique(comparison)
-
-    if (length(uniq_vars) == 1) {
-      dup_var       <- stringr::str_c(uniq_vars, "_dup")
-      comparison[3] <- dup_var
-      dup_var       <- dplyr::sym(dup_var)
-      uniq_vars     <- dplyr::sym(uniq_vars)
-
-      df_in <- dplyr::mutate(df_in, !!dup_var := !!uniq_vars)
-    }
-
-    row_sums  <- dplyr::select(df_in, dplyr::all_of(c(ctype_col, comparison)))
-    ctype_col <- dplyr::sym(ctype_col)
-    row_sums  <- tidyr::pivot_longer(row_sums, cols = -!!ctype_col)
-    row_sums  <- dplyr::group_by(row_sums, !!ctype_col)
-
-    row_sums <- dplyr::summarize(
-      row_sums,
-      row_sum = sum(.data$value),
-      .groups = "drop"
-    )
-
-    row_sums <- row_sums$row_sum
-
-    a     <- length(row_sums[row_sums == 2])      # Intersection
-    a_b_c <- length(row_sums[row_sums == 1]) + a  # Union
-
-    jaccard <- a / a_b_c
-
-    res <- tibble::tibble(
-      Var1 = comparison[1],
-      Var2 = comparison[2],
-      jaccard
-    )
-
-    res
-  }
-
-  # Fetch clonotypes and cell identities
-  vdj_meta        <- Seurat::FetchData(sobj_in, c(clonotype_col, cluster_col))
-  vdj_meta        <- dplyr::rename(vdj_meta, idents = cluster_col)
-  vdj_meta$idents <- as.character(vdj_meta$idents)
-
-  uniq_idents <- unique(vdj_meta$idents)
-  uniq_idents <- stats::na.omit(uniq_idents)
-  uniq_idents <- sort(uniq_idents)
-
-  # Create data.frame for calculating Jaccard index
-  # Use 1's and 0's to indicate if a clonotype is present in a cluster
-  vdj_meta <- dplyr::filter(vdj_meta, !is.na(!!dplyr::sym(clonotype_col)))
-  j_df     <- dplyr::mutate(vdj_meta, num = 1)
-
-  j_df <- tidyr::pivot_wider(
-    j_df,
-    names_from  = "idents",
-    values_from = "num",
-    values_fn   = list
-  )
-
-  j_df <- dplyr::mutate(j_df, dplyr::across(
-    dplyr::all_of(uniq_idents),
-    ~ purrr::map(.x, unique)
-  ))
-
-  j_df <- tidyr::unnest(j_df, cols = dplyr::all_of(uniq_idents))
-
-  j_df <- dplyr::mutate(j_df, dplyr::across(
-    dplyr::all_of(uniq_idents),
-    ~ replace_na(.x, 0)
-  ))
-
-  j_df <- dplyr::arrange(j_df, !!sym(clonotype_col))
-  j_df <- select(j_df, all_of(c(clonotype_col, uniq_idents)))
-
-  # Create data.frame of comparisons
-  comps <- expand.grid(
-    uniq_idents, uniq_idents,
-    stringsAsFactors = F
-  )
-
-  comps <- dplyr::mutate(comps, comp = map2(Var1, Var2, ~ sort(c(.x, .y))))
-  comps <- dplyr::select(comps, .data$comp)
-  comps <- unique(comps)
-
-  Var1 <- purrr::map_chr(comps$comp, ~ .x[1])
-  Var2 <- purrr::map_chr(comps$comp, ~ .x[2])
-
-  # Calculate Jaccard index for comparisons
-  res <- purrr::map2_dfr(
-    Var1, Var2,
-    ~ calc_jidx(j_df, c(.x, .y), ctype_col = clonotype_col)
-  )
-
-  res_i <- dplyr::rename(res, Var1 = Var2, Var2 = Var1)
-  res   <- dplyr::bind_rows(res, res_i)
-  res   <- unique(res)
-
-  res <- dplyr::mutate(
-    res,
-    Var1 = stringr::str_c(prefix, .data$Var1, "_jaccard")
-  )
-
-  res <- tidyr::pivot_wider(
-    res,
-    names_from  = .data$Var1,
-    values_from = .data$jaccard
-  )
-
-  # Return matrix
-  if (!return_seurat) {
-    res <- dplyr::mutate(
-      res,
-      Var2 = stringr::str_c(prefix, .data$Var2, "_jaccard")
-    )
-
-    res <- tibble::column_to_rownames(res, "Var2")
-    res <- as.matrix(res)
-
-    return(res)
-  }
-
-  # Add jaccard index to meta.data
-  vdj_meta <- tibble::as_tibble(vdj_meta, rownames = ".cell_id")
-  vdj_meta <- dplyr::left_join(vdj_meta, res, by = c("idents" = "Var2"))
-  vdj_meta <- dplyr::select(vdj_meta, -.data$idents)
-  vdj_meta <- tibble::column_to_rownames(vdj_meta, ".cell_id")
-  vdj_meta <- as.data.frame(vdj_meta)
-
-  res <- Seurat::AddMetaData(sobj_in, vdj_meta)
-
-  res
-}
-
-
-#' Cluster cells based on receptor sequence
-#'
-#' @param sobj_in Seurat object
-#' @param cdr3_col meta.data column containing CDR3 sequences to use for
-#' calculating Levenshtein distance
-#' @param resolution Clustering resolution to pass to FindClusters
-#' @param use_chains Chains to use for calculating Levenshtein distance. If
-#' multiple sequences are present for a chain, the first sequence is used.
-#' @param chain_col meta.data column containing chains detected for each cell.
-#' @param prefix Prefix to add to graph name
-#' @param ... Additional parameters to pass to FindClusters
-#' @return Seurat object with an added shared nearest neighbors graph (vdj_snn)
-#' and a meta.data column containing cluster ids
-#' @export
-cluster_vdj <- function(sobj_in, cdr3_col = "cdr3", resolution = 0.1, use_chains = NULL,
-                        chain_col = "chain", prefix = "vdj_", ...) {
-
-  # Extract sequences
-  # Only include cells with VDJ data
-  orig_idents <- Idents(sobj_in)
-
-  seqs <- Seurat::FetchData(sobj_in, c(chain_col, cdr3_col))
-  seqs <- tibble::rownames_to_column(seqs, ".cell_id")
-  seqs <- stats::na.omit(seqs)
-  seqs <- dplyr::rename(seqs, "cdr3" = !!dplyr::sym(cdr3_col))
-
-  # Select chains to use for calculating distance
-  if (!is.null(use_chains)) {
-
-    split_cols <- c("cdr3", chain_col)
-
-    seqs <- dplyr::mutate(
-      seqs,
-      dplyr::across(
-        dplyr::all_of(split_cols),
-        ~ str_split(.x, ";")
-      )
-    )
-
-    seqs <- tidyr::unnest(seqs, cols = dplyr::all_of(split_cols))
-    seqs <- dplyr::filter(seqs, !!sym(chain_col) %in% use_chains)
-    seqs <- dplyr::group_by(seqs, .data$.cell_id)
-
-    seqs <- dplyr::summarize(
-      seqs,
-      cdr3 = purrr::map_chr(
-        list(.data$cdr3),
-        purrr::reduce,
-        stringr::str_c,
-        sep = ""
-      ),
-      .groups = "drop"
-    )
-  }
-
-  # Create Levenshtein distance matrix
-  seqs     <- mutate(seqs, cdr3 = stringr::str_remove_all(.data$cdr3, ";"))
-  seqs     <- purrr::set_names(seqs$cdr3, seqs$.cell_id)
-  vdj_dist <- utils::adist(seqs)
-
-  # Create nearest neighbors graph
-  # Add graph this way or error thrown due to differing number of cells
-  vdj_snn  <- Seurat::FindNeighbors(vdj_dist, distance.matrix = T)
-  snn_name <- stringr::str_c(prefix, "snn")
-
-  sobj_in@graphs[[snn_name]] <- vdj_snn$snn
-
-  # Find clusters
-  res <- Seurat::FindClusters(
-    object     = sobj_in,
-    resolution = resolution,
-    graph.name = snn_name,
-    ...
-  )
-
-  Idents(res) <- orig_idents
-
-  res
-}
-
-
-#' Run UMAP using Seurat object containing VDJ nearest neighbors graph
-#'
-#' @param sobj_in Seurat object containing shared nearest neighbors graph for
-#' VDJ data
-#' @param umap_key Key to use for UMAP columns in meta.data
-#' @param vdj_graph Name of shared nearest neighbors graph stored in Seurat
-#' object
-#' @return Seurat object containing UMAP coordinates in meta.data
-#' @export
-run_umap_vdj <- function(sobj_in, umap_key = "vdjUMAP_", vdj_graph = "vdj_snn") {
-
-  # Subset sobj_in to only include VDJ cells and add vdj_snn graph
-  # RunUMAP does not like running with a graph that does not include results
-  # for all cells in the object
-  vdj_cells <- rownames(sobj_in[[vdj_graph]])
-
-  vdj_so <- subset(sobj_in, cells = vdj_cells)
-  vdj_so[[vdj_graph]] <- sobj_in[[vdj_graph]]
-
-  # Run UMAP and add reduction object back to original object
-  vdj_so <- Seurat::RunUMAP(
-    object         = vdj_so,
-    reduction.name = "vdj_umap",
-    reduction.key  = umap_key,
-    graph          = vdj_graph
-  )
-
-  umap_coords <- Seurat::Embeddings(vdj_so, reduction = "vdj_umap")
-  umap_cols   <- stringr::str_c(umap_key, c("1", "2"))
-
-  res <- Seurat::AddMetaData(
-    object   = sobj_in,
-    metadata = umap_coords,
-    col.name = umap_cols
-  )
-
-  res
-}
-
-
 #' Subset Seurat object based on VDJ meta.data
 #'
-#' @param sobj_in Seurat object containing CDR3 sequences
+#' @param sobj_in Seurat object containing VDJ data
 #' @param filt Condition to use for filtering object
 #' @param new_col Instead of filtering object create a new column with values
 #' based on filtering condition
@@ -568,6 +226,276 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
 }
 
 
+#' Calculate clonotype abundance
+#'
+#' @param sobj_in Seurat object containing VDJ data
+#' @param clonotype_col meta.data column containing clonotype IDs
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' grouping cells when calculating clonotype abundance
+#' @param prefix Prefix to add to new meta.data columns
+#' @return ggplot object
+#' @export
+calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id",
+                           cluster_col = NULL, prefix = "") {
+
+  meta_df <- sobj_in@meta.data
+  meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
+  meta_df <- dplyr::filter(meta_df, !is.na(!!dplyr::sym(clonotype_col)))
+
+  if (!is.null(cluster_col)) {
+    meta_df <- dplyr::group_by(meta_df, !!sym(cluster_col))
+  }
+
+  freq_col  <- stringr::str_c(prefix, "clone_freq")
+  abund_col <- stringr::str_c(prefix, "clone_abund")
+
+  meta_df <- dplyr::mutate(
+    meta_df,
+    .n_cells = dplyr::n_distinct(.data$.cell_id)
+  )
+
+  meta_df <- dplyr::group_by(
+    meta_df,
+    !!dplyr::sym(clonotype_col),
+    add = TRUE
+  )
+
+  meta_df <- dplyr::mutate(
+    meta_df,
+    !!sym(freq_col)  := dplyr::n_distinct(.data$.cell_id),
+    !!sym(abund_col) := !!dplyr::sym(freq_col) / .n_cells
+  )
+
+  meta_df <- dplyr::select(meta_df, -.n_cells)
+  meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
+
+  res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
+
+  res
+}
+
+
+#' Calculate receptor diversity (inverse Simpson Index)
+#'
+#' @param sobj_in Seurat object
+#' @param clonotype_col meta.data column containing clonotype ids
+#' @param cluster_col meta.data column containing cluster IDs used for
+#' calculating receptor diversity. If cluster_col is omitted, diversity index
+#' will be calculated for all clonotypes.
+#' @param prefix Prefix to add to new meta.data columns
+#' @return Seurat object with inverse Simpson index added to meta.data
+#' @export
+calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
+                           cluster_col = NULL, prefix = "") {
+
+  # meta.data
+  vdj_cols      <- clonotype_col
+  clonotype_col <- dplyr::sym(clonotype_col)
+  meta_df       <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
+  vdj_df        <- dplyr::filter(meta_df, !is.na(!!clonotype_col))
+
+  # Count clonotypes
+  if (!is.null(cluster_col)) {
+    vdj_cols    <- c(cluster_col, vdj_cols)
+    cluster_col <- dplyr::sym(cluster_col)
+    vdj_df      <- dplyr::group_by(vdj_df, !!cluster_col)
+  }
+
+  vdj_df <- dplyr::group_by(vdj_df, !!clonotype_col, .add = TRUE)
+
+  vdj_df <- dplyr::summarize(
+    vdj_df,
+    .n      = dplyr::n_distinct(.data$.cell_id),
+    .groups = "drop"
+  )
+
+  # Calculate diversity
+  if (!is.null(cluster_col)) {
+    vdj_df <- dplyr::group_by(vdj_df, !!cluster_col)
+  }
+
+  div_col <- stringr::str_c(prefix, "diversity")
+
+  vdj_df <- dplyr::mutate(
+    vdj_df,
+    frac     = .data$.n / sum(.data$.n),
+    sum_frac = sum(.data$frac ^ 2),
+
+    !!dplyr::sym(div_col) := 1 - .data$sum_frac
+    # !!dplyr::sym(div_col) := 1 / sum_frac
+  )
+
+  vdj_df <- dplyr::select(vdj_df, all_of(c(vdj_cols, div_col)))
+
+  # Add resuts to meta.data
+  meta_df <- dplyr::left_join(meta_df, vdj_df, by = vdj_cols)
+  meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
+  meta_df <- as.data.frame(meta_df)
+
+  res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
+
+  res
+}
+
+
+#' Calculate Jaccard index for cell identities
+#'
+#' @param sobj_in Seurat object
+#' @param clonotype_col meta.data column containing clonotype ids
+#' @param cluster_col meta.data column containing cell clusters
+#' @param prefix Prefix to add to new meta.data columns
+#' @param return_seurat Return a Seurat object. If set to FALSE, a matrix is
+#' returned
+#' @return Seurat object with Jaccard index added to meta.data
+#' @export
+calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
+                         prefix = "", return_seurat = TRUE) {
+
+  # Helper to calculate jaccard index
+  calc_jidx <- function(df_in, comparison, ctype_col) {
+
+    if (length(comparison) != 2) {
+      stop("comparison must be a character vector with two column names")
+    }
+
+    if (length(unique(df_in[, ctype_col])) != length(df_in[, ctype_col])) {
+      stop("duplicate clonotype IDs are present")
+    }
+
+    uniq_vars <- unique(comparison)
+
+    if (length(uniq_vars) == 1) {
+      dup_var       <- stringr::str_c(uniq_vars, "_dup")
+      comparison[3] <- dup_var
+      dup_var       <- dplyr::sym(dup_var)
+      uniq_vars     <- dplyr::sym(uniq_vars)
+
+      df_in <- dplyr::mutate(df_in, !!dup_var := !!uniq_vars)
+    }
+
+    row_sums  <- dplyr::select(df_in, dplyr::all_of(c(ctype_col, comparison)))
+    ctype_col <- dplyr::sym(ctype_col)
+    row_sums  <- tidyr::pivot_longer(row_sums, cols = -!!ctype_col)
+    row_sums  <- dplyr::group_by(row_sums, !!ctype_col)
+
+    row_sums <- dplyr::summarize(
+      row_sums,
+      row_sum = sum(.data$value),
+      .groups = "drop"
+    )
+
+    row_sums <- row_sums$row_sum
+
+    a     <- length(row_sums[row_sums == 2])      # Intersection
+    a_b_c <- length(row_sums[row_sums == 1]) + a  # Union
+
+    jaccard <- a / a_b_c
+
+    res <- tibble::tibble(
+      Var1 = comparison[1],
+      Var2 = comparison[2],
+      jaccard
+    )
+
+    res
+  }
+
+  # Fetch clonotypes and cell identities
+  vdj_meta        <- Seurat::FetchData(sobj_in, c(clonotype_col, cluster_col))
+  vdj_meta        <- dplyr::rename(vdj_meta, idents = cluster_col)
+  vdj_meta$idents <- as.character(vdj_meta$idents)
+
+  uniq_idents <- unique(vdj_meta$idents)
+  uniq_idents <- stats::na.omit(uniq_idents)
+  uniq_idents <- sort(uniq_idents)
+
+  # Create data.frame for calculating Jaccard index
+  # Use 1's and 0's to indicate if a clonotype is present in a cluster
+  vdj_meta <- dplyr::filter(vdj_meta, !is.na(!!dplyr::sym(clonotype_col)))
+  j_df     <- dplyr::mutate(vdj_meta, .n = 1)
+
+  j_df <- tidyr::pivot_wider(
+    j_df,
+    names_from  = "idents",
+    values_from = ".n",
+    values_fn   = list
+  )
+
+  j_df <- dplyr::mutate(j_df, dplyr::across(
+    dplyr::all_of(uniq_idents),
+    ~ purrr::map(.x, unique)
+  ))
+
+  j_df <- tidyr::unnest(j_df, cols = dplyr::all_of(uniq_idents))
+
+  j_df <- dplyr::mutate(j_df, dplyr::across(
+    dplyr::all_of(uniq_idents),
+    ~ replace_na(.x, 0)
+  ))
+
+  j_df <- dplyr::arrange(j_df, !!sym(clonotype_col))
+  j_df <- select(j_df, all_of(c(clonotype_col, uniq_idents)))
+
+  # Create data.frame of comparisons
+  comps <- expand.grid(
+    uniq_idents, uniq_idents,
+    stringsAsFactors = F
+  )
+
+  comps <- dplyr::mutate(comps, comp = map2(Var1, Var2, ~ sort(c(.x, .y))))
+  comps <- dplyr::select(comps, .data$comp)
+  comps <- unique(comps)
+
+  Var1 <- purrr::map_chr(comps$comp, ~ .x[1])
+  Var2 <- purrr::map_chr(comps$comp, ~ .x[2])
+
+  # Calculate Jaccard index for comparisons
+  res <- purrr::map2_dfr(
+    Var1, Var2,
+    ~ calc_jidx(j_df, c(.x, .y), ctype_col = clonotype_col)
+  )
+
+  res_i <- dplyr::rename(res, Var1 = Var2, Var2 = Var1)
+  res   <- dplyr::bind_rows(res, res_i)
+  res   <- unique(res)
+
+  res <- dplyr::mutate(
+    res,
+    Var1 = stringr::str_c(prefix, .data$Var1, "_jaccard")
+  )
+
+  res <- tidyr::pivot_wider(
+    res,
+    names_from  = .data$Var1,
+    values_from = .data$jaccard
+  )
+
+  # Return matrix
+  if (!return_seurat) {
+    res <- dplyr::mutate(
+      res,
+      Var2 = stringr::str_c(prefix, .data$Var2, "_jaccard")
+    )
+
+    res <- tibble::column_to_rownames(res, "Var2")
+    res <- as.matrix(res)
+
+    return(res)
+  }
+
+  # Add jaccard index to meta.data
+  vdj_meta <- tibble::as_tibble(vdj_meta, rownames = ".cell_id")
+  vdj_meta <- dplyr::left_join(vdj_meta, res, by = c("idents" = "Var2"))
+  vdj_meta <- dplyr::select(vdj_meta, -.data$idents)
+  vdj_meta <- tibble::column_to_rownames(vdj_meta, ".cell_id")
+  vdj_meta <- as.data.frame(vdj_meta)
+
+  res <- Seurat::AddMetaData(sobj_in, vdj_meta)
+
+  res
+}
+
+
 #' Calculate gene usage
 #'
 #' @param sobj_in Seurat object containing VDJ data
@@ -583,20 +511,20 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = "orig.ident",
   # data.frame to calculate usage
   vdj_cols <- c(".cell_id", gene_col, cluster_col)
 
-  meta_data <- sobj_in@meta.data
-  meta_data <- as_tibble(meta_data, rownames = ".cell_id")
-  meta_data <- dplyr::select(meta_data, dplyr::all_of(vdj_cols))
-  meta_data <- dplyr::filter(meta_data, !is.na(!!dplyr::sym(gene_col)))
-  meta_data <- dplyr::group_by(meta_data, !!dplyr::sym(cluster_col))
-  meta_data <- dplyr::mutate(
-    meta_data,
+  meta_df <- sobj_in@meta.data
+  meta_df <- as_tibble(meta_df, rownames = ".cell_id")
+  meta_df <- dplyr::select(meta_df, dplyr::all_of(vdj_cols))
+  meta_df <- dplyr::filter(meta_df, !is.na(!!dplyr::sym(gene_col)))
+  meta_df <- dplyr::group_by(meta_df, !!dplyr::sym(cluster_col))
+  meta_df <- dplyr::mutate(
+    meta_df,
     !!dplyr::sym(gene_col) := stringr::str_split(!!dplyr::sym(gene_col), ";"),
     n_cells = n_distinct(.data$.cell_id)
   )
-  meta_data <- dplyr::ungroup(meta_data)
+  meta_df <- dplyr::ungroup(meta_df)
 
   # All genes used
-  vdj_genes <- pull(meta_data, gene_col)
+  vdj_genes <- pull(meta_df, gene_col)
   vdj_genes <- unlist(vdj_genes)
   vdj_genes <- unique(vdj_genes)
   vdj_genes <- sort(vdj_genes)
@@ -606,7 +534,7 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = "orig.ident",
     gene_name <- .x
 
     res <- mutate(
-      meta_data,
+      meta_df,
       used = purrr::map_lgl(!!dplyr::sym(gene_col), ~ gene_name %in% .x)
     )
 
