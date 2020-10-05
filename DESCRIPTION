@@ -18,7 +18,9 @@ Imports:
     Seurat,
     stringr,
     tibble,
-    tidyr
+    tidyr,
+    broom,
+    ggplot2
 Suggests: 
     roxygen2,
     testthat,
