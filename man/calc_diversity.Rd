@@ -16,7 +16,7 @@ calc_diversity(
 
 \item{clonotype_col}{meta.data column containing clonotype ids}
 
-\item{cluster_col}{meta.data column containing cluster ids used for
+\item{cluster_col}{meta.data column containing cluster IDs used for
 calculating receptor diversity. If cluster_col is omitted, diversity index
 will be calculated for all clonotypes.}
 

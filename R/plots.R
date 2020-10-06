@@ -1,3 +1,105 @@
+#' Set min and max values for column
+#'
+#' @param df_in Input data.frame
+#' @param feat_col Name of column containing feature values
+#' @param lim The value cutoff
+#' @param op The operator to use for comparing values with lim
+#' (either "<" or ">")
+#' @return data.frame with modified feature values
+set_val_limits <- function(df_in, feat_col, lim, op) {
+
+  if (!op %in% c("<", ">")) {
+    stop("op must be either \"<\" or \">\"")
+  }
+
+  func <- "min"
+
+  if (op == "<") {
+    func <- "max"
+  }
+
+  res <- dplyr::mutate(
+    df_in,
+    pct_rank = dplyr::percent_rank(!!dplyr::sym(feat_col)),
+
+    lim = eval(parse(text = paste0(
+      "ifelse(pct_rank ", op, " lim, ", feat_col, ", NA)"
+    ))),
+
+    lim = eval(parse(text = paste0(
+      func, "(lim, na.rm = T)"
+    ))),
+
+    !!dplyr::sym(feat_col) := eval(parse(text = paste0(
+      "dplyr::if_else(", feat_col, op, " lim, lim, ", feat_col, ")"
+    )))
+  )
+
+  res <- dplyr::select(res, -.data$pct_rank, -lim)
+
+  res
+}
+
+
+#' Add regression line to ggplot object
+#'
+#' @param gg_in ggplot object
+#' @param lab_pos Position of correlation coefficient label. Set to NULL to
+#' omit label
+#' @param lab_size Size of label
+#' @param ... Additional arguments to pass to geom_smooth
+#' @return ggplot object with added regression line
+add_lm_line <- function(gg_in, lab_pos = NULL, lab_size = 3.5, ...) {
+
+  # Add regression line
+  res <- gg_in +
+    ggplot2::geom_smooth(
+      method   = "lm",
+      formula  = y ~ x,
+      se       = F,
+      color    = "black",
+      size     = 0.5,
+      linetype = 2,
+      ...
+    )
+
+  # Calculate correlation
+  if (!is.null(lab_pos)) {
+    gg_data <- gg_in$data
+
+    x <- as.character(gg_in$mapping$x)[2]
+    y <- as.character(gg_in$mapping$y)[2]
+
+    gg_data <- dplyr::mutate(
+      gg_data,
+      r       = broom::tidy(stats::cor.test(!!dplyr::sym(x), !!dplyr::sym(y)))$estimate,
+      r       = round(.data$r, digits = 2),
+      pval    = broom::tidy(stats::cor.test(!!dplyr::sym(x), !!dplyr::sym(y)))$p.value,
+      cor_lab = stringr::str_c("r = ", .data$r, ", p = ", format(.data$pval, digits = 2)),
+      min_x   = min(!!dplyr::sym(x)),
+      max_x   = max(!!dplyr::sym(x)),
+      min_y   = min(!!dplyr::sym(y)),
+      max_y   = max(!!dplyr::sym(y)),
+      lab_x   = (.data$max_x - .data$min_x) * lab_pos[1] + .data$min_x,
+      lab_y   = (.data$max_y - .data$min_y) * lab_pos[2] + .data$min_y
+    )
+  }
+
+  # Add correlation coefficient label
+  res <- res +
+    ggplot2::geom_text(
+      data          = gg_data,
+      mapping       = ggplot2::aes(.data$lab_x, .data$lab_y, label = .data$cor_lab),
+      color         = "black",
+      size          = lab_size,
+      check_overlap = T,
+      show.legend   = F
+    )
+
+  res
+}
+
+
 #' Create two dimensional scatter plot
 #'
 #' @param obj_in Seurat object or data.frame containing data for plotting
@@ -5,30 +107,28 @@
 #' @param y Variable to plot on y-axis
 #' @param feature Variable to use for coloring points
 #' @param data_slot Slot in the Seurat object to pull data from
-#' @param split_id Variable to use for splitting plot
+#' @param pt_size Point size
+#' @param plot_cols Vector of colors to use for plot
+#' @param feat_levels Levels to use for ordering feature
+#' @param split_id Variable to use for splitting plot into facets
+#' @param split_levels Levels to use for ordering plot facets
+#' @param min_pct Minimum value to plot for feature
+#' @param max_pct Maximum value to plot for feature
+#' @param lm_line Add regression line to plot
+#' @param cor_label Position of correlation coefficient label
+#' @param label_size Size of correlation coefficient label
+#' @param ... Additional parameters to pass to facet_wrap
 #' @return ggplot object
-plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
-                          split_id = NULL,
-
-                          pt_size = 0.25,
-                          pt_outline = NULL,
-                          plot_cols = NULL,
-                          feat_levels = NULL,
-                          split_levels = NULL,
-
-                          min_pct = NULL,
-                          max_pct = NULL,
-
-                          calc_cor = F,
-                          lm_line = F,
-                          lab_size = 3.7,
-                          lab_pos = c(0.8, 0.9),
-
-                          na_value = "#f0f0f0",
-                          ...) {
+#' @export
+plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature,
+                          data_slot = "data", pt_size = 0.25, plot_cols = NULL,
+                          feat_levels = NULL, split_id = NULL,
+                          split_levels = NULL, min_pct = NULL, max_pct = NULL,
+                          lm_line = F, cor_label = c(0.8, 0.9),
+                          label_size = 3.7, ...) {
 
   # Format imput data
-  counts <- obj_in
+  meta_df <- obj_in
 
   if ("Seurat" %in% class(obj_in)) {
     vars <- c(x, y, feature)
@@ -37,56 +137,53 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
       vars <- c(vars, split_id)
     }
 
-    counts <- Seurat::FetchData(obj_in, vars = unique(vars), slot = data_slot)
-    counts <- tibble::as_tibble(counts, rownames = ".cell_id")
+    meta_df <- Seurat::FetchData(obj_in, vars = unique(vars), slot = data_slot)
+    meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
+
+    if (!feature %in% colnames(meta_df)) {
+      stop(paste(feature, "not found in object."))
+    }
   }
 
   # Rename features
   if (!is.null(names(feature))) {
-    counts  <- dplyr::rename(counts, !!!dplyr::syms(feature))
+    meta_df  <- dplyr::rename(meta_df, !!!dplyr::syms(feature))
     feature <- names(feature)
   }
 
   if (!is.null(names(x))) {
-    counts <- dplyr::rename(counts, !!!dplyr::syms(x))
+    meta_df <- dplyr::rename(meta_df, !!!dplyr::syms(x))
     x <- names(x)
   }
 
   if (!is.null(names(y))) {
-    counts <- dplyr::rename(counts, !!!dplyr::syms(y))
+    meta_df <- dplyr::rename(meta_df, !!!dplyr::syms(y))
     y <- names(y)
   }
 
-  # Set min and max values for feature
-  if (!is.null(min_pct) || !is.null(max_pct)) {
-    counts <- mutate(
-      counts,
-      pct_rank = dplyr::percent_rank(!!dplyr::sym(feature)),
+  # Adjust values based on min_pct and max_pct
+  if (!is.null(min_pct)) {
+    meta_df <- set_val_limits(
+      meta_df,
+      feat_col = feature,
+      lim      = min_pct,
+      op       = "<"
+    )
+  }
 
-      max_val  = ifelse(pct_rank > max_pct, !!dplyr::sym(feature), NA),
-      max_val  = min(max_val, na.rm = T),
-
-      min_val  = ifelse(pct_rank < min_pct, !!dplyr::sym(feature), NA),
-      min_val  = max(min_val, na.rm = T),
-
-      !!dplyr::sym(feature) := dplyr::if_else(
-        !!dplyr::sym(feature) > max_val,
-        max_val,
-        !!dplyr::sym(feature)
-      ),
-
-      !!dplyr::sym(feature) := dplyr::if_else(
-        !!dplyr::sym(feature) < min_val,
-        min_val,
-        !!dplyr::sym(feature)
-      )
+  if (!is.null(max_pct)) {
+    meta_df <- set_val_limits(
+      meta_df,
+      feat_col = feature,
+      lim      = max_pct,
+      op       = ">"
     )
   }
 
   # Set feature order
   if (!is.null(feat_levels)) {
-    counts <- dplyr::mutate(
-      counts,
+    meta_df <- dplyr::mutate(
+      meta_df,
       !!dplyr::sym(feature) := factor(
         !!dplyr::sym(feature),
         levels = feat_levels
@@ -95,180 +192,58 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
   }
 
   # Set facet order
-  if (!is.null(split_id) && length(split_id) == 1) {
-    counts <- dplyr::mutate(counts, split_id = !!dplyr::sym(split_id))
-
-    if (!is.null(split_levels)) {
-      counts <- dplyr::mutate(
-        counts,
-        split_id = factor(split_id, levels = split_levels)
+  if (!is.null(split_id) && length(split_id) == 1 && !is.null(split_levels)) {
+    meta_df <- dplyr::mutate(
+      meta_df,
+      !!dplyr::sym(split_id) := factor(
+        !!dplyr::sym(split_id),
+        levels = split_levels
       )
-    }
-  }
-
-  # Calculate correlation
-  if (calc_cor) {
-    if (!is.null(split_id)) {
-      counts <- dplyr::group_by(counts, split_id)
-    }
-
-    counts <- dplyr::mutate(
-      counts,
-      r       = broom::tidy(stats::cor.test(!!dplyr::sym(x), !!dplyr::sym(y)))$estimate,
-      r       = round(r, digits = 2),
-      pval    = broom::tidy(stats::cor.test(!!dplyr::sym(x), !!dplyr::sym(y)))$p.value,
-      cor_lab = stringr::str_c("r = ", r, ", p = ", format(pval, digits = 2))
     )
-
-    if (lab_pos != "strip") {
-      counts <- dplyr::mutate(
-        counts,
-        min_x = min(!!dplyr::sym(x)),
-        max_x = max(!!dplyr::sym(x)),
-        min_y = min(!!dplyr::sym(y)),
-        max_y = max(!!dplyr::sym(y)),
-        lab_x = (max_x - min_x) * lab_pos[1] + min_x,
-        lab_y = (max_y - min_y) * lab_pos[2] + min_y
-      )
-    }
   }
 
   # Create scatter plot
-  # To add outline for each cluster create separate layers
-  res <- dplyr::arrange(counts, !!dplyr::sym(feature))
+  meta_df <- dplyr::arrange(meta_df, !!dplyr::sym(feature))
 
-  if (!is.null(pt_outline)) {
-
-    if (!is.numeric(counts[[feature]])) {
-      res <- ggplot2::ggplot(res, aes(
-        !!dplyr::sym(x),
-        !!dplyr::sym(y),
-        color = !!dplyr::sym(feature),
-        fill = !!dplyr::sym(feature)
-      ))
-
-      feats <- counts[[feature]]
-      feats <- unique(feats)
-
-      if (!is.null(feat_levels)) {
-        feats <- feat_levels[feat_levels %in% feats]
-      }
-
-      for (feat in feats) {
-        if (is.na(feat)) {
-          feat <- "NA"
-        }
-
-        f_counts <- dplyr::mutate(
-          counts,
-          !!dplyr::sym(feature) := tidyr::replace_na(!!dplyr::sym(feature), "NA")
-        )
-
-        f_counts <- dplyr::filter(f_counts, !!dplyr::sym(feature) == feat)
-
-        res <- res +
-          ggplot2::geom_point(
-            data        = f_counts,
-            mapping     = aes(fill = !!sym(feature)),
-            size        = pt_outline,
-            color       = "black",
-            show.legend = F
-          ) +
-          ggplot2::geom_point(data = f_counts, size = pt_size)
-      }
-
-    } else {
-      res <- ggplot2::ggplot(res, aes(
-        !!dplyr::sym(x),
-        !!dplyr::sym(y),
-        color = !!dplyr::sym(feature)
-      )) +
-        ggplot2::geom_point(
-          mapping     = aes(fill = !!dplyr::sym(feature)),
-          size        = pt_outline,
-          color       = "black",
-          show.legend = F
-        ) +
-        ggplot2::geom_point(size = pt_size)
-    }
-
-  } else {
-    res <- ggplot2::ggplot(res, aes(
-      !!dplyr::sym(x),
-      !!dplyr::sym(y),
-      color = !!dplyr::sym(feature)
-    )) +
-      geom_point(size = pt_size)
-  }
+  res <- ggplot2::ggplot(meta_df, ggplot2::aes(
+    !!dplyr::sym(x),
+    !!dplyr::sym(y),
+    color = !!dplyr::sym(feature)
+  )) +
+    ggplot2::geom_point(size = pt_size)
 
   # Add regression line
   if (lm_line) {
-    res <- res +
-      ggplot2::geom_smooth(
-        method   = "lm",
-        se       = F,
-        color    = "black",
-        size     = 0.5,
-        linetype = 2
-      )
-  }
-
-  # Add correlation coefficient label
-  if (calc_cor && lab_pos != "strip") {
-    res <- res +
-      ggplot2::geom_text(
-        mapping       = aes(lab_x, lab_y, label = cor_lab),
-        color         = "black",
-        size          = lab_size,
-        check_overlap = T,
-        show.legend   = F
-      )
+    res <- add_lm_line(
+      res,
+      lab_pos = cor_label,
+      lab_size = label_size
+    )
   }
 
   # Set feature colors
   if (!is.null(plot_cols)) {
-    if (is.numeric(counts[[feature]])) {
+    if (is.numeric(meta_df[[feature]])) {
       res <- res +
-        ggplot2::scale_color_gradientn(colors = plot_cols, na.value = na_value)
+        ggplot2::scale_color_gradientn(colors = plot_cols)
 
     } else {
       res <- res +
-        ggplot2::scale_color_manual(values = plot_cols, na.value = na_value) +
-        ggplot2::scale_fill_manual(values = plot_cols, na.value = na_value)
+        ggplot2::scale_color_manual(values = plot_cols)
     }
   }
 
   # Split plot into facets
-  cor_labeller <- function(labels) {
-    labels %>%
-      map(~ {
-        cor_labs <- dplyr::ungroup(counts)
-        cor_labs <- dplyr::select(!!dplyr::sym(feature), cor_lab)
-        cor_labs <- unique(cor_labs)
-        cor_labs <- purrr::set_names(cor_labs$cor_lab, cor_labs[[feature]])
-
-        stringr::str_c(.x, "\n", cor_labs[.x])
-      })
-  }
-
   if (!is.null(split_id)) {
     if (length(split_id) == 1) {
-
-      if (calc_cor && lab_pos == "strip") {
-        my_labs <- cor_labeller
-
-      } else {
-        my_labs <- "label_value"
-      }
-
       res <- res +
-        ggplot2::facet_wrap(~ split_id, labeller = my_labs, ...)
+        ggplot2::facet_wrap(~ !!dplyr::sym(split_id), ...)
 
     } else if (length(split_id) == 2) {
       eq <- stringr::str_c(split_id[1], " ~ ", split_id[2])
 
       res <- res +
-        ggplot2::facet_grid(as.formula(eq), ...)
+        ggplot2::facet_grid(stats::as.formula(eq), ...)
     }
   }
 
@@ -289,7 +264,6 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
 #' @param ... Additional arguments to pass to geom_line
 #' @return Seurat object with calculated clonotype abundance
 #' @export
-#'
 plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
                            abundance_col = NULL, plot_colors = NULL, plot_levels = NULL, ...) {
 
@@ -331,8 +305,8 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
   )
 
   # Plot abundance vs rank
-  gg <- ggplot2::ggplot(meta_df, aes(rank, !!dplyr::sym(abundance_col))) +
-    labs(y = "abundance")
+  gg <- ggplot2::ggplot(meta_df, ggplot2::aes(rank, !!dplyr::sym(abundance_col))) +
+    ggplot2::labs(y = "abundance")
 
   if (is.null(cluster_col)) {
     gg <- gg +
@@ -340,15 +314,113 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 
   } else {
     gg <- gg +
-      ggplot2::geom_line(aes(color = !!dplyr::sym(cluster_col)), ...)
+      ggplot2::geom_line(ggplot2::aes(color = !!dplyr::sym(cluster_col)), ...)
   }
 
   if (!is.null(plot_colors)) {
     gg <- gg +
-      scale_color_manual(values = plot_colors)
+      ggplot2::scale_color_manual(values = plot_colors)
   }
 
   gg
+}
+
+
+#' Plot VDJ gene usage
+#'
+#' @param sobj_in Seurat object containing VDJ data
+#' @param gene_col meta.data column containing genes used for each clonotype
+#' @param cluster_col meta.data column containing cell clusters to use when
+#' calculating gene usage
+#' @param plot_colors Character vector containing colors to use for plotting
+#' @param plot_genes Character vector of genes to plot
+#' @param n_genes Number of top genes to plot based on average usage
+#' @param clust_levels Levels to use for ordering clusters
+#' @param line_color Color of line used to separate clusters
+#' @param ... Additional arguments to pass to geom_tile
+#' @return ggplot object
+#' @export
+plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, plot_colors = NULL,
+                       plot_genes = NULL, n_genes = NULL, clust_levels = NULL,
+                       line_color = NULL, ...) {
+
+  # Calculate gene usage
+  gg_data <- calc_usage(
+    sobj_in,
+    gene_col = gene_col,
+    cluster_col = cluster_col
+  )
+
+  # Order genes by average usage
+  top_genes <- dplyr::group_by(gg_data, !!dplyr::sym(gene_col))
+
+  top_genes <- dplyr::summarize(
+    top_genes,
+    usage = mean(.data$usage),
+    .groups = "drop"
+  )
+
+  top_genes <- dplyr::arrange(top_genes, .data$usage)
+
+  gg_data <- dplyr::mutate(
+    gg_data,
+    !!dplyr::sym(gene_col) := factor(
+      !!dplyr::sym(gene_col),
+      levels = dplyr::pull(top_genes, gene_col)
+    )
+  )
+
+  # Order clusters
+  if (!is.null(clust_levels)) {
+    gg_data <- dplyr::mutate(
+      gg_data,
+      !!dplyr::sym(cluster_col) := factor(
+        !!dplyr::sym(cluster_col),
+        levels = clust_levels
+      )
+    )
+  }
+
+  # Filter genes to plot
+  if (!is.null(plot_genes)) {
+    gg_data <- dplyr::filter(gg_data, !!dplyr::sym(gene_col) %in% plot_genes)
+  }
+
+  # Select top genes to plot
+  if (!is.null(n_genes)) {
+    top_genes <- dplyr::slice_max(top_genes, .data$usage, n = n_genes)
+    top_genes <- pull(top_genes, gene_col)
+
+    gg_data <- dplyr::filter(gg_data, !!dplyr::sym(gene_col) %in% top_genes)
+  }
+
+  # Create heatmap
+  res <- ggplot2::ggplot(
+    gg_data,
+    ggplot2::aes(!!sym(cluster_col), !!sym(gene_col), fill = .data$usage)
+  ) +
+    ggplot2::geom_tile(...) +
+    ggplot2::theme(
+      axis.title = ggplot2::element_blank(),
+      axis.line  = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank()
+    )
+
+  # Add dividing line
+  if (!is.null(cluster_col) && !is.null(line_color)) {
+    n_clusts <- dplyr::n_distinct(gg_data[, cluster_col])
+
+    res <- res +
+      ggplot2::geom_vline(xintercept = seq(1.5, n_clusts - 0.5), color = line_color)
+  }
+
+  # Set colors
+  if (!is.null(plot_colors)) {
+    res <- res +
+      ggplot2::scale_color_gradientn(colors = plot_colors)
+  }
+
+  res
 }
 
 

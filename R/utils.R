@@ -263,10 +263,10 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id",
   meta_df <- dplyr::mutate(
     meta_df,
     !!sym(freq_col)  := dplyr::n_distinct(.data$.cell_id),
-    !!sym(abund_col) := !!dplyr::sym(freq_col) / .n_cells
+    !!sym(abund_col) := !!dplyr::sym(freq_col) / .data$.n_cells
   )
 
-  meta_df <- dplyr::select(meta_df, -.n_cells)
+  meta_df <- dplyr::select(meta_df, -.data$.n_cells)
   meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
 
   res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
@@ -502,66 +502,68 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #' @param gene_col meta.data column containing genes used for each clonotype
 #' @param cluster_col meta.data column containing cell clusters to use when
 #' calculating gene usage
-#' @param n_genes Number of top genes to include in output
-#' @return tibble containing gene usage summary
+#' @return data.frame containing gene usage summary
 #' @export
-calc_usage <- function(sobj_in, gene_col, cluster_col = "orig.ident",
-                       n_genes = NULL) {
+calc_usage <- function(sobj_in, gene_col, cluster_col = NULL) {
 
   # data.frame to calculate usage
   vdj_cols <- c(".cell_id", gene_col, cluster_col)
 
   meta_df <- sobj_in@meta.data
-  meta_df <- as_tibble(meta_df, rownames = ".cell_id")
+  meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
   meta_df <- dplyr::select(meta_df, dplyr::all_of(vdj_cols))
   meta_df <- dplyr::filter(meta_df, !is.na(!!dplyr::sym(gene_col)))
-  meta_df <- dplyr::group_by(meta_df, !!dplyr::sym(cluster_col))
+
+  if (!is.null(cluster_col)) {
+    meta_df <- dplyr::group_by(meta_df, !!!dplyr::syms(cluster_col))
+  }
+
   meta_df <- dplyr::mutate(
     meta_df,
     !!dplyr::sym(gene_col) := stringr::str_split(!!dplyr::sym(gene_col), ";"),
-    n_cells = n_distinct(.data$.cell_id)
+    n_cells = dplyr::n_distinct(.data$.cell_id)
   )
+
   meta_df <- dplyr::ungroup(meta_df)
 
   # All genes used
-  vdj_genes <- pull(meta_df, gene_col)
+  vdj_genes <- dplyr::pull(meta_df, gene_col)
   vdj_genes <- unlist(vdj_genes)
   vdj_genes <- unique(vdj_genes)
   vdj_genes <- sort(vdj_genes)
 
-  # Create data.frame with gene usage
-  res <- map(vdj_genes, ~ {
+  # Calculate gene usage for each gene
+  res <- purrr::map_dfr(vdj_genes, ~ {
     gene_name <- .x
 
-    res <- mutate(
+    res <- dplyr::mutate(
       meta_df,
       used = purrr::map_lgl(!!dplyr::sym(gene_col), ~ gene_name %in% .x)
     )
 
-    res <- dplyr::group_by(res, !!dplyr::sym(cluster_col), n_cells)
+    res <- dplyr::group_by(res, n_cells)
+
+    if (!is.null(cluster_col)) {
+      res <- dplyr::group_by(res, !!!dplyr::syms(cluster_col), .add = TRUE)
+    }
+
     res <- dplyr::tally(res, used)
     res <- dplyr::ungroup(res)
-    res <- dplyr::mutate(res, !!dplyr::sym(gene_name) := n / n_cells)
-    res <- dplyr::select(res, -n, -n_cells)
+
+    res <- dplyr::mutate(
+      res,
+      usage = n / n_cells,
+      !!dplyr::sym(gene_col) := gene_name
+    )
+
+    res <- dplyr::relocate(
+      res,
+      all_of(c(cluster_col, gene_col)),
+      .before = "n_cells"
+    )
 
     res
   })
-
-  res <- purrr::reduce(res, dplyr::left_join, by = cluster_col)
-  res <- tidyr::pivot_longer(
-    res,
-    cols      = c(-!!dplyr::sym(cluster_col)),
-    names_to  = gene_col,
-    values_to = "usage"
-  )
-  res <- dplyr::group_by(res, !!dplyr::sym(gene_col))
-  res <- dplyr::mutate(res, ave_usage = mean(.data$usage))
-  res <- dplyr::ungroup(res)
-
-  # Filter for top used genes
-  if (!is.null(n_genes)) {
-    res <- dplyr::top_n(res, n = n_genes, wt = .data$ave_usage)
-  }
 
   res
 }

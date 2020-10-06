@@ -17,7 +17,7 @@ filter_vdj(
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object containing CDR3 sequences}
+\item{sobj_in}{Seurat object containing VDJ data}
 
 \item{filt}{Condition to use for filtering object}
 

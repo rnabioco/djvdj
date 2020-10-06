@@ -4,7 +4,7 @@
 \alias{calc_usage}
 \title{Calculate gene usage}
 \usage{
-calc_usage(sobj_in, gene_col, cluster_col = "orig.ident", n_genes = NULL)
+calc_usage(sobj_in, gene_col, cluster_col = NULL)
 }
 \arguments{
 \item{sobj_in}{Seurat object containing VDJ data}
@@ -13,11 +13,9 @@ calc_usage(sobj_in, gene_col, cluster_col = "orig.ident", n_genes = NULL)
 
 \item{cluster_col}{meta.data column containing cell clusters to use when
 calculating gene usage}
-
-\item{n_genes}{Number of top genes to include in output}
 }
 \value{
-tibble containing gene usage summary
+data.frame containing gene usage summary
 }
 \description{
 Calculate gene usage
