@@ -258,6 +258,7 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature,
 #' calculating clonotype abundance
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
+#' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
 #' @param abundance_col meta.data column containing pre-calculated abundances
 #' @param plot_colors Character vector containing colors to use for plotting
 #' @param plot_levels Character vector containing levels to use for ordering
@@ -265,7 +266,8 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature,
 #' @return Seurat object with calculated clonotype abundance
 #' @export
 plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
-                           abundance_col = NULL, plot_colors = NULL, plot_levels = NULL, ...) {
+                           yaxis = "percent", abundance_col = NULL, plot_colors = NULL, plot_levels = NULL,
+                           ...) {
 
   # Calculate clonotype abundance
   if (is.null(abundance_col)) {
@@ -276,7 +278,11 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
       prefix        = "."
     )
 
-    abundance_col <- ".clone_abund"
+    abundance_col <- ".clone_pct"
+
+    if (yaxis == "frequency") {
+      abundance_col <- ".clone_freq"
+    }
   }
 
   meta_df <- sobj_in@meta.data
@@ -300,13 +306,12 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 
   meta_df <- dplyr::mutate(
     meta_df,
-    rank = dplyr::row_number(!!dplyr::sym(abundance_col)),
-    rank = (rank - (max(rank) + 1)) * -1
+    rank = dplyr::row_number(dplyr::desc(!!dplyr::sym(abundance_col)))
   )
 
   # Plot abundance vs rank
   gg <- ggplot2::ggplot(meta_df, ggplot2::aes(rank, !!dplyr::sym(abundance_col))) +
-    ggplot2::labs(y = "abundance")
+    ggplot2::labs(y = yaxis)
 
   if (is.null(cluster_col)) {
     gg <- gg +
@@ -330,33 +335,47 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #'
 #' @param sobj_in Seurat object containing VDJ data
 #' @param gene_col meta.data column containing genes used for each clonotype
-#' @param cluster_col meta.data column containing cell clusters to use when
+#' @param cluster_col meta.data column containing cell clusters to use for
 #' calculating gene usage
+#' @param chain Chain to use for calculating gene usage. Set to NULL to include
+#' all chains.
 #' @param plot_colors Character vector containing colors to use for plotting
 #' @param plot_genes Character vector of genes to plot
 #' @param n_genes Number of top genes to plot based on average usage
 #' @param clust_levels Levels to use for ordering clusters
-#' @param line_color Color of line used to separate clusters
+#' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
+#' @param vline_color Color of vertical line to separate clusters
 #' @param ... Additional arguments to pass to geom_tile
+#' @param chain_col meta.data column containing chains for each cell
+#' @param sep Separator to use for expanding gene_col
 #' @return ggplot object
 #' @export
-plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, plot_colors = NULL,
-                       plot_genes = NULL, n_genes = NULL, clust_levels = NULL,
-                       line_color = NULL, ...) {
+plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot_colors = NULL,
+                       plot_genes = NULL, n_genes = NULL, clust_levels = NULL, yaxis = "percent",
+                       vline_color = NULL, ..., chain_col = "chains", sep = ";") {
 
   # Calculate gene usage
   gg_data <- calc_usage(
     sobj_in,
-    gene_col = gene_col,
-    cluster_col = cluster_col
+    gene_col    = gene_col,
+    cluster_col = cluster_col,
+    chain       = chain,
+    chain_col   = chain_col,
+    sep         = sep
   )
+
+  usage_col <- "gene_pct"
+
+  if (yaxis == "frequency") {
+    usage_col <- "gene_freq"
+  }
 
   # Order genes by average usage
   top_genes <- dplyr::group_by(gg_data, !!dplyr::sym(gene_col))
 
   top_genes <- dplyr::summarize(
     top_genes,
-    usage = mean(.data$usage),
+    usage   = mean(!!dplyr::sym(usage_col)),
     .groups = "drop"
   )
 
@@ -395,11 +414,13 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, plot_colors = NULL
   }
 
   # Create heatmap
-  res <- ggplot2::ggplot(
-    gg_data,
-    ggplot2::aes(!!sym(cluster_col), !!sym(gene_col), fill = .data$usage)
-  ) +
+  res <- ggplot2::ggplot(gg_data, ggplot2::aes(
+    !!dplyr::sym(cluster_col),
+    !!dplyr::sym(gene_col),
+    fill = !!dplyr::sym(usage_col)
+  )) +
     ggplot2::geom_tile(...) +
+    ggplot2::guides(fill = ggplot2::guide_colorbar(title = yaxis)) +
     ggplot2::theme(
       axis.title = ggplot2::element_blank(),
       axis.line  = ggplot2::element_blank(),
@@ -407,21 +428,111 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, plot_colors = NULL
     )
 
   # Add dividing line
-  if (!is.null(cluster_col) && !is.null(line_color)) {
+  if (!is.null(cluster_col) && !is.null(vline_color)) {
     n_clusts <- dplyr::n_distinct(gg_data[, cluster_col])
+    ival     <- 1
+    xint     <- seq(ival + 0.5, n_clusts - 0.5, ival)
 
     res <- res +
-      ggplot2::geom_vline(xintercept = seq(1.5, n_clusts - 0.5), color = line_color)
+      ggplot2::geom_vline(xintercept = xint, color = vline_color)
   }
 
   # Set colors
   if (!is.null(plot_colors)) {
     res <- res +
-      ggplot2::scale_color_gradientn(colors = plot_colors)
+      ggplot2::scale_fill_gradientn(colors = plot_colors, name = yaxis)
   }
 
   res
 }
+
+
+#' Plot repertoire overlap
+#'
+#' @param obj_in Seurat object containing VDJ data or matrix
+#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' calculating overlap
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' calculating overlap
+#' @param plot_colors Character vector containing colors to use for plotting
+#' @param ... Additional arguments to pass to geom_tile
+#' @return ggplot object
+#' @export
+plot_overlap <- function(obj_in, clonotype_col = NULL, cluster_col = NULL,
+                         plot_colors = NULL, ...) {
+
+  if ("Seurat" %in% class(obj_in)) {
+    if (is.null(clonotype_col) || is.null(cluster_col)) {
+      stop("if a Seurat object is provided, clonotype_col and cluster_col must be specified")
+    }
+
+    obj_in <- calc_overlap(
+      sobj_in       = obj_in,
+      clonotype_col = clonotype_col,
+      cluster_col   = cluster_col,
+      prefix        = "",
+      return_seurat = FALSE
+    )
+  }
+
+  if (!identical(rownames(obj_in), colnames(obj_in))) {
+    stop("matrix must have the same column and row names")
+  }
+
+  gg_data <- tibble::as_tibble(obj_in, rownames = "Var1")
+
+  gg_data <- tidyr::pivot_longer(
+    gg_data,
+    cols      = -Var1,
+    names_to  = "Var2",
+    values_to = "jaccard"
+  )
+
+  gg_data <- dplyr::mutate(gg_data, jaccard = ifelse(Var1 == Var2, NA, jaccard))
+  gg_data <- dplyr::rowwise(gg_data)
+
+  gg_data <- dplyr::mutate(
+    gg_data,
+    key = stringr::str_c(sort(c(Var1, Var2)), collapse = "_")
+  )
+
+  # Add NAs so each comparison is only included once
+  gg_data <- dplyr::group_by(gg_data, key)
+  gg_data <- dplyr::mutate(gg_data, jaccard = ifelse(dplyr::row_number() == 2, NA, jaccard))
+  gg_data <- dplyr::ungroup(gg_data)
+
+  # Set Var levels
+  var_levels <- unique(gg_data$Var1)
+
+  gg_data <- dplyr::mutate(
+    gg_data,
+    Var1 = factor(Var1, levels = var_levels),
+    Var2 = factor(Var2, levels = rev(var_levels))
+  )
+
+  gg_data <- dplyr::filter(
+    gg_data,
+    Var1 != levels(Var2)[1],
+    Var2 != levels(Var1)[1]
+  )
+
+  # Create heatmap
+  res <- ggplot2::ggplot(gg_data, aes(Var1, Var2, fill = jaccard)) +
+    ggplot2::geom_tile(...) +
+    ggplot2::theme(
+      axis.title  = element_blank(),
+      axis.line   = element_blank(),
+      axis.ticks  = element_blank()
+    )
+
+  if (!is.null(plot_colors)) {
+    res <- res +
+      ggplot2::scale_fill_gradientn(colors = plot_colors, na.value = "white")
+  }
+
+  res
+}
+
 
 
 

@@ -4,12 +4,14 @@
 #' @param vdj_dir cellranger vdj output directory
 #' @param prefix Prefix to add to new meta.data columns
 #' @param cell_prefix Prefix to add to cell barcodes
-#' @param filter_contigs Only include chains with at least one productive full
-#' length contig
+#' @param filter_contigs Only include chains with at least one productive
+#' contig
+#' @param sep Separator to use for storing per cell clonotype information in
+#' the meta.data
 #' @return Seurat object with VDJ data added to meta.data
 #' @export
 import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
-                       filter_contigs = TRUE) {
+                       filter_contigs = TRUE, sep = ";") {
 
   # Load contigs
   count_cols <- c("reads", "umis")
@@ -70,7 +72,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     n_chains = n(),
     dplyr::across(
       all_of(split_cols),
-      ~ stringr::str_c(as.character(.x), collapse = ";")
+      ~ stringr::str_c(as.character(.x), collapse = sep)
     ),
     .groups = "drop"
   )
@@ -78,13 +80,12 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   # Filter for cells present in sobj_in
   cells   <- Seurat::Cells(sobj_in)
   meta_df <- dplyr::filter(meta_df, .data$barcode %in% cells)
-  meta_df <- dplyr::rename(meta_df, clonotype_id = .data$raw_clonotype_id)
 
-  # Calculate stats
-  meta_df <- dplyr::group_by(meta_df, .data$clonotype_id)
-  meta_df <- dplyr::mutate(meta_df, clone_freq = dplyr::n_distinct(.data$barcode))
-  meta_df <- dplyr::ungroup(meta_df)
-  meta_df <- dplyr::mutate(meta_df, clone_prop = .data$clone_freq / nrow(meta_df))
+  meta_df <- dplyr::rename(
+    meta_df,
+    clonotype_id = .data$raw_clonotype_id,
+    chains = .data$chain
+  )
 
   # Add meta.data to Seurat object
   meta_df <- tibble::column_to_rownames(meta_df, "barcode")
@@ -99,49 +100,53 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 #' Subset Seurat object based on VDJ meta.data
 #'
 #' @param sobj_in Seurat object containing VDJ data
-#' @param filt Condition to use for filtering object
+#' @param filt Condition to use for filtering object. If set to NULL, all cells
+#' will be returned. An argument must be passed to filt and/or new_col.
 #' @param new_col Instead of filtering object create a new column with values
-#' based on filtering condition
-#' @param true Value to use for new_col when filtering condition evaluates to
-#' TRUE
-#' @param false Value to use for new_col when filtering condition evaluates to
-#' FALSE
+#' based on filtering condition. If filt is set to NULL, the values in new_col
+#' will be based on the expression passed to true.
+#' @param true Expression to generate values for new_col when filtering
+#' condition evaluates to TRUE
+#' @param false Expression to generate values for new_col when filtering
+#' condition evaluates to FALSE
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
-#' is used to determine which cells have VDJ data. If the clonotype_col is set
-#' to NULL, filtering is performed regardless of whether VDJ data is present
-#' for the cell.
-#' @param split_cols The names of meta.data columns to split into vectors. This
-#' allows for filtering based on multiple terms present in the column.
-#' @param split_sep Separator to use for splitting columns provided by the
-#' split_cols argument
+#' is used to determine which cells have VDJ data. If clonotype_col is set to
+#' NULL, filtering is performed regardless of whether VDJ data is present for
+#' the cell.
+#' @param vdj_cols The names of meta.data columns to expand for filtering
+#' @param sep Separator to use for expanding meta.data columns
 #' @param return_seurat Return a Seurat object. If set to FALSE, the meta.data
-#' table is returned
+#' table is returned.
 #' @return Filtered Seurat object
 #' @export
-filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE,
-                       clonotype_col = "clonotype_id", split_cols = c("chain", "cdr3"),
-                       split_sep = ";", return_seurat = TRUE) {
+filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false = FALSE,
+                       clonotype_col = "clonotype_id", vdj_cols = c("chains", "cdr3"),
+                       sep = ";", return_seurat = TRUE) {
+
+  if (is.null(dplyr::enexpr(filt)) && is.null(new_col)) {
+    stop("filt and/or new_col are required")
+  }
 
   meta_df <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
 
   # Split columns into vectors
-  if (!is.null(split_cols)) {
+  if (!is.null(vdj_cols)) {
 
     # Save original columns
     split_names <- purrr::set_names(
-      x  = split_cols,
-      nm = stringr::str_c(".", split_cols)
+      x  = vdj_cols,
+      nm = stringr::str_c(".", vdj_cols)
     )
 
     meta_df <- dplyr::mutate(meta_df, !!!dplyr::syms(split_names))
 
     # Split into vectors
     meta_df <- dplyr::mutate(meta_df, dplyr::across(
-      dplyr::all_of(split_cols),
-      ~ str_split(.x, split_sep)
+      dplyr::all_of(vdj_cols),
+      ~ stringr::str_split(.x, sep)
     ))
 
-    meta_df <- tidyr::unnest(meta_df, cols = dplyr::all_of(split_cols))
+    meta_df <- tidyr::unnest(meta_df, cols = dplyr::all_of(vdj_cols))
 
     # Convert to numeric or logical if possible
     convert_type <- function(x, fun) {
@@ -151,11 +156,11 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
     meta_df <- dplyr::mutate(
       meta_df,
       across(
-        dplyr::all_of(split_cols),
+        dplyr::all_of(vdj_cols),
         ~ convert_type(.x, as.numeric)
       ),
       across(
-        dplyr::all_of(split_cols),
+        dplyr::all_of(vdj_cols),
         ~ convert_type(.x, as.logical)
       )
     )
@@ -164,7 +169,11 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
   }
 
   # Store results from filtering expression
-  meta_df <- dplyr::mutate(meta_df, .KEEP = {{filt}})
+  meta_df <- dplyr::mutate(meta_df, .KEEP = TRUE)
+
+  if (!is.null(dplyr::enexpr(filt))) {
+    meta_df <- dplyr::mutate(meta_df, .KEEP = {{filt}})
+  }
 
   # Add new column with values based on filtering expression
   if (!is.null(new_col)) {
@@ -191,7 +200,11 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
     if (!is.null(clonotype_col)) {
       meta_df <- dplyr::mutate(
         meta_df,
-        .KEEP = dplyr::if_else(is.na(!!dplyr::sym(clonotype_col)), TRUE, .data$.KEEP)
+        .KEEP = dplyr::if_else(
+          is.na(!!dplyr::sym(clonotype_col)),
+          TRUE,
+          .data$.KEEP
+        )
       )
     }
 
@@ -199,13 +212,13 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
   }
 
   # Remove columns created for filtering
-  if (!is.null(split_cols)) {
+  if (!is.null(vdj_cols)) {
     split_names <- purrr::set_names(
       x  = names(split_names),
       nm = unname(split_names)
     )
 
-    meta_df <- dplyr::select(meta_df, !dplyr::all_of(c(split_cols, ".KEEP")))
+    meta_df <- dplyr::select(meta_df, !dplyr::all_of(c(vdj_cols, ".KEEP")))
     meta_df <- dplyr::rename(meta_df, !!!dplyr::syms(split_names))
     meta_df <- dplyr::distinct(meta_df)
     meta_df <- dplyr::ungroup(meta_df)
@@ -233,10 +246,12 @@ filter_vdj <- function(sobj_in, filt, new_col = NULL, true = TRUE, false = FALSE
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
 #' @param prefix Prefix to add to new meta.data columns
-#' @return ggplot object
+#' @param return_seurat Return a Seurat object. If set to FALSE, the meta.data
+#' table is returned.
+#' @return Seurat object with clonotype abundance added to meta.data
 #' @export
-calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id",
-                           cluster_col = NULL, prefix = "") {
+calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
+                           prefix = "", return_seurat = TRUE) {
 
   meta_df <- sobj_in@meta.data
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
@@ -247,7 +262,7 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id",
   }
 
   freq_col  <- stringr::str_c(prefix, "clone_freq")
-  abund_col <- stringr::str_c(prefix, "clone_abund")
+  pct_col <- stringr::str_c(prefix, "clone_pct")
 
   meta_df <- dplyr::mutate(
     meta_df,
@@ -257,17 +272,21 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id",
   meta_df <- dplyr::group_by(
     meta_df,
     !!dplyr::sym(clonotype_col),
-    add = TRUE
+    .add = TRUE
   )
 
   meta_df <- dplyr::mutate(
     meta_df,
-    !!sym(freq_col)  := dplyr::n_distinct(.data$.cell_id),
-    !!sym(abund_col) := !!dplyr::sym(freq_col) / .data$.n_cells
+    !!sym(freq_col) := dplyr::n_distinct(.data$.cell_id),
+    !!sym(pct_col)  := (!!dplyr::sym(freq_col) / .data$.n_cells) * 100
   )
 
   meta_df <- dplyr::select(meta_df, -.data$.n_cells)
   meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
+
+  if (!return_seurat) {
+    return(meta_df)
+  }
 
   res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
 
@@ -278,15 +297,18 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id",
 #' Calculate receptor diversity (inverse Simpson Index)
 #'
 #' @param sobj_in Seurat object
-#' @param clonotype_col meta.data column containing clonotype ids
-#' @param cluster_col meta.data column containing cluster IDs used for
-#' calculating receptor diversity. If cluster_col is omitted, diversity index
-#' will be calculated for all clonotypes.
+#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' calculating diversity
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' calculating diversity. If cluster_col is omitted, diversity index will be
+#' calculated for all clonotypes.
 #' @param prefix Prefix to add to new meta.data columns
+#' @param return_seurat Return a Seurat object. If set to FALSE, the meta.data
+#' table is returned.
 #' @return Seurat object with inverse Simpson index added to meta.data
 #' @export
-calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
-                           cluster_col = NULL, prefix = "") {
+calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
+                           prefix = "", return_seurat = TRUE) {
 
   # meta.data
   vdj_cols      <- clonotype_col
@@ -322,15 +344,19 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
     sum_frac = sum(.data$frac ^ 2),
 
     !!dplyr::sym(div_col) := 1 - .data$sum_frac
-    # !!dplyr::sym(div_col) := 1 / sum_frac
+    # !!dplyr::sym(div_col) := 1 / .data$sum_frac
   )
 
   vdj_df <- dplyr::select(vdj_df, all_of(c(vdj_cols, div_col)))
 
-  # Add resuts to meta.data
+  # Add results to meta.data
   meta_df <- dplyr::left_join(meta_df, vdj_df, by = vdj_cols)
   meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
   meta_df <- as.data.frame(meta_df)
+
+  if (!return_seurat) {
+    return(res)
+  }
 
   res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
 
@@ -338,18 +364,20 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id",
 }
 
 
-#' Calculate Jaccard index for cell identities
+#' Calculate repertoire overlap between clusters
 #'
 #' @param sobj_in Seurat object
-#' @param clonotype_col meta.data column containing clonotype ids
-#' @param cluster_col meta.data column containing cell clusters
+#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' calculating overlap
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' calculating overlap
 #' @param prefix Prefix to add to new meta.data columns
 #' @param return_seurat Return a Seurat object. If set to FALSE, a matrix is
 #' returned
 #' @return Seurat object with Jaccard index added to meta.data
 #' @export
-calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
-                         prefix = "", return_seurat = TRUE) {
+calc_overlap <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
+                         prefix = "jcrd_", return_seurat = TRUE) {
 
   # Helper to calculate jaccard index
   calc_jidx <- function(df_in, comparison, ctype_col) {
@@ -461,7 +489,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 
   res <- dplyr::mutate(
     res,
-    Var1 = stringr::str_c(prefix, .data$Var1, "_jaccard")
+    Var1 = stringr::str_c(prefix, .data$Var1)
   )
 
   res <- tidyr::pivot_wider(
@@ -474,7 +502,7 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
   if (!return_seurat) {
     res <- dplyr::mutate(
       res,
-      Var2 = stringr::str_c(prefix, .data$Var2, "_jaccard")
+      Var2 = stringr::str_c(prefix, .data$Var2)
     )
 
     res <- tibble::column_to_rownames(res, "Var2")
@@ -502,12 +530,39 @@ calc_jaccard <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #' @param gene_col meta.data column containing genes used for each clonotype
 #' @param cluster_col meta.data column containing cell clusters to use when
 #' calculating gene usage
+#' @param chain Chain to use for calculating gene usage. Set to NULL to include
+#' all chains.
+#' @param chain_col meta.data column containing chains for each cell
+#' @param sep Separator to use for expanding gene_col
 #' @return data.frame containing gene usage summary
 #' @export
-calc_usage <- function(sobj_in, gene_col, cluster_col = NULL) {
+calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
+                       chain_col = "chains", sep = ";") {
+
+  # Filter for chain
+  if (!is.null(chain)) {
+    sobj_in <- filter_vdj(
+      sobj_in,
+      filt     = any(chain %in% !!dplyr::sym(chain_col)),
+      new_col  = ".GENES",
+      true     = stringr::str_c(
+        (!!dplyr::sym(gene_col))[!!dplyr::sym(chain_col) %in% chain],
+        collapse = sep
+      ),
+      false    = NA,
+      vdj_cols = c(chain_col, gene_col)
+    )
+
+  } else {
+    sobj_in <- filter_vdj(
+      sobj_in,
+      new_col = ".GENES",
+      true    = !!dplyr::sym(gene_col)
+    )
+  }
 
   # data.frame to calculate usage
-  vdj_cols <- c(".cell_id", gene_col, cluster_col)
+  vdj_cols <- c(".cell_id", gene_col, cluster_col, ".GENES")
 
   meta_df <- sobj_in@meta.data
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
@@ -520,25 +575,42 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL) {
 
   meta_df <- dplyr::mutate(
     meta_df,
-    !!dplyr::sym(gene_col) := stringr::str_split(!!dplyr::sym(gene_col), ";"),
     n_cells = dplyr::n_distinct(.data$.cell_id)
   )
 
   meta_df <- dplyr::ungroup(meta_df)
 
   # All genes used
-  vdj_genes <- dplyr::pull(meta_df, gene_col)
+  vdj_genes <- dplyr::pull(meta_df, .GENES)
+  vdj_genes <- stringr::str_split(vdj_genes, sep)
   vdj_genes <- unlist(vdj_genes)
   vdj_genes <- unique(vdj_genes)
   vdj_genes <- sort(vdj_genes)
+  vdj_genes <- vdj_genes[vdj_genes != "None"]
 
   # Calculate gene usage for each gene
   res <- purrr::map_dfr(vdj_genes, ~ {
-    gene_name <- .x
+
+    spec_chr <- c("*", "-", "+")
+    gene_str <- .x
+
+    purrr::walk(spec_chr, ~ {
+      pat  <- stringr::str_c("\\", .x)
+      repl <- stringr::str_c("\\\\", .x)
+
+      gene_str <<- stringr::str_replace_all(gene_str, pat, repl)
+    })
+
+    gene_str <- stringr::str_c(
+      sep, gene_str, sep, "|",
+      sep, gene_str, "$|",
+      "^", gene_str, sep, "|",
+      "^", gene_str, "$"
+    )
 
     res <- dplyr::mutate(
       meta_df,
-      used = purrr::map_lgl(!!dplyr::sym(gene_col), ~ gene_name %in% .x)
+      used = stringr::str_detect(!!dplyr::sym(gene_col), gene_str)
     )
 
     res <- dplyr::group_by(res, n_cells)
@@ -547,13 +619,13 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL) {
       res <- dplyr::group_by(res, !!!dplyr::syms(cluster_col), .add = TRUE)
     }
 
-    res <- dplyr::tally(res, used)
+    res <- dplyr::tally(res, used, name = "gene_freq")
     res <- dplyr::ungroup(res)
 
     res <- dplyr::mutate(
       res,
-      usage = n / n_cells,
-      !!dplyr::sym(gene_col) := gene_name
+      gene_pct = (gene_freq / n_cells) * 100,
+      !!dplyr::sym(gene_col) := .x
     )
 
     res <- dplyr::relocate(
@@ -567,6 +639,4 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL) {
 
   res
 }
-
-
 

@@ -850,11 +850,16 @@ heat_data <- j_mat %>%
   rowwise() %>%  
   mutate(key = str_c(sort(c(Var1, Var2)), collapse = "_")) %>%
   group_by(key) %>%
-  mutate(jaccard = ifelse(row_number() == 2, NA, jaccard))
+  mutate(jaccard = ifelse(row_number() == 2, NA, jaccard)) %>%
+  ungroup() %>%
+  mutate(
+    Var1 = fct_inorder(Var1),
+    Var2 = fct_relevel(Var2, rev(levels(Var1)))
+  )
 
 # Jaccard heatmap  
 j_heat <- heat_data %>%
-  ggplot(aes(Var1, rev(Var2), fill = jaccard)) +
+  ggplot(aes(Var1, Var2, fill = jaccard)) +
   geom_tile(size = 1, color = "white") +
   scale_fill_gradient(
     low      = "grey90",
