@@ -4,7 +4,14 @@
 \alias{calc_usage}
 \title{Calculate gene usage}
 \usage{
-calc_usage(sobj_in, gene_col, cluster_col = NULL)
+calc_usage(
+  sobj_in,
+  gene_col,
+  cluster_col = NULL,
+  chain = NULL,
+  chain_col = "chains",
+  sep = ";"
+)
 }
 \arguments{
 \item{sobj_in}{Seurat object containing VDJ data}
@@ -13,6 +20,13 @@ calc_usage(sobj_in, gene_col, cluster_col = NULL)
 
 \item{cluster_col}{meta.data column containing cell clusters to use when
 calculating gene usage}
+
+\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
+all chains.}
+
+\item{chain_col}{meta.data column containing chains for each cell}
+
+\item{sep}{Separator to use for expanding gene_col}
 }
 \value{
 data.frame containing gene usage summary

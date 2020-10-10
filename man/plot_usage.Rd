@@ -8,12 +8,16 @@ plot_usage(
   sobj_in,
   gene_col,
   cluster_col = NULL,
+  chain = NULL,
   plot_colors = NULL,
   plot_genes = NULL,
   n_genes = NULL,
   clust_levels = NULL,
-  line_color = NULL,
-  ...
+  yaxis = "percent",
+  vline_color = NULL,
+  ...,
+  chain_col = "chains",
+  sep = ";"
 )
 }
 \arguments{
@@ -21,8 +25,11 @@ plot_usage(
 
 \item{gene_col}{meta.data column containing genes used for each clonotype}
 
-\item{cluster_col}{meta.data column containing cell clusters to use when
+\item{cluster_col}{meta.data column containing cell clusters to use for
 calculating gene usage}
+
+\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
+all chains.}
 
 \item{plot_colors}{Character vector containing colors to use for plotting}
 
@@ -32,9 +39,15 @@ calculating gene usage}
 
 \item{clust_levels}{Levels to use for ordering clusters}
 
-\item{line_color}{Color of line used to separate clusters}
+\item{yaxis}{Units to plot on the y-axis, either "frequency" or "percent"}
+
+\item{vline_color}{Color of vertical line to separate clusters}
 
 \item{...}{Additional arguments to pass to geom_tile}
+
+\item{chain_col}{meta.data column containing chains for each cell}
+
+\item{sep}{Separator to use for expanding gene_col}
 }
 \value{
 ggplot object

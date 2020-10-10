@@ -9,7 +9,8 @@ import_vdj(
   vdj_dir,
   prefix = "",
   cell_prefix = "",
-  filter_contigs = TRUE
+  filter_contigs = TRUE,
+  sep = ";"
 )
 }
 \arguments{
@@ -21,8 +22,11 @@ import_vdj(
 
 \item{cell_prefix}{Prefix to add to cell barcodes}
 
-\item{filter_contigs}{Only include chains with at least one productive full
-length contig}
+\item{filter_contigs}{Only include chains with at least one productive
+contig}
+
+\item{sep}{Separator to use for storing per cell clonotype information in
+the meta.data}
 }
 \value{
 Seurat object with VDJ data added to meta.data

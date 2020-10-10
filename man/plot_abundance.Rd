@@ -8,6 +8,7 @@ plot_abundance(
   sobj_in,
   clonotype_col = "clonotype_id",
   cluster_col = NULL,
+  yaxis = "percent",
   abundance_col = NULL,
   plot_colors = NULL,
   plot_levels = NULL,
@@ -22,6 +23,8 @@ calculating clonotype abundance}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
+
+\item{yaxis}{Units to plot on the y-axis, either "frequency" or "percent"}
 
 \item{abundance_col}{meta.data column containing pre-calculated abundances}
 

@@ -8,7 +8,8 @@ calc_abundance(
   sobj_in,
   clonotype_col = "clonotype_id",
   cluster_col = NULL,
-  prefix = ""
+  prefix = "",
+  return_seurat = TRUE
 )
 }
 \arguments{
@@ -20,9 +21,12 @@ calc_abundance(
 grouping cells when calculating clonotype abundance}
 
 \item{prefix}{Prefix to add to new meta.data columns}
+
+\item{return_seurat}{Return a Seurat object. If set to FALSE, the meta.data
+table is returned.}
 }
 \value{
-ggplot object
+Seurat object with clonotype abundance added to meta.data
 }
 \description{
 Calculate clonotype abundance
