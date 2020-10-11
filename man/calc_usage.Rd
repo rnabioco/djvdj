@@ -32,5 +32,7 @@ all chains.}
 data.frame containing gene usage summary
 }
 \description{
-Calculate gene usage
+Gene usage is calculated as the percent of cells that express each V(D)J
+gene present in gene_col. Cells that lack V(D)J data and have an NA present
+in gene_col are excluded from this calculation.
 }

@@ -528,7 +528,7 @@ calc_overlap <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #'
 #' Gene usage is calculated as the percent of cells that express each V(D)J
 #' gene present in gene_col. Cells that lack V(D)J data and have an NA present
-#' in the gene_col are excluded from this calculation.
+#' in gene_col are excluded from this calculation.
 #'
 #' @param sobj_in Seurat object containing VDJ data
 #' @param gene_col meta.data column containing genes used for each clonotype
@@ -610,9 +610,10 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
       values_to = "freq"
     )
 
-    res <- dplyr::mutate(  # why doesn't .after work here??
+    res <- dplyr::mutate(  # why doesn't .before work here??
       res,
-      n_cells = clust_counts[!!dplyr::sym(cluster_col)]
+      n_cells = clust_counts[!!dplyr::sym(cluster_col)],
+      n_cells = as.integer(n_cells)
     )
 
     res <- dplyr::relocate(res, n_cells, .before = freq)

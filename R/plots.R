@@ -364,10 +364,12 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot
     sep         = sep
   )
 
-  usage_col <- "gene_pct"
+  gg_data <- dplyr::filter(gg_data, !!dplyr::sym(gene_col) != "None")
+
+  usage_col <- "pct"
 
   if (yaxis == "frequency") {
-    usage_col <- "gene_freq"
+    usage_col <- "freq"
   }
 
   # Order genes by average usage
