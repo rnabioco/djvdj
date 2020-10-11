@@ -526,6 +526,10 @@ calc_overlap <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 
 #' Calculate gene usage
 #'
+#' Gene usage is calculated as the percent of cells that express each V(D)J
+#' gene present in gene_col. Cells that lack V(D)J data and have an NA present
+#' in the gene_col are excluded from this calculation.
+#'
 #' @param sobj_in Seurat object containing VDJ data
 #' @param gene_col meta.data column containing genes used for each clonotype
 #' @param cluster_col meta.data column containing cell clusters to use when
@@ -549,7 +553,7 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
         (!!dplyr::sym(gene_col))[!!dplyr::sym(chain_col) %in% chain],
         collapse = sep
       ),
-      false    = NA,
+      false    = "None",
       vdj_cols = c(chain_col, gene_col)
     )
 
@@ -562,80 +566,60 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
   }
 
   # data.frame to calculate usage
-  vdj_cols <- c(".cell_id", gene_col, cluster_col, ".GENES")
+  vdj_cols <- c(".cell_id", cluster_col, ".GENES")
 
   meta_df <- sobj_in@meta.data
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
+  meta_df <- dplyr::filter(meta_df, !is.na(!!dplyr::sym(gene_col)))  # remove cells with no gene_col data
   meta_df <- dplyr::select(meta_df, dplyr::all_of(vdj_cols))
-  meta_df <- dplyr::filter(meta_df, !is.na(!!dplyr::sym(gene_col)))
+
+  # Count genes used
+  res <- dplyr::mutate(meta_df, .GENES = stringr::str_split(.GENES, sep))
+  res <- tidyr::unnest(res, cols = .GENES)
+  res <- dplyr::distinct(res)
+  res <- dplyr::group_by(res, .data$.GENES)
 
   if (!is.null(cluster_col)) {
-    meta_df <- dplyr::group_by(meta_df, !!!dplyr::syms(cluster_col))
+    res <- dplyr::group_by(res, !!dplyr::sym(cluster_col), .add = TRUE)
   }
 
-  meta_df <- dplyr::mutate(
-    meta_df,
-    n_cells = dplyr::n_distinct(.data$.cell_id)
+  res <- dplyr::summarize(
+    res,
+    n_cells = n_distinct(meta_df$.cell_id),
+    freq    = dplyr::n_distinct(.data$.cell_id),
+    .groups = "drop"
   )
 
-  meta_df <- dplyr::ungroup(meta_df)
+  # Calculate percentage used
+  if (!is.null(cluster_col)) {
+    clusts       <- dplyr::pull(meta_df, cluster_col)
+    clust_counts <- table(clusts)
+    clusts       <- unique(clusts)
 
-  # All genes used
-  vdj_genes <- dplyr::pull(meta_df, .GENES)
-  vdj_genes <- stringr::str_split(vdj_genes, sep)
-  vdj_genes <- unlist(vdj_genes)
-  vdj_genes <- unique(vdj_genes)
-  vdj_genes <- sort(vdj_genes)
-  vdj_genes <- vdj_genes[vdj_genes != "None"]
-
-  # Calculate gene usage for each gene
-  res <- purrr::map_dfr(vdj_genes, ~ {
-
-    spec_chr <- c("*", "-", "+")
-    gene_str <- .x
-
-    purrr::walk(spec_chr, ~ {
-      pat  <- stringr::str_c("\\", .x)
-      repl <- stringr::str_c("\\\\", .x)
-
-      gene_str <<- stringr::str_replace_all(gene_str, pat, repl)
-    })
-
-    gene_str <- stringr::str_c(
-      sep, gene_str, sep, "|",
-      sep, gene_str, "$|",
-      "^", gene_str, sep, "|",
-      "^", gene_str, "$"
-    )
-
-    res <- dplyr::mutate(
-      meta_df,
-      used = stringr::str_detect(!!dplyr::sym(gene_col), gene_str)
-    )
-
-    res <- dplyr::group_by(res, n_cells)
-
-    if (!is.null(cluster_col)) {
-      res <- dplyr::group_by(res, !!!dplyr::syms(cluster_col), .add = TRUE)
-    }
-
-    res <- dplyr::tally(res, used, name = "gene_freq")
-    res <- dplyr::ungroup(res)
-
-    res <- dplyr::mutate(
+    res <- tidyr::pivot_wider(
       res,
-      gene_pct = (gene_freq / n_cells) * 100,
-      !!dplyr::sym(gene_col) := .x
+      names_from  = dplyr::all_of(cluster_col),
+      values_from = freq,
+      values_fill = 0
     )
 
-    res <- dplyr::relocate(
+    res <- tidyr::pivot_longer(
       res,
-      all_of(c(cluster_col, gene_col)),
-      .before = "n_cells"
+      cols      = dplyr::all_of(clusts),
+      names_to  = cluster_col,
+      values_to = "freq"
     )
 
-    res
-  })
+    res <- dplyr::mutate(  # why doesn't .after work here??
+      res,
+      n_cells = clust_counts[!!dplyr::sym(cluster_col)]
+    )
+
+    res <- dplyr::relocate(res, n_cells, .before = freq)
+  }
+
+  res <- dplyr::mutate(res, pct = (freq / n_cells) * 100)
+  res <- dplyr::rename(res, !!dplyr::sym(gene_col) := .GENES)
 
   res
 }
