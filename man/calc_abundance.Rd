@@ -13,7 +13,7 @@ calc_abundance(
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object containing VDJ data}
+\item{sobj_in}{Seurat object containing V(D)J data}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs}
 

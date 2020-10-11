@@ -253,7 +253,7 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature,
 
 #' Plot clonotype abundance
 #'
-#' @param sobj_in Seurat object containing VDJ data
+#' @param sobj_in Seurat object containing V(D)J data
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating clonotype abundance
 #' @param cluster_col meta.data column containing cluster IDs to use for
@@ -331,9 +331,9 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 }
 
 
-#' Plot VDJ gene usage
+#' Plot V(D)J gene usage
 #'
-#' @param sobj_in Seurat object containing VDJ data
+#' @param sobj_in Seurat object containing V(D)J data
 #' @param gene_col meta.data column containing genes used for each clonotype
 #' @param cluster_col meta.data column containing cell clusters to use for
 #' calculating gene usage
@@ -451,7 +451,7 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot
 
 #' Plot repertoire overlap
 #'
-#' @param obj_in Seurat object containing VDJ data or matrix
+#' @param obj_in Seurat object containing V(D)J data or matrix
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating overlap
 #' @param cluster_col meta.data column containing cluster IDs to use for

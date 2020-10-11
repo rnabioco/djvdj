@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{plot_usage}
 \alias{plot_usage}
-\title{Plot VDJ gene usage}
+\title{Plot V(D)J gene usage}
 \usage{
 plot_usage(
   sobj_in,
@@ -21,7 +21,7 @@ plot_usage(
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object containing VDJ data}
+\item{sobj_in}{Seurat object containing V(D)J data}
 
 \item{gene_col}{meta.data column containing genes used for each clonotype}
 
@@ -53,5 +53,5 @@ all chains.}
 ggplot object
 }
 \description{
-Plot VDJ gene usage
+Plot V(D)J gene usage
 }

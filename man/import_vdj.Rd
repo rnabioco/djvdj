@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{import_vdj}
 \alias{import_vdj}
-\title{Add VDJ data to Seurat object}
+\title{Add V(D)J data to Seurat object}
 \usage{
 import_vdj(
   sobj_in,
@@ -29,8 +29,8 @@ contig}
 the meta.data}
 }
 \value{
-Seurat object with VDJ data added to meta.data
+Seurat object with V(D)J data added to meta.data
 }
 \description{
-Add VDJ data to Seurat object
+Add V(D)J data to Seurat object
 }

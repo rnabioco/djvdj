@@ -13,7 +13,7 @@ plot_overlap(
 )
 }
 \arguments{
-\item{obj_in}{Seurat object containing VDJ data or matrix}
+\item{obj_in}{Seurat object containing V(D)J data or matrix}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating overlap}

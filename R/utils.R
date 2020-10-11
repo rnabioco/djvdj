@@ -1,4 +1,4 @@
-#' Add VDJ data to Seurat object
+#' Add V(D)J data to Seurat object
 #'
 #' @param sobj_in Seurat object
 #' @param vdj_dir cellranger vdj output directory
@@ -8,7 +8,7 @@
 #' contig
 #' @param sep Separator to use for storing per cell clonotype information in
 #' the meta.data
-#' @return Seurat object with VDJ data added to meta.data
+#' @return Seurat object with V(D)J data added to meta.data
 #' @export
 import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
                        filter_contigs = TRUE, sep = ";") {
@@ -97,9 +97,9 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 }
 
 
-#' Subset Seurat object based on VDJ meta.data
+#' Subset Seurat object based on V(D)J meta.data
 #'
-#' @param sobj_in Seurat object containing VDJ data
+#' @param sobj_in Seurat object containing V(D)J data
 #' @param filt Condition to use for filtering object. If set to NULL, all cells
 #' will be returned. An argument must be passed to filt and/or new_col.
 #' @param new_col Instead of filtering object create a new column with values
@@ -110,8 +110,8 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 #' @param false Expression to generate values for new_col when filtering
 #' condition evaluates to FALSE
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
-#' is used to determine which cells have VDJ data. If clonotype_col is set to
-#' NULL, filtering is performed regardless of whether VDJ data is present for
+#' is used to determine which cells have V(D)J data. If clonotype_col is set to
+#' NULL, filtering is performed regardless of whether V(D)J data is present for
 #' the cell.
 #' @param vdj_cols The names of meta.data columns to expand for filtering
 #' @param sep Separator to use for expanding meta.data columns
@@ -149,19 +149,15 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
     meta_df <- tidyr::unnest(meta_df, cols = dplyr::all_of(vdj_cols))
 
     # Convert to numeric or logical if possible
-    convert_type <- function(x, fun) {
-      suppressWarnings(ifelse(!is.na(fun(x)) | is.na(x), fun(x), x))
-    }
-
     meta_df <- dplyr::mutate(
       meta_df,
       across(
         dplyr::all_of(vdj_cols),
-        ~ convert_type(.x, as.numeric)
+        ~ convert_char(.x, as.numeric)
       ),
       across(
         dplyr::all_of(vdj_cols),
-        ~ convert_type(.x, as.logical)
+        ~ convert_char(.x, as.logical)
       )
     )
 
@@ -241,7 +237,7 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
 
 #' Calculate clonotype abundance
 #'
-#' @param sobj_in Seurat object containing VDJ data
+#' @param sobj_in Seurat object containing V(D)J data
 #' @param clonotype_col meta.data column containing clonotype IDs
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
@@ -530,7 +526,7 @@ calc_overlap <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #' gene present in gene_col. Cells that lack V(D)J data and have an NA present
 #' in gene_col are excluded from this calculation.
 #'
-#' @param sobj_in Seurat object containing VDJ data
+#' @param sobj_in Seurat object containing V(D)J data
 #' @param gene_col meta.data column containing genes used for each clonotype
 #' @param cluster_col meta.data column containing cell clusters to use when
 #' calculating gene usage
@@ -624,4 +620,81 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
 
   res
 }
+
+
+#' Summarize values for chains
+#'
+#' Summarize values present for each column provided to the data_cols argument.
+#' For each cell, the function(s) provided to .fun will be applied to each
+#' unique label in chain_col.
+#'
+#' @param sobj_in Seurat object containing V(D)J data
+#' @param data_cols meta.data columns to summarize
+#' @param .fun Function to use for summarizing data_cols
+#' @param chain_col meta.data column(s) containing labels for each chain
+#' expressed in the cell. These labels are used for grouping the summary
+#' output. Set chain_col to NULL to group solely based on the cell ID.
+#' @param include_cols Additional columns to include in the output data.frame
+#' @param sep Separator to use for expanding data_cols and chain_col
+#' @return data.frame containing summary results
+#' @export
+summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), .fun,
+                             chain_col = "chains", include_cols = NULL, sep = ";") {
+
+  # Fetch meta.data
+  fetch_cols <- c(data_cols, chain_col, cluster_col, include_cols)
+
+  meta_df <- Seurat::FetchData(sobj_in, fetch_cols)
+  meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
+
+  meta_df <- dplyr::filter(
+    meta_df,
+    dplyr::across(dplyr::all_of(data_cols), ~ !is.na(.x))
+  )
+
+  # Expand meta.data
+  res <- dplyr::mutate(meta_df, dplyr::across(
+    dplyr::all_of(c(data_cols, chain_col)),
+    ~ stringr::str_split(.x, sep)
+  ))
+
+  res <- tidyr::unnest(res, cols = dplyr::all_of(c(data_cols, chain_col)))
+
+  # Summarize data_cols for each chain present for the cell
+  res <- dplyr::mutate(res, dplyr::across(
+    dplyr::all_of(data_cols),
+    ~ convert_char(.x, as.numeric)
+  ))
+
+  grp_cols <- c(".cell_id", chain_col, cluster_col, include_cols)
+  res      <- dplyr::group_by(res, !!!dplyr::syms(grp_cols))
+
+  res <- dplyr::summarize(
+    res,
+    dplyr::across(dplyr::all_of(data_cols), .fun),
+    .groups = "drop"
+  )
+
+  res
+}
+
+
+#' Attempt to convert character vector using provided function
+#'
+#' @param x Character vector to convert
+#' @param fun Function to try
+#' @return Value converted using fun
+convert_char <- function(x, fun) {
+  if (!is.character(x)) {
+    return(x)
+  }
+
+  suppressWarnings(ifelse(!is.na(fun(x)) | is.na(x), fun(x), x))
+}
+
+
+
+
+
+
 

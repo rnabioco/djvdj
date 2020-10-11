@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{filter_vdj}
 \alias{filter_vdj}
-\title{Subset Seurat object based on VDJ meta.data}
+\title{Subset Seurat object based on V(D)J meta.data}
 \usage{
 filter_vdj(
   sobj_in,
@@ -17,7 +17,7 @@ filter_vdj(
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object containing VDJ data}
+\item{sobj_in}{Seurat object containing V(D)J data}
 
 \item{filt}{Condition to use for filtering object. If set to NULL, all cells
 will be returned. An argument must be passed to filt and/or new_col.}
@@ -33,8 +33,8 @@ condition evaluates to TRUE}
 condition evaluates to FALSE}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs. This column
-is used to determine which cells have VDJ data. If clonotype_col is set to
-NULL, filtering is performed regardless of whether VDJ data is present for
+is used to determine which cells have V(D)J data. If clonotype_col is set to
+NULL, filtering is performed regardless of whether V(D)J data is present for
 the cell.}
 
 \item{vdj_cols}{The names of meta.data columns to expand for filtering}
@@ -48,5 +48,5 @@ table is returned.}
 Filtered Seurat object
 }
 \description{
-Subset Seurat object based on VDJ meta.data
+Subset Seurat object based on V(D)J meta.data
 }

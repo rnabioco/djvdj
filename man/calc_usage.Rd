@@ -14,7 +14,7 @@ calc_usage(
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object containing VDJ data}
+\item{sobj_in}{Seurat object containing V(D)J data}
 
 \item{gene_col}{meta.data column containing genes used for each clonotype}
 
