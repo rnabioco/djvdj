@@ -642,7 +642,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), .fun,
                              chain_col = "chains", include_cols = NULL, sep = ";") {
 
   # Fetch meta.data
-  fetch_cols <- c(data_cols, chain_col, cluster_col, include_cols)
+  fetch_cols <- c(data_cols, chain_col, include_cols)
 
   meta_df <- Seurat::FetchData(sobj_in, fetch_cols)
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
@@ -666,7 +666,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), .fun,
     ~ convert_char(.x, as.numeric)
   ))
 
-  grp_cols <- c(".cell_id", chain_col, cluster_col, include_cols)
+  grp_cols <- c(".cell_id", chain_col, include_cols)
   res      <- dplyr::group_by(res, !!!dplyr::syms(grp_cols))
 
   res <- dplyr::summarize(
