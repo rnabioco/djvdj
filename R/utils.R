@@ -351,7 +351,7 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
   meta_df <- as.data.frame(meta_df)
 
   if (!return_seurat) {
-    return(res)
+    return(meta_df)
   }
 
   res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
@@ -539,41 +539,42 @@ calc_overlap <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
                        chain_col = "chains", sep = ";") {
 
-  # Filter for chain
-  if (!is.null(chain)) {
-    sobj_in <- filter_vdj(
-      sobj_in,
-      filt     = any(chain %in% !!dplyr::sym(chain_col)),
-      new_col  = ".GENES",
-      true     = stringr::str_c(
-        (!!dplyr::sym(gene_col))[!!dplyr::sym(chain_col) %in% chain],
-        collapse = sep
-      ),
-      false    = "None",
-      vdj_cols = c(chain_col, gene_col)
-    )
-
-  } else {
-    sobj_in <- filter_vdj(
-      sobj_in,
-      new_col = ".GENES",
-      true    = !!dplyr::sym(gene_col)
-    )
-  }
-
   # data.frame to calculate usage
-  vdj_cols <- c(".cell_id", cluster_col, ".GENES")
+  split_cols <- c(gene_col, chain_col)
+  vdj_cols   <- c(".cell_id", cluster_col, split_cols)
 
   meta_df <- sobj_in@meta.data
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
   meta_df <- dplyr::filter(meta_df, !is.na(!!dplyr::sym(gene_col)))  # remove cells with no gene_col data
   meta_df <- dplyr::select(meta_df, dplyr::all_of(vdj_cols))
 
-  # Count genes used
-  res <- dplyr::mutate(meta_df, .GENES = stringr::str_split(.GENES, sep))
-  res <- tidyr::unnest(res, cols = .GENES)
+  res <- dplyr::mutate(meta_df, across(
+    all_of(split_cols),
+    ~ stringr::str_split(.x, sep)
+  ))
+
+  # Filter chains
+  if (!is.null(chain)) {
+    res <- dplyr::mutate(res, !!dplyr::sym(gene_col) := purrr::map2(
+      !!dplyr::sym(gene_col), !!dplyr::sym(chain_col), ~ {
+        .x <- dplyr::if_else(
+          any(.y %in% chain),
+          list(.x[.y %in% chain]),
+          list("None")
+        )
+
+        unlist(.x)
+      }
+    ))
+
+    res <- dplyr::select(res, -all_of(chain_col))
+  }
+
+  res <- tidyr::unnest(res, cols = all_of(gene_col))
   res <- dplyr::distinct(res)
-  res <- dplyr::group_by(res, .data$.GENES)
+
+  # Count genes used
+  res <- dplyr::group_by(res, !!dplyr::sym(gene_col))
 
   if (!is.null(cluster_col)) {
     res <- dplyr::group_by(res, !!dplyr::sym(cluster_col), .add = TRUE)
@@ -616,7 +617,6 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
   }
 
   res <- dplyr::mutate(res, pct = (freq / n_cells) * 100)
-  res <- dplyr::rename(res, !!dplyr::sym(gene_col) := .GENES)
 
   res
 }
