@@ -537,7 +537,7 @@ calc_overlap <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #' @return data.frame containing gene usage summary
 #' @export
 calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
-                       chain_col = "chains", sep = ";") {
+                       chain_col = NULL, sep = ";") {
 
   # data.frame to calculate usage
   split_cols <- c(gene_col, chain_col)
@@ -555,6 +555,10 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
 
   # Filter chains
   if (!is.null(chain)) {
+    if (is.null(chain_col)) {
+      stop("must specify chain_col")
+    }
+
     res <- dplyr::mutate(res, !!dplyr::sym(gene_col) := purrr::map2(
       !!dplyr::sym(gene_col), !!dplyr::sym(chain_col), ~ {
         .x <- dplyr::if_else(
