@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Add VDJ data to Seurat object — import_vdj • djvdj</title>
+<title>Add V(D)J data to Seurat object — import_vdj • djvdj</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Add VDJ data to Seurat object — import_vdj" />
-<meta property="og:description" content="Add VDJ data to Seurat object" />
+<meta property="og:title" content="Add V(D)J data to Seurat object — import_vdj" />
+<meta property="og:description" content="Add V(D)J data to Seurat object" />
 
 
 
@@ -79,6 +79,12 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
+  <a href="../index.html">
+    <span class="fas fa fas fa-home fa-lg"></span>
+     
+  </a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li>
@@ -100,22 +106,23 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Add VDJ data to Seurat object</h1>
+    <h1>Add V(D)J data to Seurat object</h1>
     
     <div class="hidden name"><code>import_vdj.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Add VDJ data to Seurat object</p>
+    <p>Add V(D)J data to Seurat object</p>
     </div>
 
-    <pre class="usage"><span class='fu'>import_vdj</span>(
-  <span class='kw'>sobj_in</span>,
-  <span class='kw'>vdj_dir</span>,
-  prefix = <span class='st'>""</span>,
-  cell_prefix = <span class='st'>""</span>,
-  filter_contigs = <span class='fl'>TRUE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>import_vdj</span><span class='op'>(</span>
+  <span class='va'>sobj_in</span>,
+  <span class='va'>vdj_dir</span>,
+  prefix <span class='op'>=</span> <span class='st'>""</span>,
+  cell_prefix <span class='op'>=</span> <span class='st'>""</span>,
+  filter_contigs <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  sep <span class='op'>=</span> <span class='st'>";"</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -138,14 +145,19 @@
     </tr>
     <tr>
       <th>filter_contigs</th>
-      <td><p>Only include chains with at least one productive full
-length contig</p></td>
+      <td><p>Only include chains with at least one productive
+contig</p></td>
+    </tr>
+    <tr>
+      <th>sep</th>
+      <td><p>Separator to use for storing per cell clonotype information in
+the meta.data</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Seurat object with VDJ data added to meta.data</p>
+    <p>Seurat object with V(D)J data added to meta.data</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -162,7 +174,7 @@ length contig</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

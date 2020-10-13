@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>djvdj: A Collection of Tools to Analyze AVID-seq Data — djvdj-package • djvdj</title>
+<title>Create two dimensional scatter plot — plot_features • djvdj</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="djvdj: A Collection of Tools to Analyze AVID-seq Data — djvdj-package" />
-<meta property="og:description" content="What the package does (one paragraph)." />
+<meta property="og:title" content="Create two dimensional scatter plot — plot_features" />
+<meta property="og:description" content="Create two dimensional scatter plot" />
 
 
 
@@ -106,20 +106,106 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>djvdj: A Collection of Tools to Analyze AVID-seq Data</h1>
+    <h1>Create two dimensional scatter plot</h1>
     
-    <div class="hidden name"><code>djvdj-package.Rd</code></div>
+    <div class="hidden name"><code>plot_features.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>What the package does (one paragraph).</p>
+    <p>Create two dimensional scatter plot</p>
     </div>
 
+    <pre class="usage"><span class='fu'>plot_features</span><span class='op'>(</span>
+  <span class='va'>obj_in</span>,
+  x <span class='op'>=</span> <span class='st'>"UMAP_1"</span>,
+  y <span class='op'>=</span> <span class='st'>"UMAP_2"</span>,
+  <span class='va'>feature</span>,
+  data_slot <span class='op'>=</span> <span class='st'>"data"</span>,
+  pt_size <span class='op'>=</span> <span class='fl'>0.25</span>,
+  plot_cols <span class='op'>=</span> <span class='cn'>NULL</span>,
+  feat_levels <span class='op'>=</span> <span class='cn'>NULL</span>,
+  split_id <span class='op'>=</span> <span class='cn'>NULL</span>,
+  split_levels <span class='op'>=</span> <span class='cn'>NULL</span>,
+  min_pct <span class='op'>=</span> <span class='cn'>NULL</span>,
+  max_pct <span class='op'>=</span> <span class='cn'>NULL</span>,
+  lm_line <span class='op'>=</span> <span class='cn'>F</span>,
+  cor_label <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.8</span>, <span class='fl'>0.9</span><span class='op'>)</span>,
+  label_size <span class='op'>=</span> <span class='fl'>3.7</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span></pre>
 
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>obj_in</th>
+      <td><p>Seurat object or data.frame containing data for plotting</p></td>
+    </tr>
+    <tr>
+      <th>x</th>
+      <td><p>Variable to plot on x-axis</p></td>
+    </tr>
+    <tr>
+      <th>y</th>
+      <td><p>Variable to plot on y-axis</p></td>
+    </tr>
+    <tr>
+      <th>feature</th>
+      <td><p>Variable to use for coloring points</p></td>
+    </tr>
+    <tr>
+      <th>data_slot</th>
+      <td><p>Slot in the Seurat object to pull data from</p></td>
+    </tr>
+    <tr>
+      <th>pt_size</th>
+      <td><p>Point size</p></td>
+    </tr>
+    <tr>
+      <th>plot_cols</th>
+      <td><p>Vector of colors to use for plot</p></td>
+    </tr>
+    <tr>
+      <th>feat_levels</th>
+      <td><p>Levels to use for ordering feature</p></td>
+    </tr>
+    <tr>
+      <th>split_id</th>
+      <td><p>Variable to use for splitting plot into facets</p></td>
+    </tr>
+    <tr>
+      <th>split_levels</th>
+      <td><p>Levels to use for ordering plot facets</p></td>
+    </tr>
+    <tr>
+      <th>min_pct</th>
+      <td><p>Minimum value to plot for feature</p></td>
+    </tr>
+    <tr>
+      <th>max_pct</th>
+      <td><p>Maximum value to plot for feature</p></td>
+    </tr>
+    <tr>
+      <th>lm_line</th>
+      <td><p>Add regression line to plot</p></td>
+    </tr>
+    <tr>
+      <th>cor_label</th>
+      <td><p>Position of correlation coefficient label</p></td>
+    </tr>
+    <tr>
+      <th>label_size</th>
+      <td><p>Size of correlation coefficient label</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Additional parameters to pass to facet_wrap</p></td>
+    </tr>
+    </table>
 
-    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><strong>Maintainer</strong>: First Last <a href='mailto:first.last@example.com'>first.last@example.com</a> (<a href='https://orcid.org/YOUR-ORCID-ID'>ORCID</a>)</p>
+    <p>ggplot object</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

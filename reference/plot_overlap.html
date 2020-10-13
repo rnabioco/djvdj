@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>djvdj: A Collection of Tools to Analyze AVID-seq Data — djvdj-package • djvdj</title>
+<title>Plot repertoire overlap — plot_overlap • djvdj</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="djvdj: A Collection of Tools to Analyze AVID-seq Data — djvdj-package" />
-<meta property="og:description" content="What the package does (one paragraph)." />
+<meta property="og:title" content="Plot repertoire overlap — plot_overlap" />
+<meta property="og:description" content="Plot repertoire overlap" />
 
 
 
@@ -106,20 +106,53 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>djvdj: A Collection of Tools to Analyze AVID-seq Data</h1>
+    <h1>Plot repertoire overlap</h1>
     
-    <div class="hidden name"><code>djvdj-package.Rd</code></div>
+    <div class="hidden name"><code>plot_overlap.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>What the package does (one paragraph).</p>
+    <p>Plot repertoire overlap</p>
     </div>
 
+    <pre class="usage"><span class='fu'>plot_overlap</span><span class='op'>(</span>
+  <span class='va'>obj_in</span>,
+  clonotype_col <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cluster_col <span class='op'>=</span> <span class='cn'>NULL</span>,
+  plot_colors <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span></pre>
 
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>obj_in</th>
+      <td><p>Seurat object containing V(D)J data or matrix</p></td>
+    </tr>
+    <tr>
+      <th>clonotype_col</th>
+      <td><p>meta.data column containing clonotype IDs to use for
+calculating overlap</p></td>
+    </tr>
+    <tr>
+      <th>cluster_col</th>
+      <td><p>meta.data column containing cluster IDs to use for
+calculating overlap</p></td>
+    </tr>
+    <tr>
+      <th>plot_colors</th>
+      <td><p>Character vector containing colors to use for plotting</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Additional arguments to pass to geom_tile</p></td>
+    </tr>
+    </table>
 
-    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><strong>Maintainer</strong>: First Last <a href='mailto:first.last@example.com'>first.last@example.com</a> (<a href='https://orcid.org/YOUR-ORCID-ID'>ORCID</a>)</p>
+    <p>ggplot object</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

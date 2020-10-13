@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>djvdj: A Collection of Tools to Analyze AVID-seq Data — djvdj-package • djvdj</title>
+<title>Calculate repertoire overlap between clusters — calc_overlap • djvdj</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="djvdj: A Collection of Tools to Analyze AVID-seq Data — djvdj-package" />
-<meta property="og:description" content="What the package does (one paragraph)." />
+<meta property="og:title" content="Calculate repertoire overlap between clusters — calc_overlap" />
+<meta property="og:description" content="Calculate repertoire overlap between clusters" />
 
 
 
@@ -106,20 +106,54 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>djvdj: A Collection of Tools to Analyze AVID-seq Data</h1>
+    <h1>Calculate repertoire overlap between clusters</h1>
     
-    <div class="hidden name"><code>djvdj-package.Rd</code></div>
+    <div class="hidden name"><code>calc_overlap.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>What the package does (one paragraph).</p>
+    <p>Calculate repertoire overlap between clusters</p>
     </div>
 
+    <pre class="usage"><span class='fu'>calc_overlap</span><span class='op'>(</span>
+  <span class='va'>sobj_in</span>,
+  clonotype_col <span class='op'>=</span> <span class='st'>"clonotype_id"</span>,
+  <span class='va'>cluster_col</span>,
+  prefix <span class='op'>=</span> <span class='st'>"jcrd_"</span>,
+  return_seurat <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span></pre>
 
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>sobj_in</th>
+      <td><p>Seurat object</p></td>
+    </tr>
+    <tr>
+      <th>clonotype_col</th>
+      <td><p>meta.data column containing clonotype IDs to use for
+calculating overlap</p></td>
+    </tr>
+    <tr>
+      <th>cluster_col</th>
+      <td><p>meta.data column containing cluster IDs to use for
+calculating overlap</p></td>
+    </tr>
+    <tr>
+      <th>prefix</th>
+      <td><p>Prefix to add to new meta.data columns</p></td>
+    </tr>
+    <tr>
+      <th>return_seurat</th>
+      <td><p>Return a Seurat object. If set to FALSE, a matrix is
+returned</p></td>
+    </tr>
+    </table>
 
-    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><strong>Maintainer</strong>: First Last <a href='mailto:first.last@example.com'>first.last@example.com</a> (<a href='https://orcid.org/YOUR-ORCID-ID'>ORCID</a>)</p>
+    <p>Seurat object with Jaccard index added to meta.data</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

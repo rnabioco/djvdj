@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>djvdj: A Collection of Tools to Analyze AVID-seq Data — djvdj-package • djvdj</title>
+<title>Plot V(D)J gene usage — plot_usage • djvdj</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="djvdj: A Collection of Tools to Analyze AVID-seq Data — djvdj-package" />
-<meta property="og:description" content="What the package does (one paragraph)." />
+<meta property="og:title" content="Plot V(D)J gene usage — plot_usage" />
+<meta property="og:description" content="Plot V(D)J gene usage" />
 
 
 
@@ -106,20 +106,93 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>djvdj: A Collection of Tools to Analyze AVID-seq Data</h1>
+    <h1>Plot V(D)J gene usage</h1>
     
-    <div class="hidden name"><code>djvdj-package.Rd</code></div>
+    <div class="hidden name"><code>plot_usage.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>What the package does (one paragraph).</p>
+    <p>Plot V(D)J gene usage</p>
     </div>
 
+    <pre class="usage"><span class='fu'>plot_usage</span><span class='op'>(</span>
+  <span class='va'>sobj_in</span>,
+  <span class='va'>gene_col</span>,
+  cluster_col <span class='op'>=</span> <span class='cn'>NULL</span>,
+  chain <span class='op'>=</span> <span class='cn'>NULL</span>,
+  plot_colors <span class='op'>=</span> <span class='cn'>NULL</span>,
+  plot_genes <span class='op'>=</span> <span class='cn'>NULL</span>,
+  n_genes <span class='op'>=</span> <span class='cn'>NULL</span>,
+  clust_levels <span class='op'>=</span> <span class='cn'>NULL</span>,
+  yaxis <span class='op'>=</span> <span class='st'>"percent"</span>,
+  vline_color <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>...</span>,
+  chain_col <span class='op'>=</span> <span class='st'>"chains"</span>,
+  sep <span class='op'>=</span> <span class='st'>";"</span>
+<span class='op'>)</span></pre>
 
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>sobj_in</th>
+      <td><p>Seurat object containing V(D)J data</p></td>
+    </tr>
+    <tr>
+      <th>gene_col</th>
+      <td><p>meta.data column containing genes used for each clonotype</p></td>
+    </tr>
+    <tr>
+      <th>cluster_col</th>
+      <td><p>meta.data column containing cell clusters to use for
+calculating gene usage</p></td>
+    </tr>
+    <tr>
+      <th>chain</th>
+      <td><p>Chain to use for calculating gene usage. Set to NULL to include
+all chains.</p></td>
+    </tr>
+    <tr>
+      <th>plot_colors</th>
+      <td><p>Character vector containing colors to use for plotting</p></td>
+    </tr>
+    <tr>
+      <th>plot_genes</th>
+      <td><p>Character vector of genes to plot</p></td>
+    </tr>
+    <tr>
+      <th>n_genes</th>
+      <td><p>Number of top genes to plot based on average usage</p></td>
+    </tr>
+    <tr>
+      <th>clust_levels</th>
+      <td><p>Levels to use for ordering clusters</p></td>
+    </tr>
+    <tr>
+      <th>yaxis</th>
+      <td><p>Units to plot on the y-axis, either "frequency" or "percent"</p></td>
+    </tr>
+    <tr>
+      <th>vline_color</th>
+      <td><p>Color of vertical line to separate clusters</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Additional arguments to pass to geom_tile</p></td>
+    </tr>
+    <tr>
+      <th>chain_col</th>
+      <td><p>meta.data column containing chains for each cell</p></td>
+    </tr>
+    <tr>
+      <th>sep</th>
+      <td><p>Separator to use for expanding gene_col</p></td>
+    </tr>
+    </table>
 
-    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><strong>Maintainer</strong>: First Last <a href='mailto:first.last@example.com'>first.last@example.com</a> (<a href='https://orcid.org/YOUR-ORCID-ID'>ORCID</a>)</p>
+    <p>ggplot object</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
