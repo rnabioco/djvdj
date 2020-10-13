@@ -56,28 +56,24 @@ so_vdj <- import_vdj(
   filter_contigs = TRUE             # Only include chains with at least one productive contig
 )
 
-vdj_cols <- c(
-  "chain",      "cdr3",
-  "clone_freq", "clone_prop",
-  "n_chains"
-)
+vdj_cols <- c("chains", "cdr3", "n_chains")
 
 so_vdj@meta.data %>%
   as_tibble() %>%
   select(orig.ident, nCount_RNA, nFeature_RNA, all_of(vdj_cols))
-#> # A tibble: 7,137 x 8
-#>    orig.ident nCount_RNA nFeature_RNA chain cdr3  clone_freq clone_prop n_chains
-#>    <fct>           <dbl>        <int> <chr> <chr>      <int>      <dbl>    <int>
-#>  1 AVID-seq          884          551 IGH;… CVKG…          1   0.000262        2
-#>  2 AVID-seq         3061          970 <NA>  <NA>          NA  NA              NA
-#>  3 AVID-seq         1297          677 IGH;… CARG…          1   0.000262        2
-#>  4 AVID-seq         1570          848 <NA>  <NA>          NA  NA              NA
-#>  5 AVID-seq         2277          818 <NA>  <NA>          NA  NA              NA
-#>  6 AVID-seq         1320          566 <NA>  <NA>          NA  NA              NA
-#>  7 AVID-seq          570          348 <NA>  <NA>          NA  NA              NA
-#>  8 AVID-seq          909          489 IGH;… CTVS…          1   0.000262        2
-#>  9 AVID-seq         1072          588 IGH;… CARS…          1   0.000262        2
-#> 10 AVID-seq         1143          594 IGH;… CARS…          1   0.000262        2
+#> # A tibble: 7,137 x 6
+#>    orig.ident nCount_RNA nFeature_RNA chains  cdr3                      n_chains
+#>    <fct>           <dbl>        <int> <chr>   <chr>                        <int>
+#>  1 AVID-seq          884          551 IGH;IGK CVKGYDYDWYFDVW;CLQYDNLWTF        2
+#>  2 AVID-seq         3061          970 <NA>    <NA>                            NA
+#>  3 AVID-seq         1297          677 IGH;IGK CARGRLGYAMDYW;CQHFWSTPWTF        2
+#>  4 AVID-seq         1570          848 <NA>    <NA>                            NA
+#>  5 AVID-seq         2277          818 <NA>    <NA>                            NA
+#>  6 AVID-seq         1320          566 <NA>    <NA>                            NA
+#>  7 AVID-seq          570          348 <NA>    <NA>                            NA
+#>  8 AVID-seq          909          489 IGH;IGK CTVSYTKDWYFDVW;CAQNLELPL…        2
+#>  9 AVID-seq         1072          588 IGH;IGK CARSYDYDPLYYAMDYW;CLQSDN…        2
+#> 10 AVID-seq         1143          594 IGH;IGK CARSRLAYW;CLQYASSPFTF            2
 #> # … with 7,127 more rows
 ```
 
@@ -98,26 +94,26 @@ Filter to only include cells with paired light and heavy chains.
 ``` r
 so_filt <- filter_vdj(
   sobj_in = so_vdj,                                              # Seurat object
-  filt    = "IGH" %in% chain && any(c("IGK", "IGL") %in% chain)  # Expression for filtering
+  filt    = "IGH" %in% chains && any(c("IGK", "IGL") %in% chains)  # Expression for filtering
 )
 
 so_filt@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols))
-#> # A tibble: 3,353 x 5
-#>    chain       cdr3                               clone_freq clone_prop n_chains
-#>    <chr>       <chr>                                   <int>      <dbl>    <int>
-#>  1 IGH;IGK     CVKGYDYDWYFDVW;CLQYDNLWTF                   1   0.000262        2
-#>  2 IGH;IGK     CARGRLGYAMDYW;CQHFWSTPWTF                   1   0.000262        2
-#>  3 IGH;IGK     CTVSYTKDWYFDVW;CAQNLELPLTF                  1   0.000262        2
-#>  4 IGH;IGK     CARSYDYDPLYYAMDYW;CLQSDNLPLTF               1   0.000262        2
-#>  5 IGH;IGK     CARSRLAYW;CLQYASSPFTF                       1   0.000262        2
-#>  6 IGH;IGK;IGL CAKRGYSNSLDYW;CQHFWSTPYTF;CALWYSN…          1   0.000262        3
-#>  7 IGH;IGK     CANPITTAEGWYFDVW;CLQHGESPYTF                1   0.000262        2
-#>  8 IGH;IGK     CARSYGYAMDYW;CWQGTHFPYTF                    1   0.000262        2
-#>  9 IGH;IGK     CARWVYGSAWFAYW;CMQHLEYPFTF                  1   0.000262        2
-#> 10 IGH;IGK     CARSHGYDFYAMDYW;CQHFWGTPRTF                 1   0.000262        2
+#> # A tibble: 3,353 x 3
+#>    chains      cdr3                                  n_chains
+#>    <chr>       <chr>                                    <int>
+#>  1 IGH;IGK     CVKGYDYDWYFDVW;CLQYDNLWTF                    2
+#>  2 IGH;IGK     CARGRLGYAMDYW;CQHFWSTPWTF                    2
+#>  3 IGH;IGK     CTVSYTKDWYFDVW;CAQNLELPLTF                   2
+#>  4 IGH;IGK     CARSYDYDPLYYAMDYW;CLQSDNLPLTF                2
+#>  5 IGH;IGK     CARSRLAYW;CLQYASSPFTF                        2
+#>  6 IGH;IGK;IGL CAKRGYSNSLDYW;CQHFWSTPYTF;CALWYSNHWVF        3
+#>  7 IGH;IGK     CANPITTAEGWYFDVW;CLQHGESPYTF                 2
+#>  8 IGH;IGK     CARSYGYAMDYW;CWQGTHFPYTF                     2
+#>  9 IGH;IGK     CARWVYGSAWFAYW;CMQHLEYPFTF                   2
+#> 10 IGH;IGK     CARSHGYDFYAMDYW;CQHFWGTPRTF                  2
 #> # … with 3,343 more rows
 ```
 
@@ -131,7 +127,7 @@ This is useful for plotting.
 ``` r
 so_vdj <- filter_vdj(
   sobj_in = so_vdj,                                               # Seurat object
-  filt    = "IGH" %in% chain && any(c("IGK", "IGL") %in% chain),  # Condition to use for filtering
+  filt    = "IGH" %in% chains && any(c("IGK", "IGL") %in% chains),  # Condition to use for filtering
   new_col = "Paired",                                             # Name of new column
   true    = "paired",                                             # Value when condition is TRUE
   false   = "unpaired"                                            # Value when condition is FALSE
@@ -143,19 +139,19 @@ so_vdj@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols))
-#> # A tibble: 3,820 x 6
-#>    chain      cdr3                        clone_freq clone_prop n_chains Paired 
-#>    <chr>      <chr>                            <int>      <dbl>    <int> <chr>  
-#>  1 IGH;IGK    CVKGYDYDWYFDVW;CLQYDNLWTF            1   0.000262        2 paired 
-#>  2 IGH;IGK    CARGRLGYAMDYW;CQHFWSTPWTF            1   0.000262        2 paired 
-#>  3 IGH;IGK    CTVSYTKDWYFDVW;CAQNLELPLTF           1   0.000262        2 paired 
-#>  4 IGH;IGK    CARSYDYDPLYYAMDYW;CLQSDNLP…          1   0.000262        2 paired 
-#>  5 IGH;IGK    CARSRLAYW;CLQYASSPFTF                1   0.000262        2 paired 
-#>  6 IGH;IGK;I… CAKRGYSNSLDYW;CQHFWSTPYTF;…          1   0.000262        3 paired 
-#>  7 IGK        CQQWSSNPLTF                          3   0.000785        1 unpair…
-#>  8 IGH;IGK    CANPITTAEGWYFDVW;CLQHGESPY…          1   0.000262        2 paired 
-#>  9 IGH;IGK    CARSYGYAMDYW;CWQGTHFPYTF             1   0.000262        2 paired 
-#> 10 IGH;IGK    CARWVYGSAWFAYW;CMQHLEYPFTF           1   0.000262        2 paired 
+#> # A tibble: 3,820 x 4
+#>    chains      cdr3                                  n_chains Paired  
+#>    <chr>       <chr>                                    <int> <chr>   
+#>  1 IGH;IGK     CVKGYDYDWYFDVW;CLQYDNLWTF                    2 paired  
+#>  2 IGH;IGK     CARGRLGYAMDYW;CQHFWSTPWTF                    2 paired  
+#>  3 IGH;IGK     CTVSYTKDWYFDVW;CAQNLELPLTF                   2 paired  
+#>  4 IGH;IGK     CARSYDYDPLYYAMDYW;CLQSDNLPLTF                2 paired  
+#>  5 IGH;IGK     CARSRLAYW;CLQYASSPFTF                        2 paired  
+#>  6 IGH;IGK;IGL CAKRGYSNSLDYW;CQHFWSTPYTF;CALWYSNHWVF        3 paired  
+#>  7 IGK         CQQWSSNPLTF                                  1 unpaired
+#>  8 IGH;IGK     CANPITTAEGWYFDVW;CLQHGESPYTF                 2 paired  
+#>  9 IGH;IGK     CARSYGYAMDYW;CWQGTHFPYTF                     2 paired  
+#> 10 IGH;IGK     CARWVYGSAWFAYW;CMQHLEYPFTF                   2 paired  
 #> # … with 3,810 more rows
 ```
 
@@ -170,11 +166,9 @@ created for only the unique chains.
 
 ``` r
 so_vdj <- filter_vdj(
-  sobj_in = so_vdj,                                # Seurat object
-  filt    = length(unique(chain)) < 4,             # Condition to use for filtering
-  new_col = "uniq_chains",                         # Name of new column
-  true    = str_c(unique(chain), collapse = "_"),  # Value when condition is TRUE
-  false   = "other"                                # Value when condition is FALSE
+  sobj_in = so_vdj,                               # Seurat object
+  new_col = "uniq_chains",                        # Name of new column
+  true    = str_c(unique(chains), collapse = "_")  # Value when condition is TRUE
 )
 
 vdj_cols <- c(vdj_cols, "uniq_chains")
@@ -183,19 +177,19 @@ so_vdj@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id), n_chains > 2) %>%
   select(all_of(vdj_cols))
-#> # A tibble: 526 x 7
-#>    chain    cdr3               clone_freq clone_prop n_chains Paired uniq_chains
-#>    <chr>    <chr>                   <int>      <dbl>    <int> <chr>  <chr>      
-#>  1 IGH;IGK… CAKRGYSNSLDYW;CQH…          1   0.000262        3 paired IGH_IGK_IGL
-#>  2 IGH;IGH… CARGDYW;CTTWLRLRS…          1   0.000262        4 paired IGH_IGK    
-#>  3 IGH;IGK… CAKPRYYYGSSFYAMDY…          1   0.000262        3 paired IGH_IGK    
-#>  4 IGH;IGK… CARGPYYTNGGAMDYW;…          1   0.000262        3 paired IGH_IGK    
-#>  5 IGH;IGH… CARSYPYFDYW;CARSS…          1   0.000262        4 paired IGH_IGK    
-#>  6 IGH;IGK… CALDSSGFAYW;CQQYW…          1   0.000262        3 paired IGH_IGK    
-#>  7 IGH;IGH… CARHDGLPGAMDYW;CA…          1   0.000262        4 paired IGH_IGK    
-#>  8 IGH;IGH… CAEGSSNWYFDVW;CAR…          1   0.000262        4 paired IGH_IGK    
-#>  9 IGH;IGK… CTSPPYEGYYAMDYW;C…          1   0.000262        3 paired IGH_IGK    
-#> 10 IGH;IGH… CTRLLTGYYFDYW;CAR…          1   0.000262        4 paired IGH_IGK    
+#> # A tibble: 526 x 5
+#>    chains       cdr3                                 n_chains Paired uniq_chains
+#>    <chr>        <chr>                                   <int> <chr>  <chr>      
+#>  1 IGH;IGK;IGL  CAKRGYSNSLDYW;CQHFWSTPYTF;CALWYSNHW…        3 paired IGH_IGK_IGL
+#>  2 IGH;IGH;IGK… CARGDYW;CTTWLRLRSFAYW;CHQRSSYPCTF;C…        4 paired IGH_IGK    
+#>  3 IGH;IGK;IGK  CAKPRYYYGSSFYAMDYW;CQQGNTLPFTF;CAQN…        3 paired IGH_IGK    
+#>  4 IGH;IGK;IGK  CARGPYYTNGGAMDYW;CQHFWSTPFTF;CLQYDE…        3 paired IGH_IGK    
+#>  5 IGH;IGH;IGK… CARSYPYFDYW;CARSSITTVSDYW;CQQHNEYPY…        4 paired IGH_IGK    
+#>  6 IGH;IGK;IGK  CALDSSGFAYW;CQQYWSTPTF;CHQYHRSPLTF          3 paired IGH_IGK    
+#>  7 IGH;IGH;IGK… CARHDGLPGAMDYW;CARPLTIAGSAMDYW;CQQG…        4 paired IGH_IGK    
+#>  8 IGH;IGH;IGK… CAEGSSNWYFDVW;CARDGSSPFDYW;CQQHNEYP…        4 paired IGH_IGK    
+#>  9 IGH;IGK;IGK  CTSPPYEGYYAMDYW;CFQGSHVPPTF;CKQSYNL…        3 paired IGH_IGK    
+#> 10 IGH;IGH;IGK… CTRLLTGYYFDYW;CARRYYYGSSWNYFDYW;CQQ…        4 paired IGH_IGK    
 #> # … with 516 more rows
 ```
 
@@ -211,7 +205,7 @@ have this sequence.
 # Add new cell labels to meta.data
 so_vdj <- filter_vdj(
   sobj_in = so_vdj,                                   # Seurat object
-  filt    = "CQQSNSWPYTF" %in% cdr3[chain == "IGK"],  # Condition to use for filtering
+  filt    = "CQQSNSWPYTF" %in% cdr3[chains == "IGK"],  # Condition to use for filtering
   new_col = "IGK_seq",                                # Name of new column
   true    = "CQQSNSWPYTF",                            # Value when condition is TRUE
   false   = "other"                                   # Value when condition is FALSE
@@ -223,19 +217,19 @@ so_vdj@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols))
-#> # A tibble: 3,820 x 8
-#>    chain   cdr3        clone_freq clone_prop n_chains Paired uniq_chains IGK_seq
-#>    <chr>   <chr>            <int>      <dbl>    <int> <chr>  <chr>       <chr>  
-#>  1 IGH;IGK CVKGYDYDWY…          1   0.000262        2 paired IGH_IGK     other  
-#>  2 IGH;IGK CARGRLGYAM…          1   0.000262        2 paired IGH_IGK     other  
-#>  3 IGH;IGK CTVSYTKDWY…          1   0.000262        2 paired IGH_IGK     other  
-#>  4 IGH;IGK CARSYDYDPL…          1   0.000262        2 paired IGH_IGK     other  
-#>  5 IGH;IGK CARSRLAYW;…          1   0.000262        2 paired IGH_IGK     other  
-#>  6 IGH;IG… CAKRGYSNSL…          1   0.000262        3 paired IGH_IGK_IGL other  
-#>  7 IGK     CQQWSSNPLTF          3   0.000785        1 unpai… IGK         other  
-#>  8 IGH;IGK CANPITTAEG…          1   0.000262        2 paired IGH_IGK     other  
-#>  9 IGH;IGK CARSYGYAMD…          1   0.000262        2 paired IGH_IGK     other  
-#> 10 IGH;IGK CARWVYGSAW…          1   0.000262        2 paired IGH_IGK     other  
+#> # A tibble: 3,820 x 6
+#>    chains     cdr3                          n_chains Paired  uniq_chains IGK_seq
+#>    <chr>      <chr>                            <int> <chr>   <chr>       <chr>  
+#>  1 IGH;IGK    CVKGYDYDWYFDVW;CLQYDNLWTF            2 paired  IGH_IGK     other  
+#>  2 IGH;IGK    CARGRLGYAMDYW;CQHFWSTPWTF            2 paired  IGH_IGK     other  
+#>  3 IGH;IGK    CTVSYTKDWYFDVW;CAQNLELPLTF           2 paired  IGH_IGK     other  
+#>  4 IGH;IGK    CARSYDYDPLYYAMDYW;CLQSDNLPLTF        2 paired  IGH_IGK     other  
+#>  5 IGH;IGK    CARSRLAYW;CLQYASSPFTF                2 paired  IGH_IGK     other  
+#>  6 IGH;IGK;I… CAKRGYSNSLDYW;CQHFWSTPYTF;CA…        3 paired  IGH_IGK_IGL other  
+#>  7 IGK        CQQWSSNPLTF                          1 unpair… IGK         other  
+#>  8 IGH;IGK    CANPITTAEGWYFDVW;CLQHGESPYTF         2 paired  IGH_IGK     other  
+#>  9 IGH;IGK    CARSYGYAMDYW;CWQGTHFPYTF             2 paired  IGH_IGK     other  
+#> 10 IGH;IGK    CARWVYGSAWFAYW;CMQHLEYPFTF           2 paired  IGH_IGK     other  
 #> # … with 3,810 more rows
 ```
 
@@ -271,7 +265,7 @@ present in the `cluster_col`. Using the `return_seurat` argument,
 `calc_jaccard` can also output a matrix for plotting.
 
 ``` r
-so_vdj <- calc_jaccard(
+so_vdj <- calc_overlap(
   sobj_in       = so_vdj,             # Seurat object
   clonotype_col = "clonotype_id",     # meta.data column containing clonotype ids
   cluster_col   = "seurat_clusters",  # meta.data column containing cell labels

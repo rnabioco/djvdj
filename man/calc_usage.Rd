@@ -4,21 +4,35 @@
 \alias{calc_usage}
 \title{Calculate gene usage}
 \usage{
-calc_usage(sobj_in, gene_col, cluster_col = "orig.ident", n_genes = NULL)
+calc_usage(
+  sobj_in,
+  gene_col,
+  cluster_col = NULL,
+  chain = NULL,
+  chain_col = NULL,
+  sep = ";"
+)
 }
 \arguments{
-\item{sobj_in}{Seurat object containing VDJ data}
+\item{sobj_in}{Seurat object containing V(D)J data}
 
 \item{gene_col}{meta.data column containing genes used for each clonotype}
 
 \item{cluster_col}{meta.data column containing cell clusters to use when
 calculating gene usage}
 
-\item{n_genes}{Number of top genes to include in output}
+\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
+all chains.}
+
+\item{chain_col}{meta.data column containing chains for each cell}
+
+\item{sep}{Separator to use for expanding gene_col}
 }
 \value{
-tibble containing gene usage summary
+data.frame containing gene usage summary
 }
 \description{
-Calculate gene usage
+Gene usage is calculated as the percent of cells that express each V(D)J
+gene present in gene_col. Cells that lack V(D)J data and have an NA present
+in gene_col are excluded from this calculation.
 }

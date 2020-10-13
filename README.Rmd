@@ -472,11 +472,7 @@ so_vdj <- import_vdj(
   filter_contigs = TRUE             # Only include chains with at least one productive contig
 )
 
-vdj_cols <- c(
-  "chain",      "cdr3",
-  "clone_freq", "clone_prop",
-  "n_chains"
-)
+vdj_cols <- c("chains", "cdr3", "n_chains")
 
 so_vdj@meta.data %>%
   as_tibble() %>%
@@ -494,7 +490,7 @@ Filter to only include cells with paired light and heavy chains.
 ```{r}
 so_filt <- filter_vdj(
   sobj_in = so_vdj,                                              # Seurat object
-  filt    = "IGH" %in% chain && any(c("IGK", "IGL") %in% chain)  # Expression for filtering
+  filt    = "IGH" %in% chains && any(c("IGK", "IGL") %in% chains)  # Expression for filtering
 )
 
 so_filt@meta.data %>%
@@ -510,7 +506,7 @@ Instead of filtering, `filter_vdj` can also add new cell labels to the object me
 ```{r}
 so_vdj <- filter_vdj(
   sobj_in = so_vdj,                                               # Seurat object
-  filt    = "IGH" %in% chain && any(c("IGK", "IGL") %in% chain),  # Condition to use for filtering
+  filt    = "IGH" %in% chains && any(c("IGK", "IGL") %in% chains),  # Condition to use for filtering
   new_col = "Paired",                                             # Name of new column
   true    = "paired",                                             # Value when condition is TRUE
   false   = "unpaired"                                            # Value when condition is FALSE
@@ -592,11 +588,9 @@ More complicated statements referring to meta.data columns can be used for the `
 
 ```{r}
 so_vdj <- filter_vdj(
-  sobj_in = so_vdj,                                # Seurat object
-  filt    = length(unique(chain)) < 4,             # Condition to use for filtering
-  new_col = "uniq_chains",                         # Name of new column
-  true    = str_c(unique(chain), collapse = "_"),  # Value when condition is TRUE
-  false   = "other"                                # Value when condition is FALSE
+  sobj_in = so_vdj,                               # Seurat object
+  new_col = "uniq_chains",                        # Name of new column
+  true    = str_c(unique(chains), collapse = "_")  # Value when condition is TRUE
 )
 
 vdj_cols <- c(vdj_cols, "uniq_chains")
@@ -675,7 +669,7 @@ MD4 B cells are expected to have IGK chains with the CDR3 amino acid sequence CQ
 # Add new cell labels to meta.data
 so_vdj <- filter_vdj(
   sobj_in = so_vdj,                                   # Seurat object
-  filt    = "CQQSNSWPYTF" %in% cdr3[chain == "IGK"],  # Condition to use for filtering
+  filt    = "CQQSNSWPYTF" %in% cdr3[chains == "IGK"],  # Condition to use for filtering
   new_col = "IGK_seq",                                # Name of new column
   true    = "CQQSNSWPYTF",                            # Value when condition is TRUE
   false   = "other"                                   # Value when condition is FALSE
@@ -804,7 +798,7 @@ plot_grid(
 Calculate repertoire overlap with `calc_jaccard` for the cell groups present in the `cluster_col`. Using the `return_seurat` argument, `calc_jaccard` can also output a matrix for plotting.
 
 ```{r}
-so_vdj <- calc_jaccard(
+so_vdj <- calc_overlap(
   sobj_in       = so_vdj,             # Seurat object
   clonotype_col = "clonotype_id",     # meta.data column containing clonotype ids
   cluster_col   = "seurat_clusters",  # meta.data column containing cell labels
@@ -817,7 +811,7 @@ so_vdj <- calc_jaccard(
 # Jaccard UMAP
 j_gg <- so_vdj %>%
   plot_features(
-    feature    = "x8_jaccard",
+    feature    = "x8",
     pt_size    = 0.02,
     pt_outline = 0.2,
     plot_cols  = c("grey90", get_cols()[2]),
@@ -829,38 +823,14 @@ j_gg <- so_vdj %>%
   theme(legend.text = element_text(size = 8))
 
 # Matrix for heatmap
-j_mat <- calc_jaccard(
-  sobj_in       = so_vdj,
+j_heat <- plot_overlap(
+  obj_in        = so_vdj,
   clonotype_col = "clonotype_id",
   cluster_col   = "seurat_clusters",
-  prefix        = "x",
-  return_seurat = FALSE
-)
-
-heat_data <- j_mat %>%
-  as_tibble(rownames = "Var1") %>%
-  pivot_longer(cols = -Var1, names_to = "Var2", values_to = "jaccard") %>%
-  mutate(
-    jaccard = ifelse(jaccard == 1, NA, jaccard),
-    across(
-      all_of(c("Var1", "Var2")),
-      ~ str_extract(.x, "(?<=x)[0-9]+")
-    )
-  ) %>%
-  rowwise() %>%  
-  mutate(key = str_c(sort(c(Var1, Var2)), collapse = "_")) %>%
-  group_by(key) %>%
-  mutate(jaccard = ifelse(row_number() == 2, NA, jaccard))
-
-# Jaccard heatmap  
-j_heat <- heat_data %>%
-  ggplot(aes(Var1, rev(Var2), fill = jaccard)) +
-  geom_tile(size = 1, color = "white") +
-  scale_fill_gradient(
-    low      = "grey90",
-    high     = get_cols()[2],
-    na.value = "white"
-  ) +
+  plot_colors   = c("grey90", get_cols()[2]),
+  size          = 1,
+  color         = "white"
+) +
   guides(fill = guide_colorbar(barwidth = unit(5, "pt"))) +
   base_theme +
   theme(
