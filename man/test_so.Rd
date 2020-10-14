@@ -4,9 +4,7 @@
 \name{test_so}
 \alias{test_so}
 \title{AVID-seq data for tests}
-\format{
-A Seurat object with 12334 features, 100 cells, and 3 assays
-}
+\format{A Seurat object with 12334 features, 100 cells, and 3 assays}
 \usage{
 test_so
 }
