@@ -130,7 +130,10 @@ test_cells <- colnames(so) %>%
   sample(100)
 
 test_so <- so %>%
-  subset(cells = test_cells)
+  subset(
+    features = VariableFeatures(so)[1:100],
+    cells = test_cells
+  )
 
 # Save objects
 usethis::use_data(
