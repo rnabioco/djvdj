@@ -2,9 +2,11 @@ library(tidyverse)
 library(Seurat)
 library(clustifyr)
 library(clustifyrdata)
+library(djvdj)
 
 # Parameters
 mat_path <- "~/Projects/Smith_AVIDseq/2020-07-17/JH191_GEX/outs/filtered_feature_bc_matrix"
+vdj_path <- "~/Projects/Smith_AVIDseq/2020-07-17/BCR/outs"
 gene_min <- 100
 gene_max <- 5000
 mito_max <- 15
@@ -135,6 +137,12 @@ test_so <- so %>%
     cells = test_cells
   )
 
+test_vdj <- test_so %>%
+  import_vdj(
+    vdj_dir = vdj_path,
+    filter_contigs = TRUE
+  )
+
 # Save objects
 usethis::use_data(
   so,
@@ -144,6 +152,11 @@ usethis::use_data(
 
 usethis::use_data(
   test_so,
+  overwrite = TRUE
+)
+
+usethis::use_data(
+  test_vdj,
   overwrite = TRUE
 )
 
