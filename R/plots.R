@@ -352,7 +352,7 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' @export
 plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot_colors = NULL,
                        plot_genes = NULL, n_genes = NULL, clust_levels = NULL, yaxis = "percent",
-                       vline_color = NULL, ..., chain_col = "chains", sep = ";") {
+                       ..., chain_col = "chains", sep = ";") {
 
   # Calculate gene usage
   gg_data <- calc_usage(
@@ -429,16 +429,6 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot
       axis.ticks = ggplot2::element_blank()
     )
 
-  # Add dividing line
-  if (!is.null(cluster_col) && !is.null(vline_color)) {
-    n_clusts <- dplyr::n_distinct(gg_data[, cluster_col])
-    ival     <- 1
-    xint     <- seq(ival + 0.5, n_clusts - 0.5, ival)
-
-    res <- res +
-      ggplot2::geom_vline(xintercept = xint, color = vline_color)
-  }
-
   # Set colors
   if (!is.null(plot_colors)) {
     res <- res +
@@ -481,6 +471,9 @@ plot_overlap <- function(obj_in, clonotype_col = NULL, cluster_col = NULL,
     stop("matrix must have the same column and row names")
   }
 
+  var_levels <- unique(c(rownames(obj_in), colnames(obj_in)))
+  var_levels <- sort(var_levels)
+
   gg_data <- tibble::as_tibble(obj_in, rownames = "Var1")
 
   gg_data <- tidyr::pivot_longer(
@@ -490,32 +483,11 @@ plot_overlap <- function(obj_in, clonotype_col = NULL, cluster_col = NULL,
     values_to = "jaccard"
   )
 
-  gg_data <- dplyr::mutate(gg_data, jaccard = ifelse(Var1 == Var2, NA, jaccard))
-  gg_data <- dplyr::rowwise(gg_data)
-
-  gg_data <- dplyr::mutate(
-    gg_data,
-    key = stringr::str_c(sort(c(Var1, Var2)), collapse = "_")
-  )
-
-  # Add NAs so each comparison is only included once
-  gg_data <- dplyr::group_by(gg_data, key)
-  gg_data <- dplyr::mutate(gg_data, jaccard = ifelse(dplyr::row_number() == 2, NA, jaccard))
-  gg_data <- dplyr::ungroup(gg_data)
-
   # Set Var levels
-  var_levels <- unique(gg_data$Var1)
-
   gg_data <- dplyr::mutate(
     gg_data,
-    Var1 = factor(Var1, levels = var_levels),
-    Var2 = factor(Var2, levels = rev(var_levels))
-  )
-
-  gg_data <- dplyr::filter(
-    gg_data,
-    Var1 != levels(Var2)[1],
-    Var2 != levels(Var1)[1]
+    Var1 = factor(Var1, levels = rev(var_levels)),
+    Var2 = factor(Var2, levels = var_levels)
   )
 
   # Create heatmap
