@@ -4,7 +4,9 @@
 \name{so}
 \alias{so}
 \title{AVID-seq data for mouse splenocytes}
-\format{A Seurat object with 12334 features, 7345 cells, and 3 assays}
+\format{
+A Seurat object with 12334 features, 7345 cells, and 3 assays
+}
 \usage{
 so
 }

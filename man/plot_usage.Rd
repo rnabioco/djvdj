@@ -45,8 +45,6 @@ all chains.}
 \item{chain_col}{meta.data column containing chains for each cell}
 
 \item{sep}{Separator to use for expanding gene_col}
-
-\item{vline_color}{Color of vertical line to separate clusters}
 }
 \value{
 ggplot object
