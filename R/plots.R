@@ -20,7 +20,7 @@ set_val_limits <- function(df_in, feat_col, lim, op) {
 
   res <- dplyr::mutate(
     df_in,
-    pct_rank = dplyr::percent_rank(!!dplyr::sym(feat_col)),
+    pct_rank = dplyr::percent_rank(!!sym(feat_col)),
 
     lim = eval(parse(text = paste0(
       "ifelse(pct_rank ", op, " lim, ", feat_col, ", NA)"
@@ -30,7 +30,7 @@ set_val_limits <- function(df_in, feat_col, lim, op) {
       func, "(lim, na.rm = T)"
     ))),
 
-    !!dplyr::sym(feat_col) := eval(parse(text = paste0(
+    !!sym(feat_col) := eval(parse(text = paste0(
       "dplyr::if_else(", feat_col, op, " lim, lim, ", feat_col, ")"
     )))
   )
@@ -72,14 +72,14 @@ add_lm_line <- function(gg_in, lab_pos = NULL, lab_size = 3.5, ...) {
 
     gg_data <- dplyr::mutate(
       gg_data,
-      r       = broom::tidy(stats::cor.test(!!dplyr::sym(x), !!dplyr::sym(y)))$estimate,
+      r       = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$estimate,
       r       = round(.data$r, digits = 2),
-      pval    = broom::tidy(stats::cor.test(!!dplyr::sym(x), !!dplyr::sym(y)))$p.value,
+      pval    = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$p.value,
       cor_lab = stringr::str_c("r = ", .data$r, ", p = ", format(.data$pval, digits = 2)),
-      min_x   = min(!!dplyr::sym(x)),
-      max_x   = max(!!dplyr::sym(x)),
-      min_y   = min(!!dplyr::sym(y)),
-      max_y   = max(!!dplyr::sym(y)),
+      min_x   = min(!!sym(x)),
+      max_x   = max(!!sym(x)),
+      min_y   = min(!!sym(y)),
+      max_y   = max(!!sym(y)),
       lab_x   = (.data$max_x - .data$min_x) * lab_pos[1] + .data$min_x,
       lab_y   = (.data$max_y - .data$min_y) * lab_pos[2] + .data$min_y
     )
@@ -147,17 +147,17 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature,
 
   # Rename features
   if (!is.null(names(feature))) {
-    meta_df  <- dplyr::rename(meta_df, !!!dplyr::syms(feature))
+    meta_df  <- dplyr::rename(meta_df, !!!syms(feature))
     feature <- names(feature)
   }
 
   if (!is.null(names(x))) {
-    meta_df <- dplyr::rename(meta_df, !!!dplyr::syms(x))
+    meta_df <- dplyr::rename(meta_df, !!!syms(x))
     x <- names(x)
   }
 
   if (!is.null(names(y))) {
-    meta_df <- dplyr::rename(meta_df, !!!dplyr::syms(y))
+    meta_df <- dplyr::rename(meta_df, !!!syms(y))
     y <- names(y)
   }
 
@@ -184,8 +184,8 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature,
   if (!is.null(feat_levels)) {
     meta_df <- dplyr::mutate(
       meta_df,
-      !!dplyr::sym(feature) := factor(
-        !!dplyr::sym(feature),
+      !!sym(feature) := factor(
+        !!sym(feature),
         levels = feat_levels
       )
     )
@@ -195,20 +195,20 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature,
   if (!is.null(split_id) && length(split_id) == 1 && !is.null(split_levels)) {
     meta_df <- dplyr::mutate(
       meta_df,
-      !!dplyr::sym(split_id) := factor(
-        !!dplyr::sym(split_id),
+      !!sym(split_id) := factor(
+        !!sym(split_id),
         levels = split_levels
       )
     )
   }
 
   # Create scatter plot
-  meta_df <- dplyr::arrange(meta_df, !!dplyr::sym(feature))
+  meta_df <- dplyr::arrange(meta_df, !!sym(feature))
 
   res <- ggplot2::ggplot(meta_df, ggplot2::aes(
-    !!dplyr::sym(x),
-    !!dplyr::sym(y),
-    color = !!dplyr::sym(feature)
+    !!sym(x),
+    !!sym(y),
+    color = !!sym(feature)
   )) +
     ggplot2::geom_point(size = pt_size)
 
@@ -237,7 +237,7 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature,
   if (!is.null(split_id)) {
     if (length(split_id) == 1) {
       res <- res +
-        ggplot2::facet_wrap(~ !!dplyr::sym(split_id), ...)
+        ggplot2::facet_wrap(~ !!sym(split_id), ...)
 
     } else if (length(split_id) == 2) {
       eq <- stringr::str_c(split_id[1], " ~ ", split_id[2])
@@ -287,30 +287,30 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 
   meta_df <- sobj_in@meta.data
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
-  meta_df <- dplyr::filter(meta_df, !is.na(!!dplyr::sym(clonotype_col)))
+  meta_df <- dplyr::filter(meta_df, !is.na(!!sym(clonotype_col)))
 
   # Rank by abundance
   if (!is.null(cluster_col)) {
     if (!is.null(plot_levels)) {
       meta_df <- dplyr::mutate(
         meta_df,
-        !!dplyr::sym(cluster_col) := factor(
-          !!dplyr::sym(cluster_col),
+        !!sym(cluster_col) := factor(
+          !!sym(cluster_col),
           levels = plot_levels
         )
       )
     }
 
-    meta_df <- dplyr::group_by(meta_df, !!dplyr::sym(cluster_col))
+    meta_df <- dplyr::group_by(meta_df, !!sym(cluster_col))
   }
 
   meta_df <- dplyr::mutate(
     meta_df,
-    rank = dplyr::row_number(dplyr::desc(!!dplyr::sym(abundance_col)))
+    rank = dplyr::row_number(dplyr::desc(!!sym(abundance_col)))
   )
 
   # Plot abundance vs rank
-  gg <- ggplot2::ggplot(meta_df, ggplot2::aes(rank, !!dplyr::sym(abundance_col))) +
+  gg <- ggplot2::ggplot(meta_df, ggplot2::aes(rank, !!sym(abundance_col))) +
     ggplot2::labs(y = yaxis)
 
   if (is.null(cluster_col)) {
@@ -319,7 +319,7 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 
   } else {
     gg <- gg +
-      ggplot2::geom_line(ggplot2::aes(color = !!dplyr::sym(cluster_col)), ...)
+      ggplot2::geom_line(ggplot2::aes(color = !!sym(cluster_col)), ...)
   }
 
   if (!is.null(plot_colors)) {
@@ -344,7 +344,6 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' @param n_genes Number of top genes to plot based on average usage
 #' @param clust_levels Levels to use for ordering clusters
 #' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
-#' @param vline_color Color of vertical line to separate clusters
 #' @param ... Additional arguments to pass to geom_tile
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator to use for expanding gene_col
@@ -352,7 +351,7 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' @export
 plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot_colors = NULL,
                        plot_genes = NULL, n_genes = NULL, clust_levels = NULL, yaxis = "percent",
-                       vline_color = NULL, ..., chain_col = "chains", sep = ";") {
+                       ..., chain_col = "chains", sep = ";") {
 
   # Calculate gene usage
   gg_data <- calc_usage(
@@ -364,7 +363,7 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot
     sep         = sep
   )
 
-  gg_data <- dplyr::filter(gg_data, !!dplyr::sym(gene_col) != "None")
+  gg_data <- dplyr::filter(gg_data, !!sym(gene_col) != "None")
 
   usage_col <- "pct"
 
@@ -373,11 +372,11 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot
   }
 
   # Order genes by average usage
-  top_genes <- dplyr::group_by(gg_data, !!dplyr::sym(gene_col))
+  top_genes <- dplyr::group_by(gg_data, !!sym(gene_col))
 
   top_genes <- dplyr::summarize(
     top_genes,
-    usage   = mean(!!dplyr::sym(usage_col)),
+    usage   = mean(!!sym(usage_col)),
     .groups = "drop"
   )
 
@@ -385,8 +384,8 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot
 
   gg_data <- dplyr::mutate(
     gg_data,
-    !!dplyr::sym(gene_col) := factor(
-      !!dplyr::sym(gene_col),
+    !!sym(gene_col) := factor(
+      !!sym(gene_col),
       levels = dplyr::pull(top_genes, gene_col)
     )
   )
@@ -395,8 +394,8 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot
   if (!is.null(clust_levels)) {
     gg_data <- dplyr::mutate(
       gg_data,
-      !!dplyr::sym(cluster_col) := factor(
-        !!dplyr::sym(cluster_col),
+      !!sym(cluster_col) := factor(
+        !!sym(cluster_col),
         levels = clust_levels
       )
     )
@@ -404,7 +403,7 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot
 
   # Filter genes to plot
   if (!is.null(plot_genes)) {
-    gg_data <- dplyr::filter(gg_data, !!dplyr::sym(gene_col) %in% plot_genes)
+    gg_data <- dplyr::filter(gg_data, !!sym(gene_col) %in% plot_genes)
   }
 
   # Select top genes to plot
@@ -412,14 +411,14 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot
     top_genes <- dplyr::slice_max(top_genes, .data$usage, n = n_genes)
     top_genes <- pull(top_genes, gene_col)
 
-    gg_data <- dplyr::filter(gg_data, !!dplyr::sym(gene_col) %in% top_genes)
+    gg_data <- dplyr::filter(gg_data, !!sym(gene_col) %in% top_genes)
   }
 
   # Create heatmap
   res <- ggplot2::ggplot(gg_data, ggplot2::aes(
-    !!dplyr::sym(cluster_col),
-    !!dplyr::sym(gene_col),
-    fill = !!dplyr::sym(usage_col)
+    !!sym(cluster_col),
+    !!sym(gene_col),
+    fill = !!sym(usage_col)
   )) +
     ggplot2::geom_tile(...) +
     ggplot2::guides(fill = ggplot2::guide_colorbar(title = yaxis)) +
@@ -428,16 +427,6 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot
       axis.line  = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank()
     )
-
-  # Add dividing line
-  if (!is.null(cluster_col) && !is.null(vline_color)) {
-    n_clusts <- dplyr::n_distinct(gg_data[, cluster_col])
-    ival     <- 1
-    xint     <- seq(ival + 0.5, n_clusts - 0.5, ival)
-
-    res <- res +
-      ggplot2::geom_vline(xintercept = xint, color = vline_color)
-  }
 
   # Set colors
   if (!is.null(plot_colors)) {
@@ -481,50 +470,32 @@ plot_overlap <- function(obj_in, clonotype_col = NULL, cluster_col = NULL,
     stop("matrix must have the same column and row names")
   }
 
+  var_levels <- unique(c(rownames(obj_in), colnames(obj_in)))
+  var_levels <- sort(var_levels)
+
   gg_data <- tibble::as_tibble(obj_in, rownames = "Var1")
 
   gg_data <- tidyr::pivot_longer(
     gg_data,
-    cols      = -Var1,
-    names_to  = "Var2",
+    cols      = -.data$Var1,
+    names_to  = .data$Var2,
     values_to = "jaccard"
   )
 
-  gg_data <- dplyr::mutate(gg_data, jaccard = ifelse(Var1 == Var2, NA, jaccard))
-  gg_data <- dplyr::rowwise(gg_data)
-
-  gg_data <- dplyr::mutate(
-    gg_data,
-    key = stringr::str_c(sort(c(Var1, Var2)), collapse = "_")
-  )
-
-  # Add NAs so each comparison is only included once
-  gg_data <- dplyr::group_by(gg_data, key)
-  gg_data <- dplyr::mutate(gg_data, jaccard = ifelse(dplyr::row_number() == 2, NA, jaccard))
-  gg_data <- dplyr::ungroup(gg_data)
-
   # Set Var levels
-  var_levels <- unique(gg_data$Var1)
-
   gg_data <- dplyr::mutate(
     gg_data,
-    Var1 = factor(Var1, levels = var_levels),
-    Var2 = factor(Var2, levels = rev(var_levels))
-  )
-
-  gg_data <- dplyr::filter(
-    gg_data,
-    Var1 != levels(Var2)[1],
-    Var2 != levels(Var1)[1]
+    Var1 = factor(.data$Var1, levels = rev(var_levels)),
+    Var2 = factor(.data$Var2, levels = var_levels)
   )
 
   # Create heatmap
-  res <- ggplot2::ggplot(gg_data, aes(Var1, Var2, fill = jaccard)) +
+  res <- ggplot2::ggplot(gg_data, ggplot2::aes(.data$Var1, .data$Var2, fill = .data$jaccard)) +
     ggplot2::geom_tile(...) +
     ggplot2::theme(
-      axis.title  = element_blank(),
-      axis.line   = element_blank(),
-      axis.ticks  = element_blank()
+      axis.title  = ggplot2::element_blank(),
+      axis.line   = ggplot2::element_blank(),
+      axis.ticks  = ggplot2::element_blank()
     )
 
   if (!is.null(plot_colors)) {

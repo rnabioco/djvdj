@@ -127,7 +127,8 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
     stop("filt and/or new_col are required")
   }
 
-  meta_df <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
+  meta_df <- sobj_in@meta.data
+  meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
 
   # Split columns into vectors
   if (!is.null(vdj_cols)) {
@@ -138,7 +139,7 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
       nm = stringr::str_c(".", vdj_cols)
     )
 
-    meta_df <- dplyr::mutate(meta_df, !!!dplyr::syms(split_names))
+    meta_df <- dplyr::mutate(meta_df, !!!syms(split_names))
 
     # Split into vectors
     meta_df <- dplyr::mutate(meta_df, dplyr::across(
@@ -175,7 +176,7 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
   if (!is.null(new_col)) {
     meta_df <- dplyr::mutate(
       meta_df,
-      !!dplyr::sym(new_col) := ifelse(
+      !!sym(new_col) := ifelse(
         .data$.KEEP,
         yes = {{true}},
         no  = {{false}})
@@ -184,10 +185,10 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
     if (!is.null(clonotype_col)) {
       meta_df <- dplyr::mutate(
         meta_df,
-        !!dplyr::sym(new_col) := ifelse(
-          is.na(!!dplyr::sym(clonotype_col)),
+        !!sym(new_col) := ifelse(
+          is.na(!!sym(clonotype_col)),
           NA,
-          !!dplyr::sym(new_col)
+          !!sym(new_col)
         )
       )
     }
@@ -197,7 +198,7 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
       meta_df <- dplyr::mutate(
         meta_df,
         .KEEP = dplyr::if_else(
-          is.na(!!dplyr::sym(clonotype_col)),
+          is.na(!!sym(clonotype_col)),
           TRUE,
           .data$.KEEP
         )
@@ -215,7 +216,7 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
     )
 
     meta_df <- dplyr::select(meta_df, !dplyr::all_of(c(vdj_cols, ".KEEP")))
-    meta_df <- dplyr::rename(meta_df, !!!dplyr::syms(split_names))
+    meta_df <- dplyr::rename(meta_df, !!!syms(split_names))
     meta_df <- dplyr::distinct(meta_df)
     meta_df <- dplyr::ungroup(meta_df)
   }
@@ -251,7 +252,7 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 
   meta_df <- sobj_in@meta.data
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
-  meta_df <- dplyr::filter(meta_df, !is.na(!!dplyr::sym(clonotype_col)))
+  meta_df <- dplyr::filter(meta_df, !is.na(!!sym(clonotype_col)))
 
   if (!is.null(cluster_col)) {
     meta_df <- dplyr::group_by(meta_df, !!sym(cluster_col))
@@ -267,14 +268,14 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 
   meta_df <- dplyr::group_by(
     meta_df,
-    !!dplyr::sym(clonotype_col),
+    !!sym(clonotype_col),
     .add = TRUE
   )
 
   meta_df <- dplyr::mutate(
     meta_df,
     !!sym(freq_col) := dplyr::n_distinct(.data$.cell_id),
-    !!sym(pct_col)  := (!!dplyr::sym(freq_col) / .data$.n_cells) * 100
+    !!sym(pct_col)  := (!!sym(freq_col) / .data$.n_cells) * 100
   )
 
   meta_df <- dplyr::select(meta_df, -.data$.n_cells)
@@ -306,16 +307,16 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
                            prefix = "", return_seurat = TRUE) {
 
-  # meta.data
+  # Format meta.data
   vdj_cols      <- clonotype_col
-  clonotype_col <- dplyr::sym(clonotype_col)
+  clonotype_col <- sym(clonotype_col)
   meta_df       <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
   vdj_df        <- dplyr::filter(meta_df, !is.na(!!clonotype_col))
 
   # Count clonotypes
   if (!is.null(cluster_col)) {
     vdj_cols    <- c(cluster_col, vdj_cols)
-    cluster_col <- dplyr::sym(cluster_col)
+    cluster_col <- sym(cluster_col)
     vdj_df      <- dplyr::group_by(vdj_df, !!cluster_col)
   }
 
@@ -339,8 +340,8 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
     frac     = .data$.n / sum(.data$.n),
     sum_frac = sum(.data$frac ^ 2),
 
-    !!dplyr::sym(div_col) := 1 - .data$sum_frac
-    # !!dplyr::sym(div_col) := 1 / .data$sum_frac
+    !!sym(div_col) := 1 - .data$sum_frac
+    # !!sym(div_col) := 1 / .data$sum_frac
   )
 
   vdj_df <- dplyr::select(vdj_df, all_of(c(vdj_cols, div_col)))
@@ -375,118 +376,67 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 calc_overlap <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
                          prefix = "jcrd_", return_seurat = TRUE) {
 
-  # Helper to calculate jaccard index
-  calc_jidx <- function(df_in, comparison, ctype_col) {
+  # Format meta.data
+  meta_df <- sobj_in@meta.data
+  meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
+  meta_df <- filter(meta_df, !is.na(!!sym(clonotype_col)))
 
-    if (length(comparison) != 2) {
-      stop("comparison must be a character vector with two column names")
-    }
+  meta_df <- dplyr::select(
+    meta_df,
+    dplyr::all_of(c(".cell_id", clonotype_col, cluster_col))
+  )
 
-    if (length(unique(df_in[, ctype_col])) != length(df_in[, ctype_col])) {
-      stop("duplicate clonotype IDs are present")
-    }
+  vdj_df <- dplyr::group_by(
+    meta_df,
+    !!!syms(c(cluster_col, clonotype_col))
+  )
 
-    uniq_vars <- unique(comparison)
+  vdj_df <- dplyr::summarize(
+    vdj_df,
+    n = n_distinct(.data$.cell_id),
+    .groups = "drop"
+  )
 
-    if (length(uniq_vars) == 1) {
-      dup_var       <- stringr::str_c(uniq_vars, "_dup")
-      comparison[3] <- dup_var
-      dup_var       <- dplyr::sym(dup_var)
-      uniq_vars     <- dplyr::sym(uniq_vars)
+  vdj_df <- tidyr::pivot_wider(
+    vdj_df,
+    names_from = cluster_col,
+    values_from = n
+  )
 
-      df_in <- dplyr::mutate(df_in, !!dup_var := !!uniq_vars)
-    }
+  # Calculate jaccard index
+  clusts <- colnames(vdj_df)
+  clusts <- clusts[clusts != clonotype_col]
+  clusts <- utils::combn(clusts, 2, simplify = FALSE)
 
-    row_sums  <- dplyr::select(df_in, dplyr::all_of(c(ctype_col, comparison)))
-    ctype_col <- dplyr::sym(ctype_col)
-    row_sums  <- tidyr::pivot_longer(row_sums, cols = -!!ctype_col)
-    row_sums  <- dplyr::group_by(row_sums, !!ctype_col)
+  res <- clusts %>%
+    map_dfr(~ {
+      res <- vdj_df %>%
+        select(all_of(c(clonotype_col, .x))) %>%
+        filter(!is.na(!!sym(.x[1]) | !is.na(!!sym(.x[2]))))
 
-    row_sums <- dplyr::summarize(
-      row_sums,
-      row_sum = sum(.data$value),
-      .groups = "drop"
-    )
+      uni <- nrow(res)
+      int <- nrow(na.omit(res))
 
-    row_sums <- row_sums$row_sum
+      j_idx <- int / uni
 
-    a     <- length(row_sums[row_sums == 2])      # Intersection
-    a_b_c <- length(row_sums[row_sums == 1]) + a  # Union
+      tibble(
+        Var1    = .x[1],
+        Var2    = .x[2],
+        jaccard = j_idx
+      )
+    })
 
-    jaccard <- a / a_b_c
+  if (!return_seurat) {
+    res <- tidyr::pivot_wider(res, names_from = .data$Var1, values_from = .data$jaccard)
+    res <- tibble::column_to_rownames(res, "Var2")
+    res <- as.matrix(res)
 
-    res <- tibble::tibble(
-      Var1 = comparison[1],
-      Var2 = comparison[2],
-      jaccard
-    )
-
-    res
+    return(res)
   }
 
-  # Fetch clonotypes and cell identities
-  vdj_meta        <- Seurat::FetchData(sobj_in, c(clonotype_col, cluster_col))
-  vdj_meta        <- dplyr::rename(vdj_meta, idents = cluster_col)
-  vdj_meta$idents <- as.character(vdj_meta$idents)
-
-  uniq_idents <- unique(vdj_meta$idents)
-  uniq_idents <- stats::na.omit(uniq_idents)
-  uniq_idents <- sort(uniq_idents)
-
-  # Create data.frame for calculating Jaccard index
-  # Use 1's and 0's to indicate if a clonotype is present in a cluster
-  vdj_meta <- dplyr::filter(vdj_meta, !is.na(!!dplyr::sym(clonotype_col)))
-  j_df     <- dplyr::mutate(vdj_meta, .n = 1)
-
-  j_df <- tidyr::pivot_wider(
-    j_df,
-    names_from  = "idents",
-    values_from = ".n",
-    values_fn   = list
-  )
-
-  j_df <- dplyr::mutate(j_df, dplyr::across(
-    dplyr::all_of(uniq_idents),
-    ~ purrr::map(.x, unique)
-  ))
-
-  j_df <- tidyr::unnest(j_df, cols = dplyr::all_of(uniq_idents))
-
-  j_df <- dplyr::mutate(j_df, dplyr::across(
-    dplyr::all_of(uniq_idents),
-    ~ replace_na(.x, 0)
-  ))
-
-  j_df <- dplyr::arrange(j_df, !!sym(clonotype_col))
-  j_df <- select(j_df, all_of(c(clonotype_col, uniq_idents)))
-
-  # Create data.frame of comparisons
-  comps <- expand.grid(
-    uniq_idents, uniq_idents,
-    stringsAsFactors = F
-  )
-
-  comps <- dplyr::mutate(comps, comp = map2(Var1, Var2, ~ sort(c(.x, .y))))
-  comps <- dplyr::select(comps, .data$comp)
-  comps <- unique(comps)
-
-  Var1 <- purrr::map_chr(comps$comp, ~ .x[1])
-  Var2 <- purrr::map_chr(comps$comp, ~ .x[2])
-
-  # Calculate Jaccard index for comparisons
-  res <- purrr::map2_dfr(
-    Var1, Var2,
-    ~ calc_jidx(j_df, c(.x, .y), ctype_col = clonotype_col)
-  )
-
-  res_i <- dplyr::rename(res, Var1 = Var2, Var2 = Var1)
+  res_i <- dplyr::rename(res, Var1 = .data$Var2, Var2 = .data$Var1)
   res   <- dplyr::bind_rows(res, res_i)
-  res   <- unique(res)
-
-  res <- dplyr::mutate(
-    res,
-    Var1 = stringr::str_c(prefix, .data$Var1)
-  )
+  res   <- dplyr::mutate(res, Var1 = stringr::str_c(prefix, .data$Var1))
 
   res <- tidyr::pivot_wider(
     res,
@@ -494,27 +444,15 @@ calc_overlap <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
     values_from = .data$jaccard
   )
 
-  # Return matrix
-  if (!return_seurat) {
-    res <- dplyr::mutate(
-      res,
-      Var2 = stringr::str_c(prefix, .data$Var2)
-    )
-
-    res <- tibble::column_to_rownames(res, "Var2")
-    res <- as.matrix(res)
-
-    return(res)
-  }
+  res <- dplyr::mutate(res, across(-.data$Var2, tidyr::replace_na, 1))
 
   # Add jaccard index to meta.data
-  vdj_meta <- tibble::as_tibble(vdj_meta, rownames = ".cell_id")
-  vdj_meta <- dplyr::left_join(vdj_meta, res, by = c("idents" = "Var2"))
-  vdj_meta <- dplyr::select(vdj_meta, -.data$idents)
-  vdj_meta <- tibble::column_to_rownames(vdj_meta, ".cell_id")
-  vdj_meta <- as.data.frame(vdj_meta)
+  meta_df <- dplyr::left_join(meta_df, res, by = c("orig.ident" = "Var2"))
+  meta_df <- dplyr::select(meta_df, -all_of(cluster_col))
+  meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
+  meta_df <- as.data.frame(meta_df)
 
-  res <- Seurat::AddMetaData(sobj_in, vdj_meta)
+  res <- Seurat::AddMetaData(sobj_in, meta_df)
 
   res
 }
@@ -545,7 +483,7 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
 
   meta_df <- sobj_in@meta.data
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
-  meta_df <- dplyr::filter(meta_df, !is.na(!!dplyr::sym(gene_col)))  # remove cells with no gene_col data
+  meta_df <- dplyr::filter(meta_df, !is.na(!!sym(gene_col)))  # remove cells with no gene_col data
   meta_df <- dplyr::select(meta_df, dplyr::all_of(vdj_cols))
 
   res <- dplyr::mutate(meta_df, across(
@@ -559,8 +497,8 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
       stop("must specify chain_col")
     }
 
-    res <- dplyr::mutate(res, !!dplyr::sym(gene_col) := purrr::map2(
-      !!dplyr::sym(gene_col), !!dplyr::sym(chain_col), ~ {
+    res <- dplyr::mutate(res, !!sym(gene_col) := purrr::map2(
+      !!sym(gene_col), !!sym(chain_col), ~ {
         .x <- dplyr::if_else(
           any(.y %in% chain),
           list(.x[.y %in% chain]),
@@ -578,10 +516,10 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
   res <- dplyr::distinct(res)
 
   # Count genes used
-  res <- dplyr::group_by(res, !!dplyr::sym(gene_col))
+  res <- dplyr::group_by(res, !!sym(gene_col))
 
   if (!is.null(cluster_col)) {
-    res <- dplyr::group_by(res, !!dplyr::sym(cluster_col), .add = TRUE)
+    res <- dplyr::group_by(res, !!sym(cluster_col), .add = TRUE)
   }
 
   res <- dplyr::summarize(
@@ -600,7 +538,7 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
     res <- tidyr::pivot_wider(
       res,
       names_from  = dplyr::all_of(cluster_col),
-      values_from = freq,
+      values_from = .data$freq,
       values_fill = 0
     )
 
@@ -613,14 +551,13 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
 
     res <- dplyr::mutate(  # why doesn't .before work here??
       res,
-      n_cells = clust_counts[!!dplyr::sym(cluster_col)],
-      n_cells = as.integer(n_cells)
+      n_cells = clust_counts[!!sym(cluster_col)]
     )
 
-    res <- dplyr::relocate(res, n_cells, .before = freq)
+    res <- dplyr::relocate(res, .data$n_cells, .before = .data$freq)
   }
 
-  res <- dplyr::mutate(res, pct = (freq / n_cells) * 100)
+  res <- dplyr::mutate(res, pct = (.data$freq / .data$n_cells) * 100)
 
   res
 }
@@ -671,7 +608,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), .fun,
   ))
 
   grp_cols <- c(".cell_id", chain_col, include_cols)
-  res      <- dplyr::group_by(res, !!!dplyr::syms(grp_cols))
+  res      <- dplyr::group_by(res, !!!syms(grp_cols))
 
   res <- dplyr::summarize(
     res,

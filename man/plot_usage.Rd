@@ -14,7 +14,6 @@ plot_usage(
   n_genes = NULL,
   clust_levels = NULL,
   yaxis = "percent",
-  vline_color = NULL,
   ...,
   chain_col = "chains",
   sep = ";"
@@ -40,8 +39,6 @@ all chains.}
 \item{clust_levels}{Levels to use for ordering clusters}
 
 \item{yaxis}{Units to plot on the y-axis, either "frequency" or "percent"}
-
-\item{vline_color}{Color of vertical line to separate clusters}
 
 \item{...}{Additional arguments to pass to geom_tile}
 
