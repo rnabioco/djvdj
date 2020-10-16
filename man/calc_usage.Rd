@@ -6,7 +6,7 @@
 \usage{
 calc_usage(
   sobj_in,
-  gene_col,
+  gene_cols,
   cluster_col = NULL,
   chain = NULL,
   chain_col = NULL,
@@ -16,7 +16,7 @@ calc_usage(
 \arguments{
 \item{sobj_in}{Seurat object containing V(D)J data}
 
-\item{gene_col}{meta.data column containing genes used for each clonotype}
+\item{gene_cols}{meta.data column containing genes used for each clonotype}
 
 \item{cluster_col}{meta.data column containing cell clusters to use when
 calculating gene usage}
@@ -26,13 +26,13 @@ all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
-\item{sep}{Separator to use for expanding gene_col}
+\item{sep}{Separator to use for expanding gene_cols}
 }
 \value{
 data.frame containing gene usage summary
 }
 \description{
 Gene usage is calculated as the percent of cells that express each V(D)J
-gene present in gene_col. Cells that lack V(D)J data and have an NA present
-in gene_col are excluded from this calculation.
+gene present in gene_cols. Cells that lack V(D)J data and have NAs present
+in gene_cols are excluded from this calculation.
 }

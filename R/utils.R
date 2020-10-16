@@ -461,30 +461,34 @@ calc_overlap <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
 #' Calculate gene usage
 #'
 #' Gene usage is calculated as the percent of cells that express each V(D)J
-#' gene present in gene_col. Cells that lack V(D)J data and have an NA present
-#' in gene_col are excluded from this calculation.
+#' gene present in gene_cols. Cells that lack V(D)J data and have NAs present
+#' in gene_cols are excluded from this calculation.
 #'
 #' @param sobj_in Seurat object containing V(D)J data
-#' @param gene_col meta.data column containing genes used for each clonotype
+#' @param gene_cols meta.data column containing genes used for each clonotype
 #' @param cluster_col meta.data column containing cell clusters to use when
 #' calculating gene usage
 #' @param chain Chain to use for calculating gene usage. Set to NULL to include
 #' all chains.
 #' @param chain_col meta.data column containing chains for each cell
-#' @param sep Separator to use for expanding gene_col
+#' @param sep Separator to use for expanding gene_cols
 #' @return data.frame containing gene usage summary
 #' @export
-calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
+calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
                        chain_col = NULL, sep = ";") {
 
   # data.frame to calculate usage
-  split_cols <- c(gene_col, chain_col)
+  split_cols <- c(gene_cols, chain_col)
   vdj_cols   <- c(".cell_id", cluster_col, split_cols)
 
   meta_df <- sobj_in@meta.data
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
-  meta_df <- dplyr::filter(meta_df, !is.na(!!sym(gene_col)))  # remove cells with no gene_col data
   meta_df <- dplyr::select(meta_df, dplyr::all_of(vdj_cols))
+
+  meta_df <- dplyr::filter(meta_df, dplyr::across(
+    dplyr::all_of(gene_cols),
+    ~ !is.na(.x)
+  ))
 
   res <- dplyr::mutate(meta_df, across(
     all_of(split_cols),
@@ -497,8 +501,10 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
       stop("must specify chain_col")
     }
 
-    res <- dplyr::mutate(res, !!sym(gene_col) := purrr::map2(
-      !!sym(gene_col), !!sym(chain_col), ~ {
+    res <- dplyr::mutate(res, dplyr::across(dplyr::all_of(gene_cols), ~ {
+      g_col <- .x
+
+      purrr::map2(g_col, !!sym(chain_col), ~ {
         .x <- dplyr::if_else(
           any(.y %in% chain),
           list(.x[.y %in% chain]),
@@ -506,17 +512,17 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
         )
 
         unlist(.x)
-      }
-    ))
+      })
+    }))
 
     res <- dplyr::select(res, -all_of(chain_col))
   }
 
-  res <- tidyr::unnest(res, cols = all_of(gene_col))
+  res <- tidyr::unnest(res, cols = all_of(gene_cols))
   res <- dplyr::distinct(res)
 
   # Count genes used
-  res <- dplyr::group_by(res, !!sym(gene_col))
+  res <- dplyr::group_by(res, !!!syms(gene_cols))
 
   if (!is.null(cluster_col)) {
     res <- dplyr::group_by(res, !!sym(cluster_col), .add = TRUE)
@@ -551,7 +557,7 @@ calc_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL,
 
     res <- dplyr::mutate(  # why doesn't .before work here??
       res,
-      n_cells = clust_counts[!!sym(cluster_col)]
+      n_cells = as.numeric(clust_counts[!!sym(cluster_col)])
     )
 
     res <- dplyr::relocate(res, .data$n_cells, .before = .data$freq)
