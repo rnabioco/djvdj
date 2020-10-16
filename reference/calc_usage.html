@@ -41,8 +41,8 @@
 
 <meta property="og:title" content="Calculate gene usage — calc_usage" />
 <meta property="og:description" content="Gene usage is calculated as the percent of cells that express each V(D)J
-gene present in gene_col. Cells that lack V(D)J data and have an NA present
-in gene_col are excluded from this calculation." />
+gene present in gene_cols. Cells that lack V(D)J data and have NAs present
+in gene_cols are excluded from this calculation." />
 
 
 
@@ -81,6 +81,12 @@ in gene_col are excluded from this calculation." />
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
+  <a href="../index.html">
+    <span class="fas fa fas fa-home fa-lg"></span>
+     
+  </a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li>
@@ -109,13 +115,13 @@ in gene_col are excluded from this calculation." />
 
     <div class="ref-description">
     <p>Gene usage is calculated as the percent of cells that express each V(D)J
-gene present in gene_col. Cells that lack V(D)J data and have an NA present
-in gene_col are excluded from this calculation.</p>
+gene present in gene_cols. Cells that lack V(D)J data and have NAs present
+in gene_cols are excluded from this calculation.</p>
     </div>
 
     <pre class="usage"><span class='fu'>calc_usage</span><span class='op'>(</span>
   <span class='va'>sobj_in</span>,
-  <span class='va'>gene_col</span>,
+  <span class='va'>gene_cols</span>,
   cluster_col <span class='op'>=</span> <span class='cn'>NULL</span>,
   chain <span class='op'>=</span> <span class='cn'>NULL</span>,
   chain_col <span class='op'>=</span> <span class='cn'>NULL</span>,
@@ -130,7 +136,7 @@ in gene_col are excluded from this calculation.</p>
       <td><p>Seurat object containing V(D)J data</p></td>
     </tr>
     <tr>
-      <th>gene_col</th>
+      <th>gene_cols</th>
       <td><p>meta.data column containing genes used for each clonotype</p></td>
     </tr>
     <tr>
@@ -149,7 +155,7 @@ all chains.</p></td>
     </tr>
     <tr>
       <th>sep</th>
-      <td><p>Separator to use for expanding gene_col</p></td>
+      <td><p>Separator to use for expanding gene_cols</p></td>
     </tr>
     </table>
 
@@ -172,7 +178,7 @@ all chains.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
