@@ -6,7 +6,7 @@
 \usage{
 plot_usage(
   sobj_in,
-  gene_col,
+  gene_cols,
   cluster_col = NULL,
   chain = NULL,
   plot_colors = NULL,
@@ -15,14 +15,14 @@ plot_usage(
   clust_levels = NULL,
   yaxis = "percent",
   ...,
-  chain_col = "chains",
+  chain_col = NULL,
   sep = ";"
 )
 }
 \arguments{
 \item{sobj_in}{Seurat object containing V(D)J data}
 
-\item{gene_col}{meta.data column containing genes used for each clonotype}
+\item{gene_cols}{meta.data column containing genes used for each clonotype}
 
 \item{cluster_col}{meta.data column containing cell clusters to use for
 calculating gene usage}
@@ -44,7 +44,7 @@ all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
-\item{sep}{Separator to use for expanding gene_col}
+\item{sep}{Separator to use for expanding gene_cols}
 }
 \value{
 ggplot object

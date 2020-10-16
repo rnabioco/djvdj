@@ -35,7 +35,7 @@ grouping cells when calculating clonotype abundance}
 \item{...}{Additional arguments to pass to geom_line}
 }
 \value{
-Seurat object with calculated clonotype abundance
+ggplot object
 }
 \description{
 Plot clonotype abundance

@@ -120,12 +120,10 @@ add_lm_line <- function(gg_in, lab_pos = NULL, lab_size = 3.5, ...) {
 #' @param ... Additional parameters to pass to facet_wrap
 #' @return ggplot object
 #' @export
-plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature,
-                          data_slot = "data", pt_size = 0.25, plot_cols = NULL,
-                          feat_levels = NULL, split_id = NULL,
-                          split_levels = NULL, min_pct = NULL, max_pct = NULL,
-                          lm_line = F, cor_label = c(0.8, 0.9),
-                          label_size = 3.7, ...) {
+plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
+                          pt_size = 0.25, plot_cols = NULL, feat_levels = NULL, split_id = NULL,
+                          split_levels = NULL, min_pct = NULL, max_pct = NULL, lm_line = F,
+                          cor_label = c(0.8, 0.9), label_size = 3.7, ...) {
 
   # Format imput data
   meta_df <- obj_in
@@ -263,11 +261,11 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature,
 #' @param plot_colors Character vector containing colors to use for plotting
 #' @param plot_levels Character vector containing levels to use for ordering
 #' @param ... Additional arguments to pass to geom_line
-#' @return Seurat object with calculated clonotype abundance
+#' @return ggplot object
 #' @export
 plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
-                           yaxis = "percent", abundance_col = NULL, plot_colors = NULL, plot_levels = NULL,
-                           ...) {
+                           yaxis = "percent", abundance_col = NULL, plot_colors = NULL,
+                           plot_levels = NULL, ...) {
 
   # Calculate clonotype abundance
   if (is.null(abundance_col)) {
@@ -334,7 +332,7 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' Plot V(D)J gene usage
 #'
 #' @param sobj_in Seurat object containing V(D)J data
-#' @param gene_col meta.data column containing genes used for each clonotype
+#' @param gene_cols meta.data column containing genes used for each clonotype
 #' @param cluster_col meta.data column containing cell clusters to use for
 #' calculating gene usage
 #' @param chain Chain to use for calculating gene usage. Set to NULL to include
@@ -346,33 +344,70 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
 #' @param ... Additional arguments to pass to geom_tile
 #' @param chain_col meta.data column containing chains for each cell
-#' @param sep Separator to use for expanding gene_col
+#' @param sep Separator to use for expanding gene_cols
 #' @return ggplot object
 #' @export
-plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot_colors = NULL,
+plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plot_colors = NULL,
                        plot_genes = NULL, n_genes = NULL, clust_levels = NULL, yaxis = "percent",
-                       ..., chain_col = "chains", sep = ";") {
+                       ..., chain_col = NULL, sep = ";") {
 
-  # Calculate gene usage
-  gg_data <- calc_usage(
-    sobj_in,
-    gene_col    = gene_col,
-    cluster_col = cluster_col,
-    chain       = chain,
-    chain_col   = chain_col,
-    sep         = sep
-  )
+  # Check inputs
+  if (length(gene_cols) > 2) {
+    stop("cannot specify more than two values for gene_cols")
+  }
 
-  gg_data <- dplyr::filter(gg_data, !!sym(gene_col) != "None")
+  if (!yaxis %in% c("percent", "frequency")) {
+    stop("yaxis must be either 'percent' or 'frequency'")
+  }
 
+  # Helper to create heatmaps
+  create_heatmap <- function(df_in, x, y, fill, plot_colors, legd_name,
+                             angle = 0, hjust = 0.5, ...) {
+    res <- ggplot2::ggplot(
+      df_in,
+      ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(fill))
+    ) +
+      ggplot2::geom_tile(...) +
+      ggplot2::guides(fill = ggplot2::guide_colorbar(title = yaxis)) +
+      ggplot2::theme(
+        axis.title  = ggplot2::element_blank(),
+        axis.line   = ggplot2::element_blank(),
+        axis.ticks  = ggplot2::element_blank(),
+        axis.text.x = ggplot2::element_text(angle = angle, hjust = hjust)
+      )
+
+    if (!is.null(plot_colors)) {
+      res <- res +
+        ggplot2::scale_fill_gradientn(colors = plot_colors, name = legd_name)
+    }
+
+    res
+  }
+
+  # Set y-axis
   usage_col <- "pct"
 
   if (yaxis == "frequency") {
     usage_col <- "freq"
   }
 
+  # Calculate gene usage
+  gg_data <- calc_usage(
+    sobj_in,
+    gene_cols   = gene_cols,
+    cluster_col = cluster_col,
+    chain       = chain,
+    chain_col   = chain_col,
+    sep         = sep
+  )
+
+  gg_data <- dplyr::filter(gg_data, dplyr::across(
+    dplyr::all_of(gene_cols),
+    ~ .x != "None"
+  ))
+
   # Order genes by average usage
-  top_genes <- dplyr::group_by(gg_data, !!sym(gene_col))
+  top_genes <- dplyr::group_by(gg_data, !!!syms(gene_cols))
 
   top_genes <- dplyr::summarize(
     top_genes,
@@ -382,13 +417,15 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot
 
   top_genes <- dplyr::arrange(top_genes, .data$usage)
 
-  gg_data <- dplyr::mutate(
-    gg_data,
-    !!sym(gene_col) := factor(
-      !!sym(gene_col),
-      levels = dplyr::pull(top_genes, gene_col)
+  if (length(gene_cols) == 1) {
+    gg_data <- dplyr::mutate(
+      gg_data,
+      !!sym(gene_cols) := factor(
+        !!sym(gene_cols),
+        levels = dplyr::pull(top_genes, gene_cols)
+      )
     )
-  )
+  }
 
   # Order clusters
   if (!is.null(clust_levels)) {
@@ -403,35 +440,90 @@ plot_usage <- function(sobj_in, gene_col, cluster_col = NULL, chain = NULL, plot
 
   # Filter genes to plot
   if (!is.null(plot_genes)) {
-    gg_data <- dplyr::filter(gg_data, !!sym(gene_col) %in% plot_genes)
+    gg_data <- dplyr::filter(gg_data, dplyr::across(
+      dplyr::all_of(gene_cols),
+      ~ .x %in% plot_genes
+    ))
   }
 
   # Select top genes to plot
   if (!is.null(n_genes)) {
     top_genes <- dplyr::slice_max(top_genes, .data$usage, n = n_genes)
-    top_genes <- pull(top_genes, gene_col)
+    top_genes <- unlist(top_genes[, gene_cols], use.names = F)
 
-    gg_data <- dplyr::filter(gg_data, !!sym(gene_col) %in% top_genes)
+    gg_data <- dplyr::filter(gg_data, dplyr::across(
+      dplyr::all_of(gene_cols),
+      ~ .x %in% top_genes
+    ))
   }
 
-  # Create heatmap
-  res <- ggplot2::ggplot(gg_data, ggplot2::aes(
-    !!sym(cluster_col),
-    !!sym(gene_col),
-    fill = !!sym(usage_col)
-  )) +
-    ggplot2::geom_tile(...) +
-    ggplot2::guides(fill = ggplot2::guide_colorbar(title = yaxis)) +
-    ggplot2::theme(
-      axis.title = ggplot2::element_blank(),
-      axis.line  = ggplot2::element_blank(),
-      axis.ticks = ggplot2::element_blank()
+  # Create heatmap for single gene
+  if (length(gene_cols) == 1) {
+    res <- create_heatmap(
+      gg_data,
+      x           = cluster_col,
+      y           = gene_cols,
+      fill        = usage_col,
+      plot_colors = plot_colors,
+      legd_name   = yaxis,
+      ...
     )
 
-  # Set colors
-  if (!is.null(plot_colors)) {
-    res <- res +
-      ggplot2::scale_fill_gradientn(colors = plot_colors, name = yaxis)
+    return(res)
+  }
+
+  # Create heatmap for two genes
+  grps <- NULL
+
+  if (!is.null(cluster_col)) {
+    gg_data <- dplyr::group_by(gg_data, !!sym(cluster_col))
+
+    grps <- pull(gg_data, cluster_col)
+    grps <- sort(unique(grps))
+  }
+
+  res <- dplyr::group_split(gg_data)
+  names(res) <- grps
+
+  # Format data for plotting
+  res <- purrr::map(res, ~ {
+    res <- dplyr::select(.x, dplyr::all_of(c(gene_cols, usage_col)))
+
+    res <- tidyr::pivot_wider(
+      res,
+      names_from  = gene_cols[2],
+      values_from = all_of(usage_col)
+    )
+
+    res <- dplyr::mutate(res, dplyr::across(
+      -dplyr::all_of(gene_cols[1]),
+      ~ tidyr::replace_na(.x, 0)
+    ))
+
+    res <- tidyr::pivot_longer(
+      res,
+      cols      = -dplyr::all_of(gene_cols[1]),
+      names_to  = gene_cols[2],
+      values_to = usage_col
+    )
+  })
+
+  # Create heatmaps
+  res <- purrr::map(
+    res,
+    create_heatmap,
+    x           = gene_cols[1],
+    y           = gene_cols[2],
+    fill        = usage_col,
+    plot_colors = plot_colors,
+    legd_name   = yaxis,
+    angle       = 45,
+    hjust       = 1,
+    ...
+  )
+
+  if (length(res) == 1) {
+    return(res[[1]])
   }
 
   res
