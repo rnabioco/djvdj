@@ -2,12 +2,13 @@
 % Please edit documentation in R/utils.R
 \name{calc_diversity}
 \alias{calc_diversity}
-\title{Calculate receptor diversity (inverse Simpson Index)}
+\title{Calculate receptor diversity}
 \usage{
 calc_diversity(
   sobj_in,
   clonotype_col = "clonotype_id",
   cluster_col = NULL,
+  method = "simpson",
   prefix = "",
   return_seurat = TRUE
 )
@@ -22,14 +23,16 @@ calculating diversity}
 calculating diversity. If cluster_col is omitted, diversity index will be
 calculated for all clonotypes.}
 
+\item{method}{Method to use for calculating diversity}
+
 \item{prefix}{Prefix to add to new meta.data columns}
 
 \item{return_seurat}{Return a Seurat object. If set to FALSE, the meta.data
 table is returned.}
 }
 \value{
-Seurat object with inverse Simpson index added to meta.data
+Seurat object with diversity index added to meta.data
 }
 \description{
-Calculate receptor diversity (inverse Simpson Index)
+Calculate receptor diversity
 }

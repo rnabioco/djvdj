@@ -37,7 +37,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 
   contigs <- dplyr::mutate(
     contigs,
-    barcode = stringr::str_c(cell_prefix, .data$barcode),
+    barcode = paste0(cell_prefix, .data$barcode),
     chain   = case_when(
       str_detect(.data$v_gene, pat) ~ str_extract(.data$v_gene, pat),
       str_detect(.data$d_gene, pat) ~ str_extract(.data$d_gene, pat),
@@ -72,7 +72,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     n_chains = n(),
     dplyr::across(
       all_of(split_cols),
-      ~ stringr::str_c(as.character(.x), collapse = sep)
+      ~ paste0(as.character(.x), collapse = sep)
     ),
     .groups = "drop"
   )
@@ -89,7 +89,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 
   # Add meta.data to Seurat object
   meta_df <- tibble::column_to_rownames(meta_df, "barcode")
-  meta_df <- dplyr::rename_with(meta_df, ~ stringr::str_c(prefix, .x))
+  meta_df <- dplyr::rename_with(meta_df, ~ paste0(prefix, .x))
 
   res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
 
@@ -136,7 +136,7 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
     # Save original columns
     split_names <- purrr::set_names(
       x  = vdj_cols,
-      nm = stringr::str_c(".", vdj_cols)
+      nm = paste0(".", vdj_cols)
     )
 
     meta_df <- dplyr::mutate(meta_df, !!!syms(split_names))
@@ -258,8 +258,8 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
     meta_df <- dplyr::group_by(meta_df, !!sym(cluster_col))
   }
 
-  freq_col  <- stringr::str_c(prefix, "clone_freq")
-  pct_col <- stringr::str_c(prefix, "clone_pct")
+  freq_col  <- paste0(prefix, "clone_freq")
+  pct_col <- paste0(prefix, "clone_pct")
 
   meta_df <- dplyr::mutate(
     meta_df,
@@ -291,7 +291,7 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 }
 
 
-#' Calculate receptor diversity (inverse Simpson Index)
+#' Calculate receptor diversity
 #'
 #' @param sobj_in Seurat object
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
@@ -299,28 +299,27 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating diversity. If cluster_col is omitted, diversity index will be
 #' calculated for all clonotypes.
+#' @param method Method to use for calculating diversity
 #' @param prefix Prefix to add to new meta.data columns
 #' @param return_seurat Return a Seurat object. If set to FALSE, the meta.data
 #' table is returned.
-#' @return Seurat object with inverse Simpson index added to meta.data
+#' @return Seurat object with diversity index added to meta.data
 #' @export
 calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
-                           prefix = "", return_seurat = TRUE) {
+                           method = "simpson", prefix = "", return_seurat = TRUE) {
 
   # Format meta.data
-  vdj_cols      <- clonotype_col
-  clonotype_col <- sym(clonotype_col)
-  meta_df       <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
-  vdj_df        <- dplyr::filter(meta_df, !is.na(!!clonotype_col))
+  vdj_cols <- clonotype_col
+  meta_df  <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
+  vdj_df   <- dplyr::filter(meta_df, !is.na(!!sym(clonotype_col)))
 
   # Count clonotypes
   if (!is.null(cluster_col)) {
-    vdj_cols    <- c(cluster_col, vdj_cols)
-    cluster_col <- sym(cluster_col)
-    vdj_df      <- dplyr::group_by(vdj_df, !!cluster_col)
+    vdj_cols <- c(cluster_col, vdj_cols)
+    vdj_df   <- dplyr::group_by(vdj_df, !!sym(cluster_col))
   }
 
-  vdj_df <- dplyr::group_by(vdj_df, !!clonotype_col, .add = TRUE)
+  vdj_df <- dplyr::group_by(vdj_df, !!sym(clonotype_col), .add = TRUE)
 
   vdj_df <- dplyr::summarize(
     vdj_df,
@@ -330,30 +329,31 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 
   # Calculate diversity
   if (!is.null(cluster_col)) {
-    vdj_df <- dplyr::group_by(vdj_df, !!cluster_col)
+    vdj_df <- dplyr::group_by(vdj_df, !!sym(cluster_col))
   }
 
-  div_col <- stringr::str_c(prefix, "diversity")
+  div_col <- paste0(prefix, "diversity")
 
   vdj_df <- dplyr::mutate(
     vdj_df,
-    frac     = .data$.n / sum(.data$.n),
-    sum_frac = sum(.data$frac ^ 2),
-
-    !!sym(div_col) := 1 - .data$sum_frac
-    # !!sym(div_col) := 1 / .data$sum_frac
+    !!sym(div_col) := eval(parse(text = paste0("abdiv::", method, "(.n)")))
   )
 
+  vdj_df <- dplyr::ungroup(vdj_df)
   vdj_df <- dplyr::select(vdj_df, all_of(c(vdj_cols, div_col)))
+
+  # Return data.frame
+  if (!return_seurat) {
+    res <- dplyr::select(vdj_df, dplyr::all_of(c(cluster_col, div_col)))
+    res <- dplyr::distinct(res)
+
+    return(res)
+  }
 
   # Add results to meta.data
   meta_df <- dplyr::left_join(meta_df, vdj_df, by = vdj_cols)
   meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
   meta_df <- as.data.frame(meta_df)
-
-  if (!return_seurat) {
-    return(meta_df)
-  }
 
   res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
 
@@ -368,13 +368,14 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' calculating overlap
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating overlap
+#' @param method Method to use for calculating similarity between clusters
 #' @param prefix Prefix to add to new meta.data columns
 #' @param return_seurat Return a Seurat object. If set to FALSE, a matrix is
 #' returned
-#' @return Seurat object with Jaccard index added to meta.data
+#' @return Seurat object with similarity index added to meta.data
 #' @export
-calc_overlap <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
-                         prefix = "jcrd_", return_seurat = TRUE) {
+calc_similarity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
+                            method = "jaccard", prefix = "sim_", return_seurat = TRUE) {
 
   # Format meta.data
   meta_df <- sobj_in@meta.data
@@ -403,51 +404,62 @@ calc_overlap <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
     values_from = n
   )
 
-  # Calculate jaccard index
+  # Calculate similarity index
   clusts <- colnames(vdj_df)
   clusts <- clusts[clusts != clonotype_col]
-  clusts <- utils::combn(clusts, 2, simplify = FALSE)
 
-  res <- clusts %>%
-    map_dfr(~ {
-      res <- vdj_df %>%
-        select(all_of(c(clonotype_col, .x))) %>%
-        filter(!is.na(!!sym(.x[1]) | !is.na(!!sym(.x[2]))))
+  vdj_df <- dplyr::mutate(vdj_df, dplyr::across(
+    dplyr::all_of(clusts), ~ replace_na(.x, 0)
+  ))
 
-      uni <- nrow(res)
-      int <- nrow(na.omit(res))
+  combs <- utils::combn(clusts, 2, simplify = FALSE)
 
-      j_idx <- int / uni
+  res <- map_dfr(combs, ~ {
+    cmd <- paste0("sim <- abdiv::", method, "(vdj_df$", .x[1], ", vdj_df$", .x[2], ")")
 
-      tibble(
-        Var1    = .x[1],
-        Var2    = .x[2],
-        jaccard = j_idx
-      )
-    })
+    eval(parse(text = cmd))
 
+    df <- tibble(Var1 = .x[1], Var2 = .x[2], sim = sim)
+  })
+
+  # Invert index
+  dis_idx <- "jaccard"
+
+  if (method %in% dis_idx) {
+    res <- dplyr::mutate(res, sim = 1 - sim)
+  }
+
+  res_i <- dplyr::rename(res, Var1 = .data$Var2, Var2 = .data$Var1)
+
+  # Return matrix
   if (!return_seurat) {
-    res <- tidyr::pivot_wider(res, names_from = .data$Var1, values_from = .data$jaccard)
+    res <- tidyr::pivot_wider(
+      res,
+      names_from  = .data$Var1,
+      values_from = .data$sim
+    )
+
     res <- tibble::column_to_rownames(res, "Var2")
     res <- as.matrix(res)
 
     return(res)
   }
 
-  res_i <- dplyr::rename(res, Var1 = .data$Var2, Var2 = .data$Var1)
-  res   <- dplyr::bind_rows(res, res_i)
-  res   <- dplyr::mutate(res, Var1 = stringr::str_c(prefix, .data$Var1))
+  # Add inverse combinations
+  clusts <- tibble::tibble(Var1 = clusts, Var2 = clusts, sim = 1)
+  res <- dplyr::bind_rows(res, res_i, clusts)
+  res <- dplyr::mutate(res, Var1 = paste0(prefix, .data$Var1))
 
   res <- tidyr::pivot_wider(
     res,
     names_from  = .data$Var1,
-    values_from = .data$jaccard
+    values_from = .data$sim
   )
 
-  res <- dplyr::mutate(res, across(-.data$Var2, tidyr::replace_na, 1))
-
   # Add jaccard index to meta.data
-  meta_df <- dplyr::left_join(meta_df, res, by = c("orig.ident" = "Var2"))
+  j_cols <- purrr::set_names("Var2", cluster_col)
+
+  meta_df <- dplyr::left_join(meta_df, res, by = j_cols)
   meta_df <- dplyr::select(meta_df, -all_of(cluster_col))
   meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
   meta_df <- as.data.frame(meta_df)

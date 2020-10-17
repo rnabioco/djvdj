@@ -20,7 +20,8 @@ Imports:
     tibble,
     tidyr,
     broom,
-    ggplot2
+    ggplot2,
+    abdiv
 Suggests: 
     roxygen2,
     testthat,
