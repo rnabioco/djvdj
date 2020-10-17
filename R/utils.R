@@ -394,14 +394,14 @@ calc_similarity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col
 
   vdj_df <- dplyr::summarize(
     vdj_df,
-    n = n_distinct(.data$.cell_id),
+    n       = n_distinct(.data$.cell_id),
     .groups = "drop"
   )
 
   vdj_df <- tidyr::pivot_wider(
     vdj_df,
-    names_from = cluster_col,
-    values_from = n
+    names_from  = .data$cluster_col,
+    values_from = .data$n
   )
 
   # Calculate similarity index
@@ -447,8 +447,8 @@ calc_similarity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col
 
   # Add inverse combinations
   clusts <- tibble::tibble(Var1 = clusts, Var2 = clusts, sim = 1)
-  res <- dplyr::bind_rows(res, res_i, clusts)
-  res <- dplyr::mutate(res, Var1 = paste0(prefix, .data$Var1))
+  res    <- dplyr::bind_rows(res, res_i, clusts)
+  res    <- dplyr::mutate(res, Var1 = paste0(prefix, .data$Var1))
 
   res <- tidyr::pivot_wider(
     res,
