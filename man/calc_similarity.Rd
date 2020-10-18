@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{calc_similarity}
 \alias{calc_similarity}
-\title{Calculate repertoire overlap between clusters}
+\title{Calculate repertoire similarity between clusters}
 \usage{
 calc_similarity(
   sobj_in,
@@ -33,5 +33,5 @@ returned}
 Seurat object with similarity index added to meta.data
 }
 \description{
-Calculate repertoire overlap between clusters
+Calculate repertoire similarity between clusters
 }

@@ -30,9 +30,9 @@ calculating gene usage}
 \item{chain}{Chain to use for calculating gene usage. Set to NULL to include
 all chains.}
 
-\item{plot_colors}{Character vector containing colors to use for plotting}
+\item{plot_colors}{Character vector containing colors for plotting}
 
-\item{plot_genes}{Character vector of genes to plot}
+\item{plot_genes}{Character vector containing genes to plot}
 
 \item{n_genes}{Number of top genes to plot based on average usage}
 

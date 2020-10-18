@@ -1,105 +1,3 @@
-#' Set min and max values for column
-#'
-#' @param df_in Input data.frame
-#' @param feat_col Name of column containing feature values
-#' @param lim The value cutoff
-#' @param op The operator to use for comparing values with lim
-#' (either "<" or ">")
-#' @return data.frame with modified feature values
-set_val_limits <- function(df_in, feat_col, lim, op) {
-
-  if (!op %in% c("<", ">")) {
-    stop("op must be either \"<\" or \">\"")
-  }
-
-  func <- "min"
-
-  if (op == "<") {
-    func <- "max"
-  }
-
-  res <- dplyr::mutate(
-    df_in,
-    pct_rank = dplyr::percent_rank(!!sym(feat_col)),
-
-    lim = eval(parse(text = paste0(
-      "ifelse(pct_rank ", op, " lim, ", feat_col, ", NA)"
-    ))),
-
-    lim = eval(parse(text = paste0(
-      func, "(lim, na.rm = T)"
-    ))),
-
-    !!sym(feat_col) := eval(parse(text = paste0(
-      "dplyr::if_else(", feat_col, op, " lim, lim, ", feat_col, ")"
-    )))
-  )
-
-  res <- dplyr::select(res, -.data$pct_rank, -lim)
-
-  res
-}
-
-
-#' Add regression line to ggplot object
-#'
-#' @param gg_in ggplot object
-#' @param lab_pos Position of correlation coefficient label. Set to NULL to
-#' omit label
-#' @param lab_size Size of label
-#' @param ... Additional arguments to pass to geom_smooth
-#' @return ggplot object with added regression line
-add_lm_line <- function(gg_in, lab_pos = NULL, lab_size = 3.5, ...) {
-
-  # Add regression line
-  res <- gg_in +
-    ggplot2::geom_smooth(
-      method   = "lm",
-      formula  = y ~ x,
-      se       = F,
-      color    = "black",
-      size     = 0.5,
-      linetype = 2,
-      ...
-    )
-
-  # Calculate correlation
-  if (!is.null(lab_pos)) {
-    gg_data <- gg_in$data
-
-    x <- as.character(gg_in$mapping$x)[2]
-    y <- as.character(gg_in$mapping$y)[2]
-
-    gg_data <- dplyr::mutate(
-      gg_data,
-      r       = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$estimate,
-      r       = round(.data$r, digits = 2),
-      pval    = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$p.value,
-      cor_lab = stringr::str_c("r = ", .data$r, ", p = ", format(.data$pval, digits = 2)),
-      min_x   = min(!!sym(x)),
-      max_x   = max(!!sym(x)),
-      min_y   = min(!!sym(y)),
-      max_y   = max(!!sym(y)),
-      lab_x   = (.data$max_x - .data$min_x) * lab_pos[1] + .data$min_x,
-      lab_y   = (.data$max_y - .data$min_y) * lab_pos[2] + .data$min_y
-    )
-  }
-
-  # Add correlation coefficient label
-  res <- res +
-    ggplot2::geom_text(
-      data          = gg_data,
-      mapping       = ggplot2::aes(.data$lab_x, .data$lab_y, label = .data$cor_lab),
-      color         = "black",
-      size          = lab_size,
-      check_overlap = T,
-      show.legend   = F
-    )
-
-  res
-}
-
-
 #' Create two dimensional scatter plot
 #'
 #' @param obj_in Seurat object or data.frame containing data for plotting
@@ -108,7 +6,7 @@ add_lm_line <- function(gg_in, lab_pos = NULL, lab_size = 3.5, ...) {
 #' @param feature Variable to use for coloring points
 #' @param data_slot Slot in the Seurat object to pull data from
 #' @param pt_size Point size
-#' @param plot_cols Vector of colors to use for plot
+#' @param plot_colors Vector of colors to use for plot
 #' @param feat_levels Levels to use for ordering feature
 #' @param split_id Variable to use for splitting plot into facets
 #' @param split_levels Levels to use for ordering plot facets
@@ -121,7 +19,7 @@ add_lm_line <- function(gg_in, lab_pos = NULL, lab_size = 3.5, ...) {
 #' @return ggplot object
 #' @export
 plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
-                          pt_size = 0.25, plot_cols = NULL, feat_levels = NULL, split_id = NULL,
+                          pt_size = 0.25, plot_colors = NULL, feat_levels = NULL, split_id = NULL,
                           split_levels = NULL, min_pct = NULL, max_pct = NULL, lm_line = F,
                           cor_label = c(0.8, 0.9), label_size = 3.7, ...) {
 
@@ -161,7 +59,7 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
 
   # Adjust values based on min_pct and max_pct
   if (!is.null(min_pct)) {
-    meta_df <- set_val_limits(
+    meta_df <- .set_lims(
       meta_df,
       feat_col = feature,
       lim      = min_pct,
@@ -170,7 +68,7 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
   }
 
   if (!is.null(max_pct)) {
-    meta_df <- set_val_limits(
+    meta_df <- .set_lims(
       meta_df,
       feat_col = feature,
       lim      = max_pct,
@@ -203,16 +101,15 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
   # Create scatter plot
   meta_df <- dplyr::arrange(meta_df, !!sym(feature))
 
-  res <- ggplot2::ggplot(meta_df, ggplot2::aes(
-    !!sym(x),
-    !!sym(y),
-    color = !!sym(feature)
-  )) +
+  res <- ggplot2::ggplot(
+    meta_df,
+    ggplot2::aes(!!sym(x), !!sym(y), color = !!sym(feature))
+  ) +
     ggplot2::geom_point(size = pt_size)
 
   # Add regression line
   if (lm_line) {
-    res <- add_lm_line(
+    res <- .add_lm(
       res,
       lab_pos = cor_label,
       lab_size = label_size
@@ -220,14 +117,14 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
   }
 
   # Set feature colors
-  if (!is.null(plot_cols)) {
+  if (!is.null(plot_colors)) {
     if (is.numeric(meta_df[[feature]])) {
       res <- res +
-        ggplot2::scale_color_gradientn(colors = plot_cols)
+        ggplot2::scale_color_gradientn(colors = plot_colors)
 
     } else {
       res <- res +
-        ggplot2::scale_color_manual(values = plot_cols)
+        ggplot2::scale_color_manual(values = plot_colors)
     }
   }
 
@@ -249,6 +146,126 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
 }
 
 
+#' Create bar graphs summarizing cell counts for clusters
+#'
+#' @param sobj_in Seurat object or data.frame containing data
+#' @param x meta.data column containing clusters to use for creating bars
+#' @param fill_col meta.data column to use for coloring bars
+#' @param split_col meta.data column containing groups to use for spliting bars
+#' @param yaxis Units to plot on the y-axis, either "fraction" or "count"
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_levels Character vector containing levels for ordering
+#' @param order_count Order bar color by number of cells in each group
+#' @param n_label Include label showing the number of cells represented by each
+#' bar
+#' @param label_aes Named list providing additional label aesthetics
+#' (color, size, etc.)
+#' @param split_rows The number of facet rows. Use this argument if split_col
+#' is specified
+#' @param split_scales If split_col is used, this argument passes a scales
+#' specification to facet_wrap. Can be "fixed", "free", "free_x", or "free_y"
+#' @param ... Additional arguments to pass to geom_bar
+#' @return ggplot object
+#' @export
+plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis = "fraction",
+                            plot_colors = NULL, plot_levels = NULL, order_count = TRUE, n_label = TRUE,
+                            label_aes = list(), split_rows = 1, split_scales = "free_x", ...) {
+
+  # Set y-axis unit
+  y_types <- c("fraction", "count")
+
+  if (!yaxis %in% y_types) {
+    stop("yaxis must be either fraction or count")
+  }
+
+  y_types <- purrr::set_names(c("fill", "identity"), y_types)
+
+  bar_pos <- y_types[[yaxis]]
+
+  # Format meta.data for plotting
+  meta_df <- sobj_in
+
+  if ("Seurat" %in% class(sobj_in)) {
+    meta_df <- sobj_in@meta.data %>%
+      as_tibble(rownames = ".cell_id")
+  }
+
+  if (!is.null(plot_levels)) {
+    meta_df <- meta_df %>%
+      mutate(!!sym(x) := fct_relevel(!!sym(x), plot_levels))
+  }
+
+  # Create bar graphs
+  res <- meta_df %>%
+    ggplot(aes(!!sym(x)))
+
+  if (!is.null(fill_col)) {
+    if (order_count) {
+      meta_df <- meta_df %>%
+        mutate(
+          !!sym(fill_col) := fct_reorder(!!sym(fill_col), .cell_id, n_distinct)
+        )
+    }
+
+    res <- meta_df %>%
+      ggplot(aes(!!sym(x), fill = !!sym(fill_col)))
+  }
+
+  res <- res +
+    geom_bar(position = bar_pos, ...) +
+    labs(y = yaxis) +
+    theme(axis.title.x = element_blank())
+
+  if (!is.null(split_col)) {
+    res <- res +
+      ggplot2::facet_wrap(
+        as.formula(str_c("~ ", split_col)),
+        nrow   = split_rows,
+        scales = split_scales
+      )
+  }
+
+  # Add n labels
+  if (n_label) {
+    cell_counts <- meta_df %>%
+      group_by(!!sym(x))
+
+    if (!is.null(split_col)) {
+      cell_counts <- cell_counts %>%
+        group_by(!!sym(split_col), .add = T)
+    }
+
+    cell_counts <- cell_counts %>%
+      summarize(
+        cell_count = paste0("n = ", n_distinct(.data$.cell_id)),
+        .groups = "drop"
+      )
+
+    res <- res +
+      geom_text(
+        aes(!!sym(x), 0, label = cell_count),
+        data          = cell_counts,
+        inherit.aes   = F,
+        check_overlap = T,
+        size          = 3,
+        angle         = 90,
+        hjust         = -0.1
+      )
+
+    res <- .add_aes(res, label_aes, 2)
+
+  }
+
+  # Set plot colors
+  if (!is.null(plot_colors)) {
+    res <- res +
+      scale_fill_manual(values = plot_colors)
+  }
+
+  res
+}
+
+
 #' Plot clonotype abundance
 #'
 #' @param sobj_in Seurat object containing V(D)J data
@@ -257,15 +274,18 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
 #' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_levels Character vector containing levels for ordering
+#' @param label_col meta.data column containing labels to use for plot
+#' @param n_labels Number of clonotypes to label
+#' @param label_aes Named list providing additional label aesthetics (color, size, etc.)
 #' @param abundance_col meta.data column containing pre-calculated abundances
-#' @param plot_colors Character vector containing colors to use for plotting
-#' @param plot_levels Character vector containing levels to use for ordering
 #' @param ... Additional arguments to pass to geom_line
 #' @return ggplot object
 #' @export
-plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
-                           yaxis = "percent", abundance_col = NULL, plot_colors = NULL,
-                           plot_levels = NULL, ...) {
+plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL, yaxis = "percent",
+                           plot_colors = NULL, plot_levels = NULL, label_col = NULL, n_labels = 2,
+                           label_aes = list(), abundance_col = NULL, ...) {
 
   # Calculate clonotype abundance
   if (is.null(abundance_col)) {
@@ -308,24 +328,176 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
   )
 
   # Plot abundance vs rank
-  gg <- ggplot2::ggplot(meta_df, ggplot2::aes(rank, !!sym(abundance_col))) +
+  res <- ggplot2::ggplot(meta_df, ggplot2::aes(rank, !!sym(abundance_col))) +
     ggplot2::labs(y = yaxis)
 
   if (is.null(cluster_col)) {
-    gg <- gg +
+    res <- res +
       ggplot2::geom_line(...)
 
   } else {
-    gg <- gg +
+    res <- res +
       ggplot2::geom_line(ggplot2::aes(color = !!sym(cluster_col)), ...)
   }
 
   if (!is.null(plot_colors)) {
-    gg <- gg +
+    res <- res +
       ggplot2::scale_color_manual(values = plot_colors)
   }
 
-  gg
+  # Add labels
+  if (!is.null(label_col)) {
+    top_genes <- dplyr::slice_min(
+      meta_df,
+      order_by  = rank,
+      n         = n_labels,
+      with_ties = FALSE
+    )
+
+    res <- res +
+      ggrepel::geom_text_repel(
+        ggplot2::aes(label = !!sym(label_col)),
+        data          = top_genes,
+        nudge_x       = 400,
+        direction     = "y",
+        segment.alpha = 0.3
+      )
+
+    res <- .add_aes(res, label_aes, 2)
+  }
+
+  res
+}
+
+
+#' Plot repertoire diversity
+#'
+#' @param sobj_in Seurat object containing V(D)J data or data.frame containing
+#' diversity values to plot
+#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' calculating clonotype abundance
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' grouping cells when calculating clonotype abundance
+#' @param method Method to use for calculating diversity
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_levels Character vector containing levels for ordering
+#' @param ... Additional arguments to pass to geom_col
+#' @return ggplot object
+plot_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
+                           method = "simpson", plot_colors = NULL, plot_levels = NULL, ...) {
+
+  # Calculate diversity
+  if ("Seurat" %in% class(sobj_in)) {
+    sobj_in <- calc_diversity(
+      sobj_in = sobj_in,
+      clonotype_col  = clonotype_col,
+      cluster_col    = cluster_col,
+      method         = method,
+      prefix         = "",
+      return_seurat = FALSE
+    )
+  }
+
+  if (is.null(cluster_col)) {
+    cluster_col <- "x"
+
+    sobj_in <- dplyr::mutate(sobj_in, x = cluster_col)
+  }
+
+  # Set plot levels
+  if (!is.null(plot_levels)) {
+    sobj_in <- dplyr::mutate(
+      sobj_in,
+      !!sym(cluster_col) := factor(
+        !!sym(cluster_col),
+        levels = plot_levels
+      )
+    )
+  }
+
+  # Create bar graphs
+  res <- ggplot2::ggplot(sobj_in, ggplot2::aes(
+    !!sym(cluster_col),
+    diversity,
+    fill = !!sym(cluster_col)
+  )) +
+    geom_col(...)
+
+  # Set plot colors
+  if (!is.null(plot_colors)) {
+    res <- res +
+      scale_fill_manual(values = plot_colors)
+  }
+
+  res
+}
+
+
+#' Plot repertoire overlap
+#'
+#' @param sobj_in Seurat object containing V(D)J data or matrix containing
+#' similarity values to plot
+#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' calculating overlap
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' calculating overlap
+#' @param method Method to use for calculating similarity between clusters
+#' @param plot_colors Character vector containing colors for plotting
+#' @param ... Additional arguments to pass to geom_tile
+#' @return ggplot object
+#' @export
+plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
+                            plot_colors = NULL, ...) {
+
+  if ("Seurat" %in% class(sobj_in)) {
+    if (is.null(clonotype_col) || is.null(cluster_col)) {
+      stop("if a Seurat object is provided, clonotype_col and cluster_col must be specified")
+    }
+
+    sobj_in <- calc_similarity(
+      sobj_in       = sobj_in,
+      clonotype_col = clonotype_col,
+      cluster_col   = cluster_col,
+      method        = method,
+      prefix        = "",
+      return_seurat = FALSE
+    )
+  }
+
+  if (!identical(rownames(sobj_in), colnames(sobj_in))) {
+    stop("matrix must have the same column and row names")
+  }
+
+  var_levels <- unique(c(rownames(sobj_in), colnames(sobj_in)))
+  var_levels <- sort(var_levels)
+
+  gg_data <- tibble::as_tibble(sobj_in, rownames = "Var1")
+
+  gg_data <- tidyr::pivot_longer(
+    gg_data,
+    cols      = -Var1,
+    names_to  = "Var2",
+    values_to = method
+  )
+
+  # Set Var levels
+  gg_data <- dplyr::mutate(
+    gg_data,
+    Var1 = factor(.data$Var1, levels = rev(var_levels)),
+    Var2 = factor(.data$Var2, levels = var_levels)
+  )
+
+  # Create heatmap
+  res <- .create_heatmap(
+    gg_data,
+    x           = "Var1",
+    y           = "Var2",
+    fill        = method,
+    plot_colors = plot_colors,
+    ...
+  )
+
+  res
 }
 
 
@@ -337,8 +509,8 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' calculating gene usage
 #' @param chain Chain to use for calculating gene usage. Set to NULL to include
 #' all chains.
-#' @param plot_colors Character vector containing colors to use for plotting
-#' @param plot_genes Character vector of genes to plot
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_genes Character vector containing genes to plot
 #' @param n_genes Number of top genes to plot based on average usage
 #' @param clust_levels Levels to use for ordering clusters
 #' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
@@ -358,30 +530,6 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
 
   if (!yaxis %in% c("percent", "frequency")) {
     stop("yaxis must be either 'percent' or 'frequency'")
-  }
-
-  # Helper to create heatmaps
-  create_heatmap <- function(df_in, x, y, fill, plot_colors, legd_name,
-                             angle = 0, hjust = 0.5, ...) {
-    res <- ggplot2::ggplot(
-      df_in,
-      ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(fill))
-    ) +
-      ggplot2::geom_tile(...) +
-      ggplot2::guides(fill = ggplot2::guide_colorbar(title = yaxis)) +
-      ggplot2::theme(
-        axis.title  = ggplot2::element_blank(),
-        axis.line   = ggplot2::element_blank(),
-        axis.ticks  = ggplot2::element_blank(),
-        axis.text.x = ggplot2::element_text(angle = angle, hjust = hjust)
-      )
-
-    if (!is.null(plot_colors)) {
-      res <- res +
-        ggplot2::scale_fill_gradientn(colors = plot_colors, name = legd_name)
-    }
-
-    res
   }
 
   # Set y-axis
@@ -459,13 +607,13 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
 
   # Create heatmap for single gene
   if (length(gene_cols) == 1) {
-    res <- create_heatmap(
+    res <- .create_heatmap(
       gg_data,
       x           = cluster_col,
       y           = gene_cols,
       fill        = usage_col,
       plot_colors = plot_colors,
-      legd_name   = yaxis,
+      legd_title  = yaxis,
       ...
     )
 
@@ -511,12 +659,12 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
   # Create heatmaps
   res <- purrr::map(
     res,
-    create_heatmap,
+    .create_heatmap,
     x           = gene_cols[1],
     y           = gene_cols[2],
     fill        = usage_col,
     plot_colors = plot_colors,
-    legd_name   = yaxis,
+    legd_title  = yaxis,
     angle       = 45,
     hjust       = 1,
     ...
@@ -530,70 +678,162 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
 }
 
 
-#' Plot repertoire overlap
+#' Set min and max values for column
 #'
-#' @param obj_in Seurat object containing V(D)J data or matrix
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating overlap
-#' @param cluster_col meta.data column containing cluster IDs to use for
-#' calculating overlap
-#' @param plot_colors Character vector containing colors to use for plotting
-#' @param ... Additional arguments to pass to geom_tile
-#' @return ggplot object
-#' @export
-plot_overlap <- function(obj_in, clonotype_col = NULL, cluster_col = NULL,
-                         plot_colors = NULL, ...) {
+#' @param df_in Input data.frame
+#' @param feat_col Name of column containing feature values
+#' @param lim The value cutoff
+#' @param op The operator to use for comparing values with lim
+#' (either "<" or ">")
+#' @return data.frame with modified feature values
+.set_lims <- function(df_in, feat_col, lim, op) {
 
-  if ("Seurat" %in% class(obj_in)) {
-    if (is.null(clonotype_col) || is.null(cluster_col)) {
-      stop("if a Seurat object is provided, clonotype_col and cluster_col must be specified")
-    }
+  if (!op %in% c("<", ">")) {
+    stop("op must be either \"<\" or \">\"")
+  }
 
-    obj_in <- calc_overlap(
-      sobj_in       = obj_in,
-      clonotype_col = clonotype_col,
-      cluster_col   = cluster_col,
-      prefix        = "",
-      return_seurat = FALSE
+  func <- "min"
+
+  if (op == "<") {
+    func <- "max"
+  }
+
+  res <- dplyr::mutate(
+    df_in,
+    pct_rank = dplyr::percent_rank(!!sym(feat_col)),
+
+    lim = eval(parse(text = paste0(
+      "ifelse(pct_rank ", op, " lim, ", feat_col, ", NA)"
+    ))),
+
+    lim = eval(parse(text = paste0(
+      func, "(lim, na.rm = T)"
+    ))),
+
+    !!sym(feat_col) := eval(parse(text = paste0(
+      "dplyr::if_else(", feat_col, op, " lim, lim, ", feat_col, ")"
+    )))
+  )
+
+  res <- dplyr::select(res, -.data$pct_rank, -lim)
+
+  res
+}
+
+
+#' Add regression line to ggplot object
+#'
+#' @param gg_in ggplot object
+#' @param lab_pos Position of correlation coefficient label. Set to NULL to
+#' omit label
+#' @param lab_size Size of label
+#' @param ... Additional arguments to pass to geom_smooth
+#' @return ggplot object with added regression line
+.add_lm <- function(gg_in, lab_pos = NULL, lab_size = 3.5, ...) {
+
+  # Add regression line
+  res <- gg_in +
+    ggplot2::geom_smooth(
+      method   = "lm",
+      formula  = y ~ x,
+      se       = F,
+      color    = "black",
+      size     = 0.5,
+      linetype = 2,
+      ...
+    )
+
+  # Calculate correlation
+  if (!is.null(lab_pos)) {
+    gg_data <- gg_in$data
+
+    x <- as.character(gg_in$mapping$x)[2]
+    y <- as.character(gg_in$mapping$y)[2]
+
+    gg_data <- dplyr::mutate(
+      gg_data,
+      r       = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$estimate,
+      r       = round(.data$r, digits = 2),
+      pval    = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$p.value,
+      cor_lab = stringr::str_c("r = ", .data$r, ", p = ", format(.data$pval, digits = 2)),
+      min_x   = min(!!sym(x)),
+      max_x   = max(!!sym(x)),
+      min_y   = min(!!sym(y)),
+      max_y   = max(!!sym(y)),
+      lab_x   = (.data$max_x - .data$min_x) * lab_pos[1] + .data$min_x,
+      lab_y   = (.data$max_y - .data$min_y) * lab_pos[2] + .data$min_y
     )
   }
 
-  if (!identical(rownames(obj_in), colnames(obj_in))) {
-    stop("matrix must have the same column and row names")
+  # Add correlation coefficient label
+  res <- res +
+    ggplot2::geom_text(
+      data          = gg_data,
+      mapping       = ggplot2::aes(.data$lab_x, .data$lab_y, label = .data$cor_lab),
+      color         = "black",
+      size          = lab_size,
+      check_overlap = T,
+      show.legend   = F
+    )
+
+  res
+}
+
+
+#' Add list of aes params to ggplot object
+#'
+#' @param gg_in ggplot object
+#' @param add_aes List of aes params to add or override
+#' @param lay Layer number to modify
+#' @return ggplot object
+.add_aes <- function(gg_in, add_aes, lay) {
+
+  # Need to use colour instead of color
+  aes_names      <- names(add_aes)
+  names(add_aes) <- replace(aes_names, aes_names == "color", "colour")
+
+  # Add aes params
+  curr_aes <- gg_in$layers[[lay]]$aes_params
+
+  curr_aes[names(add_aes)]       <- add_aes
+  gg_in$layers[[lay]]$aes_params <- curr_aes
+
+  gg_in
+}
+
+
+#' Create ggplot heatmap
+#'
+#' @param df_in data.frame
+#' @param x Variable to plot on the x-axis
+#' @param y Variable to plot on the y-axis
+#' @param fill Variable to use for the fill color
+#' @param plot_colors Character vector containing colors for plotting
+#' @param na_color Color to use for missing values
+#' @param legd_title Legend title
+#' @param angle Angle of x-axis text
+#' @param hjust Horizontal justification for x-axis text
+#' @param ... Additional arguments to pass to geom_tile
+.create_heatmap <- function(df_in, x, y, fill, plot_colors = NULL, na_color = "white",
+                            legd_title = fill, angle = 0, hjust = 0.5, ...) {
+
+  if (is.null(plot_colors)) {
+    plot_colors <- c("grey90", "#56B4E9")
   }
 
-  var_levels <- unique(c(rownames(obj_in), colnames(obj_in)))
-  var_levels <- sort(var_levels)
-
-  gg_data <- tibble::as_tibble(obj_in, rownames = "Var1")
-
-  gg_data <- tidyr::pivot_longer(
-    gg_data,
-    cols      = -.data$Var1,
-    names_to  = .data$Var2,
-    values_to = "jaccard"
-  )
-
-  # Set Var levels
-  gg_data <- dplyr::mutate(
-    gg_data,
-    Var1 = factor(.data$Var1, levels = rev(var_levels)),
-    Var2 = factor(.data$Var2, levels = var_levels)
-  )
-
-  # Create heatmap
-  res <- ggplot2::ggplot(gg_data, ggplot2::aes(.data$Var1, .data$Var2, fill = .data$jaccard)) +
+  res <- ggplot2::ggplot(
+    df_in,
+    ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(fill))
+  ) +
     ggplot2::geom_tile(...) +
+    ggplot2::guides(fill = ggplot2::guide_colorbar(title = legd_title)) +
     ggplot2::theme(
       axis.title  = ggplot2::element_blank(),
       axis.line   = ggplot2::element_blank(),
-      axis.ticks  = ggplot2::element_blank()
-    )
-
-  if (!is.null(plot_colors)) {
-    res <- res +
-      ggplot2::scale_fill_gradientn(colors = plot_colors, na.value = "white")
-  }
+      axis.ticks  = ggplot2::element_blank(),
+      axis.text.x = ggplot2::element_text(angle = angle, hjust = hjust)
+    ) +
+    ggplot2::scale_fill_gradientn(colors = plot_colors, na.value = na_color)
 
   res
 }

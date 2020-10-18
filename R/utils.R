@@ -29,34 +29,27 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     split_cols
   )
 
-  vdj_dir <- file.path(vdj_dir, "filtered_contig_annotations.csv")
-  contigs <- readr::read_csv(vdj_dir)
+  contigs <- "filtered_contig_annotations.csv"
+  contigs <- file.path(vdj_dir, contigs)
+  contigs <- readr::read_csv(contigs, col_types = cols())
 
-  # Extract chain, add cell barcode prefix
-  pat <- "^[A-Z]{3}"
-
+  # Add cell barcode prefix
   contigs <- dplyr::mutate(
     contigs,
-    barcode = paste0(cell_prefix, .data$barcode),
-    chain   = case_when(
-      str_detect(.data$v_gene, pat) ~ str_extract(.data$v_gene, pat),
-      str_detect(.data$d_gene, pat) ~ str_extract(.data$d_gene, pat),
-      str_detect(.data$j_gene, pat) ~ str_extract(.data$j_gene, pat),
-      str_detect(.data$c_gene, pat) ~ str_extract(.data$c_gene, pat),
-      TRUE ~ "None"
-    )
+    barcode = paste0(cell_prefix, .data$barcode)
   )
 
-  # Filter for productive full length contigs
+  # Filter for productive contigs
   if (filter_contigs) {
     contigs <- dplyr::filter(contigs, .data$productive, .data$full_length)
   }
 
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
-  # Sum contig reads and UMIs for clonotype chains
+  # Sum contig reads and UMIs for chains
   grp_cols <- vdj_cols[!vdj_cols %in% count_cols]
   contigs  <- dplyr::group_by(contigs, !!!syms(grp_cols))
+
   contigs  <- dplyr::summarize(
     contigs,
     across(all_of(count_cols), sum),
@@ -64,7 +57,11 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   )
 
   # Merge rows for each cell
-  contigs <- dplyr::arrange(contigs, .data$barcode, .data$raw_clonotype_id, .data$chain)
+  contigs <- dplyr::arrange(
+    contigs,
+    .data$barcode, .data$raw_clonotype_id, .data$chain
+  )
+
   contigs <- dplyr::group_by(contigs, .data$barcode, .data$raw_clonotype_id)
 
   meta_df <- summarize(
@@ -154,11 +151,11 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
       meta_df,
       across(
         dplyr::all_of(vdj_cols),
-        ~ convert_char(.x, as.numeric)
+        ~ .convert_char(.x, as.numeric)
       ),
       across(
         dplyr::all_of(vdj_cols),
-        ~ convert_char(.x, as.logical)
+        ~ .convert_char(.x, as.logical)
       )
     )
 
@@ -291,7 +288,7 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 }
 
 
-#' Calculate receptor diversity
+#' Calculate repertoire diversity
 #'
 #' @param sobj_in Seurat object
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
@@ -307,6 +304,15 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' @export
 calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
                            method = "simpson", prefix = "", return_seurat = TRUE) {
+
+  # Check method
+  mets <- abdiv::alpha_diversities
+
+  if (!method %in% mets) {
+    mets <- paste(mets, collapse = ", ")
+
+    stop(paste0("select one of the following methods: ", mets))
+  }
 
   # Format meta.data
   vdj_cols <- clonotype_col
@@ -336,7 +342,7 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 
   vdj_df <- dplyr::mutate(
     vdj_df,
-    !!sym(div_col) := eval(parse(text = paste0("abdiv::", method, "(.n)")))
+    !!sym(div_col) := eval(.call_abdiv(".n", method))
   )
 
   vdj_df <- dplyr::ungroup(vdj_df)
@@ -361,7 +367,7 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 }
 
 
-#' Calculate repertoire overlap between clusters
+#' Calculate repertoire similarity between clusters
 #'
 #' @param sobj_in Seurat object
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
@@ -376,6 +382,14 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' @export
 calc_similarity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
                             method = "jaccard", prefix = "sim_", return_seurat = TRUE) {
+
+  mets <- abdiv::beta_diversities
+
+  if (!method %in% mets) {
+    mets <- paste(mets, collapse = ", ")
+
+    stop(paste0("select one of the following methods: ", mets))
+  }
 
   # Format meta.data
   meta_df <- sobj_in@meta.data
@@ -400,7 +414,7 @@ calc_similarity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col
 
   vdj_df <- tidyr::pivot_wider(
     vdj_df,
-    names_from  = .data$cluster_col,
+    names_from  = dplyr::all_of(cluster_col),
     values_from = .data$n
   )
 
@@ -415,11 +429,13 @@ calc_similarity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col
   combs <- utils::combn(clusts, 2, simplify = FALSE)
 
   res <- map_dfr(combs, ~ {
-    cmd <- paste0("sim <- abdiv::", method, "(vdj_df$", .x[1], ", vdj_df$", .x[2], ")")
+    ins <- paste0("vdj_df$", .x)
 
-    eval(parse(text = cmd))
-
-    df <- tibble(Var1 = .x[1], Var2 = .x[2], sim = sim)
+    tibble::tibble(
+      Var1 = .x[1],
+      Var2 = .x[2],
+      sim  = eval(.call_abdiv(ins, method))
+    )
   })
 
   # Invert index
@@ -584,12 +600,12 @@ calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
 #' Summarize values for chains
 #'
 #' Summarize values present for each column provided to the data_cols argument.
-#' For each cell, the function(s) provided to .fun will be applied to each
-#' unique label in chain_col.
+#' For each cell, the function(s) provided will be applied to each unique label
+#' in chain_col.
 #'
 #' @param sobj_in Seurat object containing V(D)J data
 #' @param data_cols meta.data columns to summarize
-#' @param .fun Function to use for summarizing data_cols
+#' @param fn Function to use for summarizing data_cols
 #' @param chain_col meta.data column(s) containing labels for each chain
 #' expressed in the cell. These labels are used for grouping the summary
 #' output. Set chain_col to NULL to group solely based on the cell ID.
@@ -597,7 +613,7 @@ calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
 #' @param sep Separator to use for expanding data_cols and chain_col
 #' @return data.frame containing summary results
 #' @export
-summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), .fun,
+summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
                              chain_col = "chains", include_cols = NULL, sep = ";") {
 
   # Fetch meta.data
@@ -622,7 +638,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), .fun,
   # Summarize data_cols for each chain present for the cell
   res <- dplyr::mutate(res, dplyr::across(
     dplyr::all_of(data_cols),
-    ~ convert_char(.x, as.numeric)
+    ~ .convert_char(.x, as.numeric)
   ))
 
   grp_cols <- c(".cell_id", chain_col, include_cols)
@@ -630,7 +646,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), .fun,
 
   res <- dplyr::summarize(
     res,
-    dplyr::across(dplyr::all_of(data_cols), .fun),
+    dplyr::across(dplyr::all_of(data_cols), fn),
     .groups = "drop"
   )
 
@@ -638,17 +654,30 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), .fun,
 }
 
 
+#' Create expression for calling abdiv functions
+#'
+#' @param ins Names of input columns or vectors
+#' @param fn Function to use
+#' @return Expression to call abdiv function
+.call_abdiv <- function(ins, fn) {
+  ins <- paste0(ins, collapse = ", ")
+  cmd <- paste0("abdiv::", fn, "(", ins, ")")
+
+  parse(text = cmd)
+}
+
+
 #' Attempt to convert character vector using provided function
 #'
 #' @param x Character vector to convert
-#' @param fun Function to try
-#' @return Value converted using fun
-convert_char <- function(x, fun) {
+#' @param fn Function to try
+#' @return Value converted using fn
+.convert_char <- function(x, fn) {
   if (!is.character(x)) {
     return(x)
   }
 
-  suppressWarnings(ifelse(!is.na(fun(x)) | is.na(x), fun(x), x))
+  suppressWarnings(ifelse(!is.na(fn(x)) | is.na(x), fn(x), x))
 }
 
 

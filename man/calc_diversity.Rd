@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{calc_diversity}
 \alias{calc_diversity}
-\title{Calculate receptor diversity}
+\title{Calculate repertoire diversity}
 \usage{
 calc_diversity(
   sobj_in,
@@ -34,5 +34,5 @@ table is returned.}
 Seurat object with diversity index added to meta.data
 }
 \description{
-Calculate receptor diversity
+Calculate repertoire diversity
 }

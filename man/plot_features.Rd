@@ -11,7 +11,7 @@ plot_features(
   feature,
   data_slot = "data",
   pt_size = 0.25,
-  plot_cols = NULL,
+  plot_colors = NULL,
   feat_levels = NULL,
   split_id = NULL,
   split_levels = NULL,
@@ -36,7 +36,7 @@ plot_features(
 
 \item{pt_size}{Point size}
 
-\item{plot_cols}{Vector of colors to use for plot}
+\item{plot_colors}{Vector of colors to use for plot}
 
 \item{feat_levels}{Levels to use for ordering feature}
 
