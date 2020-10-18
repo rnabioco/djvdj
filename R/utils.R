@@ -31,7 +31,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 
   contigs <- "filtered_contig_annotations.csv"
   contigs <- file.path(vdj_dir, contigs)
-  contigs <- readr::read_csv(contigs, col_types = cols())
+  contigs <- readr::read_csv(contigs, col_types = readr::cols())
 
   # Add cell barcode prefix
   contigs <- dplyr::mutate(
@@ -442,7 +442,7 @@ calc_similarity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col
   dis_idx <- "jaccard"
 
   if (method %in% dis_idx) {
-    res <- dplyr::mutate(res, sim = 1 - sim)
+    res <- dplyr::mutate(res, sim = 1 - .data$sim)
   }
 
   res_i <- dplyr::rename(res, Var1 = .data$Var2, Var2 = .data$Var1)
@@ -664,6 +664,20 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
   cmd <- paste0("abdiv::", fn, "(", ins, ")")
 
   parse(text = cmd)
+
+  # my_fun <- function(..., method = "shannon") {
+  #   avail_fns <- c(alpha_diversities, beta_diversities)
+  #   fns       <- paste0("abdiv::", avail_fns)
+  #
+  #   fn_list <- set_names(
+  #     unlist(map(fns, ~ eval(parse(text = .x)))),
+  #     avail_fns
+  #   )
+  #
+  #   fn <- fn_list[[method]]
+  #
+  #   fn(...)
+  # }
 }
 
 

@@ -8,6 +8,7 @@ plot_similarity(
   sobj_in,
   clonotype_col = NULL,
   cluster_col = NULL,
+  method = "jaccard",
   plot_colors = NULL,
   ...
 )
@@ -22,11 +23,11 @@ calculating overlap}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 calculating overlap}
 
+\item{method}{Method to use for calculating similarity between clusters}
+
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{...}{Additional arguments to pass to geom_tile}
-
-\item{method}{Method to use for calculating similarity between clusters}
 }
 \value{
 ggplot object

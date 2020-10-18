@@ -21,7 +21,9 @@ Imports:
     tidyr,
     broom,
     ggplot2,
-    abdiv
+    abdiv,
+    stats,
+    ggrepel
 Suggests: 
     roxygen2,
     testthat,

@@ -192,34 +192,36 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
 
   if (!is.null(plot_levels)) {
     meta_df <- meta_df %>%
-      mutate(!!sym(x) := fct_relevel(!!sym(x), plot_levels))
+      mutate(!!sym(x) := factor(!!sym(x), levels = plot_levels))
   }
 
   # Create bar graphs
   res <- meta_df %>%
-    ggplot(aes(!!sym(x)))
+    ggplot2::ggplot(ggplot2::aes(!!sym(x)))
 
   if (!is.null(fill_col)) {
-    if (order_count) {
-      meta_df <- meta_df %>%
-        mutate(
-          !!sym(fill_col) := fct_reorder(!!sym(fill_col), .cell_id, n_distinct)
-        )
-    }
+    # if (order_count) {
+    #   meta_df <- mutate(
+    #     meta_df,
+    #     !!sym(fill_col) := fct_reorder(!!sym(fill_col), .data$.cell_id, n_distinct)
+    #   )
+    # }
 
-    res <- meta_df %>%
-      ggplot(aes(!!sym(x), fill = !!sym(fill_col)))
+    res <- ggplot2::ggplot(
+      meta_df,
+      ggplot2::aes(!!sym(x), fill = !!sym(fill_col))
+    )
   }
 
   res <- res +
-    geom_bar(position = bar_pos, ...) +
-    labs(y = yaxis) +
-    theme(axis.title.x = element_blank())
+    ggplot2::geom_bar(position = bar_pos, ...) +
+    ggplot2::labs(y = yaxis) +
+    ggplot2::theme(axis.title.x = ggplot2::element_blank())
 
   if (!is.null(split_col)) {
     res <- res +
       ggplot2::facet_wrap(
-        as.formula(str_c("~ ", split_col)),
+        stats::as.formula(paste0("~ ", split_col)),
         nrow   = split_rows,
         scales = split_scales
       )
@@ -227,23 +229,21 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
 
   # Add n labels
   if (n_label) {
-    cell_counts <- meta_df %>%
-      group_by(!!sym(x))
+    cell_counts <- dplyr::group_by(meta_df, !!sym(x))
 
     if (!is.null(split_col)) {
-      cell_counts <- cell_counts %>%
-        group_by(!!sym(split_col), .add = T)
+      cell_counts <- group_by(cell_counts, !!sym(split_col), .add = T)
     }
 
-    cell_counts <- cell_counts %>%
-      summarize(
-        cell_count = paste0("n = ", n_distinct(.data$.cell_id)),
-        .groups = "drop"
-      )
+    cell_counts <- summarize(
+      cell_counts,
+      cell_count = paste0("n = ", dplyr::n_distinct(.data$.cell_id)),
+      .groups = "drop"
+    )
 
     res <- res +
-      geom_text(
-        aes(!!sym(x), 0, label = cell_count),
+      ggplot2::geom_text(
+        ggplot2::aes(!!sym(x), 0, label = .data$cell_count),
         data          = cell_counts,
         inherit.aes   = F,
         check_overlap = T,
@@ -259,7 +259,7 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
   # Set plot colors
   if (!is.null(plot_colors)) {
     res <- res +
-      scale_fill_manual(values = plot_colors)
+      ggplot2::scale_fill_manual(values = plot_colors)
   }
 
   res
@@ -418,15 +418,15 @@ plot_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
   # Create bar graphs
   res <- ggplot2::ggplot(sobj_in, ggplot2::aes(
     !!sym(cluster_col),
-    diversity,
+    .data$diversity,
     fill = !!sym(cluster_col)
   )) +
-    geom_col(...)
+    ggplot2::geom_col(...)
 
   # Set plot colors
   if (!is.null(plot_colors)) {
     res <- res +
-      scale_fill_manual(values = plot_colors)
+      ggplot2::scale_fill_manual(values = plot_colors)
   }
 
   res
@@ -447,7 +447,7 @@ plot_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' @return ggplot object
 #' @export
 plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
-                            plot_colors = NULL, ...) {
+                            method = "jaccard", plot_colors = NULL, ...) {
 
   if ("Seurat" %in% class(sobj_in)) {
     if (is.null(clonotype_col) || is.null(cluster_col)) {
@@ -475,7 +475,7 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 
   gg_data <- tidyr::pivot_longer(
     gg_data,
-    cols      = -Var1,
+    cols      = -.data$Var1,
     names_to  = "Var2",
     values_to = method
   )
