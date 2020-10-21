@@ -8,7 +8,7 @@ calc_diversity(
   sobj_in,
   clonotype_col = "clonotype_id",
   cluster_col = NULL,
-  method = "simpson",
+  method = abdiv::simpson,
   prefix = "",
   return_seurat = TRUE
 )

@@ -253,7 +253,6 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
       )
 
     res <- .add_aes(res, label_aes, 2)
-
   }
 
   # Set plot colors

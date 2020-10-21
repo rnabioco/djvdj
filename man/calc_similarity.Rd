@@ -8,7 +8,7 @@ calc_similarity(
   sobj_in,
   clonotype_col = "clonotype_id",
   cluster_col,
-  method = "jaccard",
+  method = abdiv::jaccard,
   prefix = "sim_",
   return_seurat = TRUE
 )

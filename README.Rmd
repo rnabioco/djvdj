@@ -54,298 +54,6 @@ create_col_fun <- function(cols_in) {
     create_gradient(cols_in, n)
   }
 }
-
-# Overlay feature data on UMAP or tSNE
-# Cannot change number of columns when using FeaturePlot with split.by
-plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data", 
-                          split_id = NULL, pt_size = 0.25, pt_outline = NULL, plot_cols = NULL,
-                          feat_levels = NULL, split_levels = NULL, min_pct = NULL, max_pct = NULL, 
-                          calc_cor = F, lm_line = F, lab_size = 3.7, lab_pos = c(0.8, 0.9),
-                          na_value = "#f0f0f0", ...) {
-  
-  # Format imput data
-  counts <- sobj_in
-  
-  if ("Seurat" %in% class(sobj_in)) {
-    vars <- c(x, y, feature)
-    
-    if (!is.null(split_id)) {
-      vars <- c(vars, split_id)
-    }
-
-    counts <- sobj_in %>%
-      FetchData(vars = unique(vars), slot = data_slot) %>%
-      as_tibble(rownames = "cell_ids")
-  }
-  
-  # Rename features
-  if (!is.null(names(feature))) {
-    counts <- counts %>%
-      rename(!!!syms(feature))
-    
-    feature <- names(feature)
-  }
-  
-  if (!is.null(names(x))) {
-    counts <- counts %>%
-      rename(!!!syms(x))
-    
-    x <- names(x)
-  }
-  
-  if (!is.null(names(y))) {
-    counts <- counts %>%
-      rename(!!!syms(y))
-    
-    y <- names(y)
-  }
-  
-  # Set min and max values for feature
-  if (!is.null(min_pct) || !is.null(max_pct)) {
-    counts <- counts %>%
-      mutate(
-        pct_rank = percent_rank(!!sym(feature)),
-        max_val  = ifelse(pct_rank > max_pct, !!sym(feature), NA),
-        max_val  = min(max_val, na.rm = T),
-        min_val  = ifelse(pct_rank < min_pct, !!sym(feature), NA),
-        min_val  = max(min_val, na.rm = T),
-        !!sym(feature) := if_else(!!sym(feature) > max_val, max_val, !!sym(feature)),
-        !!sym(feature) := if_else(!!sym(feature) < min_val, min_val, !!sym(feature))
-      )
-  }
-
-  # Set feature order
-  if (!is.null(feat_levels)) {
-    counts <- counts %>%
-      mutate(!!sym(feature) := fct_relevel(!!sym(feature), feat_levels))
-  }
-  
-  # Set facet order
-  if (!is.null(split_id) && length(split_id) == 1) {
-    counts <- counts %>%
-      mutate(split_id = !!sym(split_id))
-    
-    if (!is.null(split_levels)) {
-      counts <- counts %>%
-        mutate(split_id = fct_relevel(split_id, split_levels))
-    }
-  }
-  
-  # Calculate correlation
-  if (calc_cor) {
-    if (!is.null(split_id)) {
-      counts <- counts %>%
-        group_by(split_id)
-    }
-    
-    counts <- counts %>%
-      mutate(
-        r       = tidy(cor.test(!!sym(x), !!sym(y)))$estimate,
-        r       = round(r, digits = 2),
-        pval    = tidy(cor.test(!!sym(x), !!sym(y)))$p.value,
-        cor_lab = str_c("r = ", r, ", p = ", format(pval, digits = 2))
-        
-        # cor_lab = cor(!!sym(x), !!sym(y)),
-        # cor_lab = round(cor_lab, digits = 2),
-        # cor_lab = str_c("r = ", cor_lab),
-      )
-    
-    if (lab_pos != "strip") {
-      counts <- counts %>%
-        mutate(
-          min_x = min(!!sym(x)),
-          max_x = max(!!sym(x)),
-          min_y = min(!!sym(y)),
-          max_y = max(!!sym(y)),
-          lab_x = (max_x - min_x) * lab_pos[1] + min_x,
-          lab_y = (max_y - min_y) * lab_pos[2] + min_y
-        )
-    }
-  }
-  
-  # Create scatter plot
-  # To add outline for each cluster create separate layers
-  res <- counts %>%
-    arrange(!!sym(feature))
-  
-  if (!is.null(pt_outline)) {
-    
-    if (!is.numeric(counts[[feature]])) {
-      res <- res %>%
-        ggplot(aes(!!sym(x), !!sym(y), color = !!sym(feature), fill = !!sym(feature)))
-      
-      feats <- counts[[feature]] %>%
-        unique()
-      
-      if (!is.null(feat_levels)) {
-        feats <- feat_levels[feat_levels %in% feats]
-      }
-      
-      for (feat in feats) {
-        if (is.na(feat)) {
-          feat <- "NA"
-        }
-        
-        f_counts <- counts %>%
-          mutate(!!sym(feature) := replace_na(!!sym(feature), "NA")) %>%
-          filter(!!sym(feature) == feat)
-        
-        res <- res +
-          geom_point(
-            data        = f_counts,
-            mapping     = aes(fill = !!sym(feature)),
-            size        = pt_outline,
-            color       = "black",
-            show.legend = F
-          ) +
-          geom_point(data = f_counts, size = pt_size)
-      }
-      
-    } else {
-      res <- res %>%
-        ggplot(aes(!!sym(x), !!sym(y), color = !!sym(feature))) +
-        geom_point(aes(fill = !!sym(feature)), size = pt_outline, color = "black", show.legend = F) +
-        geom_point(size = pt_size)
-    }
-    
-  } else {
-    res <- res %>%
-      ggplot(aes(!!sym(x), !!sym(y), color = !!sym(feature))) +
-      geom_point(size = pt_size)
-  }
-
-  # Add regression line
-  if (lm_line) {
-    res <- res +
-      geom_smooth(
-        method   = "lm",
-        se       = F,
-        color    = "black",
-        size     = 0.5,
-        linetype = 2
-      )
-  }
-  
-  # Add correlation coefficient label
-  if (calc_cor && lab_pos != "strip") {
-    res <- res +
-      geom_text(
-        mapping       = aes(lab_x, lab_y, label = cor_lab),
-        color         = "black",
-        size          = lab_size,
-        check_overlap = T, 
-        show.legend   = F
-      )
-  }
-  
-  # Set feature colors
-  if (!is.null(plot_cols)) {
-    if (is.numeric(counts[[feature]])) {
-      res <- res +
-        scale_color_gradientn(colors = plot_cols, na.value = na_value)
-        # scale_color_gradient(low = plot_cols[1], high = plot_cols[2])
-
-    } else {
-      res <- res +
-        scale_color_manual(values = plot_cols, na.value = na_value) +
-        scale_fill_manual(values = plot_cols, na.value = na_value)
-    }
-  }
-  
-  # Split plot into facets
-  cor_labeller <- function(labels) {
-    labels %>%
-      map(~ {
-        cor_labs <- counts %>%
-          ungroup() %>%
-          select(!!sym(feature), cor_lab) %>%
-          unique()
-        
-        cor_labs <- set_names(cor_labs$cor_lab, cor_labs[[feature]])
-        
-        str_c(.x, "\n", cor_labs[.x])
-      })
-  }
-  
-  if (!is.null(split_id)) {
-    if (length(split_id) == 1) {
-      
-      if (calc_cor && lab_pos == "strip") {
-        my_labs <- cor_labeller
-        
-      } else {
-        my_labs <- "label_value"
-      }
-      
-      res <- res +
-        facet_wrap(~ split_id, labeller = my_labs, ...)
-      
-    } else if (length(split_id) == 2) {
-      eq <- str_c(split_id[1], " ~ ", split_id[2])
-      
-      res <- res +
-        facet_grid(as.formula(eq), ...)
-    }
-  }
-  
-  res
-}
-
-# Plot fraction of cells containing given labels
-plot_cell_count <- function(sobj_in, group_id, split_id = NULL, group_order = NULL, fill_id, 
-                            plot_cols = NULL, x_lab = "Cell type", y_lab = "Fraction of cells",
-                            bar_pos = "fill", order_count = T, bar_line = 0, na_value = "#f0f0f0",
-                            ...) {
-  
-  res <- sobj_in
-  
-  if ("Seurat" %in% class(sobj_in)) {
-    res <- sobj_in@meta.data %>%
-      rownames_to_column("cell_id")
-  }
-  
-  res <- res %>%
-    mutate(
-      group_id := !!sym(group_id),
-      fill_id  := !!sym(fill_id)
-    )
-  
-  if (!is.null(group_order)) {
-    res <- res %>%
-      mutate(group_id = fct_relevel(group_id, group_order))
-  }
-  
-  if (!is.null(split_id)) {
-    res <- res %>%
-      mutate(split_id := !!sym(split_id))
-  }
-  
-  if (order_count) {
-    res <- res %>%
-      mutate(fill_id = fct_reorder(fill_id, cell_id, n_distinct))
-  }
-
-  res <- res %>%
-    ggplot(aes(group_id, fill = fill_id)) +
-    geom_bar(position = bar_pos, size = bar_line, color = "black") +
-    labs(x = x_lab, y = y_lab)
-  
-  if (!is.null(plot_cols)) {
-    res <- res +
-      scale_fill_manual(values = plot_cols, na.value = na_value)
-    
-  } else {
-    res <- res +
-      scale_fill_manual(na.value = na_value)
-  }
-  
-  if (!is.null(split_id)) {
-    res <- res +
-      facet_wrap(~ split_id, ...)
-  }
-  
-  res
-}
 ```
 
 ```{r "Setup", include = FALSE}
@@ -384,16 +92,14 @@ umap_theme <- base_theme +
   )
 
 # Legend guides
-create_guide <- function(size = 3.5, shape = 21, color = "black",
-                         stroke = 0.25, nrow = NULL, ncol = NULL, ...) {
+create_guide <- function(size = 3.5, shape = 16, nrow = NULL,
+                         ncol = NULL, ...) {
   guide_legend(
     nrow = nrow,
     ncol = ncol,
     override.aes = list(
       size   = size,
       shape  = shape,
-      color  = color,
-      stroke = stroke,
       ...
     )
   )
@@ -419,12 +125,13 @@ get_cols <- create_col_fun(ito_cols)
 Splenocytes from MD4 transgenic mice which have monoclonal B cells that all bind hen egg lysozyme (HEL) antigen were mixed with splenocytes from C57BL/6 mice at a 1:20 ratio. The cells were stained with the HEL AVID-tag and sequencing libraries were prepared to capture gene expression, B cell receptor sequences, and AVID-tag signals using the 10x Genomics 5’ immune profiling kit.
 
 ```{r "rna_umap", fig.width = 12.5, fig.height = 5, echo = FALSE}
-key_gg <- so %>%
+load("data/so_tcr.rda")
+
+key_gg <- so_tcr %>%
   plot_features(
-    feature    = "type_mouse",
-    pt_size    = 0.02,
-    pt_outline = 0.2,
-    plot_cols  = get_cols()
+    feature     = "type_mouse",
+    pt_size     = 0.02,
+    plot_colors = get_cols()
   ) +
   ggtitle("Cell type") +
   guides(color = create_guide()) +
@@ -434,12 +141,11 @@ key_gg <- so %>%
     legend.title = element_blank()
   )
 
-clust_gg <- so %>%
+clust_gg <- so_tcr %>%
   plot_features(
-    feature    = "seurat_clusters",
-    pt_size    = 0.02,
-    pt_outline = 0.2,
-    plot_cols  = get_cols(22)
+    feature     = "seurat_clusters",
+    pt_size     = 0.02,
+    plot_colors = get_cols(22)
   ) +
   ggtitle("Cluster") +
   guides(color = create_guide()) +
@@ -463,20 +169,14 @@ plot_grid(
 
 `import_vdj` takes the output files from `cellranger vdj` and adds clonotype information to the meta.data for an existing Seurat object. For cells that do not have any VDJ sequencing data, NAs will be included in the meta.data. The `filter_contigs` argument will only include chains that have at least one contig that is full length and productive.
 
-```{r "import_vdj"}
+```{r "import_vdj", eval = F}
 so_vdj <- import_vdj(
-  sobj_in        = so,              # Seurat object                         
+  sobj_in        = so_vdj,          # Seurat object                         
   vdj_dir        = params$vdj_dir,  # Directory containing cellranger output files
   prefix         = "",              # Prefix to add to new meta.data columns
   cell_prefix    = "",              # Prefix to add to cell barcodes
   filter_contigs = TRUE             # Only include chains with at least one productive contig
 )
-
-vdj_cols <- c("chains", "cdr3", "n_chains")
-
-so_vdj@meta.data %>%
-  as_tibble() %>%
-  select(orig.ident, nCount_RNA, nFeature_RNA, all_of(vdj_cols))
 ```
 
 <br>
@@ -489,7 +189,7 @@ Filter to only include cells with paired light and heavy chains.
 
 ```{r}
 so_filt <- filter_vdj(
-  sobj_in = so_vdj,                                              # Seurat object
+  sobj_in = so_vdj,                                                # Seurat object
   filt    = "IGH" %in% chains && any(c("IGK", "IGL") %in% chains)  # Expression for filtering
 )
 
@@ -505,11 +205,11 @@ Instead of filtering, `filter_vdj` can also add new cell labels to the object me
 
 ```{r}
 so_vdj <- filter_vdj(
-  sobj_in = so_vdj,                                               # Seurat object
+  sobj_in = so_vdj,                                                 # Seurat object
   filt    = "IGH" %in% chains && any(c("IGK", "IGL") %in% chains),  # Condition to use for filtering
-  new_col = "Paired",                                             # Name of new column
-  true    = "paired",                                             # Value when condition is TRUE
-  false   = "unpaired"                                            # Value when condition is FALSE
+  new_col = "Paired",                                               # Name of new column
+  true    = "paired",                                               # Value when condition is TRUE
+  false   = "unpaired"                                              # Value when condition is FALSE
 )
 
 vdj_cols <- c(vdj_cols, "Paired")
@@ -537,12 +237,11 @@ pairs_cols["NA"] <- "#f0f0f0"
 # Paired UMAP
 pairs_umap <- so_vdj %>%
   plot_features(
-    x          = "UMAP_1",
-    y          = "UMAP_2",
-    feature    = "Paired",
-    pt_size    = 0.02,
-    pt_outline = 0.2,
-    plot_cols  = pairs_cols
+    x           = "UMAP_1",
+    y           = "UMAP_2",
+    feature     = "Paired",
+    pt_size     = 0.02,
+    plot_colors = pairs_cols
   ) +
   ggtitle("Paired chains") +
   guides(color = create_guide(nrow = 2)) +
@@ -555,10 +254,11 @@ pairs_umap <- so_vdj %>%
 # Paired bar graphs
 pairs_bars <- so_vdj %>%
   plot_cell_count(
-    group_id  = "mouse",
-    fill_id   = "Paired",
-    plot_cols = pairs_cols,
-    bar_line  = 0.2
+    x           = "mouse",
+    fill_col    = "Paired",
+    plot_colors = pairs_cols,
+    size        = 0.2,
+    color       = "black"
   ) +
   scale_y_continuous(breaks = c(0, 0.5, 1)) +
   base_theme +
@@ -588,8 +288,8 @@ More complicated statements referring to meta.data columns can be used for the `
 
 ```{r}
 so_vdj <- filter_vdj(
-  sobj_in = so_vdj,                               # Seurat object
-  new_col = "uniq_chains",                        # Name of new column
+  sobj_in = so_vdj,                                # Seurat object
+  new_col = "uniq_chains",                         # Name of new column
   true    = str_c(unique(chains), collapse = "_")  # Value when condition is TRUE
 )
 
@@ -618,10 +318,9 @@ chains_cols["NA"] <- "#f0f0f0"
 # Chains UMAP
 chains_umap <- so_vdj %>%
   plot_features(
-    feature    = "uniq_chains",
-    pt_size    = 0.02,
-    pt_outline = 0.2,
-    plot_cols  = chains_cols
+    feature     = "uniq_chains",
+    pt_size     = 0.02,
+    plot_colors = chains_cols
   ) +
   ggtitle("Unique chains") +
   guides(color = create_guide(nrow = 2)) +
@@ -634,10 +333,11 @@ chains_umap <- so_vdj %>%
 # Chains bar graphs
 chains_bars <- so_vdj %>%
   plot_cell_count(
-    group_id  = "mouse",
-    fill_id   = "uniq_chains",
-    plot_cols = chains_cols,
-    bar_line  = 0.2
+    x           = "mouse",
+    fill_col    = "uniq_chains",
+    plot_colors = chains_cols,
+    size        = 0.2,
+    color       = "black"
   ) +
   scale_y_continuous(breaks = c(0, 0.5, 1)) +
   base_theme +
@@ -655,91 +355,9 @@ chains_bars <- plot_grid(
 plot_grid(
   chains_umap, chains_bars,
   rel_widths = c(0.65, 1),
-  nrow  = 1,
-  align = "h",
-  axis  = "tb"
-)
-```
-
-<br>
-
-MD4 B cells are expected to have IGK chains with the CDR3 amino acid sequence CQQSNSWPYTF. Using `filter_vdj` we can visualize which cells have this sequence.
-
-```{r}
-# Add new cell labels to meta.data
-so_vdj <- filter_vdj(
-  sobj_in = so_vdj,                                   # Seurat object
-  filt    = "CQQSNSWPYTF" %in% cdr3[chains == "IGK"],  # Condition to use for filtering
-  new_col = "IGK_seq",                                # Name of new column
-  true    = "CQQSNSWPYTF",                            # Value when condition is TRUE
-  false   = "other"                                   # Value when condition is FALSE
-)
-
-vdj_cols <- c(vdj_cols, "IGK_seq")
-
-so_vdj@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols))
-```
-
-```{r "seq_umap", fig.width = 12, fig.height = 5, echo = FALSE}
-# Plot colors
-seq_cols <- so_vdj@meta.data %>%
-  pull(IGK_seq) %>%
-  unique() %>%
-  na.omit()
-
-seq_cols <- set_names(
-  x  = get_cols()[c(4, 7)],
-  nm = seq_cols
-)
-
-seq_cols["NA"] <- "#f0f0f0"
-
-# Sequence UMAP
-seq_umap <- so_vdj %>%
-  plot_features(
-    feature    = "IGK_seq",
-    pt_size    = 0.02,
-    pt_outline = 0.2,
-    plot_cols  = seq_cols
-  ) +
-  ggtitle("IGK sequence") +
-  guides(color = create_guide(nrow = 2)) +
-  umap_theme +
-  theme(
-    legend.position = "top",
-    legend.title = element_blank()
-  )
-
-# Sequence bar graphs
-seq_bars <- so_vdj %>%
-  plot_cell_count(
-    group_id  = "mouse",
-    fill_id   = "IGK_seq",
-    plot_cols = seq_cols,
-    bar_line  = 0.2
-  ) +
-  scale_y_continuous(breaks = c(0, 0.5, 1)) +
-  base_theme +
-  theme(
-    legend.position = "none",
-    axis.title.x    = element_blank()
-  )
-
-seq_bars <- plot_grid(
-  seq_bars, NULL,
-  rel_widths = c(0.4, 1)
-)
-
-# Final figure
-plot_grid(
-  seq_umap, seq_bars,
-  rel_widths = c(0.65, 1),
-  nrow  = 1,
-  align = "h",
-  axis  = "tb"
+  nrow       = 1,
+  align      = "h",
+  axis       = "tb"
 )
 ```
 
@@ -747,50 +365,68 @@ plot_grid(
 
 ### Repertoire stats
 
-The functions `calc_diversity` and `calc_jaccard` will calculate repertoire diversity and repertoire overlap on a per-cluster basis. These functions can be given any meta.data column containing cell labels to use for calculations.
+The functions `calc_diversity` and `calc_similarity` will calculate repertoire diversity and repertoire similarity on a per-cluster basis. These functions can be given any meta.data column containing cell labels to use for calculations.
 
-Calculate repertoire diversity with `calc_diversity`. The inverse Simpson index is used to measure diversity for each cluster.
+Calculate repertoire diversity with `calc_diversity`.
 
 ```{r}
 so_vdj <- calc_diversity(
   sobj_in       = so_vdj,          # Seurat object
   clonotype_col = "clonotype_id",  # meta.data column containing clonotype ids
   cluster_col   = "type_mouse",    # meta.data column containing cell labels
-  prefix        = ""               # Prefix to add to new meta.data columns
+  method        = "shannon"        # Method to use
 )
 ```
 
+Plotting functions are also provided to summarize diversity metrics
+
 ```{r "div_umap", fig.width = 12, fig.height = 5, echo = FALSE}
-div_gg <- so_vdj %>%
-  plot_features(
-    feature    = "diversity",
-    pt_size    = 0.02,
-    pt_outline = 0.2,
-    plot_cols  = c("grey90", get_cols()[1]),
-    na_value   = "grey60"
-  ) +
-  ggtitle("Repertoire Diversity") +
-  guides(color = guide_colorbar(barwidth = unit(5, "pt"))) +
-  umap_theme +
-  theme(legend.title = element_blank())
 
-hel_gg <- so_vdj %>%
-  plot_features(
-    feature    = "adt_HEL",
-    pt_size    = 0.02,
-    pt_outline = 0.2,
-    plot_cols  = c("grey90", get_cols()[6])
-  ) +
-  ggtitle("HEL") +
-  guides(color = guide_colorbar(barwidth = unit(5, "pt"))) +
-  umap_theme +
-  theme(legend.title = element_blank())
+plot_diversity(
+  sobj_in       = so_vdj,          # Seurat object
+  clonotype_col = "clonotype_id",  # meta.data column containing clonotype ids
+  cluster_col   = "mouse",         # meta.data column containing cell labels
+  method        = "shannon",       # Method to use
+  plot_colors   = ito_cols 
+) +
+  theme_cowplot() +
+  theme(
+    legend.position = "none",
+    axis.title.x    = element_blank()
+  )
 
-plot_grid(
-  div_gg, hel_gg,
-  align  = "vh",
-  "axis" = "trbl"
-)
+
+
+# div_gg <- so_vdj %>% 
+#   plot_features(
+#     feature    = "diversity",
+#     pt_size    = 0.02,
+#     pt_outline = 0.2,
+#     plot_colors  = c("grey90", get_cols()[1]),
+#     na_value   = "grey60"
+#   ) +
+#   ggtitle("Repertoire Diversity") +
+#   guides(color = guide_colorbar(barwidth = unit(5, "pt"))) +
+#   umap_theme +
+#   theme(legend.title = element_blank())
+# 
+# hel_gg <- so_vdj %>%
+#   plot_features(
+#     feature    = "adt_HEL",
+#     pt_size    = 0.02,
+#     pt_outline = 0.2,
+#     plot_colors  = c("grey90", get_cols()[6])
+#   ) +
+#   ggtitle("HEL") +
+#   guides(color = guide_colorbar(barwidth = unit(5, "pt"))) +
+#   umap_theme +
+#   theme(legend.title = element_blank())
+# 
+# plot_grid(
+#   div_gg, hel_gg,
+#   align  = "vh",
+#   "axis" = "trbl"
+# )
 ```
 
 <br>
@@ -814,7 +450,7 @@ j_gg <- so_vdj %>%
     feature    = "x8",
     pt_size    = 0.02,
     pt_outline = 0.2,
-    plot_cols  = c("grey90", get_cols()[2]),
+    plot_colors  = c("grey90", get_cols()[2]),
     na_value   = "grey60"
   ) +
   ggtitle("Repertoire Overlap") +
@@ -892,7 +528,7 @@ en_df %>%
     y          = "vdjUMAP_2",
     feature    = "group_id",
     pt_outline = 0.3,
-    plot_cols  = grp_cols
+    plot_colors  = grp_cols
   ) +
   umap_theme +
   guides(color = guide_legend(override.aes = list(size = 3))

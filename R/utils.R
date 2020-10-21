@@ -303,16 +303,7 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' @return Seurat object with diversity index added to meta.data
 #' @export
 calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
-                           method = "simpson", prefix = "", return_seurat = TRUE) {
-
-  # Check method
-  mets <- abdiv::alpha_diversities
-
-  if (!method %in% mets) {
-    mets <- paste(mets, collapse = ", ")
-
-    stop(paste0("select one of the following methods: ", mets))
-  }
+                           method = abdiv::simpson, prefix = "", return_seurat = TRUE) {
 
   # Format meta.data
   vdj_cols <- clonotype_col
@@ -342,7 +333,7 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 
   vdj_df <- dplyr::mutate(
     vdj_df,
-    !!sym(div_col) := eval(.call_abdiv(".n", method))
+    !!sym(div_col) := method(.data$.n)
   )
 
   vdj_df <- dplyr::ungroup(vdj_df)
@@ -381,15 +372,7 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' @return Seurat object with similarity index added to meta.data
 #' @export
 calc_similarity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
-                            method = "jaccard", prefix = "sim_", return_seurat = TRUE) {
-
-  mets <- abdiv::beta_diversities
-
-  if (!method %in% mets) {
-    mets <- paste(mets, collapse = ", ")
-
-    stop(paste0("select one of the following methods: ", mets))
-  }
+                            method = abdiv::jaccard, prefix = "sim_", return_seurat = TRUE) {
 
   # Format meta.data
   meta_df <- sobj_in@meta.data
@@ -434,7 +417,7 @@ calc_similarity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col
     tibble::tibble(
       Var1 = .x[1],
       Var2 = .x[2],
-      sim  = eval(.call_abdiv(ins, method))
+      sim  = method(!!sym(.x[1]), !!sym(.x[2]))
     )
   })
 
@@ -472,7 +455,7 @@ calc_similarity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col
     values_from = .data$sim
   )
 
-  # Add jaccard index to meta.data
+  # Add similarity index to meta.data
   j_cols <- purrr::set_names("Var2", cluster_col)
 
   meta_df <- dplyr::left_join(meta_df, res, by = j_cols)
@@ -651,33 +634,6 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
   )
 
   res
-}
-
-
-#' Create expression for calling abdiv functions
-#'
-#' @param ins Names of input columns or vectors
-#' @param fn Function to use
-#' @return Expression to call abdiv function
-.call_abdiv <- function(ins, fn) {
-  ins <- paste0(ins, collapse = ", ")
-  cmd <- paste0("abdiv::", fn, "(", ins, ")")
-
-  parse(text = cmd)
-
-  # my_fun <- function(..., method = "shannon") {
-  #   avail_fns <- c(alpha_diversities, beta_diversities)
-  #   fns       <- paste0("abdiv::", avail_fns)
-  #
-  #   fn_list <- set_names(
-  #     unlist(map(fns, ~ eval(parse(text = .x)))),
-  #     avail_fns
-  #   )
-  #
-  #   fn <- fn_list[[method]]
-  #
-  #   fn(...)
-  # }
 }
 
 
