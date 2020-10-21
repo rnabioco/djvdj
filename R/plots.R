@@ -383,7 +383,7 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' @param ... Additional arguments to pass to geom_col
 #' @return ggplot object
 plot_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
-                           method = "simpson", plot_colors = NULL, plot_levels = NULL, ...) {
+                           method = abdiv::shannon, plot_colors = NULL, plot_levels = NULL, ...) {
 
   # Calculate diversity
   if ("Seurat" %in% class(sobj_in)) {
@@ -446,7 +446,7 @@ plot_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' @return ggplot object
 #' @export
 plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
-                            method = "jaccard", plot_colors = NULL, ...) {
+                            method = abdiv::jaccard, plot_colors = NULL, ...) {
 
   if ("Seurat" %in% class(sobj_in)) {
     if (is.null(clonotype_col) || is.null(cluster_col)) {
@@ -463,10 +463,6 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
     )
   }
 
-  if (!identical(rownames(sobj_in), colnames(sobj_in))) {
-    stop("matrix must have the same column and row names")
-  }
-
   var_levels <- unique(c(rownames(sobj_in), colnames(sobj_in)))
   var_levels <- sort(var_levels)
 
@@ -476,7 +472,7 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
     gg_data,
     cols      = -.data$Var1,
     names_to  = "Var2",
-    values_to = method
+    values_to = "similarity"
   )
 
   # Set Var levels
@@ -491,7 +487,7 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
     gg_data,
     x           = "Var1",
     y           = "Var2",
-    fill        = method,
+    fill        = "similarity",
     plot_colors = plot_colors,
     ...
   )
@@ -826,13 +822,14 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
   ) +
     ggplot2::geom_tile(...) +
     ggplot2::guides(fill = ggplot2::guide_colorbar(title = legd_title)) +
+    ggplot2::scale_fill_gradientn(colors = plot_colors, na.value = na_color) +
     ggplot2::theme(
+      panel.background = element_rect(color = NA, fill = NA),
       axis.title  = ggplot2::element_blank(),
       axis.line   = ggplot2::element_blank(),
       axis.ticks  = ggplot2::element_blank(),
       axis.text.x = ggplot2::element_text(angle = angle, hjust = hjust)
-    ) +
-    ggplot2::scale_fill_gradientn(colors = plot_colors, na.value = na_color)
+    )
 
   res
 }

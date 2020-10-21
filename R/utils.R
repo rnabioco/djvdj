@@ -417,16 +417,9 @@ calc_similarity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col
     tibble::tibble(
       Var1 = .x[1],
       Var2 = .x[2],
-      sim  = method(!!sym(.x[1]), !!sym(.x[2]))
+      sim  = method(dplyr::pull(vdj_df, .x[1]), dplyr::pull(vdj_df, .x[2]))
     )
   })
-
-  # Invert index
-  dis_idx <- "jaccard"
-
-  if (method %in% dis_idx) {
-    res <- dplyr::mutate(res, sim = 1 - .data$sim)
-  }
 
   res_i <- dplyr::rename(res, Var1 = .data$Var2, Var2 = .data$Var1)
 
