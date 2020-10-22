@@ -382,6 +382,7 @@ plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, ya
 #' @param plot_levels Character vector containing levels for ordering
 #' @param ... Additional arguments to pass to geom_col
 #' @return ggplot object
+#' @export
 plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
                            method = abdiv::shannon, plot_colors = NULL, plot_levels = NULL, ...) {
 
