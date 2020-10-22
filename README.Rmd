@@ -374,6 +374,21 @@ plot_grid(
 
 <br>
 
+### Clonotype Abundance
+
+To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_abundance` function.
+
+```{r}
+x <- calc_abundance(
+  sobj_in       = so_tcr,        # Seurat object
+  clonotype_col = "cdr3",        # meta.data column containing clonotype IDs
+  cluster_col   = "orig.ident",  # meta.data column containing cell labels
+  prefix        = ""             # Prefix to add to new meta.data columns
+)
+```
+
+<br>
+
 ### Repertoire Diversity
 
 The function `calc_diversity` will calculate repertoire diversity on a per-cluster basis. Using the `cluster_col` argument, any meta.data column containing cell labels can be used for calculations. `calc_diversity` uses the R package `abdiv` for performing diversity calculations and any `abdiv` diversity function can be specified using the `method` argument.
@@ -400,7 +415,7 @@ so_tcr <- calc_diversity(
 
 For each 'calculation' function provided by `djvdj`, there is a matching `plot` function that will generate a summary plot. For `plot_diversity` this is a bar graph.
 
-```{r "div_plots", fig.width = 3, fig.height = 4}
+```{r "div_plots", fig.width = 3, fig.height = 4, fig.fullwidth = FALSE}
 plot_diversity(
   sobj_in       = so_tcr,          # Seurat object
   clonotype_col = "cdr3",          # meta.data column containing clonotype ids
@@ -417,10 +432,6 @@ plot_diversity(
 ```
 
 <br>
-
-### Clonotype Abundance
-
-
 
 ### Repertoire Overlap
 

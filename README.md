@@ -274,6 +274,8 @@ plot_diversity(
 
 <br>
 
+### Clonotype Abundance
+
 ### Repertoire Overlap
 
 To compare repertoires for different samples or clusters,
