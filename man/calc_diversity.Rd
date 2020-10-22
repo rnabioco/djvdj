@@ -6,7 +6,7 @@
 \usage{
 calc_diversity(
   sobj_in,
-  clonotype_col = "clonotype_id",
+  clonotype_col = NULL,
   cluster_col = NULL,
   method = abdiv::simpson,
   prefix = "",

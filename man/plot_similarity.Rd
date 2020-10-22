@@ -8,7 +8,7 @@ plot_similarity(
   sobj_in,
   clonotype_col = NULL,
   cluster_col = NULL,
-  method = "jaccard",
+  method = abdiv::jaccard,
   plot_colors = NULL,
   ...
 )

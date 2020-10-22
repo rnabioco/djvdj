@@ -6,7 +6,7 @@
 \usage{
 calc_similarity(
   sobj_in,
-  clonotype_col = "clonotype_id",
+  clonotype_col = NULL,
   cluster_col,
   method = abdiv::jaccard,
   prefix = "sim_",

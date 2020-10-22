@@ -6,7 +6,7 @@
 \usage{
 plot_abundance(
   sobj_in,
-  clonotype_col = "clonotype_id",
+  clonotype_col = NULL,
   cluster_col = NULL,
   yaxis = "percent",
   plot_colors = NULL,

@@ -6,9 +6,9 @@
 \usage{
 plot_diversity(
   sobj_in,
-  clonotype_col = "clonotype_id",
+  clonotype_col = NULL,
   cluster_col = NULL,
-  method = "simpson",
+  method = abdiv::shannon,
   plot_colors = NULL,
   plot_levels = NULL,
   ...

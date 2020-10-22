@@ -1,7 +1,10 @@
 #' Add V(D)J data to Seurat object
 #'
 #' @param sobj_in Seurat object
-#' @param vdj_dir cellranger vdj output directory
+#' @param vdj_dir cellranger vdj output directories. If a vector of multiple
+#' paths is provided, an equal number of cell prefixes must also be provided.
+#' If a named vector is given, the names will be used to prefix each cell
+#' barcode.
 #' @param prefix Prefix to add to new meta.data columns
 #' @param cell_prefix Prefix to add to cell barcodes
 #' @param filter_contigs Only include chains with at least one productive
@@ -13,7 +16,7 @@
 import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
                        filter_contigs = TRUE, sep = ";") {
 
-  # Load contigs
+  # VDJ columns
   count_cols <- c("reads", "umis")
 
   split_cols <- c(
@@ -29,15 +32,33 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     split_cols
   )
 
-  contigs <- "filtered_contig_annotations.csv"
-  contigs <- file.path(vdj_dir, contigs)
-  contigs <- readr::read_csv(contigs, col_types = readr::cols())
+  # Check path names
+  if (is.null(names(vdj_dir))) {
+    if (length(vdj_dir) != length(cell_prefix)) {
+      stop("Must provide a cell prefix for each path passed to vdj_dir.")
+    }
 
-  # Add cell barcode prefix
-  contigs <- dplyr::mutate(
-    contigs,
-    barcode = paste0(cell_prefix, .data$barcode)
-  )
+    names(vdj_dir) <- cell_prefix
+  }
+
+  if (any(is.na(names(vdj_dir)))) {
+    stop("Cell prefixes must not include NAs.")
+  }
+
+  # Load contigs
+  contigs <- "filtered_contig_annotations.csv"
+  contigs <- purrr::map(vdj_dir, ~ file.path(.x, contigs))
+  contigs <- purrr::map(contigs, readr::read_csv, col_types = readr::cols())
+
+  contigs <- purrr::imap(contigs, ~ {
+    if (!grepl("_$", .y)) {
+      .y <- paste0(.y, "_")
+    }
+
+    dplyr::mutate(.x, barcode = paste0(.y, .data$barcode))
+  })
+
+  contigs <- dplyr::bind_rows(contigs)
 
   # Filter for productive contigs
   if (filter_contigs) {
@@ -75,13 +96,18 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   )
 
   # Filter for cells present in sobj_in
-  cells   <- Seurat::Cells(sobj_in)
+  cells <- Seurat::Cells(sobj_in)
+
+  if (!any(cells %in% meta_df$barcode)) {
+    stop("No VDJ cell barcodes are present in the Seurat object. Are you sure you are using the correct cell prefixes?")
+  }
+
   meta_df <- dplyr::filter(meta_df, .data$barcode %in% cells)
 
   meta_df <- dplyr::rename(
     meta_df,
     clonotype_id = .data$raw_clonotype_id,
-    chains = .data$chain
+    chains       = .data$chain
   )
 
   # Add meta.data to Seurat object
@@ -244,7 +270,7 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
 #' table is returned.
 #' @return Seurat object with clonotype abundance added to meta.data
 #' @export
-calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
+calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
                            prefix = "", return_seurat = TRUE) {
 
   meta_df <- sobj_in@meta.data
@@ -302,7 +328,7 @@ calc_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' table is returned.
 #' @return Seurat object with diversity index added to meta.data
 #' @export
-calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
+calc_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
                            method = abdiv::simpson, prefix = "", return_seurat = TRUE) {
 
   # Format meta.data
@@ -371,7 +397,7 @@ calc_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' returned
 #' @return Seurat object with similarity index added to meta.data
 #' @export
-calc_similarity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col,
+calc_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col,
                             method = abdiv::jaccard, prefix = "sim_", return_seurat = TRUE) {
 
   # Format meta.data
@@ -502,7 +528,7 @@ calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
   # Filter chains
   if (!is.null(chain)) {
     if (is.null(chain_col)) {
-      stop("must specify chain_col")
+      stop("Must specify chain_col.")
     }
 
     res <- dplyr::mutate(res, dplyr::across(dplyr::all_of(gene_cols), ~ {

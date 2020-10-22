@@ -6,7 +6,7 @@
 \usage{
 calc_abundance(
   sobj_in,
-  clonotype_col = "clonotype_id",
+  clonotype_col = NULL,
   cluster_col = NULL,
   prefix = "",
   return_seurat = TRUE

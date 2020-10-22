@@ -175,7 +175,7 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
   y_types <- c("fraction", "count")
 
   if (!yaxis %in% y_types) {
-    stop("yaxis must be either fraction or count")
+    stop("yaxis must be either fraction or count.")
   }
 
   y_types <- purrr::set_names(c("fill", "identity"), y_types)
@@ -282,7 +282,7 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
 #' @param ... Additional arguments to pass to geom_line
 #' @return ggplot object
 #' @export
-plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL, yaxis = "percent",
+plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, yaxis = "percent",
                            plot_colors = NULL, plot_levels = NULL, label_col = NULL, n_labels = 2,
                            label_aes = list(), abundance_col = NULL, ...) {
 
@@ -382,7 +382,7 @@ plot_abundance <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
 #' @param plot_levels Character vector containing levels for ordering
 #' @param ... Additional arguments to pass to geom_col
 #' @return ggplot object
-plot_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col = NULL,
+plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
                            method = abdiv::shannon, plot_colors = NULL, plot_levels = NULL, ...) {
 
   # Calculate diversity
@@ -420,7 +420,11 @@ plot_diversity <- function(sobj_in, clonotype_col = "clonotype_id", cluster_col 
     .data$diversity,
     fill = !!sym(cluster_col)
   )) +
-    ggplot2::geom_col(...)
+    ggplot2::geom_col(...) +
+    theme(
+      legend.position = "none",
+      axis.title.x    = element_blank()
+    )
 
   # Set plot colors
   if (!is.null(plot_colors)) {
@@ -450,7 +454,7 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 
   if ("Seurat" %in% class(sobj_in)) {
     if (is.null(clonotype_col) || is.null(cluster_col)) {
-      stop("if a Seurat object is provided, clonotype_col and cluster_col must be specified")
+      stop("If a Seurat object is provided, clonotype_col and cluster_col must be specified.")
     }
 
     sobj_in <- calc_similarity(
@@ -520,11 +524,11 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
 
   # Check inputs
   if (length(gene_cols) > 2) {
-    stop("cannot specify more than two values for gene_cols")
+    stop("Cannot specify more than two values for gene_cols.")
   }
 
   if (!yaxis %in% c("percent", "frequency")) {
-    stop("yaxis must be either 'percent' or 'frequency'")
+    stop("yaxis must be either 'percent' or 'frequency'.")
   }
 
   # Set y-axis
@@ -684,7 +688,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
 .set_lims <- function(df_in, feat_col, lim, op) {
 
   if (!op %in% c("<", ">")) {
-    stop("op must be either \"<\" or \">\"")
+    stop("op must be either \"<\" or \">\".")
   }
 
   func <- "min"
