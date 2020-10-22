@@ -153,12 +153,10 @@ so_tcr <- filter_vdj(
 )
 
 # Take a look at the meta.data
-vdj_cols <- c(vdj_cols, "Paired")
-
 so_tcr@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols))
+  select(all_of(vdj_cols), Paired)
 #> # A tibble: 3,850 x 8
 #>    clonotype_id cdr3           chains  v_gene     j_gene    reads   umis  Paired
 #>    <chr>        <chr>          <chr>   <chr>      <chr>     <chr>   <chr> <chr> 
@@ -192,26 +190,24 @@ so_tcr <- filter_vdj(
 )
 
 # Take a look at the meta.data
-vdj_cols <- c(vdj_cols, "uniq_chains")
-
 so_tcr@meta.data %>%
   as_tibble() %>%
-  filter(!is.na(clonotype_id), n_chains > 2) %>%
-  select(all_of(vdj_cols))
-#> # A tibble: 101 x 9
-#>    clonotype_id cdr3     chains  v_gene   j_gene  reads umis  Paired uniq_chains
-#>    <chr>        <chr>    <chr>   <chr>    <chr>   <chr> <chr> <chr>  <chr>      
-#>  1 clonotype10  CATTGFA… TRA;TR… TRAV16D… TRAJ35… 904;… 2;6;… paired TRA_TRB    
-#>  2 clonotype27  CALVMNY… TRA;TR… TRAV13-… TRAJ23… 1688… 13;1… paired TRA_TRB    
-#>  3 clonotype36  CAAYSGG… TRA;TR… TRAV14-… TRAJ53… 1210… 14;8… paired TRA_TRB    
-#>  4 clonotype85  CVVVDLP… TRA;TR… TRAV11;… TRAJ28… 6974… 7;11… paired TRA_TRB    
-#>  5 clonotype136 CAARRGS… TRA;TR… TRAV14D… TRAJ33… 2014… 13;3… paired TRA_TRB    
-#>  6 clonotype138 CVAHNNA… TRA;TR… TRAV11D… TRAJ39… 7230… 5;10… paired TRA_TRB    
-#>  7 clonotype174 CAASTSG… TRA;TR… TRAV7D-… TRAJ22… 1815… 11;8… paired TRA_TRB    
-#>  8 clonotype205 CALLASS… TRA;TR… TRAV12-… TRAJ50… 1294… 19;5… paired TRA_TRB    
-#>  9 clonotype215 CAPGTGG… TRA;TR… TRAV13-… TRAJ12… 1188… 13;4… paired TRA_TRB    
-#> 10 clonotype282 CAASALR… TRA;TR… TRAV14N… TRAJ13… 1337… 8;15… paired TRA_TRB    
-#> # … with 91 more rows
+  filter(!is.na(clonotype_id)) %>%
+  select(all_of(vdj_cols), uniq_chains)
+#> # A tibble: 3,850 x 8
+#>    clonotype_id cdr3         chains  v_gene    j_gene   reads  umis  uniq_chains
+#>    <chr>        <chr>        <chr>   <chr>     <chr>    <chr>  <chr> <chr>      
+#>  1 clonotype5   CAVQGANTEVFF TRB     TRBV17    TRBJ1-1  42590  72    TRB        
+#>  2 clonotype6   CASSHPGQNSG… TRB     TRBV5     TRBJ1-3  12670  17    TRB        
+#>  3 clonotype7   CASSHWGETLYF TRB     TRBV5     TRBJ2-3  31772  46    TRB        
+#>  4 clonotype8   CGARAQGLYNS… TRB     TRBV20    TRBJ1-6  7124   15    TRB        
+#>  5 clonotype9   CTAPAGGQNTE… TRB     TRBV1     TRBJ1-1  4744   8     TRB        
+#>  6 clonotype10  CASSQDLDWGG… TRB     TRBV5     TRBJ2-1  34966  52    TRB        
+#>  7 clonotype11  CASRTGGCYEQ… TRB;TRB TRBV13-1… TRBJ2-7… 4166;… 7;171 TRB        
+#>  8 clonotype2   CASSPGTENTL… TRB     TRBV12-2  TRBJ2-4  9180   18    TRB        
+#>  9 clonotype12  CASSLKGARSD… TRB     TRBV12-1  TRBJ1-2  19742  29    TRB        
+#> 10 clonotype13  CASRLTGRDSD… TRB;TRB TRBV15;T… TRBJ1-2… 28860… 48;22 TRB        
+#> # … with 3,840 more rows
 ```
 
 ![](man/figures/README-chains_umap-1.png)<!-- -->
@@ -224,13 +220,59 @@ To identify the top clonotypes in each sample or cluster, clonotype
 abundance can be calculated using the `calc_abundance` function.
 
 ``` r
-x <- calc_abundance(
+so_tcr <- calc_abundance(
   sobj_in       = so_tcr,        # Seurat object
   clonotype_col = "cdr3",        # meta.data column containing clonotype IDs
   cluster_col   = "orig.ident",  # meta.data column containing cell labels
   prefix        = ""             # Prefix to add to new meta.data columns
 )
+
+# Take a look at the meta.data
+so_tcr@meta.data %>%
+  as_tibble() %>%
+  filter(!is.na(clonotype_id)) %>%
+  select(all_of(vdj_cols), clone_freq, clone_pct) %>%
+  arrange(desc(clone_pct))
+#> # A tibble: 3,850 x 9
+#>    clonotype_id cdr3     chains v_gene   j_gene reads umis  clone_freq clone_pct
+#>    <chr>        <chr>    <chr>  <chr>    <chr>  <chr> <chr>      <int>     <dbl>
+#>  1 clonotype2   CASSPGT… TRB    TRBV12-2 TRBJ2… 9180  18             2     0.335
+#>  2 clonotype4   CASSLQG… TRB    TRBV10   TRBJ2… 16316 29             2     0.335
+#>  3 clonotype4   CASSLQG… TRB    TRBV10   TRBJ2… 10730 19             2     0.335
+#>  4 clonotype2   CASSPGT… TRB    TRBV12-2 TRBJ2… 2966  5              2     0.335
+#>  5 clonotype73  CASSRDR… TRB    TRBV2    TRBJ1… 2502  5              2     0.275
+#>  6 clonotype1   CASSDEG… TRB    TRBV13-1 TRBJ2… 13532 24             2     0.275
+#>  7 clonotype2   CASSLTE… TRB    TRBV12-1 TRBJ1… 10946 21             2     0.275
+#>  8 clonotype3   CASSLRD… TRB    TRBV15   TRBJ1… 12528 19             2     0.275
+#>  9 clonotype330 CASSQDG… TRB    TRBV2    TRBJ1… 3016  8              2     0.275
+#> 10 clonotype6   CASGASS… TRB    TRBV12-… TRBJ2… 18264 32             2     0.275
+#> # … with 3,840 more rows
 ```
+
+<br>
+
+For each ‘calculation’ function provided by `djvdj`, there is a matching
+`plot` function that will generate a summary plot. The `calc_abundance`
+function will plot clonotypes ranked by abundance.
+
+``` r
+plot_abundance(
+  sobj_in       = so_tcr,        # Seurat object
+  clonotype_col = "cdr3",        # meta.data column containing clonotype IDs
+  cluster_col   = "orig.ident",  # meta.data column containing cell labels
+  
+  plot_colors = ito_cols,        # Plot colors
+  yaxis       = "percent",       # Units to plot
+  label_col   = "cdr3",          # meta.data column containing labels
+  n_labels    = 2,               # Number of top clonotypes to label
+  
+  size = 1                       # Additional ggplot options
+) +
+  theme_cowplot() +
+  theme(legend.title = element_blank())
+```
+
+![](man/figures/README-abund_plots-1.png)<!-- -->
 
 <br>
 
@@ -266,9 +308,8 @@ so_tcr <- calc_diversity(
 
 <br>
 
-For each ‘calculation’ function provided by `djvdj`, there is a matching
-`plot` function that will generate a summary plot. For `plot_diversity`
-this is a bar graph.
+The `plot_diversity` function will create plots summarizing repertoire
+diversity for each sample.
 
 ``` r
 plot_diversity(
@@ -343,21 +384,21 @@ so_tcr@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id), n_chains > 2) %>%
   select(all_of(vdj_cols), starts_with("jcrd_"))
-#> # A tibble: 101 x 13
-#>    clonotype_id cdr3  chains v_gene j_gene reads umis  Paired uniq_chains
-#>    <chr>        <chr> <chr>  <chr>  <chr>  <chr> <chr> <chr>  <chr>      
-#>  1 clonotype10  CATT… TRA;T… TRAV1… TRAJ3… 904;… 2;6;… paired TRA_TRB    
-#>  2 clonotype27  CALV… TRA;T… TRAV1… TRAJ2… 1688… 13;1… paired TRA_TRB    
-#>  3 clonotype36  CAAY… TRA;T… TRAV1… TRAJ5… 1210… 14;8… paired TRA_TRB    
-#>  4 clonotype85  CVVV… TRA;T… TRAV1… TRAJ2… 6974… 7;11… paired TRA_TRB    
-#>  5 clonotype136 CAAR… TRA;T… TRAV1… TRAJ3… 2014… 13;3… paired TRA_TRB    
-#>  6 clonotype138 CVAH… TRA;T… TRAV1… TRAJ3… 7230… 5;10… paired TRA_TRB    
-#>  7 clonotype174 CAAS… TRA;T… TRAV7… TRAJ2… 1815… 11;8… paired TRA_TRB    
-#>  8 clonotype205 CALL… TRA;T… TRAV1… TRAJ5… 1294… 19;5… paired TRA_TRB    
-#>  9 clonotype215 CAPG… TRA;T… TRAV1… TRAJ1… 1188… 13;4… paired TRA_TRB    
-#> 10 clonotype282 CAAS… TRA;T… TRAV1… TRAJ1… 1337… 8;15… paired TRA_TRB    
-#> # … with 91 more rows, and 4 more variables: jcrd_KI_DN3 <dbl>,
-#> #   jcrd_KI_DN4 <dbl>, jcrd_WT_DN3 <dbl>, jcrd_WT_DN4 <dbl>
+#> # A tibble: 101 x 11
+#>    clonotype_id cdr3  chains v_gene j_gene reads umis  jcrd_KI_DN3 jcrd_KI_DN4
+#>    <chr>        <chr> <chr>  <chr>  <chr>  <chr> <chr>       <dbl>       <dbl>
+#>  1 clonotype10  CATT… TRA;T… TRAV1… TRAJ3… 904;… 2;6;…       0.997       0.998
+#>  2 clonotype27  CALV… TRA;T… TRAV1… TRAJ2… 1688… 13;1…       0.997       0.998
+#>  3 clonotype36  CAAY… TRA;T… TRAV1… TRAJ5… 1210… 14;8…       0.997       0.998
+#>  4 clonotype85  CVVV… TRA;T… TRAV1… TRAJ2… 6974… 7;11…       0.997       0.998
+#>  5 clonotype136 CAAR… TRA;T… TRAV1… TRAJ3… 2014… 13;3…       0.997       0.998
+#>  6 clonotype138 CVAH… TRA;T… TRAV1… TRAJ3… 7230… 5;10…       0.997       0.998
+#>  7 clonotype174 CAAS… TRA;T… TRAV7… TRAJ2… 1815… 11;8…       0.997       0.998
+#>  8 clonotype205 CALL… TRA;T… TRAV1… TRAJ5… 1294… 19;5…       0.997       0.998
+#>  9 clonotype215 CAPG… TRA;T… TRAV1… TRAJ1… 1188… 13;4…       0.997       0.998
+#> 10 clonotype282 CAAS… TRA;T… TRAV1… TRAJ1… 1337… 8;15…       0.997       0.998
+#> # … with 91 more rows, and 2 more variables: jcrd_WT_DN3 <dbl>,
+#> #   jcrd_WT_DN4 <dbl>
 ```
 
 <br>
@@ -367,7 +408,7 @@ Alternatively, `calc_similarity` can output a matrix
 ``` r
 calc_similarity(
   sobj_in       = so_tcr,          # Seurat object
-  clonotype_col = "cdr3",          # meta.data column containing clonotype ids
+  clonotype_col = "cdr3",          # meta.data column containing clonotype IDs
   cluster_col   = "orig.ident",    # meta.data column containing cell labels
   method        = abdiv::jaccard,  # abdiv method to use
   return_seurat = FALSE            # Return Seurat object with results added to meta.data
@@ -387,11 +428,11 @@ compare the different samples and one to compare cell clusters.
 ``` r
 # Sample heatmap
 ident_heat <- plot_similarity(
-  sobj_in       = so_tcr,
-  clonotype_col = "cdr3",
-  cluster_col   = "orig.ident",
-  method        = abdiv::jaccard,
-  plot_colors   = c("grey90", "#56B4E9")
+  sobj_in       = so_tcr,                  # Seurat object
+  clonotype_col = "cdr3",                  # meta.data column containing clonotype IDs
+  cluster_col   = "orig.ident",            # meta.data column containing cell labels
+  method        = abdiv::jaccard,          # Method to use
+  plot_colors   = c("grey90", "#56B4E9")   # Plot colors
 ) +
   theme(legend.title = element_blank())
 
@@ -401,10 +442,10 @@ clust_heat <- plot_similarity(
   clonotype_col = "cdr3",
   cluster_col   = "seurat_clusters",
   method        = abdiv::jaccard,
-  plot_colors   = c("grey90", "#56B4E9"),
+  plot_colors   = c("grey90", "#56B4E9"),  
   
-  size          = 1,       # Additional options to pass to ggplot
-  color         = "white"  # Additional options to pass to ggplot
+  size          = 1,                       # Additional ggplot options
+  color         = "white"                  # Additional ggplot options
 ) +
   theme(legend.title = element_blank())
 
@@ -472,10 +513,10 @@ plot_usage(
   chain       = "TRB",                     # Chain to use for filtering genes
   chain_col   = "chains",                  # meta.data column containing chains
   
+  yaxis       = "percent",                 # Units to plot
   plot_colors = c("grey90", ito_cols[5]),  # Colors to use for heatmap
   plot_genes  = NULL,                      # A list of genes to plot
-  n_genes     = 10,                        # The number of top genes to plot
-  yaxis       = "percent"                  # Units to plot
+  n_genes     = 10                         # The number of top genes to plot
 )
 ```
 

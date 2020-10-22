@@ -1,5 +1,7 @@
 ---
 output: github_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -9,7 +11,6 @@ knitr::opts_chunk$set(
   collapse  = TRUE,
   comment   = "#>",
   fig.path  = "man/figures/README-",
-  # out.width = "100%",
   warning   = FALSE,
   message   = FALSE
 )
@@ -224,12 +225,10 @@ so_tcr <- filter_vdj(
 )
 
 # Take a look at the meta.data
-vdj_cols <- c(vdj_cols, "Paired")
-
 so_tcr@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols))
+  select(all_of(vdj_cols), Paired)
 ```
 
 ```{r "pair_umap", fig.width = 12, fig.height = 5, echo = FALSE}
@@ -305,12 +304,10 @@ so_tcr <- filter_vdj(
 )
 
 # Take a look at the meta.data
-vdj_cols <- c(vdj_cols, "uniq_chains")
-
 so_tcr@meta.data %>%
   as_tibble() %>%
-  filter(!is.na(clonotype_id), n_chains > 2) %>%
-  select(all_of(vdj_cols))
+  filter(!is.na(clonotype_id)) %>%
+  select(all_of(vdj_cols), uniq_chains)
 ```
 
 ```{r "chains_umap", fig.width = 12, fig.height = 5, echo = FALSE}
@@ -378,13 +375,41 @@ plot_grid(
 
 To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_abundance` function.
 
-```{r, eval = F}
-x <- calc_abundance(
+```{r}
+so_tcr <- calc_abundance(
   sobj_in       = so_tcr,        # Seurat object
   clonotype_col = "cdr3",        # meta.data column containing clonotype IDs
   cluster_col   = "orig.ident",  # meta.data column containing cell labels
   prefix        = ""             # Prefix to add to new meta.data columns
 )
+
+# Take a look at the meta.data
+so_tcr@meta.data %>%
+  as_tibble() %>%
+  filter(!is.na(clonotype_id)) %>%
+  select(all_of(vdj_cols), clone_freq, clone_pct) %>%
+  arrange(desc(clone_pct))
+```
+
+<br>
+
+For each 'calculation' function provided by `djvdj`, there is a matching `plot` function that will generate a summary plot. The `calc_abundance` function will plot clonotypes ranked by abundance.
+
+```{r "abund_plots", fig.width = 8, fig.height = 4}
+plot_abundance(
+  sobj_in       = so_tcr,        # Seurat object
+  clonotype_col = "cdr3",        # meta.data column containing clonotype IDs
+  cluster_col   = "orig.ident",  # meta.data column containing cell labels
+  
+  plot_colors = ito_cols,        # Plot colors
+  yaxis       = "percent",       # Units to plot
+  label_col   = "cdr3",          # meta.data column containing labels
+  n_labels    = 2,               # Number of top clonotypes to label
+  
+  size = 1                       # Additional ggplot options
+) +
+  theme_cowplot() +
+  theme(legend.title = element_blank())
 ```
 
 <br>
@@ -413,7 +438,7 @@ so_tcr <- calc_diversity(
 
 <br>
 
-For each 'calculation' function provided by `djvdj`, there is a matching `plot` function that will generate a summary plot. For `plot_diversity` this is a bar graph.
+The `plot_diversity` function will create plots summarizing repertoire diversity for each sample.
 
 ```{r "div_plots", fig.width = 3, fig.height = 4}
 plot_diversity(
@@ -471,7 +496,7 @@ Alternatively, `calc_similarity` can output a matrix
 ```{r}
 calc_similarity(
   sobj_in       = so_tcr,          # Seurat object
-  clonotype_col = "cdr3",          # meta.data column containing clonotype ids
+  clonotype_col = "cdr3",          # meta.data column containing clonotype IDs
   cluster_col   = "orig.ident",    # meta.data column containing cell labels
   method        = abdiv::jaccard,  # abdiv method to use
   return_seurat = FALSE            # Return Seurat object with results added to meta.data
@@ -485,11 +510,11 @@ A heatmap summarizing the results can be generated using the `plot_similarity` f
 ```{r "sim_plots", fig.width = 8, fig.height = 2.7}
 # Sample heatmap
 ident_heat <- plot_similarity(
-  sobj_in       = so_tcr,
-  clonotype_col = "cdr3",
-  cluster_col   = "orig.ident",
-  method        = abdiv::jaccard,
-  plot_colors   = c("grey90", "#56B4E9")
+  sobj_in       = so_tcr,                  # Seurat object
+  clonotype_col = "cdr3",                  # meta.data column containing clonotype IDs
+  cluster_col   = "orig.ident",            # meta.data column containing cell labels
+  method        = abdiv::jaccard,          # Method to use
+  plot_colors   = c("grey90", "#56B4E9")   # Plot colors
 ) +
   theme(legend.title = element_blank())
 
@@ -499,10 +524,10 @@ clust_heat <- plot_similarity(
   clonotype_col = "cdr3",
   cluster_col   = "seurat_clusters",
   method        = abdiv::jaccard,
-  plot_colors   = c("grey90", "#56B4E9"),
+  plot_colors   = c("grey90", "#56B4E9"),  
   
-  size          = 1,       # Additional options to pass to ggplot
-  color         = "white"  # Additional options to pass to ggplot
+  size          = 1,                       # Additional ggplot options
+  color         = "white"                  # Additional ggplot options
 ) +
   theme(legend.title = element_blank())
 
@@ -542,10 +567,10 @@ plot_usage(
   chain       = "TRB",                     # Chain to use for filtering genes
   chain_col   = "chains",                  # meta.data column containing chains
   
+  yaxis       = "percent",                 # Units to plot
   plot_colors = c("grey90", ito_cols[5]),  # Colors to use for heatmap
   plot_genes  = NULL,                      # A list of genes to plot
-  n_genes     = 10,                        # The number of top genes to plot
-  yaxis       = "percent"                  # Units to plot
+  n_genes     = 10                         # The number of top genes to plot
 )
 ```
 
