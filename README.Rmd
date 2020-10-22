@@ -164,8 +164,6 @@ paths   <- file.path("data", str_c(samples, "_TCR"), "outs")
 
 names(paths) <- str_c(samples, "_GE")
 
-paths
-
 # Import VDJ data
 so_tcr <- import_vdj(
   sobj_in         = so_tcr,  # Seurat object
@@ -270,9 +268,7 @@ pairs_bars <- so_tcr %>%
   plot_cell_count(
     x           = "orig.ident",
     fill_col    = "Paired",
-    plot_colors = pairs_cols,
-    size        = 0.2,
-    color       = "black"
+    plot_colors = pairs_cols
   ) +
   scale_y_continuous(breaks = c(0, 0.5, 1)) +
   base_theme +
@@ -351,9 +347,7 @@ chains_bars <- so_tcr %>%
   plot_cell_count(
     x           = "orig.ident",
     fill_col    = "uniq_chains",
-    plot_colors = chains_cols,
-    size        = 0.2,
-    color       = "black"
+    plot_colors = chains_cols
   ) +
   scale_y_continuous(breaks = c(0, 0.5, 1)) +
   base_theme +
@@ -385,9 +379,13 @@ plot_grid(
 The function `calc_diversity` will calculate repertoire diversity on a per-cluster basis. Using the `cluster_col` argument, any meta.data column containing cell labels can be used for calculations. `calc_diversity` uses the R package `abdiv` for performing diversity calculations and any `abdiv` diversity function can be specified using the `method` argument.
 
 Possible methods for calculating diversity include:
+
 ```{r, echo = F}
 abdiv::alpha_diversities
 ```
+<br>
+
+In this example we are calculating the Shannon index of diversity for each sample in the orig.ident meta.data column.
 
 ```{r}
 so_tcr <- calc_diversity(
@@ -397,6 +395,8 @@ so_tcr <- calc_diversity(
   method        = abdiv::shannon  # abdiv method to use
 )
 ```
+
+<br>
 
 For each 'calculation' function provided by `djvdj`, there is a matching `plot` function that will generate a summary plot. For `plot_diversity` this is a bar graph.
 
@@ -418,6 +418,10 @@ plot_diversity(
 
 <br>
 
+### Clonotype Abundance
+
+
+
 ### Repertoire Overlap
 
 To compare repertoires for different samples or clusters, `calc_similarity` can calculate a variety of different similarity metrics. The `cluster_col` should be used to specify the meta.data column containing cell labels for comparison. Like `calc_diversity`, an `abdiv` function can be specified with the `method` argument.
@@ -427,6 +431,8 @@ Possible methods for calculating repertoire similarity include:
 ```{r, echo = F}
 abdiv::beta_diversities
 ```
+
+<br>
 
 By default `calc_similarity` will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of cell labels present in the `orig.ident` column.
 
@@ -447,6 +453,8 @@ so_tcr@meta.data %>%
   select(all_of(vdj_cols), starts_with("jcrd_"))
 ```
 
+<br>
+
 Alternatively, `calc_similarity` can output a matrix
 
 ```{r}
@@ -458,6 +466,8 @@ calc_similarity(
   return_seurat = FALSE            # Return Seurat object with results added to meta.data
 )
 ```
+
+<br>
 
 A heatmap summarizing the results can be generated using the `plot_similarity` function. Here we are creating two heatmaps, one to compare the different samples and one to compare cell clusters.
 
@@ -507,24 +517,28 @@ calc_usage(
 )
 ```
 
+<br>
+
 The companion function `plot_usage` can be used to create a heatmap summarizing these results. Using the `yaxis` argument, the percent or absolute count (frequency) can be used for plotting. The genes plotting can also be selected using the `plot_genes` argument, or the total number of genes to plot can be passed to `n_genes`.
 
 In this example we are only plotting the top 10 genes that have the highest average usage.
 
 ```{r "usage_plots_1", fig.width = 4.5, fig.height = 5}
 plot_usage(
-  sobj_in     = so_tcr,        # Seurat object
-  gene_cols   = "v_gene",      # meta.data column(s) containing genes
-  cluster_col = "orig.ident",  # meta.data column containing cell labels
-  chain       = "TRB",         # Chain to use for filtering genes
-  chain_col   = "chains",      # meta.data column containing chains identified for each cell
+  sobj_in     = so_tcr,                    # Seurat object
+  gene_cols   = "v_gene",                  # meta.data column(s) containing genes
+  cluster_col = "orig.ident",              # meta.data column containing cell labels
+  chain       = "TRB",                     # Chain to use for filtering genes
+  chain_col   = "chains",                  # meta.data column containing chains
   
-  plot_colors = NULL,          # Colors to use for heatmap
-  plot_genes  = NULL,          # A list of genes to plot
-  n_genes     = 10,            # The number of top genes to plot
-  yaxis       = "percent"      # Units to plot
+  plot_colors = c("grey90", ito_cols[5]),  # Colors to use for heatmap
+  plot_genes  = NULL,                      # A list of genes to plot
+  n_genes     = 10,                        # The number of top genes to plot
+  yaxis       = "percent"                  # Units to plot
 )
 ```
+
+<br>
 
 By passing multiple columns to `gene_cols`, the frequency that different genes are used together can also be summarized.
 
@@ -534,19 +548,22 @@ calc_usage(
   gene_cols   = c("v_gene", "j_gene"),  # meta.data column(s) containing genes
   cluster_col = "orig.ident",           # meta.data column containing cell labels
   chain       = "TRB",                  # Chain to use for filtering genes
-  chain_col   = "chains"                # meta.data column containing chains identified for each cell
+  chain_col   = "chains"                # meta.data column containing chains
 )
 ```
+
+<br>
 
 When multiple gene columns are passed to `plot_usage`, a list of plots will be returned, one for each cell label in the `cluster_col` column.
 
 ```{r "usage_plots_2", fig.width = 12, fig.height = 8}
 gg <- plot_usage(
-  sobj_in     = so_tcr,                 # Seurat object
-  gene_cols   = c("v_gene", "j_gene"),  # meta.data column(s) containing genes
-  cluster_col = "orig.ident",           # meta.data column containing cell labels
-  chain       = "TRB",                  # Chain to use for filtering genes
-  chain_col   = "chains"                # meta.data column containing chains identified for each cell
+  sobj_in     = so_tcr,                   # Seurat object
+  gene_cols   = c("v_gene", "j_gene"),    # meta.data column(s) containing genes
+  cluster_col = "orig.ident",             # meta.data column containing cell labels
+  chain       = "TRB",                    # Chain to use for filtering genes
+  chain_col   = "chains",                 # meta.data column containing chains identified
+  plot_colors = c("grey90", ito_cols[8])  # Colors to use for heatmap
 ) %>%
   imap(~ .x + ggtitle(.y))
 
