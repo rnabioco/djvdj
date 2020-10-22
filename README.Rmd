@@ -9,7 +9,7 @@ knitr::opts_chunk$set(
   collapse  = TRUE,
   comment   = "#>",
   fig.path  = "man/figures/README-",
-  out.width = "100%",
+  # out.width = "100%",
   warning   = FALSE,
   message   = FALSE
 )
@@ -378,7 +378,7 @@ plot_grid(
 
 To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_abundance` function.
 
-```{r}
+```{r, eval = F}
 x <- calc_abundance(
   sobj_in       = so_tcr,        # Seurat object
   clonotype_col = "cdr3",        # meta.data column containing clonotype IDs
@@ -415,7 +415,7 @@ so_tcr <- calc_diversity(
 
 For each 'calculation' function provided by `djvdj`, there is a matching `plot` function that will generate a summary plot. For `plot_diversity` this is a bar graph.
 
-```{r "div_plots", fig.width = 3, fig.height = 4, fig.fullwidth = FALSE}
+```{r "div_plots", fig.width = 3, fig.height = 4}
 plot_diversity(
   sobj_in       = so_tcr,          # Seurat object
   clonotype_col = "cdr3",          # meta.data column containing clonotype ids

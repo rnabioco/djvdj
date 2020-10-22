@@ -30,7 +30,7 @@ devtools::install_github("rnabioco/djvdj")
 
 Write a description here…
 
-<img src="man/figures/README-rna_umap-1.png" width="100%" />
+![](man/figures/README-rna_umap-1.png)<!-- -->
 
 <br>
 
@@ -175,7 +175,7 @@ so_tcr@meta.data %>%
 #> # … with 3,840 more rows
 ```
 
-<img src="man/figures/README-pair_umap-1.png" width="100%" />
+![](man/figures/README-pair_umap-1.png)<!-- -->
 
 <br>
 
@@ -214,7 +214,23 @@ so_tcr@meta.data %>%
 #> # … with 91 more rows
 ```
 
-<img src="man/figures/README-chains_umap-1.png" width="100%" />
+![](man/figures/README-chains_umap-1.png)<!-- -->
+
+<br>
+
+### Clonotype Abundance
+
+To identify the top clonotypes in each sample or cluster, clonotype
+abundance can be calculated using the `calc_abundance` function.
+
+``` r
+x <- calc_abundance(
+  sobj_in       = so_tcr,        # Seurat object
+  clonotype_col = "cdr3",        # meta.data column containing clonotype IDs
+  cluster_col   = "orig.ident",  # meta.data column containing cell labels
+  prefix        = ""             # Prefix to add to new meta.data columns
+)
+```
 
 <br>
 
@@ -270,11 +286,9 @@ plot_diversity(
   )
 ```
 
-<img src="man/figures/README-div_plots-1.png" width="100%" />
+![](man/figures/README-div_plots-1.png)<!-- -->
 
 <br>
-
-### Clonotype Abundance
 
 ### Repertoire Overlap
 
@@ -398,7 +412,7 @@ clust_heat <- plot_similarity(
 plot_grid(ident_heat, clust_heat)
 ```
 
-<img src="man/figures/README-sim_plots-1.png" width="100%" />
+![](man/figures/README-sim_plots-1.png)<!-- -->
 
 <br>
 
@@ -465,7 +479,7 @@ plot_usage(
 )
 ```
 
-<img src="man/figures/README-usage_plots_1-1.png" width="100%" />
+![](man/figures/README-usage_plots_1-1.png)<!-- -->
 
 <br>
 
@@ -516,4 +530,4 @@ gg <- plot_usage(
 plot_grid(plotlist = gg)
 ```
 
-<img src="man/figures/README-usage_plots_2-1.png" width="100%" />
+![](man/figures/README-usage_plots_2-1.png)<!-- -->
