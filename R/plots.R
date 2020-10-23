@@ -12,6 +12,7 @@
 #' @param split_levels Levels to use for ordering plot facets
 #' @param min_pct Minimum value to plot for feature
 #' @param max_pct Maximum value to plot for feature
+#' @param na_color Color to use for missing values
 #' @param lm_line Add regression line to plot
 #' @param cor_label Position of correlation coefficient label
 #' @param label_size Size of correlation coefficient label
@@ -20,8 +21,8 @@
 #' @export
 plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
                           pt_size = 0.25, plot_colors = NULL, feat_levels = NULL, split_id = NULL,
-                          split_levels = NULL, min_pct = NULL, max_pct = NULL, lm_line = F,
-                          cor_label = c(0.8, 0.9), label_size = 3.7, ...) {
+                          split_levels = NULL, min_pct = NULL, max_pct = NULL, na_color = "grey90",
+                          lm_line = F, cor_label = c(0.8, 0.9), label_size = 3.7, ...) {
 
   # Format imput data
   meta_df <- obj_in
@@ -120,11 +121,17 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
   if (!is.null(plot_colors)) {
     if (is.numeric(meta_df[[feature]])) {
       res <- res +
-        ggplot2::scale_color_gradientn(colors = plot_colors)
+        ggplot2::scale_color_gradientn(
+          colors   = plot_colors,
+          na.value = na_color
+        )
 
     } else {
       res <- res +
-        ggplot2::scale_color_manual(values = plot_colors)
+        ggplot2::scale_color_manual(
+          values   = plot_colors,
+          na.value = na_color
+        )
     }
   }
 
@@ -156,6 +163,7 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
 #' @param yaxis Units to plot on the y-axis, either "fraction" or "count"
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_levels Character vector containing levels for ordering
+#' @param na_color Color to use for missing values
 #' @param order_count Order bar color by number of cells in each group
 #' @param n_label Include label showing the number of cells represented by each
 #' bar
@@ -169,8 +177,8 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
 #' @return ggplot object
 #' @export
 plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis = "fraction",
-                            plot_colors = NULL, plot_levels = NULL, order_count = TRUE, n_label = TRUE,
-                            label_aes = list(), split_rows = 1, split_scales = "free_x", ...) {
+                            plot_colors = NULL, plot_levels = NULL, na_color = "grey90", order_count = TRUE,
+                            n_label = TRUE, label_aes = list(), split_rows = 1, split_scales = "free_x", ...) {
 
   # Set y-axis unit
   y_types <- c("fraction", "count")
@@ -258,7 +266,7 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
   # Set plot colors
   if (!is.null(plot_colors)) {
     res <- res +
-      ggplot2::scale_fill_manual(values = plot_colors)
+      ggplot2::scale_fill_manual(values = plot_colors, na.value = na_color)
   }
 
   res +

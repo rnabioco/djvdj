@@ -1,7 +1,7 @@
 ---
 output: github_document
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -231,10 +231,9 @@ so_tcr@meta.data %>%
   select(all_of(vdj_cols), Paired)
 ```
 
-```{r "pair_umap", fig.width = 12, fig.height = 5, echo = FALSE}
+```{r "pair_umap", fig.width = 6.5, fig.height = 5, echo = FALSE}
 # Plot colors
-pairs_cols <- so_tcr@meta.data %>%
-  pull(Paired) %>%
+pairs_cols <- so_tcr$Paired %>%
   unique() %>%
   na.omit()
 
@@ -242,8 +241,6 @@ pairs_cols <- set_names(
   x  = get_cols()[seq_along(pairs_cols)],
   nm = pairs_cols
 )
-
-pairs_cols["NA"] <- "#f0f0f0"
 
 # Paired UMAP
 pairs_umap <- so_tcr %>%
@@ -277,15 +274,10 @@ pairs_bars <- so_tcr %>%
     axis.text.x     = element_text(angle = 45, hjust = 1)
   )
 
-pairs_bars <- plot_grid(
-  pairs_bars, NULL,
-  rel_widths = c(0.4, 1)
-)
-
 # Final figure
 plot_grid(
   pairs_umap, pairs_bars,
-  rel_widths = c(0.65, 1),
+  rel_widths = c(1, 0.55),
   nrow  = 1,
   align = "h",
   axis  = "tb"
@@ -310,7 +302,7 @@ so_tcr@meta.data %>%
   select(all_of(vdj_cols), uniq_chains)
 ```
 
-```{r "chains_umap", fig.width = 12, fig.height = 5, echo = FALSE}
+```{r "chains_umap", fig.width = 6.5, fig.height = 5, echo = FALSE}
 # Plot colors
 chains_cols <- so_tcr@meta.data %>%
   pull(uniq_chains) %>%
@@ -354,15 +346,10 @@ chains_bars <- so_tcr %>%
     axis.text.x     = element_text(angle = 45, hjust = 1)
   )
 
-chains_bars <- plot_grid(
-  chains_bars, NULL,
-  rel_widths = c(0.4, 1)
-)
-
 # Final figure
 plot_grid(
   chains_umap, chains_bars,
-  rel_widths = c(0.65, 1),
+  rel_widths = c(1, 0.55),
   nrow       = 1,
   align      = "h",
   axis       = "tb"

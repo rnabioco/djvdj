@@ -12,6 +12,7 @@ plot_cell_count(
   yaxis = "fraction",
   plot_colors = NULL,
   plot_levels = NULL,
+  na_color = "grey90",
   order_count = TRUE,
   n_label = TRUE,
   label_aes = list(),
@@ -34,6 +35,8 @@ plot_cell_count(
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{plot_levels}{Character vector containing levels for ordering}
+
+\item{na_color}{Color to use for missing values}
 
 \item{order_count}{Order bar color by number of cells in each group}
 

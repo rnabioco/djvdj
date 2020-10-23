@@ -17,6 +17,7 @@ plot_features(
   split_levels = NULL,
   min_pct = NULL,
   max_pct = NULL,
+  na_color = "grey90",
   lm_line = F,
   cor_label = c(0.8, 0.9),
   label_size = 3.7,
@@ -47,6 +48,8 @@ plot_features(
 \item{min_pct}{Minimum value to plot for feature}
 
 \item{max_pct}{Maximum value to plot for feature}
+
+\item{na_color}{Color to use for missing values}
 
 \item{lm_line}{Add regression line to plot}
 

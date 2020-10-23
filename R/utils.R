@@ -273,16 +273,23 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
 calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
                            prefix = "", return_seurat = TRUE) {
 
+  # Format meta.data
   meta_df <- sobj_in@meta.data
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
   meta_df <- dplyr::filter(meta_df, !is.na(!!sym(clonotype_col)))
 
+  meta_df <- dplyr::select(
+    meta_df,
+    .cell_id, all_of(c(cluster_col, clonotype_col))
+  )
+
+  # Calculate abundance
   if (!is.null(cluster_col)) {
     meta_df <- dplyr::group_by(meta_df, !!sym(cluster_col))
   }
 
-  freq_col  <- paste0(prefix, "clone_freq")
-  pct_col <- paste0(prefix, "clone_pct")
+  freq_col <- paste0(prefix, "clone_freq")
+  pct_col  <- paste0(prefix, "clone_pct")
 
   meta_df <- dplyr::mutate(
     meta_df,
@@ -301,9 +308,11 @@ calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
     !!sym(pct_col)  := (!!sym(freq_col) / .data$.n_cells) * 100
   )
 
-  meta_df <- dplyr::select(meta_df, -.data$.n_cells)
+  meta_df <- dplyr::ungroup(meta_df)
+  meta_df <- dplyr::select(meta_df, -all_of(c(".n_cells", cluster_col)))
   meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
 
+  # Add results to meta.data
   if (!return_seurat) {
     return(meta_df)
   }
