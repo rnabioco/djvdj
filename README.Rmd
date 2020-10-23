@@ -437,7 +437,8 @@ ggs <- metrics %>%
       method        = .x,            # abdiv method to use
       plot_colors   = ito_cols
     ) +
-      ggtitle(.y)
+      ggtitle(.y) +
+      bar_theme
   })
 
 plot_grid(plotlist = ggs, nrow = 1)
