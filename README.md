@@ -226,27 +226,6 @@ so_tcr <- calc_abundance(
   cluster_col   = "orig.ident",  # meta.data column containing cell labels
   prefix        = ""             # Prefix to add to new meta.data columns
 )
-
-# Take a look at the meta.data
-so_tcr@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols), clone_freq, clone_pct) %>%
-  arrange(desc(clone_pct))
-#> # A tibble: 3,850 x 9
-#>    clonotype_id cdr3     chains v_gene   j_gene reads umis  clone_freq clone_pct
-#>    <chr>        <chr>    <chr>  <chr>    <chr>  <chr> <chr>      <int>     <dbl>
-#>  1 clonotype2   CASSPGT… TRB    TRBV12-2 TRBJ2… 9180  18             2     0.335
-#>  2 clonotype4   CASSLQG… TRB    TRBV10   TRBJ2… 16316 29             2     0.335
-#>  3 clonotype4   CASSLQG… TRB    TRBV10   TRBJ2… 10730 19             2     0.335
-#>  4 clonotype2   CASSPGT… TRB    TRBV12-2 TRBJ2… 2966  5              2     0.335
-#>  5 clonotype73  CASSRDR… TRB    TRBV2    TRBJ1… 2502  5              2     0.275
-#>  6 clonotype1   CASSDEG… TRB    TRBV13-1 TRBJ2… 13532 24             2     0.275
-#>  7 clonotype2   CASSLTE… TRB    TRBV12-1 TRBJ1… 10946 21             2     0.275
-#>  8 clonotype3   CASSLRD… TRB    TRBV15   TRBJ1… 12528 19             2     0.275
-#>  9 clonotype330 CASSQDG… TRB    TRBV2    TRBJ1… 3016  8              2     0.275
-#> 10 clonotype6   CASGASS… TRB    TRBV12-… TRBJ2… 18264 32             2     0.275
-#> # … with 3,840 more rows
 ```
 
 <br>
@@ -264,10 +243,10 @@ plot_abundance(
   plot_colors = ito_cols,        # Plot colors
   yaxis       = "percent",       # Units to plot
   label_col   = "cdr3",          # meta.data column containing labels
-  n_labels    = 2,               # Number of top clonotypes to label
-  
-  size = 1                       # Additional ggplot options
-)
+  n_labels    = 1,               # Number of top clonotypes to label
+  size        = 1                # Additional ggplot options
+) +
+  theme(legend.title = element_blank())
 ```
 
 ![](man/figures/README-abund_plots-1.png)<!-- -->
@@ -292,8 +271,8 @@ Possible methods for calculating diversity include:
 
 <br>
 
-In this example we are calculating the Shannon index of diversity for
-each sample in the orig.ident meta.data column.
+In this example we are calculating the Shannon diversity for each sample
+in the orig.ident meta.data column.
 
 ``` r
 so_tcr <- calc_diversity(
@@ -393,27 +372,6 @@ so_tcr <- calc_similarity(
   prefix        = "jcrd_",         # Prefix to add to new meta.data columns 
   return_seurat = TRUE             # Return Seurat object with results added to meta.data
 )
-
-# Take a look at the meta.data
-so_tcr@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id), n_chains > 2) %>%
-  select(all_of(vdj_cols), starts_with("jcrd_"))
-#> # A tibble: 101 x 11
-#>    clonotype_id cdr3  chains v_gene j_gene reads umis  jcrd_KI_DN3 jcrd_KI_DN4
-#>    <chr>        <chr> <chr>  <chr>  <chr>  <chr> <chr>       <dbl>       <dbl>
-#>  1 clonotype10  CATT… TRA;T… TRAV1… TRAJ3… 904;… 2;6;…       0.997       0.998
-#>  2 clonotype27  CALV… TRA;T… TRAV1… TRAJ2… 1688… 13;1…       0.997       0.998
-#>  3 clonotype36  CAAY… TRA;T… TRAV1… TRAJ5… 1210… 14;8…       0.997       0.998
-#>  4 clonotype85  CVVV… TRA;T… TRAV1… TRAJ2… 6974… 7;11…       0.997       0.998
-#>  5 clonotype136 CAAR… TRA;T… TRAV1… TRAJ3… 2014… 13;3…       0.997       0.998
-#>  6 clonotype138 CVAH… TRA;T… TRAV1… TRAJ3… 7230… 5;10…       0.997       0.998
-#>  7 clonotype174 CAAS… TRA;T… TRAV7… TRAJ2… 1815… 11;8…       0.997       0.998
-#>  8 clonotype205 CALL… TRA;T… TRAV1… TRAJ5… 1294… 19;5…       0.997       0.998
-#>  9 clonotype215 CAPG… TRA;T… TRAV1… TRAJ1… 1188… 13;4…       0.997       0.998
-#> 10 clonotype282 CAAS… TRA;T… TRAV1… TRAJ1… 1337… 8;15…       0.997       0.998
-#> # … with 91 more rows, and 2 more variables: jcrd_WT_DN3 <dbl>,
-#> #   jcrd_WT_DN4 <dbl>
 ```
 
 <br>
@@ -423,15 +381,20 @@ A heatmap summarizing the results can be generated using the
 compare the different samples and one to compare cell clusters.
 
 ``` r
+heat_theme <- theme(
+  legend.title = element_blank(),
+  legend.text  = element_text(size = 8)
+)
+
 # Sample heatmap
 ident_heat <- plot_similarity(
-  sobj_in       = so_tcr,                  # Seurat object
-  clonotype_col = "cdr3",                  # meta.data column containing clonotype IDs
-  cluster_col   = "orig.ident",            # meta.data column containing cell labels
-  method        = abdiv::jaccard,          # Method to use
-  plot_colors   = c("grey90", "#56B4E9")   # Plot colors
+  sobj_in       = so_tcr,                 # Seurat object
+  clonotype_col = "cdr3",                 # meta.data column containing clonotype IDs
+  cluster_col   = "orig.ident",           # meta.data column containing cell labels
+  method        = abdiv::jaccard,         # Method to use
+  plot_colors   = c("grey90", "#009E73")  # Plot colors
 ) +
-  theme(legend.title = element_blank())
+  heat_theme
 
 # Cluster heatmap
 clust_heat <- plot_similarity(
@@ -440,14 +403,14 @@ clust_heat <- plot_similarity(
   cluster_col   = "seurat_clusters",
   method        = abdiv::jaccard,
   plot_colors   = c("grey90", "#56B4E9"),  
-  
-  size          = 1,                       # Additional ggplot options
-  color         = "white"                  # Additional ggplot options
+  size          = 1,                      # Additional ggplot options
+  color         = "white"                 # Additional ggplot options
 ) +
-  theme(legend.title = element_blank())
+  heat_theme +
+  theme(axis.text.x  = element_text(angle = 0))
 
 # Combine heatmaps
-plot_grid(ident_heat, clust_heat)
+plot_grid(ident_heat, clust_heat, align = "h")
 ```
 
 ![](man/figures/README-sim_plots-1.png)<!-- -->
@@ -504,16 +467,16 @@ highest average usage.
 
 ``` r
 plot_usage(
-  sobj_in     = so_tcr,                    # Seurat object
-  gene_cols   = "v_gene",                  # meta.data column(s) containing genes
-  cluster_col = "orig.ident",              # meta.data column containing cell labels
-  chain       = "TRB",                     # Chain to use for filtering genes
-  chain_col   = "chains",                  # meta.data column containing chains
+  sobj_in     = so_tcr,                  # Seurat object
+  gene_cols   = "v_gene",                # meta.data column(s) containing genes
+  cluster_col = "orig.ident",            # meta.data column containing cell labels
+  chain       = "TRB",                   # Chain to use for filtering genes
+  chain_col   = "chains",                # meta.data column containing chains
   
-  yaxis       = "percent",                 # Units to plot
-  plot_colors = c("grey90", ito_cols[5]),  # Colors to use for heatmap
-  plot_genes  = NULL,                      # A list of genes to plot
-  n_genes     = 10                         # The number of top genes to plot
+  yaxis       = "percent",               # Units to plot
+  plot_colors = c("grey90", "#d7301f"),  # Colors to use for heatmap
+  plot_genes  = NULL,                    # A list of genes to plot
+  n_genes     = 10                       # The number of top genes to plot
 ) +
   coord_flip()
 ```
@@ -533,20 +496,6 @@ calc_usage(
   chain       = "TRB",                  # Chain to use for filtering genes
   chain_col   = "chains"                # meta.data column containing chains
 )
-#> # A tibble: 1,016 x 6
-#>    v_gene j_gene  orig.ident n_cells  freq   pct
-#>    <chr>  <chr>   <chr>        <dbl> <int> <dbl>
-#>  1 None   None    WT_DN3         597     0 0    
-#>  2 None   None    WT_DN4         909    12 1.32 
-#>  3 None   None    KI_DN3         728     0 0    
-#>  4 None   None    KI_DN4        1616     8 0.495
-#>  5 TRBV1  TRBJ1-1 WT_DN3         597     3 0.503
-#>  6 TRBV1  TRBJ1-1 WT_DN4         909     8 0.880
-#>  7 TRBV1  TRBJ1-1 KI_DN3         728     4 0.549
-#>  8 TRBV1  TRBJ1-1 KI_DN4        1616    10 0.619
-#>  9 TRBV1  TRBJ1-2 WT_DN3         597     1 0.168
-#> 10 TRBV1  TRBJ1-2 WT_DN4         909     3 0.330
-#> # … with 1,006 more rows
 ```
 
 <br>
@@ -556,12 +505,12 @@ will be returned, one for each cell label in the `cluster_col` column.
 
 ``` r
 ggs <- plot_usage(
-  sobj_in     = so_tcr,                   # Seurat object
-  gene_cols   = c("v_gene", "j_gene"),    # meta.data column(s) containing genes
-  cluster_col = "orig.ident",             # meta.data column containing cell labels
-  chain       = "TRB",                    # Chain to use for filtering genes
-  chain_col   = "chains",                 # meta.data column containing chains identified
-  plot_colors = c("grey90", ito_cols[8])  # Colors to use for heatmap
+  sobj_in     = so_tcr,                 # Seurat object
+  gene_cols   = c("v_gene", "j_gene"),  # meta.data column(s) containing genes
+  cluster_col = "orig.ident",           # meta.data column containing cell labels
+  chain       = "TRB",                  # Chain to use for filtering genes
+  chain_col   = "chains",               # meta.data column containing chains identified
+  plot_colors = c("grey90", "#6A51A3")  # Colors to use for heatmap
 ) %>%
   imap(~ .x + ggtitle(.y))
 

@@ -483,25 +483,25 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
   var_levels <- unique(c(rownames(sobj_in), colnames(sobj_in)))
   var_levels <- sort(var_levels)
 
-  gg_data <- tibble::as_tibble(sobj_in, rownames = "Var1")
+  gg_df <- tibble::as_tibble(sobj_in, rownames = "Var1")
 
-  gg_data <- tidyr::pivot_longer(
-    gg_data,
+  gg_df <- tidyr::pivot_longer(
+    gg_df,
     cols      = -.data$Var1,
     names_to  = "Var2",
     values_to = "similarity"
   )
 
   # Set Var levels
-  gg_data <- dplyr::mutate(
-    gg_data,
+  gg_df <- dplyr::mutate(
+    gg_df,
     Var1 = factor(.data$Var1, levels = rev(var_levels)),
     Var2 = factor(.data$Var2, levels = var_levels)
   )
 
   # Create heatmap
   res <- .create_heatmap(
-    gg_data,
+    gg_df,
     x           = "Var1",
     y           = "Var2",
     fill        = "similarity",
@@ -552,7 +552,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
   }
 
   # Calculate gene usage
-  gg_data <- calc_usage(
+  gg_df <- calc_usage(
     sobj_in,
     gene_cols   = gene_cols,
     cluster_col = cluster_col,
@@ -561,13 +561,13 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
     sep         = sep
   )
 
-  gg_data <- dplyr::filter(gg_data, dplyr::across(
+  gg_df <- dplyr::filter(gg_df, dplyr::across(
     dplyr::all_of(gene_cols),
     ~ .x != "None"
   ))
 
   # Order genes by average usage
-  top_genes <- dplyr::group_by(gg_data, !!!syms(gene_cols))
+  top_genes <- dplyr::group_by(gg_df, !!!syms(gene_cols))
 
   top_genes <- dplyr::summarize(
     top_genes,
@@ -578,8 +578,8 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
   top_genes <- dplyr::arrange(top_genes, .data$usage)
 
   if (length(gene_cols) == 1) {
-    gg_data <- dplyr::mutate(
-      gg_data,
+    gg_df <- dplyr::mutate(
+      gg_df,
       !!sym(gene_cols) := factor(
         !!sym(gene_cols),
         levels = dplyr::pull(top_genes, gene_cols)
@@ -589,8 +589,8 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
 
   # Order clusters
   if (!is.null(clust_levels)) {
-    gg_data <- dplyr::mutate(
-      gg_data,
+    gg_df <- dplyr::mutate(
+      gg_df,
       !!sym(cluster_col) := factor(
         !!sym(cluster_col),
         levels = clust_levels
@@ -600,7 +600,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
 
   # Filter genes to plot
   if (!is.null(plot_genes)) {
-    gg_data <- dplyr::filter(gg_data, dplyr::across(
+    gg_df <- dplyr::filter(gg_df, dplyr::across(
       dplyr::all_of(gene_cols),
       ~ .x %in% plot_genes
     ))
@@ -611,7 +611,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
     top_genes <- dplyr::slice_max(top_genes, .data$usage, n = n_genes)
     top_genes <- unlist(top_genes[, gene_cols], use.names = F)
 
-    gg_data <- dplyr::filter(gg_data, dplyr::across(
+    gg_df <- dplyr::filter(gg_df, dplyr::across(
       dplyr::all_of(gene_cols),
       ~ .x %in% top_genes
     ))
@@ -620,7 +620,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
   # Create heatmap for single gene
   if (length(gene_cols) == 1) {
     res <- .create_heatmap(
-      gg_data,
+      gg_df,
       x           = cluster_col,
       y           = gene_cols,
       fill        = usage_col,
@@ -636,13 +636,13 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
   grps <- NULL
 
   if (!is.null(cluster_col)) {
-    gg_data <- dplyr::group_by(gg_data, !!sym(cluster_col))
+    gg_df <- dplyr::group_by(gg_df, !!sym(cluster_col))
 
-    grps <- pull(gg_data, cluster_col)
+    grps <- pull(gg_df, cluster_col)
     grps <- sort(unique(grps))
   }
 
-  res <- dplyr::group_split(gg_data)
+  res <- dplyr::group_split(gg_df)
   names(res) <- grps
 
   # Format data for plotting
@@ -792,13 +792,13 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
 
   # Calculate correlation
   if (!is.null(lab_pos)) {
-    gg_data <- gg_in$data
+    gg_df <- gg_in$data
 
     x <- as.character(gg_in$mapping$x)[2]
     y <- as.character(gg_in$mapping$y)[2]
 
-    gg_data <- dplyr::mutate(
-      gg_data,
+    gg_df <- dplyr::mutate(
+      gg_df,
       r       = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$estimate,
       r       = round(.data$r, digits = 2),
       pval    = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$p.value,
@@ -815,7 +815,7 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
   # Add correlation coefficient label
   res <- res +
     ggplot2::geom_text(
-      data          = gg_data,
+      data          = gg_df,
       mapping       = ggplot2::aes(.data$lab_x, .data$lab_y, label = .data$cor_lab),
       color         = "black",
       size          = lab_size,

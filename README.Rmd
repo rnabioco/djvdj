@@ -1,7 +1,5 @@
 ---
 output: github_document
-editor_options: 
-  chunk_output_type: inline
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -64,10 +62,13 @@ base_theme <- theme_cowplot() +
 
 umap_theme <- base_theme +
   theme(
-    axis.title = element_blank(),
-    axis.line  = element_blank(),
-    axis.ticks = element_blank(),
-    axis.text  = element_blank()
+    plot.title      = element_text(size = 12),
+    legend.position = "top",
+    legend.title    = element_blank(),
+    axis.title      = element_blank(),
+    axis.line       = element_blank(),
+    axis.ticks      = element_blank(),
+    axis.text       = element_blank()
   )
 
 # Legend guides
@@ -253,11 +254,7 @@ pairs_umap <- so_tcr %>%
   ) +
   ggtitle("Paired chains") +
   guides(color = create_guide(nrow = 2)) +
-  umap_theme +
-  theme(
-    legend.position = "top",
-    legend.title = element_blank()
-  )
+  umap_theme
 
 # Paired bar graphs
 pairs_bars <- so_tcr %>%
@@ -314,8 +311,6 @@ chains_cols <- set_names(
   nm = chains_cols
 )
 
-chains_cols["NA"] <- "#f0f0f0"
-
 # Chains UMAP
 chains_umap <- so_tcr %>%
   plot_features(
@@ -325,11 +320,7 @@ chains_umap <- so_tcr %>%
   ) +
   ggtitle("Unique chains") +
   guides(color = create_guide(nrow = 2)) +
-  umap_theme +
-  theme(
-    legend.position = "top",
-    legend.title = element_blank()
-  )
+  umap_theme
 
 # Chains bar graphs
 chains_bars <- so_tcr %>%
@@ -369,20 +360,13 @@ so_tcr <- calc_abundance(
   cluster_col   = "orig.ident",  # meta.data column containing cell labels
   prefix        = ""             # Prefix to add to new meta.data columns
 )
-
-# Take a look at the meta.data
-so_tcr@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols), clone_freq, clone_pct) %>%
-  arrange(desc(clone_pct))
 ```
 
 <br>
 
 For each 'calculation' function provided by `djvdj`, there is a matching `plot` function that will generate a summary plot. The `calc_abundance` function will plot clonotypes ranked by abundance.
 
-```{r "abund_plots", fig.width = 8, fig.height = 4}
+```{r "abund_plots", fig.width = 6, fig.height = 3}
 plot_abundance(
   sobj_in       = so_tcr,        # Seurat object
   clonotype_col = "cdr3",        # meta.data column containing clonotype IDs
@@ -391,10 +375,10 @@ plot_abundance(
   plot_colors = ito_cols,        # Plot colors
   yaxis       = "percent",       # Units to plot
   label_col   = "cdr3",          # meta.data column containing labels
-  n_labels    = 2,               # Number of top clonotypes to label
-  
-  size = 1                       # Additional ggplot options
-)
+  n_labels    = 1,               # Number of top clonotypes to label
+  size        = 1                # Additional ggplot options
+) +
+  theme(legend.title = element_blank())
 ```
 
 <br>
@@ -410,7 +394,7 @@ abdiv::alpha_diversities
 ```
 <br>
 
-In this example we are calculating the Shannon index of diversity for each sample in the orig.ident meta.data column.
+In this example we are calculating the Shannon diversity for each sample in the orig.ident meta.data column.
 
 ```{r}
 so_tcr <- calc_diversity(
@@ -482,28 +466,27 @@ so_tcr <- calc_similarity(
   prefix        = "jcrd_",         # Prefix to add to new meta.data columns 
   return_seurat = TRUE             # Return Seurat object with results added to meta.data
 )
-
-# Take a look at the meta.data
-so_tcr@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id), n_chains > 2) %>%
-  select(all_of(vdj_cols), starts_with("jcrd_"))
 ```
 
 <br>
 
 A heatmap summarizing the results can be generated using the `plot_similarity` function. Here we are creating two heatmaps, one to compare the different samples and one to compare cell clusters.
 
-```{r "sim_plots", fig.width = 8, fig.height = 2.7}
+```{r "sim_plots", fig.width = 10, fig.height = 4}
+heat_theme <- theme(
+  legend.title = element_blank(),
+  legend.text  = element_text(size = 8)
+)
+
 # Sample heatmap
 ident_heat <- plot_similarity(
-  sobj_in       = so_tcr,                  # Seurat object
-  clonotype_col = "cdr3",                  # meta.data column containing clonotype IDs
-  cluster_col   = "orig.ident",            # meta.data column containing cell labels
-  method        = abdiv::jaccard,          # Method to use
-  plot_colors   = c("grey90", "#56B4E9")   # Plot colors
+  sobj_in       = so_tcr,                 # Seurat object
+  clonotype_col = "cdr3",                 # meta.data column containing clonotype IDs
+  cluster_col   = "orig.ident",           # meta.data column containing cell labels
+  method        = abdiv::jaccard,         # Method to use
+  plot_colors   = c("grey90", "#009E73")  # Plot colors
 ) +
-  theme(legend.title = element_blank())
+  heat_theme
 
 # Cluster heatmap
 clust_heat <- plot_similarity(
@@ -512,14 +495,14 @@ clust_heat <- plot_similarity(
   cluster_col   = "seurat_clusters",
   method        = abdiv::jaccard,
   plot_colors   = c("grey90", "#56B4E9"),  
-  
-  size          = 1,                       # Additional ggplot options
-  color         = "white"                  # Additional ggplot options
+  size          = 1,                      # Additional ggplot options
+  color         = "white"                 # Additional ggplot options
 ) +
-  theme(legend.title = element_blank())
+  heat_theme +
+  theme(axis.text.x  = element_text(angle = 0))
 
 # Combine heatmaps
-plot_grid(ident_heat, clust_heat)
+plot_grid(ident_heat, clust_heat, align = "h")
 ```
 
 <br>
@@ -548,16 +531,16 @@ In this example we are only plotting the top 10 genes that have the highest aver
 
 ```{r "usage_plots_1", fig.width = 6, fig.height = 3}
 plot_usage(
-  sobj_in     = so_tcr,                    # Seurat object
-  gene_cols   = "v_gene",                  # meta.data column(s) containing genes
-  cluster_col = "orig.ident",              # meta.data column containing cell labels
-  chain       = "TRB",                     # Chain to use for filtering genes
-  chain_col   = "chains",                  # meta.data column containing chains
+  sobj_in     = so_tcr,                  # Seurat object
+  gene_cols   = "v_gene",                # meta.data column(s) containing genes
+  cluster_col = "orig.ident",            # meta.data column containing cell labels
+  chain       = "TRB",                   # Chain to use for filtering genes
+  chain_col   = "chains",                # meta.data column containing chains
   
-  yaxis       = "percent",                 # Units to plot
-  plot_colors = c("grey90", ito_cols[5]),  # Colors to use for heatmap
-  plot_genes  = NULL,                      # A list of genes to plot
-  n_genes     = 10                         # The number of top genes to plot
+  yaxis       = "percent",               # Units to plot
+  plot_colors = c("grey90", "#d7301f"),  # Colors to use for heatmap
+  plot_genes  = NULL,                    # A list of genes to plot
+  n_genes     = 10                       # The number of top genes to plot
 ) +
   coord_flip()
 ```
@@ -566,7 +549,7 @@ plot_usage(
 
 By passing multiple columns to `gene_cols`, the frequency that different genes are used together can also be summarized.
 
-```{r}
+```{r, eval = F}
 calc_usage(
   sobj_in     = so_tcr,                 # Seurat object
   gene_cols   = c("v_gene", "j_gene"),  # meta.data column(s) containing genes
@@ -582,12 +565,12 @@ When multiple gene columns are passed to `plot_usage`, a list of plots will be r
 
 ```{r "usage_plots_2", fig.width = 12, fig.height = 8}
 ggs <- plot_usage(
-  sobj_in     = so_tcr,                   # Seurat object
-  gene_cols   = c("v_gene", "j_gene"),    # meta.data column(s) containing genes
-  cluster_col = "orig.ident",             # meta.data column containing cell labels
-  chain       = "TRB",                    # Chain to use for filtering genes
-  chain_col   = "chains",                 # meta.data column containing chains identified
-  plot_colors = c("grey90", ito_cols[8])  # Colors to use for heatmap
+  sobj_in     = so_tcr,                 # Seurat object
+  gene_cols   = c("v_gene", "j_gene"),  # meta.data column(s) containing genes
+  cluster_col = "orig.ident",           # meta.data column containing cell labels
+  chain       = "TRB",                  # Chain to use for filtering genes
+  chain_col   = "chains",               # meta.data column containing chains identified
+  plot_colors = c("grey90", "#6A51A3")  # Colors to use for heatmap
 ) %>%
   imap(~ .x + ggtitle(.y))
 
