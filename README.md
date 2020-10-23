@@ -264,10 +264,12 @@ the `method` argument.
 
 Possible methods for calculating diversity include:
 
-    #>  [1] "berger_parker_d"  "brillouin_d"      "dominance"        "heip_e"          
-    #>  [5] "invsimpson"       "kempton_taylor_q" "margalef"         "mcintosh_d"      
-    #>  [9] "mcintosh_e"       "menhinick"        "pielou_e"         "richness"        
-    #> [13] "shannon"          "simpson"          "simpson_e"        "strong"
+``` 
+ [1] "berger_parker_d"  "brillouin_d"      "dominance"        "heip_e"          
+ [5] "invsimpson"       "kempton_taylor_q" "margalef"         "mcintosh_d"      
+ [9] "mcintosh_e"       "menhinick"        "pielou_e"         "richness"        
+[13] "shannon"          "simpson"          "simpson_e"        "strong"          
+```
 
 <br>
 
@@ -335,26 +337,28 @@ column containing cell labels for comparison. Like `calc_diversity`, an
 
 Possible methods for calculating repertoire similarity include:
 
-    #>  [1] "binomial_deviance"                  "bray_curtis"                       
-    #>  [3] "bray_curtis_balanced"               "bray_curtis_gradient"              
-    #>  [5] "canberra"                           "chebyshev"                         
-    #>  [7] "chord"                              "clark_coefficient_of_divergence"   
-    #>  [9] "correlation_distance"               "cosine_distance"                   
-    #> [11] "cy_dissimilarity"                   "euclidean"                         
-    #> [13] "geodesic_metric"                    "hamming"                           
-    #> [15] "hellinger"                          "horn_morisita"                     
-    #> [17] "jaccard"                            "jaccard_nestedness"                
-    #> [19] "jaccard_turnover"                   "kulczynski_first"                  
-    #> [21] "kulczynski_second"                  "kullback_leibler_divergence"       
-    #> [23] "manhattan"                          "mean_character_difference"         
-    #> [25] "minkowski"                          "modified_mean_character_difference"
-    #> [27] "morisita"                           "rms_distance"                      
-    #> [29] "rogers_tanimoto"                    "russel_rao"                        
-    #> [31] "ruzicka"                            "ruzicka_balanced"                  
-    #> [33] "ruzicka_gradient"                   "sokal_michener"                    
-    #> [35] "sokal_sneath"                       "sorenson"                          
-    #> [37] "sorenson_nestedness"                "sorenson_turnover"                 
-    #> [39] "weighted_kulczynski_second"         "yule_dissimilarity"
+``` 
+ [1] "binomial_deviance"                  "bray_curtis"                       
+ [3] "bray_curtis_balanced"               "bray_curtis_gradient"              
+ [5] "canberra"                           "chebyshev"                         
+ [7] "chord"                              "clark_coefficient_of_divergence"   
+ [9] "correlation_distance"               "cosine_distance"                   
+[11] "cy_dissimilarity"                   "euclidean"                         
+[13] "geodesic_metric"                    "hamming"                           
+[15] "hellinger"                          "horn_morisita"                     
+[17] "jaccard"                            "jaccard_nestedness"                
+[19] "jaccard_turnover"                   "kulczynski_first"                  
+[21] "kulczynski_second"                  "kullback_leibler_divergence"       
+[23] "manhattan"                          "mean_character_difference"         
+[25] "minkowski"                          "modified_mean_character_difference"
+[27] "morisita"                           "rms_distance"                      
+[29] "rogers_tanimoto"                    "russel_rao"                        
+[31] "ruzicka"                            "ruzicka_balanced"                  
+[33] "ruzicka_gradient"                   "sokal_michener"                    
+[35] "sokal_sneath"                       "sorenson"                          
+[37] "sorenson_nestedness"                "sorenson_turnover"                 
+[39] "weighted_kulczynski_second"         "yule_dissimilarity"                
+```
 
 <br>
 

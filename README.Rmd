@@ -130,7 +130,10 @@ key_umap <- so_tcr %>%
   ggtitle("Cell type") +
   guides(color = create_guide()) +
   umap_theme +
-  theme(legend.title = element_blank())
+  theme(
+    legend.position = "right",
+    legend.title    = element_blank()
+  )
 
 clust_umap <- so_tcr %>%
   plot_features(
@@ -141,7 +144,10 @@ clust_umap <- so_tcr %>%
   ggtitle("Cluster") +
   guides(color = create_guide()) +
   umap_theme +
-  theme(legend.title = element_blank())
+  theme(
+    legend.position = "right",
+    legend.title    = element_blank()
+  )
 
 plot_grid(
   key_umap, clust_umap,
@@ -389,7 +395,7 @@ The function `calc_diversity` will calculate repertoire diversity on a per-clust
 
 Possible methods for calculating diversity include:
 
-```{r, echo = F}
+```{r, comment = "", echo = F}
 abdiv::alpha_diversities
 ```
 <br>
@@ -449,7 +455,7 @@ To compare repertoires for different samples or clusters, `calc_similarity` can 
 
 Possible methods for calculating repertoire similarity include:
 
-```{r, echo = F}
+```{r, comment = "", echo = F}
 abdiv::beta_diversities
 ```
 
