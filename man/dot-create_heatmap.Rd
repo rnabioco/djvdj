@@ -12,8 +12,8 @@
   plot_colors = NULL,
   na_color = "white",
   legd_title = fill,
-  angle = 0,
-  hjust = 0.5,
+  angle = 45,
+  hjust = 1,
   ...
 )
 }

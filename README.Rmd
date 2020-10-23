@@ -1,7 +1,7 @@
 ---
 output: github_document
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -407,9 +407,7 @@ plot_abundance(
   n_labels    = 2,               # Number of top clonotypes to label
   
   size = 1                       # Additional ggplot options
-) +
-  theme_cowplot() +
-  theme(legend.title = element_blank())
+)
 ```
 
 <br>
@@ -438,22 +436,38 @@ so_tcr <- calc_diversity(
 
 <br>
 
-The `plot_diversity` function will create plots summarizing repertoire diversity for each sample.
+The `plot_diversity` function will create plots summarizing repertoire diversity for each sample. Four different diversity metrics are plotted below.
 
-```{r "div_plots", fig.width = 3, fig.height = 4}
-plot_diversity(
-  sobj_in       = so_tcr,          # Seurat object
-  clonotype_col = "cdr3",          # meta.data column containing clonotype ids
-  cluster_col   = "orig.ident",    # meta.data column containing cell labels
-  method        = abdiv::shannon,  # abdiv method to use
-  plot_colors   = ito_cols 
-) +
-  theme_cowplot() +
-  theme(
-    legend.position = "none",
-    axis.title.x    = element_blank(),
-    axis.text.x     = element_text(angle = 45, hjust = 1)
-  )
+```{r "div_plots", fig.width = 7, fig.height = 3}
+# Metrics to use
+metrics <- list(
+  "simpson"   = abdiv::simpson,
+  "shannon"   = abdiv::shannon,
+  "margalef"  = abdiv::margalef,
+  "menhinick" = abdiv::menhinick
+)
+
+# Plot diversity metrics
+ggs <- metrics %>%
+  imap(~ {
+    plot_diversity(
+      sobj_in       = so_tcr,        # Seurat object
+      clonotype_col = "cdr3",        # meta.data column containing clonotype ids
+      cluster_col   = "orig.ident",  # meta.data column containing cell labels
+      method        = .x,            # abdiv method to use
+      plot_colors   = ito_cols
+    ) +
+      ggtitle(.y) +
+      theme(
+        axis.title  = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1)
+      )
+  })
+
+plot_grid(
+  plotlist = ggs,
+  nrow = 1
+)
 ```
 
 <br>
@@ -487,20 +501,6 @@ so_tcr@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id), n_chains > 2) %>%
   select(all_of(vdj_cols), starts_with("jcrd_"))
-```
-
-<br>
-
-Alternatively, `calc_similarity` can output a matrix
-
-```{r}
-calc_similarity(
-  sobj_in       = so_tcr,          # Seurat object
-  clonotype_col = "cdr3",          # meta.data column containing clonotype IDs
-  cluster_col   = "orig.ident",    # meta.data column containing cell labels
-  method        = abdiv::jaccard,  # abdiv method to use
-  return_seurat = FALSE            # Return Seurat object with results added to meta.data
-)
 ```
 
 <br>
@@ -559,7 +559,7 @@ The companion function `plot_usage` can be used to create a heatmap summarizing 
 
 In this example we are only plotting the top 10 genes that have the highest average usage.
 
-```{r "usage_plots_1", fig.width = 4.5, fig.height = 5}
+```{r "usage_plots_1", fig.width = 6, fig.height = 3}
 plot_usage(
   sobj_in     = so_tcr,                    # Seurat object
   gene_cols   = "v_gene",                  # meta.data column(s) containing genes
@@ -571,7 +571,8 @@ plot_usage(
   plot_colors = c("grey90", ito_cols[5]),  # Colors to use for heatmap
   plot_genes  = NULL,                      # A list of genes to plot
   n_genes     = 10                         # The number of top genes to plot
-)
+) +
+  coord_flip()
 ```
 
 <br>
@@ -593,7 +594,7 @@ calc_usage(
 When multiple gene columns are passed to `plot_usage`, a list of plots will be returned, one for each cell label in the `cluster_col` column.
 
 ```{r "usage_plots_2", fig.width = 12, fig.height = 8}
-gg <- plot_usage(
+ggs <- plot_usage(
   sobj_in     = so_tcr,                   # Seurat object
   gene_cols   = c("v_gene", "j_gene"),    # meta.data column(s) containing genes
   cluster_col = "orig.ident",             # meta.data column containing cell labels
@@ -603,8 +604,7 @@ gg <- plot_usage(
 ) %>%
   imap(~ .x + ggtitle(.y))
 
-# Combine heatmaps
-plot_grid(plotlist = gg)
+plot_grid(plotlist = ggs)
 ```
 
 

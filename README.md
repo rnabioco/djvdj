@@ -267,9 +267,7 @@ plot_abundance(
   n_labels    = 2,               # Number of top clonotypes to label
   
   size = 1                       # Additional ggplot options
-) +
-  theme_cowplot() +
-  theme(legend.title = element_blank())
+)
 ```
 
 ![](man/figures/README-abund_plots-1.png)<!-- -->
@@ -309,22 +307,39 @@ so_tcr <- calc_diversity(
 <br>
 
 The `plot_diversity` function will create plots summarizing repertoire
-diversity for each sample.
+diversity for each sample. Four different diversity metrics are plotted
+below.
 
 ``` r
-plot_diversity(
-  sobj_in       = so_tcr,          # Seurat object
-  clonotype_col = "cdr3",          # meta.data column containing clonotype ids
-  cluster_col   = "orig.ident",    # meta.data column containing cell labels
-  method        = abdiv::shannon,  # abdiv method to use
-  plot_colors   = ito_cols 
-) +
-  theme_cowplot() +
-  theme(
-    legend.position = "none",
-    axis.title.x    = element_blank(),
-    axis.text.x     = element_text(angle = 45, hjust = 1)
-  )
+# Metrics to use
+metrics <- list(
+  "simpson"   = abdiv::simpson,
+  "shannon"   = abdiv::shannon,
+  "margalef"  = abdiv::margalef,
+  "menhinick" = abdiv::menhinick
+)
+
+# Plot diversity metrics
+ggs <- metrics %>%
+  imap(~ {
+    plot_diversity(
+      sobj_in       = so_tcr,        # Seurat object
+      clonotype_col = "cdr3",        # meta.data column containing clonotype ids
+      cluster_col   = "orig.ident",  # meta.data column containing cell labels
+      method        = .x,            # abdiv method to use
+      plot_colors   = ito_cols
+    ) +
+      ggtitle(.y) +
+      theme(
+        axis.title  = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1)
+      )
+  })
+
+plot_grid(
+  plotlist = ggs,
+  nrow = 1
+)
 ```
 
 ![](man/figures/README-div_plots-1.png)<!-- -->
@@ -399,24 +414,6 @@ so_tcr@meta.data %>%
 #> 10 clonotype282 CAAS… TRA;T… TRAV1… TRAJ1… 1337… 8;15…       0.997       0.998
 #> # … with 91 more rows, and 2 more variables: jcrd_WT_DN3 <dbl>,
 #> #   jcrd_WT_DN4 <dbl>
-```
-
-<br>
-
-Alternatively, `calc_similarity` can output a matrix
-
-``` r
-calc_similarity(
-  sobj_in       = so_tcr,          # Seurat object
-  clonotype_col = "cdr3",          # meta.data column containing clonotype IDs
-  cluster_col   = "orig.ident",    # meta.data column containing cell labels
-  method        = abdiv::jaccard,  # abdiv method to use
-  return_seurat = FALSE            # Return Seurat object with results added to meta.data
-)
-#>           KI_DN3    KI_DN4 WT_DN3
-#> KI_DN4 0.9987069        NA     NA
-#> WT_DN3 1.0000000 0.9986326     NA
-#> WT_DN4 0.9969174 0.9980024      1
 ```
 
 <br>
@@ -517,7 +514,8 @@ plot_usage(
   plot_colors = c("grey90", ito_cols[5]),  # Colors to use for heatmap
   plot_genes  = NULL,                      # A list of genes to plot
   n_genes     = 10                         # The number of top genes to plot
-)
+) +
+  coord_flip()
 ```
 
 ![](man/figures/README-usage_plots_1-1.png)<!-- -->
@@ -557,7 +555,7 @@ When multiple gene columns are passed to `plot_usage`, a list of plots
 will be returned, one for each cell label in the `cluster_col` column.
 
 ``` r
-gg <- plot_usage(
+ggs <- plot_usage(
   sobj_in     = so_tcr,                   # Seurat object
   gene_cols   = c("v_gene", "j_gene"),    # meta.data column(s) containing genes
   cluster_col = "orig.ident",             # meta.data column containing cell labels
@@ -567,8 +565,7 @@ gg <- plot_usage(
 ) %>%
   imap(~ .x + ggtitle(.y))
 
-# Combine heatmaps
-plot_grid(plotlist = gg)
+plot_grid(plotlist = ggs)
 ```
 
 ![](man/figures/README-usage_plots_2-1.png)<!-- -->

@@ -142,7 +142,8 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
     }
   }
 
-  res
+  res +
+    vdj_theme()
 }
 
 
@@ -215,8 +216,7 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
 
   res <- res +
     ggplot2::geom_bar(position = bar_pos, ...) +
-    ggplot2::labs(y = yaxis) +
-    ggplot2::theme(axis.title.x = ggplot2::element_blank())
+    ggplot2::labs(y = yaxis)
 
   if (!is.null(split_col)) {
     res <- res +
@@ -261,7 +261,9 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
       ggplot2::scale_fill_manual(values = plot_colors)
   }
 
-  res
+  res +
+    vdj_theme() +
+    ggplot2::theme(axis.title.x = ggplot2::element_blank())
 }
 
 
@@ -365,7 +367,8 @@ plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, ya
     res <- .add_aes(res, label_aes, 2)
   }
 
-  res
+  res +
+    vdj_theme()
 }
 
 
@@ -389,11 +392,11 @@ plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
   # Calculate diversity
   if ("Seurat" %in% class(sobj_in)) {
     sobj_in <- calc_diversity(
-      sobj_in = sobj_in,
-      clonotype_col  = clonotype_col,
-      cluster_col    = cluster_col,
-      method         = method,
-      prefix         = "",
+      sobj_in       = sobj_in,
+      clonotype_col = clonotype_col,
+      cluster_col   = cluster_col,
+      method        = method,
+      prefix        = "",
       return_seurat = FALSE
     )
   }
@@ -421,11 +424,7 @@ plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
     .data$diversity,
     fill = !!sym(cluster_col)
   )) +
-    ggplot2::geom_col(...) +
-    theme(
-      legend.position = "none",
-      axis.title.x    = element_blank()
-    )
+    ggplot2::geom_col(...)
 
   # Set plot colors
   if (!is.null(plot_colors)) {
@@ -433,7 +432,12 @@ plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
       ggplot2::scale_fill_manual(values = plot_colors)
   }
 
-  res
+  res +
+    vdj_theme() +
+    ggplot2::theme(
+      legend.position = "none",
+      axis.title.x    = ggplot2::element_blank()
+    )
 }
 
 
@@ -654,6 +658,19 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
       names_to  = gene_cols[2],
       values_to = usage_col
     )
+
+    res <- dplyr::arrange(res, dplyr::desc(pct))
+
+    v1_lvls <- rev(unique(dplyr::pull(res, gene_cols[1])))
+    v2_lvls <- rev(unique(dplyr::pull(res, gene_cols[2])))
+
+    res <- dplyr::mutate(
+      res,
+      !!sym(gene_cols[1]) := factor(!!sym(gene_cols[1]), levels = v1_lvls),
+      !!sym(gene_cols[2]) := factor(!!sym(gene_cols[2]), levels = v2_lvls)
+    )
+
+    res
   })
 
   # Create heatmaps
@@ -665,14 +682,36 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
     fill        = usage_col,
     plot_colors = plot_colors,
     legd_title  = yaxis,
-    angle       = 45,
-    hjust       = 1,
     ...
   )
 
   if (length(res) == 1) {
     return(res[[1]])
   }
+
+  res
+}
+
+
+#' Theme for djvdj plotting functions
+#'
+#' @param txt_size Size of axis text
+#' @param ttl_size Size of axis titles
+#' @param txt_col Color of axis text
+#' @return ggplot theme
+#' @export
+vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
+  res <- ggplot2::theme(
+    panel.background  = ggplot2::element_blank(),
+    legend.background = ggplot2::element_blank(),
+    legend.title      = ggplot2::element_text(size = ttl_size),
+    legend.key        = ggplot2::element_blank(),
+    legend.text       = ggplot2::element_text(size = txt_size, color = txt_col),
+    axis.line         = ggplot2::element_line(size = 0.5, color = txt_col),
+    axis.ticks        = ggplot2::element_line(size = 0.5, color = txt_col),
+    axis.text         = ggplot2::element_text(size = txt_size, color = txt_col),
+    axis.title        = ggplot2::element_text(size = ttl_size, color = txt_col)
+  )
 
   res
 }
@@ -815,7 +854,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
 #' @param hjust Horizontal justification for x-axis text
 #' @param ... Additional arguments to pass to geom_tile
 .create_heatmap <- function(df_in, x, y, fill, plot_colors = NULL, na_color = "white",
-                            legd_title = fill, angle = 0, hjust = 0.5, ...) {
+                            legd_title = fill, angle = 45, hjust = 1, ...) {
 
   if (is.null(plot_colors)) {
     plot_colors <- c("grey90", "#56B4E9")
@@ -828,8 +867,8 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
     ggplot2::geom_tile(...) +
     ggplot2::guides(fill = ggplot2::guide_colorbar(title = legd_title)) +
     ggplot2::scale_fill_gradientn(colors = plot_colors, na.value = na_color) +
+    vdj_theme() +
     ggplot2::theme(
-      panel.background = element_rect(color = NA, fill = NA),
       axis.title  = ggplot2::element_blank(),
       axis.line   = ggplot2::element_blank(),
       axis.ticks  = ggplot2::element_blank(),
