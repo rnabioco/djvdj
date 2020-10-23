@@ -1,5 +1,7 @@
 ---
 output: github_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -168,7 +170,7 @@ If the Seurat object contains data for multiple runs, a vector containing paths 
 ```{r "import_vdj"}
 # Create vector of paths for cellranger output
 samples <- levels(so_tcr$orig.ident)
-paths   <- file.path("data", str_c(samples, "_TCR"), "outs")
+paths   <- file.path("data", str_c(samples, "_TCR"))
 
 names(paths) <- str_c(samples, "_GE")
 
@@ -585,18 +587,19 @@ plot_grid(plotlist = ggs)
 
 
 ```{r "enclone_test", eval = FALSE, echo = FALSE}
-# To run enclone
-#enclone \
-#    BCR=BCR/outs \
-#    REF=ref/refdata-cellranger-vdj-GRCm38-alts-ensembl-3.1.0/fasta/regions.fa \
-#    POUT="enclone_out.csv" \
-#    PCOLS=group_id,group_ncells,clonotype_id,clonotype_ncells,barcodes
+paths        <- dir("data", pattern = "[0-9]_AB")
+names(paths) <- str_remove(paths, "_b_Cell$|_bCellEnriched$")
+paths        <- map_chr(paths, ~ file.path("data", .x))
+
+
+
 
 # Import enclone results
-en_df <- read_csv("~/Projects/Smith_AVIDseq/2020-07-17/enclone_out.csv") %>%
+en_df <- read_csv(here("enclone_out.csv")) %>%
+  select(all_of(en_cols)) %>%
   mutate(barcodes = str_split(barcodes, ",")) %>%
   unnest(barcodes) %>%
-  select(cell_id = barcodes, group_id, group_ncells) %>%
+  rename(cell_id = barcodes) %>%
   filter(group_ncells > 1)
 
 # Merge enclone groups with meta.data

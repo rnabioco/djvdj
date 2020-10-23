@@ -142,7 +142,7 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
         ggplot2::facet_wrap(~ !!sym(split_id), ...)
 
     } else if (length(split_id) == 2) {
-      eq <- stringr::str_c(split_id[1], " ~ ", split_id[2])
+      eq <- paste0(split_id[1], " ~ ", split_id[2])
 
       res <- res +
         ggplot2::facet_grid(stats::as.formula(eq), ...)
@@ -802,7 +802,7 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
       r       = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$estimate,
       r       = round(.data$r, digits = 2),
       pval    = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$p.value,
-      cor_lab = stringr::str_c("r = ", .data$r, ", p = ", format(.data$pval, digits = 2)),
+      cor_lab = paste0("r = ", .data$r, ", p = ", format(.data$pval, digits = 2)),
       min_x   = min(!!sym(x)),
       max_x   = max(!!sym(x)),
       min_y   = min(!!sym(y)),
