@@ -1,7 +1,7 @@
 ---
 output: github_document
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -512,7 +512,7 @@ plot_grid(ident_heat, clust_heat, align = "h")
 
 <br>
 
-### VDJ Gene Usage
+### Gene Usage
 
 The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function `calc_usage` can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the `chain` and `chain_col` arguments can be used to specify the meta.data column containing the chains detected for each cell. By default the results for all chains will be included.
 
@@ -545,7 +545,10 @@ plot_usage(
   yaxis       = "percent",               # Units to plot
   plot_colors = c("grey90", "#d7301f"),  # Colors to use for heatmap
   plot_genes  = NULL,                    # A list of genes to plot
-  n_genes     = NULL                     # The number of top genes to plot
+  n_genes     = NULL,                    # The number of top genes to plot
+  
+  size        = 0.2,                     # Additional ggplot options
+  color       = "white"                  # Additional ggplot options
 ) +
   coord_flip()
 ```

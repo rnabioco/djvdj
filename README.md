@@ -51,7 +51,7 @@ for the vector.
 ``` r
 # Create vector of paths for cellranger output
 samples <- levels(so_tcr$orig.ident)
-paths   <- file.path("data", str_c(samples, "_TCR"), "outs")
+paths   <- file.path("data", str_c(samples, "_TCR"))
 
 names(paths) <- str_c(samples, "_GE")
 
@@ -76,18 +76,18 @@ so_tcr@meta.data %>%
   filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols))
 #> # A tibble: 3,850 x 7
-#>    clonotype_id cdr3               chains  v_gene      j_gene     reads    umis 
-#>    <chr>        <chr>              <chr>   <chr>       <chr>      <chr>    <chr>
-#>  1 clonotype5   CAVQGANTEVFF       TRB     TRBV17      TRBJ1-1    42590    72   
-#>  2 clonotype6   CASSHPGQNSGNTLYF   TRB     TRBV5       TRBJ1-3    12670    17   
-#>  3 clonotype7   CASSHWGETLYF       TRB     TRBV5       TRBJ2-3    31772    46   
-#>  4 clonotype8   CGARAQGLYNSPLYF    TRB     TRBV20      TRBJ1-6    7124     15   
-#>  5 clonotype9   CTAPAGGQNTEVFF     TRB     TRBV1       TRBJ1-1    4744     8    
-#>  6 clonotype10  CASSQDLDWGGEQFF    TRB     TRBV5       TRBJ2-1    34966    52   
-#>  7 clonotype11  CASRTGGCYEQYF;CAS… TRB;TRB TRBV13-1;T… TRBJ2-7;T… 4166;67… 7;171
-#>  8 clonotype2   CASSPGTENTLYF      TRB     TRBV12-2    TRBJ2-4    9180     18   
-#>  9 clonotype12  CASSLKGARSDYTF     TRB     TRBV12-1    TRBJ1-2    19742    29   
-#> 10 clonotype13  CASRLTGRDSDYTF;CA… TRB;TRB TRBV15;TRB… TRBJ1-2;T… 28860;1… 48;22
+#>    clonotype_id     cdr3             chains  v_gene      j_gene    reads   umis 
+#>    <chr>            <chr>            <chr>   <chr>       <chr>     <chr>   <chr>
+#>  1 WT_DN3_GE_clono… CAVQGANTEVFF     TRB     TRBV17      TRBJ1-1   42590   72   
+#>  2 WT_DN3_GE_clono… CASSHPGQNSGNTLYF TRB     TRBV5       TRBJ1-3   12670   17   
+#>  3 WT_DN3_GE_clono… CASSHWGETLYF     TRB     TRBV5       TRBJ2-3   31772   46   
+#>  4 WT_DN3_GE_clono… CGARAQGLYNSPLYF  TRB     TRBV20      TRBJ1-6   7124    15   
+#>  5 WT_DN3_GE_clono… CTAPAGGQNTEVFF   TRB     TRBV1       TRBJ1-1   4744    8    
+#>  6 WT_DN3_GE_clono… CASSQDLDWGGEQFF  TRB     TRBV5       TRBJ2-1   34966   52   
+#>  7 WT_DN3_GE_clono… CASRTGGCYEQYF;C… TRB;TRB TRBV13-1;T… TRBJ2-7;… 4166;6… 7;171
+#>  8 WT_DN3_GE_clono… CASSPGTENTLYF    TRB     TRBV12-2    TRBJ2-4   9180    18   
+#>  9 WT_DN3_GE_clono… CASSLKGARSDYTF   TRB     TRBV12-1    TRBJ1-2   19742   29   
+#> 10 WT_DN3_GE_clono… CASRLTGRDSDYTF;… TRB;TRB TRBV15;TRB… TRBJ1-2;… 28860;… 48;22
 #> # … with 3,840 more rows
 ```
 
@@ -117,18 +117,18 @@ so_filt@meta.data %>%
   filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols))
 #> # A tibble: 654 x 7
-#>    clonotype_id cdr3             chains   v_gene       j_gene     reads    umis 
-#>    <chr>        <chr>            <chr>    <chr>        <chr>      <chr>    <chr>
-#>  1 clonotype490 CALSGSNTGYQNFYF… TRA;TRB  TRAV15-2-DV… TRAJ49;TR… 2286;13… 3;26 
-#>  2 clonotype7   CAASASANKMIF;CA… TRA;TRB  TRAV14-2;TR… TRAJ47;TR… 19138;2… 13;23
-#>  3 clonotype10  CATTGFASALTF;CA… TRA;TRB… TRAV16D-DV1… TRAJ35;TR… 904;639… 2;6;…
-#>  4 clonotype11  CALGMNYNQGKLIF;… TRA;TRB  TRAV6N-7;TR… TRAJ23;TR… 8336;84… 8;8  
-#>  5 clonotype16  CALISGSFNKLTF;C… TRA;TRB  TRAV12D-2;T… TRAJ4;TRB… 2190;82… 1;10 
-#>  6 clonotype25  CAMRGGEGSWQLIF;… TRA;TRB  TRAV16N;TRB… TRAJ22;TR… 11096;1… 8;11 
-#>  7 clonotype26  CAAYNYAQGLTF;CA… TRA;TRB  TRAV14N-3;T… TRAJ26;TR… 10850;1… 7;15 
-#>  8 clonotype27  CALVMNYNQGKLIF;… TRA;TRB… TRAV13-1;TR… TRAJ23;TR… 16886;1… 13;1…
-#>  9 clonotype29  CAVSNNNNAPRF;CA… TRA;TRB  TRAV3-3;TRB… TRAJ43;TR… 11874;2… 8;25 
-#> 10 clonotype30  CAGHYNVLYF;CASS… TRA;TRB  TRAV7-3;TRB… TRAJ21;TR… 4144;59… 2;6  
+#>    clonotype_id    cdr3            chains   v_gene       j_gene    reads   umis 
+#>    <chr>           <chr>           <chr>    <chr>        <chr>     <chr>   <chr>
+#>  1 WT_DN3_GE_clon… CALSGSNTGYQNFY… TRA;TRB  TRAV15-2-DV… TRAJ49;T… 2286;1… 3;26 
+#>  2 WT_DN4_GE_clon… CAASASANKMIF;C… TRA;TRB  TRAV14-2;TR… TRAJ47;T… 19138;… 13;23
+#>  3 WT_DN4_GE_clon… CATTGFASALTF;C… TRA;TRB… TRAV16D-DV1… TRAJ35;T… 904;63… 2;6;…
+#>  4 WT_DN4_GE_clon… CALGMNYNQGKLIF… TRA;TRB  TRAV6N-7;TR… TRAJ23;T… 8336;8… 8;8  
+#>  5 WT_DN4_GE_clon… CALISGSFNKLTF;… TRA;TRB  TRAV12D-2;T… TRAJ4;TR… 2190;8… 1;10 
+#>  6 WT_DN4_GE_clon… CAMRGGEGSWQLIF… TRA;TRB  TRAV16N;TRB… TRAJ22;T… 11096;… 8;11 
+#>  7 WT_DN4_GE_clon… CAAYNYAQGLTF;C… TRA;TRB  TRAV14N-3;T… TRAJ26;T… 10850;… 7;15 
+#>  8 WT_DN4_GE_clon… CALVMNYNQGKLIF… TRA;TRB… TRAV13-1;TR… TRAJ23;T… 16886;… 13;1…
+#>  9 WT_DN4_GE_clon… CAVSNNNNAPRF;C… TRA;TRB  TRAV3-3;TRB… TRAJ43;T… 11874;… 8;25 
+#> 10 WT_DN4_GE_clon… CAGHYNVLYF;CAS… TRA;TRB  TRAV7-3;TRB… TRAJ21;T… 4144;5… 2;6  
 #> # … with 644 more rows
 ```
 
@@ -158,18 +158,18 @@ so_tcr@meta.data %>%
   filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols), Paired)
 #> # A tibble: 3,850 x 8
-#>    clonotype_id cdr3           chains  v_gene     j_gene    reads   umis  Paired
-#>    <chr>        <chr>          <chr>   <chr>      <chr>     <chr>   <chr> <chr> 
-#>  1 clonotype5   CAVQGANTEVFF   TRB     TRBV17     TRBJ1-1   42590   72    unpai…
-#>  2 clonotype6   CASSHPGQNSGNT… TRB     TRBV5      TRBJ1-3   12670   17    unpai…
-#>  3 clonotype7   CASSHWGETLYF   TRB     TRBV5      TRBJ2-3   31772   46    unpai…
-#>  4 clonotype8   CGARAQGLYNSPL… TRB     TRBV20     TRBJ1-6   7124    15    unpai…
-#>  5 clonotype9   CTAPAGGQNTEVFF TRB     TRBV1      TRBJ1-1   4744    8     unpai…
-#>  6 clonotype10  CASSQDLDWGGEQ… TRB     TRBV5      TRBJ2-1   34966   52    unpai…
-#>  7 clonotype11  CASRTGGCYEQYF… TRB;TRB TRBV13-1;… TRBJ2-7;… 4166;6… 7;171 unpai…
-#>  8 clonotype2   CASSPGTENTLYF  TRB     TRBV12-2   TRBJ2-4   9180    18    unpai…
-#>  9 clonotype12  CASSLKGARSDYTF TRB     TRBV12-1   TRBJ1-2   19742   29    unpai…
-#> 10 clonotype13  CASRLTGRDSDYT… TRB;TRB TRBV15;TR… TRBJ1-2;… 28860;… 48;22 unpai…
+#>    clonotype_id    cdr3          chains  v_gene     j_gene   reads  umis  Paired
+#>    <chr>           <chr>         <chr>   <chr>      <chr>    <chr>  <chr> <chr> 
+#>  1 WT_DN3_GE_clon… CAVQGANTEVFF  TRB     TRBV17     TRBJ1-1  42590  72    unpai…
+#>  2 WT_DN3_GE_clon… CASSHPGQNSGN… TRB     TRBV5      TRBJ1-3  12670  17    unpai…
+#>  3 WT_DN3_GE_clon… CASSHWGETLYF  TRB     TRBV5      TRBJ2-3  31772  46    unpai…
+#>  4 WT_DN3_GE_clon… CGARAQGLYNSP… TRB     TRBV20     TRBJ1-6  7124   15    unpai…
+#>  5 WT_DN3_GE_clon… CTAPAGGQNTEV… TRB     TRBV1      TRBJ1-1  4744   8     unpai…
+#>  6 WT_DN3_GE_clon… CASSQDLDWGGE… TRB     TRBV5      TRBJ2-1  34966  52    unpai…
+#>  7 WT_DN3_GE_clon… CASRTGGCYEQY… TRB;TRB TRBV13-1;… TRBJ2-7… 4166;… 7;171 unpai…
+#>  8 WT_DN3_GE_clon… CASSPGTENTLYF TRB     TRBV12-2   TRBJ2-4  9180   18    unpai…
+#>  9 WT_DN3_GE_clon… CASSLKGARSDY… TRB     TRBV12-1   TRBJ1-2  19742  29    unpai…
+#> 10 WT_DN3_GE_clon… CASRLTGRDSDY… TRB;TRB TRBV15;TR… TRBJ1-2… 28860… 48;22 unpai…
 #> # … with 3,840 more rows
 ```
 
@@ -195,18 +195,18 @@ so_tcr@meta.data %>%
   filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols), uniq_chains)
 #> # A tibble: 3,850 x 8
-#>    clonotype_id cdr3         chains  v_gene    j_gene   reads  umis  uniq_chains
-#>    <chr>        <chr>        <chr>   <chr>     <chr>    <chr>  <chr> <chr>      
-#>  1 clonotype5   CAVQGANTEVFF TRB     TRBV17    TRBJ1-1  42590  72    TRB        
-#>  2 clonotype6   CASSHPGQNSG… TRB     TRBV5     TRBJ1-3  12670  17    TRB        
-#>  3 clonotype7   CASSHWGETLYF TRB     TRBV5     TRBJ2-3  31772  46    TRB        
-#>  4 clonotype8   CGARAQGLYNS… TRB     TRBV20    TRBJ1-6  7124   15    TRB        
-#>  5 clonotype9   CTAPAGGQNTE… TRB     TRBV1     TRBJ1-1  4744   8     TRB        
-#>  6 clonotype10  CASSQDLDWGG… TRB     TRBV5     TRBJ2-1  34966  52    TRB        
-#>  7 clonotype11  CASRTGGCYEQ… TRB;TRB TRBV13-1… TRBJ2-7… 4166;… 7;171 TRB        
-#>  8 clonotype2   CASSPGTENTL… TRB     TRBV12-2  TRBJ2-4  9180   18    TRB        
-#>  9 clonotype12  CASSLKGARSD… TRB     TRBV12-1  TRBJ1-2  19742  29    TRB        
-#> 10 clonotype13  CASRLTGRDSD… TRB;TRB TRBV15;T… TRBJ1-2… 28860… 48;22 TRB        
+#>    clonotype_id    cdr3        chains v_gene   j_gene   reads  umis  uniq_chains
+#>    <chr>           <chr>       <chr>  <chr>    <chr>    <chr>  <chr> <chr>      
+#>  1 WT_DN3_GE_clon… CAVQGANTEV… TRB    TRBV17   TRBJ1-1  42590  72    TRB        
+#>  2 WT_DN3_GE_clon… CASSHPGQNS… TRB    TRBV5    TRBJ1-3  12670  17    TRB        
+#>  3 WT_DN3_GE_clon… CASSHWGETL… TRB    TRBV5    TRBJ2-3  31772  46    TRB        
+#>  4 WT_DN3_GE_clon… CGARAQGLYN… TRB    TRBV20   TRBJ1-6  7124   15    TRB        
+#>  5 WT_DN3_GE_clon… CTAPAGGQNT… TRB    TRBV1    TRBJ1-1  4744   8     TRB        
+#>  6 WT_DN3_GE_clon… CASSQDLDWG… TRB    TRBV5    TRBJ2-1  34966  52    TRB        
+#>  7 WT_DN3_GE_clon… CASRTGGCYE… TRB;T… TRBV13-… TRBJ2-7… 4166;… 7;171 TRB        
+#>  8 WT_DN3_GE_clon… CASSPGTENT… TRB    TRBV12-2 TRBJ2-4  9180   18    TRB        
+#>  9 WT_DN3_GE_clon… CASSLKGARS… TRB    TRBV12-1 TRBJ1-2  19742  29    TRB        
+#> 10 WT_DN3_GE_clon… CASRLTGRDS… TRB;T… TRBV15;… TRBJ1-2… 28860… 48;22 TRB        
 #> # … with 3,840 more rows
 ```
 
@@ -420,7 +420,7 @@ plot_grid(ident_heat, clust_heat, align = "h")
 
 <br>
 
-### VDJ Gene Usage
+### Gene Usage
 
 The V(D)J data imported from Cell Ranger also includes the specific
 genes detected for each cell. The function `calc_usage` can be used to
@@ -479,7 +479,10 @@ plot_usage(
   yaxis       = "percent",               # Units to plot
   plot_colors = c("grey90", "#d7301f"),  # Colors to use for heatmap
   plot_genes  = NULL,                    # A list of genes to plot
-  n_genes     = NULL                     # The number of top genes to plot
+  n_genes     = NULL,                    # The number of top genes to plot
+  
+  size        = 0.2,                     # Additional ggplot options
+  color       = "white"                  # Additional ggplot options
 ) +
   coord_flip()
 ```

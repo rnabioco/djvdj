@@ -24,13 +24,13 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   split_cols <- c(
     "v_gene",     "d_gene",
     "j_gene",     "c_gene",
-    "chain",      "cdr3",
+    "chains",     "cdr3",
     "cdr3_nt",    count_cols,
     "productive", "full_length"
   )
 
   vdj_cols <- c(
-    "barcode", "raw_clonotype_id",
+    "barcode", "clonotype_id",
     split_cols
   )
 
@@ -57,15 +57,13 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 
   # Add cell prefixes
   contigs <- purrr::imap(contigs, ~ {
-    .x <- dplyr::mutate(.x, barcode = paste0(.y, .data$barcode))
-
-    .x <- dplyr::rename(
+    .x <- dplyr::mutate(
       .x,
-      clonotype_id = paste0(.y, .data$raw_clonotype_id),
-      chains       = .data$chain
+      barcode      = paste0(.y, .data$barcode),
+      clonotype_id = paste0(.y, raw_clonotype_id)
     )
 
-    .x
+    .x <- dplyr::rename(.x, chains = .data$chain)
   })
 
   contigs <- dplyr::bind_rows(contigs)
