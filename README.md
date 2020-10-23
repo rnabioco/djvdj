@@ -292,6 +292,11 @@ diversity for each sample. Four different diversity metrics are plotted
 below.
 
 ``` r
+bar_theme <- theme(
+  axis.title  = element_blank(),
+  axis.text.x = element_text(angle = 45, hjust = 1)
+)
+
 # Metrics to use
 metrics <- list(
   "simpson"   = abdiv::simpson,
@@ -310,17 +315,10 @@ ggs <- metrics %>%
       method        = .x,            # abdiv method to use
       plot_colors   = ito_cols
     ) +
-      ggtitle(.y) +
-      theme(
-        axis.title  = element_blank(),
-        axis.text.x = element_text(angle = 45, hjust = 1)
-      )
+      ggtitle(.y)
   })
 
-plot_grid(
-  plotlist = ggs,
-  nrow = 1
-)
+plot_grid(plotlist = ggs, nrow = 1)
 ```
 
 ![](man/figures/README-div_plots-1.png)<!-- -->
@@ -480,7 +478,7 @@ plot_usage(
   yaxis       = "percent",               # Units to plot
   plot_colors = c("grey90", "#d7301f"),  # Colors to use for heatmap
   plot_genes  = NULL,                    # A list of genes to plot
-  n_genes     = 10                       # The number of top genes to plot
+  n_genes     = NULL                     # The number of top genes to plot
 ) +
   coord_flip()
 ```

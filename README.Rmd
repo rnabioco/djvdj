@@ -238,7 +238,7 @@ so_tcr@meta.data %>%
   select(all_of(vdj_cols), Paired)
 ```
 
-```{r "pair_umap", fig.width = 6.5, fig.height = 5, echo = FALSE}
+```{r "pair_umap", fig.width = 6.5, fig.height = 4.5, echo = FALSE}
 # Plot colors
 pairs_cols <- so_tcr$Paired %>%
   unique() %>%
@@ -272,6 +272,7 @@ pairs_bars <- so_tcr %>%
   scale_y_continuous(breaks = c(0, 0.5, 1)) +
   base_theme +
   theme(
+    plot.margin     = unit(c(120, 10, 10, 10), "pt"),
     legend.position = "none",
     axis.title.x    = element_blank(),
     axis.text.x     = element_text(angle = 45, hjust = 1)
@@ -281,9 +282,7 @@ pairs_bars <- so_tcr %>%
 plot_grid(
   pairs_umap, pairs_bars,
   rel_widths = c(1, 0.55),
-  nrow  = 1,
-  align = "h",
-  axis  = "tb"
+  nrow  = 1
 )
 ```
 
@@ -305,7 +304,7 @@ so_tcr@meta.data %>%
   select(all_of(vdj_cols), uniq_chains)
 ```
 
-```{r "chains_umap", fig.width = 6.5, fig.height = 5, echo = FALSE}
+```{r "chains_umap", fig.width = 6.5, fig.height = 4.5, echo = FALSE}
 # Plot colors
 chains_cols <- so_tcr@meta.data %>%
   pull(uniq_chains) %>%
@@ -338,6 +337,7 @@ chains_bars <- so_tcr %>%
   scale_y_continuous(breaks = c(0, 0.5, 1)) +
   base_theme +
   theme(
+    plot.margin     = unit(c(120, 10, 10, 10), "pt"),
     legend.position = "none",
     axis.title.x    = element_blank(),
     axis.text.x     = element_text(angle = 45, hjust = 1)
@@ -347,9 +347,7 @@ chains_bars <- so_tcr %>%
 plot_grid(
   chains_umap, chains_bars,
   rel_widths = c(1, 0.55),
-  nrow       = 1,
-  align      = "h",
-  axis       = "tb"
+  nrow       = 1
 )
 ```
 
@@ -416,6 +414,11 @@ so_tcr <- calc_diversity(
 The `plot_diversity` function will create plots summarizing repertoire diversity for each sample. Four different diversity metrics are plotted below.
 
 ```{r "div_plots", fig.width = 7, fig.height = 3}
+bar_theme <- theme(
+  axis.title  = element_blank(),
+  axis.text.x = element_text(angle = 45, hjust = 1)
+)
+
 # Metrics to use
 metrics <- list(
   "simpson"   = abdiv::simpson,
@@ -434,17 +437,10 @@ ggs <- metrics %>%
       method        = .x,            # abdiv method to use
       plot_colors   = ito_cols
     ) +
-      ggtitle(.y) +
-      theme(
-        axis.title  = element_blank(),
-        axis.text.x = element_text(angle = 45, hjust = 1)
-      )
+      ggtitle(.y)
   })
 
-plot_grid(
-  plotlist = ggs,
-  nrow = 1
-)
+plot_grid(plotlist = ggs, nrow = 1)
 ```
 
 <br>
@@ -535,7 +531,7 @@ The companion function `plot_usage` can be used to create a heatmap summarizing 
 
 In this example we are only plotting the top 10 genes that have the highest average usage.
 
-```{r "usage_plots_1", fig.width = 6, fig.height = 3}
+```{r "usage_plots_1", fig.width = 11, fig.height = 3}
 plot_usage(
   sobj_in     = so_tcr,                  # Seurat object
   gene_cols   = "v_gene",                # meta.data column(s) containing genes
@@ -546,7 +542,7 @@ plot_usage(
   yaxis       = "percent",               # Units to plot
   plot_colors = c("grey90", "#d7301f"),  # Colors to use for heatmap
   plot_genes  = NULL,                    # A list of genes to plot
-  n_genes     = 10                       # The number of top genes to plot
+  n_genes     = NULL                     # The number of top genes to plot
 ) +
   coord_flip()
 ```
