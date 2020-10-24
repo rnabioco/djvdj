@@ -11,9 +11,9 @@
   fill,
   plot_colors = NULL,
   na_color = "white",
-  legd_title = fill,
-  angle = 45,
-  hjust = 1,
+  legd_ttl = fill,
+  ang = 45,
+  hjst = 1,
   ...
 )
 }
@@ -30,13 +30,13 @@
 
 \item{na_color}{Color to use for missing values}
 
-\item{legd_title}{Legend title}
+\item{ang}{Angle of x-axis text}
 
-\item{angle}{Angle of x-axis text}
-
-\item{hjust}{Horizontal justification for x-axis text}
+\item{hjst}{Horizontal justification for x-axis text}
 
 \item{...}{Additional arguments to pass to geom_tile}
+
+\item{legd_title}{Legend title}
 }
 \description{
 Create ggplot heatmap

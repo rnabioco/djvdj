@@ -190,7 +190,7 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
     meta_df <- dplyr::group_by(meta_df, .data$.cell_id)
   }
 
-  # Store results from filtering expression
+  # Store results from filtering
   meta_df <- dplyr::mutate(meta_df, .KEEP = TRUE)
 
   if (!is.null(dplyr::enexpr(filt))) {
@@ -471,6 +471,10 @@ calc_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
   if (!return_seurat) {
     res <- dplyr::select(vdj_df, dplyr::all_of(c(cluster_col, div_col)))
     res <- dplyr::distinct(res)
+
+    if (is.null(cluster_col)) {
+      res <- unlist(res)
+    }
 
     return(res)
   }

@@ -9,6 +9,7 @@ plot_usage(
   gene_cols,
   cluster_col = NULL,
   chain = NULL,
+  type = "heatmap",
   plot_colors = NULL,
   plot_genes = NULL,
   n_genes = NULL,
@@ -29,6 +30,8 @@ calculating gene usage}
 
 \item{chain}{Chain to use for calculating gene usage. Set to NULL to include
 all chains.}
+
+\item{type}{Type of plot to create, must be either 'heatmap' or 'bar'}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 

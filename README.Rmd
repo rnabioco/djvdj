@@ -530,27 +530,25 @@ calc_usage(
 
 <br>
 
-The companion function `plot_usage` can be used to create a heatmap summarizing these results. Using the `yaxis` argument, the percent or absolute count (frequency) can be used for plotting. The genes plotting can also be selected using the `plot_genes` argument, or the total number of genes to plot can be passed to `n_genes`.
+The function `plot_usage` can be used to summarize these results. Using the `yaxis` argument, the percent or absolute count (frequency) can be used for plotting. The genes plotted can also be selected using the `plot_genes` argument, or the number of top genes (most frequent) to plot can be specified with `n_genes`.
 
-In this example we are only plotting the top 10 genes that have the highest average usage.
-
-```{r "usage_plots_1", fig.width = 11, fig.height = 3}
+```{r "usage_plots_1", fig.width = 11, fig.height = 3.5}
 plot_usage(
-  sobj_in     = so_tcr,                  # Seurat object
-  gene_cols   = "v_gene",                # meta.data column(s) containing genes
-  cluster_col = "orig.ident",            # meta.data column containing cell labels
-  chain       = "TRB",                   # Chain to use for filtering genes
-  chain_col   = "chains",                # meta.data column containing chains
+  sobj_in     = so_tcr,                # Seurat object
+  gene_cols   = "v_gene",              # meta.data column(s) containing genes
+  cluster_col = "orig.ident",          # meta.data column containing cell labels
+  type        = "bar",                 # Type of plot
+  chain       = "TRB",                 # Chain to use for filtering genes
+  chain_col   = "chains",              # meta.data column containing chains
   
-  yaxis       = "percent",               # Units to plot
-  plot_colors = c("grey90", "#d7301f"),  # Colors to use for heatmap
-  plot_genes  = NULL,                    # A list of genes to plot
-  n_genes     = NULL,                    # The number of top genes to plot
+  yaxis       = "percent",             # Units to plot
+  plot_colors = ito_cols,              # Colors to use for heatmap
+  plot_genes  = NULL,                  # A list of genes to plot
+  n_genes     = NULL,                  # The number of top genes to plot
   
-  size        = 0.2,                     # Additional ggplot options
-  color       = "white"                  # Additional ggplot options
-) +
-  coord_flip()
+  size        = 0.2,                   # Additional ggplot options
+  color       = "white"                # Additional ggplot options
+)
 ```
 
 <br>

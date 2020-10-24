@@ -521,6 +521,7 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 #' calculating gene usage
 #' @param chain Chain to use for calculating gene usage. Set to NULL to include
 #' all chains.
+#' @param type Type of plot to create, must be either 'heatmap' or 'bar'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_genes Character vector containing genes to plot
 #' @param n_genes Number of top genes to plot based on average usage
@@ -531,9 +532,9 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 #' @param sep Separator to use for expanding gene_cols
 #' @return ggplot object
 #' @export
-plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plot_colors = NULL,
-                       plot_genes = NULL, n_genes = NULL, clust_levels = NULL, yaxis = "percent",
-                       ..., chain_col = NULL, sep = ";") {
+plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, type = "heatmap",
+                       plot_colors = NULL, plot_genes = NULL, n_genes = NULL, clust_levels = NULL,
+                       yaxis = "percent", ..., chain_col = NULL, sep = ";") {
 
   # Check inputs
   if (length(gene_cols) > 2) {
@@ -609,7 +610,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
   # Select top genes to plot
   if (!is.null(n_genes)) {
     top_genes <- dplyr::slice_max(top_genes, .data$usage, n = n_genes)
-    top_genes <- unlist(top_genes[, gene_cols], use.names = F)
+    top_genes <- unlist(top_genes[, gene_cols], use.names = FALSE)
 
     gg_df <- dplyr::filter(gg_df, dplyr::across(
       dplyr::all_of(gene_cols),
@@ -617,8 +618,22 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, plo
     ))
   }
 
-  # Create heatmap for single gene
+  # Create heatmap or bar graph for single gene
   if (length(gene_cols) == 1) {
+    if (type == "bar") {
+       res <- .create_bars(
+         gg_df,
+         x           = gene_cols,
+         y           = usage_col,
+         fill        = cluster_col,
+         plot_colors = plot_colors,
+         y_ttl       = yaxis,
+         ...
+       )
+
+      return(res)
+    }
+
     res <- .create_heatmap(
       gg_df,
       x           = cluster_col,
@@ -858,30 +873,93 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
 #' @param plot_colors Character vector containing colors for plotting
 #' @param na_color Color to use for missing values
 #' @param legd_title Legend title
-#' @param angle Angle of x-axis text
-#' @param hjust Horizontal justification for x-axis text
+#' @param ang Angle of x-axis text
+#' @param hjst Horizontal justification for x-axis text
 #' @param ... Additional arguments to pass to geom_tile
 .create_heatmap <- function(df_in, x, y, fill, plot_colors = NULL, na_color = "white",
-                            legd_title = fill, angle = 45, hjust = 1, ...) {
+                            legd_ttl = fill, ang = 45, hjst = 1, ...) {
 
   if (is.null(plot_colors)) {
     plot_colors <- c("grey90", "#56B4E9")
   }
 
-  res <- ggplot2::ggplot(
-    df_in,
-    ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(fill))
-  ) +
-    ggplot2::geom_tile(...) +
-    ggplot2::guides(fill = ggplot2::guide_colorbar(title = legd_title)) +
+  if (!is.null(x)) {
+    res <- ggplot2::ggplot(
+      df_in,
+      ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(fill))
+    )
+
+  } else {
+    res <- ggplot2::ggplot(
+      df_in,
+      ggplot2::aes("sample", !!sym(y), fill = !!sym(fill))
+    )
+  }
+
+  res <- res +
+    ggplot2::geom_tile() +
+    ggplot2::guides(fill = ggplot2::guide_colorbar(title = legd_ttl)) +
     ggplot2::scale_fill_gradientn(colors = plot_colors, na.value = na_color) +
     vdj_theme() +
     ggplot2::theme(
       axis.title  = ggplot2::element_blank(),
       axis.line   = ggplot2::element_blank(),
       axis.ticks  = ggplot2::element_blank(),
-      axis.text.x = ggplot2::element_text(angle = angle, hjust = hjust)
+      axis.text.x = ggplot2::element_text(angle = ang, hjust = hjst)
     )
+
+  res
+}
+
+
+#' Create ggplot bar graph
+#'
+#' @param df_in data.frame
+#' @param x Variable to plot on x-axis
+#' @param y Variable to plot on y-axis
+#' @param fill Variable to use for fill color
+#'
+.create_bars <- function(df_in, x, y, fill, plot_colors = NULL, y_ttl = y, ang = 45,
+                         hjst = 1, ...) {
+
+  # Reverse bar order
+  df_in <- dplyr::mutate(
+    df_in,
+    !!sym(x) := factor(
+      !!sym(x),
+      levels = rev(levels(!!sym(x)))
+    )
+  )
+
+  if (!is.null(fill)) {
+    res <- ggplot2::ggplot(
+      df_in,
+      ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(fill))
+    )
+
+  } else {
+    res <- ggplot2::ggplot(
+      df_in,
+      aes(!!sym(x), !!sym(y))
+    )
+  }
+
+  res <- ggplot2::ggplot(
+    df_in,
+    aes(!!sym(x), !!sym(y), fill = !!sym(fill))
+  ) +
+    ggplot2::geom_col(..., position = "dodge") +
+    labs(y = y_ttl) +
+    vdj_theme() +
+    ggplot2::theme(
+      axis.title.x = ggplot2::element_blank(),
+      axis.text.x  = ggplot2::element_text(angle = ang, hjust = hjst)
+    )
+
+  if (!is.null(plot_colors)) {
+    res <- res +
+      ggplot2::scale_fill_manual(values = plot_colors)
+  }
 
   res
 }
