@@ -500,7 +500,7 @@ clust_heat <- plot_similarity(
   cluster_col   = "seurat_clusters",
   method        = abdiv::jaccard,
   plot_colors   = c("grey90", "#56B4E9"),  
-  size          = 1,                      # Additional ggplot options
+  size          = 0.2,                    # Additional ggplot options
   color         = "white"                 # Additional ggplot options
 ) +
   heat_theme +

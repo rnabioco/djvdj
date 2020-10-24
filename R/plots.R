@@ -640,7 +640,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
       y           = gene_cols,
       fill        = usage_col,
       plot_colors = plot_colors,
-      legd_title  = yaxis,
+      legd_ttl    = yaxis,
       ...
     )
 
@@ -704,7 +704,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
     y           = gene_cols[2],
     fill        = usage_col,
     plot_colors = plot_colors,
-    legd_title  = yaxis,
+    legd_ttl    = yaxis,
     ...
   )
 
@@ -746,17 +746,17 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
 #' @param feat_col Name of column containing feature values
 #' @param lim The value cutoff
 #' @param op The operator to use for comparing values with lim
-#' (either "<" or ">")
+#' (either "less" or "greater")
 #' @return data.frame with modified feature values
 .set_lims <- function(df_in, feat_col, lim, op) {
 
-  if (!op %in% c("<", ">")) {
-    stop("op must be either \"<\" or \">\".")
+  if (!op %in% c("less", "greater")) {
+    stop("op must be either \"less\" or \"greater\".")
   }
 
   func <- "min"
 
-  if (op == "<") {
+  if (op == "less") {
     func <- "max"
   }
 
@@ -872,7 +872,7 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
 #' @param fill Variable to use for the fill color
 #' @param plot_colors Character vector containing colors for plotting
 #' @param na_color Color to use for missing values
-#' @param legd_title Legend title
+#' @param legd_ttl Legend title
 #' @param ang Angle of x-axis text
 #' @param hjst Horizontal justification for x-axis text
 #' @param ... Additional arguments to pass to geom_tile
@@ -897,7 +897,7 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
   }
 
   res <- res +
-    ggplot2::geom_tile() +
+    ggplot2::geom_tile(...) +
     ggplot2::guides(fill = ggplot2::guide_colorbar(title = legd_ttl)) +
     ggplot2::scale_fill_gradientn(colors = plot_colors, na.value = na_color) +
     vdj_theme() +
