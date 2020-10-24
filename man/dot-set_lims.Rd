@@ -14,7 +14,7 @@
 \item{lim}{The value cutoff}
 
 \item{op}{The operator to use for comparing values with lim
-(either "<" or ">")}
+(either "less" or "greater")}
 }
 \value{
 data.frame with modified feature values

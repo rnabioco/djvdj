@@ -21,7 +21,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   # VDJ columns
   count_cols <- c("reads", "umis")
 
-  split_cols <- c(
+  sep_cols <- c(
     "v_gene",     "d_gene",
     "j_gene",     "c_gene",
     "chains",     "cdr3",
@@ -31,7 +31,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 
   vdj_cols <- c(
     "barcode", "clonotype_id",
-    split_cols
+    sep_cols
   )
 
   # Check path names
@@ -97,7 +97,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     contigs,
     n_chains = n(),
     dplyr::across(
-      all_of(split_cols),
+      all_of(sep_cols),
       ~ paste0(as.character(.x), collapse = sep)
     ),
     .groups = "drop"
@@ -122,7 +122,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 }
 
 
-#' Subset Seurat object based on V(D)J meta.data
+#' Filter V(D)J meta.data
 #'
 #' @param sobj_in Seurat object containing V(D)J data
 #' @param filt Condition to use for filtering object. If set to NULL, all cells
@@ -137,64 +137,104 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
 #' is used to determine which cells have V(D)J data. If clonotype_col is set to
 #' NULL, filtering is performed regardless of whether V(D)J data is present for
-#' the cell.
-#' @param vdj_cols The names of meta.data columns to expand for filtering
+#' the cell
+#' @param filter_cells Should cells be removed from object? If set FALSE
+#' (default) V(D)J data will be removed from meta.data but no cells will be
+#' removed from the object
 #' @param sep Separator to use for expanding meta.data columns
+#' @param vdj_cols meta.data columns containing VDJ data to use for filtering.
+#' If set to NULL (recommended) columns are automatically selected.
 #' @param return_seurat Return a Seurat object. If set to FALSE, the meta.data
 #' table is returned.
 #' @return Filtered Seurat object
 #' @export
 filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false = FALSE,
-                       clonotype_col = "clonotype_id", vdj_cols = c("chains", "cdr3"),
-                       sep = ";", return_seurat = TRUE) {
+                       clonotype_col = "clonotype_id", filter_cells = FALSE, sep = ";",
+                       vdj_cols = NULL, return_seurat = TRUE) {
 
   if (is.null(dplyr::enexpr(filt)) && is.null(new_col)) {
-    stop("filt and/or new_col are required")
+    stop("filt and/or new_col are required.")
+  }
+
+  if (!filter_cells && is.null(clonotype_col)) {
+    stop("clonotype_col must be provided when filter_cells is set to FALSE.")
   }
 
   meta_df <- sobj_in@meta.data
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
 
-  # Split columns into vectors
-  if (!is.null(vdj_cols)) {
+  # Identify columns with VDJ data based on NAs in clonotype_col
+  # If no clonotype_col is given use all columns
+  if (is.null(clonotype_col)) {
+    vdj_cols <- colnames(meta_df)
+    vdj_cols <- vdj_cols[vdj_cols != ".cell_id"]
+  }
 
-    # Save original columns
-    split_names <- purrr::set_names(
-      x  = vdj_cols,
-      nm = paste0(".", vdj_cols)
+  if (is.null(vdj_cols)) {
+    vdj_cols <- dplyr::mutate(
+      meta_df,
+      dplyr::across(dplyr::everything(), is.na)
     )
 
-    meta_df <- dplyr::mutate(meta_df, !!!syms(split_names))
+    vdj_cols <- purrr::keep(
+      vdj_cols,
+      ~ identical(.x, dplyr::pull(vdj_cols, clonotype_col))
+    )
+
+    vdj_cols <- colnames(vdj_cols)
+  }
+
+  # Identify columns to split based on sep
+  sep_cols <- dplyr::select(meta_df, all_of(vdj_cols))
+
+  sep_cols <- purrr::keep(
+    sep_cols,
+    ~ any(purrr::map_lgl(na.omit(.x), grepl, pattern = sep))
+  )
+
+  sep_cols <- colnames(sep_cols)
+
+  # Split columns into vectors
+  if (!purrr::is_empty(sep_cols)) {
+
+    # Save original columns
+    sep_names <- purrr::set_names(
+      x  = sep_cols,
+      nm = paste0(".", sep_cols)
+    )
+
+    meta_df <- dplyr::mutate(meta_df, !!!syms(sep_names))
 
     # Split into vectors
     meta_df <- dplyr::mutate(meta_df, dplyr::across(
-      dplyr::all_of(vdj_cols),
+      dplyr::all_of(sep_cols),
       ~ strsplit(.x, sep)
     ))
 
-    meta_df <- tidyr::unnest(meta_df, cols = dplyr::all_of(vdj_cols))
-
     # Convert to numeric or logical if possible
+    num_cols <- c("umis", "reads")
+    lgl_cols <- c("productive", "full_length")
+
     meta_df <- dplyr::mutate(
       meta_df,
       across(
-        dplyr::all_of(vdj_cols),
-        ~ .convert_char(.x, as.numeric)
+        dplyr::all_of(num_cols),
+        map, ~ .convert_char(.x, as.numeric)
       ),
       across(
-        dplyr::all_of(vdj_cols),
-        ~ .convert_char(.x, as.logical)
+        dplyr::all_of(lgl_cols),
+        map, ~ .convert_char(.x, as.logical)
       )
     )
-
-    meta_df <- dplyr::group_by(meta_df, .data$.cell_id)
   }
 
   # Store results from filtering
   meta_df <- dplyr::mutate(meta_df, .KEEP = TRUE)
 
   if (!is.null(dplyr::enexpr(filt))) {
+    meta_df <- dplyr::rowwise(meta_df)
     meta_df <- dplyr::mutate(meta_df, .KEEP = {{filt}})
+    meta_df <- dplyr::ungroup(meta_df)
   }
 
   # Add new column with values based on filtering expression
@@ -218,6 +258,17 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
       )
     }
 
+  # Remove VDJ data from meta.data
+  } else if (!filter_cells) {
+    meta_df <- dplyr::mutate(
+      meta_df,
+      dplyr::across(
+        all_of(c(vdj_cols, names(sep_names))),
+        ~ ifelse(.KEEP, .x, NA)
+      )
+    )
+
+  # Filter cells from object
   } else {
     if (!is.null(clonotype_col)) {
       meta_df <- dplyr::mutate(
@@ -235,13 +286,13 @@ filter_vdj <- function(sobj_in, filt = NULL, new_col = NULL, true = TRUE, false 
 
   # Remove columns created for filtering
   if (!is.null(vdj_cols)) {
-    split_names <- purrr::set_names(
-      x  = names(split_names),
-      nm = unname(split_names)
+    sep_names <- purrr::set_names(
+      x  = names(sep_names),
+      nm = unname(sep_names)
     )
 
-    meta_df <- dplyr::select(meta_df, !dplyr::all_of(c(vdj_cols, ".KEEP")))
-    meta_df <- dplyr::rename(meta_df, !!!syms(split_names))
+    meta_df <- dplyr::select(meta_df, !dplyr::all_of(c(sep_cols, ".KEEP")))
+    meta_df <- dplyr::rename(meta_df, !!!syms(sep_names))
     meta_df <- dplyr::distinct(meta_df)
     meta_df <- dplyr::ungroup(meta_df)
   }
@@ -614,8 +665,8 @@ calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
                        chain_col = NULL, sep = ";") {
 
   # data.frame to calculate usage
-  split_cols <- c(gene_cols, chain_col)
-  vdj_cols   <- c(".cell_id", cluster_col, split_cols)
+  sep_cols <- c(gene_cols, chain_col)
+  vdj_cols   <- c(".cell_id", cluster_col, sep_cols)
 
   meta_df <- sobj_in@meta.data
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
@@ -627,7 +678,7 @@ calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
   ))
 
   res <- dplyr::mutate(meta_df, across(
-    all_of(split_cols),
+    all_of(sep_cols),
     ~ strsplit(.x, sep)
   ))
 

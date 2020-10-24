@@ -1,7 +1,5 @@
 ---
 output: github_document
-editor_options: 
-  chunk_output_type: inline
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -206,9 +204,10 @@ Filter to only include cells with paired alpha and beta chains.
 
 ```{r}
 so_filt <- filter_vdj(
-  sobj_in  = so_tcr,                            # Seurat object
+  sobj_in  = so_tcr,                           # Seurat object
   filt     = all(c("TRA", "TRB") %in% chains),  # Expression for filtering
-  vdj_cols = "chains"
+  filter_cells = T,
+  clonotype_col = NULL
 )
 
 # Take a look at the meta.data
