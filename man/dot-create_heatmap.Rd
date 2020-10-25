@@ -36,7 +36,10 @@
 
 \item{hjst}{Horizontal justification for x-axis text}
 
-\item{...}{Additional arguments to pass to geom_tile}
+\item{...}{Additional arguments to pass to ggplot}
+}
+\value{
+ggplot object
 }
 \description{
 Create ggplot heatmap

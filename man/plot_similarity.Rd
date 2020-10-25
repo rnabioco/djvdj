@@ -27,7 +27,7 @@ calculating overlap}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
-\item{...}{Additional arguments to pass to geom_tile}
+\item{...}{Additional arguments to pass to ggplot}
 }
 \value{
 ggplot object

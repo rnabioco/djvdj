@@ -10,7 +10,7 @@ plot_abundance(
   cluster_col = NULL,
   yaxis = "percent",
   plot_colors = NULL,
-  plot_levels = NULL,
+  plot_lvls = NULL,
   label_col = NULL,
   n_labels = 2,
   label_aes = list(),
@@ -31,7 +31,7 @@ grouping cells when calculating clonotype abundance}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
-\item{plot_levels}{Character vector containing levels for ordering}
+\item{plot_lvls}{Character vector containing levels for ordering}
 
 \item{label_col}{meta.data column containing labels to use for plot}
 

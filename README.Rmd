@@ -1,5 +1,7 @@
 ---
 output: github_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -114,7 +116,7 @@ get_cols <- create_col_fun(ito_cols)
 
 <br>
 
-## TCR analysis
+## Vignette
 
 Write a description here...
 
@@ -174,13 +176,13 @@ names(paths) <- str_c(samples, "_GE")
 
 # Import VDJ data
 so_tcr <- import_vdj(
-  sobj_in         = so_tcr,  # Seurat object
-  vdj_dir         = paths,   # Directories containing cellranger output files
-  prefix          = "",      # Prefix to add to new meta.data columns
-  filter_contigs = TRUE      # Only include chains with at least one productive contig
+  sobj_in        = so_tcr,  # Seurat object
+  vdj_dir        = paths,   # Directories containing cellranger output files
+  prefix         = "",      # Prefix to add to new meta.data columns
+  filter_contigs = TRUE     # Only include chains with at least one productive contig
 )
 
-# Take a look at the added meta.data
+# Take a look at the meta.data
 vdj_cols <- c(
   "clonotype_id", "cdr3",
   "chains", "v_gene", 
@@ -196,112 +198,24 @@ so_tcr@meta.data %>%
 
 <br>
 
-### Filtering
+### Quality Control
 
-`filter_vdj` allows you to filter a Seurat object using the added clonotype information or any other columns present in the meta.data. When filtering, columns with VDJ data will be expanded based on the delimiter ";" (or a character passed to `sep`). The columns that are expanded for filtering can be specified with the `vdj_cols` argument. By default filtering is only performed on cells that include VDJ data.
+#### Paired Chains
 
-Filter to only include cells with paired alpha and beta chains.
+The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired alpha and beta chains. Using the `mutate_vdj` function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.
 
-```{r}
-so_filt <- filter_vdj(
-  sobj_in  = so_tcr,                           # Seurat object
-  filt     = all(c("TRA", "TRB") %in% chains),  # Expression for filtering
-  filter_cells = T,
-  clonotype_col = NULL
-)
-
-# Take a look at the meta.data
-so_filt@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols))
-```
-
-<br>
-
-Instead of filtering, `filter_vdj` can also add a new column to the object meta.data using the `new_col` argument. The values present in `new_col` will be based on the values (or expression) passed to the `true` and `false` arguments.
-
-In this example a new column is added indicating whether the cell has a paired alpha and beta chain. This is useful for generating new cell labels for plotting.
+In this example we create a new column that summarizes the unique chains identified for each cell. We can then overlay these cell labels on a UMAP projection.
 
 ```{r}
-so_tcr <- filter_vdj(
-  sobj_in = so_tcr,                            # Seurat object
-  filt    = all(c("TRA", "TRB") %in% chains),  # Condition to use for filtering
-  new_col = "Paired",                          # Name of new column
-  true    = "paired",                          # Value when condition is TRUE
-  false   = "unpaired"                         # Value when condition is FALSE
+so_tcr <- mutate_vdj(
+  sobj_in     = so_tcr,                                # Seurat object
+  uniq_chains = str_c(unique(chains), collapse = "_")  # New column
 )
 
 # Take a look at the meta.data
 so_tcr@meta.data %>%
   as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols), Paired)
-```
-
-```{r "pair_umap", fig.width = 6.5, fig.height = 4.5, echo = FALSE}
-# Plot colors
-pairs_cols <- so_tcr$Paired %>%
-  unique() %>%
-  na.omit()
-
-pairs_cols <- set_names(
-  x  = get_cols()[seq_along(pairs_cols)],
-  nm = pairs_cols
-)
-
-# Paired UMAP
-pairs_umap <- so_tcr %>%
-  plot_features(
-    x           = "UMAP_1",
-    y           = "UMAP_2",
-    feature     = "Paired",
-    pt_size     = 0.02,
-    plot_colors = pairs_cols
-  ) +
-  ggtitle("Paired chains") +
-  guides(color = create_guide(nrow = 2)) +
-  umap_theme
-
-# Paired bar graphs
-pairs_bars <- so_tcr %>%
-  plot_cell_count(
-    x           = "orig.ident",
-    fill_col    = "Paired",
-    plot_colors = pairs_cols
-  ) +
-  scale_y_continuous(breaks = c(0, 0.5, 1)) +
-  base_theme +
-  theme(
-    plot.margin     = unit(c(120, 10, 10, 10), "pt"),
-    legend.position = "none",
-    axis.title.x    = element_blank(),
-    axis.text.x     = element_text(angle = 45, hjust = 1)
-  )
-
-# Final figure
-plot_grid(
-  pairs_umap, pairs_bars,
-  rel_widths = c(1, 0.55),
-  nrow  = 1
-)
-```
-
-<br>
-
-More complicated statements referring to meta.data columns can be used for the `filt`, `true`, and `false` arguments. For more detailed analysis of the chains detected for each cell, a new cell label can be created for only the unique chains detected in each cell.
-
-```{r}
-so_tcr <- filter_vdj(
-  sobj_in = so_tcr,                                # Seurat object
-  new_col = "uniq_chains",                         # Name of new column
-  true    = str_c(unique(chains), collapse = "_")  # Value when condition is TRUE
-)
-
-# Take a look at the meta.data
-so_tcr@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
+  filter(!is.na(clonotype_id), n_chains > 2) %>%
   select(all_of(vdj_cols), uniq_chains)
 ```
 
@@ -350,6 +264,57 @@ plot_grid(
   rel_widths = c(1, 0.55),
   nrow       = 1
 )
+```
+
+<br>
+
+Clonotypes that lack paired alpha and beta chains can be removed from the meta.data using `filter_vdj`. With this function cells that match the provided condition are filtered from the object. Setting `filter_cells` to `FALSE` will just remove the V(D)J data without completely removing these cells.
+
+```{r}
+so_filt <- filter_vdj(
+  sobj_in      = so_tcr,                            # Seurat object
+  filt         = all(c("TRA", "TRB") %in% chains),  # Condition for filtering
+  filter_cells = FALSE                              # Should cells be removed from object
+)
+
+# Take a look at the meta.data
+so_filt@meta.data %>%
+  as_tibble() %>%
+  filter(!is.na(clonotype_id)) %>%
+  select(all_of(vdj_cols))
+```
+
+<br>
+
+#### Read Support
+
+The read support for each chain can be visualized with the `plot_reads` function. This will create plots summarizing the number of UMIs and total reads that were obtained for each chain.
+
+```{r "read_support", fig.width = 6.5, fig.height = 3}
+plot_reads(
+  sobj_in      = so_tcr,        # Seurat object
+  chain_col    = "chains",      # Column containing chains for each cell
+  cluster_col  = "orig.ident",  # Column containing labels to group by
+  plot_colors  = ito_cols       # Plot colors
+)
+```
+
+<br>
+
+Clonotypes that do not have adequate UMI support can be filtered from the object using `filter_vdj`. In this example we filter for clonotypes that have chains supported by at least two UMIs.
+
+```{r}
+so_tcr <- filter_vdj(
+  sobj_in      = so_tcr,         # Seurat object
+  filt         = all(umis > 1),  # Condition for filtering
+  filter_cells = FALSE           # Should cells be removed from object
+)
+
+# Take a look at the meta.data
+so_tcr@meta.data %>%
+  as_tibble() %>%
+  filter(!is.na(clonotype_id)) %>%
+  select(all_of(vdj_cols))
 ```
 
 <br>

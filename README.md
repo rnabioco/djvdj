@@ -26,7 +26,7 @@ devtools::install_github("rnabioco/djvdj")
 
 <br>
 
-## TCR analysis
+## Vignette
 
 Write a description here…
 
@@ -57,13 +57,13 @@ names(paths) <- str_c(samples, "_GE")
 
 # Import VDJ data
 so_tcr <- import_vdj(
-  sobj_in         = so_tcr,  # Seurat object
-  vdj_dir         = paths,   # Directories containing cellranger output files
-  prefix          = "",      # Prefix to add to new meta.data columns
-  filter_contigs = TRUE      # Only include chains with at least one productive contig
+  sobj_in        = so_tcr,  # Seurat object
+  vdj_dir        = paths,   # Directories containing cellranger output files
+  prefix         = "",      # Prefix to add to new meta.data columns
+  filter_contigs = TRUE     # Only include chains with at least one productive contig
 )
 
-# Take a look at the added meta.data
+# Take a look at the meta.data
 vdj_cols <- c(
   "clonotype_id", "cdr3",
   "chains", "v_gene", 
@@ -93,22 +93,61 @@ so_tcr@meta.data %>%
 
 <br>
 
-### Filtering
+### Quality Control
 
-`filter_vdj` allows you to filter a Seurat object using the added
-clonotype information or any other columns present in the meta.data.
-When filtering, columns with VDJ data will be expanded based on the
-delimiter “;” (or a character passed to `sep`). The columns that are
-expanded for filtering can be specified with the `vdj_cols` argument. By
-default filtering is only performed on cells that include VDJ data.
+#### Paired Chains
 
-Filter to only include cells with paired alpha and beta chains.
+The V(D)J data imported from Cell Ranger will include clonotypes that do
+not have paired alpha and beta chains. Using the `mutate_vdj` function,
+we can add a new cell label to the meta.data to allow for easy
+visualization of these cells.
+
+In this example we create a new column that summarizes the unique chains
+identified for each cell. We can then overlay these cell labels on a
+UMAP projection.
+
+``` r
+so_tcr <- mutate_vdj(
+  sobj_in     = so_tcr,                                # Seurat object
+  uniq_chains = str_c(unique(chains), collapse = "_")  # New column
+)
+
+# Take a look at the meta.data
+so_tcr@meta.data %>%
+  as_tibble() %>%
+  filter(!is.na(clonotype_id), n_chains > 2) %>%
+  select(all_of(vdj_cols), uniq_chains)
+#> # A tibble: 101 x 8
+#>    clonotype_id  cdr3       chains  v_gene    j_gene    reads  umis  uniq_chains
+#>    <chr>         <chr>      <chr>   <chr>     <chr>     <chr>  <chr> <chr>      
+#>  1 WT_DN4_GE_cl… CATTGFASA… TRA;TR… TRAV16D-… TRAJ35;T… 904;6… 2;6;… TRA_TRB    
+#>  2 WT_DN4_GE_cl… CALVMNYNQ… TRA;TR… TRAV13-1… TRAJ23;T… 16886… 13;1… TRA_TRB    
+#>  3 WT_DN4_GE_cl… CAAYSGGSN… TRA;TR… TRAV14-3… TRAJ53;T… 12106… 14;8… TRA_TRB    
+#>  4 WT_DN4_GE_cl… CVVVDLPGT… TRA;TR… TRAV11;T… TRAJ28;T… 6974;… 7;11… TRA_TRB    
+#>  5 WT_DN4_GE_cl… CAARRGSNY… TRA;TR… TRAV14D-… TRAJ33;T… 20144… 13;3… TRA_TRB    
+#>  6 WT_DN4_GE_cl… CVAHNNAGA… TRA;TR… TRAV11D;… TRAJ39;T… 7230;… 5;10… TRA_TRB    
+#>  7 WT_DN4_GE_cl… CAASTSGSW… TRA;TR… TRAV7D-2… TRAJ22;T… 18152… 11;8… TRA_TRB    
+#>  8 WT_DN4_GE_cl… CALLASSSF… TRA;TR… TRAV12-1… TRAJ50;T… 12942… 19;5… TRA_TRB    
+#>  9 WT_DN4_GE_cl… CAPGTGGYK… TRA;TR… TRAV13-2… TRAJ12;T… 11882… 13;4… TRA_TRB    
+#> 10 WT_DN4_GE_cl… CAASALRDS… TRA;TR… TRAV14N-… TRAJ13;T… 13372… 8;15… TRA_TRB    
+#> # … with 91 more rows
+```
+
+![](man/figures/README-chains_umap-1.png)<!-- -->
+
+<br>
+
+Clonotypes that lack paired alpha and beta chains can be removed from
+the meta.data using `filter_vdj`. With this function cells that match
+the provided condition are filtered from the object. Setting
+`filter_cells` to `FALSE` will just remove the V(D)J data without
+completely removing these cells.
 
 ``` r
 so_filt <- filter_vdj(
-  sobj_in  = so_tcr,                            # Seurat object
-  filt     = all(c("TRA", "TRB") %in% chains),  # Expression for filtering
-  vdj_cols = "chains"
+  sobj_in      = so_tcr,                            # Seurat object
+  filt         = all(c("TRA", "TRB") %in% chains),  # Condition for filtering
+  filter_cells = FALSE                              # Should cells be removed from object
 )
 
 # Take a look at the meta.data
@@ -134,83 +173,56 @@ so_filt@meta.data %>%
 
 <br>
 
-Instead of filtering, `filter_vdj` can also add a new column to the
-object meta.data using the `new_col` argument. The values present in
-`new_col` will be based on the values (or expression) passed to the
-`true` and `false` arguments.
+#### Read Support
 
-In this example a new column is added indicating whether the cell has a
-paired alpha and beta chain. This is useful for generating new cell
-labels for plotting.
+The read support for each chain can be visualized with the `plot_reads`
+function. This will create plots summarizing the number of UMIs and
+total reads that were obtained for each chain.
 
 ``` r
-so_tcr <- filter_vdj(
-  sobj_in = so_tcr,                            # Seurat object
-  filt    = all(c("TRA", "TRB") %in% chains),  # Condition to use for filtering
-  new_col = "Paired",                          # Name of new column
-  true    = "paired",                          # Value when condition is TRUE
-  false   = "unpaired"                         # Value when condition is FALSE
+plot_reads(
+  sobj_in      = so_tcr,        # Seurat object
+  chain_col    = "chains",      # Column containing chains for each cell
+  cluster_col  = "orig.ident",  # Column containing labels to group by
+  plot_colors  = ito_cols       # Plot colors
 )
-
-# Take a look at the meta.data
-so_tcr@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols), Paired)
-#> # A tibble: 3,850 x 8
-#>    clonotype_id    cdr3          chains  v_gene     j_gene   reads  umis  Paired
-#>    <chr>           <chr>         <chr>   <chr>      <chr>    <chr>  <chr> <chr> 
-#>  1 WT_DN3_GE_clon… CAVQGANTEVFF  TRB     TRBV17     TRBJ1-1  42590  72    unpai…
-#>  2 WT_DN3_GE_clon… CASSHPGQNSGN… TRB     TRBV5      TRBJ1-3  12670  17    unpai…
-#>  3 WT_DN3_GE_clon… CASSHWGETLYF  TRB     TRBV5      TRBJ2-3  31772  46    unpai…
-#>  4 WT_DN3_GE_clon… CGARAQGLYNSP… TRB     TRBV20     TRBJ1-6  7124   15    unpai…
-#>  5 WT_DN3_GE_clon… CTAPAGGQNTEV… TRB     TRBV1      TRBJ1-1  4744   8     unpai…
-#>  6 WT_DN3_GE_clon… CASSQDLDWGGE… TRB     TRBV5      TRBJ2-1  34966  52    unpai…
-#>  7 WT_DN3_GE_clon… CASRTGGCYEQY… TRB;TRB TRBV13-1;… TRBJ2-7… 4166;… 7;171 unpai…
-#>  8 WT_DN3_GE_clon… CASSPGTENTLYF TRB     TRBV12-2   TRBJ2-4  9180   18    unpai…
-#>  9 WT_DN3_GE_clon… CASSLKGARSDY… TRB     TRBV12-1   TRBJ1-2  19742  29    unpai…
-#> 10 WT_DN3_GE_clon… CASRLTGRDSDY… TRB;TRB TRBV15;TR… TRBJ1-2… 28860… 48;22 unpai…
-#> # … with 3,840 more rows
 ```
 
-![](man/figures/README-pair_umap-1.png)<!-- -->
+![](man/figures/README-read_support-1.png)<!-- -->
 
 <br>
 
-More complicated statements referring to meta.data columns can be used
-for the `filt`, `true`, and `false` arguments. For more detailed
-analysis of the chains detected for each cell, a new cell label can be
-created for only the unique chains detected in each cell.
+Clonotypes that do not have adequate UMI support can be filtered from
+the object using `filter_vdj`. In this example we filter for clonotypes
+that have chains supported by at least two UMIs.
 
 ``` r
 so_tcr <- filter_vdj(
-  sobj_in = so_tcr,                                # Seurat object
-  new_col = "uniq_chains",                         # Name of new column
-  true    = str_c(unique(chains), collapse = "_")  # Value when condition is TRUE
+  sobj_in      = so_tcr,         # Seurat object
+  filt         = all(umis > 1),  # Condition for filtering
+  filter_cells = FALSE           # Should cells be removed from object
 )
 
 # Take a look at the meta.data
 so_tcr@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols), uniq_chains)
-#> # A tibble: 3,850 x 8
-#>    clonotype_id    cdr3        chains v_gene   j_gene   reads  umis  uniq_chains
-#>    <chr>           <chr>       <chr>  <chr>    <chr>    <chr>  <chr> <chr>      
-#>  1 WT_DN3_GE_clon… CAVQGANTEV… TRB    TRBV17   TRBJ1-1  42590  72    TRB        
-#>  2 WT_DN3_GE_clon… CASSHPGQNS… TRB    TRBV5    TRBJ1-3  12670  17    TRB        
-#>  3 WT_DN3_GE_clon… CASSHWGETL… TRB    TRBV5    TRBJ2-3  31772  46    TRB        
-#>  4 WT_DN3_GE_clon… CGARAQGLYN… TRB    TRBV20   TRBJ1-6  7124   15    TRB        
-#>  5 WT_DN3_GE_clon… CTAPAGGQNT… TRB    TRBV1    TRBJ1-1  4744   8     TRB        
-#>  6 WT_DN3_GE_clon… CASSQDLDWG… TRB    TRBV5    TRBJ2-1  34966  52    TRB        
-#>  7 WT_DN3_GE_clon… CASRTGGCYE… TRB;T… TRBV13-… TRBJ2-7… 4166;… 7;171 TRB        
-#>  8 WT_DN3_GE_clon… CASSPGTENT… TRB    TRBV12-2 TRBJ2-4  9180   18    TRB        
-#>  9 WT_DN3_GE_clon… CASSLKGARS… TRB    TRBV12-1 TRBJ1-2  19742  29    TRB        
-#> 10 WT_DN3_GE_clon… CASRLTGRDS… TRB;T… TRBV15;… TRBJ1-2… 28860… 48;22 TRB        
-#> # … with 3,840 more rows
+  select(all_of(vdj_cols))
+#> # A tibble: 3,807 x 7
+#>    clonotype_id     cdr3             chains  v_gene      j_gene    reads   umis 
+#>    <chr>            <chr>            <chr>   <chr>       <chr>     <chr>   <chr>
+#>  1 WT_DN3_GE_clono… CAVQGANTEVFF     TRB     TRBV17      TRBJ1-1   42590   72   
+#>  2 WT_DN3_GE_clono… CASSHPGQNSGNTLYF TRB     TRBV5       TRBJ1-3   12670   17   
+#>  3 WT_DN3_GE_clono… CASSHWGETLYF     TRB     TRBV5       TRBJ2-3   31772   46   
+#>  4 WT_DN3_GE_clono… CGARAQGLYNSPLYF  TRB     TRBV20      TRBJ1-6   7124    15   
+#>  5 WT_DN3_GE_clono… CTAPAGGQNTEVFF   TRB     TRBV1       TRBJ1-1   4744    8    
+#>  6 WT_DN3_GE_clono… CASSQDLDWGGEQFF  TRB     TRBV5       TRBJ2-1   34966   52   
+#>  7 WT_DN3_GE_clono… CASRTGGCYEQYF;C… TRB;TRB TRBV13-1;T… TRBJ2-7;… 4166;6… 7;171
+#>  8 WT_DN3_GE_clono… CASSPGTENTLYF    TRB     TRBV12-2    TRBJ2-4   9180    18   
+#>  9 WT_DN3_GE_clono… CASSLKGARSDYTF   TRB     TRBV12-1    TRBJ1-2   19742   29   
+#> 10 WT_DN3_GE_clono… CASRLTGRDSDYTF;… TRB;TRB TRBV15;TRB… TRBJ1-2;… 28860;… 48;22
+#> # … with 3,797 more rows
 ```
-
-![](man/figures/README-chains_umap-1.png)<!-- -->
 
 <br>
 
@@ -444,16 +456,16 @@ calc_usage(
 #> # A tibble: 92 x 5
 #>    v_gene orig.ident n_cells  freq   pct
 #>    <chr>  <chr>        <dbl> <int> <dbl>
-#>  1 None   WT_DN3         597     0 0    
-#>  2 None   WT_DN4         909    12 1.32 
-#>  3 None   KI_DN3         728     0 0    
-#>  4 None   KI_DN4        1616     8 0.495
-#>  5 TRBV1  WT_DN3         597    23 3.85 
-#>  6 TRBV1  WT_DN4         909    38 4.18 
-#>  7 TRBV1  KI_DN3         728    34 4.67 
-#>  8 TRBV1  KI_DN4        1616    66 4.08 
-#>  9 TRBV10 WT_DN3         597    31 5.19 
-#> 10 TRBV10 WT_DN4         909    59 6.49 
+#>  1 None   WT_DN3         596     0 0    
+#>  2 None   WT_DN4         896    12 1.34 
+#>  3 None   KI_DN3         727     0 0    
+#>  4 None   KI_DN4        1588     7 0.441
+#>  5 TRBV1  WT_DN3         596    23 3.86 
+#>  6 TRBV1  WT_DN4         896    37 4.13 
+#>  7 TRBV1  KI_DN3         727    34 4.68 
+#>  8 TRBV1  KI_DN4        1588    65 4.09 
+#>  9 TRBV10 WT_DN3         596    31 5.20 
+#> 10 TRBV10 WT_DN4         896    58 6.47 
 #> # … with 82 more rows
 ```
 

@@ -24,6 +24,11 @@
 \item{y}{Variable to plot on y-axis}
 
 \item{fill}{Variable to use for fill color}
+
+\item{...}{Additional arguments to pass to ggplot}
+}
+\value{
+ggplot object
 }
 \description{
 Create ggplot bar graph

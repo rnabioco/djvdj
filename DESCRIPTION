@@ -16,14 +16,14 @@ Imports:
     readr,
     rlang (>= 0.1.2),
     Seurat,
-    stringr,
     tibble,
     tidyr,
     broom,
     ggplot2,
     abdiv,
     stats,
-    ggrepel
+    ggrepel,
+    scales
 Suggests: 
     roxygen2,
     testthat,

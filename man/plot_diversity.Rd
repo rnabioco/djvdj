@@ -10,7 +10,7 @@ plot_diversity(
   cluster_col = NULL,
   method = abdiv::shannon,
   plot_colors = NULL,
-  plot_levels = NULL,
+  plot_lvls = NULL,
   ...
 )
 }
@@ -28,9 +28,9 @@ grouping cells when calculating clonotype abundance}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
-\item{plot_levels}{Character vector containing levels for ordering}
+\item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{...}{Additional arguments to pass to geom_col}
+\item{...}{Additional arguments to pass to ggplot}
 }
 \value{
 ggplot object

@@ -12,9 +12,9 @@ plot_features(
   data_slot = "data",
   pt_size = 0.25,
   plot_colors = NULL,
-  feat_levels = NULL,
-  split_id = NULL,
-  split_levels = NULL,
+  feat_lvls = NULL,
+  facet_id = NULL,
+  facet_lvls = NULL,
   min_pct = NULL,
   max_pct = NULL,
   na_color = "grey90",
@@ -39,11 +39,11 @@ plot_features(
 
 \item{plot_colors}{Vector of colors to use for plot}
 
-\item{feat_levels}{Levels to use for ordering feature}
+\item{feat_lvls}{Levels to use for ordering feature}
 
-\item{split_id}{Variable to use for splitting plot into facets}
+\item{facet_id}{Variable to use for splitting plot into facets}
 
-\item{split_levels}{Levels to use for ordering plot facets}
+\item{facet_lvls}{Levels to use for ordering plot facets}
 
 \item{min_pct}{Minimum value to plot for feature}
 

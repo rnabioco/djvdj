@@ -8,16 +8,16 @@ plot_cell_count(
   sobj_in,
   x,
   fill_col = NULL,
-  split_col = NULL,
+  facet_col = NULL,
   yaxis = "fraction",
   plot_colors = NULL,
-  plot_levels = NULL,
+  plot_lvls = NULL,
   na_color = "grey90",
   order_count = TRUE,
   n_label = TRUE,
   label_aes = list(),
-  split_rows = 1,
-  split_scales = "free_x",
+  facet_rows = 1,
+  facet_scales = "free_x",
   ...
 )
 }
@@ -28,13 +28,13 @@ plot_cell_count(
 
 \item{fill_col}{meta.data column to use for coloring bars}
 
-\item{split_col}{meta.data column containing groups to use for spliting bars}
+\item{facet_col}{meta.data column containing groups to use for spliting bars}
 
 \item{yaxis}{Units to plot on the y-axis, either "fraction" or "count"}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
-\item{plot_levels}{Character vector containing levels for ordering}
+\item{plot_lvls}{Character vector containing levels for ordering}
 
 \item{na_color}{Color to use for missing values}
 
@@ -46,13 +46,13 @@ bar}
 \item{label_aes}{Named list providing additional label aesthetics
 (color, size, etc.)}
 
-\item{split_rows}{The number of facet rows. Use this argument if split_col
+\item{facet_rows}{The number of facet rows. Use this argument if facet_col
 is specified}
 
-\item{split_scales}{If split_col is used, this argument passes a scales
+\item{facet_scales}{If facet_col is used, this argument passes a scales
 specification to facet_wrap. Can be "fixed", "free", "free_x", or "free_y"}
 
-\item{...}{Additional arguments to pass to geom_bar}
+\item{...}{Additional arguments to pass to ggplot}
 }
 \value{
 ggplot object

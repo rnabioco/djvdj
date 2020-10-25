@@ -7,9 +7,9 @@
 #' @param data_slot Slot in the Seurat object to pull data from
 #' @param pt_size Point size
 #' @param plot_colors Vector of colors to use for plot
-#' @param feat_levels Levels to use for ordering feature
-#' @param split_id Variable to use for splitting plot into facets
-#' @param split_levels Levels to use for ordering plot facets
+#' @param feat_lvls Levels to use for ordering feature
+#' @param facet_id Variable to use for splitting plot into facets
+#' @param facet_lvls Levels to use for ordering plot facets
 #' @param min_pct Minimum value to plot for feature
 #' @param max_pct Maximum value to plot for feature
 #' @param na_color Color to use for missing values
@@ -20,8 +20,8 @@
 #' @return ggplot object
 #' @export
 plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
-                          pt_size = 0.25, plot_colors = NULL, feat_levels = NULL, split_id = NULL,
-                          split_levels = NULL, min_pct = NULL, max_pct = NULL, na_color = "grey90",
+                          pt_size = 0.25, plot_colors = NULL, feat_lvls = NULL, facet_id = NULL,
+                          facet_lvls = NULL, min_pct = NULL, max_pct = NULL, na_color = "grey90",
                           lm_line = F, cor_label = c(0.8, 0.9), label_size = 3.7, ...) {
 
   # Format imput data
@@ -30,8 +30,8 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
   if ("Seurat" %in% class(obj_in)) {
     vars <- c(x, y, feature)
 
-    if (!is.null(split_id)) {
-      vars <- c(vars, split_id)
+    if (!is.null(facet_id)) {
+      vars <- c(vars, facet_id)
     }
 
     meta_df <- Seurat::FetchData(obj_in, vars = unique(vars), slot = data_slot)
@@ -77,26 +77,11 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
     )
   }
 
-  # Set feature order
-  if (!is.null(feat_levels)) {
-    meta_df <- dplyr::mutate(
-      meta_df,
-      !!sym(feature) := factor(
-        !!sym(feature),
-        levels = feat_levels
-      )
-    )
-  }
+  # Set feature and facet order
+  meta_df <- .set_lvls(meta_df, feature, feat_lvls)
 
-  # Set facet order
-  if (!is.null(split_id) && length(split_id) == 1 && !is.null(split_levels)) {
-    meta_df <- dplyr::mutate(
-      meta_df,
-      !!sym(split_id) := factor(
-        !!sym(split_id),
-        levels = split_levels
-      )
-    )
+  if (!is.null(facet_id) && length(facet_id) == 1) {
+    meta_df <- .set_lvls(meta_df, facet_id, facet_lvls)
   }
 
   # Create scatter plot
@@ -136,13 +121,13 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
   }
 
   # Split plot into facets
-  if (!is.null(split_id)) {
-    if (length(split_id) == 1) {
+  if (!is.null(facet_id)) {
+    if (length(facet_id) == 1) {
       res <- res +
-        ggplot2::facet_wrap(~ !!sym(split_id), ...)
+        ggplot2::facet_wrap(~ !!sym(facet_id), ...)
 
-    } else if (length(split_id) == 2) {
-      eq <- paste0(split_id[1], " ~ ", split_id[2])
+    } else if (length(facet_id) == 2) {
+      eq <- paste0(facet_id[1], " ~ ", facet_id[2])
 
       res <- res +
         ggplot2::facet_grid(stats::as.formula(eq), ...)
@@ -159,26 +144,26 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
 #' @param sobj_in Seurat object or data.frame containing data
 #' @param x meta.data column containing clusters to use for creating bars
 #' @param fill_col meta.data column to use for coloring bars
-#' @param split_col meta.data column containing groups to use for spliting bars
+#' @param facet_col meta.data column containing groups to use for spliting bars
 #' @param yaxis Units to plot on the y-axis, either "fraction" or "count"
 #' @param plot_colors Character vector containing colors for plotting
-#' @param plot_levels Character vector containing levels for ordering
+#' @param plot_lvls Character vector containing levels for ordering
 #' @param na_color Color to use for missing values
 #' @param order_count Order bar color by number of cells in each group
 #' @param n_label Include label showing the number of cells represented by each
 #' bar
 #' @param label_aes Named list providing additional label aesthetics
 #' (color, size, etc.)
-#' @param split_rows The number of facet rows. Use this argument if split_col
+#' @param facet_rows The number of facet rows. Use this argument if facet_col
 #' is specified
-#' @param split_scales If split_col is used, this argument passes a scales
+#' @param facet_scales If facet_col is used, this argument passes a scales
 #' specification to facet_wrap. Can be "fixed", "free", "free_x", or "free_y"
-#' @param ... Additional arguments to pass to geom_bar
+#' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis = "fraction",
-                            plot_colors = NULL, plot_levels = NULL, na_color = "grey90", order_count = TRUE,
-                            n_label = TRUE, label_aes = list(), split_rows = 1, split_scales = "free_x", ...) {
+plot_cell_count <- function(sobj_in, x, fill_col = NULL, facet_col = NULL, yaxis = "fraction",
+                            plot_colors = NULL, plot_lvls = NULL, na_color = "grey90", order_count = TRUE,
+                            n_label = TRUE, label_aes = list(), facet_rows = 1, facet_scales = "free_x", ...) {
 
   # Set y-axis unit
   y_types <- c("fraction", "count")
@@ -199,10 +184,7 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
       as_tibble(rownames = ".cell_id")
   }
 
-  if (!is.null(plot_levels)) {
-    meta_df <- meta_df %>%
-      mutate(!!sym(x) := factor(!!sym(x), levels = plot_levels))
-  }
+  meta_df <- .set_lvls(meta_df, x, plot_lvls)
 
   # Create bar graphs
   res <- meta_df %>%
@@ -226,12 +208,12 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
     ggplot2::geom_bar(position = bar_pos, ...) +
     ggplot2::labs(y = yaxis)
 
-  if (!is.null(split_col)) {
+  if (!is.null(facet_col)) {
     res <- res +
       ggplot2::facet_wrap(
-        stats::as.formula(paste0("~ ", split_col)),
-        nrow   = split_rows,
-        scales = split_scales
+        stats::as.formula(paste0("~ ", facet_col)),
+        nrow   = facet_rows,
+        scales = facet_scales
       )
   }
 
@@ -239,8 +221,8 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
   if (n_label) {
     cell_counts <- dplyr::group_by(meta_df, !!sym(x))
 
-    if (!is.null(split_col)) {
-      cell_counts <- group_by(cell_counts, !!sym(split_col), .add = T)
+    if (!is.null(facet_col)) {
+      cell_counts <- group_by(cell_counts, !!sym(facet_col), .add = T)
     }
 
     cell_counts <- summarize(
@@ -275,6 +257,181 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
 }
 
 
+#' Plot read support for chains
+#'
+#' @param sobj_in Seurat object
+#' @param data_cols meta.data columns containing UMI and/or read counts
+#' @param chain_col meta.data column containing chains. If chain_col is
+#' provided, reads and UMIs will be plotted separately for each chain.
+#' @param cluster_col meta.data column containing cluster IDs. If cluster_col
+#' is provided reads and UMIs will be plotted separately for each cluster.
+#' @param type Type of plot to create.
+#' @param type Type of plot to create, can be 'violin', 'heatmap' or 'density'.
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_lvls Character vector containing levels for ordering
+#' @param facet_rows The number of facet rows. Use this argument if both
+#' chain_col and cluster_col are provided.
+#' @param facet_scales This argument passes a scales specification to
+#' facet_wrap. Can be "fixed", "free", "free_x", or "free_y"
+#' @param sep Separator to use for expanding data_cols
+#' @param ... Additional arguments to pass to ggplot
+#' @return ggplot object
+#' @export
+plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL, cluster_col = NULL,
+                       type = "violin", plot_colors = NULL, plot_lvls = NULL, facet_rows = 1,
+                       facet_scales = "free_x", ..., sep = ";") {
+
+  if (!type %in% c("violin", "histogram", "density")) {
+    stop("type must be either 'heatmap' or 'bar'.")
+  }
+
+  # calculate average reads/umis each chain for each cell
+  gg_df <- summarize_chains(
+    sobj_in,
+    data_cols    = data_cols,
+    fn           = mean,
+    chain_col    = chain_col,
+    include_cols = cluster_col,
+    sep          = sep
+  )
+
+  # Format data for plotting
+  gg_df <- tidyr::pivot_longer(
+    gg_df,
+    cols      = all_of(data_cols),
+    names_to  = "key",
+    values_to = "counts"
+  )
+
+  if (!is.null(cluster_col)) {
+    gg_df <- .set_lvls(gg_df, cluster_col, plot_lvls)
+  }
+
+  # Calculate median counts for each chain
+  box_stats <- dplyr::group_by(
+    gg_df,
+    !!!syms(c(chain_col, cluster_col, "key"))
+  )
+
+  box_stats <- dplyr::summarize(
+    box_stats,
+    med     = median(counts),
+    .groups = "drop"
+  )
+
+  # Set chain_col
+  if (!is.null(chain_col)) {
+    lvls <- dplyr::group_by(gg_df, !!sym(chain_col))
+
+    lvls <- dplyr::summarise(
+      lvls,
+      n       = dplyr::n_distinct(.cell_id),
+      .groups = "drop"
+    )
+
+    lvls <- dplyr::arrange(lvls, desc(n))
+    lvls <- dplyr::pull(lvls, chain_col)
+
+    gg_df <- .set_lvls(gg_df, chain_col, lvls)
+
+    chain_col <- sym(chain_col)
+
+  } else if (!is.null(cluster_col)) {
+    chain_col <- sym(cluster_col)
+
+  } else {
+    chain_col <- "counts"
+    box_stats <- dplyr::mutate(box_stats, !!sym(chain_col) := chain_col)
+  }
+
+  # Create violin plots
+  if (type == "violin") {
+    res <- ggplot2::ggplot(gg_df, ggplot2::aes(!!chain_col, counts)) +
+      geom_violin(
+        ggplot2::aes(
+          color = !!chain_col,
+          fill  = !!chain_col,
+          alpha = key
+        ),
+        position = "identity",
+        ...
+      ) +
+      ggplot2::geom_point(
+        ggplot2::aes(!!sym(chain_col), med),
+        data        = box_stats,
+        show.legend = FALSE
+      ) +
+      ggplot2::scale_y_log10(
+        labels = scales::trans_format("log10", scales::math_format(10^.x)),
+        breaks = 10^(-10:10)
+      ) +
+      ggplot2::theme(axis.title.x = element_blank())
+
+  # Create histogram
+  } else {
+    res <- ggplot2::ggplot(
+      gg_df,
+      ggplot2::aes(
+        counts,
+        color = !!chain_col,
+        fill  = !!chain_col,
+        alpha = key
+      )
+    ) +
+      ggplot2::scale_x_log10(
+        labels = scales::trans_format("log10", scales::math_format(10^.x)),
+        breaks = 10^(-10:10)
+      )
+
+    if (type == "histogram") {
+      res <- res +
+        ggplot2::geom_histogram(position = "identity", color = NA, ...)
+
+    } else {
+      res <- res +
+        ggplot2::geom_density(...)
+    }
+  }
+
+  res <- res +
+    ggplot2::guides(alpha = FALSE, color = FALSE) +
+    vdj_theme() +
+    ggplot2::theme(
+      panel.spacing = unit(1, "cm"),
+      legend.title  = element_blank()
+    )
+
+  if (!is.null(cluster_col) && cluster_col != chain_col) {
+    res <- res +
+      ggplot2::facet_wrap(
+        stats::as.formula(paste0("~ ", cluster_col)),
+        scales = facet_scales,
+        nrow   = facet_rows
+      )
+  }
+
+  # Adjust theme
+  if (length(data_cols) > 1) {
+    alphas <- 1 / length(data_cols)
+    alphas <- seq(alphas, 1, alphas)
+
+    res <- res +
+      ggplot2::scale_alpha_manual(values = alphas) +
+      ggplot2::guides(alpha = ggplot2::guide_legend(
+        override.aes = list(fill = "black")
+      ))
+  }
+
+  if (!is.null(plot_colors)) {
+    res <- res +
+      ggplot2::scale_color_manual(values = plot_colors) +
+      ggplot2::scale_fill_manual(values = plot_colors)
+  }
+
+  res
+}
+
+
 #' Plot clonotype abundance
 #'
 #' @param sobj_in Seurat object containing V(D)J data
@@ -284,7 +441,7 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
 #' grouping cells when calculating clonotype abundance
 #' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
 #' @param plot_colors Character vector containing colors for plotting
-#' @param plot_levels Character vector containing levels for ordering
+#' @param plot_lvls Character vector containing levels for ordering
 #' @param label_col meta.data column containing labels to use for plot
 #' @param n_labels Number of clonotypes to label
 #' @param label_aes Named list providing additional label aesthetics (color, size, etc.)
@@ -293,7 +450,7 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, split_col = NULL, yaxis
 #' @return ggplot object
 #' @export
 plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, yaxis = "percent",
-                           plot_colors = NULL, plot_levels = NULL, label_col = NULL, n_labels = 2,
+                           plot_colors = NULL, plot_lvls = NULL, label_col = NULL, n_labels = 2,
                            label_aes = list(), abundance_col = NULL, ...) {
 
   # Calculate clonotype abundance
@@ -318,16 +475,7 @@ plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, ya
 
   # Rank by abundance
   if (!is.null(cluster_col)) {
-    if (!is.null(plot_levels)) {
-      meta_df <- dplyr::mutate(
-        meta_df,
-        !!sym(cluster_col) := factor(
-          !!sym(cluster_col),
-          levels = plot_levels
-        )
-      )
-    }
-
+    meta_df <- .set_lvls(meta_df, cluster_col, plot_lvls)
     meta_df <- dplyr::group_by(meta_df, !!sym(cluster_col))
   }
 
@@ -390,12 +538,12 @@ plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, ya
 #' grouping cells when calculating clonotype abundance
 #' @param method Method to use for calculating diversity
 #' @param plot_colors Character vector containing colors for plotting
-#' @param plot_levels Character vector containing levels for ordering
-#' @param ... Additional arguments to pass to geom_col
+#' @param plot_lvls Character vector containing levels for ordering
+#' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
 plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
-                           method = abdiv::shannon, plot_colors = NULL, plot_levels = NULL, ...) {
+                           method = abdiv::shannon, plot_colors = NULL, plot_lvls = NULL, ...) {
 
   # Calculate diversity
   if ("Seurat" %in% class(sobj_in)) {
@@ -416,15 +564,7 @@ plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
   }
 
   # Set plot levels
-  if (!is.null(plot_levels)) {
-    sobj_in <- dplyr::mutate(
-      sobj_in,
-      !!sym(cluster_col) := factor(
-        !!sym(cluster_col),
-        levels = plot_levels
-      )
-    )
-  }
+  meta_df <- .set_lvls(sobj_in, cluster_col, plot_lvls)
 
   # Create bar graphs
   res <- ggplot2::ggplot(sobj_in, ggplot2::aes(
@@ -459,7 +599,7 @@ plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 #' calculating overlap
 #' @param method Method to use for calculating similarity between clusters
 #' @param plot_colors Character vector containing colors for plotting
-#' @param ... Additional arguments to pass to geom_tile
+#' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
 plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
@@ -480,8 +620,8 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
     )
   }
 
-  var_levels <- unique(c(rownames(sobj_in), colnames(sobj_in)))
-  var_levels <- sort(var_levels)
+  var_lvls <- unique(c(rownames(sobj_in), colnames(sobj_in)))
+  var_lvls <- sort(var_lvls)
 
   gg_df <- tibble::as_tibble(sobj_in, rownames = "Var1")
 
@@ -495,8 +635,8 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
   # Set Var levels
   gg_df <- dplyr::mutate(
     gg_df,
-    Var1 = factor(.data$Var1, levels = rev(var_levels)),
-    Var2 = factor(.data$Var2, levels = var_levels)
+    Var1 = factor(.data$Var1, levels = rev(var_lvls)),
+    Var2 = factor(.data$Var2, levels = var_lvls)
   )
 
   # Create heatmap
@@ -521,22 +661,26 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 #' calculating gene usage
 #' @param chain Chain to use for calculating gene usage. Set to NULL to include
 #' all chains.
-#' @param type Type of plot to create, must be either 'heatmap' or 'bar'
+#' @param type Type of plot to create, can be either 'heatmap' or 'bar'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_genes Character vector containing genes to plot
 #' @param n_genes Number of top genes to plot based on average usage
-#' @param clust_levels Levels to use for ordering clusters
+#' @param clust_lvls Levels to use for ordering clusters
 #' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
-#' @param ... Additional arguments to pass to geom_tile
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator to use for expanding gene_cols
+#' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
 plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, type = "heatmap",
-                       plot_colors = NULL, plot_genes = NULL, n_genes = NULL, clust_levels = NULL,
-                       yaxis = "percent", ..., chain_col = NULL, sep = ";") {
+                       plot_colors = NULL, plot_genes = NULL, n_genes = NULL, clust_lvls = NULL,
+                       yaxis = "percent", chain_col = NULL, sep = ";", ...) {
 
   # Check inputs
+  if (!type %in% c("heatmap", "bar")) {
+    stop("type must be either 'heatmap' or 'bar'.")
+  }
+
   if (length(gene_cols) > 2) {
     stop("Cannot specify more than two values for gene_cols.")
   }
@@ -579,25 +723,12 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
   top_genes <- dplyr::arrange(top_genes, .data$usage)
 
   if (length(gene_cols) == 1) {
-    gg_df <- dplyr::mutate(
-      gg_df,
-      !!sym(gene_cols) := factor(
-        !!sym(gene_cols),
-        levels = dplyr::pull(top_genes, gene_cols)
-      )
-    )
+    lvls  <- dplyr::pull(top_genes, gene_cols)
+    gg_df <- .set_lvls(gg_df, gene_cols, lvls)
   }
 
   # Order clusters
-  if (!is.null(clust_levels)) {
-    gg_df <- dplyr::mutate(
-      gg_df,
-      !!sym(cluster_col) := factor(
-        !!sym(cluster_col),
-        levels = clust_levels
-      )
-    )
-  }
+  gg_df <- .set_lvls(gg_df, cluster_col, clust_lvls)
 
   # Filter genes to plot
   if (!is.null(plot_genes)) {
@@ -687,11 +818,8 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
     v1_lvls <- rev(unique(dplyr::pull(res, gene_cols[1])))
     v2_lvls <- rev(unique(dplyr::pull(res, gene_cols[2])))
 
-    res <- dplyr::mutate(
-      res,
-      !!sym(gene_cols[1]) := factor(!!sym(gene_cols[1]), levels = v1_lvls),
-      !!sym(gene_cols[2]) := factor(!!sym(gene_cols[2]), levels = v2_lvls)
-    )
+    res <- .set_lvls(res, gene_cols[1], v1_lvls)
+    res <- .set_lvls(res, gene_cols[2], v2_lvls)
 
     res
   })
@@ -725,6 +853,8 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
 #' @export
 vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
   res <- ggplot2::theme(
+    strip.background  = ggplot2::element_blank(),
+    strip.text        = ggplot2::element_text(size = ttl_size),
     panel.background  = ggplot2::element_blank(),
     legend.background = ggplot2::element_blank(),
     legend.title      = ggplot2::element_text(size = ttl_size),
@@ -875,7 +1005,8 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
 #' @param legd_ttl Legend title
 #' @param ang Angle of x-axis text
 #' @param hjst Horizontal justification for x-axis text
-#' @param ... Additional arguments to pass to geom_tile
+#' @param ... Additional arguments to pass to ggplot
+#' @return ggplot object
 .create_heatmap <- function(df_in, x, y, fill, plot_colors = NULL, na_color = "white",
                             legd_ttl = fill, ang = 45, hjst = 1, ...) {
 
@@ -883,16 +1014,15 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
     plot_colors <- c("grey90", "#56B4E9")
   }
 
+  res <- ggplot2::ggplot(
+    df_in,
+    ggplot2::aes("sample", !!sym(y), fill = !!sym(fill))
+  )
+
   if (!is.null(x)) {
     res <- ggplot2::ggplot(
       df_in,
       ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(fill))
-    )
-
-  } else {
-    res <- ggplot2::ggplot(
-      df_in,
-      ggplot2::aes("sample", !!sym(y), fill = !!sym(fill))
     )
   }
 
@@ -918,18 +1048,14 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
 #' @param fill Variable to use for fill color
-#'
+#' @param ... Additional arguments to pass to ggplot
+#' @return ggplot object
 .create_bars <- function(df_in, x, y, fill, plot_colors = NULL, y_ttl = y, ang = 45,
                          hjst = 1, ...) {
 
   # Reverse bar order
-  df_in <- dplyr::mutate(
-    df_in,
-    !!sym(x) := factor(
-      !!sym(x),
-      levels = rev(levels(!!sym(x)))
-    )
-  )
+  lvls  <- rev(levels(dplyr::pull(df_in, x)))
+  df_in <- .set_lvls(df_in, x, lvls)
 
   if (!is.null(fill)) {
     res <- ggplot2::ggplot(
@@ -964,6 +1090,28 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
   res
 }
 
+
+#' Set column levels
+#'
+#' @param df_in data.frame
+#' @param clmn Column to modify
+#' @param lvls Levels
+#' @return data.frame
+.set_lvls <- function(df_in, clmn, lvls) {
+
+  if (!is.null(lvls)) {
+    if (!all(pull(df_in, clmn) %in% lvls)) {
+      stop(paste0("Not all labels in ", clmn, " are included in plot_levels."))
+    }
+
+    df_in <- dplyr::mutate(
+      df_in,
+      !!sym(clmn) := factor(!!sym(clmn), levels = lvls)
+    )
+  }
+
+  df_in
+}
 
 
 
