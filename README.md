@@ -65,33 +65,6 @@ so_tcr <- import_vdj(
   prefix         = "",      # Prefix to add to new meta.data columns
   filter_contigs = TRUE     # Only include chains with at least one productive contig
 )
-
-# Take a look at the meta.data
-vdj_cols <- c(
-  "clonotype_id", "cdr3",
-  "chains", "v_gene", 
-  "j_gene", "reads",
-  "umis"
-)
-
-so_tcr@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols))
-#> # A tibble: 3,850 x 7
-#>    clonotype_id     cdr3             chains  v_gene      j_gene    reads   umis 
-#>    <chr>            <chr>            <chr>   <chr>       <chr>     <chr>   <chr>
-#>  1 WT_DN3_GE_clono… CAVQGANTEVFF     TRB     TRBV17      TRBJ1-1   42590   72   
-#>  2 WT_DN3_GE_clono… CASSHPGQNSGNTLYF TRB     TRBV5       TRBJ1-3   12670   17   
-#>  3 WT_DN3_GE_clono… CASSHWGETLYF     TRB     TRBV5       TRBJ2-3   31772   46   
-#>  4 WT_DN3_GE_clono… CGARAQGLYNSPLYF  TRB     TRBV20      TRBJ1-6   7124    15   
-#>  5 WT_DN3_GE_clono… CTAPAGGQNTEVFF   TRB     TRBV1       TRBJ1-1   4744    8    
-#>  6 WT_DN3_GE_clono… CASSQDLDWGGEQFF  TRB     TRBV5       TRBJ2-1   34966   52   
-#>  7 WT_DN3_GE_clono… CASRTGGCYEQYF;C… TRB;TRB TRBV13-1;T… TRBJ2-7;… 4166;6… 7;171
-#>  8 WT_DN3_GE_clono… CASSPGTENTLYF    TRB     TRBV12-2    TRBJ2-4   9180    18   
-#>  9 WT_DN3_GE_clono… CASSLKGARSDYTF   TRB     TRBV12-1    TRBJ1-2   19742   29   
-#> 10 WT_DN3_GE_clono… CASRLTGRDSDYTF;… TRB;TRB TRBV15;TRB… TRBJ1-2;… 28860;… 48;22
-#> # … with 3,840 more rows
 ```
 
 <br>

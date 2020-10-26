@@ -161,19 +161,6 @@ so_tcr <- import_vdj(
   prefix         = "",      # Prefix to add to new meta.data columns
   filter_contigs = TRUE     # Only include chains with at least one productive contig
 )
-
-# Take a look at the meta.data
-vdj_cols <- c(
-  "clonotype_id", "cdr3",
-  "chains", "v_gene", 
-  "j_gene", "reads",
-  "umis"
-)
-
-so_tcr@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols))
 ```
 
 <br>
