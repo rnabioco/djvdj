@@ -315,7 +315,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
 
   box_stats <- dplyr::summarize(
     box_stats,
-    med     = median(counts),
+    med     = stats::median(.data$counts),
     .groups = "drop"
   )
 
@@ -325,7 +325,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
 
     lvls <- dplyr::summarise(
       lvls,
-      n       = dplyr::n_distinct(.cell_id),
+      n       = dplyr::n_distinct(.data$.cell_id),
       .groups = "drop"
     )
 
@@ -346,40 +346,46 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
 
   # Create violin plots
   if (type == "violin") {
-    res <- ggplot2::ggplot(gg_df, ggplot2::aes(!!chain_col, counts)) +
-      geom_violin(
+    res <- ggplot2::ggplot(gg_df, ggplot2::aes(!!chain_col, .data$counts)) +
+      ggplot2::geom_violin(
         ggplot2::aes(
           color = !!chain_col,
           fill  = !!chain_col,
-          alpha = key
+          alpha = .data$key
         ),
         position = "identity",
         ...
       ) +
       ggplot2::geom_point(
-        ggplot2::aes(!!sym(chain_col), med),
+        ggplot2::aes(!!sym(chain_col), .data$med),
         data        = box_stats,
         show.legend = FALSE
       ) +
       ggplot2::scale_y_log10(
-        labels = scales::trans_format("log10", scales::math_format(10^.x)),
+        labels = scales::trans_format(
+          "log10",
+          scales::math_format(10^.data$.x)
+        ),
         breaks = 10^(-10:10)
       ) +
-      ggplot2::theme(axis.title.x = element_blank())
+      ggplot2::theme(axis.title.x = ggplot2::element_blank())
 
   # Create histogram
   } else {
     res <- ggplot2::ggplot(
       gg_df,
       ggplot2::aes(
-        counts,
+        .data$counts,
         color = !!chain_col,
         fill  = !!chain_col,
-        alpha = key
+        alpha = .data$key
       )
     ) +
       ggplot2::scale_x_log10(
-        labels = scales::trans_format("log10", scales::math_format(10^.x)),
+        labels = scales::trans_format(
+          "log10",
+          scales::math_format(10^.data$.x)
+        ),
         breaks = 10^(-10:10)
       )
 
@@ -397,8 +403,8 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
     ggplot2::guides(alpha = FALSE, color = FALSE) +
     vdj_theme() +
     ggplot2::theme(
-      panel.spacing = unit(1, "cm"),
-      legend.title  = element_blank()
+      panel.spacing = ggplot2::unit(1, "cm"),
+      legend.title  = ggplot2::element_blank()
     )
 
   if (!is.null(cluster_col) && cluster_col != chain_col) {
@@ -1064,18 +1070,15 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
     )
 
   } else {
-    res <- ggplot2::ggplot(
-      df_in,
-      aes(!!sym(x), !!sym(y))
-    )
+    res <- ggplot2::ggplot(df_in, ggplot2::aes(!!sym(x), !!sym(y)))
   }
 
   res <- ggplot2::ggplot(
     df_in,
-    aes(!!sym(x), !!sym(y), fill = !!sym(fill))
+    ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(fill))
   ) +
     ggplot2::geom_col(..., position = "dodge") +
-    labs(y = y_ttl) +
+    ggplot2::labs(y = y_ttl) +
     vdj_theme() +
     ggplot2::theme(
       axis.title.x = ggplot2::element_blank(),
