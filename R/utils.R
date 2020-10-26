@@ -469,7 +469,8 @@ calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating diversity. If cluster_col is omitted, diversity index will be
 #' calculated for all clonotypes.
-#' @param method Method to use for calculating diversity
+#' @param method Method to use for calculating diversity. Can pass also pass
+#' a named list to use multiple methods.
 #' @param prefix Prefix to add to new meta.data columns
 #' @param return_seurat Return a Seurat object. If set to FALSE, the meta.data
 #' table is returned.
@@ -502,19 +503,37 @@ calc_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
     vdj_df <- dplyr::group_by(vdj_df, !!sym(cluster_col))
   }
 
-  div_col <- paste0(prefix, "diversity")
+  if (length(method) == 1 && is.null(names(method))) {
+    nm <- as.character(substitute(method))
+    nm <- dplyr::last(nm)
 
-  vdj_df <- dplyr::mutate(
+    method        <- list(method)
+    names(method) <- nm
+  }
+
+  div_cols      <- paste0(prefix, names(method))
+  names(method) <- div_cols
+
+  vdj_df <- purrr::imap_dfr(method, ~ {
+    dplyr::mutate(
+      vdj_df,
+      diversity = .x(.data$.n),
+      met       = .y
+    )
+  })
+
+  vdj_df <- tidyr::pivot_wider(
     vdj_df,
-    !!sym(div_col) := method(.data$.n)
+    names_from  = "met",
+    values_from = "diversity"
   )
 
   vdj_df <- dplyr::ungroup(vdj_df)
-  vdj_df <- dplyr::select(vdj_df, all_of(c(vdj_cols, div_col)))
+  vdj_df <- dplyr::select(vdj_df, all_of(c(vdj_cols, div_cols)))
 
   # Return data.frame
   if (!return_seurat) {
-    res <- dplyr::select(vdj_df, dplyr::all_of(c(cluster_col, div_col)))
+    res <- dplyr::select(vdj_df, dplyr::all_of(c(cluster_col, div_cols)))
     res <- dplyr::distinct(res)
 
     if (is.null(cluster_col)) {

@@ -359,37 +359,26 @@ so_tcr <- calc_diversity(
 
 <br>
 
-The `plot_diversity` function will create plots summarizing repertoire diversity for each sample. Four different diversity metrics are plotted below.
+The `plot_diversity` function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Four different diversity metrics are shown in the example below.
 
-```{r "div_plots", fig.width = 7, fig.height = 3}
-bar_theme <- theme(
-  axis.title  = element_blank(),
-  axis.text.x = element_text(angle = 45, hjust = 1)
+```{r "div_plots", fig.width = 7.5, fig.height = 3}
+# Metrics to plot
+fns <- list(
+  "simpson"     = abdiv::simpson,
+  "shannon"     = abdiv::shannon,
+  "margalef"    = abdiv::margalef,
+  "menhinick"   = abdiv::menhinick,
+  "brillouin_d" = abdiv::brillouin_d
 )
 
-# Metrics to use
-metrics <- list(
-  "simpson"   = abdiv::simpson,
-  "shannon"   = abdiv::shannon,
-  "margalef"  = abdiv::margalef,
-  "menhinick" = abdiv::menhinick
-)
-
-# Plot diversity metrics
-ggs <- metrics %>%
-  imap(~ {
-    plot_diversity(
-      sobj_in       = so_tcr,        # Seurat object
-      clonotype_col = "cdr3",        # meta.data column containing clonotype ids
-      cluster_col   = "orig.ident",  # meta.data column containing cell labels
-      method        = .x,            # abdiv method to use
-      plot_colors   = ito_cols
-    ) +
-      ggtitle(.y) +
-      bar_theme
-  })
-
-plot_grid(plotlist = ggs, nrow = 1)
+plot_diversity(
+  sobj_in       = so_tcr,        # Seurat object
+  clonotype_col = "cdr3",        # meta.data column containing clonotype ids
+  cluster_col   = "orig.ident",  # meta.data column containing cell labels
+  method        = fns,           # abdiv method to use
+  plot_colors   = ito_cols
+) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 <br>

@@ -23,7 +23,8 @@ calculating diversity}
 calculating diversity. If cluster_col is omitted, diversity index will be
 calculated for all clonotypes.}
 
-\item{method}{Method to use for calculating diversity}
+\item{method}{Method to use for calculating diversity. Can pass also pass
+a named list to use multiple methods.}
 
 \item{prefix}{Prefix to add to new meta.data columns}
 

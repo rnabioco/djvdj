@@ -545,14 +545,30 @@ plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, ya
 #' calculating clonotype abundance
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
-#' @param method Method to use for calculating diversity
+#' @param method Method to use for calculating diversity. Can pass also pass
+#' a named list to use multiple methods.
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
+#' @param facet_rows The number of facet rows. Use this argument if a list of
+#' functions is passed to method.
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
 plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
-                           method = abdiv::shannon, plot_colors = NULL, plot_lvls = NULL, ...) {
+                           method = abdiv::shannon, plot_colors = NULL, plot_lvls = NULL,
+                           facet_rows = 1, ...) {
+
+  if (length(method) > 1 && is.null(names(method))) {
+    stop("Must include names if using a list of methods.")
+  }
+
+  if (length(method) == 1 && is.null(names(method))) {
+    nm <- as.character(substitute(method))
+    nm <- dplyr::last(nm)
+
+    method        <- list(method)
+    names(method) <- nm
+  }
 
   # Calculate diversity
   if ("Seurat" %in% class(sobj_in)) {
@@ -566,22 +582,43 @@ plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
     )
   }
 
-  if (is.null(cluster_col)) {
-    cluster_col <- "x"
+  # Format data for plotting
+  include_strips <- TRUE
 
-    sobj_in <- dplyr::mutate(sobj_in, x = cluster_col)
+  if (is.null(cluster_col)) {
+    meta_df <- tibble::tibble(
+      diversity = unname(sobj_in),
+      name      = names(sobj_in),
+    )
+
+    include_strips <- FALSE
+    cluster_col <- "name"
+
+  } else {
+    meta_df <- tidyr::pivot_longer(
+      sobj_in,
+      cols = -!!sym(cluster_col),
+      values_to = "diversity"
+    )
   }
 
   # Set plot levels
-  meta_df <- .set_lvls(sobj_in, cluster_col, plot_lvls)
+  meta_df <- .set_lvls(meta_df, cluster_col, plot_lvls)
+  meta_df <- .set_lvls(meta_df, "name", unique(meta_df$name))
 
   # Create bar graphs
-  res <- ggplot2::ggplot(sobj_in, ggplot2::aes(
+  res <- ggplot2::ggplot(meta_df, ggplot2::aes(
     !!sym(cluster_col),
     .data$diversity,
     fill = !!sym(cluster_col)
   )) +
     ggplot2::geom_col(...)
+
+  # Create facets
+  if (length(method) > 1) {
+    res <- res +
+      ggplot2::facet_wrap(~ name, nrow = facet_rows, scales = "free")
+  }
 
   # Set plot colors
   if (!is.null(plot_colors)) {
@@ -589,12 +626,20 @@ plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
       ggplot2::scale_fill_manual(values = plot_colors)
   }
 
-  res +
+  # Set theme
+  res <- res +
     vdj_theme() +
     ggplot2::theme(
       legend.position = "none",
       axis.title.x    = ggplot2::element_blank()
     )
+
+  if (!include_strips) {
+    res <- res +
+      ggplot2::theme(strip.text = ggplot2::element_blank())
+  }
+
+  res
 }
 
 
@@ -1010,7 +1055,7 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black", ln_col = 
 #' @param x Variable to plot on the x-axis
 #' @param y Variable to plot on the y-axis
 #' @param fill Variable to use for the fill color
-#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_colors Vector of colors for plotting
 #' @param na_color Color to use for missing values
 #' @param legd_ttl Legend title
 #' @param ang Angle of x-axis text
@@ -1058,6 +1103,10 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black", ln_col = 
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
 #' @param fill Variable to use for fill color
+#' @param plot_colors Vector of colors for plotting
+#' @param y_ttl Title for y-axis
+#' @param ang Angle of x-axis text
+#' @param hjst Horizontal justification for x-axis text
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 .create_bars <- function(df_in, x, y, fill, plot_colors = NULL, y_ttl = y, ang = 45,
