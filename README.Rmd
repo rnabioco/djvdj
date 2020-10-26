@@ -4,9 +4,8 @@ editor_options:
   chunk_output_type: console
 ---
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
-```{r, include = FALSE}
+```{r "setup", include = FALSE}
+# Chunk opts
 knitr::opts_chunk$set(
   collapse  = TRUE,
   comment   = "#>",
@@ -14,28 +13,7 @@ knitr::opts_chunk$set(
   warning   = FALSE,
   message   = FALSE
 )
-```
 
-# djvdj <img src="man/figures/djvdj-logo.png" align="right" height="145">
-
-<!-- badges: start -->
-[![R build status](https://github.com/rnabioco/djvdj/workflows/R-CMD-check/badge.svg)](https://github.com/rnabioco/djvdj/actions)
-<!-- badges: end -->
-
-The goal of djvdj is to provide tools to analyze AVID-seq signals alongside single-cell VDJ sequencing data.
-
-<br>
-
-## Installation
-
-You can install the development version of djvdj from [GitHub](https://github.com/rnabioco/djvdj) with:
-
-```{r, eval = FALSE}
-# install.packages("devtools")
-devtools::install_github("rnabioco/djvdj")
-```
-
-```{r "Setup", include = FALSE}
 # Packages
 library(tidyverse)
 library(Seurat)
@@ -45,18 +23,6 @@ library(colorblindr)
 library(here)
 
 # Themes
-umap_theme <- vdj_theme() +
-  theme(
-    plot.title      = element_text(size = 12),
-    legend.position = "top",
-    legend.title    = element_blank(),
-    axis.title      = element_blank(),
-    axis.line       = element_blank(),
-    axis.ticks      = element_blank(),
-    axis.text       = element_blank()
-  )
-
-# Legend guides
 create_guide <- function(size = 3.5, shape = 16, nrow = NULL,
                          ncol = NULL, ...) {
   guide_legend(
@@ -70,7 +36,16 @@ create_guide <- function(size = 3.5, shape = 16, nrow = NULL,
   )
 }
 
-col_guide <- create_guide(shape = 16, stroke = NULL, color = NULL)
+umap_theme <- vdj_theme() +
+  theme(
+    plot.title      = element_text(size = 12),
+    legend.position = "top",
+    legend.title    = element_blank(),
+    axis.title      = element_blank(),
+    axis.line       = element_blank(),
+    axis.ticks      = element_blank(),
+    axis.text       = element_blank()
+  )
 
 # Okabe Ito color palettes
 ito_cols <- c(
@@ -95,6 +70,25 @@ create_col_fun <- function(cols_in) {
 }
 
 get_cols <- create_col_fun(ito_cols)
+```
+
+# djvdj <img src="man/figures/djvdj-logo.png" align="right" height="145">
+
+<!-- badges: start -->
+[![R build status](https://github.com/rnabioco/djvdj/workflows/R-CMD-check/badge.svg)](https://github.com/rnabioco/djvdj/actions)
+<!-- badges: end -->
+
+The goal of djvdj is to provide tools to analyze AVID-seq signals alongside single-cell VDJ sequencing data.
+
+<br>
+
+## Installation
+
+You can install the development version of djvdj from [GitHub](https://github.com/rnabioco/djvdj) with:
+
+```{r, eval = FALSE}
+# install.packages("devtools")
+devtools::install_github("rnabioco/djvdj")
 ```
 
 <br>
@@ -183,94 +177,7 @@ so_tcr@meta.data %>%
 
 ### Quality Control
 
-#### Paired Chains
-
-The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired alpha and beta chains. Using the `mutate_vdj` function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.
-
-In this example we create a new column that summarizes the unique chains identified for each cell. We can then overlay these cell labels on a UMAP projection.
-
-```{r}
-so_tcr <- mutate_vdj(
-  sobj_in     = so_tcr,                                # Seurat object
-  uniq_chains = str_c(unique(chains), collapse = "_")  # New column
-)
-
-# Take a look at the meta.data
-so_tcr@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id), n_chains > 2) %>%
-  select(all_of(vdj_cols), uniq_chains)
-```
-
-```{r "chains_umap", fig.width = 6.5, fig.height = 4.5, echo = FALSE}
-# Plot colors
-chains_cols <- so_tcr@meta.data %>%
-  pull(uniq_chains) %>%
-  unique() %>%
-  na.omit()
-
-chains_cols <- set_names(
-  x  = get_cols()[seq_along(chains_cols)],
-  nm = chains_cols
-)
-
-# Chains UMAP
-chains_umap <- so_tcr %>%
-  plot_features(
-    feature     = "uniq_chains",
-    pt_size     = 0.02,
-    plot_colors = chains_cols
-  ) +
-  ggtitle("Unique chains") +
-  guides(color = create_guide(nrow = 2)) +
-  umap_theme
-
-# Chains bar graphs
-chains_bars <- so_tcr %>%
-  plot_cell_count(
-    x           = "orig.ident",
-    fill_col    = "uniq_chains",
-    plot_colors = chains_cols
-  ) +
-  scale_y_continuous(breaks = c(0, 0.5, 1)) +
-  theme(
-    plot.margin     = unit(c(120, 10, 10, 10), "pt"),
-    legend.position = "none",
-    axis.title.x    = element_blank(),
-    axis.text.x     = element_text(angle = 45, hjust = 1)
-  )
-
-# Final figure
-plot_grid(
-  chains_umap, chains_bars,
-  rel_widths = c(1, 0.55),
-  nrow       = 1
-)
-```
-
-<br>
-
-Clonotypes that lack paired alpha and beta chains can be removed from the meta.data using `filter_vdj`. With this function cells that match the provided condition are filtered from the object. Setting `filter_cells` to `FALSE` will just remove the V(D)J data without completely removing these cells.
-
-```{r}
-so_filt <- filter_vdj(
-  sobj_in      = so_tcr,                            # Seurat object
-  filt         = all(c("TRA", "TRB") %in% chains),  # Condition for filtering
-  filter_cells = FALSE                              # Should cells be removed from object
-)
-
-# Take a look at the meta.data
-so_filt@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols))
-```
-
-<br>
-
-#### Read Support
-
-The read support for each chain can be visualized with the `plot_reads` function. This will create plots summarizing the number of UMIs and total reads that were obtained for each chain.
+`djvdj` provides a range of tools to assess data quality and filter single-cell V(D)J data. `mutate_vdj` can be used to add new cell labels to the object meta.data, which is helpful for assessing quality. `filter_vdj` will filter cells based on V(D)J information in the meta.data or just remove V(D)J data from the object without discarding cells. This can be used to filter V(D)J data based on read support. To assess overall read and and UMI support, the function `plot_reads` will summarize these metrics for each clonotype.
 
 ```{r "read_support", fig.width = 6.5, fig.height = 3}
 plot_reads(
@@ -284,40 +191,9 @@ plot_reads(
 
 <br>
 
-Clonotypes that do not have adequate UMI support can be filtered from the object using `filter_vdj`. In this example we filter for clonotypes that have chains supported by at least two UMIs.
-
-```{r}
-so_tcr <- filter_vdj(
-  sobj_in      = so_tcr,         # Seurat object
-  filt         = all(umis > 1),  # Condition for filtering
-  filter_cells = FALSE           # Should cells be removed from object
-)
-
-# Take a look at the meta.data
-so_tcr@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols))
-```
-
-<br>
-
 ### Clonotype Abundance
 
-To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_abundance` function.
-
-```{r}
-so_tcr <- calc_abundance(
-  sobj_in       = so_tcr,        # Seurat object
-  clonotype_col = "cdr3",        # meta.data column containing clonotype IDs
-  cluster_col   = "orig.ident",  # meta.data column containing cell labels
-  prefix        = ""             # Prefix to add to new meta.data columns
-)
-```
-
-<br>
-
-For each 'calculation' function provided by `djvdj`, there is a matching `plot` function that will generate a summary plot. The `calc_abundance` function will plot clonotypes ranked by abundance.
+To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_abundance` function. The corresponding `plot_abundance` function will plot clonotype frequency.
 
 ```{r "abund_plots", fig.width = 6, fig.height = 3}
 plot_abundance(
@@ -338,29 +214,7 @@ plot_abundance(
 
 ### Repertoire Diversity
 
-The function `calc_diversity` will calculate repertoire diversity on a per-cluster basis. Using the `cluster_col` argument, any meta.data column containing cell labels can be used for calculations. `calc_diversity` uses the R package `abdiv` for performing diversity calculations and any `abdiv` diversity function can be specified using the `method` argument.
-
-Possible methods for calculating diversity include:
-
-```{r, comment = "", echo = F}
-abdiv::alpha_diversities
-```
-<br>
-
-In this example we are calculating the Shannon diversity for each sample in the orig.ident meta.data column.
-
-```{r}
-so_tcr <- calc_diversity(
-  sobj_in       = so_tcr,         # Seurat object
-  clonotype_col = "cdr3",         # meta.data column containing clonotype ids
-  cluster_col   = "orig.ident",   # meta.data column containing cell labels
-  method        = abdiv::shannon  # abdiv method to use
-)
-```
-
-<br>
-
-The `plot_diversity` function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Four different diversity metrics are shown in the example below.
+The function `calc_diversity` will calculate repertoire diversity on a per-cluster basis. Using the `cluster_col` argument, any meta.data column containing cell labels can be used for calculations. `calc_diversity` uses the R package `abdiv` for performing diversity calculations and any `abdiv` diversity function can be specified using the `method` argument. The `plot_diversity` function can summarize these results.
 
 ```{r "div_plots", fig.width = 7.5, fig.height = 3}
 # Metrics to plot
@@ -386,32 +240,7 @@ plot_diversity(
 
 ### Repertoire Overlap
 
-To compare repertoires for different samples or clusters, `calc_similarity` can calculate a variety of different similarity metrics. The `cluster_col` should be used to specify the meta.data column containing cell labels for comparison. Like `calc_diversity`, an `abdiv` function can be specified with the `method` argument.
-
-Possible methods for calculating repertoire similarity include:
-
-```{r, comment = "", echo = F}
-abdiv::beta_diversities
-```
-
-<br>
-
-By default `calc_similarity` will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of cell labels present in the `orig.ident` column.
-
-```{r}
-so_tcr <- calc_similarity(
-  sobj_in       = so_tcr,          # Seurat object
-  clonotype_col = "cdr3",          # meta.data column containing clonotype ids
-  cluster_col   = "orig.ident",    # meta.data column containing cell labels
-  method        = abdiv::jaccard,  # abdiv method to use
-  prefix        = "jcrd_",         # Prefix to add to new meta.data columns 
-  return_seurat = TRUE             # Return Seurat object with results added to meta.data
-)
-```
-
-<br>
-
-A heatmap summarizing the results can be generated using the `plot_similarity` function. Here we are creating two heatmaps, one to compare the different samples and one to compare cell clusters.
+To compare repertoires for different samples or clusters, `calc_similarity` can calculate a variety of different similarity metrics. The `cluster_col` should be used to specify the meta.data column containing cell labels for comparison. Like `calc_diversity`, an `abdiv` function can be specified with the `method` argument. These results can be visualized with `plot_similarity`.
 
 ```{r "sim_plots", fig.width = 10, fig.height = 4}
 heat_theme <- theme(
@@ -450,23 +279,7 @@ plot_grid(ident_heat, clust_heat, align = "h")
 
 ### Gene Usage
 
-The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function `calc_usage` can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the `chain` and `chain_col` arguments can be used to specify the meta.data column containing the chains detected for each cell. By default the results for all chains will be included.
-
-In this example we are summarizing the usage of different V genes for the TRB chain 
-
-```{r}
-calc_usage(
-  sobj_in     = so_tcr,        # Seurat object
-  gene_cols   = "v_gene",      # meta.data column containing genes
-  cluster_col = "orig.ident",  # meta.data column containing cell labels
-  chain       = "TRB",         # Chain to use for filtering genes
-  chain_col   = "chains"       # meta.data column containing chains identified for each cell
-)
-```
-
-<br>
-
-The function `plot_usage` can be used to summarize these results. Using the `yaxis` argument, the percent or absolute count (frequency) can be used for plotting. The genes plotted can also be selected using the `plot_genes` argument, or the number of top genes (most frequent) to plot can be specified with `n_genes`.
+The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function `calc_usage` can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the `chain` and `chain_col` arguments can be used to specify the meta.data column containing the chains detected for each cell. These results can be visualized with the `plot_usage` function.
 
 ```{r "usage_plots_1", fig.width = 11, fig.height = 3.5}
 plot_usage(
@@ -489,21 +302,7 @@ plot_usage(
 
 <br>
 
-By passing multiple columns to `gene_cols`, the frequency that different genes are used together can also be summarized.
-
-```{r, eval = F}
-calc_usage(
-  sobj_in     = so_tcr,                 # Seurat object
-  gene_cols   = c("v_gene", "j_gene"),  # meta.data column(s) containing genes
-  cluster_col = "orig.ident",           # meta.data column containing cell labels
-  chain       = "TRB",                  # Chain to use for filtering genes
-  chain_col   = "chains"                # meta.data column containing chains
-)
-```
-
-<br>
-
-When multiple gene columns are passed to `plot_usage`, a list of plots will be returned, one for each cell label in the `cluster_col` column.
+By passing multiple columns to `gene_cols`, the frequency that different genes are used together can also be shown.
 
 ```{r "usage_plots_2", fig.width = 12, fig.height = 8}
 ggs <- plot_usage(
@@ -518,63 +317,3 @@ ggs <- plot_usage(
 
 plot_grid(plotlist = ggs)
 ```
-
-
-
-
-
-```{r "enclone_test", eval = FALSE, echo = FALSE}
-paths        <- dir("data", pattern = "[0-9]_AB")
-names(paths) <- str_remove(paths, "_b_Cell$|_bCellEnriched$")
-paths        <- map_chr(paths, ~ file.path("data", .x))
-
-
-
-
-# Import enclone results
-en_df <- read_csv(here("enclone_out.csv")) %>%
-  select(all_of(en_cols)) %>%
-  mutate(barcodes = str_split(barcodes, ",")) %>%
-  unnest(barcodes) %>%
-  rename(cell_id = barcodes) %>%
-  filter(group_ncells > 1)
-
-# Merge enclone groups with meta.data
-en_df <- so_tcr@meta.data %>%
-  as_tibble(rownames = "cell_id") %>%
-  left_join(en_df, by = "cell_id") %>%
-  mutate(
-    group_id = as.character(group_id),
-    group_id = replace_na(group_id, "NA")
-  )
-
-# Group colors
-grp_cols <- en_df %>%
-  pull(group_id) %>%
-  unique()
-
-grp_cols <- set_names(
-  x  = c(ito_cols, darken(ito_cols, 0.2))[seq_along(grp_cols)],
-  nm = grp_cols
-)
-
-grp_cols["NA"] <- "white"
-
-# Overlay enclone groups on UMAP
-en_df %>%
-  mutate(group_id = fct_relevel(group_id, names(grp_cols))) %>%
-  plot_features(
-    x          = "vdjUMAP_1",
-    y          = "vdjUMAP_2",
-    feature    = "group_id",
-    pt_outline = 0.3,
-    plot_colors  = grp_cols
-  ) +
-  umap_theme +
-  guides(color = guide_legend(override.aes = list(size = 3))
-```
-
-
-
-
-
