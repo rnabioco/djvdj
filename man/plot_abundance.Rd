@@ -14,7 +14,6 @@ plot_abundance(
   label_col = NULL,
   n_labels = 2,
   label_aes = list(),
-  abundance_col = NULL,
   ...
 )
 }
@@ -38,8 +37,6 @@ grouping cells when calculating clonotype abundance}
 \item{n_labels}{Number of clonotypes to label}
 
 \item{label_aes}{Named list providing additional label aesthetics (color, size, etc.)}
-
-\item{abundance_col}{meta.data column containing pre-calculated abundances}
 
 \item{...}{Additional arguments to pass to geom_line}
 }

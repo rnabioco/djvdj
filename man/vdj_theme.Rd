@@ -4,7 +4,7 @@
 \alias{vdj_theme}
 \title{Theme for djvdj plotting functions}
 \usage{
-vdj_theme(txt_size = 11, ttl_size = 12, txt_col = "black")
+vdj_theme(txt_size = 11, ttl_size = 12, txt_col = "black", ln_col = "grey85")
 }
 \arguments{
 \item{txt_size}{Size of axis text}
@@ -12,6 +12,8 @@ vdj_theme(txt_size = 11, ttl_size = 12, txt_col = "black")
 \item{ttl_size}{Size of axis titles}
 
 \item{txt_col}{Color of axis text}
+
+\item{ln_col}{Color of axis lines}
 }
 \value{
 ggplot theme

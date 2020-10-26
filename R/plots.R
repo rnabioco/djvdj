@@ -364,13 +364,13 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
       ggplot2::scale_y_log10(
         labels = scales::trans_format(
           "log10",
-          scales::math_format(10^.data$.x)
+          scales::label_math()
         ),
         breaks = 10^(-10:10)
       ) +
       ggplot2::theme(axis.title.x = ggplot2::element_blank())
 
-  # Create histogram
+    # Create histogram
   } else {
     res <- ggplot2::ggplot(
       gg_df,
@@ -384,7 +384,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
       ggplot2::scale_x_log10(
         labels = scales::trans_format(
           "log10",
-          scales::math_format(10^.data$.x)
+          scales::label_math()
         ),
         breaks = 10^(-10:10)
       )
@@ -451,28 +451,29 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
 #' @param label_col meta.data column containing labels to use for plot
 #' @param n_labels Number of clonotypes to label
 #' @param label_aes Named list providing additional label aesthetics (color, size, etc.)
-#' @param abundance_col meta.data column containing pre-calculated abundances
 #' @param ... Additional arguments to pass to geom_line
 #' @return ggplot object
 #' @export
 plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, yaxis = "percent",
                            plot_colors = NULL, plot_lvls = NULL, label_col = NULL, n_labels = 2,
-                           label_aes = list(), abundance_col = NULL, ...) {
+                           label_aes = list(), ...) {
+
+  if (!yaxis %in% c("frequency", "percent")) {
+    stop("yaxis must be either 'frequency' or 'percent'.")
+  }
 
   # Calculate clonotype abundance
-  if (is.null(abundance_col)) {
-    sobj_in <- djvdj::calc_abundance(
-      sobj_in,
-      clonotype_col = clonotype_col,
-      cluster_col   = cluster_col,
-      prefix        = "."
-    )
+  sobj_in <- djvdj::calc_abundance(
+    sobj_in,
+    clonotype_col = clonotype_col,
+    cluster_col   = cluster_col,
+    prefix        = "."
+  )
 
-    abundance_col <- ".clone_pct"
+  data_col <- ".clone_pct"
 
-    if (yaxis == "frequency") {
-      abundance_col <- ".clone_freq"
-    }
+  if (yaxis == "frequency") {
+    data_col <- ".clone_freq"
   }
 
   meta_df <- sobj_in@meta.data
@@ -487,11 +488,11 @@ plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, ya
 
   meta_df <- dplyr::mutate(
     meta_df,
-    rank = dplyr::row_number(dplyr::desc(!!sym(abundance_col)))
+    rank = dplyr::row_number(dplyr::desc(!!sym(data_col)))
   )
 
   # Plot abundance vs rank
-  res <- ggplot2::ggplot(meta_df, ggplot2::aes(rank, !!sym(abundance_col))) +
+  res <- ggplot2::ggplot(meta_df, ggplot2::aes(rank, !!sym(data_col))) +
     ggplot2::labs(y = yaxis)
 
   if (is.null(cluster_col)) {
@@ -521,9 +522,11 @@ plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, ya
       ggrepel::geom_text_repel(
         ggplot2::aes(label = !!sym(label_col)),
         data          = top_genes,
-        nudge_x       = 400,
+        nudge_x       = 500,
         direction     = "y",
-        segment.alpha = 0.3
+        segment.size  = 0.2,
+        segment.alpha = 0.2,
+        size          = 3
       )
 
     res <- .add_aes(res, label_aes, 2)
@@ -855,9 +858,10 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
 #' @param txt_size Size of axis text
 #' @param ttl_size Size of axis titles
 #' @param txt_col Color of axis text
+#' @param ln_col Color of axis lines
 #' @return ggplot theme
 #' @export
-vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
+vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black", ln_col = "grey85") {
   res <- ggplot2::theme(
     strip.background  = ggplot2::element_blank(),
     strip.text        = ggplot2::element_text(size = ttl_size),
@@ -866,8 +870,8 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black") {
     legend.title      = ggplot2::element_text(size = ttl_size),
     legend.key        = ggplot2::element_blank(),
     legend.text       = ggplot2::element_text(size = txt_size, color = txt_col),
-    axis.line         = ggplot2::element_line(size = 0.5, color = txt_col),
-    axis.ticks        = ggplot2::element_line(size = 0.5, color = txt_col),
+    axis.line         = ggplot2::element_line(size = 0.5, color = ln_col),
+    axis.ticks        = ggplot2::element_line(size = 0.5, color = ln_col),
     axis.text         = ggplot2::element_text(size = txt_size, color = txt_col),
     axis.title        = ggplot2::element_text(size = ttl_size, color = txt_col)
   )
