@@ -400,7 +400,6 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
   }
 
   res <- res +
-    ggplot2::guides(alpha = FALSE, color = FALSE) +
     vdj_theme() +
     ggplot2::theme(
       panel.spacing = ggplot2::unit(1, "cm"),

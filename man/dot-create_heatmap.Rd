@@ -26,7 +26,7 @@
 
 \item{fill}{Variable to use for the fill color}
 
-\item{plot_colors}{Character vector containing colors for plotting}
+\item{plot_colors}{Vector of colors for plotting}
 
 \item{na_color}{Color to use for missing values}
 

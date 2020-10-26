@@ -185,7 +185,8 @@ plot_reads(
   chain_col    = "chains",      # Column containing chains for each cell
   cluster_col  = "orig.ident",  # Column containing labels to group by
   plot_colors  = ito_cols       # Plot colors
-)
+) +
+  guides(fill = FALSE, color = FALSE)
 ```
 
 ![](man/figures/README-read_support-1.png)<!-- -->

@@ -25,6 +25,14 @@
 
 \item{fill}{Variable to use for fill color}
 
+\item{plot_colors}{Vector of colors for plotting}
+
+\item{y_ttl}{Title for y-axis}
+
+\item{ang}{Angle of x-axis text}
+
+\item{hjst}{Horizontal justification for x-axis text}
+
 \item{...}{Additional arguments to pass to ggplot}
 }
 \value{

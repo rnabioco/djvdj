@@ -1,7 +1,7 @@
 ---
 output: github_document
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -278,7 +278,8 @@ plot_reads(
   chain_col    = "chains",      # Column containing chains for each cell
   cluster_col  = "orig.ident",  # Column containing labels to group by
   plot_colors  = ito_cols       # Plot colors
-)
+) +
+  guides(fill = FALSE, color = FALSE)
 ```
 
 <br>
