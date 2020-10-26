@@ -15,6 +15,7 @@ knitr::opts_chunk$set(
 )
 
 # Packages
+library(UsingR)
 library(tidyverse)
 library(Seurat)
 library(djvdj)
@@ -70,6 +71,10 @@ create_col_fun <- function(cols_in) {
 }
 
 get_cols <- create_col_fun(ito_cols)
+
+# lorem ipsum
+filler <- str_split(lorem, "")[[1]][1:500] %>%
+  str_c(collapse = "")
 ```
 
 # djvdj <img src="man/figures/djvdj-logo.png" align="right" height="145">
@@ -82,7 +87,7 @@ The goal of djvdj is to provide tools to analyze AVID-seq signals alongside sing
 
 <br>
 
-## Installation
+### Installation
 
 You can install the development version of djvdj from [GitHub](https://github.com/rnabioco/djvdj) with:
 
@@ -93,9 +98,7 @@ devtools::install_github("rnabioco/djvdj")
 
 <br>
 
-## Vignette
-
-Write a description here...
+`r filler`
 
 ```{r "rna_umap", fig.width = 12.5, fig.height = 5, echo = FALSE}
 load(here("data/so_tcr.rda"))

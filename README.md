@@ -12,7 +12,7 @@ alongside single-cell VDJ sequencing data.
 
 <br>
 
-## Installation
+### Installation
 
 You can install the development version of djvdj from
 [GitHub](https://github.com/rnabioco/djvdj) with:
@@ -24,9 +24,14 @@ devtools::install_github("rnabioco/djvdj")
 
 <br>
 
-## Vignette
-
-Write a description here…
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. In nec molestie
+risus. Duis vitae eros odio. Proin condimentum odio dolor, at vehicula
+lorem tempus sit amet. Nunc id metus vehicula, facilisis velit in,
+tincidunt augue. Donec at semper turpis, nec cursus justo. Suspendisse
+est lorem, vulputate vitae diam sit amet, luctus volutpat sem. Aenean at
+odio sed nibh tempor eleifend. Duis ultrices turpis sit amet velit
+luctus, eu commodo urna lacinia. In porttitor tristique quam ac
+molestie. In s
 
 ![](man/figures/README-rna_umap-1.png)<!-- -->
 
