@@ -147,7 +147,7 @@
 <div id="paired-chains" class="section level3">
 <h3 class="hasAnchor">
 <a href="#paired-chains" class="anchor"></a>Paired Chains</h3>
-<p>The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired alpha and beta chains. Using the <code><a href="../reference/mutate_vdj.html">mutate_vdj()</a></code> function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.</p>
+<p>The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired heavy and light chains. Using the <code><a href="../reference/mutate_vdj.html">mutate_vdj()</a></code> function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.</p>
 <p>In this example we create a new column that summarizes the unique chains identified for each cell. We can then overlay these cell labels on a UMAP projection.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit">
 <span class="va">so_bcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mutate_vdj.html">mutate_vdj</a></span><span class="op">(</span>
@@ -176,7 +176,7 @@
 <span class="co">#&gt; # … with 1,085 more rows</span></pre></div>
 <p><img src="bcr_files/figure-html/chains_umap-1.png" width="768"></p>
 <p><br></p>
-<p>Clonotypes that lack paired alpha and beta chains can be removed from the meta.data using <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code>. With this function cells that match the provided condition are filtered from the object. Setting <code>filter_cells</code> to <code>FALSE</code> will just remove the V(D)J data without completely removing these cells.</p>
+<p>Clonotypes that lack paired chains can be removed from the meta.data using <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code>. With this function cells that match the provided condition are filtered from the object. Setting <code>filter_cells</code> to <code>FALSE</code> will just remove the V(D)J data without completely removing these cells.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit">
 <span class="va">so_filt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span>
   sobj_in      <span class="op">=</span> <span class="va">so_bcr</span>,
@@ -262,7 +262,7 @@
   prefix        <span class="op">=</span> <span class="st">""</span>             <span class="co"># Prefix to add to new meta.data columns</span>
 <span class="op">)</span></pre></div>
 <p><br></p>
-<p>For each ‘calculation’ function provided by djvdj, there is a matching ‘plot’ function that will generate a summary plot. The <code><a href="../reference/calc_abundance.html">calc_abundance()</a></code> function will plot clonotypes ranked by abundance.</p>
+<p>For each ‘calc’ function provided by djvdj, there is a matching ‘plot’ function that will generate a summary plot. The <code><a href="../reference/calc_abundance.html">calc_abundance()</a></code> function will plot clonotypes ranked by abundance.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit">
 <span class="fu"><a href="../reference/plot_abundance.html">plot_abundance</a></span><span class="op">(</span>
   sobj_in       <span class="op">=</span> <span class="va">so_bcr</span>,        <span class="co"># Seurat object</span>
@@ -415,7 +415,7 @@
 <span class="co">#&gt; 5 None   3_ABA_07       1042  1042   100</span>
 <span class="co">#&gt; 6 None   4_ABCtr_07     2596  2596   100</span></pre></div>
 <p><br></p>
-<p>The function <code>plot_usage</code> can be used to summarize these results. Using the <code>yaxis</code> argument, the percent or absolute count (frequency) can be used for plotting. The genes plotted can also be selected using the <code>plot_genes</code> argument, or the number of top genes (most frequent) to plot can be specified with <code>n_genes</code>.</p>
+<p>The function <code><a href="../reference/plot_usage.html">plot_usage()</a></code> can be used to summarize these results. Using the <code>yaxis</code> argument, the percent or absolute count (frequency) can be used for plotting. The genes plotted can also be selected using the <code>plot_genes</code> argument, or the number of top genes (most frequent) to plot can be specified with <code>n_genes</code>.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit">
 <span class="fu"><a href="../reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_bcr</span>,                <span class="co"># Seurat object</span>
@@ -445,7 +445,7 @@
   chain_col   <span class="op">=</span> <span class="st">"chains"</span>                <span class="co"># meta.data column containing chains</span>
 <span class="op">)</span></pre></div>
 <p><br></p>
-<p>When multiple gene columns are passed to <code>plot_usage</code>, a list of plots will be returned, one for each cell label in the <code>cluster_col</code> column.</p>
+<p>When multiple gene columns are passed to <code><a href="../reference/plot_usage.html">plot_usage()</a></code>, a list of plots will be returned, one for each cell label in the <code>cluster_col</code> column.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit">
 <span class="va">ggs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_bcr</span>,                 <span class="co"># Seurat object</span>
