@@ -88,7 +88,7 @@ get_cols <- create_col_fun(ito_cols)
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. In nec molestie risus. Duis vitae eros odio. Proin condimentum odio dolor, at vehicula lorem tempus sit amet. Nunc id metus vehicula, facilisis velit in, tincidunt augue. Donec at semper turpis, nec cursus justo. Suspendisse est lorem, vulputate vitae diam sit amet, luctus volutpat sem. Aenean at odio sed nibh tempor eleifend. Duis ultrices turpis sit amet velit luctus, eu commodo urna lacinia. In porttitor tristique quam ac molestie. In s
 
 ```{r "rna_umap", fig.width = 12.5, fig.height = 5, echo = FALSE}
-load("../data/bcr/so_bcr.rda")
+load(here("data/bcr/so_bcr.rda"))
 
 key_umap <- so_bcr %>%
   plot_features(
@@ -136,9 +136,9 @@ If the Seurat object contains data for multiple runs, a vector containing paths 
 
 ```{r "import_vdj"}
 # Create vector of paths for cellranger output
-paths        <- dir("../data/bcr", pattern = "[0-9]_AB")
+paths        <- dir(here("data/bcr"), pattern = "[0-9]_AB")
 names(paths) <- str_remove(paths, "_b_Cell$|_bCellEnriched$")
-paths        <- map_chr(paths, ~ file.path("../data/bcr", .x))
+paths        <- map_chr(paths, ~ here("data/bcr", .x))
 
 # Import VDJ data
 so_bcr <- import_vdj(

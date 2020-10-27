@@ -42,7 +42,6 @@ jobs:
 
       - name: Download data
         run: |
-          pwd
           wget https://djvdj-data.s3-us-west-2.amazonaws.com/bcr.zip
           wget https://djvdj-data.s3-us-west-2.amazonaws.com/tcr.zip
           unzip bcr.zip
