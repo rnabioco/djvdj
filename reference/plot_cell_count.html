@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Plot clonotype abundance — plot_abundance • djvdj</title>
+<title>Create bar graphs summarizing cell counts for clusters — plot_cell_count • djvdj</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Plot clonotype abundance — plot_abundance" />
-<meta property="og:description" content="Plot clonotype abundance" />
+<meta property="og:title" content="Create bar graphs summarizing cell counts for clusters — plot_cell_count" />
+<meta property="og:description" content="Create bar graphs summarizing cell counts for clusters" />
 
 
 
@@ -121,25 +121,29 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Plot clonotype abundance</h1>
+    <h1>Create bar graphs summarizing cell counts for clusters</h1>
     
-    <div class="hidden name"><code>plot_abundance.Rd</code></div>
+    <div class="hidden name"><code>plot_cell_count.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Plot clonotype abundance</p>
+    <p>Create bar graphs summarizing cell counts for clusters</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plot_abundance</span><span class='op'>(</span>
+    <pre class="usage"><span class='fu'>plot_cell_count</span><span class='op'>(</span>
   <span class='va'>sobj_in</span>,
-  clonotype_col <span class='op'>=</span> <span class='cn'>NULL</span>,
-  cluster_col <span class='op'>=</span> <span class='cn'>NULL</span>,
-  yaxis <span class='op'>=</span> <span class='st'>"percent"</span>,
+  <span class='va'>x</span>,
+  fill_col <span class='op'>=</span> <span class='cn'>NULL</span>,
+  facet_col <span class='op'>=</span> <span class='cn'>NULL</span>,
+  yaxis <span class='op'>=</span> <span class='st'>"fraction"</span>,
   plot_colors <span class='op'>=</span> <span class='cn'>NULL</span>,
   plot_lvls <span class='op'>=</span> <span class='cn'>NULL</span>,
-  label_col <span class='op'>=</span> <span class='cn'>NULL</span>,
-  n_labels <span class='op'>=</span> <span class='fl'>2</span>,
+  na_color <span class='op'>=</span> <span class='st'>"grey90"</span>,
+  order_count <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  n_label <span class='op'>=</span> <span class='cn'>TRUE</span>,
   label_aes <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
+  facet_rows <span class='op'>=</span> <span class='fl'>1</span>,
+  facet_scales <span class='op'>=</span> <span class='st'>"free_x"</span>,
   <span class='va'>...</span>
 <span class='op'>)</span></pre>
 
@@ -148,21 +152,23 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>sobj_in</th>
-      <td><p>Seurat object containing V(D)J data</p></td>
+      <td><p>Seurat object or data.frame containing data</p></td>
     </tr>
     <tr>
-      <th>clonotype_col</th>
-      <td><p>meta.data column containing clonotype IDs to use for
-calculating clonotype abundance</p></td>
+      <th>x</th>
+      <td><p>meta.data column containing clusters to use for creating bars</p></td>
     </tr>
     <tr>
-      <th>cluster_col</th>
-      <td><p>meta.data column containing cluster IDs to use for
-grouping cells when calculating clonotype abundance</p></td>
+      <th>fill_col</th>
+      <td><p>meta.data column to use for coloring bars</p></td>
+    </tr>
+    <tr>
+      <th>facet_col</th>
+      <td><p>meta.data column containing groups to use for spliting bars</p></td>
     </tr>
     <tr>
       <th>yaxis</th>
-      <td><p>Units to plot on the y-axis, either "frequency" or "percent"</p></td>
+      <td><p>Units to plot on the y-axis, either "fraction" or "count"</p></td>
     </tr>
     <tr>
       <th>plot_colors</th>
@@ -173,20 +179,36 @@ grouping cells when calculating clonotype abundance</p></td>
       <td><p>Character vector containing levels for ordering</p></td>
     </tr>
     <tr>
-      <th>label_col</th>
-      <td><p>meta.data column containing labels to use for plot</p></td>
+      <th>na_color</th>
+      <td><p>Color to use for missing values</p></td>
     </tr>
     <tr>
-      <th>n_labels</th>
-      <td><p>Number of clonotypes to label</p></td>
+      <th>order_count</th>
+      <td><p>Order bar color by number of cells in each group</p></td>
+    </tr>
+    <tr>
+      <th>n_label</th>
+      <td><p>Include label showing the number of cells represented by each
+bar</p></td>
     </tr>
     <tr>
       <th>label_aes</th>
-      <td><p>Named list providing additional label aesthetics (color, size, etc.)</p></td>
+      <td><p>Named list providing additional label aesthetics
+(color, size, etc.)</p></td>
+    </tr>
+    <tr>
+      <th>facet_rows</th>
+      <td><p>The number of facet rows. Use this argument if facet_col
+is specified</p></td>
+    </tr>
+    <tr>
+      <th>facet_scales</th>
+      <td><p>If facet_col is used, this argument passes a scales
+specification to facet_wrap. Can be "fixed", "free", "free_x", or "free_y"</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Additional arguments to pass to geom_line</p></td>
+      <td><p>Additional arguments to pass to ggplot</p></td>
     </tr>
     </table>
 

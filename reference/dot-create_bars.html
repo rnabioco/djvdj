@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Plot clonotype abundance — plot_abundance • djvdj</title>
+<title>Create ggplot bar graph — .create_bars • djvdj</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Plot clonotype abundance — plot_abundance" />
-<meta property="og:description" content="Plot clonotype abundance" />
+<meta property="og:title" content="Create ggplot bar graph — .create_bars" />
+<meta property="og:description" content="Create ggplot bar graph" />
 
 
 
@@ -121,25 +121,24 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Plot clonotype abundance</h1>
+    <h1>Create ggplot bar graph</h1>
     
-    <div class="hidden name"><code>plot_abundance.Rd</code></div>
+    <div class="hidden name"><code>dot-create_bars.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Plot clonotype abundance</p>
+    <p>Create ggplot bar graph</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plot_abundance</span><span class='op'>(</span>
-  <span class='va'>sobj_in</span>,
-  clonotype_col <span class='op'>=</span> <span class='cn'>NULL</span>,
-  cluster_col <span class='op'>=</span> <span class='cn'>NULL</span>,
-  yaxis <span class='op'>=</span> <span class='st'>"percent"</span>,
+    <pre class="usage"><span class='fu'>.create_bars</span><span class='op'>(</span>
+  <span class='va'>df_in</span>,
+  <span class='va'>x</span>,
+  <span class='va'>y</span>,
+  <span class='va'>fill</span>,
   plot_colors <span class='op'>=</span> <span class='cn'>NULL</span>,
-  plot_lvls <span class='op'>=</span> <span class='cn'>NULL</span>,
-  label_col <span class='op'>=</span> <span class='cn'>NULL</span>,
-  n_labels <span class='op'>=</span> <span class='fl'>2</span>,
-  label_aes <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
+  y_ttl <span class='op'>=</span> <span class='va'>y</span>,
+  ang <span class='op'>=</span> <span class='fl'>45</span>,
+  hjst <span class='op'>=</span> <span class='fl'>1</span>,
   <span class='va'>...</span>
 <span class='op'>)</span></pre>
 
@@ -147,46 +146,40 @@
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>sobj_in</th>
-      <td><p>Seurat object containing V(D)J data</p></td>
+      <th>df_in</th>
+      <td><p>data.frame</p></td>
     </tr>
     <tr>
-      <th>clonotype_col</th>
-      <td><p>meta.data column containing clonotype IDs to use for
-calculating clonotype abundance</p></td>
+      <th>x</th>
+      <td><p>Variable to plot on x-axis</p></td>
     </tr>
     <tr>
-      <th>cluster_col</th>
-      <td><p>meta.data column containing cluster IDs to use for
-grouping cells when calculating clonotype abundance</p></td>
+      <th>y</th>
+      <td><p>Variable to plot on y-axis</p></td>
     </tr>
     <tr>
-      <th>yaxis</th>
-      <td><p>Units to plot on the y-axis, either "frequency" or "percent"</p></td>
+      <th>fill</th>
+      <td><p>Variable to use for fill color</p></td>
     </tr>
     <tr>
       <th>plot_colors</th>
-      <td><p>Character vector containing colors for plotting</p></td>
+      <td><p>Vector of colors for plotting</p></td>
     </tr>
     <tr>
-      <th>plot_lvls</th>
-      <td><p>Character vector containing levels for ordering</p></td>
+      <th>y_ttl</th>
+      <td><p>Title for y-axis</p></td>
     </tr>
     <tr>
-      <th>label_col</th>
-      <td><p>meta.data column containing labels to use for plot</p></td>
+      <th>ang</th>
+      <td><p>Angle of x-axis text</p></td>
     </tr>
     <tr>
-      <th>n_labels</th>
-      <td><p>Number of clonotypes to label</p></td>
-    </tr>
-    <tr>
-      <th>label_aes</th>
-      <td><p>Named list providing additional label aesthetics (color, size, etc.)</p></td>
+      <th>hjst</th>
+      <td><p>Horizontal justification for x-axis text</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Additional arguments to pass to geom_line</p></td>
+      <td><p>Additional arguments to pass to ggplot</p></td>
     </tr>
     </table>
 
