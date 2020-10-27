@@ -8,3 +8,5 @@
 ^\.github$
 ^data-raw$
 ^codecov\.yml$
+^vignettes/tcr\.Rmd$
+^vignettes/bcr\.Rmd$
