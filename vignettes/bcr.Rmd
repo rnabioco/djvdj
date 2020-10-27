@@ -3,7 +3,7 @@ title: "BCR analysis"
 date: '`r format(Sys.Date(), "%B %d %Y")`'
 output:
   rmarkdown::html_vignette:
-    toc: true
+    toc_float: true
     toc_depth: 2
     vignette: >
       %\VignetteIndexEntry{BCR}
@@ -127,9 +127,9 @@ plot_grid(
 
 <br>
 
-### Import VDJ data
+## Import VDJ data
 
-`import_vdj` takes the output files from `cellranger vdj` and adds clonotype information to the meta.data for an existing Seurat object. For cells with multiple chains, the information for each chain is stored as a single row, separated by a ";" (or a character specified by `sep`). For cells that do not have any VDJ sequencing data, NAs will be added to the meta.data.
+`import_vdj()` takes the output files from [Cell Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header) and adds clonotype information to the meta.data for an existing [Seurat](https://satijalab.org/seurat/) object. For cells with multiple chains, the information for each chain is stored as a single row, separated by a ';' (or a character specified by `sep`). For cells that do not have any VDJ sequencing data, NAs will be added to the meta.data.
 
 If the Seurat object contains data for multiple runs, a vector containing paths to the VDJ data for each sample can be given. If multiple paths are provided, cell prefixes should be included as names for the vector. 
 
@@ -163,11 +163,11 @@ so_bcr@meta.data %>%
 
 <br>
 
-### Quality Control
+## Quality Control
 
-#### Paired Chains
+### Paired Chains
 
-The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired alpha and beta chains. Using the `mutate_vdj` function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.
+The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired alpha and beta chains. Using the `mutate_vdj()` function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.
 
 In this example we create a new column that summarizes the unique chains identified for each cell. We can then overlay these cell labels on a UMAP projection.
 
@@ -232,7 +232,7 @@ plot_grid(
 
 <br>
 
-Clonotypes that lack paired alpha and beta chains can be removed from the meta.data using `filter_vdj`. With this function cells that match the provided condition are filtered from the object. Setting `filter_cells` to `FALSE` will just remove the V(D)J data without completely removing these cells.
+Clonotypes that lack paired alpha and beta chains can be removed from the meta.data using `filter_vdj()`. With this function cells that match the provided condition are filtered from the object. Setting `filter_cells` to `FALSE` will just remove the V(D)J data without completely removing these cells.
 
 ```{r}
 so_filt <- filter_vdj(
@@ -250,9 +250,9 @@ so_filt@meta.data %>%
 
 <br>
 
-#### Read Support
+### Read Support
 
-The read support for each chain can be visualized with the `plot_reads` function. This will create plots summarizing the number of UMIs and total reads that were obtained for each chain.
+The read support for each chain can be visualized with the `plot_reads()` function. This will create plots summarizing the number of UMIs and total reads that were obtained for each chain.
 
 ```{r "read_support", fig.width = 10, fig.height = 3.5}
 plot_reads(
@@ -267,7 +267,7 @@ plot_reads(
 
 <br>
 
-Clonotypes that do not have adequate UMI support can be filtered from the object using `filter_vdj`. In this example we filter for clonotypes that have chains supported by at least two UMIs.
+Clonotypes that do not have adequate UMI support can be filtered from the object using `filter_vdj()`. In this example we filter for clonotypes that have chains supported by at least two UMIs.
 
 ```{r}
 so_bcr <- filter_vdj(
@@ -285,9 +285,9 @@ so_bcr@meta.data %>%
 
 <br>
 
-### Clonotype Abundance
+## Clonotype Abundance
 
-To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_abundance` function.
+To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_abundance()` function.
 
 ```{r}
 so_bcr <- calc_abundance(
@@ -300,7 +300,7 @@ so_bcr <- calc_abundance(
 
 <br>
 
-For each 'calculation' function provided by `djvdj`, there is a matching `plot` function that will generate a summary plot. The `calc_abundance` function will plot clonotypes ranked by abundance.
+For each 'calculation' function provided by djvdj, there is a matching 'plot' function that will generate a summary plot. The `calc_abundance()` function will plot clonotypes ranked by abundance.
 
 ```{r "abund_plots", fig.width = 6, fig.height = 3}
 plot_abundance(
@@ -319,9 +319,9 @@ plot_abundance(
 
 <br>
 
-### Repertoire Diversity
+## Repertoire Diversity
 
-The function `calc_diversity` will calculate repertoire diversity on a per-cluster basis. Using the `cluster_col` argument, any meta.data column containing cell labels can be used for calculations. `calc_diversity` uses the R package `abdiv` for performing diversity calculations and any `abdiv` diversity function can be specified using the `method` argument.
+The function `calc_diversity()` will calculate repertoire diversity on a per-cluster basis. Using the `cluster_col` argument, any meta.data column containing cell labels can be used for calculations. `calc_diversity()` uses the R package [abdiv](https://github.com/kylebittinger/abdiv) for performing diversity calculations and any [abdiv](https://github.com/kylebittinger/abdiv) diversity function can be specified using the `method` argument.
 
 Possible methods for calculating diversity include:
 
@@ -343,7 +343,7 @@ so_bcr <- calc_diversity(
 
 <br>
 
-The `plot_diversity` function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Four different diversity metrics are shown in the example below.
+The `plot_diversity()` function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Five different diversity metrics are shown in the example below.
 
 ```{r "div_plots", fig.width = 8.5, fig.height = 3}
 # Metrics to plot
@@ -367,9 +367,9 @@ plot_diversity(
 
 <br>
 
-### Repertoire Overlap
+## Repertoire Overlap
 
-To compare repertoires for different samples or clusters, `calc_similarity` can calculate a variety of different similarity metrics. The `cluster_col` should be used to specify the meta.data column containing cell labels for comparison. Like `calc_diversity`, an `abdiv` function can be specified with the `method` argument.
+To compare repertoires for different samples or clusters, `calc_similarity()` can calculate a variety of different similarity metrics. The `cluster_col` should be used to specify the meta.data column containing cell labels for comparison. Like `calc_diversity()`, an [abdiv](https://github.com/kylebittinger/abdiv) function can be specified with the `method` argument.
 
 Possible methods for calculating repertoire similarity include:
 
@@ -379,7 +379,7 @@ abdiv::beta_diversities
 
 <br>
 
-By default `calc_similarity` will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of cell labels present in the `orig.ident` column.
+By default `calc_similarity()` will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of cell labels present in the `orig.ident` column.
 
 ```{r}
 so_bcr <- calc_similarity(
@@ -394,7 +394,7 @@ so_bcr <- calc_similarity(
 
 <br>
 
-A heatmap summarizing the results can be generated using the `plot_similarity` function. Here we are creating two heatmaps, one to compare the different samples and one to compare cell clusters.
+A heatmap summarizing the results can be generated using the `plot_similarity()` function. Here we are creating two heatmaps, one to compare the different samples and one to compare cell clusters.
 
 ```{r "sim_plots", fig.width = 10, fig.height = 4}
 heat_theme <- theme(
@@ -431,7 +431,7 @@ plot_grid(ident_heat, clust_heat, align = "h")
 
 <br>
 
-### Gene Usage
+## Gene Usage
 
 The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function `calc_usage` can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the `chain` and `chain_col` arguments can be used to specify the meta.data column containing the chains detected for each cell. By default the results for all chains will be included.
 

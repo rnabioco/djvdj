@@ -5,11 +5,11 @@ development:
 
 template:
   params:
-    bootswatch: lumen
+    bootswatch: united
 
 reference:
 
-- title:
+- title: Import and manipulate
   contents:
   - import_vdj
   - filter_vdj
@@ -23,3 +23,4 @@ reference:
 - title: Plotting
   contents:
   - starts_with("plot")
+  - vdj_theme

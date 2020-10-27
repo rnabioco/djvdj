@@ -26,9 +26,10 @@ devtools::install_github("rnabioco/djvdj")
 
 With djvdj you can import V(D)J sequencing results from [Cell
 Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header)
-and add these data to your current Seurat object using `import_vdj`.
-Additional functions are provided to filter (`filter_vdj`) and
-manipulate (`mutate_vdj`) the Seurat object based on a range of V(D)J
+and add these data to your current
+[Seurat](https://satijalab.org/seurat/) object using `import_vdj()`.
+Additional functions are provided to filter (`filter_vdj()`) and
+manipulate (`mutate_vdj()`) the Seurat object based on a range of V(D)J
 metrics including chains, clonotypes, and CDR3 sequences.
 
 ``` r
@@ -57,12 +58,13 @@ so_filt <- filter_vdj(
 djvdj allows you to calculate a range of population diversity and
 similarity metrics implemented with the
 [abdiv](https://github.com/kylebittinger/abdiv) package. The function
-`calc_diversity` can be used to measure diversity on a per-cluster or
+`calc_diversity()` can be used to measure diversity on a per-cluster or
 per-sample basis to allow for comparison across conditions.
-`calc_similarity` will measure repertoire overlap between clusters or
+`calc_similarity()` will measure repertoire overlap between clusters or
 samples to allow for direct comparisons between cells of interest.
 Additional functions are also available to calculate clonotype
-abundances (`calc_abundance`) and relative gene usage (`calc_usage`).
+abundances (`calc_abundance()`) and relative gene usage
+(`calc_usage()`).
 
 ``` r
 # Calculate five different diversity metrics for each sample
