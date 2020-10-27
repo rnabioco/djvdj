@@ -9,14 +9,15 @@ plot_usage(
   gene_cols,
   cluster_col = NULL,
   chain = NULL,
+  type = "heatmap",
   plot_colors = NULL,
   plot_genes = NULL,
   n_genes = NULL,
-  clust_levels = NULL,
+  clust_lvls = NULL,
   yaxis = "percent",
-  ...,
   chain_col = NULL,
-  sep = ";"
+  sep = ";",
+  ...
 )
 }
 \arguments{
@@ -30,21 +31,23 @@ calculating gene usage}
 \item{chain}{Chain to use for calculating gene usage. Set to NULL to include
 all chains.}
 
-\item{plot_colors}{Character vector containing colors to use for plotting}
+\item{type}{Type of plot to create, can be either 'heatmap' or 'bar'}
 
-\item{plot_genes}{Character vector of genes to plot}
+\item{plot_colors}{Character vector containing colors for plotting}
+
+\item{plot_genes}{Character vector containing genes to plot}
 
 \item{n_genes}{Number of top genes to plot based on average usage}
 
-\item{clust_levels}{Levels to use for ordering clusters}
+\item{clust_lvls}{Levels to use for ordering clusters}
 
 \item{yaxis}{Units to plot on the y-axis, either "frequency" or "percent"}
-
-\item{...}{Additional arguments to pass to geom_tile}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
 \item{sep}{Separator to use for expanding gene_cols}
+
+\item{...}{Additional arguments to pass to ggplot}
 }
 \value{
 ggplot object

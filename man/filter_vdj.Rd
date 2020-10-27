@@ -2,51 +2,39 @@
 % Please edit documentation in R/utils.R
 \name{filter_vdj}
 \alias{filter_vdj}
-\title{Subset Seurat object based on V(D)J meta.data}
+\title{Filter V(D)J meta.data}
 \usage{
 filter_vdj(
   sobj_in,
-  filt = NULL,
-  new_col = NULL,
-  true = TRUE,
-  false = FALSE,
+  filt,
   clonotype_col = "clonotype_id",
-  vdj_cols = c("chains", "cdr3"),
+  filter_cells = FALSE,
   sep = ";",
-  return_seurat = TRUE
+  vdj_cols = NULL
 )
 }
 \arguments{
 \item{sobj_in}{Seurat object containing V(D)J data}
 
-\item{filt}{Condition to use for filtering object. If set to NULL, all cells
-will be returned. An argument must be passed to filt and/or new_col.}
-
-\item{new_col}{Instead of filtering object create a new column with values
-based on filtering condition. If filt is set to NULL, the values in new_col
-will be based on the expression passed to true.}
-
-\item{true}{Expression to generate values for new_col when filtering
-condition evaluates to TRUE}
-
-\item{false}{Expression to generate values for new_col when filtering
-condition evaluates to FALSE}
+\item{filt}{Condition to use for filtering meta.data}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs. This column
 is used to determine which cells have V(D)J data. If clonotype_col is set to
 NULL, filtering is performed regardless of whether V(D)J data is present for
-the cell.}
+the cell}
 
-\item{vdj_cols}{The names of meta.data columns to expand for filtering}
+\item{filter_cells}{Should cells be removed from object? If set FALSE
+(default) V(D)J data will be removed from meta.data but no cells will be
+removed from the object}
 
 \item{sep}{Separator to use for expanding meta.data columns}
 
-\item{return_seurat}{Return a Seurat object. If set to FALSE, the meta.data
-table is returned.}
+\item{vdj_cols}{meta.data columns containing VDJ data to use for filtering.
+If set to NULL (recommended) columns are automatically selected.}
 }
 \value{
-Filtered Seurat object
+Seurat object
 }
 \description{
-Subset Seurat object based on V(D)J meta.data
+Filter V(D)J meta.data
 }

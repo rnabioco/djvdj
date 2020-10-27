@@ -16,7 +16,10 @@ import_vdj(
 \arguments{
 \item{sobj_in}{Seurat object}
 
-\item{vdj_dir}{cellranger vdj output directory}
+\item{vdj_dir}{cellranger vdj output directories. If a vector of multiple
+paths is provided, an equal number of cell prefixes must also be provided.
+If a named vector is given, the names will be used to prefix each cell
+barcode.}
 
 \item{prefix}{Prefix to add to new meta.data columns}
 

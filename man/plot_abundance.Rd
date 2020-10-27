@@ -6,12 +6,14 @@
 \usage{
 plot_abundance(
   sobj_in,
-  clonotype_col = "clonotype_id",
+  clonotype_col = NULL,
   cluster_col = NULL,
   yaxis = "percent",
-  abundance_col = NULL,
   plot_colors = NULL,
-  plot_levels = NULL,
+  plot_lvls = NULL,
+  label_col = NULL,
+  n_labels = 2,
+  label_aes = list(),
   ...
 )
 }
@@ -26,11 +28,15 @@ grouping cells when calculating clonotype abundance}
 
 \item{yaxis}{Units to plot on the y-axis, either "frequency" or "percent"}
 
-\item{abundance_col}{meta.data column containing pre-calculated abundances}
+\item{plot_colors}{Character vector containing colors for plotting}
 
-\item{plot_colors}{Character vector containing colors to use for plotting}
+\item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{plot_levels}{Character vector containing levels to use for ordering}
+\item{label_col}{meta.data column containing labels to use for plot}
+
+\item{n_labels}{Number of clonotypes to label}
+
+\item{label_aes}{Named list providing additional label aesthetics (color, size, etc.)}
 
 \item{...}{Additional arguments to pass to geom_line}
 }

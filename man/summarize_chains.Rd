@@ -7,8 +7,8 @@
 summarize_chains(
   sobj_in,
   data_cols = c("umis", "reads"),
-  .fun,
-  chain_col = "chains",
+  fn,
+  chain_col = NULL,
   include_cols = NULL,
   sep = ";"
 )
@@ -18,7 +18,7 @@ summarize_chains(
 
 \item{data_cols}{meta.data columns to summarize}
 
-\item{.fun}{Function to use for summarizing data_cols}
+\item{fn}{Function to use for summarizing data_cols}
 
 \item{chain_col}{meta.data column(s) containing labels for each chain
 expressed in the cell. These labels are used for grouping the summary
@@ -33,6 +33,6 @@ data.frame containing summary results
 }
 \description{
 Summarize values present for each column provided to the data_cols argument.
-For each cell, the function(s) provided to .fun will be applied to each
-unique label in chain_col.
+For each cell, the function(s) provided will be applied to each unique label
+in chain_col.
 }

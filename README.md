@@ -1,6 +1,4 @@
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
 # djvdj <img src="man/figures/djvdj-logo.png" align="right" height="145">
 
 <!-- badges: start -->
@@ -14,7 +12,7 @@ alongside single-cell VDJ sequencing data.
 
 <br>
 
-## Installation
+### Installation
 
 You can install the development version of djvdj from
 [GitHub](https://github.com/rnabioco/djvdj) with:
@@ -26,16 +24,16 @@ devtools::install_github("rnabioco/djvdj")
 
 <br>
 
-## Vignette
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. In nec molestie
+risus. Duis vitae eros odio. Proin condimentum odio dolor, at vehicula
+lorem tempus sit amet. Nunc id metus vehicula, facilisis velit in,
+tincidunt augue. Donec at semper turpis, nec cursus justo. Suspendisse
+est lorem, vulputate vitae diam sit amet, luctus volutpat sem. Aenean at
+odio sed nibh tempor eleifend. Duis ultrices turpis sit amet velit
+luctus, eu commodo urna lacinia. In porttitor tristique quam ac
+molestie. In s
 
-Splenocytes from MD4 transgenic mice which have monoclonal B cells that
-all bind hen egg lysozyme (HEL) antigen were mixed with splenocytes from
-C57BL/6 mice at a 1:20 ratio. The cells were stained with the HEL
-AVID-tag and sequencing libraries were prepared to capture gene
-expression, B cell receptor sequences, and AVID-tag signals using the
-10x Genomics 5’ immune profiling kit.
-
-<img src="man/figures/README-rna_umap-1.png" width="100%" />
+![](man/figures/README-rna_umap-1.png)<!-- -->
 
 <br>
 
@@ -43,235 +41,213 @@ expression, B cell receptor sequences, and AVID-tag signals using the
 
 `import_vdj` takes the output files from `cellranger vdj` and adds
 clonotype information to the meta.data for an existing Seurat object.
-For cells that do not have any VDJ sequencing data, NAs will be included
-in the meta.data. The `filter_contigs` argument will only include chains
-that have at least one contig that is full length and productive.
+For cells with multiple chains, the information for each chain is stored
+as a single row, separated by a “;” (or a character specified by `sep`).
+For cells that do not have any VDJ sequencing data, NAs will be added to
+the meta.data.
+
+If the Seurat object contains data for multiple runs, a vector
+containing paths to the VDJ data for each sample can be given. If
+multiple paths are provided, cell prefixes should be included as names
+for the vector.
 
 ``` r
-so_vdj <- import_vdj(
-  sobj_in        = so,              # Seurat object                         
-  vdj_dir        = params$vdj_dir,  # Directory containing cellranger output files
-  prefix         = "",              # Prefix to add to new meta.data columns
-  cell_prefix    = "",              # Prefix to add to cell barcodes
-  filter_contigs = TRUE             # Only include chains with at least one productive contig
+# Create vector of paths for cellranger output
+samples <- levels(so_tcr$orig.ident)
+paths   <- file.path("data", str_c(samples, "_TCR"))
+
+names(paths) <- str_c(samples, "_GE")
+
+# Import VDJ data
+so_tcr <- import_vdj(
+  sobj_in        = so_tcr,  # Seurat object
+  vdj_dir        = paths,   # Directories containing cellranger output files
+  prefix         = "",      # Prefix to add to new meta.data columns
+  filter_contigs = TRUE     # Only include chains with at least one productive contig
 )
-
-vdj_cols <- c("chains", "cdr3", "n_chains")
-
-so_vdj@meta.data %>%
-  as_tibble() %>%
-  select(orig.ident, nCount_RNA, nFeature_RNA, all_of(vdj_cols))
-#> # A tibble: 7,137 x 6
-#>    orig.ident nCount_RNA nFeature_RNA chains  cdr3                      n_chains
-#>    <fct>           <dbl>        <int> <chr>   <chr>                        <int>
-#>  1 AVID-seq          884          551 IGH;IGK CVKGYDYDWYFDVW;CLQYDNLWTF        2
-#>  2 AVID-seq         3061          970 <NA>    <NA>                            NA
-#>  3 AVID-seq         1297          677 IGH;IGK CARGRLGYAMDYW;CQHFWSTPWTF        2
-#>  4 AVID-seq         1570          848 <NA>    <NA>                            NA
-#>  5 AVID-seq         2277          818 <NA>    <NA>                            NA
-#>  6 AVID-seq         1320          566 <NA>    <NA>                            NA
-#>  7 AVID-seq          570          348 <NA>    <NA>                            NA
-#>  8 AVID-seq          909          489 IGH;IGK CTVSYTKDWYFDVW;CAQNLELPL…        2
-#>  9 AVID-seq         1072          588 IGH;IGK CARSYDYDPLYYAMDYW;CLQSDN…        2
-#> 10 AVID-seq         1143          594 IGH;IGK CARSRLAYW;CLQYASSPFTF            2
-#> # … with 7,127 more rows
 ```
 
 <br>
 
-### Filtering
+### Quality Control
 
-`filter_vdj` allows you to filter a Seurat object using the added
-clonotype information or any other columns present in the meta.data. For
-cells with multiple chains, the information for each chain is stored as
-a single row, separated by a “;”. When filtering, columns with VDJ data
-will be expanded based on the delimiter “;”. The columns that are
-expanded for filtering can be specified with the `split_cols` argument.
-By default filtering is only performed on cells that include VDJ data.
-
-Filter to only include cells with paired light and heavy chains.
+`djvdj` provides a range of tools to assess data quality and filter
+single-cell V(D)J data. `mutate_vdj` can be used to add new cell labels
+to the object meta.data, which is helpful for assessing quality.
+`filter_vdj` will filter cells based on V(D)J information in the
+meta.data or just remove V(D)J data from the object without discarding
+cells. This can be used to filter V(D)J data based on read support. To
+assess overall read and and UMI support, the function `plot_reads` will
+summarize these metrics for each clonotype.
 
 ``` r
-so_filt <- filter_vdj(
-  sobj_in = so_vdj,                                              # Seurat object
-  filt    = "IGH" %in% chains && any(c("IGK", "IGL") %in% chains)  # Expression for filtering
-)
-
-so_filt@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols))
-#> # A tibble: 3,353 x 3
-#>    chains      cdr3                                  n_chains
-#>    <chr>       <chr>                                    <int>
-#>  1 IGH;IGK     CVKGYDYDWYFDVW;CLQYDNLWTF                    2
-#>  2 IGH;IGK     CARGRLGYAMDYW;CQHFWSTPWTF                    2
-#>  3 IGH;IGK     CTVSYTKDWYFDVW;CAQNLELPLTF                   2
-#>  4 IGH;IGK     CARSYDYDPLYYAMDYW;CLQSDNLPLTF                2
-#>  5 IGH;IGK     CARSRLAYW;CLQYASSPFTF                        2
-#>  6 IGH;IGK;IGL CAKRGYSNSLDYW;CQHFWSTPYTF;CALWYSNHWVF        3
-#>  7 IGH;IGK     CANPITTAEGWYFDVW;CLQHGESPYTF                 2
-#>  8 IGH;IGK     CARSYGYAMDYW;CWQGTHFPYTF                     2
-#>  9 IGH;IGK     CARWVYGSAWFAYW;CMQHLEYPFTF                   2
-#> 10 IGH;IGK     CARSHGYDFYAMDYW;CQHFWGTPRTF                  2
-#> # … with 3,343 more rows
+plot_reads(
+  sobj_in      = so_tcr,        # Seurat object
+  chain_col    = "chains",      # Column containing chains for each cell
+  cluster_col  = "orig.ident",  # Column containing labels to group by
+  plot_colors  = ito_cols       # Plot colors
+) +
+  guides(fill = FALSE, color = FALSE)
 ```
+
+![](man/figures/README-read_support-1.png)<!-- -->
 
 <br>
 
-Instead of filtering, `filter_vdj` can also add new cell labels to the
-object meta.data using the `new_col` argument. Here a new column is
-added indicating whether each cell has a paired heavy and light chain.
-This is useful for plotting.
+### Clonotype Abundance
+
+To identify the top clonotypes in each sample or cluster, clonotype
+abundance can be calculated using the `calc_abundance` function. The
+corresponding `plot_abundance` function will plot clonotype frequency.
 
 ``` r
-so_vdj <- filter_vdj(
-  sobj_in = so_vdj,                                               # Seurat object
-  filt    = "IGH" %in% chains && any(c("IGK", "IGL") %in% chains),  # Condition to use for filtering
-  new_col = "Paired",                                             # Name of new column
-  true    = "paired",                                             # Value when condition is TRUE
-  false   = "unpaired"                                            # Value when condition is FALSE
-)
-
-vdj_cols <- c(vdj_cols, "Paired")
-
-so_vdj@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols))
-#> # A tibble: 3,820 x 4
-#>    chains      cdr3                                  n_chains Paired  
-#>    <chr>       <chr>                                    <int> <chr>   
-#>  1 IGH;IGK     CVKGYDYDWYFDVW;CLQYDNLWTF                    2 paired  
-#>  2 IGH;IGK     CARGRLGYAMDYW;CQHFWSTPWTF                    2 paired  
-#>  3 IGH;IGK     CTVSYTKDWYFDVW;CAQNLELPLTF                   2 paired  
-#>  4 IGH;IGK     CARSYDYDPLYYAMDYW;CLQSDNLPLTF                2 paired  
-#>  5 IGH;IGK     CARSRLAYW;CLQYASSPFTF                        2 paired  
-#>  6 IGH;IGK;IGL CAKRGYSNSLDYW;CQHFWSTPYTF;CALWYSNHWVF        3 paired  
-#>  7 IGK         CQQWSSNPLTF                                  1 unpaired
-#>  8 IGH;IGK     CANPITTAEGWYFDVW;CLQHGESPYTF                 2 paired  
-#>  9 IGH;IGK     CARSYGYAMDYW;CWQGTHFPYTF                     2 paired  
-#> 10 IGH;IGK     CARWVYGSAWFAYW;CMQHLEYPFTF                   2 paired  
-#> # … with 3,810 more rows
+plot_abundance(
+  sobj_in       = so_tcr,        # Seurat object
+  clonotype_col = "cdr3",        # meta.data column containing clonotype IDs
+  cluster_col   = "orig.ident",  # meta.data column containing cell labels
+  
+  plot_colors = ito_cols,        # Plot colors
+  yaxis       = "percent",       # Units to plot
+  label_col   = "cdr3",          # meta.data column containing labels
+  n_labels    = 1,               # Number of top clonotypes to label
+  size        = 1                # Additional ggplot options
+) +
+  theme(legend.title = element_blank())
 ```
 
-<img src="man/figures/README-pair_umap-1.png" width="100%" />
+![](man/figures/README-abund_plots-1.png)<!-- -->
 
 <br>
 
-More complicated statements referring to meta.data columns can be used
-for the `filt`, `true`, and `false` arguments. For more detailed
-analysis of the chains detected for each cell, a new cell label can be
-created for only the unique chains.
+### Repertoire Diversity
+
+The function `calc_diversity` will calculate repertoire diversity on a
+per-cluster basis. Using the `cluster_col` argument, any meta.data
+column containing cell labels can be used for calculations.
+`calc_diversity` uses the R package `abdiv` for performing diversity
+calculations and any `abdiv` diversity function can be specified using
+the `method` argument. The `plot_diversity` function can summarize these
+results.
 
 ``` r
-so_vdj <- filter_vdj(
-  sobj_in = so_vdj,                               # Seurat object
-  new_col = "uniq_chains",                        # Name of new column
-  true    = str_c(unique(chains), collapse = "_")  # Value when condition is TRUE
+# Metrics to plot
+fns <- list(
+  "simpson"     = abdiv::simpson,
+  "shannon"     = abdiv::shannon,
+  "margalef"    = abdiv::margalef,
+  "menhinick"   = abdiv::menhinick,
+  "brillouin_d" = abdiv::brillouin_d
 )
 
-vdj_cols <- c(vdj_cols, "uniq_chains")
-
-so_vdj@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id), n_chains > 2) %>%
-  select(all_of(vdj_cols))
-#> # A tibble: 526 x 5
-#>    chains       cdr3                                 n_chains Paired uniq_chains
-#>    <chr>        <chr>                                   <int> <chr>  <chr>      
-#>  1 IGH;IGK;IGL  CAKRGYSNSLDYW;CQHFWSTPYTF;CALWYSNHW…        3 paired IGH_IGK_IGL
-#>  2 IGH;IGH;IGK… CARGDYW;CTTWLRLRSFAYW;CHQRSSYPCTF;C…        4 paired IGH_IGK    
-#>  3 IGH;IGK;IGK  CAKPRYYYGSSFYAMDYW;CQQGNTLPFTF;CAQN…        3 paired IGH_IGK    
-#>  4 IGH;IGK;IGK  CARGPYYTNGGAMDYW;CQHFWSTPFTF;CLQYDE…        3 paired IGH_IGK    
-#>  5 IGH;IGH;IGK… CARSYPYFDYW;CARSSITTVSDYW;CQQHNEYPY…        4 paired IGH_IGK    
-#>  6 IGH;IGK;IGK  CALDSSGFAYW;CQQYWSTPTF;CHQYHRSPLTF          3 paired IGH_IGK    
-#>  7 IGH;IGH;IGK… CARHDGLPGAMDYW;CARPLTIAGSAMDYW;CQQG…        4 paired IGH_IGK    
-#>  8 IGH;IGH;IGK… CAEGSSNWYFDVW;CARDGSSPFDYW;CQQHNEYP…        4 paired IGH_IGK    
-#>  9 IGH;IGK;IGK  CTSPPYEGYYAMDYW;CFQGSHVPPTF;CKQSYNL…        3 paired IGH_IGK    
-#> 10 IGH;IGH;IGK… CTRLLTGYYFDYW;CARRYYYGSSWNYFDYW;CQQ…        4 paired IGH_IGK    
-#> # … with 516 more rows
+plot_diversity(
+  sobj_in       = so_tcr,        # Seurat object
+  clonotype_col = "cdr3",        # meta.data column containing clonotype ids
+  cluster_col   = "orig.ident",  # meta.data column containing cell labels
+  method        = fns,           # abdiv method to use
+  plot_colors   = ito_cols
+) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-<img src="man/figures/README-chains_umap-1.png" width="100%" />
+![](man/figures/README-div_plots-1.png)<!-- -->
 
 <br>
 
-MD4 B cells are expected to have IGK chains with the CDR3 amino acid
-sequence CQQSNSWPYTF. Using `filter_vdj` we can visualize which cells
-have this sequence.
+### Repertoire Overlap
+
+To compare repertoires for different samples or clusters,
+`calc_similarity` can calculate a variety of different similarity
+metrics. The `cluster_col` should be used to specify the meta.data
+column containing cell labels for comparison. Like `calc_diversity`, an
+`abdiv` function can be specified with the `method` argument. These
+results can be visualized with `plot_similarity`.
 
 ``` r
-# Add new cell labels to meta.data
-so_vdj <- filter_vdj(
-  sobj_in = so_vdj,                                   # Seurat object
-  filt    = "CQQSNSWPYTF" %in% cdr3[chains == "IGK"],  # Condition to use for filtering
-  new_col = "IGK_seq",                                # Name of new column
-  true    = "CQQSNSWPYTF",                            # Value when condition is TRUE
-  false   = "other"                                   # Value when condition is FALSE
+heat_theme <- theme(
+  legend.title = element_blank(),
+  legend.text  = element_text(size = 8)
 )
 
-vdj_cols <- c(vdj_cols, "IGK_seq")
+# Sample heatmap
+ident_heat <- plot_similarity(
+  sobj_in       = so_tcr,                 # Seurat object
+  clonotype_col = "cdr3",                 # meta.data column containing clonotype IDs
+  cluster_col   = "orig.ident",           # meta.data column containing cell labels
+  method        = abdiv::jaccard,         # Method to use
+  plot_colors   = c("grey90", "#009E73")  # Plot colors
+) +
+  heat_theme
 
-so_vdj@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols))
-#> # A tibble: 3,820 x 6
-#>    chains     cdr3                          n_chains Paired  uniq_chains IGK_seq
-#>    <chr>      <chr>                            <int> <chr>   <chr>       <chr>  
-#>  1 IGH;IGK    CVKGYDYDWYFDVW;CLQYDNLWTF            2 paired  IGH_IGK     other  
-#>  2 IGH;IGK    CARGRLGYAMDYW;CQHFWSTPWTF            2 paired  IGH_IGK     other  
-#>  3 IGH;IGK    CTVSYTKDWYFDVW;CAQNLELPLTF           2 paired  IGH_IGK     other  
-#>  4 IGH;IGK    CARSYDYDPLYYAMDYW;CLQSDNLPLTF        2 paired  IGH_IGK     other  
-#>  5 IGH;IGK    CARSRLAYW;CLQYASSPFTF                2 paired  IGH_IGK     other  
-#>  6 IGH;IGK;I… CAKRGYSNSLDYW;CQHFWSTPYTF;CA…        3 paired  IGH_IGK_IGL other  
-#>  7 IGK        CQQWSSNPLTF                          1 unpair… IGK         other  
-#>  8 IGH;IGK    CANPITTAEGWYFDVW;CLQHGESPYTF         2 paired  IGH_IGK     other  
-#>  9 IGH;IGK    CARSYGYAMDYW;CWQGTHFPYTF             2 paired  IGH_IGK     other  
-#> 10 IGH;IGK    CARWVYGSAWFAYW;CMQHLEYPFTF           2 paired  IGH_IGK     other  
-#> # … with 3,810 more rows
+# Cluster heatmap
+clust_heat <- plot_similarity(
+  sobj_in       = so_tcr,
+  clonotype_col = "cdr3",
+  cluster_col   = "seurat_clusters",
+  method        = abdiv::jaccard,
+  plot_colors   = c("grey90", "#56B4E9"),  
+  size          = 0.2,                    # Additional ggplot options
+  color         = "white"                 # Additional ggplot options
+) +
+  heat_theme +
+  theme(axis.text.x  = element_text(angle = 0))
+
+# Combine heatmaps
+plot_grid(ident_heat, clust_heat, align = "h")
 ```
 
-<img src="man/figures/README-seq_umap-1.png" width="100%" />
+![](man/figures/README-sim_plots-1.png)<!-- -->
 
 <br>
 
-### Repertoire stats
+### Gene Usage
 
-The functions `calc_diversity` and `calc_jaccard` will calculate
-repertoire diversity and repertoire overlap on a per-cluster basis.
-These functions can be given any meta.data column containing cell labels
-to use for calculations.
-
-Calculate repertoire diversity with `calc_diversity`. The inverse
-Simpson index is used to measure diversity for each cluster.
+The V(D)J data imported from Cell Ranger also includes the specific
+genes detected for each cell. The function `calc_usage` can be used to
+calculate the fraction of cells that express different V(D)J genes. This
+function will produce a table summarizing the results. To only include
+results for a certain chain, the `chain` and `chain_col` arguments can
+be used to specify the meta.data column containing the chains detected
+for each cell. These results can be visualized with the `plot_usage`
+function.
 
 ``` r
-so_vdj <- calc_diversity(
-  sobj_in       = so_vdj,          # Seurat object
-  clonotype_col = "clonotype_id",  # meta.data column containing clonotype ids
-  cluster_col   = "type_mouse",    # meta.data column containing cell labels
-  prefix        = ""               # Prefix to add to new meta.data columns
+plot_usage(
+  sobj_in     = so_tcr,                # Seurat object
+  gene_cols   = "v_gene",              # meta.data column(s) containing genes
+  cluster_col = "orig.ident",          # meta.data column containing cell labels
+  type        = "bar",                 # Type of plot
+  chain       = "TRB",                 # Chain to use for filtering genes
+  chain_col   = "chains",              # meta.data column containing chains
+  
+  yaxis       = "percent",             # Units to plot
+  plot_colors = ito_cols,              # Colors to use for heatmap
+  plot_genes  = NULL,                  # A list of genes to plot
+  n_genes     = NULL,                  # The number of top genes to plot
+  
+  size        = 0.2,                   # Additional ggplot options
+  color       = "white"                # Additional ggplot options
 )
 ```
 
-<img src="man/figures/README-div_umap-1.png" width="100%" />
+![](man/figures/README-usage_plots_1-1.png)<!-- -->
 
 <br>
 
-Calculate repertoire overlap with `calc_jaccard` for the cell groups
-present in the `cluster_col`. Using the `return_seurat` argument,
-`calc_jaccard` can also output a matrix for plotting.
+By passing multiple columns to `gene_cols`, the frequency that different
+genes are used together can also be shown.
 
 ``` r
-so_vdj <- calc_overlap(
-  sobj_in       = so_vdj,             # Seurat object
-  clonotype_col = "clonotype_id",     # meta.data column containing clonotype ids
-  cluster_col   = "seurat_clusters",  # meta.data column containing cell labels
-  prefix        = "x",                # Prefix to add to new meta.data columns 
-  return_seurat = TRUE                # Return Seurat object with results added to meta.data
-)
+ggs <- plot_usage(
+  sobj_in     = so_tcr,                 # Seurat object
+  gene_cols   = c("v_gene", "j_gene"),  # meta.data column(s) containing genes
+  cluster_col = "orig.ident",           # meta.data column containing cell labels
+  chain       = "TRB",                  # Chain to use for filtering genes
+  chain_col   = "chains",               # meta.data column containing chains identified
+  plot_colors = c("grey90", "#6A51A3")  # Colors to use for heatmap
+) %>%
+  imap(~ .x + ggtitle(.y))
+
+plot_grid(plotlist = ggs)
 ```
 
-<img src="man/figures/README-jaccard_umap-1.png" width="100%" />
+![](man/figures/README-usage_plots_2-1.png)<!-- -->
