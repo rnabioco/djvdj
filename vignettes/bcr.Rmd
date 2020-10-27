@@ -433,16 +433,16 @@ plot_grid(ident_heat, clust_heat, align = "h")
 
 ## Gene Usage
 
-The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function `calc_usage` can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the `chain` and `chain_col` arguments can be used to specify the meta.data column containing the chains detected for each cell. By default the results for all chains will be included.
+The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function `calc_usage()` can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the `chain` and `chain_col` arguments can be used to specify the meta.data column containing the chains detected for each cell. By default the results for all chains will be included.
 
-In this example we are summarizing the usage of different V genes for the TRB chain 
+In this example we are summarizing the usage of different V genes for the IGH chain 
 
 ```{r}
 calc_usage(
   sobj_in     = so_bcr,        # Seurat object
   gene_cols   = "v_gene",      # meta.data column containing genes
   cluster_col = "orig.ident",  # meta.data column containing cell labels
-  chain       = "TRB",         # Chain to use for filtering genes
+  chain       = "IGH",         # Chain to use for filtering genes
   chain_col   = "chains"       # meta.data column containing chains identified for each cell
 )
 ```
