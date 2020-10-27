@@ -48,9 +48,6 @@ jobs:
           unzip tcr.zip
           mv bcr data
           mv tcr data
-          ls data
-          ls data/bcr
-          ls data/tcr
 
       - name: Deploy package
         run: |

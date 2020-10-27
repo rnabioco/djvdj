@@ -1,7 +1,7 @@
 url: https://rnabioco.github.io/djvdj
 
 development:
-  mode: devel
+  mode: auto
 
 template:
   params:
