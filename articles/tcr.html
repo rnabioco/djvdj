@@ -92,7 +92,7 @@
     
 <p><br></p>
 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In nec molestie risus. Duis vitae eros odio. Proin condimentum odio dolor, at vehicula lorem tempus sit amet. Nunc id metus vehicula, facilisis velit in, tincidunt augue. Donec at semper turpis, nec cursus justo. Suspendisse est lorem, vulputate vitae diam sit amet, luctus volutpat sem. Aenean at odio sed nibh tempor eleifend. Duis ultrices turpis sit amet velit luctus, eu commodo urna lacinia. In porttitor tristique quam ac molestie. In s</p>
-<p><img src="man/figures/README-rna_umap-1.png" width="1200"></p>
+<p><img src="tcr_files/figure-html/rna_umap-1.png" width="1200"></p>
 <p><br></p>
 <div id="import-vdj-data" class="section level3">
 <h3 class="hasAnchor">
@@ -144,7 +144,6 @@
 <div id="quality-control" class="section level3">
 <h3 class="hasAnchor">
 <a href="#quality-control" class="anchor"></a>Quality Control</h3>
-<p><br></p>
 <div id="paired-chains" class="section level4">
 <h4 class="hasAnchor">
 <a href="#paired-chains" class="anchor"></a>Paired Chains</h4>
@@ -175,7 +174,7 @@
 <span class="co">#&gt;  9 WT_DN4_GE_cl… CAPGTGGYK… TRA;TR… TRAV13-2… TRAJ12;T… 11882… 13;4… TRA_TRB    </span>
 <span class="co">#&gt; 10 WT_DN4_GE_cl… CAASALRDS… TRA;TR… TRAV14N-… TRAJ13;T… 13372… 8;15… TRA_TRB    </span>
 <span class="co">#&gt; # … with 91 more rows</span></pre></div>
-<p><img src="man/figures/README-chains_umap-1.png" width="624"></p>
+<p><img src="tcr_files/figure-html/chains_umap-1.png" width="624"></p>
 <p><br></p>
 <p>Clonotypes that lack paired alpha and beta chains can be removed from the meta.data using <code>filter_vdj</code>. With this function cells that match the provided condition are filtered from the object. Setting <code>filter_cells</code> to <code>FALSE</code> will just remove the V(D)J data without completely removing these cells.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit">
@@ -218,7 +217,7 @@
   plot_colors  <span class="op">=</span> <span class="va">ito_cols</span>       <span class="co"># Plot colors</span>
 <span class="op">)</span> <span class="op">+</span>
   <span class="fu">guides</span><span class="op">(</span>fill <span class="op">=</span> <span class="cn">FALSE</span>, color <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></pre></div>
-<p><img src="man/figures/README-read_support-1.png" width="624"></p>
+<p><img src="tcr_files/figure-html/read_support-1.png" width="624"></p>
 <p><br></p>
 <p>Clonotypes that do not have adequate UMI support can be filtered from the object using <code>filter_vdj</code>. In this example we filter for clonotypes that have chains supported by at least two UMIs.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit">
@@ -276,7 +275,7 @@
   size        <span class="op">=</span> <span class="fl">1</span>                <span class="co"># Additional ggplot options</span>
 <span class="op">)</span> <span class="op">+</span>
   <span class="fu">theme</span><span class="op">(</span>legend.title <span class="op">=</span> <span class="fu">element_blank</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></pre></div>
-<p><img src="man/figures/README-abund_plots-1.png" width="576"></p>
+<p><img src="tcr_files/figure-html/abund_plots-1.png" width="576"></p>
 <p><br></p>
 </div>
 <div id="repertoire-diversity" class="section level3">
@@ -317,7 +316,7 @@
   plot_colors   <span class="op">=</span> <span class="va">ito_cols</span>
 <span class="op">)</span> <span class="op">+</span>
   <span class="fu">theme</span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, hjust <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></pre></div>
-<p><img src="man/figures/README-div_plots-1.png" width="720"></p>
+<p><img src="tcr_files/figure-html/div_plots-1.png" width="720"></p>
 <p><br></p>
 </div>
 <div id="repertoire-overlap" class="section level3">
@@ -389,7 +388,7 @@
 
 <span class="co"># Combine heatmaps</span>
 <span class="fu">plot_grid</span><span class="op">(</span><span class="va">ident_heat</span>, <span class="va">clust_heat</span>, align <span class="op">=</span> <span class="st">"h"</span><span class="op">)</span></pre></div>
-<p><img src="man/figures/README-sim_plots-1.png" width="960"></p>
+<p><img src="tcr_files/figure-html/sim_plots-1.png" width="960"></p>
 <p><br></p>
 </div>
 <div id="gene-usage" class="section level3">
@@ -438,7 +437,7 @@
   size        <span class="op">=</span> <span class="fl">0.2</span>,                   <span class="co"># Additional ggplot options</span>
   color       <span class="op">=</span> <span class="st">"white"</span>                <span class="co"># Additional ggplot options</span>
 <span class="op">)</span></pre></div>
-<p><img src="man/figures/README-usage_plots_1-1.png" width="1056"></p>
+<p><img src="tcr_files/figure-html/usage_plots_1-1.png" width="1056"></p>
 <p><br></p>
 <p>By passing multiple columns to <code>gene_cols</code>, the frequency that different genes are used together can also be summarized.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit">
@@ -463,7 +462,7 @@
   <span class="fu">imap</span><span class="op">(</span><span class="op">~</span> <span class="va">.x</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="va">.y</span><span class="op">)</span><span class="op">)</span>
 
 <span class="fu">plot_grid</span><span class="op">(</span>plotlist <span class="op">=</span> <span class="va">ggs</span><span class="op">)</span></pre></div>
-<p><img src="man/figures/README-usage_plots_2-1.png" width="1152"></p>
+<p><img src="tcr_files/figure-html/usage_plots_2-1.png" width="1152"></p>
 </div>
   </div>
 
