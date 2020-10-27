@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>A Collection of Tools to Analyze AVID-seq Data • djvdj</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/lumen/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/united/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
 <script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
@@ -95,7 +95,7 @@
 <div id="import" class="section level3">
 <h3 class="hasAnchor">
 <a href="#import" class="anchor"></a>Import</h3>
-<p>With djvdj you can import V(D)J sequencing results from <a href="https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header">Cell Ranger</a> and add these data to your current Seurat object using <code>import_vdj</code>. Additional functions are provided to filter (<code>filter_vdj</code>) and manipulate (<code>mutate_vdj</code>) the Seurat object based on a range of V(D)J metrics including chains, clonotypes, and CDR3 sequences.</p>
+<p>With djvdj you can import V(D)J sequencing results from <a href="https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header">Cell Ranger</a> and add these data to your current <a href="https://satijalab.org/seurat/">Seurat</a> object using <code><a href="reference/import_vdj.html">import_vdj()</a></code>. Additional functions are provided to filter (<code><a href="reference/filter_vdj.html">filter_vdj()</a></code>) and manipulate (<code><a href="reference/mutate_vdj.html">mutate_vdj()</a></code>) the Seurat object based on a range of V(D)J metrics including chains, clonotypes, and CDR3 sequences.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit">
 <span class="co"># Import VDJ data</span>
 <span class="va">paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>
@@ -119,7 +119,7 @@
 <div id="calculate" class="section level3">
 <h3 class="hasAnchor">
 <a href="#calculate" class="anchor"></a>Calculate</h3>
-<p>djvdj allows you to calculate a range of population diversity and similarity metrics implemented with the <a href="https://github.com/kylebittinger/abdiv">abdiv</a> package. The function <code>calc_diversity</code> can be used to measure diversity on a per-cluster or per-sample basis to allow for comparison across conditions. <code>calc_similarity</code> will measure repertoire overlap between clusters or samples to allow for direct comparisons between cells of interest. Additional functions are also available to calculate clonotype abundances (<code>calc_abundance</code>) and relative gene usage (<code>calc_usage</code>).</p>
+<p>djvdj allows you to calculate a range of population diversity and similarity metrics implemented with the <a href="https://github.com/kylebittinger/abdiv">abdiv</a> package. The function <code><a href="reference/calc_diversity.html">calc_diversity()</a></code> can be used to measure diversity on a per-cluster or per-sample basis to allow for comparison across conditions. <code><a href="reference/calc_similarity.html">calc_similarity()</a></code> will measure repertoire overlap between clusters or samples to allow for direct comparisons between cells of interest. Additional functions are also available to calculate clonotype abundances (<code><a href="reference/calc_abundance.html">calc_abundance()</a></code>) and relative gene usage (<code><a href="reference/calc_usage.html">calc_usage()</a></code>).</p>
 <div class="sourceCode" id="cb3"><pre class="downlit">
 <span class="co"># Calculate five different diversity metrics for each sample</span>
 <span class="va">fns</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>

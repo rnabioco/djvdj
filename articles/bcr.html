@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BCR analysis • djvdj</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/lumen/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/united/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
@@ -94,10 +94,10 @@
 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In nec molestie risus. Duis vitae eros odio. Proin condimentum odio dolor, at vehicula lorem tempus sit amet. Nunc id metus vehicula, facilisis velit in, tincidunt augue. Donec at semper turpis, nec cursus justo. Suspendisse est lorem, vulputate vitae diam sit amet, luctus volutpat sem. Aenean at odio sed nibh tempor eleifend. Duis ultrices turpis sit amet velit luctus, eu commodo urna lacinia. In porttitor tristique quam ac molestie. In s</p>
 <p><img src="bcr_files/figure-html/rna_umap-1.png" width="1200"></p>
 <p><br></p>
-<div id="import-vdj-data" class="section level3">
-<h3 class="hasAnchor">
-<a href="#import-vdj-data" class="anchor"></a>Import VDJ data</h3>
-<p><code>import_vdj</code> takes the output files from <code>cellranger vdj</code> and adds clonotype information to the meta.data for an existing Seurat object. For cells with multiple chains, the information for each chain is stored as a single row, separated by a “;” (or a character specified by <code>sep</code>). For cells that do not have any VDJ sequencing data, NAs will be added to the meta.data.</p>
+<div id="import-vdj-data" class="section level2">
+<h2 class="hasAnchor">
+<a href="#import-vdj-data" class="anchor"></a>Import VDJ data</h2>
+<p><code><a href="../reference/import_vdj.html">import_vdj()</a></code> takes the output files from <a href="https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header">Cell Ranger</a> and adds clonotype information to the meta.data for an existing <a href="https://satijalab.org/seurat/">Seurat</a> object. For cells with multiple chains, the information for each chain is stored as a single row, separated by a ‘;’ (or a character specified by <code>sep</code>). For cells that do not have any VDJ sequencing data, NAs will be added to the meta.data.</p>
 <p>If the Seurat object contains data for multiple runs, a vector containing paths to the VDJ data for each sample can be given. If multiple paths are provided, cell prefixes should be included as names for the vector.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit">
 <span class="co"># Create vector of paths for cellranger output</span>
@@ -141,13 +141,13 @@
 <span class="co">#&gt; # … with 15,428 more rows</span></pre></div>
 <p><br></p>
 </div>
-<div id="quality-control" class="section level3">
+<div id="quality-control" class="section level2">
+<h2 class="hasAnchor">
+<a href="#quality-control" class="anchor"></a>Quality Control</h2>
+<div id="paired-chains" class="section level3">
 <h3 class="hasAnchor">
-<a href="#quality-control" class="anchor"></a>Quality Control</h3>
-<div id="paired-chains" class="section level4">
-<h4 class="hasAnchor">
-<a href="#paired-chains" class="anchor"></a>Paired Chains</h4>
-<p>The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired alpha and beta chains. Using the <code>mutate_vdj</code> function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.</p>
+<a href="#paired-chains" class="anchor"></a>Paired Chains</h3>
+<p>The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired alpha and beta chains. Using the <code><a href="../reference/mutate_vdj.html">mutate_vdj()</a></code> function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.</p>
 <p>In this example we create a new column that summarizes the unique chains identified for each cell. We can then overlay these cell labels on a UMAP projection.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit">
 <span class="va">so_bcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mutate_vdj.html">mutate_vdj</a></span><span class="op">(</span>
@@ -176,7 +176,7 @@
 <span class="co">#&gt; # … with 1,085 more rows</span></pre></div>
 <p><img src="bcr_files/figure-html/chains_umap-1.png" width="768"></p>
 <p><br></p>
-<p>Clonotypes that lack paired alpha and beta chains can be removed from the meta.data using <code>filter_vdj</code>. With this function cells that match the provided condition are filtered from the object. Setting <code>filter_cells</code> to <code>FALSE</code> will just remove the V(D)J data without completely removing these cells.</p>
+<p>Clonotypes that lack paired alpha and beta chains can be removed from the meta.data using <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code>. With this function cells that match the provided condition are filtered from the object. Setting <code>filter_cells</code> to <code>FALSE</code> will just remove the V(D)J data without completely removing these cells.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit">
 <span class="va">so_filt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span>
   sobj_in      <span class="op">=</span> <span class="va">so_bcr</span>,
@@ -205,10 +205,10 @@
 <span class="co">#&gt; # … with 14,725 more rows</span></pre></div>
 <p><br></p>
 </div>
-<div id="read-support" class="section level4">
-<h4 class="hasAnchor">
-<a href="#read-support" class="anchor"></a>Read Support</h4>
-<p>The read support for each chain can be visualized with the <code>plot_reads</code> function. This will create plots summarizing the number of UMIs and total reads that were obtained for each chain.</p>
+<div id="read-support" class="section level3">
+<h3 class="hasAnchor">
+<a href="#read-support" class="anchor"></a>Read Support</h3>
+<p>The read support for each chain can be visualized with the <code><a href="../reference/plot_reads.html">plot_reads()</a></code> function. This will create plots summarizing the number of UMIs and total reads that were obtained for each chain.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit">
 <span class="fu"><a href="../reference/plot_reads.html">plot_reads</a></span><span class="op">(</span>
   sobj_in      <span class="op">=</span> <span class="va">so_bcr</span>,        <span class="co"># Seurat object</span>
@@ -220,7 +220,7 @@
   <span class="fu">theme</span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, hjust <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></pre></div>
 <p><img src="bcr_files/figure-html/read_support-1.png" width="960"></p>
 <p><br></p>
-<p>Clonotypes that do not have adequate UMI support can be filtered from the object using <code>filter_vdj</code>. In this example we filter for clonotypes that have chains supported by at least two UMIs.</p>
+<p>Clonotypes that do not have adequate UMI support can be filtered from the object using <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code>. In this example we filter for clonotypes that have chains supported by at least two UMIs.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit">
 <span class="va">so_bcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span>
   sobj_in      <span class="op">=</span> <span class="va">so_bcr</span>,         <span class="co"># Seurat object</span>
@@ -250,10 +250,10 @@
 <p><br></p>
 </div>
 </div>
-<div id="clonotype-abundance" class="section level3">
-<h3 class="hasAnchor">
-<a href="#clonotype-abundance" class="anchor"></a>Clonotype Abundance</h3>
-<p>To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the <code>calc_abundance</code> function.</p>
+<div id="clonotype-abundance" class="section level2">
+<h2 class="hasAnchor">
+<a href="#clonotype-abundance" class="anchor"></a>Clonotype Abundance</h2>
+<p>To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the <code><a href="../reference/calc_abundance.html">calc_abundance()</a></code> function.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit">
 <span class="va">so_bcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_abundance.html">calc_abundance</a></span><span class="op">(</span>
   sobj_in       <span class="op">=</span> <span class="va">so_bcr</span>,        <span class="co"># Seurat object</span>
@@ -262,7 +262,7 @@
   prefix        <span class="op">=</span> <span class="st">""</span>             <span class="co"># Prefix to add to new meta.data columns</span>
 <span class="op">)</span></pre></div>
 <p><br></p>
-<p>For each ‘calculation’ function provided by <code>djvdj</code>, there is a matching <code>plot</code> function that will generate a summary plot. The <code>calc_abundance</code> function will plot clonotypes ranked by abundance.</p>
+<p>For each ‘calculation’ function provided by djvdj, there is a matching ‘plot’ function that will generate a summary plot. The <code><a href="../reference/calc_abundance.html">calc_abundance()</a></code> function will plot clonotypes ranked by abundance.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit">
 <span class="fu"><a href="../reference/plot_abundance.html">plot_abundance</a></span><span class="op">(</span>
   sobj_in       <span class="op">=</span> <span class="va">so_bcr</span>,        <span class="co"># Seurat object</span>
@@ -279,10 +279,10 @@
 <p><img src="bcr_files/figure-html/abund_plots-1.png" width="576"></p>
 <p><br></p>
 </div>
-<div id="repertoire-diversity" class="section level3">
-<h3 class="hasAnchor">
-<a href="#repertoire-diversity" class="anchor"></a>Repertoire Diversity</h3>
-<p>The function <code>calc_diversity</code> will calculate repertoire diversity on a per-cluster basis. Using the <code>cluster_col</code> argument, any meta.data column containing cell labels can be used for calculations. <code>calc_diversity</code> uses the R package <code>abdiv</code> for performing diversity calculations and any <code>abdiv</code> diversity function can be specified using the <code>method</code> argument.</p>
+<div id="repertoire-diversity" class="section level2">
+<h2 class="hasAnchor">
+<a href="#repertoire-diversity" class="anchor"></a>Repertoire Diversity</h2>
+<p>The function <code><a href="../reference/calc_diversity.html">calc_diversity()</a></code> will calculate repertoire diversity on a per-cluster basis. Using the <code>cluster_col</code> argument, any meta.data column containing cell labels can be used for calculations. <code><a href="../reference/calc_diversity.html">calc_diversity()</a></code> uses the R package <a href="https://github.com/kylebittinger/abdiv">abdiv</a> for performing diversity calculations and any <a href="https://github.com/kylebittinger/abdiv">abdiv</a> diversity function can be specified using the <code>method</code> argument.</p>
 <p>Possible methods for calculating diversity include:</p>
 <pre><code> [1] "berger_parker_d"  "brillouin_d"      "dominance"        "heip_e"          
  [5] "invsimpson"       "kempton_taylor_q" "margalef"         "mcintosh_d"      
@@ -298,7 +298,7 @@
   method        <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/shannon.html">shannon</a></span>  <span class="co"># abdiv method to use</span>
 <span class="op">)</span></pre></div>
 <p><br></p>
-<p>The <code>plot_diversity</code> function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Four different diversity metrics are shown in the example below.</p>
+<p>The <code><a href="../reference/plot_diversity.html">plot_diversity()</a></code> function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Five different diversity metrics are shown in the example below.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit">
 <span class="co"># Metrics to plot</span>
 <span class="va">fns</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
@@ -320,10 +320,10 @@
 <p><img src="bcr_files/figure-html/div_plots-1.png" width="816"></p>
 <p><br></p>
 </div>
-<div id="repertoire-overlap" class="section level3">
-<h3 class="hasAnchor">
-<a href="#repertoire-overlap" class="anchor"></a>Repertoire Overlap</h3>
-<p>To compare repertoires for different samples or clusters, <code>calc_similarity</code> can calculate a variety of different similarity metrics. The <code>cluster_col</code> should be used to specify the meta.data column containing cell labels for comparison. Like <code>calc_diversity</code>, an <code>abdiv</code> function can be specified with the <code>method</code> argument.</p>
+<div id="repertoire-overlap" class="section level2">
+<h2 class="hasAnchor">
+<a href="#repertoire-overlap" class="anchor"></a>Repertoire Overlap</h2>
+<p>To compare repertoires for different samples or clusters, <code><a href="../reference/calc_similarity.html">calc_similarity()</a></code> can calculate a variety of different similarity metrics. The <code>cluster_col</code> should be used to specify the meta.data column containing cell labels for comparison. Like <code><a href="../reference/calc_diversity.html">calc_diversity()</a></code>, an <a href="https://github.com/kylebittinger/abdiv">abdiv</a> function can be specified with the <code>method</code> argument.</p>
 <p>Possible methods for calculating repertoire similarity include:</p>
 <pre><code> [1] "binomial_deviance"                  "bray_curtis"                       
  [3] "bray_curtis_balanced"               "bray_curtis_gradient"              
@@ -346,7 +346,7 @@
 [37] "sorenson_nestedness"                "sorenson_turnover"                 
 [39] "weighted_kulczynski_second"         "yule_dissimilarity"                </code></pre>
 <p><br></p>
-<p>By default <code>calc_similarity</code> will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of cell labels present in the <code>orig.ident</code> column.</p>
+<p>By default <code><a href="../reference/calc_similarity.html">calc_similarity()</a></code> will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of cell labels present in the <code>orig.ident</code> column.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit">
 <span class="va">so_bcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_similarity.html">calc_similarity</a></span><span class="op">(</span>
   sobj_in       <span class="op">=</span> <span class="va">so_bcr</span>,          <span class="co"># Seurat object</span>
@@ -357,7 +357,7 @@
   return_seurat <span class="op">=</span> <span class="cn">TRUE</span>             <span class="co"># Return Seurat object with results added to meta.data</span>
 <span class="op">)</span></pre></div>
 <p><br></p>
-<p>A heatmap summarizing the results can be generated using the <code>plot_similarity</code> function. Here we are creating two heatmaps, one to compare the different samples and one to compare cell clusters.</p>
+<p>A heatmap summarizing the results can be generated using the <code><a href="../reference/plot_similarity.html">plot_similarity()</a></code> function. Here we are creating two heatmaps, one to compare the different samples and one to compare cell clusters.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit">
 <span class="va">heat_theme</span> <span class="op">&lt;-</span> <span class="fu">theme</span><span class="op">(</span>
   legend.title <span class="op">=</span> <span class="fu">element_blank</span><span class="op">(</span><span class="op">)</span>,
@@ -392,9 +392,9 @@
 <p><img src="bcr_files/figure-html/sim_plots-1.png" width="960"></p>
 <p><br></p>
 </div>
-<div id="gene-usage" class="section level3">
-<h3 class="hasAnchor">
-<a href="#gene-usage" class="anchor"></a>Gene Usage</h3>
+<div id="gene-usage" class="section level2">
+<h2 class="hasAnchor">
+<a href="#gene-usage" class="anchor"></a>Gene Usage</h2>
 <p>The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function <code>calc_usage</code> can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the <code>chain</code> and <code>chain_col</code> arguments can be used to specify the meta.data column containing the chains detected for each cell. By default the results for all chains will be included.</p>
 <p>In this example we are summarizing the usage of different V genes for the TRB chain</p>
 <div class="sourceCode" id="cb14"><pre class="downlit">
@@ -464,7 +464,9 @@
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-      </div>
+        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
+    </nav>
+</div>
 
 </div>
 
