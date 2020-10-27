@@ -40,6 +40,15 @@ jobs:
       - name: Install package
         run: R CMD INSTALL .
 
+      - name: Download data
+        run: |
+          wget https://djvdj-data.s3-us-west-2.amazonaws.com/bcr.zip
+          unzip bcr.zip
+          mv bcr data
+          wget https://djvdj-data.s3-us-west-2.amazonaws.com/tcr.zip
+          unzip tcr.zip
+          mv tcr data
+
       - name: Deploy package
         run: |
           git config --local user.email "actions@github.com"
