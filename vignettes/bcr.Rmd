@@ -16,7 +16,6 @@ output:
 knitr::opts_chunk$set(
   collapse  = TRUE,
   comment   = "#>",
-  fig.path  = "man/figures/README-",
   warning   = FALSE,
   message   = FALSE
 )
@@ -166,8 +165,6 @@ so_bcr@meta.data %>%
 
 ### Quality Control
 
-<br>
-
 #### Paired Chains
 
 The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired alpha and beta chains. Using the `mutate_vdj` function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.
@@ -239,9 +236,9 @@ Clonotypes that lack paired alpha and beta chains can be removed from the meta.d
 
 ```{r}
 so_filt <- filter_vdj(
-  sobj_in      = so_bcr,                                                 # Seurat object
-  filt         = "IGH" %in% chains && any(c("IGL", "IGK") %in% chains),  # Condition for filtering
-  filter_cells = FALSE                                                   # Should cells be removed from object
+  sobj_in      = so_bcr,
+  filt         = "IGH" %in% chains && any(c("IGL", "IGK") %in% chains),
+  filter_cells = FALSE
 )
 
 # Take a look at the meta.data

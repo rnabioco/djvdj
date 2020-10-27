@@ -7,130 +7,65 @@
 status](https://github.com/rnabioco/djvdj/workflows/R-CMD-check/badge.svg)](https://github.com/rnabioco/djvdj/actions)
 <!-- badges: end -->
 
-The goal of djvdj is to provide tools to analyze AVID-seq signals
-alongside single-cell VDJ sequencing data.
-
-<br>
+The djvdj package provides a range of tools to analyze and manipulate
+single cell V(D)J sequencing data. These tools are straightforward and
+easily integrate into a standard [Seurat](https://satijalab.org/seurat/)
+workflow.
 
 ### Installation
 
 You can install the development version of djvdj from
-[GitHub](https://github.com/rnabioco/djvdj) with:
+[github](https://github.com/rnabioco/djvdj) with:
 
 ``` r
 # install.packages("devtools")
 devtools::install_github("rnabioco/djvdj")
 ```
 
-<br>
+### Import
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. In nec molestie
-risus. Duis vitae eros odio. Proin condimentum odio dolor, at vehicula
-lorem tempus sit amet. Nunc id metus vehicula, facilisis velit in,
-tincidunt augue. Donec at semper turpis, nec cursus justo. Suspendisse
-est lorem, vulputate vitae diam sit amet, luctus volutpat sem. Aenean at
-odio sed nibh tempor eleifend. Duis ultrices turpis sit amet velit
-luctus, eu commodo urna lacinia. In porttitor tristique quam ac
-molestie. In s
-
-![](man/figures/README-rna_umap-1.png)<!-- -->
-
-<br>
-
-### Import VDJ data
-
-`import_vdj` takes the output files from `cellranger vdj` and adds
-clonotype information to the meta.data for an existing Seurat object.
-For cells with multiple chains, the information for each chain is stored
-as a single row, separated by a “;” (or a character specified by `sep`).
-For cells that do not have any VDJ sequencing data, NAs will be added to
-the meta.data.
-
-If the Seurat object contains data for multiple runs, a vector
-containing paths to the VDJ data for each sample can be given. If
-multiple paths are provided, cell prefixes should be included as names
-for the vector.
+With djvdj you can import V(D)J sequencing results from [Cell
+Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header)
+and add these data to your current Seurat object using `import_vdj`.
+Additional functions are provided to filter (`filter_vdj`) and
+manipulate (`mutate_vdj`) the Seurat object based on a range of V(D)J
+metrics including chains, clonotypes, and CDR3 sequences.
 
 ``` r
-# Create vector of paths for cellranger output
-samples <- levels(so_tcr$orig.ident)
-paths   <- file.path("data", str_c(samples, "_TCR"))
-
-names(paths) <- str_c(samples, "_GE")
-
 # Import VDJ data
+paths <- c(
+  KI_DN3_GE = "data/tcr/KI_DN3_TCR",
+  KI_DN4_GE = "data/tcr/KI_DN4_TCR",
+  WT_DN3_GE = "data/tcr/WT_DN3_TCR",
+  WT_DN4_GE = "data/tcr/WT_DN4_TCR"
+)
+
 so_tcr <- import_vdj(
-  sobj_in        = so_tcr,  # Seurat object
-  vdj_dir        = paths,   # Directories containing cellranger output files
-  prefix         = "",      # Prefix to add to new meta.data columns
-  filter_contigs = TRUE     # Only include chains with at least one productive contig
+  sobj_in = so_tcr,                           # Seurat object
+  vdj_dir = paths                             # Cellranger output directories
+)
+
+# Filter for paired chains
+so_filt <- filter_vdj(
+  sobj_in = so_tcr,                           # Seurat object
+  filt    = all(c("TRA", "TRB") %in% chains)  # Condition for filtering
 )
 ```
 
-<br>
+### Calculate
 
-### Quality Control
-
-`djvdj` provides a range of tools to assess data quality and filter
-single-cell V(D)J data. `mutate_vdj` can be used to add new cell labels
-to the object meta.data, which is helpful for assessing quality.
-`filter_vdj` will filter cells based on V(D)J information in the
-meta.data or just remove V(D)J data from the object without discarding
-cells. This can be used to filter V(D)J data based on read support. To
-assess overall read and and UMI support, the function `plot_reads` will
-summarize these metrics for each clonotype.
-
-``` r
-plot_reads(
-  sobj_in      = so_tcr,        # Seurat object
-  chain_col    = "chains",      # Column containing chains for each cell
-  cluster_col  = "orig.ident",  # Column containing labels to group by
-  plot_colors  = ito_cols       # Plot colors
-) +
-  guides(fill = FALSE, color = FALSE)
-```
-
-![](man/figures/README-read_support-1.png)<!-- -->
-
-<br>
-
-### Clonotype Abundance
-
-To identify the top clonotypes in each sample or cluster, clonotype
-abundance can be calculated using the `calc_abundance` function. The
-corresponding `plot_abundance` function will plot clonotype frequency.
+djvdj allows you to calculate a range of population diversity and
+similarity metrics implemented with the
+[abdiv](https://github.com/kylebittinger/abdiv) package. The function
+`calc_diversity` can be used to measure diversity on a per-cluster or
+per-sample basis to allow for comparison across conditions.
+`calc_similarity` will measure repertoire overlap between clusters or
+samples to allow for direct comparisons between cells of interest.
+Additional functions are also available to calculate clonotype
+abundances (`calc_abundance`) and relative gene usage (`calc_usage`).
 
 ``` r
-plot_abundance(
-  sobj_in       = so_tcr,        # Seurat object
-  clonotype_col = "cdr3",        # meta.data column containing clonotype IDs
-  cluster_col   = "orig.ident",  # meta.data column containing cell labels
-  
-  plot_colors = ito_cols,        # Plot colors
-  yaxis       = "percent",       # Units to plot
-  label_col   = "cdr3",          # meta.data column containing labels
-  n_labels    = 1,               # Number of top clonotypes to label
-  size        = 1                # Additional ggplot options
-) +
-  theme(legend.title = element_blank())
-```
-
-![](man/figures/README-abund_plots-1.png)<!-- -->
-
-<br>
-
-### Repertoire Diversity
-
-The function `calc_diversity` will calculate repertoire diversity on a
-per-cluster basis. Using the `cluster_col` argument, any meta.data
-column containing cell labels can be used for calculations.
-`calc_diversity` uses the R package `abdiv` for performing diversity
-calculations and any `abdiv` diversity function can be specified using
-the `method` argument. The `plot_diversity` function can summarize these
-results.
-
-``` r
-# Metrics to plot
+# Calculate five different diversity metrics for each sample
 fns <- list(
   "simpson"     = abdiv::simpson,
   "shannon"     = abdiv::shannon,
@@ -139,104 +74,21 @@ fns <- list(
   "brillouin_d" = abdiv::brillouin_d
 )
 
-plot_diversity(
+so_tcr <- calc_diversity(
   sobj_in       = so_tcr,        # Seurat object
   clonotype_col = "cdr3",        # meta.data column containing clonotype ids
   cluster_col   = "orig.ident",  # meta.data column containing cell labels
-  method        = fns,           # abdiv method to use
-  plot_colors   = ito_cols
-) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-![](man/figures/README-div_plots-1.png)<!-- -->
-
-<br>
-
-### Repertoire Overlap
-
-To compare repertoires for different samples or clusters,
-`calc_similarity` can calculate a variety of different similarity
-metrics. The `cluster_col` should be used to specify the meta.data
-column containing cell labels for comparison. Like `calc_diversity`, an
-`abdiv` function can be specified with the `method` argument. These
-results can be visualized with `plot_similarity`.
-
-``` r
-heat_theme <- theme(
-  legend.title = element_blank(),
-  legend.text  = element_text(size = 8)
-)
-
-# Sample heatmap
-ident_heat <- plot_similarity(
-  sobj_in       = so_tcr,                 # Seurat object
-  clonotype_col = "cdr3",                 # meta.data column containing clonotype IDs
-  cluster_col   = "orig.ident",           # meta.data column containing cell labels
-  method        = abdiv::jaccard,         # Method to use
-  plot_colors   = c("grey90", "#009E73")  # Plot colors
-) +
-  heat_theme
-
-# Cluster heatmap
-clust_heat <- plot_similarity(
-  sobj_in       = so_tcr,
-  clonotype_col = "cdr3",
-  cluster_col   = "seurat_clusters",
-  method        = abdiv::jaccard,
-  plot_colors   = c("grey90", "#56B4E9"),  
-  size          = 0.2,                    # Additional ggplot options
-  color         = "white"                 # Additional ggplot options
-) +
-  heat_theme +
-  theme(axis.text.x  = element_text(angle = 0))
-
-# Combine heatmaps
-plot_grid(ident_heat, clust_heat, align = "h")
-```
-
-![](man/figures/README-sim_plots-1.png)<!-- -->
-
-<br>
-
-### Gene Usage
-
-The V(D)J data imported from Cell Ranger also includes the specific
-genes detected for each cell. The function `calc_usage` can be used to
-calculate the fraction of cells that express different V(D)J genes. This
-function will produce a table summarizing the results. To only include
-results for a certain chain, the `chain` and `chain_col` arguments can
-be used to specify the meta.data column containing the chains detected
-for each cell. These results can be visualized with the `plot_usage`
-function.
-
-``` r
-plot_usage(
-  sobj_in     = so_tcr,                # Seurat object
-  gene_cols   = "v_gene",              # meta.data column(s) containing genes
-  cluster_col = "orig.ident",          # meta.data column containing cell labels
-  type        = "bar",                 # Type of plot
-  chain       = "TRB",                 # Chain to use for filtering genes
-  chain_col   = "chains",              # meta.data column containing chains
-  
-  yaxis       = "percent",             # Units to plot
-  plot_colors = ito_cols,              # Colors to use for heatmap
-  plot_genes  = NULL,                  # A list of genes to plot
-  n_genes     = NULL,                  # The number of top genes to plot
-  
-  size        = 0.2,                   # Additional ggplot options
-  color       = "white"                # Additional ggplot options
+  method        = fns            # abdiv method to use
 )
 ```
 
-![](man/figures/README-usage_plots_1-1.png)<!-- -->
+### Visualize
 
-<br>
-
-By passing multiple columns to `gene_cols`, the frequency that different
-genes are used together can also be shown.
+For each ‘calculate’ function, djvdj also provides a corresponding
+‘plot’ function to summarize the results.
 
 ``` r
+# Compare the usage of different V and J genes
 ggs <- plot_usage(
   sobj_in     = so_tcr,                 # Seurat object
   gene_cols   = c("v_gene", "j_gene"),  # meta.data column(s) containing genes
@@ -250,4 +102,4 @@ ggs <- plot_usage(
 plot_grid(plotlist = ggs)
 ```
 
-![](man/figures/README-usage_plots_2-1.png)<!-- -->
+![](man/figures/README-usage-1.png)<!-- -->

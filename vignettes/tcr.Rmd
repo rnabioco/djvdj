@@ -16,7 +16,6 @@ output:
 knitr::opts_chunk$set(
   collapse  = TRUE,
   comment   = "#>",
-  fig.path  = "man/figures/README-",
   warning   = FALSE,
   message   = FALSE
 )
@@ -165,8 +164,6 @@ so_tcr@meta.data %>%
 <br>
 
 ### Quality Control
-
-<br>
 
 #### Paired Chains
 
