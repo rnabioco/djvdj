@@ -22,12 +22,16 @@ knitr::opts_chunk$set(
 )
 
 # Packages
-library(tidyverse)
-library(Seurat)
-library(djvdj)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(stringr)
+library(ggplot2)
 library(cowplot)
 library(colorblindr)
 library(here)
+library(Seurat)
+library(djvdj)
 
 # Themes
 create_guide <- function(size = 3.5, shape = 16, nrow = NULL,
