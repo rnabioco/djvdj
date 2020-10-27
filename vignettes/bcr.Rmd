@@ -167,7 +167,7 @@ so_bcr@meta.data %>%
 
 ### Paired Chains
 
-The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired alpha and beta chains. Using the `mutate_vdj()` function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.
+The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired heavy and light chains. Using the `mutate_vdj()` function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.
 
 In this example we create a new column that summarizes the unique chains identified for each cell. We can then overlay these cell labels on a UMAP projection.
 
@@ -232,7 +232,7 @@ plot_grid(
 
 <br>
 
-Clonotypes that lack paired alpha and beta chains can be removed from the meta.data using `filter_vdj()`. With this function cells that match the provided condition are filtered from the object. Setting `filter_cells` to `FALSE` will just remove the V(D)J data without completely removing these cells.
+Clonotypes that lack paired chains can be removed from the meta.data using `filter_vdj()`. With this function cells that match the provided condition are filtered from the object. Setting `filter_cells` to `FALSE` will just remove the V(D)J data without completely removing these cells.
 
 ```{r}
 so_filt <- filter_vdj(
@@ -449,7 +449,7 @@ calc_usage(
 
 <br>
 
-The function `plot_usage` can be used to summarize these results. Using the `yaxis` argument, the percent or absolute count (frequency) can be used for plotting. The genes plotted can also be selected using the `plot_genes` argument, or the number of top genes (most frequent) to plot can be specified with `n_genes`.
+The function `plot_usage()` can be used to summarize these results. Using the `yaxis` argument, the percent or absolute count (frequency) can be used for plotting. The genes plotted can also be selected using the `plot_genes` argument, or the number of top genes (most frequent) to plot can be specified with `n_genes`.
 
 ```{r "usage_plots_1", fig.width = 11, fig.height = 3.5}
 plot_usage(
@@ -486,7 +486,7 @@ calc_usage(
 
 <br>
 
-When multiple gene columns are passed to `plot_usage`, a list of plots will be returned, one for each cell label in the `cluster_col` column.
+When multiple gene columns are passed to `plot_usage()`, a list of plots will be returned, one for each cell label in the `cluster_col` column.
 
 ```{r "usage_plots_2", fig.width = 12, fig.height = 7}
 ggs <- plot_usage(
