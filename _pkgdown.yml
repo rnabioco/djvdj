@@ -6,3 +6,20 @@ development:
 template:
   params:
     bootswatch: lumen
+
+reference:
+
+- title:
+  contents:
+  - import_vdj
+  - filter_vdj
+  - mutate_vdj
+
+- title: Calculate
+  contents:
+  - starts_with("calc")
+  - summarize_chains
+
+- title: Plotting
+  contents:
+  - starts_with("plot")
