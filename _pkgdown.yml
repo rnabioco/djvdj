@@ -1,0 +1,11 @@
+url: https://rnabioco.github.io/djvdj
+
+development:
+  mode: auto
+
+template:
+  params:
+    bootswatch: lumen
+
+authors:
+  Ryan Sheridan

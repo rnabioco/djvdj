@@ -145,12 +145,6 @@ test_vdj <- test_so %>%
 
 # Save objects
 usethis::use_data(
-  so,
-  compress = "xz",
-  overwrite = TRUE
-)
-
-usethis::use_data(
   test_so,
   overwrite = TRUE
 )
