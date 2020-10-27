@@ -395,25 +395,30 @@
 <div id="gene-usage" class="section level2">
 <h2 class="hasAnchor">
 <a href="#gene-usage" class="anchor"></a>Gene Usage</h2>
-<p>The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function <code>calc_usage</code> can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the <code>chain</code> and <code>chain_col</code> arguments can be used to specify the meta.data column containing the chains detected for each cell. By default the results for all chains will be included.</p>
-<p>In this example we are summarizing the usage of different V genes for the TRB chain</p>
+<p>The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function <code><a href="../reference/calc_usage.html">calc_usage()</a></code> can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the <code>chain</code> and <code>chain_col</code> arguments can be used to specify the meta.data column containing the chains detected for each cell. By default the results for all chains will be included.</p>
+<p>In this example we are summarizing the usage of different V genes for the IGH chain</p>
 <div class="sourceCode" id="cb14"><pre class="downlit">
 <span class="fu"><a href="../reference/calc_usage.html">calc_usage</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_bcr</span>,        <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,      <span class="co"># meta.data column containing genes</span>
   cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,  <span class="co"># meta.data column containing cell labels</span>
-  chain       <span class="op">=</span> <span class="st">"TRB"</span>,         <span class="co"># Chain to use for filtering genes</span>
+  chain       <span class="op">=</span> <span class="st">"IGH"</span>,         <span class="co"># Chain to use for filtering genes</span>
   chain_col   <span class="op">=</span> <span class="st">"chains"</span>       <span class="co"># meta.data column containing chains identified for each cell</span>
 <span class="op">)</span>
-<span class="co">#&gt; # A tibble: 6 x 5</span>
-<span class="co">#&gt;   v_gene orig.ident  n_cells  freq   pct</span>
-<span class="co">#&gt;   &lt;chr&gt;  &lt;chr&gt;         &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt;</span>
-<span class="co">#&gt; 1 None   1_ABA_015       655   655   100</span>
-<span class="co">#&gt; 2 None   2_ABCtr_015    5110  5110   100</span>
-<span class="co">#&gt; 3 None   1_ABA_019      4211  4211   100</span>
-<span class="co">#&gt; 4 None   2_ABCtr_019    1646  1646   100</span>
-<span class="co">#&gt; 5 None   3_ABA_07       1042  1042   100</span>
-<span class="co">#&gt; 6 None   4_ABCtr_07     2596  2596   100</span></pre></div>
+<span class="co">#&gt; # A tibble: 306 x 5</span>
+<span class="co">#&gt;    v_gene   orig.ident  n_cells  freq   pct</span>
+<span class="co">#&gt;    &lt;chr&gt;    &lt;chr&gt;         &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 IGHV1-18 1_ABA_015       655    28  4.27</span>
+<span class="co">#&gt;  2 IGHV1-18 2_ABCtr_015    5110   175  3.42</span>
+<span class="co">#&gt;  3 IGHV1-18 1_ABA_019      4211   152  3.61</span>
+<span class="co">#&gt;  4 IGHV1-18 2_ABCtr_019    1646    42  2.55</span>
+<span class="co">#&gt;  5 IGHV1-18 3_ABA_07       1042    40  3.84</span>
+<span class="co">#&gt;  6 IGHV1-18 4_ABCtr_07     2596    89  3.43</span>
+<span class="co">#&gt;  7 IGHV1-2  1_ABA_015       655    37  5.65</span>
+<span class="co">#&gt;  8 IGHV1-2  2_ABCtr_015    5110   295  5.77</span>
+<span class="co">#&gt;  9 IGHV1-2  1_ABA_019      4211    72  1.71</span>
+<span class="co">#&gt; 10 IGHV1-2  2_ABCtr_019    1646    79  4.80</span>
+<span class="co">#&gt; # … with 296 more rows</span></pre></div>
 <p><br></p>
 <p>The function <code><a href="../reference/plot_usage.html">plot_usage()</a></code> can be used to summarize these results. Using the <code>yaxis</code> argument, the percent or absolute count (frequency) can be used for plotting. The genes plotted can also be selected using the <code>plot_genes</code> argument, or the number of top genes (most frequent) to plot can be specified with <code>n_genes</code>.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit">
