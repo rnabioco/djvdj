@@ -86,8 +86,8 @@ so_tcr <- calc_diversity(
 
 ### Visualize
 
-For each ‘calculate’ function, djvdj also provides a corresponding
-‘plot’ function to summarize the results.
+For each ‘calc’ function, djvdj also provides a corresponding ‘plot’
+function to summarize the results.
 
 ``` r
 # Compare the usage of different V and J genes
