@@ -1,7 +1,5 @@
 ---
 output: github_document
-editor_options: 
-  chunk_output_type: console
 ---
 
 ```{r "setup", include = FALSE}
@@ -15,7 +13,6 @@ knitr::opts_chunk$set(
 )
 
 # Packages
-library(UsingR)
 library(tidyverse)
 library(Seurat)
 library(djvdj)
@@ -71,10 +68,6 @@ create_col_fun <- function(cols_in) {
 }
 
 get_cols <- create_col_fun(ito_cols)
-
-# lorem ipsum
-filler <- str_split(lorem, "")[[1]][1:500] %>%
-  str_c(collapse = "")
 ```
 
 # djvdj <img src="man/figures/djvdj-logo.png" align="right" height="145">
@@ -98,7 +91,7 @@ devtools::install_github("rnabioco/djvdj")
 
 <br>
 
-`r filler`
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. In nec molestie risus. Duis vitae eros odio. Proin condimentum odio dolor, at vehicula lorem tempus sit amet. Nunc id metus vehicula, facilisis velit in, tincidunt augue. Donec at semper turpis, nec cursus justo. Suspendisse est lorem, vulputate vitae diam sit amet, luctus volutpat sem. Aenean at odio sed nibh tempor eleifend. Duis ultrices turpis sit amet velit luctus, eu commodo urna lacinia. In porttitor tristique quam ac molestie. In s
 
 ```{r "rna_umap", fig.width = 12.5, fig.height = 5, echo = FALSE}
 load(here("data/so_tcr.rda"))
