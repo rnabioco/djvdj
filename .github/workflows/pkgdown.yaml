@@ -43,13 +43,15 @@ jobs:
       - name: Download data
         run: |
           pwd
-          mkdir data
           wget https://djvdj-data.s3-us-west-2.amazonaws.com/bcr.zip
           wget https://djvdj-data.s3-us-west-2.amazonaws.com/tcr.zip
           unzip bcr.zip
           unzip tcr.zip
           mv bcr data
           mv tcr data
+          ls data
+          ls data/bcr
+          ls data/tcr
 
       - name: Deploy package
         run: |
