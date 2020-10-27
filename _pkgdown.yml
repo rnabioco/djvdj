@@ -6,6 +6,3 @@ development:
 template:
   params:
     bootswatch: lumen
-
-authors:
-  Ryan Sheridan
