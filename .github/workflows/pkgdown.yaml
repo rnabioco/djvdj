@@ -45,7 +45,7 @@ jobs:
           wget https://djvdj-data.s3-us-west-2.amazonaws.com/bcr.zip
           unzip bcr.zip
           mv bcr data
-          https://djvdj-data.s3-us-west-2.amazonaws.com/tcr.zip
+          wget https://djvdj-data.s3-us-west-2.amazonaws.com/tcr.zip
           unzip tcr.zip
           mv tcr data
 
