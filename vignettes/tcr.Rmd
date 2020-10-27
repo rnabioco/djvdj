@@ -299,7 +299,7 @@ so_tcr <- calc_abundance(
 
 <br>
 
-For each 'calculation' function provided by djvdj, there is a matching 'plot' function that will generate a summary plot. The `calc_abundance()` function will plot clonotypes ranked by abundance.
+For each 'calc' function provided by djvdj, there is a matching 'plot' function that will generate a summary plot. The `calc_abundance()` function will plot clonotypes ranked by abundance.
 
 ```{r "abund_plots", fig.width = 6, fig.height = 3}
 plot_abundance(
