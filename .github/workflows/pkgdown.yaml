@@ -33,7 +33,8 @@ jobs:
       - name: Install dependencies
         run: |
           remotes::install_deps(dependencies = TRUE)
-          install.packages(c("pkgdown", "stringr", "colorblindr", "here", "cowplot"))
+          install.packages(c("pkgdown", "stringr", "here", "cowplot"))
+          remotes::install_github("clauswilke/colorblindr")
         shell: Rscript {0}
 
       - name: Install package
