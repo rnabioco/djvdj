@@ -368,7 +368,12 @@ identify_clonotypes <- function(sobj_in, vdj_dir, csv_file = "enclone_output.csv
 
   # Import enclone results
   meta_df <- readr::read_csv(csv_file, col_types = readr::cols())
-  meta_df <- dplyr::mutate(meta_df, barcodes = strsplit(.data$barcodes, ","))
+
+  meta_df <- dplyr::mutate(
+    meta_df,
+    barcodes = strsplit(as.character(.data$barcodes), ",")
+  )
+
   meta_df <- tidyr::unnest(meta_df, cols = "barcodes")
 
   meta_df <- dplyr::mutate(
@@ -692,7 +697,7 @@ calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
 
   res <- dplyr::mutate(meta_df, across(
     all_of(sep_cols),
-    ~ strsplit(.x, sep)
+    ~ strsplit(as.character(.x), sep)
   ))
 
   # Filter chains
@@ -802,7 +807,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
   # Expand meta.data
   res <- dplyr::mutate(meta_df, dplyr::across(
     dplyr::all_of(c(data_cols, chain_col)),
-    ~ strsplit(.x, sep)
+    ~ strsplit(as.character(.x), sep)
   ))
 
   res <- tidyr::unnest(res, cols = dplyr::all_of(c(data_cols, chain_col)))
@@ -842,7 +847,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
 
   res <- dplyr::mutate(res, dplyr::across(
     dplyr::all_of(unname(sep_cols)),
-    ~ strsplit(.x, sep)
+    ~ strsplit(as.character(.x), sep)
   ))
 
   # Convert to numeric or logical
