@@ -500,3 +500,40 @@ ggs <- plot_usage(
 
 plot_grid(plotlist = ggs)
 ```
+
+```{r "DIM RED EX", eval = F, echo = F}
+library(forcats)
+
+ex_theme <- vdj_theme() +
+  theme(
+    legend.position = "none",
+    panel.border    = element_rect(size = 1, color = "grey85", fill = NA),
+    axis.line       = element_blank(),
+    axis.title      = element_blank(),
+    axis.text       = element_blank(),
+    axis.ticks      = element_blank()
+  )
+
+# PC example
+pc_mat <- so_tcr@reductions$pca@cell.embeddings
+pcs <- colnames(pc_mat)
+
+pc_df <- pc_mat %>%
+  as_tibble(rownames = ".cell_id") %>%
+  pivot_longer(cols = c(-.cell_id, -PC_1)) %>%
+  mutate(name = fct_relevel(name, pcs))
+
+pc_ex <- pc_df %>%
+  filter(name %in% pcs[1:20]) %>%
+  ggplot(aes(PC_1, value, color = name)) +
+  geom_point(size = 0.1, color = "#56B4E9") +
+  facet_wrap(~ name, scales = "free") +
+  ex_theme
+
+umap_ex <- so_tcr@meta.data %>%
+  ggplot(aes(UMAP_1, UMAP_2)) +
+  geom_point(size = 0.5, color = "#009E73") +
+  ex_theme
+
+```
+

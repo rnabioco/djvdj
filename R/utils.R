@@ -167,9 +167,9 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "clonotype_id", filter_cel
     )
 
     meta_df <- .split_vdj(
-      df_in     = meta_df,
-      sep_cols  = sep_cols,
-      sep       = sep
+      df_in    = meta_df,
+      sep_cols = sep_cols,
+      sep      = sep
     )
 
     meta_df <- dplyr::rowwise(meta_df)
@@ -409,8 +409,8 @@ identify_clonotypes <- function(sobj_in, vdj_dir, csv_file = "enclone_output.csv
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
 #' @param prefix Prefix to add to new meta.data columns
-#' @param return_seurat Return a Seurat object. If set to FALSE, the meta.data
-#' table is returned.
+#' @param return_seurat Return a Seurat object. If set to FALSE, a tibble
+#' summarizing the results is returned.
 #' @return Seurat object with clonotype abundance added to meta.data
 #' @export
 calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
@@ -431,12 +431,9 @@ calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
     meta_df <- dplyr::group_by(meta_df, !!sym(cluster_col))
   }
 
-  freq_col <- paste0(prefix, "clone_freq")
-  pct_col  <- paste0(prefix, "clone_pct")
-
   meta_df <- dplyr::mutate(
     meta_df,
-    .n_cells = dplyr::n_distinct(.data$.cell_id)
+    n_cells = dplyr::n_distinct(.data$.cell_id)
   )
 
   meta_df <- dplyr::group_by(
@@ -447,18 +444,31 @@ calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 
   meta_df <- dplyr::mutate(
     meta_df,
-    !!sym(freq_col) := dplyr::n_distinct(.data$.cell_id),
-    !!sym(pct_col)  := (!!sym(freq_col) / .data$.n_cells) * 100
+    freq = dplyr::n_distinct(.data$.cell_id),
+    pct  = (freq / .data$n_cells) * 100
   )
 
   meta_df <- dplyr::ungroup(meta_df)
-  meta_df <- dplyr::select(meta_df, -all_of(c(".n_cells", cluster_col)))
-  meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
 
   # Add results to meta.data
   if (!return_seurat) {
-    return(meta_df)
+    res <- dplyr::select(meta_df, -.cell_id)
+    res <- unique(res)
+
+    return(res)
   }
+
+  freq_col <- paste0(prefix, "clone_freq")
+  pct_col  <- paste0(prefix, "clone_pct")
+
+  meta_df <- dplyr::select(
+    meta_df,
+    -all_of(c("n_cells", cluster_col)),
+    !!sym(freq_col) := freq,
+    !!sym(pct_col)  := pct
+  )
+
+  meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
 
   res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
 
@@ -900,14 +910,18 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
   }
 
   # Identify columns to split based on sep
-  sep_cols <- dplyr::select(df_in, all_of(cols_in))
+  sep_cols <- NULL
 
-  sep_cols <- purrr::keep(
-    sep_cols,
-    ~ any(purrr::map_lgl(na.omit(.x), grepl, pattern = sep))
-  )
+  if (!is.null(sep)) {
+    sep_cols <- dplyr::select(df_in, all_of(cols_in))
 
-  sep_cols <- colnames(sep_cols)
+    sep_cols <- purrr::keep(
+      sep_cols,
+      ~ any(purrr::map_lgl(na.omit(.x), grepl, pattern = sep))
+    )
+
+    sep_cols <- colnames(sep_cols)
+  }
 
   # Return list of vectors
   res <- list(
