@@ -14,22 +14,6 @@ test_that("Check Seurat return without filtering", {
   expect_identical(old_na, new_na)                     # cells w/o VDJ data
 })
 
-# test_that("Check Seurat return with new_col", {
-#   res <- filter_vdj(
-#     sobj_in = test_vdj,
-#     filt    = any(chains %in% c("IGH", "IGK", "IGL")),
-#     new_col = "NEW_COL"
-#   )
-#
-#   expect_true("Seurat" %in% class(res))                # class
-#   expect_identical(colnames(res), colnames(test_vdj))  # cells in object
-#   expect_true("NEW_COL" %in% colnames(res@meta.data))  # meta.data
-#
-#   new_na <- colnames(res)[is.na(res$clonotype_id)]
-#   old_na <- colnames(test_vdj)[is.na(test_vdj$clonotype_id)]
-#   expect_identical(old_na, new_na)                     # cells w/o VDJ data
-# })
-
 test_that("Check data.frame return without filtering", {
   res <- filter_vdj(
     sobj_in       = test_vdj,

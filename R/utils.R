@@ -75,6 +75,11 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
+  # Check if sep is already in sep_cols
+  if (any(grepl(sep, contigs[, sep_cols]))) {
+    stop(paste0("sep '", sep, "' is already present, select a different seperator."))
+  }
+
   # Sum contig reads and UMIs for chains
   grp_cols <- vdj_cols[!vdj_cols %in% count_cols]
   contigs  <- dplyr::group_by(contigs, !!!syms(grp_cols))
@@ -90,6 +95,22 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     contigs,
     .data$barcode, .data$clonotype_id, .data$chains
   )
+
+  # Extract isotypes
+  iso_pat <- "IGH[ADEGM]|IGL|IGK"
+
+  if (any(grepl(iso_pat, contigs$c_gene))) {
+    contigs <- dplyr::mutate(
+      contigs,
+      isotype = ifelse(
+        grepl(iso_pat, .data$c_gene),
+        regmatches(.data$c_gene, regexpr(iso_pat, .data$c_gene)),
+        "None"
+      )
+    )
+
+    sep_cols <- c(sep_cols, "isotype")
+  }
 
   contigs <- dplyr::group_by(contigs, .data$barcode, .data$clonotype_id)
 
