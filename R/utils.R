@@ -445,7 +445,7 @@ identify_clonotypes <- function(sobj_in, vdj_dir, csv_file = "enclone_output.csv
 #' summarizing the results is returned.
 #' @return Seurat object with clonotype abundance added to meta.data
 #' @export
-calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
+calc_abundance <- function(sobj_in, clonotype_col, cluster_col = NULL,
                            prefix = "", return_seurat = TRUE) {
 
   # Format meta.data
@@ -523,7 +523,7 @@ calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 #' table is returned.
 #' @return Seurat object with diversity index added to meta.data
 #' @export
-calc_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
+calc_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
                            method = abdiv::simpson, prefix = "", return_seurat = TRUE) {
 
   # Format meta.data
