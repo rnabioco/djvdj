@@ -81,7 +81,7 @@
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>BCR analysis</h1>
             
-            <h4 class="date">October 27 2020</h4>
+            <h4 class="date">November 01 2020</h4>
       
       
       <div class="hidden name"><code>bcr.Rmd</code></div>
@@ -116,28 +116,28 @@
 <span class="co"># Take a look at the meta.data</span>
 <span class="va">vdj_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>
   <span class="st">"clonotype_id"</span>, <span class="st">"cdr3"</span>,
-  <span class="st">"chains"</span>, <span class="st">"v_gene"</span>, 
-  <span class="st">"j_gene"</span>, <span class="st">"reads"</span>,
-  <span class="st">"umis"</span>
+  <span class="st">"isotype"</span>, <span class="st">"chains"</span>,
+  <span class="st">"v_gene"</span>,  <span class="st">"j_gene"</span>,
+  <span class="st">"reads"</span>,   <span class="st">"umis"</span>
 <span class="op">)</span>
 
 <span class="va">so_bcr</span><span class="op">@</span><span class="va">meta.data</span> <span class="op">%&gt;%</span>
   <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">clonotype_id</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu">select</span><span class="op">(</span><span class="fu">all_of</span><span class="op">(</span><span class="va">vdj_cols</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 15,438 x 7</span>
-<span class="co">#&gt;    clonotype_id     cdr3              chains  v_gene      j_gene  reads   umis  </span>
-<span class="co">#&gt;    &lt;chr&gt;            &lt;chr&gt;             &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt; </span>
-<span class="co">#&gt;  1 1_ABA_015_clono… CARVFRDLAVAGTLWF… IGH;IGL IGHV4-61;I… IGHJ5;… 1464;1… 11;26 </span>
-<span class="co">#&gt;  2 1_ABA_015_clono… CAKGAREWELRRHSYY… IGH;IGK IGHV3-23;I… IGHJ4;… 2646;8… 24;61 </span>
-<span class="co">#&gt;  3 1_ABA_015_clono… CARLGYGDKDYW;CQQ… IGH;IGK IGHV4-59;I… IGHJ4;… 2296;6… 15;38 </span>
-<span class="co">#&gt;  4 1_ABA_015_clono… CTSPSKHYYYYYMDVW… IGH;IGL IGHV3-73;I… IGHJ6;… 2996;3… 24;42 </span>
-<span class="co">#&gt;  5 1_ABA_015_clono… CARQSGTYDYW;CQAW… IGH;IGL IGHV1-2;IG… IGHJ4;… 1112;5… 11;59 </span>
-<span class="co">#&gt;  6 1_ABA_015_clono… CVREGITMIVVSTLSY… IGH;IGL IGHV3-7;IG… IGHJ4;… 36010;… 4584;…</span>
-<span class="co">#&gt;  7 1_ABA_015_clono… CARIVVKNYYDSSGYY… IGH;IGK IGHV2-26;I… IGHJ4;… 3542;3… 26;26 </span>
-<span class="co">#&gt;  8 1_ABA_015_clono… CAVHGTGPIIMPPGNY… IGH;IGK IGHV1-46;I… IGHJ6;… 27246;… 5345;…</span>
-<span class="co">#&gt;  9 1_ABA_015_clono… CARDGGRWYPGAFDIW… IGH;IGK IGHV3-21;I… IGHJ3;… 3706;7… 30;47 </span>
-<span class="co">#&gt; 10 1_ABA_015_clono… CARGGATMGPDGAFDI… IGH;IGL IGHV4-61;I… IGHJ3;… 3244;8… 22;89 </span>
+<span class="co">#&gt; # A tibble: 15,438 x 8</span>
+<span class="co">#&gt;    clonotype_id    cdr3           isotype chains v_gene    j_gene  reads  umis  </span>
+<span class="co">#&gt;    &lt;chr&gt;           &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; </span>
+<span class="co">#&gt;  1 1_ABA_015_clon… CARVFRDLAVAGT… IGHM;I… IGH;I… IGHV4-61… IGHJ5;… 1464;… 11;26 </span>
+<span class="co">#&gt;  2 1_ABA_015_clon… CAKGAREWELRRH… IGHM;I… IGH;I… IGHV3-23… IGHJ4;… 2646;… 24;61 </span>
+<span class="co">#&gt;  3 1_ABA_015_clon… CARLGYGDKDYW;… IGHM;I… IGH;I… IGHV4-59… IGHJ4;… 2296;… 15;38 </span>
+<span class="co">#&gt;  4 1_ABA_015_clon… CTSPSKHYYYYYM… IGHM;I… IGH;I… IGHV3-73… IGHJ6;… 2996;… 24;42 </span>
+<span class="co">#&gt;  5 1_ABA_015_clon… CARQSGTYDYW;C… IGHG;I… IGH;I… IGHV1-2;… IGHJ4;… 1112;… 11;59 </span>
+<span class="co">#&gt;  6 1_ABA_015_clon… CVREGITMIVVST… IGHA;I… IGH;I… IGHV3-7;… IGHJ4;… 36010… 4584;…</span>
+<span class="co">#&gt;  7 1_ABA_015_clon… CARIVVKNYYDSS… IGHM;I… IGH;I… IGHV2-26… IGHJ4;… 3542;… 26;26 </span>
+<span class="co">#&gt;  8 1_ABA_015_clon… CAVHGTGPIIMPP… IGHG;I… IGH;I… IGHV1-46… IGHJ6;… 27246… 5345;…</span>
+<span class="co">#&gt;  9 1_ABA_015_clon… CARDGGRWYPGAF… IGHM;I… IGH;I… IGHV3-21… IGHJ3;… 3706;… 30;47 </span>
+<span class="co">#&gt; 10 1_ABA_015_clon… CARGGATMGPDGA… IGHM;I… IGH;I… IGHV4-61… IGHJ3;… 3244;… 22;89 </span>
 <span class="co">#&gt; # … with 15,428 more rows</span></pre></div>
 <p><br></p>
 </div>
@@ -160,19 +160,19 @@
   <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">clonotype_id</span><span class="op">)</span>, <span class="va">n_chains</span> <span class="op">&gt;</span> <span class="fl">2</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu">select</span><span class="op">(</span><span class="fu">all_of</span><span class="op">(</span><span class="va">vdj_cols</span><span class="op">)</span>, <span class="va">uniq_chains</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 1,095 x 8</span>
-<span class="co">#&gt;    clonotype_id  cdr3        chains  v_gene    j_gene   reads  umis  uniq_chains</span>
-<span class="co">#&gt;    &lt;chr&gt;         &lt;chr&gt;       &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;      </span>
-<span class="co">#&gt;  1 1_ABA_015_cl… CARDGYGSGI… IGH;IG… IGHV1-18… IGHJ4;I… 4850;… 29;3… IGH_IGK_IGL</span>
-<span class="co">#&gt;  2 1_ABA_015_cl… CAREGYYYDS… IGH;IG… IGHV4-61… IGHJ4;I… 1688;… 11;3… IGH_IGL    </span>
-<span class="co">#&gt;  3 1_ABA_015_cl… CARGLFGGTQ… IGH;IG… IGHV3-11… IGHJ4;I… 3960;… 28;1… IGH_IGK_IGL</span>
-<span class="co">#&gt;  4 1_ABA_015_cl… CATYDSSGPW… IGH;IG… IGHV1-46… IGHJ3;I… 4550;… 35;1… IGH_IGK_IGL</span>
-<span class="co">#&gt;  5 1_ABA_015_cl… CAKGDYYDSS… IGH;IG… IGHV3-23… IGHJ6;I… 438;5… 4;4;… IGH_IGK    </span>
-<span class="co">#&gt;  6 1_ABA_015_cl… CARDPFSVTM… IGH;IG… IGHV1-69… IGHJ4;I… 3742;… 29;1… IGH_IGK_IGL</span>
-<span class="co">#&gt;  7 1_ABA_015_cl… CARRSSAAPR… IGH;IG… IGHV5-51… IGHJ6;I… 3422;… 24;5… IGH_IGK_IGL</span>
-<span class="co">#&gt;  8 1_ABA_015_cl… CARVKSWFDP… IGH;IG… IGHV1-2;… IGHJ5;I… 5538;… 48;2… IGH_IGK    </span>
-<span class="co">#&gt;  9 1_ABA_015_cl… CAKHKVATMY… IGH;IG… IGHV3-23… IGHJ4;I… 3572;… 25;3… IGH_IGK    </span>
-<span class="co">#&gt; 10 1_ABA_015_cl… CTTADFWSGS… IGH;IG… IGHV3-15… IGHJ4;I… 1958;… 15;6… IGH_IGK_IGL</span>
+<span class="co">#&gt; # A tibble: 1,095 x 9</span>
+<span class="co">#&gt;    clonotype_id  cdr3     isotype  chains v_gene  j_gene reads umis  uniq_chains</span>
+<span class="co">#&gt;    &lt;chr&gt;         &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;      </span>
+<span class="co">#&gt;  1 1_ABA_015_cl… CARDGYG… IGHM;IG… IGH;I… IGHV1-… IGHJ4… 4850… 29;3… IGH_IGK_IGL</span>
+<span class="co">#&gt;  2 1_ABA_015_cl… CAREGYY… IGHM;IG… IGH;I… IGHV4-… IGHJ4… 1688… 11;3… IGH_IGL    </span>
+<span class="co">#&gt;  3 1_ABA_015_cl… CARGLFG… IGHM;IG… IGH;I… IGHV3-… IGHJ4… 3960… 28;1… IGH_IGK_IGL</span>
+<span class="co">#&gt;  4 1_ABA_015_cl… CATYDSS… IGHM;IG… IGH;I… IGHV1-… IGHJ3… 4550… 35;1… IGH_IGK_IGL</span>
+<span class="co">#&gt;  5 1_ABA_015_cl… CAKGDYY… IGHM;IG… IGH;I… IGHV3-… IGHJ6… 438;… 4;4;… IGH_IGK    </span>
+<span class="co">#&gt;  6 1_ABA_015_cl… CARDPFS… IGHM;IG… IGH;I… IGHV1-… IGHJ4… 3742… 29;1… IGH_IGK_IGL</span>
+<span class="co">#&gt;  7 1_ABA_015_cl… CARRSSA… IGHM;IG… IGH;I… IGHV5-… IGHJ6… 3422… 24;5… IGH_IGK_IGL</span>
+<span class="co">#&gt;  8 1_ABA_015_cl… CARVKSW… IGHM;IG… IGH;I… IGHV1-… IGHJ5… 5538… 48;2… IGH_IGK    </span>
+<span class="co">#&gt;  9 1_ABA_015_cl… CAKHKVA… IGHM;IG… IGH;I… IGHV3-… IGHJ4… 3572… 25;3… IGH_IGK    </span>
+<span class="co">#&gt; 10 1_ABA_015_cl… CTTADFW… IGHM;IG… IGH;I… IGHV3-… IGHJ4… 1958… 15;6… IGH_IGK_IGL</span>
 <span class="co">#&gt; # … with 1,085 more rows</span></pre></div>
 <p><img src="bcr_files/figure-html/chains_umap-1.png" width="768"></p>
 <p><br></p>
@@ -189,19 +189,19 @@
   <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">clonotype_id</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu">select</span><span class="op">(</span><span class="fu">all_of</span><span class="op">(</span><span class="va">vdj_cols</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 14,735 x 7</span>
-<span class="co">#&gt;    clonotype_id     cdr3              chains  v_gene      j_gene  reads   umis  </span>
-<span class="co">#&gt;    &lt;chr&gt;            &lt;chr&gt;             &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt; </span>
-<span class="co">#&gt;  1 1_ABA_015_clono… CARVFRDLAVAGTLWF… IGH;IGL IGHV4-61;I… IGHJ5;… 1464;1… 11;26 </span>
-<span class="co">#&gt;  2 1_ABA_015_clono… CAKGAREWELRRHSYY… IGH;IGK IGHV3-23;I… IGHJ4;… 2646;8… 24;61 </span>
-<span class="co">#&gt;  3 1_ABA_015_clono… CARLGYGDKDYW;CQQ… IGH;IGK IGHV4-59;I… IGHJ4;… 2296;6… 15;38 </span>
-<span class="co">#&gt;  4 1_ABA_015_clono… CTSPSKHYYYYYMDVW… IGH;IGL IGHV3-73;I… IGHJ6;… 2996;3… 24;42 </span>
-<span class="co">#&gt;  5 1_ABA_015_clono… CARQSGTYDYW;CQAW… IGH;IGL IGHV1-2;IG… IGHJ4;… 1112;5… 11;59 </span>
-<span class="co">#&gt;  6 1_ABA_015_clono… CVREGITMIVVSTLSY… IGH;IGL IGHV3-7;IG… IGHJ4;… 36010;… 4584;…</span>
-<span class="co">#&gt;  7 1_ABA_015_clono… CARIVVKNYYDSSGYY… IGH;IGK IGHV2-26;I… IGHJ4;… 3542;3… 26;26 </span>
-<span class="co">#&gt;  8 1_ABA_015_clono… CAVHGTGPIIMPPGNY… IGH;IGK IGHV1-46;I… IGHJ6;… 27246;… 5345;…</span>
-<span class="co">#&gt;  9 1_ABA_015_clono… CARDGGRWYPGAFDIW… IGH;IGK IGHV3-21;I… IGHJ3;… 3706;7… 30;47 </span>
-<span class="co">#&gt; 10 1_ABA_015_clono… CARGGATMGPDGAFDI… IGH;IGL IGHV4-61;I… IGHJ3;… 3244;8… 22;89 </span>
+<span class="co">#&gt; # A tibble: 14,735 x 8</span>
+<span class="co">#&gt;    clonotype_id    cdr3           isotype chains v_gene    j_gene  reads  umis  </span>
+<span class="co">#&gt;    &lt;chr&gt;           &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; </span>
+<span class="co">#&gt;  1 1_ABA_015_clon… CARVFRDLAVAGT… IGHM;I… IGH;I… IGHV4-61… IGHJ5;… 1464;… 11;26 </span>
+<span class="co">#&gt;  2 1_ABA_015_clon… CAKGAREWELRRH… IGHM;I… IGH;I… IGHV3-23… IGHJ4;… 2646;… 24;61 </span>
+<span class="co">#&gt;  3 1_ABA_015_clon… CARLGYGDKDYW;… IGHM;I… IGH;I… IGHV4-59… IGHJ4;… 2296;… 15;38 </span>
+<span class="co">#&gt;  4 1_ABA_015_clon… CTSPSKHYYYYYM… IGHM;I… IGH;I… IGHV3-73… IGHJ6;… 2996;… 24;42 </span>
+<span class="co">#&gt;  5 1_ABA_015_clon… CARQSGTYDYW;C… IGHG;I… IGH;I… IGHV1-2;… IGHJ4;… 1112;… 11;59 </span>
+<span class="co">#&gt;  6 1_ABA_015_clon… CVREGITMIVVST… IGHA;I… IGH;I… IGHV3-7;… IGHJ4;… 36010… 4584;…</span>
+<span class="co">#&gt;  7 1_ABA_015_clon… CARIVVKNYYDSS… IGHM;I… IGH;I… IGHV2-26… IGHJ4;… 3542;… 26;26 </span>
+<span class="co">#&gt;  8 1_ABA_015_clon… CAVHGTGPIIMPP… IGHG;I… IGH;I… IGHV1-46… IGHJ6;… 27246… 5345;…</span>
+<span class="co">#&gt;  9 1_ABA_015_clon… CARDGGRWYPGAF… IGHM;I… IGH;I… IGHV3-21… IGHJ3;… 3706;… 30;47 </span>
+<span class="co">#&gt; 10 1_ABA_015_clon… CARGGATMGPDGA… IGHM;I… IGH;I… IGHV4-61… IGHJ3;… 3244;… 22;89 </span>
 <span class="co">#&gt; # … with 14,725 more rows</span></pre></div>
 <p><br></p>
 </div>
@@ -233,19 +233,19 @@
   <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">clonotype_id</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu">select</span><span class="op">(</span><span class="fu">all_of</span><span class="op">(</span><span class="va">vdj_cols</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 15,260 x 7</span>
-<span class="co">#&gt;    clonotype_id     cdr3              chains  v_gene      j_gene  reads   umis  </span>
-<span class="co">#&gt;    &lt;chr&gt;            &lt;chr&gt;             &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt; </span>
-<span class="co">#&gt;  1 1_ABA_015_clono… CARVFRDLAVAGTLWF… IGH;IGL IGHV4-61;I… IGHJ5;… 1464;1… 11;26 </span>
-<span class="co">#&gt;  2 1_ABA_015_clono… CAKGAREWELRRHSYY… IGH;IGK IGHV3-23;I… IGHJ4;… 2646;8… 24;61 </span>
-<span class="co">#&gt;  3 1_ABA_015_clono… CARLGYGDKDYW;CQQ… IGH;IGK IGHV4-59;I… IGHJ4;… 2296;6… 15;38 </span>
-<span class="co">#&gt;  4 1_ABA_015_clono… CTSPSKHYYYYYMDVW… IGH;IGL IGHV3-73;I… IGHJ6;… 2996;3… 24;42 </span>
-<span class="co">#&gt;  5 1_ABA_015_clono… CARQSGTYDYW;CQAW… IGH;IGL IGHV1-2;IG… IGHJ4;… 1112;5… 11;59 </span>
-<span class="co">#&gt;  6 1_ABA_015_clono… CVREGITMIVVSTLSY… IGH;IGL IGHV3-7;IG… IGHJ4;… 36010;… 4584;…</span>
-<span class="co">#&gt;  7 1_ABA_015_clono… CARIVVKNYYDSSGYY… IGH;IGK IGHV2-26;I… IGHJ4;… 3542;3… 26;26 </span>
-<span class="co">#&gt;  8 1_ABA_015_clono… CAVHGTGPIIMPPGNY… IGH;IGK IGHV1-46;I… IGHJ6;… 27246;… 5345;…</span>
-<span class="co">#&gt;  9 1_ABA_015_clono… CARDGGRWYPGAFDIW… IGH;IGK IGHV3-21;I… IGHJ3;… 3706;7… 30;47 </span>
-<span class="co">#&gt; 10 1_ABA_015_clono… CARGGATMGPDGAFDI… IGH;IGL IGHV4-61;I… IGHJ3;… 3244;8… 22;89 </span>
+<span class="co">#&gt; # A tibble: 15,260 x 8</span>
+<span class="co">#&gt;    clonotype_id    cdr3           isotype chains v_gene    j_gene  reads  umis  </span>
+<span class="co">#&gt;    &lt;chr&gt;           &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; </span>
+<span class="co">#&gt;  1 1_ABA_015_clon… CARVFRDLAVAGT… IGHM;I… IGH;I… IGHV4-61… IGHJ5;… 1464;… 11;26 </span>
+<span class="co">#&gt;  2 1_ABA_015_clon… CAKGAREWELRRH… IGHM;I… IGH;I… IGHV3-23… IGHJ4;… 2646;… 24;61 </span>
+<span class="co">#&gt;  3 1_ABA_015_clon… CARLGYGDKDYW;… IGHM;I… IGH;I… IGHV4-59… IGHJ4;… 2296;… 15;38 </span>
+<span class="co">#&gt;  4 1_ABA_015_clon… CTSPSKHYYYYYM… IGHM;I… IGH;I… IGHV3-73… IGHJ6;… 2996;… 24;42 </span>
+<span class="co">#&gt;  5 1_ABA_015_clon… CARQSGTYDYW;C… IGHG;I… IGH;I… IGHV1-2;… IGHJ4;… 1112;… 11;59 </span>
+<span class="co">#&gt;  6 1_ABA_015_clon… CVREGITMIVVST… IGHA;I… IGH;I… IGHV3-7;… IGHJ4;… 36010… 4584;…</span>
+<span class="co">#&gt;  7 1_ABA_015_clon… CARIVVKNYYDSS… IGHM;I… IGH;I… IGHV2-26… IGHJ4;… 3542;… 26;26 </span>
+<span class="co">#&gt;  8 1_ABA_015_clon… CAVHGTGPIIMPP… IGHG;I… IGH;I… IGHV1-46… IGHJ6;… 27246… 5345;…</span>
+<span class="co">#&gt;  9 1_ABA_015_clon… CARDGGRWYPGAF… IGHM;I… IGH;I… IGHV3-21… IGHJ3;… 3706;… 30;47 </span>
+<span class="co">#&gt; 10 1_ABA_015_clon… CARGGATMGPDGA… IGHM;I… IGH;I… IGHV4-61… IGHJ3;… 3244;… 22;89 </span>
 <span class="co">#&gt; # … with 15,250 more rows</span></pre></div>
 <p><br></p>
 </div>

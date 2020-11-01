@@ -85,13 +85,13 @@
     <loc>https://rnabioco.github.io/djvdj/reference/summarize_chains.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/test_so.html</loc>
-  </url>
-  <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/test_vdj.html</loc>
-  </url>
-  <url>
     <loc>https://rnabioco.github.io/djvdj/reference/tidyeval.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/tiny_so.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/tiny_vdj.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/vdj_theme.html</loc>
