@@ -13,6 +13,7 @@ test_that("Check Seurat output", {
 test_that("Check tibble output", {
   res <- tiny_vdj %>%
     calc_abundance(
+      clonotype_col = "clonotype_id",
       return_seurat = FALSE
     )
 

@@ -1,7 +1,7 @@
 
 test_that("Single import with full path", {
   res <- tiny_so %>%
-    import_vdj(vdj_dir = "inst/outs")
+    import_vdj(vdj_dir = "outs")
 
   expect_s4_class(res, "Seurat")                       # class
   expect_identical(colnames(res), colnames(tiny_so))   # cells in object
@@ -9,7 +9,7 @@ test_that("Single import with full path", {
 
 test_that("Single import without full path", {
   res <- tiny_so %>%
-    import_vdj(vdj_dir = "inst")
+    import_vdj(vdj_dir = "")
 
   expect_s4_class(res, "Seurat")                       # class
   expect_identical(colnames(res), colnames(tiny_so))   # cells in object
