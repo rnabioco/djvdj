@@ -128,29 +128,36 @@ so@meta.data <- so@meta.data %>%
   column_to_rownames("cell_id")
 
 # Test data
-test_cells <- colnames(so) %>%
+tiny_cells <- colnames(so) %>%
   sample(100)
 
-test_so <- so %>%
+tiny_so <- so %>%
   subset(
     features = VariableFeatures(so)[1:100],
-    cells = test_cells
+    cells = tiny_cells
   )
 
-test_vdj <- test_so %>%
+tiny_vdj <- tiny_so %>%
   import_vdj(
     vdj_dir = vdj_path,
     filter_contigs = TRUE
   )
 
+# Test contigs
+contigs <- read_csv(file.path(vdj_path, "filtered_contig_annotations.csv"))
+
+contigs %>%
+  filter(barcode %in% tiny_cells) %>%
+  write_csv("inst/outs/filtered_contig_annotations.csv")
+
 # Save objects
 usethis::use_data(
-  test_so,
+  tiny_so,
   overwrite = TRUE
 )
 
 usethis::use_data(
-  test_vdj,
+  tiny_vdj,
   overwrite = TRUE
 )
 

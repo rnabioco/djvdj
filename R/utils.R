@@ -16,8 +16,6 @@
 import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
                        filter_contigs = TRUE, sep = ";") {
 
-  vdj_dir <- purrr::map_chr(vdj_dir, ~ file.path(.x, "outs"))
-
   # VDJ columns
   count_cols <- c("reads", "umis")
 
@@ -47,13 +45,26 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     stop("Cell prefixes must not include NAs.")
   }
 
-  nms <- !grepl("_$", names(vdj_dir))
+  nms <- names(vdj_dir) != "" & !grepl("_$", names(vdj_dir))
   names(vdj_dir)[nms] <- paste0(names(vdj_dir)[nms], "_")
 
   # Load contigs
+  # Check given dir before adding outs to path
   contigs <- "filtered_contig_annotations.csv"
-  contigs <- purrr::map(vdj_dir, ~ file.path(.x, contigs))
-  contigs <- purrr::map(contigs, readr::read_csv, col_types = readr::cols())
+
+  contigs <- purrr::map_chr(vdj_dir, ~ {
+    ifelse(
+      file.exists(file.path(.x, contigs)),
+      file.path(.x, contigs),
+      file.path(.x, "outs", contigs)
+    )
+  })
+
+  contigs <- purrr::map(
+    contigs,
+    readr::read_csv,
+    col_types = readr::cols()
+  )
 
   # Add cell prefixes
   contigs <- purrr::imap(contigs, ~ {
@@ -466,14 +477,14 @@ calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
   meta_df <- dplyr::mutate(
     meta_df,
     freq = dplyr::n_distinct(.data$.cell_id),
-    pct  = (freq / .data$n_cells) * 100
+    pct  = (.data$freq / .data$n_cells) * 100
   )
 
   meta_df <- dplyr::ungroup(meta_df)
 
   # Add results to meta.data
   if (!return_seurat) {
-    res <- dplyr::select(meta_df, -.cell_id)
+    res <- dplyr::select(meta_df, -.data$.cell_id)
     res <- unique(res)
 
     return(res)
@@ -485,8 +496,8 @@ calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
   meta_df <- dplyr::select(
     meta_df,
     -all_of(c("n_cells", cluster_col)),
-    !!sym(freq_col) := freq,
-    !!sym(pct_col)  := pct
+    !!sym(freq_col) := .data$freq,
+    !!sym(pct_col)  := .data$pct
   )
 
   meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
