@@ -53,11 +53,16 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   contigs <- "filtered_contig_annotations.csv"
 
   contigs <- purrr::map_chr(vdj_dir, ~ {
-    ifelse(
-      file.exists(file.path(.x, contigs)),
-      file.path(.x, contigs),
-      file.path(.x, "outs", contigs)
+    path <- case_when(
+      file.exists(file.path(.x, contigs)) ~ file.path(.x, contigs),
+      file.exists(file.path(.x, "outs", contigs)) ~ file.path(.x, "outs", contigs)
     )
+
+    if (is.na(path)) {
+      stop(paste0(contigs, " not found in ", vdj_dir, "."))
+    }
+
+    path
   })
 
   contigs <- purrr::map(
