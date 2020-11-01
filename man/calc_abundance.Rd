@@ -6,7 +6,7 @@
 \usage{
 calc_abundance(
   sobj_in,
-  clonotype_col = NULL,
+  clonotype_col,
   cluster_col = NULL,
   prefix = "",
   return_seurat = TRUE
@@ -22,8 +22,8 @@ grouping cells when calculating clonotype abundance}
 
 \item{prefix}{Prefix to add to new meta.data columns}
 
-\item{return_seurat}{Return a Seurat object. If set to FALSE, the meta.data
-table is returned.}
+\item{return_seurat}{Return a Seurat object. If set to FALSE, a tibble
+summarizing the results is returned.}
 }
 \value{
 Seurat object with clonotype abundance added to meta.data

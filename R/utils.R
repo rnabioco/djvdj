@@ -16,8 +16,6 @@
 import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
                        filter_contigs = TRUE, sep = ";") {
 
-  vdj_dir <- purrr::map_chr(vdj_dir, ~ file.path(.x, "outs"))
-
   # VDJ columns
   count_cols <- c("reads", "umis")
 
@@ -47,13 +45,31 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     stop("Cell prefixes must not include NAs.")
   }
 
-  nms <- !grepl("_$", names(vdj_dir))
+  nms <- names(vdj_dir) != "" & !grepl("_$", names(vdj_dir))
   names(vdj_dir)[nms] <- paste0(names(vdj_dir)[nms], "_")
 
   # Load contigs
+  # Check given dir before adding outs to path
   contigs <- "filtered_contig_annotations.csv"
-  contigs <- purrr::map(vdj_dir, ~ file.path(.x, contigs))
-  contigs <- purrr::map(contigs, readr::read_csv, col_types = readr::cols())
+
+  contigs <- purrr::map_chr(vdj_dir, ~ {
+    path <- case_when(
+      file.exists(file.path(.x, contigs)) ~ file.path(.x, contigs),
+      file.exists(file.path(.x, "outs", contigs)) ~ file.path(.x, "outs", contigs)
+    )
+
+    if (is.na(path)) {
+      stop(paste0(contigs, " not found in ", vdj_dir, "."))
+    }
+
+    path
+  })
+
+  contigs <- purrr::map(
+    contigs,
+    readr::read_csv,
+    col_types = readr::cols()
+  )
 
   # Add cell prefixes
   contigs <- purrr::imap(contigs, ~ {
@@ -75,6 +91,11 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
+  # Check if sep is already in sep_cols
+  if (any(grepl(sep, contigs[, sep_cols]))) {
+    stop(paste0("sep '", sep, "' is already present, select a different seperator."))
+  }
+
   # Sum contig reads and UMIs for chains
   grp_cols <- vdj_cols[!vdj_cols %in% count_cols]
   contigs  <- dplyr::group_by(contigs, !!!syms(grp_cols))
@@ -90,6 +111,22 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     contigs,
     .data$barcode, .data$clonotype_id, .data$chains
   )
+
+  # Extract isotypes
+  iso_pat <- "IGH[ADEGM]|IGL|IGK"
+
+  if (any(grepl(iso_pat, contigs$c_gene))) {
+    contigs <- dplyr::mutate(
+      contigs,
+      isotype = ifelse(
+        grepl(iso_pat, .data$c_gene),
+        regmatches(.data$c_gene, regexpr(iso_pat, .data$c_gene)),
+        "None"
+      )
+    )
+
+    sep_cols <- c(sep_cols, "isotype")
+  }
 
   contigs <- dplyr::group_by(contigs, .data$barcode, .data$clonotype_id)
 
@@ -167,9 +204,9 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "clonotype_id", filter_cel
     )
 
     meta_df <- .split_vdj(
-      df_in     = meta_df,
-      sep_cols  = sep_cols,
-      sep       = sep
+      df_in    = meta_df,
+      sep_cols = sep_cols,
+      sep      = sep
     )
 
     meta_df <- dplyr::rowwise(meta_df)
@@ -368,7 +405,12 @@ identify_clonotypes <- function(sobj_in, vdj_dir, csv_file = "enclone_output.csv
 
   # Import enclone results
   meta_df <- readr::read_csv(csv_file, col_types = readr::cols())
-  meta_df <- dplyr::mutate(meta_df, barcodes = strsplit(.data$barcodes, ","))
+
+  meta_df <- dplyr::mutate(
+    meta_df,
+    barcodes = strsplit(as.character(.data$barcodes), ",")
+  )
+
   meta_df <- tidyr::unnest(meta_df, cols = "barcodes")
 
   meta_df <- dplyr::mutate(
@@ -404,11 +446,11 @@ identify_clonotypes <- function(sobj_in, vdj_dir, csv_file = "enclone_output.csv
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
 #' @param prefix Prefix to add to new meta.data columns
-#' @param return_seurat Return a Seurat object. If set to FALSE, the meta.data
-#' table is returned.
+#' @param return_seurat Return a Seurat object. If set to FALSE, a tibble
+#' summarizing the results is returned.
 #' @return Seurat object with clonotype abundance added to meta.data
 #' @export
-calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
+calc_abundance <- function(sobj_in, clonotype_col, cluster_col = NULL,
                            prefix = "", return_seurat = TRUE) {
 
   # Format meta.data
@@ -426,12 +468,9 @@ calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
     meta_df <- dplyr::group_by(meta_df, !!sym(cluster_col))
   }
 
-  freq_col <- paste0(prefix, "clone_freq")
-  pct_col  <- paste0(prefix, "clone_pct")
-
   meta_df <- dplyr::mutate(
     meta_df,
-    .n_cells = dplyr::n_distinct(.data$.cell_id)
+    n_cells = dplyr::n_distinct(.data$.cell_id)
   )
 
   meta_df <- dplyr::group_by(
@@ -442,18 +481,31 @@ calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 
   meta_df <- dplyr::mutate(
     meta_df,
-    !!sym(freq_col) := dplyr::n_distinct(.data$.cell_id),
-    !!sym(pct_col)  := (!!sym(freq_col) / .data$.n_cells) * 100
+    freq = dplyr::n_distinct(.data$.cell_id),
+    pct  = (.data$freq / .data$n_cells) * 100
   )
 
   meta_df <- dplyr::ungroup(meta_df)
-  meta_df <- dplyr::select(meta_df, -all_of(c(".n_cells", cluster_col)))
-  meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
 
   # Add results to meta.data
   if (!return_seurat) {
-    return(meta_df)
+    res <- dplyr::select(meta_df, -.data$.cell_id)
+    res <- unique(res)
+
+    return(res)
   }
+
+  freq_col <- paste0(prefix, "clone_freq")
+  pct_col  <- paste0(prefix, "clone_pct")
+
+  meta_df <- dplyr::select(
+    meta_df,
+    -all_of(c("n_cells", cluster_col)),
+    !!sym(freq_col) := .data$freq,
+    !!sym(pct_col)  := .data$pct
+  )
+
+  meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
 
   res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
 
@@ -476,7 +528,7 @@ calc_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 #' table is returned.
 #' @return Seurat object with diversity index added to meta.data
 #' @export
-calc_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
+calc_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
                            method = abdiv::simpson, prefix = "", return_seurat = TRUE) {
 
   # Format meta.data
@@ -692,7 +744,7 @@ calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
 
   res <- dplyr::mutate(meta_df, across(
     all_of(sep_cols),
-    ~ strsplit(.x, sep)
+    ~ strsplit(as.character(.x), sep)
   ))
 
   # Filter chains
@@ -802,7 +854,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
   # Expand meta.data
   res <- dplyr::mutate(meta_df, dplyr::across(
     dplyr::all_of(c(data_cols, chain_col)),
-    ~ strsplit(.x, sep)
+    ~ strsplit(as.character(.x), sep)
   ))
 
   res <- tidyr::unnest(res, cols = dplyr::all_of(c(data_cols, chain_col)))
@@ -842,7 +894,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
 
   res <- dplyr::mutate(res, dplyr::across(
     dplyr::all_of(unname(sep_cols)),
-    ~ strsplit(.x, sep)
+    ~ strsplit(as.character(.x), sep)
   ))
 
   # Convert to numeric or logical
@@ -895,14 +947,18 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
   }
 
   # Identify columns to split based on sep
-  sep_cols <- dplyr::select(df_in, all_of(cols_in))
+  sep_cols <- NULL
 
-  sep_cols <- purrr::keep(
-    sep_cols,
-    ~ any(purrr::map_lgl(na.omit(.x), grepl, pattern = sep))
-  )
+  if (!is.null(sep)) {
+    sep_cols <- dplyr::select(df_in, all_of(cols_in))
 
-  sep_cols <- colnames(sep_cols)
+    sep_cols <- purrr::keep(
+      sep_cols,
+      ~ any(purrr::map_lgl(na.omit(.x), grepl, pattern = sep))
+    )
+
+    sep_cols <- colnames(sep_cols)
+  }
 
   # Return list of vectors
   res <- list(

@@ -7,8 +7,8 @@ output:
     toc_depth: 2
     vignette: >
       %\VignetteIndexEntry{BCR}
-      %\VignetteEngine{knitr::rmarkdown}
       %\VignetteEncoding{UTF-8}
+      %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ```{r "setup", include = FALSE}
@@ -150,9 +150,9 @@ so_bcr <- import_vdj(
 # Take a look at the meta.data
 vdj_cols <- c(
   "clonotype_id", "cdr3",
-  "chains", "v_gene", 
-  "j_gene", "reads",
-  "umis"
+  "isotype", "chains",
+  "v_gene",  "j_gene",
+  "reads",   "umis"
 )
 
 so_bcr@meta.data %>%
