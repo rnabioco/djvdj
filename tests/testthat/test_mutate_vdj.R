@@ -7,19 +7,19 @@ test_that("Check Seurat output", {
   expect_identical(colnames(res), colnames(tiny_vdj))  # cells in object
 })
 
-test_that("Default separator", {
-  res <- tiny_vdj %>%
-    mutate_vdj(
-      NEW = stringr::str_c(chains, collapse = "_"),
-      sep = ";"
-    )
-
-  old_nms <- stringr::str_replace_all(tiny_vdj$chains, ";", "_")
-
-  expect_s4_class(res, "Seurat")                       # class
-  expect_identical(colnames(res), colnames(tiny_vdj))  # cells in object
-  expect_identical(unname(res$NEW), old_nms)           # new column
-})
+# test_that("Default separator", {
+#   res <- tiny_vdj %>%
+#     mutate_vdj(
+#       NEW = str_c(chains, collapse = "_"),
+#       sep = ";"
+#     )
+#
+#   old_nms <- str_replace_all(tiny_vdj$chains, ";", "_")
+#
+#   expect_s4_class(res, "Seurat")                       # class
+#   expect_identical(colnames(res), colnames(tiny_vdj))  # cells in object
+#   expect_identical(unname(res$NEW), old_nms)           # new column
+# })
 
 test_that("NULL separator", {
   res <- tiny_vdj %>%
