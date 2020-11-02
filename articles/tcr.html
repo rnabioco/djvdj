@@ -5,13 +5,13 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TCR analysis • djvdj</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/united/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<title>**TCR analysis** • djvdj</title>
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/cosmo/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="TCR analysis">
+<script src="../pkgdown.js"></script><meta property="og:title" content="**TCR analysis**">
 <meta property="og:description" content="djvdj">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -54,10 +54,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/bcr.html">BCR analysis</a>
+      <a href="../articles/bcr.html">**BCR analysis**</a>
     </li>
     <li>
-      <a href="../articles/tcr.html">TCR analysis</a>
+      <a href="../articles/tcr.html">**TCR analysis**</a>
     </li>
   </ul>
 </li>
@@ -79,9 +79,9 @@
 <script src="tcr_files/anchor-sections-1.0/anchor-sections.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1 data-toc-skip>TCR analysis</h1>
+      <h1 data-toc-skip><strong>TCR analysis</strong></h1>
             
-            <h4 class="date">November 01 2020</h4>
+            <h4 class="date">November 02 2020</h4>
       
       
       <div class="hidden name"><code>tcr.Rmd</code></div>
@@ -96,7 +96,8 @@
 <p><br></p>
 <div id="import-vdj-data" class="section level2">
 <h2 class="hasAnchor">
-<a href="#import-vdj-data" class="anchor"></a>Import VDJ data</h2>
+<a href="#import-vdj-data" class="anchor"></a><strong>Import VDJ data</strong>
+</h2>
 <p><code><a href="../reference/import_vdj.html">import_vdj()</a></code> takes the output files from <a href="https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header">Cell Ranger</a> and adds clonotype information to the meta.data for an existing <a href="https://satijalab.org/seurat/">Seurat</a> object. For cells with multiple chains, the information for each chain is stored as a single row, separated by a ‘;’ (or a character specified by <code>sep</code>). For cells that do not have any VDJ sequencing data, NAs will be added to the meta.data.</p>
 <p>If the Seurat object contains data for multiple runs, a vector containing paths to the VDJ data for each sample can be given. If multiple paths are provided, cell prefixes should be included as names for the vector.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit">
@@ -111,9 +112,10 @@
   vdj_dir        <span class="op">=</span> <span class="va">paths</span>,   <span class="co"># Directories containing cellranger output files</span>
   prefix         <span class="op">=</span> <span class="st">""</span>,      <span class="co"># Prefix to add to new meta.data columns</span>
   filter_contigs <span class="op">=</span> <span class="cn">TRUE</span>     <span class="co"># Only include chains with at least one productive contig</span>
-<span class="op">)</span>
-
-<span class="co"># Take a look at the meta.data</span>
+<span class="op">)</span></pre></div>
+<p><br></p>
+<p>Take a look at the meta.data to see the V(D)J data added to the object.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit">
 <span class="va">vdj_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>
   <span class="st">"clonotype_id"</span>, <span class="st">"cdr3"</span>,
   <span class="st">"chains"</span>, <span class="st">"v_gene"</span>, 
@@ -143,13 +145,14 @@
 </div>
 <div id="quality-control" class="section level2">
 <h2 class="hasAnchor">
-<a href="#quality-control" class="anchor"></a>Quality Control</h2>
+<a href="#quality-control" class="anchor"></a><strong>Quality Control</strong>
+</h2>
 <div id="paired-chains" class="section level3">
 <h3 class="hasAnchor">
 <a href="#paired-chains" class="anchor"></a>Paired Chains</h3>
 <p>The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired alpha and beta chains. Using the <code><a href="../reference/mutate_vdj.html">mutate_vdj()</a></code> function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.</p>
 <p>In this example we create a new column that summarizes the unique chains identified for each cell. We can then overlay these cell labels on a UMAP projection.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit">
+<div class="sourceCode" id="cb3"><pre class="downlit">
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mutate_vdj.html">mutate_vdj</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                                <span class="co"># Seurat object</span>
   uniq_chains <span class="op">=</span> <span class="fu">str_c</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html">unique</a></span><span class="op">(</span><span class="va">chains</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"_"</span><span class="op">)</span>  <span class="co"># New column</span>
@@ -177,7 +180,7 @@
 <p><img src="tcr_files/figure-html/chains_umap-1.png" width="624"></p>
 <p><br></p>
 <p>Clonotypes that lack paired alpha and beta chains can be removed from the meta.data using <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code>. With this function cells that match the provided condition are filtered from the object. Setting <code>filter_cells</code> to <code>FALSE</code> will just remove the V(D)J data without completely removing these cells.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit">
+<div class="sourceCode" id="cb4"><pre class="downlit">
 <span class="va">so_filt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span>
   sobj_in      <span class="op">=</span> <span class="va">so_tcr</span>,                            <span class="co"># Seurat object</span>
   filt         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"TRA"</span>, <span class="st">"TRB"</span><span class="op">)</span> <span class="op">%in%</span> <span class="va">chains</span><span class="op">)</span>,  <span class="co"># Condition for filtering</span>
@@ -209,7 +212,7 @@
 <h3 class="hasAnchor">
 <a href="#read-support" class="anchor"></a>Read Support</h3>
 <p>The read support for each chain can be visualized with the <code><a href="../reference/plot_reads.html">plot_reads()</a></code> function. This will create plots summarizing the number of UMIs and total reads that were obtained for each chain.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit">
+<div class="sourceCode" id="cb5"><pre class="downlit">
 <span class="fu"><a href="../reference/plot_reads.html">plot_reads</a></span><span class="op">(</span>
   sobj_in      <span class="op">=</span> <span class="va">so_tcr</span>,        <span class="co"># Seurat object</span>
   chain_col    <span class="op">=</span> <span class="st">"chains"</span>,      <span class="co"># Column containing chains for each cell</span>
@@ -220,7 +223,7 @@
 <p><img src="tcr_files/figure-html/read_support-1.png" width="624"></p>
 <p><br></p>
 <p>Clonotypes that do not have adequate UMI support can be filtered from the object using <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code>. In this example we filter for clonotypes that have chains supported by at least two UMIs.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit">
+<div class="sourceCode" id="cb6"><pre class="downlit">
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span>
   sobj_in      <span class="op">=</span> <span class="va">so_tcr</span>,         <span class="co"># Seurat object</span>
   filt         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span><span class="op">(</span><span class="va">umis</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span>,  <span class="co"># Condition for filtering</span>
@@ -251,9 +254,10 @@
 </div>
 <div id="clonotype-abundance" class="section level2">
 <h2 class="hasAnchor">
-<a href="#clonotype-abundance" class="anchor"></a>Clonotype Abundance</h2>
+<a href="#clonotype-abundance" class="anchor"></a><strong>Clonotype Abundance</strong>
+</h2>
 <p>To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the <code><a href="../reference/calc_abundance.html">calc_abundance()</a></code> function.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit">
+<div class="sourceCode" id="cb7"><pre class="downlit">
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_abundance.html">calc_abundance</a></span><span class="op">(</span>
   sobj_in       <span class="op">=</span> <span class="va">so_tcr</span>,        <span class="co"># Seurat object</span>
   clonotype_col <span class="op">=</span> <span class="st">"cdr3"</span>,        <span class="co"># meta.data column containing clonotype IDs</span>
@@ -262,16 +266,17 @@
 <span class="op">)</span></pre></div>
 <p><br></p>
 <p>For each ‘calc’ function provided by djvdj, there is a matching ‘plot’ function that will generate a summary plot. The <code><a href="../reference/plot_abundance.html">plot_abundance()</a></code> function will plot clonotypes ranked by abundance.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit">
+<div class="sourceCode" id="cb8"><pre class="downlit">
 <span class="fu"><a href="../reference/plot_abundance.html">plot_abundance</a></span><span class="op">(</span>
   sobj_in       <span class="op">=</span> <span class="va">so_tcr</span>,        <span class="co"># Seurat object</span>
   clonotype_col <span class="op">=</span> <span class="st">"cdr3"</span>,        <span class="co"># meta.data column containing clonotype IDs</span>
   cluster_col   <span class="op">=</span> <span class="st">"orig.ident"</span>,  <span class="co"># meta.data column containing cell labels</span>
   
+  type        <span class="op">=</span> <span class="st">"line"</span>,          <span class="co"># Type of plot</span>
   plot_colors <span class="op">=</span> <span class="va">ito_cols</span>,        <span class="co"># Plot colors</span>
   yaxis       <span class="op">=</span> <span class="st">"percent"</span>,       <span class="co"># Units to plot</span>
   label_col   <span class="op">=</span> <span class="st">"cdr3"</span>,          <span class="co"># meta.data column containing labels</span>
-  n_labels    <span class="op">=</span> <span class="fl">1</span>,               <span class="co"># Number of top clonotypes to label</span>
+  n_labels    <span class="op">=</span> <span class="fl">2</span>,               <span class="co"># Number of top clonotypes to label</span>
   size        <span class="op">=</span> <span class="fl">1</span>                <span class="co"># Additional ggplot options</span>
 <span class="op">)</span> <span class="op">+</span>
   <span class="fu">theme</span><span class="op">(</span>legend.title <span class="op">=</span> <span class="fu">element_blank</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></pre></div>
@@ -280,7 +285,8 @@
 </div>
 <div id="repertoire-diversity" class="section level2">
 <h2 class="hasAnchor">
-<a href="#repertoire-diversity" class="anchor"></a>Repertoire Diversity</h2>
+<a href="#repertoire-diversity" class="anchor"></a><strong>Repertoire Diversity</strong>
+</h2>
 <p>The function <code><a href="../reference/calc_diversity.html">calc_diversity()</a></code> will calculate repertoire diversity on a per-cluster basis. Using the <code>cluster_col</code> argument, any meta.data column containing cell labels can be used for calculations. <code><a href="../reference/calc_diversity.html">calc_diversity()</a></code> uses the R package <a href="https://github.com/kylebittinger/abdiv">abdiv</a> for performing diversity calculations and any <a href="https://github.com/kylebittinger/abdiv">abdiv</a> diversity function can be specified using the <code>method</code> argument.</p>
 <p>Possible methods for calculating diversity include:</p>
 <pre><code> [1] "berger_parker_d"  "brillouin_d"      "dominance"        "heip_e"          
@@ -289,7 +295,7 @@
 [13] "shannon"          "simpson"          "simpson_e"        "strong"          </code></pre>
 <p><br></p>
 <p>In this example we are calculating the Shannon diversity for each sample in the orig.ident meta.data column.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit">
+<div class="sourceCode" id="cb10"><pre class="downlit">
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_diversity.html">calc_diversity</a></span><span class="op">(</span>
   sobj_in       <span class="op">=</span> <span class="va">so_tcr</span>,         <span class="co"># Seurat object</span>
   clonotype_col <span class="op">=</span> <span class="st">"cdr3"</span>,         <span class="co"># meta.data column containing clonotype ids</span>
@@ -298,7 +304,7 @@
 <span class="op">)</span></pre></div>
 <p><br></p>
 <p>The <code><a href="../reference/plot_diversity.html">plot_diversity()</a></code> function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Four different diversity metrics are shown in the example below.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit">
+<div class="sourceCode" id="cb11"><pre class="downlit">
 <span class="co"># Metrics to plot</span>
 <span class="va">fns</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
   <span class="st">"simpson"</span>     <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/simpson.html">simpson</a></span>,
@@ -321,7 +327,8 @@
 </div>
 <div id="repertoire-overlap" class="section level2">
 <h2 class="hasAnchor">
-<a href="#repertoire-overlap" class="anchor"></a>Repertoire Overlap</h2>
+<a href="#repertoire-overlap" class="anchor"></a><strong>Repertoire Overlap</strong>
+</h2>
 <p>To compare repertoires for different samples or clusters, <code><a href="../reference/calc_similarity.html">calc_similarity()</a></code> can calculate a variety of different similarity metrics. The <code>cluster_col</code> should be used to specify the meta.data column containing cell labels for comparison. Like <code><a href="../reference/calc_diversity.html">calc_diversity()</a></code>, an <a href="https://github.com/kylebittinger/abdiv">abdiv</a> function can be specified with the <code>method</code> argument.</p>
 <p>Possible methods for calculating repertoire similarity include:</p>
 <pre><code> [1] "binomial_deviance"                  "bray_curtis"                       
@@ -346,7 +353,7 @@
 [39] "weighted_kulczynski_second"         "yule_dissimilarity"                </code></pre>
 <p><br></p>
 <p>By default <code><a href="../reference/calc_similarity.html">calc_similarity()</a></code> will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of cell labels present in the <code>orig.ident</code> column.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit">
+<div class="sourceCode" id="cb13"><pre class="downlit">
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_similarity.html">calc_similarity</a></span><span class="op">(</span>
   sobj_in       <span class="op">=</span> <span class="va">so_tcr</span>,          <span class="co"># Seurat object</span>
   clonotype_col <span class="op">=</span> <span class="st">"cdr3"</span>,          <span class="co"># meta.data column containing clonotype ids</span>
@@ -357,7 +364,7 @@
 <span class="op">)</span></pre></div>
 <p><br></p>
 <p>A heatmap summarizing the results can be generated using the <code><a href="../reference/plot_similarity.html">plot_similarity()</a></code> function. Here we are creating two heatmaps, one to compare the different samples and one to compare cell clusters.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit">
+<div class="sourceCode" id="cb14"><pre class="downlit">
 <span class="va">heat_theme</span> <span class="op">&lt;-</span> <span class="fu">theme</span><span class="op">(</span>
   legend.title <span class="op">=</span> <span class="fu">element_blank</span><span class="op">(</span><span class="op">)</span>,
   legend.text  <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>size <span class="op">=</span> <span class="fl">8</span><span class="op">)</span>
@@ -393,10 +400,11 @@
 </div>
 <div id="gene-usage" class="section level2">
 <h2 class="hasAnchor">
-<a href="#gene-usage" class="anchor"></a>Gene Usage</h2>
+<a href="#gene-usage" class="anchor"></a><strong>Gene Usage</strong>
+</h2>
 <p>The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function <code><a href="../reference/calc_usage.html">calc_usage()</a></code> can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the <code>chain</code> and <code>chain_col</code> arguments can be used to specify the meta.data column containing the chains detected for each cell. By default the results for all chains will be included.</p>
 <p>In this example we are summarizing the usage of different V genes for the TRB chain</p>
-<div class="sourceCode" id="cb14"><pre class="downlit">
+<div class="sourceCode" id="cb15"><pre class="downlit">
 <span class="fu"><a href="../reference/calc_usage.html">calc_usage</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,        <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,      <span class="co"># meta.data column containing genes</span>
@@ -420,7 +428,7 @@
 <span class="co">#&gt; # … with 82 more rows</span></pre></div>
 <p><br></p>
 <p>The function <code><a href="../reference/plot_usage.html">plot_usage()</a></code> can be used to summarize these results. Using the <code>yaxis</code> argument, the percent or absolute count (frequency) can be used for plotting. The genes plotted can also be selected using the <code>plot_genes</code> argument, or the number of top genes (most frequent) to plot can be specified with <code>n_genes</code>.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit">
+<div class="sourceCode" id="cb16"><pre class="downlit">
 <span class="fu"><a href="../reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,              <span class="co"># meta.data column(s) containing genes</span>
@@ -432,15 +440,12 @@
   yaxis       <span class="op">=</span> <span class="st">"percent"</span>,             <span class="co"># Units to plot</span>
   plot_colors <span class="op">=</span> <span class="va">ito_cols</span>,              <span class="co"># Colors to use for heatmap</span>
   plot_genes  <span class="op">=</span> <span class="cn">NULL</span>,                  <span class="co"># A list of genes to plot</span>
-  n_genes     <span class="op">=</span> <span class="cn">NULL</span>,                  <span class="co"># The number of top genes to plot</span>
-  
-  size        <span class="op">=</span> <span class="fl">0.2</span>,                   <span class="co"># Additional ggplot options</span>
-  color       <span class="op">=</span> <span class="st">"white"</span>                <span class="co"># Additional ggplot options</span>
+  n_genes     <span class="op">=</span> <span class="cn">NULL</span>                   <span class="co"># The number of top genes to plot</span>
 <span class="op">)</span></pre></div>
-<p><img src="tcr_files/figure-html/usage_plots_1-1.png" width="1056"></p>
+<p><img src="tcr_files/figure-html/gene_usage_1-1.png" width="1056"></p>
 <p><br></p>
 <p>By passing multiple columns to <code>gene_cols</code>, the frequency that different genes are used together can also be summarized.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit">
+<div class="sourceCode" id="cb17"><pre class="downlit">
 <span class="fu"><a href="../reference/calc_usage.html">calc_usage</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                 <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,  <span class="co"># meta.data column(s) containing genes</span>
@@ -450,7 +455,7 @@
 <span class="op">)</span></pre></div>
 <p><br></p>
 <p>When multiple gene columns are passed to <code><a href="../reference/plot_usage.html">plot_usage()</a></code>, a list of plots will be returned, one for each cell label in the <code>cluster_col</code> column.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit">
+<div class="sourceCode" id="cb18"><pre class="downlit">
 <span class="va">ggs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                 <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,  <span class="co"># meta.data column(s) containing genes</span>
@@ -462,7 +467,29 @@
   <span class="fu">imap</span><span class="op">(</span><span class="op">~</span> <span class="va">.x</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="va">.y</span><span class="op">)</span><span class="op">)</span>
 
 <span class="fu">plot_grid</span><span class="op">(</span>plotlist <span class="op">=</span> <span class="va">ggs</span><span class="op">)</span></pre></div>
-<p><img src="tcr_files/figure-html/usage_plots_2-1.png" width="1152"></p>
+<p><img src="tcr_files/figure-html/gene_usage_2-1.png" width="1152"></p>
+<p><br></p>
+</div>
+<div id="cdr3-usage" class="section level2">
+<h2 class="hasAnchor">
+<a href="#cdr3-usage" class="anchor"></a><strong>CDR3 Usage</strong>
+</h2>
+<p>The <code><a href="../reference/calc_usage.html">calc_usage()</a></code> and <code><a href="../reference/plot_usage.html">plot_usage()</a></code> functions can also be used to calculate the fraction of cells that have a certain CDR3 sequence. To do this, the meta.data column containing the CDR3 sequences for each cell can be passed to the <code>gene_cols</code> argument. The plot can be divided into facets based on sample using simple ggplot2 commands.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit">
+<span class="fu"><a href="../reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
+  sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,
+  gene_cols   <span class="op">=</span> <span class="st">"cdr3"</span>,        <span class="co"># Column containing CDR3 sequences</span>
+  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,
+  type        <span class="op">=</span> <span class="st">"bar"</span>,
+  chain       <span class="op">=</span> <span class="st">"TRB"</span>,
+  chain_col   <span class="op">=</span> <span class="st">"chains"</span>,
+  
+  plot_colors <span class="op">=</span> <span class="va">ito_cols</span>,
+  n_genes     <span class="op">=</span> <span class="fl">10</span>             <span class="co"># Number of CDR3 sequences to plot</span>
+<span class="op">)</span> <span class="op">+</span>
+  <span class="fu">facet_wrap</span><span class="op">(</span><span class="op">~</span> <span class="va">orig.ident</span>, nrow <span class="op">=</span> <span class="fl">1</span>, scales <span class="op">=</span> <span class="st">"free_x"</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu">theme</span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></pre></div>
+<p><img src="tcr_files/figure-html/cdr3_usage-1.png" width="960"></p>
 </div>
   </div>
 
