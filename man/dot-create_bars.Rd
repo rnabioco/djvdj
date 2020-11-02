@@ -8,7 +8,7 @@
   df_in,
   x,
   y,
-  fill,
+  .fill,
   plot_colors = NULL,
   y_ttl = y,
   ang = 45,
@@ -23,8 +23,6 @@
 
 \item{y}{Variable to plot on y-axis}
 
-\item{fill}{Variable to use for fill color}
-
 \item{plot_colors}{Vector of colors for plotting}
 
 \item{y_ttl}{Title for y-axis}
@@ -34,6 +32,8 @@
 \item{hjst}{Horizontal justification for x-axis text}
 
 \item{...}{Additional arguments to pass to ggplot}
+
+\item{fill}{Variable to use for fill color}
 }
 \value{
 ggplot object

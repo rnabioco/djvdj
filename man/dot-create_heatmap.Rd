@@ -8,10 +8,10 @@
   df_in,
   x,
   y,
-  fill,
+  .fill,
   plot_colors = NULL,
   na_color = "white",
-  legd_ttl = fill,
+  legd_ttl = .fill,
   ang = 45,
   hjst = 1,
   ...
@@ -24,8 +24,6 @@
 
 \item{y}{Variable to plot on the y-axis}
 
-\item{fill}{Variable to use for the fill color}
-
 \item{plot_colors}{Vector of colors for plotting}
 
 \item{na_color}{Color to use for missing values}
@@ -37,6 +35,8 @@
 \item{hjst}{Horizontal justification for x-axis text}
 
 \item{...}{Additional arguments to pass to ggplot}
+
+\item{fill}{Variable to use for the fill color}
 }
 \value{
 ggplot object
