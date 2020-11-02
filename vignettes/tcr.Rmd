@@ -9,8 +9,6 @@ output:
       %\VignetteIndexEntry{TCR}
       %\VignetteEncoding{UTF-8}
       %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
-  chunk_output_type: inline
 ---
 
 ```{r "setup", include = FALSE}
@@ -188,8 +186,7 @@ so_tcr@meta.data %>%
 
 ```{r "chains_umap", fig.width = 6.5, fig.height = 4.5, echo = FALSE}
 # Plot colors
-chains_cols <- so_tcr@meta.data %>%
-  pull(uniq_chains) %>%
+chains_cols <- so_tcr$uniq_chains %>%
   unique() %>%
   na.omit()
 

@@ -97,6 +97,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   }
 
   # Sum contig reads and UMIs for chains
+  # Some chains are supported by multiple contigs
   grp_cols <- vdj_cols[!vdj_cols %in% count_cols]
   contigs  <- dplyr::group_by(contigs, !!!syms(grp_cols))
 
@@ -112,23 +113,40 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     .data$barcode, .data$clonotype_id, .data$chains
   )
 
-  # Extract isotypes
-  iso_pat <- "IGH[ADEGM]|IGL|IGK"
+  # Extract isotypes from c_gene for IGH chain
+  iso_pat <- "^IGH[ADEGM]"
 
   if (any(grepl(iso_pat, contigs$c_gene))) {
+    contigs <- dplyr::group_by(contigs, barcode)
+
     contigs <- dplyr::mutate(
       contigs,
-      isotype = ifelse(
-        grepl(iso_pat, .data$c_gene),
-        regmatches(.data$c_gene, regexpr(iso_pat, .data$c_gene)),
-        "None"
-      )
+      isotype = list(
+        substr(
+          .data$c_gene, 1,
+          attr(regexpr(iso_pat, .data$c_gene), "match.length", exact = TRUE)
+        )
+      ),
+      isotype = map_chr(isotype, ~ {
+        isos <- ifelse(all(.x == ""), "", unique(.x[.x != ""]))
+
+        dplyr::case_when(
+          isos == ""        ~ "None",
+          length(isos) > 1  ~ "Multi",
+          length(isos) == 1 ~ isos
+        )
+      })
     )
 
-    sep_cols <- c(sep_cols, "isotype")
+    contigs <- dplyr::group_by(contigs, .data$isotype)
   }
 
-  contigs <- dplyr::group_by(contigs, .data$barcode, .data$clonotype_id)
+  # Collapse chains into a single row for each cell
+  contigs <- dplyr::group_by(
+    contigs,
+    .data$barcode, .data$clonotype_id,
+    .add = TRUE
+  )
 
   meta_df <- summarize(
     contigs,
@@ -982,10 +1000,3 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
 
   suppressWarnings(ifelse(!is.na(fn(x)) | is.na(x), fn(x), x))
 }
-
-
-
-
-
-
-

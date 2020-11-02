@@ -285,6 +285,53 @@ so_bcr@meta.data %>%
 
 <br>
 
+## **Isotypes**
+
+```{r "isotype_umap", fig.width = 8, fig.height = 5.5, echo = FALSE}
+# Plot colors
+iso_cols <- so_bcr$isotype %>%
+  unique() %>%
+  na.omit()
+
+iso_cols <- set_names(
+  x  = get_cols()[seq_along(iso_cols)],
+  nm = iso_cols
+)
+
+# Chains UMAP
+iso_umap <- so_bcr %>%
+  plot_features(
+    feature     = "isotype",
+    pt_size     = 0.02,
+    plot_colors = iso_cols
+  ) +
+  ggtitle("Isotype") +
+  guides(color = create_guide(nrow = 2)) +
+  umap_theme
+
+# Chains bar graphs
+iso_bars <- so_bcr %>%
+  plot_cell_count(
+    x           = "orig.ident",
+    fill_col    = "isotype",
+    plot_colors = iso_cols
+  ) +
+  scale_y_continuous(breaks = c(0, 0.5, 1)) +
+  theme(
+    plot.margin     = unit(c(120, 10, 10, 10), "pt"),
+    legend.position = "none",
+    axis.title.x    = element_blank(),
+    axis.text.x     = element_text(angle = 45, hjust = 1)
+  )
+
+# Final figure
+plot_grid(
+  iso_umap, iso_bars,
+  rel_widths = c(1, 0.55),
+  nrow       = 1
+)
+```
+
 ## **Clonotype Abundance**
 
 To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_abundance()` function.
@@ -302,7 +349,7 @@ so_bcr <- calc_abundance(
 
 For each 'calc' function provided by djvdj, there is a matching 'plot' function that will generate a summary plot. The `plot_abundance()` function will plot clonotypes ranked by abundance.
 
-```{r "abund_plots", fig.width = 6, fig.height = 3}
+```{r "abund_plots", fig.width = 8, fig.height = 5}
 plot_abundance(
   sobj_in       = so_bcr,        # Seurat object
   clonotype_col = "cdr3",        # meta.data column containing clonotype IDs
@@ -311,10 +358,10 @@ plot_abundance(
   plot_colors = ito_cols,        # Plot colors
   yaxis       = "percent",       # Units to plot
   label_col   = "cdr3",          # meta.data column containing labels
-  n_labels    = 0,               # Number of top clonotypes to label
-  size        = 1                # Additional ggplot options
+  n_labels    = 3                # Number of top clonotypes to label
 ) +
-  theme(legend.title = element_blank())
+  facet_wrap(~ orig.ident, nrow = 1, scales = "free_x") +
+  theme(legend.position = "none")
 ```
 
 <br>
@@ -379,7 +426,7 @@ abdiv::beta_diversities
 
 <br>
 
-By default `calc_similarity()` will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of cell labels present in the `orig.ident` column.
+By default `calc_similarity()` will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of cell labels present in the `orig.ident` column. For this metric a value close to 0 indicates strong overlap and a value close to 1 indicates minimal overlap.
 
 ```{r}
 so_bcr <- calc_similarity(

@@ -369,7 +369,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
       ) +
       ggplot2::theme(axis.title.x = ggplot2::element_blank())
 
-    # Create histogram
+  # Create histogram
   } else {
     res <- ggplot2::ggplot(
       gg_df,
