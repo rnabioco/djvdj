@@ -146,8 +146,13 @@ so_bcr <- import_vdj(
   prefix         = "",      # Prefix to add to new meta.data columns
   filter_contigs = TRUE     # Only include chains with at least one productive contig
 )
+```
 
-# Take a look at the meta.data
+<br>
+
+Take a look at the meta.data to see the V(D)J data added to the object.
+
+```{r}
 vdj_cols <- c(
   "clonotype_id", "cdr3",
   "isotype", "chains",
@@ -287,6 +292,8 @@ so_bcr@meta.data %>%
 
 ## **Isotypes**
 
+For BCR analysis, the isotype is also included in the meta.data and can be plotted.
+
 ```{r "isotype_umap", fig.width = 8, fig.height = 5.5, echo = FALSE}
 # Plot colors
 iso_cols <- so_bcr$isotype %>%
@@ -305,7 +312,6 @@ iso_umap <- so_bcr %>%
     pt_size     = 0.02,
     plot_colors = iso_cols
   ) +
-  ggtitle("Isotype") +
   guides(color = create_guide(nrow = 2)) +
   umap_theme
 

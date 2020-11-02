@@ -84,7 +84,7 @@ so_tcr <- calc_diversity(
 )
 ```
 
-### **Visualize**
+### **Plot**
 
 For each ‘calc’ function, djvdj also provides a corresponding ‘plot’
 function to summarize the results.
