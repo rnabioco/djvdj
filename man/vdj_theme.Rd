@@ -4,7 +4,7 @@
 \alias{vdj_theme}
 \title{Theme for djvdj plotting functions}
 \usage{
-vdj_theme(txt_size = 11, ttl_size = 12, txt_col = "black", ln_col = "grey85")
+vdj_theme(txt_size = 8, ttl_size = 12, txt_col = "black", ln_col = "grey85")
 }
 \arguments{
 \item{txt_size}{Size of axis text}

@@ -13,7 +13,7 @@ plot_usage(
   plot_colors = NULL,
   plot_genes = NULL,
   n_genes = NULL,
-  clust_lvls = NULL,
+  plot_lvls = NULL,
   yaxis = "percent",
   chain_col = NULL,
   sep = ";",
@@ -39,7 +39,7 @@ all chains.}
 
 \item{n_genes}{Number of top genes to plot based on average usage}
 
-\item{clust_lvls}{Levels to use for ordering clusters}
+\item{plot_lvls}{Levels to use for ordering clusters}
 
 \item{yaxis}{Units to plot on the y-axis, either "frequency" or "percent"}
 

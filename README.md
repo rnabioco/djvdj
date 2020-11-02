@@ -1,5 +1,5 @@
 
-# djvdj <img src="man/figures/djvdj-logo.png" align="right" height="145">
+# **djvdj** <img src="man/figures/djvdj-logo-dark-3.png" align="right" height="155">
 
 <!-- badges: start -->
 
@@ -12,7 +12,7 @@ single cell V(D)J sequencing data. These tools are straightforward and
 easily integrate into a standard [Seurat](https://satijalab.org/seurat/)
 workflow.
 
-### Installation
+### **Installation**
 
 You can install the development version of djvdj from
 [github](https://github.com/rnabioco/djvdj) with:
@@ -22,7 +22,7 @@ You can install the development version of djvdj from
 devtools::install_github("rnabioco/djvdj")
 ```
 
-### Import
+### **Import**
 
 With djvdj you can import V(D)J sequencing results from [Cell
 Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header)
@@ -53,7 +53,7 @@ so_filt <- filter_vdj(
 )
 ```
 
-### Calculate
+### **Calculate**
 
 djvdj allows you to calculate a range of population diversity and
 similarity metrics implemented with the
@@ -84,7 +84,7 @@ so_tcr <- calc_diversity(
 )
 ```
 
-### Visualize
+### **Plot**
 
 For each ‘calc’ function, djvdj also provides a corresponding ‘plot’
 function to summarize the results.

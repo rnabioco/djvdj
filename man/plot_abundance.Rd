@@ -8,12 +8,15 @@ plot_abundance(
   sobj_in,
   clonotype_col = NULL,
   cluster_col = NULL,
+  type = "bar",
   yaxis = "percent",
   plot_colors = NULL,
   plot_lvls = NULL,
   label_col = NULL,
-  n_labels = 2,
+  n_labels = 10,
   label_aes = list(),
+  facet_rows = 1,
+  facet_scales = "free_x",
   ...
 )
 }
@@ -26,6 +29,8 @@ calculating clonotype abundance}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
 
+\item{type}{Type of plot to create, can be 'bar' or 'line'.}
+
 \item{yaxis}{Units to plot on the y-axis, either "frequency" or "percent"}
 
 \item{plot_colors}{Character vector containing colors for plotting}
@@ -36,7 +41,14 @@ grouping cells when calculating clonotype abundance}
 
 \item{n_labels}{Number of clonotypes to label}
 
-\item{label_aes}{Named list providing additional label aesthetics (color, size, etc.)}
+\item{label_aes}{Named list providing additional label aesthetics (color,
+size, etc.)}
+
+\item{facet_rows}{The number of facet rows. Use this argument if type =
+'bar'.}
+
+\item{facet_scales}{If type = 'bar', this argument passes a scales
+specification to facet_wrap. Can be "fixed", "free", "free_x", or "free_y"}
 
 \item{...}{Additional arguments to pass to geom_line}
 }
