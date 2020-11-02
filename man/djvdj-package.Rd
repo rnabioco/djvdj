@@ -4,12 +4,19 @@
 \name{djvdj-package}
 \alias{djvdj}
 \alias{djvdj-package}
-\title{djvdj: A Collection of Tools to Analyze AVID-seq Data}
+\title{djvdj: A collection of single-cell V(D)J tools}
 \description{
-What the package does (one paragraph).
+djvdj provides a range of tools to analyze single-cell V(D)J data.
 }
 \author{
-\strong{Maintainer}: Ryan Sheridan \email{ryan.sheridan@cuanschutz.edu} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
+\strong{Maintainer}: Ryan Sheridan \email{ryan.sheridan@cuanschutz.edu} (\href{https://orcid.org/0000-0003-4012-3147}{ORCID})
+
+Other contributors:
+\itemize{
+  \item Jay Hesselberth \email{jay.hesselberth@gmail.com} [contributor]
+  \item Rui Fu \email{raysinensis@gmail.com} [contributor]
+  \item Kent Riemondy \email{kent.riemondy@ucdenver.edu} [contributor]
+}
 
 }
 \keyword{internal}
