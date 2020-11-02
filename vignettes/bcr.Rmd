@@ -1,5 +1,5 @@
 ---
-title: "BCR analysis"
+title: "**BCR analysis**"
 date: '`r format(Sys.Date(), "%B %d %Y")`'
 output:
   rmarkdown::html_vignette:
@@ -127,7 +127,7 @@ plot_grid(
 
 <br>
 
-## Import VDJ data
+## **Import VDJ data**
 
 `import_vdj()` takes the output files from [Cell Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header) and adds clonotype information to the meta.data for an existing [Seurat](https://satijalab.org/seurat/) object. For cells with multiple chains, the information for each chain is stored as a single row, separated by a ';' (or a character specified by `sep`). For cells that do not have any VDJ sequencing data, NAs will be added to the meta.data.
 
@@ -163,7 +163,7 @@ so_bcr@meta.data %>%
 
 <br>
 
-## Quality Control
+## **Quality Control**
 
 ### Paired Chains
 
@@ -285,7 +285,7 @@ so_bcr@meta.data %>%
 
 <br>
 
-## Clonotype Abundance
+## **Clonotype Abundance**
 
 To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_abundance()` function.
 
@@ -319,7 +319,7 @@ plot_abundance(
 
 <br>
 
-## Repertoire Diversity
+## **Repertoire Diversity**
 
 The function `calc_diversity()` will calculate repertoire diversity on a per-cluster basis. Using the `cluster_col` argument, any meta.data column containing cell labels can be used for calculations. `calc_diversity()` uses the R package [abdiv](https://github.com/kylebittinger/abdiv) for performing diversity calculations and any [abdiv](https://github.com/kylebittinger/abdiv) diversity function can be specified using the `method` argument.
 
@@ -367,7 +367,7 @@ plot_diversity(
 
 <br>
 
-## Repertoire Overlap
+## **Repertoire Overlap**
 
 To compare repertoires for different samples or clusters, `calc_similarity()` can calculate a variety of different similarity metrics. The `cluster_col` should be used to specify the meta.data column containing cell labels for comparison. Like `calc_diversity()`, an [abdiv](https://github.com/kylebittinger/abdiv) function can be specified with the `method` argument.
 
@@ -431,7 +431,7 @@ plot_grid(ident_heat, clust_heat, align = "h")
 
 <br>
 
-## Gene Usage
+## **Gene Usage**
 
 The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function `calc_usage()` can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the `chain` and `chain_col` arguments can be used to specify the meta.data column containing the chains detected for each cell. By default the results for all chains will be included.
 

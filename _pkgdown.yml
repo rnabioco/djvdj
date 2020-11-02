@@ -5,7 +5,7 @@ development:
 
 template:
   params:
-    bootswatch: united
+    bootswatch: cosmo
 
 reference:
 

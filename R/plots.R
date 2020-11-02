@@ -265,7 +265,6 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, facet_col = NULL, yaxis
 #' provided, reads and UMIs will be plotted separately for each chain.
 #' @param cluster_col meta.data column containing cluster IDs. If cluster_col
 #' is provided reads and UMIs will be plotted separately for each cluster.
-#' @param type Type of plot to create.
 #' @param type Type of plot to create, can be 'violin', 'heatmap' or 'density'.
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
@@ -444,29 +443,45 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
 #' calculating clonotype abundance
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
+#' @param type Type of plot to create, can be 'bar' or 'line'.
 #' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param label_col meta.data column containing labels to use for plot
 #' @param n_labels Number of clonotypes to label
-#' @param label_aes Named list providing additional label aesthetics (color, size, etc.)
+#' @param label_aes Named list providing additional label aesthetics (color,
+#' size, etc.)
+#' @param facet_rows The number of facet rows. Use this argument if type =
+#' 'bar'.
+#' @param facet_scales If type = 'bar', this argument passes a scales
+#' specification to facet_wrap. Can be "fixed", "free", "free_x", or "free_y"
 #' @param ... Additional arguments to pass to geom_line
 #' @return ggplot object
 #' @export
-plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, yaxis = "percent",
-                           plot_colors = NULL, plot_lvls = NULL, label_col = NULL, n_labels = 2,
-                           label_aes = list(), ...) {
+plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, type = "bar",
+                           yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, label_col = NULL,
+                           n_labels = 10, label_aes = list(), facet_rows = 1, facet_scales = "free_x", ...) {
 
   if (!yaxis %in% c("frequency", "percent")) {
     stop("yaxis must be either 'frequency' or 'percent'.")
   }
 
+  if (!type %in% c("bar", "line")) {
+    stop("type must be either 'bar' or 'line'.")
+  }
+
+  if (type == "bar" && is.null(label_col)) {
+    stop("Must include label_col when type = 'bar'.")
+  }
+
   # Calculate clonotype abundance
+  # Return seurat since label_col is needed from meta.data
   sobj_in <- djvdj::calc_abundance(
     sobj_in,
     clonotype_col = clonotype_col,
     cluster_col   = cluster_col,
-    prefix        = "."
+    prefix        = ".",
+    return_seurat = TRUE
   )
 
   data_col <- ".clone_pct"
@@ -479,6 +494,13 @@ plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, ya
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
   meta_df <- dplyr::filter(meta_df, !is.na(!!sym(clonotype_col)))
 
+  meta_df <- dplyr::select(
+    meta_df,
+    all_of(c(cluster_col, clonotype_col, label_col, data_col))
+  )
+
+  meta_df <- dplyr::distinct(meta_df)
+
   # Rank by abundance
   if (!is.null(cluster_col)) {
     meta_df <- .set_lvls(meta_df, cluster_col, plot_lvls)
@@ -490,9 +512,67 @@ plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, ya
     rank = dplyr::row_number(dplyr::desc(!!sym(data_col)))
   )
 
+  # Identify top clonotypes
+  top_genes <- dplyr::slice_min(
+    meta_df,
+    order_by  = rank,
+    n         = n_labels,
+    with_ties = FALSE
+  )
+
+  meta_df <- dplyr::ungroup(meta_df)
+
+  # Create bar graph
+  if (type == "bar") {
+    top_genes <- dplyr::arrange(top_genes, rank)
+
+    top_genes <- dplyr::mutate(
+      top_genes,
+      !!sym(label_col) := factor(
+        !!sym(label_col),
+        levels = unique(!!sym(label_col))
+      )
+    )
+
+    res <- ggplot2::ggplot(
+      top_genes,
+      ggplot2::aes(!!sym(label_col), !!sym(data_col))
+    ) +
+      ggplot2::labs(y = yaxis) +
+      vdj_theme() +
+      ggplot2::theme(
+        axis.title.x = ggplot2::element_blank(),
+        axis.text.x  = ggplot2::element_text(angle = 45, hjust = 1)
+      )
+
+    if (is.null(cluster_col)) {
+      res <- res +
+        ggplot2::geom_col(...)
+
+    } else {
+      eq <- paste0("~ ", cluster_col)
+
+      res <- res +
+        ggplot2::geom_col(ggplot2::aes(fill = !!sym(cluster_col)), ...) +
+        ggplot2::facet_wrap(
+          as.formula(eq),
+          nrow   = facet_rows,
+          scales = facet_scales
+        )
+    }
+
+    if (!is.null(plot_colors)) {
+      res <- res +
+        ggplot2::scale_fill_manual(values = plot_colors)
+    }
+
+    return(res)
+  }
+
   # Plot abundance vs rank
   res <- ggplot2::ggplot(meta_df, ggplot2::aes(rank, !!sym(data_col))) +
-    ggplot2::labs(y = yaxis)
+    ggplot2::labs(y = yaxis) +
+    vdj_theme()
 
   if (is.null(cluster_col)) {
     res <- res +
@@ -510,13 +590,6 @@ plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, ya
 
   # Add labels
   if (!is.null(label_col)) {
-    top_genes <- dplyr::slice_min(
-      meta_df,
-      order_by  = rank,
-      n         = n_labels,
-      with_ties = FALSE
-    )
-
     res <- res +
       ggrepel::geom_text_repel(
         ggplot2::aes(label = !!sym(label_col)),
@@ -531,8 +604,7 @@ plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, ya
     res <- .add_aes(res, label_aes, 2)
   }
 
-  res +
-    vdj_theme()
+  res
 }
 
 
@@ -697,7 +769,7 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
     gg_df,
     x           = "Var1",
     y           = "Var2",
-    fill        = "similarity",
+    .fill       = "similarity",
     plot_colors = plot_colors,
     ...
   )
@@ -718,7 +790,7 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_genes Character vector containing genes to plot
 #' @param n_genes Number of top genes to plot based on average usage
-#' @param clust_lvls Levels to use for ordering clusters
+#' @param plot_lvls Levels to use for ordering clusters
 #' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator to use for expanding gene_cols
@@ -726,7 +798,7 @@ plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 #' @return ggplot object
 #' @export
 plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, type = "heatmap",
-                       plot_colors = NULL, plot_genes = NULL, n_genes = NULL, clust_lvls = NULL,
+                       plot_colors = NULL, plot_genes = NULL, n_genes = NULL, plot_lvls = NULL,
                        yaxis = "percent", chain_col = NULL, sep = ";", ...) {
 
   # Check inputs
@@ -765,15 +837,38 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
   ))
 
   # Order genes by average usage
-  top_genes <- dplyr::group_by(gg_df, !!!syms(gene_cols))
+  top_genes <- gg_df
+
+  if (!is.null(cluster_col)) {
+    top_genes <- dplyr::group_by(top_genes, !!sym(cluster_col))
+  }
+
+  if (!is.null(n_genes)) {
+    top_genes <- dplyr::slice_max(
+      top_genes,
+      order_by  = !!sym(usage_col),
+      n         = n_genes,
+      with_ties = FALSE
+    )
+  }
+
+  top_genes <- dplyr::group_by(top_genes, !!!syms(gene_cols))
 
   top_genes <- dplyr::summarize(
     top_genes,
-    usage   = mean(!!sym(usage_col)),
-    .groups = "drop"
+    usage = mean(!!sym(usage_col)), .groups = "drop"
   )
 
   top_genes <- dplyr::arrange(top_genes, .data$usage)
+
+  if (!is.null(n_genes)) {
+    gene_lst <- unlist(top_genes[, gene_cols], use.names = FALSE)
+
+    gg_df <- dplyr::filter(gg_df, dplyr::across(
+      dplyr::all_of(gene_cols),
+      ~ .x %in% gene_lst
+    ))
+  }
 
   if (length(gene_cols) == 1) {
     lvls  <- dplyr::pull(top_genes, gene_cols)
@@ -781,7 +876,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
   }
 
   # Order clusters
-  gg_df <- .set_lvls(gg_df, cluster_col, clust_lvls)
+  gg_df <- .set_lvls(gg_df, cluster_col, plot_lvls)
 
   # Filter genes to plot
   if (!is.null(plot_genes)) {
@@ -791,29 +886,20 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
     ))
   }
 
-  # Select top genes to plot
-  if (!is.null(n_genes)) {
-    top_genes <- dplyr::slice_max(top_genes, .data$usage, n = n_genes)
-    top_genes <- unlist(top_genes[, gene_cols], use.names = FALSE)
-
-    gg_df <- dplyr::filter(gg_df, dplyr::across(
-      dplyr::all_of(gene_cols),
-      ~ .x %in% top_genes
-    ))
-  }
-
   # Create heatmap or bar graph for single gene
   if (length(gene_cols) == 1) {
     if (type == "bar") {
-       res <- .create_bars(
-         gg_df,
-         x           = gene_cols,
-         y           = usage_col,
-         fill        = cluster_col,
-         plot_colors = plot_colors,
-         y_ttl       = yaxis,
-         ...
-       )
+      gg_df <- dplyr::filter(gg_df, !!sym(usage_col) > 0)
+
+      res <- .create_bars(
+        gg_df,
+        x           = gene_cols,
+        y           = usage_col,
+        .fill       = cluster_col,
+        plot_colors = plot_colors,
+        y_ttl       = yaxis,
+        ...
+      )
 
       return(res)
     }
@@ -822,7 +908,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
       gg_df,
       x           = cluster_col,
       y           = gene_cols,
-      fill        = usage_col,
+      .fill       = usage_col,
       plot_colors = plot_colors,
       legd_ttl    = yaxis,
       ...
@@ -883,7 +969,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
     .create_heatmap,
     x           = gene_cols[1],
     y           = gene_cols[2],
-    fill        = usage_col,
+    .fill       = usage_col,
     plot_colors = plot_colors,
     legd_ttl    = yaxis,
     ...
@@ -905,7 +991,8 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
 #' @param ln_col Color of axis lines
 #' @return ggplot theme
 #' @export
-vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black", ln_col = "grey85") {
+vdj_theme <- function(txt_size = 8, ttl_size = 12, txt_col = "black",
+                      ln_col = "grey85") {
   res <- ggplot2::theme(
     strip.background  = ggplot2::element_blank(),
     strip.text        = ggplot2::element_text(size = ttl_size),
@@ -1061,22 +1148,23 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black", ln_col = 
 #' @param hjst Horizontal justification for x-axis text
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
-.create_heatmap <- function(df_in, x, y, fill, plot_colors = NULL, na_color = "white",
-                            legd_ttl = fill, ang = 45, hjst = 1, ...) {
+.create_heatmap <- function(df_in, x, y, .fill, plot_colors = NULL, na_color = "white",
+                            legd_ttl = .fill, ang = 45, hjst = 1, ...) {
 
   if (is.null(plot_colors)) {
     plot_colors <- c("grey90", "#56B4E9")
   }
 
-  res <- ggplot2::ggplot(
-    df_in,
-    ggplot2::aes("sample", !!sym(y), fill = !!sym(fill))
-  )
-
   if (!is.null(x)) {
     res <- ggplot2::ggplot(
       df_in,
-      ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(fill))
+      ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(.fill))
+    )
+
+  } else {
+    res <- ggplot2::ggplot(
+      df_in,
+      ggplot2::aes("sample", !!sym(y), fill = !!sym(.fill))
     )
   }
 
@@ -1108,27 +1196,24 @@ vdj_theme <- function(txt_size = 11, ttl_size = 12, txt_col = "black", ln_col = 
 #' @param hjst Horizontal justification for x-axis text
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
-.create_bars <- function(df_in, x, y, fill, plot_colors = NULL, y_ttl = y, ang = 45,
+.create_bars <- function(df_in, x, y, .fill, plot_colors = NULL, y_ttl = y, ang = 45,
                          hjst = 1, ...) {
 
   # Reverse bar order
   lvls  <- rev(levels(dplyr::pull(df_in, x)))
   df_in <- .set_lvls(df_in, x, lvls)
 
-  if (!is.null(fill)) {
+  if (!is.null(.fill)) {
     res <- ggplot2::ggplot(
       df_in,
-      ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(fill))
+      ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(.fill))
     )
 
   } else {
     res <- ggplot2::ggplot(df_in, ggplot2::aes(!!sym(x), !!sym(y)))
   }
 
-  res <- ggplot2::ggplot(
-    df_in,
-    ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(fill))
-  ) +
+  res <- res +
     ggplot2::geom_col(..., position = "dodge") +
     ggplot2::labs(y = y_ttl) +
     vdj_theme() +

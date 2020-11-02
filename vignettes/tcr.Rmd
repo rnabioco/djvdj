@@ -1,5 +1,5 @@
 ---
-title: "TCR analysis"
+title: "**TCR analysis**"
 date: '`r format(Sys.Date(), "%B %d %Y")`'
 output:
   rmarkdown::html_vignette:
@@ -7,8 +7,10 @@ output:
     toc_depth: 2
     vignette: >
       %\VignetteIndexEntry{TCR}
-      %\VignetteEngine{knitr::rmarkdown}
       %\VignetteEncoding{UTF-8}
+      %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r "setup", include = FALSE}
@@ -127,7 +129,7 @@ plot_grid(
 
 <br>
 
-## Import VDJ data
+## **Import VDJ data**
 
 `import_vdj()` takes the output files from [Cell Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header) and adds clonotype information to the meta.data for an existing [Seurat](https://satijalab.org/seurat/) object. For cells with multiple chains, the information for each chain is stored as a single row, separated by a ';' (or a character specified by `sep`). For cells that do not have any VDJ sequencing data, NAs will be added to the meta.data.
 
@@ -163,7 +165,7 @@ so_tcr@meta.data %>%
 
 <br>
 
-## Quality Control
+## **Quality Control**
 
 ### Paired Chains
 
@@ -284,7 +286,7 @@ so_tcr@meta.data %>%
 
 <br>
 
-## Clonotype Abundance
+## **Clonotype Abundance**
 
 To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_abundance()` function.
 
@@ -307,10 +309,11 @@ plot_abundance(
   clonotype_col = "cdr3",        # meta.data column containing clonotype IDs
   cluster_col   = "orig.ident",  # meta.data column containing cell labels
   
+  type        = "line",          # Type of plot
   plot_colors = ito_cols,        # Plot colors
   yaxis       = "percent",       # Units to plot
   label_col   = "cdr3",          # meta.data column containing labels
-  n_labels    = 1,               # Number of top clonotypes to label
+  n_labels    = 2,               # Number of top clonotypes to label
   size        = 1                # Additional ggplot options
 ) +
   theme(legend.title = element_blank())
@@ -318,7 +321,7 @@ plot_abundance(
 
 <br>
 
-## Repertoire Diversity
+## **Repertoire Diversity**
 
 The function `calc_diversity()` will calculate repertoire diversity on a per-cluster basis. Using the `cluster_col` argument, any meta.data column containing cell labels can be used for calculations. `calc_diversity()` uses the R package [abdiv](https://github.com/kylebittinger/abdiv) for performing diversity calculations and any [abdiv](https://github.com/kylebittinger/abdiv) diversity function can be specified using the `method` argument.
 
@@ -366,7 +369,7 @@ plot_diversity(
 
 <br>
 
-## Repertoire Overlap
+## **Repertoire Overlap**
 
 To compare repertoires for different samples or clusters, `calc_similarity()` can calculate a variety of different similarity metrics. The `cluster_col` should be used to specify the meta.data column containing cell labels for comparison. Like `calc_diversity()`, an [abdiv](https://github.com/kylebittinger/abdiv) function can be specified with the `method` argument.
 
@@ -430,7 +433,7 @@ plot_grid(ident_heat, clust_heat, align = "h")
 
 <br>
 
-## Gene Usage
+## **Gene Usage**
 
 The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function `calc_usage()` can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the `chain` and `chain_col` arguments can be used to specify the meta.data column containing the chains detected for each cell. By default the results for all chains will be included.
 
@@ -450,7 +453,7 @@ calc_usage(
 
 The function `plot_usage()` can be used to summarize these results. Using the `yaxis` argument, the percent or absolute count (frequency) can be used for plotting. The genes plotted can also be selected using the `plot_genes` argument, or the number of top genes (most frequent) to plot can be specified with `n_genes`.
 
-```{r "usage_plots_1", fig.width = 11, fig.height = 3.5}
+```{r "gene_usage_1", fig.width = 11, fig.height = 3.5}
 plot_usage(
   sobj_in     = so_tcr,                # Seurat object
   gene_cols   = "v_gene",              # meta.data column(s) containing genes
@@ -462,10 +465,7 @@ plot_usage(
   yaxis       = "percent",             # Units to plot
   plot_colors = ito_cols,              # Colors to use for heatmap
   plot_genes  = NULL,                  # A list of genes to plot
-  n_genes     = NULL,                  # The number of top genes to plot
-  
-  size        = 0.2,                   # Additional ggplot options
-  color       = "white"                # Additional ggplot options
+  n_genes     = NULL                   # The number of top genes to plot
 )
 ```
 
@@ -487,7 +487,7 @@ calc_usage(
 
 When multiple gene columns are passed to `plot_usage()`, a list of plots will be returned, one for each cell label in the `cluster_col` column.
 
-```{r "usage_plots_2", fig.width = 12, fig.height = 8}
+```{r "gene_usage_2", fig.width = 12, fig.height = 8}
 ggs <- plot_usage(
   sobj_in     = so_tcr,                 # Seurat object
   gene_cols   = c("v_gene", "j_gene"),  # meta.data column(s) containing genes
@@ -499,6 +499,28 @@ ggs <- plot_usage(
   imap(~ .x + ggtitle(.y))
 
 plot_grid(plotlist = ggs)
+```
+
+<br>
+
+## **CDR3 Usage**
+
+The `calc_usage()` and `plot_usage()` functions can also be used to calculate the fraction of cells that have a certain CDR3 sequence. To do this, the meta.data column containing the CDR3 sequences for each cell can be passed to the `gene_cols` argument. The plot can be divided into facets based on sample using simple ggplot2 commands.
+
+```{r "cdr3_usage", fig.width = 10, fig.height = 4}
+plot_usage(
+  sobj_in     = so_tcr,
+  gene_cols   = "cdr3",        # Column containing CDR3 sequences
+  cluster_col = "orig.ident",
+  type        = "bar",
+  chain       = "TRB",
+  chain_col   = "chains",
+  
+  plot_colors = ito_cols,
+  n_genes     = 10             # Number of CDR3 sequences to plot
+) +
+  facet_wrap(~ orig.ident, nrow = 1, scales = "free_x") +
+  theme(legend.position = "none")
 ```
 
 ```{r "DIM RED EX", eval = F, echo = F}
@@ -534,6 +556,5 @@ umap_ex <- so_tcr@meta.data %>%
   ggplot(aes(UMAP_1, UMAP_2)) +
   geom_point(size = 0.5, color = "#009E73") +
   ex_theme
-
 ```
 
