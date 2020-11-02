@@ -550,12 +550,10 @@ plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, ty
         ggplot2::geom_col(...)
 
     } else {
-      eq <- paste0("~ ", cluster_col)
-
       res <- res +
         ggplot2::geom_col(ggplot2::aes(fill = !!sym(cluster_col)), ...) +
         ggplot2::facet_wrap(
-          as.formula(eq),
+          stats::as.formula(paste0("~ ", cluster_col)),
           nrow   = facet_rows,
           scales = facet_scales
         )
@@ -1140,7 +1138,7 @@ vdj_theme <- function(txt_size = 8, ttl_size = 12, txt_col = "black",
 #' @param df_in data.frame
 #' @param x Variable to plot on the x-axis
 #' @param y Variable to plot on the y-axis
-#' @param fill Variable to use for the fill color
+#' @param .fill Variable to use for the fill color
 #' @param plot_colors Vector of colors for plotting
 #' @param na_color Color to use for missing values
 #' @param legd_ttl Legend title
@@ -1189,7 +1187,7 @@ vdj_theme <- function(txt_size = 8, ttl_size = 12, txt_col = "black",
 #' @param df_in data.frame
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
-#' @param fill Variable to use for fill color
+#' @param .fill Variable to use for fill color
 #' @param plot_colors Vector of colors for plotting
 #' @param y_ttl Title for y-axis
 #' @param ang Angle of x-axis text

@@ -117,7 +117,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   iso_pat <- "^IGH[ADEGM]"
 
   if (any(grepl(iso_pat, contigs$c_gene))) {
-    contigs <- dplyr::group_by(contigs, barcode)
+    contigs <- dplyr::group_by(contigs, .data$barcode)
 
     contigs <- dplyr::mutate(
       contigs,
@@ -127,7 +127,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
           attr(regexpr(iso_pat, .data$c_gene), "match.length", exact = TRUE)
         )
       ),
-      isotype = map_chr(isotype, ~ {
+      isotype = map_chr(.data$isotype, ~ {
         isos <- ifelse(all(.x == ""), "", unique(.x[.x != ""]))
 
         dplyr::case_when(
