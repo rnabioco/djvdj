@@ -15,16 +15,13 @@ test_that("Check plot_features", {
     plot_colors = list(NULL, test_cols),
     feat_lvls   = list(NULL, test_lvls),
     facet_id    = list(NULL, "orig.ident"),
-    facet_lvls  = list(NULL, "orig.ident"),
+    facet_lvls  = list(NULL, "AVID-seq"),
     min_pct     = list(NULL, 0.05),
     max_pct     = list(NULL, 0.95),
     lm_line     = c(TRUE, FALSE)
   ) %>%
     expand.grid() %>%
-    mutate(
-      across(where(is.factor), as.character),
-      n = rownames(.)
-    )
+    mutate(across(where(is.factor), as.character))
 
   res <- pmap(
     args_df,
@@ -38,27 +35,24 @@ test_that("Check plot_features", {
 
 test_that("Check plot_cell_count", {
   args_df <- list(
-    x           = "orig.ident",
     fill_col    = list(NULL, "seurat_clusters"),
     facet_col   = list(NULL, "orig.ident"),
     yaxis       = c("fraction", "count"),
     plot_colors = list(NULL, test_cols),
-    plot_lvls   = "orig.ident",
+    plot_lvls   = list(NULL, "AVID-seq"),
     order_count = c(TRUE, FALSE),
     n_label     = c(TRUE, FALSE),
     label_aes   = list(list(), list(size = 2))
   ) %>%
     expand.grid() %>%
-    mutate(
-      across(where(is.factor), as.character),
-      n = rownames(.)
-    )
+    mutate(across(where(is.factor), as.character))
 
   res <- pmap(
     args_df,
     check_args,
     .fn     = plot_cell_count,
-    sobj_in = tiny_vdj
+    sobj_in = tiny_vdj,
+    x       = "orig.ident"
   )
 
   walk(res, expect_s3_class, "ggplot")
@@ -73,8 +67,7 @@ test_that("Check plot_reads", {
     plot_colors = list(NULL, test_cols),
     plot_lvls   = list(NULL, test_lvls)
   ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+    expand.grid()
 
   res <- pmap(
     args_df,
@@ -95,8 +88,7 @@ test_that("Check plot_abundance line plot", {
     plot_lvls   = list(NULL, test_lvls),
     label_aes   = list(list(), list(size = 2))
   ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+    expand.grid()
 
   res <- pmap(
     args_df,
@@ -118,8 +110,7 @@ test_that("Check plot_abundance bar plot", {
     plot_lvls   = list(NULL, test_lvls),
     label_aes   = list(list(), list(size = 2))
   ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+    expand.grid()
 
   res <- pmap(
     args_df,
@@ -144,8 +135,7 @@ test_that("Check plot_diversity", {
     plot_colors = list(NULL, test_cols),
     plot_lvls   = list(NULL, test_lvls)
   ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+    expand.grid()
 
   res <- pmap(
     args_df,
@@ -166,8 +156,7 @@ test_that("Check plot_similarity", {
     method      = mets,
     plot_colors = list(NULL, test_cols)
   ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+    expand.grid()
 
   res <- pmap(
     args_df,
@@ -191,8 +180,7 @@ test_that("Check plot_usage", {
     plot_lvls   = list(NULL, test_lvls),
     yaxis       = c("percent", "frequency")
   ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+    expand.grid()
 
   res <- pmap(
     args_df,

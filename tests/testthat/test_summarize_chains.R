@@ -6,8 +6,7 @@ test_that("Check all summarize_chains arguments", {
     chain_col    = list(NULL, "chains"),
     include_cols = list(NULL, "seurat_clusters")
   ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+    expand.grid()
 
   res <- pmap(
     args_df,

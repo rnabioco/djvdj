@@ -1240,7 +1240,15 @@ vdj_theme <- function(txt_size = 8, ttl_size = 12, txt_col = "black",
 #' @return data.frame
 .set_lvls <- function(df_in, clmn, lvls) {
 
-  if (!is.null(lvls) && !is.null(clmn) && is.character(dplyr::pull(df_in, clmn))) {
+  if (!is.null(lvls) && !is.null(clmn)) {
+    dat <- dplyr::pull(df_in, clmn)
+
+    if (!is.character(dat) && !is.factor(dat)) {
+      warning("Plot levels were not modified, levels are only modified for characters and factors.")
+
+      return(df_in)
+    }
+
     if (!all(pull(df_in, clmn) %in% lvls)) {
       stop(paste0("Not all labels in ", clmn, " are included in plot_levels."))
     }

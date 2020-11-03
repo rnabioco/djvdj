@@ -5,8 +5,7 @@ test_that("Check all calc_usage arguments", {
     cluster_col = list(NULL, "seurat_clusters"),
     chain       = list(NULL, "IGH", "IGL", "IGK")
   ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+    expand.grid()
 
   res <- pmap(
     args_df,

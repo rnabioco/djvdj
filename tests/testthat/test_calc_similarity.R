@@ -7,8 +7,7 @@ test_that("Check all calc_similarity arguments", {
     method        = mets,
     return_seurat = c(TRUE, FALSE)
   ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+    expand.grid()
 
   res <- pmap(
     args_df,
