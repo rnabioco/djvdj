@@ -6,7 +6,7 @@ output:
     toc_float: true
     toc_depth: 2
     vignette: >
-      %\VignetteIndexEntry{TCR}
+      %\VignetteIndexEntry{TCR analysis}
       %\VignetteEncoding{UTF-8}
       %\VignetteEngine{knitr::rmarkdown}
 ---
