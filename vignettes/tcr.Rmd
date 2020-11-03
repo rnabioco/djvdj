@@ -1,12 +1,12 @@
 ---
-title: "**TCR analysis**"
+title: "TCR analysis"
 date: '`r format(Sys.Date(), "%B %d %Y")`'
 output:
   rmarkdown::html_vignette:
     toc_float: true
     toc_depth: 2
     vignette: >
-      %\VignetteIndexEntry{TCR}
+      %\VignetteIndexEntry{TCR analysis}
       %\VignetteEncoding{UTF-8}
       %\VignetteEngine{knitr::rmarkdown}
 ---
