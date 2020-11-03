@@ -1,5 +1,5 @@
 ---
-title: "**BCR analysis**"
+title: "BCR analysis"
 date: '`r format(Sys.Date(), "%B %d %Y")`'
 output:
   rmarkdown::html_vignette:

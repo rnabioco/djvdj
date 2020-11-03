@@ -1,5 +1,5 @@
 ---
-title: "**TCR analysis**"
+title: "TCR analysis"
 date: '`r format(Sys.Date(), "%B %d %Y")`'
 output:
   rmarkdown::html_vignette:
