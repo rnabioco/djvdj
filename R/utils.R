@@ -637,8 +637,8 @@ calc_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
 #' returned
 #' @return Seurat object with similarity index added to meta.data
 #' @export
-calc_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col,
-                            method = abdiv::jaccard, prefix = "sim_", return_seurat = TRUE) {
+calc_similarity <- function(sobj_in, clonotype_col, cluster_col, method = abdiv::jaccard,
+                            prefix = "sim_", return_seurat = TRUE) {
 
   # Format meta.data
   meta_df <- sobj_in@meta.data
@@ -672,7 +672,7 @@ calc_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col,
   clusts <- clusts[clusts != clonotype_col]
 
   vdj_df <- dplyr::mutate(vdj_df, dplyr::across(
-    dplyr::all_of(clusts), ~ replace_na(.x, 0)
+    dplyr::all_of(clusts), ~ tidyr::replace_na(.x, 0)
   ))
 
   combs <- utils::combn(clusts, 2, simplify = FALSE)

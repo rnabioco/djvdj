@@ -14,3 +14,15 @@ test_that("Single import without full path", {
   expect_s4_class(res, "Seurat")                       # class
   expect_identical(colnames(res), colnames(tiny_so))   # cells in object
 })
+
+test_that("Bad separator", {
+  fn <- function() {
+    res <- tiny_so %>%
+      import_vdj(
+        vdj_dir = system.file("extdata", package = "djvdj"),
+        sep = "A"
+      )
+  }
+
+  expect_error(fn())
+})

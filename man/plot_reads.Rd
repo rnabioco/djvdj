@@ -29,7 +29,7 @@ provided, reads and UMIs will be plotted separately for each chain.}
 \item{cluster_col}{meta.data column containing cluster IDs. If cluster_col
 is provided reads and UMIs will be plotted separately for each cluster.}
 
-\item{type}{Type of plot to create, can be 'violin', 'heatmap' or 'density'.}
+\item{type}{Type of plot to create, can be 'violin', 'histogram' or 'density'.}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 

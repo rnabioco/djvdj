@@ -6,8 +6,8 @@
 \usage{
 plot_similarity(
   sobj_in,
-  clonotype_col = NULL,
-  cluster_col = NULL,
+  clonotype_col,
+  cluster_col,
   method = abdiv::jaccard,
   plot_colors = NULL,
   ...

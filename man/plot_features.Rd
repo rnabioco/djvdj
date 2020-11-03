@@ -18,7 +18,7 @@ plot_features(
   min_pct = NULL,
   max_pct = NULL,
   na_color = "grey90",
-  lm_line = F,
+  lm_line = FALSE,
   cor_label = c(0.8, 0.9),
   label_size = 3.7,
   ...

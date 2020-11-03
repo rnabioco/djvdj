@@ -22,7 +22,7 @@
 plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
                           pt_size = 0.25, plot_colors = NULL, feat_lvls = NULL, facet_id = NULL,
                           facet_lvls = NULL, min_pct = NULL, max_pct = NULL, na_color = "grey90",
-                          lm_line = F, cor_label = c(0.8, 0.9), label_size = 3.7, ...) {
+                          lm_line = FALSE, cor_label = c(0.8, 0.9), label_size = 3.7, ...) {
 
   # Format imput data
   meta_df <- obj_in
@@ -34,7 +34,12 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
       vars <- c(vars, facet_id)
     }
 
-    meta_df <- Seurat::FetchData(obj_in, vars = unique(vars), slot = data_slot)
+    meta_df <- Seurat::FetchData(
+      obj_in,
+      vars = unique(vars),
+      slot = as.character(data_slot)
+    )
+
     meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
 
     if (!feature %in% colnames(meta_df)) {
@@ -265,7 +270,7 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, facet_col = NULL, yaxis
 #' provided, reads and UMIs will be plotted separately for each chain.
 #' @param cluster_col meta.data column containing cluster IDs. If cluster_col
 #' is provided reads and UMIs will be plotted separately for each cluster.
-#' @param type Type of plot to create, can be 'violin', 'heatmap' or 'density'.
+#' @param type Type of plot to create, can be 'violin', 'histogram' or 'density'.
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param facet_rows The number of facet rows. Use this argument if both
@@ -281,7 +286,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
                        facet_scales = "free_x", ..., sep = ";") {
 
   if (!type %in% c("violin", "histogram", "density")) {
-    stop("type must be either 'heatmap' or 'bar'.")
+    stop("type must be 'violin', 'histogram' or 'density'.")
   }
 
   # calculate average reads/umis each chain for each cell
@@ -400,10 +405,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
 
   res <- res +
     vdj_theme() +
-    ggplot2::theme(
-      panel.spacing = ggplot2::unit(1, "cm"),
-      legend.title  = ggplot2::element_blank()
-    )
+    ggplot2::theme(legend.title = ggplot2::element_blank())
 
   if (!is.null(cluster_col) && cluster_col != chain_col) {
     res <- res +
@@ -458,7 +460,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
 #' @param ... Additional arguments to pass to geom_line
 #' @return ggplot object
 #' @export
-plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, type = "bar",
+plot_abundance <- function(sobj_in, clonotype_col, cluster_col = NULL, type = "bar",
                            yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, label_col = NULL,
                            n_labels = 10, label_aes = list(), facet_rows = 1, facet_scales = "free_x", ...) {
 
@@ -623,7 +625,7 @@ plot_abundance <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL, ty
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
+plot_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
                            method = abdiv::shannon, plot_colors = NULL, plot_lvls = NULL,
                            facet_rows = 1, ...) {
 
@@ -669,10 +671,11 @@ plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
       cols = -!!sym(cluster_col),
       values_to = "diversity"
     )
+
+    meta_df <- .set_lvls(meta_df, cluster_col, plot_lvls)
   }
 
   # Set plot levels
-  meta_df <- .set_lvls(meta_df, cluster_col, plot_lvls)
   meta_df <- .set_lvls(meta_df, "name", unique(meta_df$name))
 
   # Create bar graphs
@@ -725,8 +728,8 @@ plot_diversity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_similarity <- function(sobj_in, clonotype_col = NULL, cluster_col = NULL,
-                            method = abdiv::jaccard, plot_colors = NULL, ...) {
+plot_similarity <- function(sobj_in, clonotype_col, cluster_col, method = abdiv::jaccard,
+                            plot_colors = NULL, ...) {
 
   if ("Seurat" %in% class(sobj_in)) {
     if (is.null(clonotype_col) || is.null(cluster_col)) {
@@ -950,7 +953,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
       values_to = usage_col
     )
 
-    res <- dplyr::arrange(res, dplyr::desc(pct))
+    res <- dplyr::arrange(res, dplyr::desc(!!sym(usage_col)))
 
     v1_lvls <- rev(unique(dplyr::pull(res, gene_cols[1])))
     v2_lvls <- rev(unique(dplyr::pull(res, gene_cols[2])))
@@ -1019,13 +1022,13 @@ vdj_theme <- function(txt_size = 8, ttl_size = 12, txt_col = "black",
 #' @return data.frame with modified feature values
 .set_lims <- function(df_in, feat_col, lim, op) {
 
-  if (!op %in% c("less", "greater")) {
-    stop("op must be either \"less\" or \"greater\".")
+  if (!op %in% c("<", ">")) {
+    stop("op must be either \"<\" or \">\".")
   }
 
   func <- "min"
 
-  if (op == "less") {
+  if (op == "<") {
     func <- "max"
   }
 
@@ -1237,7 +1240,7 @@ vdj_theme <- function(txt_size = 8, ttl_size = 12, txt_col = "black",
 #' @return data.frame
 .set_lvls <- function(df_in, clmn, lvls) {
 
-  if (!is.null(lvls)) {
+  if (!is.null(lvls) && !is.null(clmn) && is.character(dplyr::pull(df_in, clmn))) {
     if (!all(pull(df_in, clmn) %in% lvls)) {
       stop(paste0("Not all labels in ", clmn, " are included in plot_levels."))
     }

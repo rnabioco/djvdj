@@ -6,7 +6,7 @@
 \usage{
 plot_abundance(
   sobj_in,
-  clonotype_col = NULL,
+  clonotype_col,
   cluster_col = NULL,
   type = "bar",
   yaxis = "percent",

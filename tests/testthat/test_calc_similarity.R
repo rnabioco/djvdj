@@ -1,12 +1,10 @@
 
-test_that("Check all calc_diversity arguments", {
-  mets <- abdiv::alpha_diversities %>%
+test_that("Check all calc_similarity arguments", {
+  mets <- abdiv::beta_diversities %>%
     map(~ eval(parse(text = paste0("abdiv::", .x))))
 
   args_df <- list(
-    cluster_col   = list(NULL, "seurat_clusters"),
     method        = mets,
-    prefix        = c("", "X"),
     return_seurat = c(TRUE, FALSE)
   ) %>%
     expand.grid() %>%
@@ -15,9 +13,10 @@ test_that("Check all calc_diversity arguments", {
   res <- pmap(
     args_df,
     check_args,
-    .fn           = calc_diversity,
+    .fn           = calc_similarity,
     sobj_in       = tiny_vdj,
-    clonotype_col = "cdr3"
+    clonotype_col = "cdr3",
+    cluster_col   = "seurat_clusters"
   )
 })
 
