@@ -1,204 +1,178 @@
 
+# Test inputs
 test_cols <- c(
   "#E69F00", "#56B4E9", "#009E73",
   "#F0E442", "#d7301f", "#0072B2",
   "#D55E00", "#6A51A3", "#CC79A7",
-  "#999999", "#875C04"
+  "#999999", "#875C04", "#000000"
 )
 
 test_lvls <- unique(tiny_vdj$seurat_clusters)
 
-test_that("Check plot_features", {
-  args_df <- list(
-    feature     = c("seurat_clusters", "nCount_RNA"),
-    data_slot   = c("data", "counts"),
-    plot_colors = list(NULL, test_cols),
-    feat_lvls   = list(NULL, test_lvls),
-    facet_id    = list(NULL, "orig.ident"),
-    facet_lvls  = list(NULL, "orig.ident"),
-    min_pct     = list(NULL, 0.05),
-    max_pct     = list(NULL, 0.95),
-    lm_line     = c(TRUE, FALSE)
-  ) %>%
-    expand.grid() %>%
-    mutate(
-      across(where(is.factor), as.character),
-      n = rownames(.)
-    )
+tiny_dat <- tiny_vdj@meta.data %>%
+  as_tibble(rownames = ".cell_id")
 
-  res <- pmap(
-    args_df,
-    check_args,
-    .fn     = plot_features,
-    obj_in  = tiny_vdj
-  )
+# Check all plot_features arguments
+args_lst <- list(
+  sobj_in     = list(tiny_vdj, tiny_dat),
+  feature     = c("seurat_clusters", "nCount_RNA"),
+  data_slot   = c("data", "counts"),
+  plot_colors = list(NULL, test_cols),
+  feat_lvls   = list(NULL, test_lvls),
+  facet_id    = list(NULL, "orig.ident"),
+  facet_lvls  = list(NULL, "AVID-seq"),
+  min_pct     = list(NULL, 0.05),
+  max_pct     = list(NULL, 0.95),
+  lm_line     = c(TRUE, FALSE)
+)
 
-  walk(res, expect_s3_class, "ggplot")
-})
+test_all_args(
+  lst     = args_lst,
+  .fn     = plot_features,
+  ttl     = "plot_feature args",
+  chk_fn  = expect_s3_class,
+  chk_arg = "ggplot"
+)
 
-test_that("Check plot_cell_count", {
-  args_df <- list(
-    x           = "orig.ident",
-    fill_col    = list(NULL, "seurat_clusters"),
-    facet_col   = list(NULL, "orig.ident"),
-    yaxis       = c("fraction", "count"),
-    plot_colors = list(NULL, test_cols),
-    plot_lvls   = "orig.ident",
-    order_count = c(TRUE, FALSE),
-    n_label     = c(TRUE, FALSE),
-    label_aes   = list(list(), list(size = 2))
-  ) %>%
-    expand.grid() %>%
-    mutate(
-      across(where(is.factor), as.character),
-      n = rownames(.)
-    )
+# Check all plot_cell_count arguments
+args_lst <- list(
+  sobj_in     = list(tiny_vdj, tiny_dat),
+  x           = "orig.ident",
+  fill_col    = list(NULL, "seurat_clusters"),
+  facet_col   = list(NULL, "orig.ident"),
+  yaxis       = c("fraction", "count"),
+  plot_colors = list(NULL, test_cols),
+  plot_lvls   = list(NULL, "AVID-seq"),
+  order_count = c(TRUE, FALSE),
+  n_label     = c(TRUE, FALSE),
+  label_aes   = list(list(), list(size = 2))
+)
 
-  res <- pmap(
-    args_df,
-    check_args,
-    .fn     = plot_cell_count,
-    sobj_in = tiny_vdj
-  )
+test_all_args(
+  lst     = args_lst,
+  .fn     = plot_cell_count,
+  ttl     = "plot_cell_count args",
+  chk_fn  = expect_s3_class,
+  chk_arg = "ggplot"
+)
 
-  walk(res, expect_s3_class, "ggplot")
-})
+# Check all plot_reads arguments
+args_lst <- list(
+  sobj_in     = list(tiny_vdj),
+  data_cols   = list("reads", "umis", c("reads", "umis")),
+  chain_col   = list(NULL, "chains"),
+  cluster_col = list(NULL, "seurat_clusters"),
+  type        = c("violin", "histogram", "density"),
+  plot_colors = list(NULL, test_cols),
+  plot_lvls   = list(NULL, test_lvls)
+)
 
-test_that("Check plot_reads", {
-  args_df <- list(
-    data_cols   = list("reads", "umis", c("reads", "umis")),
-    chain_col   = list(NULL, "chains"),
-    cluster_col = list(NULL, "seurat_clusters"),
-    type        = c("violin", "histogram", "density"),
-    plot_colors = list(NULL, test_cols),
-    plot_lvls   = list(NULL, test_lvls)
-  ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+test_all_args(
+  lst     = args_lst,
+  .fn     = plot_reads,
+  ttl     = "plot_reads args",
+  chk_fn  = expect_s3_class,
+  chk_arg = "ggplot"
+)
 
-  res <- pmap(
-    args_df,
-    check_args,
-    .fn     = plot_reads,
-    sobj_in = tiny_vdj
-  )
+# Check all plot_abundance arguments for line plot
+args_lst <- list(
+  sobj_in       = list(tiny_vdj),
+  clonotype_col = "cdr3",
+  cluster_col   = list(NULL, "seurat_clusters"),
+  type          = "line",
+  label_col     = list(NULL, "cdr3"),
+  yaxis         = c("percent", "frequency"),
+  plot_colors   = list(NULL, test_cols),
+  plot_lvls     = list(NULL, test_lvls),
+  label_aes     = list(list(), list(size = 2))
+)
 
-  walk(res, expect_s3_class, "ggplot")
-})
+test_all_args(
+  lst     = args_lst,
+  .fn     = plot_abundance,
+  ttl     = "plot_abundance args",
+  chk_fn  = expect_s3_class,
+  chk_arg = "ggplot"
+)
 
-test_that("Check plot_abundance line plot", {
-  args_df <- list(
-    cluster_col = list(NULL, "seurat_clusters"),
-    label_col   = list(NULL, "cdr3"),
-    yaxis       = c("percent", "frequency"),
-    plot_colors = list(NULL, test_cols),
-    plot_lvls   = list(NULL, test_lvls),
-    label_aes   = list(list(), list(size = 2))
-  ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+# Check all plot_abundance arguments for bar plot
+args_lst <- list(
+  sobj_in       = list(tiny_vdj),
+  clonotype_col = "cdr3",
+  cluster_col   = list(NULL, "seurat_clusters"),
+  type          = "bar",
+  label_col     = "cdr3",
+  yaxis         = c("percent", "frequency"),
+  plot_colors   = list(NULL, test_cols),
+  plot_lvls     = list(NULL, test_lvls),
+  label_aes     = list(list(), list(size = 2))
+)
 
-  res <- pmap(
-    args_df,
-    check_args,
-    .fn           = plot_abundance,
-    sobj_in       = tiny_vdj,
-    clonotype_col = "cdr3",
-    type          = "line"
-  )
+test_all_args(
+  lst     = args_lst,
+  .fn     = plot_abundance,
+  ttl     = "plot_abundance args",
+  chk_fn  = expect_s3_class,
+  chk_arg = "ggplot"
+)
 
-  walk(res, expect_s3_class, "ggplot")
-})
+# Check all plot_diversity arguments
+mets <- abdiv::alpha_diversities %>%
+  map(~ eval(parse(text = paste0("abdiv::", .x))))
 
-test_that("Check plot_abundance bar plot", {
-  args_df <- list(
-    cluster_col = list(NULL, "seurat_clusters"),
-    yaxis       = c("percent", "frequency"),
-    plot_colors = list(NULL, test_cols),
-    plot_lvls   = list(NULL, test_lvls),
-    label_aes   = list(list(), list(size = 2))
-  ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+args_lst <- list(
+  sobj_in       = list(tiny_vdj),
+  clonotype_col = "cdr3",
+  cluster_col   = list(NULL, "seurat_clusters"),
+  method        = mets,
+  plot_colors   = list(NULL, test_cols),
+  plot_lvls     = list(NULL, test_lvls)
+)
 
-  res <- pmap(
-    args_df,
-    check_args,
-    .fn           = plot_abundance,
-    sobj_in       = tiny_vdj,
-    clonotype_col = "cdr3",
-    type          = "bar",
-    label_col     = "cdr3"
-  )
+test_all_args(
+  lst     = args_lst,
+  .fn     = plot_diversity,
+  ttl     = "plot_diversity args",
+  chk_fn  = expect_s3_class,
+  chk_arg = "ggplot"
+)
 
-  walk(res, expect_s3_class, "ggplot")
-})
+# Check all plot_similarity arguments
+mets <- abdiv::beta_diversities %>%
+  map(~ eval(parse(text = paste0("abdiv::", .x))))
 
-test_that("Check plot_diversity", {
-  mets <- abdiv::alpha_diversities %>%
-    map(~ eval(parse(text = paste0("abdiv::", .x))))
+args_lst <- list(
+  sobj_in       = list(tiny_vdj),
+  clonotype_col = "cdr3",
+  cluster_col   = "seurat_clusters",
+  method        = mets,
+  plot_colors   = list(NULL, test_cols)
+)
 
-  args_df <- list(
-    cluster_col = list(NULL, "seurat_clusters"),
-    method      = mets,
-    plot_colors = list(NULL, test_cols),
-    plot_lvls   = list(NULL, test_lvls)
-  ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+test_all_args(
+  lst     = args_lst,
+  .fn     = plot_similarity,
+  ttl     = "plot_similarity args",
+  chk_fn  = expect_s3_class,
+  chk_arg = "ggplot"
+)
 
-  res <- pmap(
-    args_df,
-    check_args,
-    .fn           = plot_diversity,
-    sobj_in       = tiny_vdj,
-    clonotype_col = "cdr3"
-  )
+# Check all plot_usage arguments
+args_lst <- list(
+  sobj_in     = list(tiny_vdj),
+  gene_cols   = list("v_gene", "d_gene", "j_gene", "c_gene", c("v_gene", "j_gene")),
+  cluster_col = list(NULL, "seurat_clusters"),
+  chain       = list(NULL, "IGH", "IGL", "IGK"),
+  chain_col   = "chains",
+  type        = c("heatmap", "bar"),
+  plot_colors = list(NULL, test_cols),
+  plot_lvls   = list(NULL, test_lvls),
+  yaxis       = c("percent", "frequency")
+)
 
-  walk(res, expect_s3_class, "ggplot")
-})
-
-test_that("Check plot_similarity", {
-  mets <- abdiv::beta_diversities %>%
-    map(~ eval(parse(text = paste0("abdiv::", .x))))
-
-  args_df <- list(
-    method      = mets,
-    plot_colors = list(NULL, test_cols)
-  ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
-
-  res <- pmap(
-    args_df,
-    check_args,
-    .fn           = plot_similarity,
-    sobj_in       = tiny_vdj,
-    clonotype_col = "cdr3",
-    cluster_col   = "seurat_clusters"
-  )
-
-  walk(res, expect_s3_class, "ggplot")
-})
-
-test_that("Check plot_usage", {
-  args_df <- list(
-    gene_cols   = list("v_gene", "d_gene", "j_gene", "c_gene", c("v_gene", "j_gene")),
-    cluster_col = list(NULL, "seurat_clusters"),
-    chain       = list(NULL, "IGH", "IGL", "IGK"),
-    type        = c("heatmap", "bar"),
-    plot_colors = list(NULL, test_cols),
-    plot_lvls   = list(NULL, test_lvls),
-    yaxis       = c("percent", "frequency")
-  ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
-
-  res <- pmap(
-    args_df,
-    check_args,
-    .fn       = plot_usage,
-    sobj_in   = tiny_vdj,
-    chain_col = "chains"
-  )
-})
+test_all_args(
+  lst = args_lst,
+  .fn = plot_usage,
+  ttl = "plot_usage args"
+)

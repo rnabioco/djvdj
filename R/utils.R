@@ -151,7 +151,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   meta_df <- summarize(
     contigs,
     n_chains = n(),
-    dplyr::across(
+    across(
       all_of(sep_cols),
       ~ paste0(as.character(.x), collapse = sep)
     ),
@@ -238,7 +238,7 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "clonotype_id", filter_cel
   if (!filter_cells) {
     meta_df <- dplyr::mutate(
       meta_df,
-      dplyr::across(
+      across(
         all_of(c(vdj_cols, names(sep_cols))),
         ~ ifelse(.KEEP, .x, NA)
       )
@@ -270,7 +270,7 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "clonotype_id", filter_cel
 
     meta_df <- dplyr::select(
       meta_df,
-      !dplyr::all_of(c(names(sep_cols), ".KEEP"))
+      !all_of(c(names(sep_cols), ".KEEP"))
     )
 
     meta_df <- dplyr::rename(meta_df, !!!syms(sep_cols))
@@ -344,7 +344,7 @@ mutate_vdj <- function(sobj_in, ..., clonotype_col = "clonotype_id", sep = ";", 
 
     meta_df <- dplyr::select(
       meta_df,
-      !dplyr::all_of(names(sep_cols))
+      !all_of(names(sep_cols))
     )
 
     meta_df <- dplyr::rename(meta_df, !!!syms(sep_cols))
@@ -603,7 +603,7 @@ calc_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
 
   # Return data.frame
   if (!return_seurat) {
-    res <- dplyr::select(vdj_df, dplyr::all_of(c(cluster_col, div_cols)))
+    res <- dplyr::select(vdj_df, all_of(c(cluster_col, div_cols)))
     res <- dplyr::distinct(res)
 
     if (is.null(cluster_col)) {
@@ -647,7 +647,7 @@ calc_similarity <- function(sobj_in, clonotype_col, cluster_col, method = abdiv:
 
   meta_df <- dplyr::select(
     meta_df,
-    dplyr::all_of(c(".cell_id", clonotype_col, cluster_col))
+    all_of(c(".cell_id", clonotype_col, cluster_col))
   )
 
   vdj_df <- dplyr::group_by(
@@ -663,7 +663,7 @@ calc_similarity <- function(sobj_in, clonotype_col, cluster_col, method = abdiv:
 
   vdj_df <- tidyr::pivot_wider(
     vdj_df,
-    names_from  = dplyr::all_of(cluster_col),
+    names_from  = all_of(cluster_col),
     values_from = .data$n
   )
 
@@ -671,8 +671,8 @@ calc_similarity <- function(sobj_in, clonotype_col, cluster_col, method = abdiv:
   clusts <- colnames(vdj_df)
   clusts <- clusts[clusts != clonotype_col]
 
-  vdj_df <- dplyr::mutate(vdj_df, dplyr::across(
-    dplyr::all_of(clusts), ~ tidyr::replace_na(.x, 0)
+  vdj_df <- dplyr::mutate(vdj_df, across(
+    all_of(clusts), ~ tidyr::replace_na(.x, 0)
   ))
 
   combs <- utils::combn(clusts, 2, simplify = FALSE)
@@ -753,10 +753,10 @@ calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
 
   meta_df <- sobj_in@meta.data
   meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
-  meta_df <- dplyr::select(meta_df, dplyr::all_of(vdj_cols))
+  meta_df <- dplyr::select(meta_df, all_of(vdj_cols))
 
-  meta_df <- dplyr::filter(meta_df, dplyr::across(
-    dplyr::all_of(gene_cols),
+  meta_df <- dplyr::filter(meta_df, across(
+    all_of(gene_cols),
     ~ !is.na(.x)
   ))
 
@@ -771,7 +771,7 @@ calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
       stop("Must specify chain_col.")
     }
 
-    res <- dplyr::mutate(res, dplyr::across(dplyr::all_of(gene_cols), ~ {
+    res <- dplyr::mutate(res, across(all_of(gene_cols), ~ {
       g_col <- .x
 
       purrr::map2(g_col, !!sym(chain_col), ~ {
@@ -813,14 +813,14 @@ calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
 
     res <- tidyr::pivot_wider(
       res,
-      names_from  = dplyr::all_of(cluster_col),
+      names_from  = all_of(cluster_col),
       values_from = .data$freq,
       values_fill = 0
     )
 
     res <- tidyr::pivot_longer(
       res,
-      cols      = dplyr::all_of(clusts),
+      cols      = all_of(clusts),
       names_to  = cluster_col,
       values_to = "freq"
     )
@@ -866,20 +866,20 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
 
   meta_df <- dplyr::filter(
     meta_df,
-    dplyr::across(dplyr::all_of(data_cols), ~ !is.na(.x))
+    across(all_of(data_cols), ~ !is.na(.x))
   )
 
   # Expand meta.data
-  res <- dplyr::mutate(meta_df, dplyr::across(
-    dplyr::all_of(c(data_cols, chain_col)),
+  res <- dplyr::mutate(meta_df, across(
+    all_of(c(data_cols, chain_col)),
     ~ strsplit(as.character(.x), sep)
   ))
 
-  res <- tidyr::unnest(res, cols = dplyr::all_of(c(data_cols, chain_col)))
+  res <- tidyr::unnest(res, cols = all_of(c(data_cols, chain_col)))
 
   # Summarize data_cols for each chain present for the cell
-  res <- dplyr::mutate(res, dplyr::across(
-    dplyr::all_of(data_cols),
+  res <- dplyr::mutate(res, across(
+    all_of(data_cols),
     ~ .convert_char(.x, as.numeric)
   ))
 
@@ -888,7 +888,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
 
   res <- dplyr::summarize(
     res,
-    dplyr::across(dplyr::all_of(data_cols), fn),
+    across(all_of(data_cols), fn),
     .groups = "drop"
   )
 
@@ -910,8 +910,8 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
   # Split columns into vectors
   res <- dplyr::mutate(df_in, !!!syms(sep_cols))
 
-  res <- dplyr::mutate(res, dplyr::across(
-    dplyr::all_of(unname(sep_cols)),
+  res <- dplyr::mutate(res, across(
+    all_of(unname(sep_cols)),
     ~ strsplit(as.character(.x), sep)
   ))
 
@@ -919,11 +919,11 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
   res <- dplyr::mutate(
     res,
     across(
-      dplyr::all_of(num_cols),
+      all_of(num_cols),
       map, ~ .convert_char(.x, as.numeric)
     ),
     across(
-      dplyr::all_of(lgl_cols),
+      all_of(lgl_cols),
       map, ~ .convert_char(.x, as.logical)
     )
   )
@@ -953,7 +953,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
   if (is.null(cols_in)) {
     cols_in <- dplyr::mutate(
       df_in,
-      dplyr::across(dplyr::everything(), is.na)
+      across(dplyr::everything(), is.na)
     )
 
     cols_in <- purrr::keep(

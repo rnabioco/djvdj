@@ -1,20 +1,17 @@
 
-test_that("Check all calc_usage arguments", {
-  args_df <- list(
-    gene_cols   = list("v_gene", "d_gene", "j_gene", "c_gene", c("v_gene", "j_gene")),
-    cluster_col = list(NULL, "seurat_clusters"),
-    chain       = list(NULL, "IGH", "IGL", "IGK")
-  ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+# Check all calc_usage arguments
+args_lst <- list(
+  sobj_in     = list(tiny_vdj),
+  gene_cols   = list("v_gene", "d_gene", "j_gene", "c_gene", c("v_gene", "j_gene")),
+  cluster_col = list(NULL, "seurat_clusters"),
+  chain       = list(NULL, "IGH", "IGL", "IGK"),
+  chain_col   = "chains"
+)
 
-  res <- pmap(
-    args_df,
-    check_args,
-    .fn       = calc_usage,
-    sobj_in   = tiny_vdj,
-    chain_col = "chains"
-  )
-
-  walk(res, expect_s3_class, "tbl")
-})
+test_all_args(
+  lst     = args_lst,
+  .fn     = calc_usage,
+  ttl     = "calc_usage args",
+  chk_fn  = expect_s3_class,
+  chk_arg = "tbl"
+)

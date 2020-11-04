@@ -1,30 +1,27 @@
 
-test_that("Check all calc_diversity arguments", {
-  mets <- abdiv::alpha_diversities %>%
-    map(~ eval(parse(text = paste0("abdiv::", .x))))
+# Check all calc_diversity arguments
+mets <- abdiv::alpha_diversities %>%
+  map(~ eval(parse(text = paste0("abdiv::", .x))))
 
-  args_df <- list(
-    cluster_col   = list(NULL, "seurat_clusters"),
-    method        = mets,
-    prefix        = c("", "X"),
-    return_seurat = c(TRUE, FALSE)
-  ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+args_lst <- list(
+  sobj_in       = list(tiny_vdj),
+  clonotype_col = "cdr3",
+  cluster_col   = list(NULL, "seurat_clusters"),
+  method        = mets,
+  prefix        = c("", "X"),
+  return_seurat = c(TRUE, FALSE)
+)
 
-  res <- pmap(
-    args_df,
-    check_args,
-    .fn           = calc_diversity,
-    sobj_in       = tiny_vdj,
-    clonotype_col = "cdr3"
-  )
-})
+test_all_args(
+  lst = args_lst,
+  .fn = calc_diversity,
+  ttl = "calc_diversity args"
+)
 
 test_that("Check Seurat output", {
   res <- tiny_vdj %>%
     calc_diversity(
-      clonotype_col = "clonotype_id",
+      clonotype_col = "cdr3",
       return_seurat = TRUE
     )
 
@@ -35,7 +32,7 @@ test_that("Check Seurat output", {
 test_that("Check tibble output", {
   res <- tiny_vdj %>%
     calc_diversity(
-      clonotype_col = "clonotype_id",
+      clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
       return_seurat = FALSE
     )
@@ -52,7 +49,7 @@ test_that("Check tibble output", {
 test_that("Check numeric output", {
   res <- tiny_vdj %>%
     calc_diversity(
-      clonotype_col = "clonotype_id",
+      clonotype_col = "cdr3",
       return_seurat = FALSE,
       method        = abdiv::simpson
     )
@@ -70,7 +67,7 @@ test_that("Check methods", {
 
   res <- tiny_vdj %>%
     calc_diversity(
-      clonotype_col = "clonotype_id",
+      clonotype_col = "cdr3",
       method = fns
     )
 

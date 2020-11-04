@@ -1,21 +1,18 @@
 
-test_that("Check all calc_abundance arguments", {
-  args_df <- list(
-    cluster_col   = list(NULL, "seurat_clusters"),
-    prefix        = c("", "X"),
-    return_seurat = c(TRUE, FALSE)
-  ) %>%
-    expand.grid() %>%
-    mutate(n = rownames(.))
+# Check all calc_abundance arguments
+args_lst <- list(
+  sobj_in       = list(tiny_vdj),
+  clonotype_col = "cdr3",
+  cluster_col   = list(NULL, "seurat_clusters"),
+  prefix        = c("", "X"),
+  return_seurat = c(TRUE, FALSE)
+)
 
-  res <- pmap(
-    args_df,
-    check_args,
-    .fn           = calc_abundance,
-    sobj_in       = tiny_vdj,
-    clonotype_col = "cdr3"
-  )
-})
+test_all_args(
+  lst = args_lst,
+  .fn = calc_abundance,
+  ttl = "calc_abundance args"
+)
 
 test_that("Check Seurat output", {
   res <- tiny_vdj %>%

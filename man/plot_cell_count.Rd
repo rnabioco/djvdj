@@ -13,7 +13,6 @@ plot_cell_count(
   plot_colors = NULL,
   plot_lvls = NULL,
   na_color = "grey90",
-  order_count = TRUE,
   n_label = TRUE,
   label_aes = list(),
   facet_rows = 1,
@@ -37,8 +36,6 @@ plot_cell_count(
 \item{plot_lvls}{Character vector containing levels for ordering}
 
 \item{na_color}{Color to use for missing values}
-
-\item{order_count}{Order bar color by number of cells in each group}
 
 \item{n_label}{Include label showing the number of cells represented by each
 bar}
