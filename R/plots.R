@@ -64,23 +64,12 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
   }
 
   # Adjust values based on min_pct and max_pct
-  if (!is.null(min_pct)) {
-    meta_df <- .set_lims(
-      meta_df,
-      feat_col = feature,
-      lim      = min_pct,
-      op       = "<"
-    )
-  }
-
-  if (!is.null(max_pct)) {
-    meta_df <- .set_lims(
-      meta_df,
-      feat_col = feature,
-      lim      = max_pct,
-      op       = ">"
-    )
-  }
+  meta_df <- .set_lims(
+    meta_df,
+    ft = feature,
+    mn = min_pct,
+    mx = max_pct
+  )
 
   # Set feature and facet order
   meta_df <- .set_lvls(meta_df, feature, feat_lvls)
@@ -96,7 +85,8 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
     meta_df,
     ggplot2::aes(!!sym(x), !!sym(y), color = !!sym(feature))
   ) +
-    ggplot2::geom_point(size = pt_size)
+    ggplot2::geom_point(size = pt_size) +
+    vdj_theme()
 
   # Add regression line
   if (lm_line) {
@@ -139,8 +129,7 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
     }
   }
 
-  res +
-    vdj_theme()
+  res
 }
 
 
@@ -1015,41 +1004,40 @@ vdj_theme <- function(txt_size = 8, ttl_size = 12, txt_col = "black",
 #' Set min and max values for column
 #'
 #' @param df_in Input data.frame
-#' @param feat_col Name of column containing feature values
-#' @param lim The value cutoff
-#' @param op The operator to use for comparing values with lim
-#' (either "less" or "greater")
+#' @param ft Name of column containing feature values
+#' @param mn Minimum percent rank
+#' @param mx Maximum percent rank
 #' @return data.frame with modified feature values
-.set_lims <- function(df_in, feat_col, lim, op) {
+.set_lims <- function(df_in, ft, mn = NULL, mx = NULL) {
 
-  if (!op %in% c("<", ">")) {
-    stop("op must be either \"<\" or \">\".")
+  if (is.null(mn) && is.null(mx)) {
+    return(df_in)
   }
 
-  func <- "min"
-
-  if (op == "<") {
-    func <- "max"
-  }
+  ft <- sym(ft)
 
   res <- dplyr::mutate(
     df_in,
-    pct_rank = dplyr::percent_rank(!!sym(feat_col)),
-
-    lim = eval(parse(text = paste0(
-      "ifelse(pct_rank ", op, " lim, ", feat_col, ", NA)"
-    ))),
-
-    lim = eval(parse(text = paste0(
-      func, "(lim, na.rm = T)"
-    ))),
-
-    !!sym(feat_col) := eval(parse(text = paste0(
-      "dplyr::if_else(", feat_col, op, " lim, lim, ", feat_col, ")"
-    )))
+    pct = dplyr::percent_rank(!!ft)
   )
 
-  res <- dplyr::select(res, -.data$pct_rank, -lim)
+  if (!is.null(mn)) {
+    res <- dplyr::mutate(
+      res,
+      !!ft := ifelse(.data$pct > mn, !!ft, NA),
+      !!ft := ifelse(.data$pct <= mn, min(!!ft, na.rm = TRUE), !!ft)
+    )
+  }
+
+  if (!is.null(mx)) {
+    res <- dplyr::mutate(
+      res,
+      !!ft := ifelse(.data$pct < mx, !!ft, NA),
+      !!ft := ifelse(.data$pct >= mx, max(!!ft, na.rm = TRUE), !!ft)
+    )
+  }
+
+  res <- dplyr::select(res, -.data$pct)
 
   res
 }

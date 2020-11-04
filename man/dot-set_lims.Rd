@@ -4,17 +4,16 @@
 \alias{.set_lims}
 \title{Set min and max values for column}
 \usage{
-.set_lims(df_in, feat_col, lim, op)
+.set_lims(df_in, ft, mn = NULL, mx = NULL)
 }
 \arguments{
 \item{df_in}{Input data.frame}
 
-\item{feat_col}{Name of column containing feature values}
+\item{ft}{Name of column containing feature values}
 
-\item{lim}{The value cutoff}
+\item{mn}{Minimum percent rank}
 
-\item{op}{The operator to use for comparing values with lim
-(either "less" or "greater")}
+\item{mx}{Maximum percent rank}
 }
 \value{
 data.frame with modified feature values
