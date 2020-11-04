@@ -5,7 +5,7 @@
 \title{Create two dimensional scatter plot}
 \usage{
 plot_features(
-  obj_in,
+  sobj_in,
   x = "UMAP_1",
   y = "UMAP_2",
   feature,
@@ -25,7 +25,7 @@ plot_features(
 )
 }
 \arguments{
-\item{obj_in}{Seurat object or data.frame containing data for plotting}
+\item{sobj_in}{Seurat object or data.frame containing data for plotting}
 
 \item{x}{Variable to plot on x-axis}
 

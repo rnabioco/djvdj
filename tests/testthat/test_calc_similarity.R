@@ -1,23 +1,21 @@
 
-test_that("Check all calc_similarity arguments", {
-  mets <- abdiv::beta_diversities %>%
-    map(~ eval(parse(text = paste0("abdiv::", .x))))
+# Chack all calc_similarity arguments
+mets <- abdiv::beta_diversities %>%
+  map(~ eval(parse(text = paste0("abdiv::", .x))))
 
-  args_df <- list(
-    method        = mets,
-    return_seurat = c(TRUE, FALSE)
-  ) %>%
-    expand.grid()
+args_lst <- list(
+  sobj_in       = list(tiny_vdj),
+  clonotype_col = "cdr3",
+  method        = mets,
+  cluster_col   = "seurat_clusters",
+  return_seurat = c(TRUE, FALSE)
+)
 
-  res <- pmap(
-    args_df,
-    check_args,
-    .fn           = calc_similarity,
-    sobj_in       = tiny_vdj,
-    clonotype_col = "cdr3",
-    cluster_col   = "seurat_clusters"
-  )
-})
+test_all_args(
+  lst = args_lst,
+  .fn = calc_similarity,
+  ttl = "calc_similarity args"
+)
 
 test_that("Check Seurat output", {
   res <- tiny_vdj %>%

@@ -1,6 +1,6 @@
 #' Create two dimensional scatter plot
 #'
-#' @param obj_in Seurat object or data.frame containing data for plotting
+#' @param sobj_in Seurat object or data.frame containing data for plotting
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
 #' @param feature Variable to use for coloring points
@@ -19,15 +19,15 @@
 #' @param ... Additional parameters to pass to facet_wrap
 #' @return ggplot object
 #' @export
-plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
+plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
                           pt_size = 0.25, plot_colors = NULL, feat_lvls = NULL, facet_id = NULL,
                           facet_lvls = NULL, min_pct = NULL, max_pct = NULL, na_color = "grey90",
                           lm_line = FALSE, cor_label = c(0.8, 0.9), label_size = 3.7, ...) {
 
   # Format imput data
-  meta_df <- obj_in
+  meta_df <- sobj_in
 
-  if ("Seurat" %in% class(obj_in)) {
+  if ("Seurat" %in% class(sobj_in)) {
     vars <- c(x, y, feature)
 
     if (!is.null(facet_id)) {
@@ -35,7 +35,7 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
     }
 
     meta_df <- Seurat::FetchData(
-      obj_in,
+      sobj_in,
       vars = unique(vars),
       slot = as.character(data_slot)
     )
@@ -143,7 +143,6 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param na_color Color to use for missing values
-#' @param order_count Order bar color by number of cells in each group
 #' @param n_label Include label showing the number of cells represented by each
 #' bar
 #' @param label_aes Named list providing additional label aesthetics
@@ -156,8 +155,8 @@ plot_features <- function(obj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot
 #' @return ggplot object
 #' @export
 plot_cell_count <- function(sobj_in, x, fill_col = NULL, facet_col = NULL, yaxis = "fraction",
-                            plot_colors = NULL, plot_lvls = NULL, na_color = "grey90", order_count = TRUE,
-                            n_label = TRUE, label_aes = list(), facet_rows = 1, facet_scales = "free_x", ...) {
+                            plot_colors = NULL, plot_lvls = NULL, na_color = "grey90", n_label = TRUE,
+                            label_aes = list(), facet_rows = 1, facet_scales = "free_x", ...) {
 
   # Set y-axis unit
   y_types <- c("fraction", "count")
@@ -185,13 +184,6 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, facet_col = NULL, yaxis
     ggplot2::ggplot(ggplot2::aes(!!sym(x)))
 
   if (!is.null(fill_col)) {
-    # if (order_count) {
-    #   meta_df <- mutate(
-    #     meta_df,
-    #     !!sym(fill_col) := fct_reorder(!!sym(fill_col), .data$.cell_id, n_distinct)
-    #   )
-    # }
-
     res <- ggplot2::ggplot(
       meta_df,
       ggplot2::aes(!!sym(x), fill = !!sym(fill_col))
