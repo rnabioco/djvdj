@@ -1,13 +1,19 @@
 
-# Chack all calc_similarity arguments
+# Test inputs
+test_clsts <- tiny_vdj@meta.data %>%
+  na.omit() %>%
+  pull(seurat_clusters) %>%
+  unique()
+
+# Check all calc_similarity arguments
 mets <- abdiv::beta_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 args_lst <- list(
   sobj_in       = list(tiny_vdj),
   clonotype_col = "cdr3",
-  method        = mets,
   cluster_col   = "seurat_clusters",
+  method        = mets,
   return_seurat = c(TRUE, FALSE)
 )
 
@@ -17,58 +23,80 @@ test_all_args(
   ttl = "calc_similarity args"
 )
 
-test_that("Check Seurat output", {
-  res <- tiny_vdj %>%
-    calc_diversity(
-      clonotype_col = "clonotype_id",
-      return_seurat = TRUE
-    )
+# Check similarity calculation
+test_sim <- tiny_vdj@meta.data %>%
+  as_tibble(rownames = ".cell_id") %>%
+  filter(!is.na(cdr3)) %>%
+  group_by(cdr3, seurat_clusters) %>%
+  summarize(n = n_distinct(.cell_id), .groups = "drop") %>%
+  pivot_wider(names_from = "seurat_clusters", values_from = "n") %>%
+  mutate(across(all_of(test_clsts), replace_na, 0))
 
-  expect_s4_class(res, "Seurat")                       # class
-  expect_identical(colnames(res), colnames(tiny_vdj))  # cells in object
-})
+test_sim <- map_dfr(test_clsts, ~ {
+  x <- test_sim$`6`
+  y <- pull(test_sim, .x)
 
-test_that("Check tibble output", {
+  tibble(
+    seurat_clusters = .x,
+    x6 = abdiv::binomial_deviance(x, y)
+  )
+}) %>%
+  arrange(seurat_clusters) %>%
+  mutate(x6 = if_else(seurat_clusters == "6", 1, x6))
+
+test_that("sim calc", {
   res <- tiny_vdj %>%
-    calc_diversity(
-      clonotype_col = "clonotype_id",
+    calc_similarity(
+      clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
-      return_seurat = FALSE
+      method        = abdiv::binomial_deviance,
+      return_seurat = TRUE,
+      prefix        = "x"
     )
 
-  old_nms <- tiny_vdj@meta.data %>%
-    filter(!is.na(clonotype_id)) %>%
-    pull(seurat_clusters) %>%
-    unique()
+  res <- res@meta.data %>%
+    as_tibble() %>%
+    select(seurat_clusters, x6) %>%
+    filter(!is.na(x6)) %>%
+    distinct() %>%
+    arrange(seurat_clusters)
 
-  expect_s3_class(res, "tbl")
-  expect_identical(sort(res$seurat_clusters), sort(old_nms))
+  expect_identical(res, test_sim)
 })
 
-test_that("Check numeric output", {
+# Check Seurat output
+test_that("calc_similarity Seurat out", {
   res <- tiny_vdj %>%
-    calc_diversity(
-      clonotype_col = "clonotype_id",
+    calc_similarity(
+      clonotype_col = "cdr3",
+      cluster_col   = "seurat_clusters",
+      method        = abdiv::binomial_deviance,
+      return_seurat = TRUE,
+      prefix        = "x"
+    )
+
+  expect_s4_class(res, "Seurat")
+
+  res@meta.data <- res@meta.data %>%
+    select(-all_of(paste0("x", test_clsts)))
+
+  expect_identical(res, tiny_vdj)
+})
+
+# Check matrix output
+test_that("calc_similarity mat out", {
+  res <- tiny_vdj %>%
+    calc_similarity(
+      clonotype_col = "cdr3",
+      cluster_col   = "seurat_clusters",
+      method        = abdiv::binomial_deviance,
       return_seurat = FALSE,
-      method        = abdiv::simpson
+      prefix        = "x"
     )
 
   expect_type(res, "double")
-  expect_identical(names(res), "simpson")
-})
 
-test_that("Check methods", {
-  fns <- map(abdiv::alpha_diversities, ~ {
-    eval(parse(text = paste0("abdiv::", .x)))
-  })
+  res <- unique(c(rownames(res), colnames(res)))
 
-  names(fns) <- abdiv::alpha_diversities
-
-  res <- tiny_vdj %>%
-    calc_diversity(
-      clonotype_col = "clonotype_id",
-      method = fns
-    )
-
-  expect_true(all(abdiv::alpha_diversities %in% names(res@meta.data)))
+  expect_true(all(sort(test_clsts) == sort(res)))
 })

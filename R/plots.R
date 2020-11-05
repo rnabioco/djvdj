@@ -592,7 +592,7 @@ plot_abundance <- function(sobj_in, clonotype_col, cluster_col = NULL, type = "b
 #' Plot repertoire diversity
 #'
 #' @param sobj_in Seurat object containing V(D)J data or data.frame containing
-#' diversity values to plot
+#' diversity values to plot. If a data.frame is used
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating clonotype abundance
 #' @param cluster_col meta.data column containing cluster IDs to use for
@@ -649,8 +649,8 @@ plot_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
   } else {
     meta_df <- tidyr::pivot_longer(
       sobj_in,
-      cols = -!!sym(cluster_col),
-      values_to = "diversity"
+      cols = all_of(names(method)),
+      values_to = "div"
     )
 
     meta_df <- .set_lvls(meta_df, cluster_col, plot_lvls)
@@ -662,7 +662,7 @@ plot_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
   # Create bar graphs
   res <- ggplot2::ggplot(meta_df, ggplot2::aes(
     !!sym(cluster_col),
-    .data$diversity,
+    .data$div,
     fill = !!sym(cluster_col)
   )) +
     ggplot2::geom_col(...)

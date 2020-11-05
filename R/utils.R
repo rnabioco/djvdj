@@ -549,6 +549,18 @@ calc_abundance <- function(sobj_in, clonotype_col, cluster_col = NULL,
 calc_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
                            method = abdiv::simpson, prefix = "", return_seurat = TRUE) {
 
+  if (length(method) > 1 && is.null(names(method))) {
+    stop("Must include names if using a list of methods.")
+  }
+
+  if (length(method) == 1 && is.null(names(method))) {
+    nm <- as.character(substitute(method))
+    nm <- dplyr::last(nm)
+
+    method        <- list(method)
+    names(method) <- nm
+  }
+
   # Format meta.data
   vdj_cols <- clonotype_col
   meta_df  <- tibble::as_tibble(sobj_in@meta.data, rownames = ".cell_id")
@@ -680,10 +692,13 @@ calc_similarity <- function(sobj_in, clonotype_col, cluster_col, method = abdiv:
   res <- map_dfr(combs, ~ {
     ins <- paste0("vdj_df$", .x)
 
+    x <- dplyr::pull(vdj_df, .x[1])
+    y <- dplyr::pull(vdj_df, .x[2])
+
     tibble::tibble(
       Var1 = .x[1],
       Var2 = .x[2],
-      sim  = method(dplyr::pull(vdj_df, .x[1]), dplyr::pull(vdj_df, .x[2]))
+      sim  = method(x, y)
     )
   })
 

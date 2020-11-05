@@ -1,13 +1,13 @@
 library(testthat)
 library(dplyr)
+library(tidyr)
 library(purrr)
 library(djvdj)
 
 # Helper to test all combinations of provided arguments
 test_all_args <- function(lst, .fn, ttl, chk_fn = NULL, chk_arg = NULL) {
   lst <- lst %>%
-    expand.grid() %>%
-    mutate(across(where(is.factor), as.character))
+    expand.grid(stringsAsFactors = FALSE)
 
   n <- 1
 

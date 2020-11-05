@@ -1,5 +1,6 @@
 
-test_that("Check Seurat output", {
+# Check Seurat output
+test_that("mutate_vdj Seurat out", {
   res <- tiny_vdj %>%
     mutate_vdj(NEW = paste0(unique(chains), collapse = "_"))
 
@@ -21,7 +22,8 @@ test_that("Check Seurat output", {
 #   expect_identical(unname(res$NEW), old_nms)           # new column
 # })
 
-test_that("NULL separator", {
+# Check NULL separator
+test_that("mutate_vdj NULL sep", {
   res <- tiny_vdj %>%
     mutate_vdj(
       NEW = paste0(chains, nCount_RNA, sep = "_"),
@@ -35,7 +37,8 @@ test_that("NULL separator", {
   expect_identical(unname(res$NEW), old_nms)           # new column
 })
 
-test_that("Default separator with bad command", {
+# Check bad command
+test_that("mutate_vdj bad command", {
   fn <- function() {
     tiny_vdj %>%
       mutate_vdj(

@@ -17,7 +17,7 @@ test_all_args(
 test_that("Check Seurat output", {
   res <- tiny_vdj %>%
     calc_abundance(
-      clonotype_col = "clonotype_id",
+      clonotype_col = "cdr3",
       return_seurat = TRUE
     )
 
@@ -25,17 +25,19 @@ test_that("Check Seurat output", {
   expect_identical(colnames(res), colnames(tiny_vdj))  # cells in object
 })
 
-test_that("Check tibble output", {
+# Check tibble output
+test_that("calc_abundance tbl out", {
   res <- tiny_vdj %>%
     calc_abundance(
-      clonotype_col = "clonotype_id",
+      clonotype_col = "cdr3",
       return_seurat = FALSE
     )
 
   expect_s3_class(res, "tbl")
 })
 
-test_that("Check empty clonotype_col", {
+# Check empty clonotype_col
+test_that("calc_abundance NULL clonotype_col", {
   .fn<- function() {
     tiny_vdj %>%
       calc_abundance(return_seurat = TRUE)
