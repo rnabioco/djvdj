@@ -1,6 +1,6 @@
 
 # Check all calc_abundance arguments
-args_lst <- list(
+lst <- list(
   sobj_in       = list(tiny_vdj),
   clonotype_col = "cdr3",
   cluster_col   = list(NULL, "seurat_clusters"),
@@ -9,9 +9,10 @@ args_lst <- list(
 )
 
 test_all_args(
-  lst = args_lst,
-  .fn = calc_abundance,
-  ttl = "calc_abundance args"
+  lst    = lst,
+  .fn    = calc_abundance,
+  ttl    = "calc_abundance args",
+  chk_fn = expect_silent
 )
 
 test_that("Check Seurat output", {
@@ -21,8 +22,8 @@ test_that("Check Seurat output", {
       return_seurat = TRUE
     )
 
-  expect_s4_class(res, "Seurat")                       # class
-  expect_identical(colnames(res), colnames(tiny_vdj))  # cells in object
+  expect_s4_class(res, "Seurat")
+  expect_identical(colnames(res), colnames(tiny_vdj))
 })
 
 # Check tibble output

@@ -43,7 +43,6 @@ lst <- list(
   yaxis       = c("fraction", "count"),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, "AVID-seq"),
-  order_count = c(TRUE, FALSE),
   n_label     = c(TRUE, FALSE),
   label_aes   = list(list(), list(size = 2))
 )
@@ -163,7 +162,8 @@ lst <- list(
 )
 
 test_all_args(
-  lst = lst,
-  .fn = plot_usage,
-  ttl = "plot_usage args"
+  lst    = lst,
+  .fn    = plot_usage,
+  ttl    = "plot_usage args",
+  chk_fn = expect_silent
 )
