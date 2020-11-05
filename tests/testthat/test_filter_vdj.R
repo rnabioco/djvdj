@@ -1,5 +1,6 @@
 
-test_that("Seurat return without filtering", {
+# Check Seurat return without filtering
+test_that("filter_vdj Seurat out no filt", {
   res <- filter_vdj(
     sobj_in = tiny_vdj,
     filt    = any(chains %in% c("IGH", "IGK", "IGL")),
@@ -14,7 +15,8 @@ test_that("Seurat return without filtering", {
   expect_identical(old_na, new_na)                     # cells w/o VDJ data
 })
 
-test_that("data.frame return without filtering", {
+# Check data.frame return without filtering
+test_that("filter_vdj df out no filt", {
   res <- filter_vdj(
     sobj_in       = tiny_vdj,
     filt          = any(chains %in% c("IGH", "IGK", "IGL"))
@@ -30,7 +32,8 @@ test_that("data.frame return without filtering", {
   expect_identical(old_na, new_na)                                           # cells w/o VDJ data
 })
 
-test_that("Seurat return for only cells with VDJ data", {
+# Check Seurat return for only VDJ cells
+test_that("filter_vdj Seurat return VDJ cells", {
   res <- filter_vdj(
     sobj_in       = tiny_vdj,
     filt          = any(chains %in% c("IGH", "IGK", "IGL")),
