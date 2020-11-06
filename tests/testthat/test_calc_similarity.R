@@ -9,7 +9,7 @@ test_clsts <- tiny_vdj@meta.data %>%
 mets <- abdiv::beta_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
-lst <- list(
+arg_lst <- list(
   sobj_in       = list(tiny_vdj),
   clonotype_col = "cdr3",
   cluster_col   = "seurat_clusters",
@@ -18,10 +18,10 @@ lst <- list(
 )
 
 test_all_args(
-  lst    = lst,
-  .fn    = calc_similarity,
-  ttl    = "calc_similarity args",
-  chk_fn = expect_silent
+  arg_lst = arg_lst,
+  .fn     = calc_similarity,
+  ttl     = "calc_similarity args",
+  chk_fn  = expect_silent
 )
 
 # Check similarity calculation

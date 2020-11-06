@@ -1061,8 +1061,8 @@ vdj_theme <- function(txt_size = 8, ttl_size = 12, txt_col = "black",
   if (!is.null(lab_pos)) {
     gg_df <- gg_in$data
 
-    x <- as.character(gg_in$mapping$x)[2]
-    y <- as.character(gg_in$mapping$y)[2]
+    x <- as_name(gg_in$mapping$x)
+    y <- as_name(gg_in$mapping$y)
 
     gg_df <- dplyr::mutate(
       gg_df,
