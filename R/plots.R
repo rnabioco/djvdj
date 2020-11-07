@@ -23,6 +23,10 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
                           facet_lvls = NULL, min_pct = NULL, max_pct = NULL, na_color = "grey90",
                           lm_line = FALSE, cor_label = c(0.8, 0.9), label_size = 3.7, ...) {
 
+  if (x == y) {
+    stop("'x' and 'y' must be different.")
+  }
+
   # Format imput data
   meta_df <- sobj_in
 

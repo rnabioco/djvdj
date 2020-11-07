@@ -4,13 +4,7 @@
 \alias{mutate_vdj}
 \title{Mutate V(D)J meta.data}
 \usage{
-mutate_vdj(
-  sobj_in,
-  ...,
-  clonotype_col = "clonotype_id",
-  sep = ";",
-  vdj_cols = NULL
-)
+mutate_vdj(sobj_in, ..., clonotype_col = "cdr3_nt", sep = ";", vdj_cols = NULL)
 }
 \arguments{
 \item{sobj_in}{Seurat object containing V(D)J data}

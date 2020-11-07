@@ -6,33 +6,33 @@ test_that("filter_vdj Seurat out no filt", {
     filt    = any(chains %in% c("IGH", "IGK", "IGL")),
   )
 
-  expect_s4_class(res, "Seurat")                       # class
-  expect_identical(colnames(res), colnames(tiny_vdj))  # cells in object
-  expect_identical(res@meta.data, tiny_vdj@meta.data)  # meta.data
+  expect_s4_class(res, "Seurat")
+  expect_identical(colnames(res), colnames(tiny_vdj))                          # cells in object
+  expect_identical(res@meta.data, tiny_vdj@meta.data)                          # meta.data
 
   new_na <- colnames(res)[is.na(res$clonotype_id)]
   old_na <- colnames(tiny_vdj)[is.na(tiny_vdj$clonotype_id)]
-  expect_identical(old_na, new_na)                     # cells w/o VDJ data
+  expect_identical(old_na, new_na)                                             # cells w/o VDJ data
 })
 
 # Check data.frame return without filtering
 test_that("filter_vdj df out no filt", {
   res <- filter_vdj(
-    sobj_in       = tiny_vdj,
-    filt          = any(chains %in% c("IGH", "IGK", "IGL"))
+    sobj_in = tiny_vdj,
+    filt    = any(chains %in% c("IGH", "IGK", "IGL"))
   )
 
   res <- res@meta.data
 
-  expect_identical(rownames(res), colnames(tiny_vdj))                        # cells in object
-  expect_identical(sort(colnames(res)), sort(colnames(tiny_vdj@meta.data)))  # meta.data columns are not in the same order
+  expect_identical(rownames(res), colnames(tiny_vdj))                          # cells in object
+  expect_identical(sort(colnames(res)), sort(colnames(tiny_vdj@meta.data)))    # meta.data columns are not in the same order
 
   new_na <- rownames(res)[is.na(res$clonotype_id)]
   old_na <- colnames(tiny_vdj)[is.na(tiny_vdj$clonotype_id)]
-  expect_identical(old_na, new_na)                                           # cells w/o VDJ data
+  expect_identical(old_na, new_na)                                             # cells w/o VDJ data
 })
 
-# Check Seurat return for only VDJ cells
+# Check Seurat return for all cells
 test_that("filter_vdj Seurat return VDJ cells", {
   res <- filter_vdj(
     sobj_in       = tiny_vdj,
@@ -43,8 +43,21 @@ test_that("filter_vdj Seurat return VDJ cells", {
 
   old_na <- colnames(tiny_vdj)[!is.na(tiny_vdj$clonotype_id)]
 
-  expect_s4_class(res, "Seurat")           # class
-  expect_identical(colnames(res), old_na)  # cells w/ VDJ data
+  expect_s4_class(res, "Seurat")
+  expect_identical(colnames(res), old_na)                                      # cells w/ VDJ
+})
+
+# Check Seurat return for only VDJ cells
+test_that("filter_vdj Seurat return all cells", {
+  res <- filter_vdj(
+    sobj_in       = tiny_vdj,
+    filt          = any(chains %in% c("IGH", "IGK", "IGL")),
+    clonotype_col = "cdr3_nt",
+    filter_cells  = TRUE
+  )
+
+  expect_s4_class(res, "Seurat")
+  expect_identical(colnames(res), colnames(tiny_vdj))
 })
 
 

@@ -14,12 +14,14 @@ tiny_dat <- tiny_vdj@meta.data %>%
 
 # Check all plot_features arguments for character feature
 arg_lst <- list(
+  x           = list("UMAP_1", c(x = "UMAP_1")),
+  y           = list("UMAP_2", c(y = "UMAP_2")),
   sobj_in     = list(tiny_vdj, tiny_dat),
-  feature     = "seurat_clusters",
+  feature     = list("seurat_clusters", c(clust = "seurat_clusters")),
   data_slot   = c("data", "counts"),
   plot_colors = list(NULL, test_cols),
   feat_lvls   = list(NULL, test_lvls),
-  facet_id    = list(NULL, "orig.ident"),
+  facet_col   = list(NULL, "orig.ident", c("orig.ident", "seurat_clusters")),
   facet_lvls  = list(NULL, "AVID-seq"),
   min_pct     = list(NULL, 0.05),
   max_pct     = list(NULL, 0.95),
@@ -103,6 +105,7 @@ ab_lst <- list(
   cluster_col   = list(NULL, "seurat_clusters"),
   type          = "line",
   label_col     = list(NULL, "cdr3"),
+  color_col     = list(NULL, "seurat_clusters"),
   yaxis         = c("percent", "frequency"),
   plot_colors   = list(NULL, test_cols),
   plot_lvls     = list(NULL, test_lvls),
@@ -110,7 +113,7 @@ ab_lst <- list(
 )
 
 test_all_args(
-  arg_lst     = ab_lst,
+  arg_lst = ab_lst,
   .fn     = plot_abundance,
   ttl     = "plot_abundance args",
   chk_fn  = expect_s3_class,
@@ -122,7 +125,7 @@ ab_lst$type <- "bar"
 ab_lst$label_col <- "cdr3"
 
 test_all_args(
-  arg_lst     = ab_lst,
+  arg_lst = ab_lst,
   .fn     = plot_abundance,
   ttl     = "plot_abundance args",
   chk_fn  = expect_s3_class,
@@ -133,11 +136,13 @@ test_all_args(
 mets <- abdiv::alpha_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
+names(mets) <- abdiv::alpha_diversities
+
 arg_lst <- list(
   sobj_in       = list(tiny_vdj),
   clonotype_col = "cdr3",
   cluster_col   = list(NULL, "seurat_clusters"),
-  method        = mets,
+  method        = append(mets, list(mets)),
   plot_colors   = list(NULL, test_cols),
   plot_lvls     = list(NULL, test_lvls)
 )
@@ -171,6 +176,12 @@ test_all_args(
 )
 
 # Check all plot_usage arguments
+test_genes <- c(
+  "IGHV1",    "IGHJ3", "IGHM",
+  "IGKV4-53", "IGKJ2", "IGKC",
+  "IGLV1",    "IGLJ1", "IGLC1"
+)
+
 arg_lst <- list(
   sobj_in     = list(tiny_vdj),
   gene_cols   = list("v_gene", "d_gene", "j_gene", "c_gene", c("v_gene", "j_gene")),
@@ -178,14 +189,16 @@ arg_lst <- list(
   chain       = list(NULL, "IGH", "IGL", "IGK"),
   chain_col   = "chains",
   type        = c("heatmap", "bar"),
+  n_genes     = list(NULL, 10),
+  plot_genes  = list(NULL, test_genes),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls),
   yaxis       = c("percent", "frequency")
 )
 
 test_all_args(
-  arg_lst    = arg_lst,
-  .fn    = plot_usage,
-  ttl    = "plot_usage args",
-  chk_fn = expect_silent
+  arg_lst = arg_lst,
+  .fn     = plot_usage,
+  ttl     = "plot_usage args",
+  chk_fn  = expect_silent
 )
