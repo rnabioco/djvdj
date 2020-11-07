@@ -7,7 +7,7 @@
 filter_vdj(
   sobj_in,
   filt,
-  clonotype_col = "clonotype_id",
+  clonotype_col = "cdr3_nt",
   filter_cells = FALSE,
   sep = ";",
   vdj_cols = NULL

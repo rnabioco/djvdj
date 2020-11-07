@@ -193,7 +193,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 #' If set to NULL (recommended) columns are automatically selected.
 #' @return Seurat object
 #' @export
-filter_vdj <- function(sobj_in, filt, clonotype_col = "clonotype_id", filter_cells = FALSE,
+filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = FALSE,
                        sep = ";", vdj_cols = NULL) {
 
   if (!filter_cells && is.null(clonotype_col)) {
@@ -299,7 +299,7 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "clonotype_id", filter_cel
 #' If set to NULL (recommended) columns are automatically selected.
 #' @return Seurat object
 #' @export
-mutate_vdj <- function(sobj_in, ..., clonotype_col = "clonotype_id", sep = ";", vdj_cols = NULL) {
+mutate_vdj <- function(sobj_in, ..., clonotype_col = "cdr3_nt", sep = ";", vdj_cols = NULL) {
 
   # Identify columns with VDJ data
   meta_df <- sobj_in@meta.data
@@ -356,101 +356,6 @@ mutate_vdj <- function(sobj_in, ..., clonotype_col = "clonotype_id", sep = ";", 
   cells <- rownames(meta_df)
   res   <- subset(sobj_in, cells = cells)
   res   <- Seurat::AddMetaData(res, meta_df)
-
-  res
-}
-
-
-#' Identify clonotypes
-#'
-#' Identify clonotypes using enclone from 10x Genomics
-#' (https://10xgenomics.github.io/enclone)
-#'
-#' @param sobj_in Seurat object
-#' @param vdj_dir cellranger vdj output directories. If a vector of multiple
-#' paths is provided, an equal number of cell prefixes must also be provided.
-#' If a named vector is given, the names will be used to prefix each cell
-#' barcode.
-#' @param csv_file Output file to write enclone results
-#' @param prefix Prefix to add to new meta.data columns
-#' @param cell_prefix Prefix to add to cell barcodes
-#' @param overwrite If csv_file already exists, should the file be overwritten?
-#' If csv_file already exists and overwrite = FALSE, the existing file will be
-#' loaded. To re-run enclone, set overwrite = TRUE.
-#' @return Seurat object
-identify_clonotypes <- function(sobj_in, vdj_dir, csv_file = "enclone_output.csv", prefix = "",
-                                cell_prefix = "", overwrite = FALSE) {
-
-  # Check path names
-  if (is.null(names(vdj_dir))) {
-    if (length(vdj_dir) != length(cell_prefix)) {
-      stop("Must provide a cell prefix for each path passed to vdj_dir.")
-    }
-
-    names(vdj_dir) <- cell_prefix
-  }
-
-  if (any(is.na(names(vdj_dir)))) {
-    stop("Cell prefixes must not include NAs.")
-  }
-
-  nms <- !grepl("_$", names(vdj_dir))
-  names(vdj_dir)[nms] <- paste0(names(vdj_dir)[nms], "_")
-
-  # Run enclone
-  en_cols <- c(
-    "datasets", "barcodes",
-    "group_id", "group_ncells"
-    # "clonotype_id", "clonotype_ncells"
-  )
-
-  if (!file.exists(csv_file) || overwrite) {
-    out_cols <- paste0(en_cols, collapse = ",")
-    en_dir   <- paste0(vdj_dir, collapse = ";")
-    en_cmd   <- paste0("enclone BCR=\"", en_dir, "\" POUT=", csv_file, " PCOLS=", out_cols)
-
-    system(en_cmd, ignore.stdout = TRUE)
-
-  } else {
-    warning(paste0(csv_file, " already exists, using previous results. Set overwrite = TRUE to re-run enclone."))
-  }
-
-  samples <- purrr::set_names(
-    names(vdj_dir),
-    basename(vdj_dir)
-  )
-
-  # Import enclone results
-  meta_df <- readr::read_csv(csv_file, col_types = readr::cols())
-
-  meta_df <- dplyr::mutate(
-    meta_df,
-    barcodes = strsplit(as.character(.data$barcodes), ",")
-  )
-
-  meta_df <- tidyr::unnest(meta_df, cols = "barcodes")
-
-  meta_df <- dplyr::mutate(
-    meta_df,
-    barcodes = paste0(samples[.data$datasets], .data$barcodes)
-  )
-
-  meta_df <- dplyr::select(meta_df, -.data$datasets)
-
-  # Filter for cells present in sobj_in
-  cells <- Seurat::Cells(sobj_in)
-
-  if (!any(cells %in% meta_df$barcodes)) {
-    stop("No VDJ cell barcodes are present in the Seurat object. Are you sure you are using the correct cell prefixes?")
-  }
-
-  meta_df <- dplyr::filter(meta_df, .data$barcodes %in% cells)
-
-  # Add meta.data to Seurat object
-  meta_df <- tibble::column_to_rownames(meta_df, "barcodes")
-  meta_df <- dplyr::rename_with(meta_df, ~ paste0(prefix, .x))
-
-  res <- Seurat::AddMetaData(sobj_in, metadata = meta_df)
 
   res
 }
