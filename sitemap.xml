@@ -25,6 +25,9 @@
     <loc>https://rnabioco.github.io/djvdj/reference/dot-add_lm.html</loc>
   </url>
   <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/dot-calc_abund.html</loc>
+  </url>
+  <url>
     <loc>https://rnabioco.github.io/djvdj/reference/dot-convert_char.html</loc>
   </url>
   <url>
@@ -95,9 +98,6 @@
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/vdj_theme.html</loc>
-  </url>
-  <url>
-    <loc>https://rnabioco.github.io/djvdj/articles/bcr.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/articles/tcr.html</loc>

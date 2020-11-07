@@ -2,9 +2,8 @@ pandoc: 2.7.3
 pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
-  bcr: bcr.html
   tcr: tcr.html
-last_built: 2020-11-05T08:14Z
+last_built: 2020-11-07T01:07Z
 urls:
   reference: https://rnabioco.github.io/djvdj/reference
   article: https://rnabioco.github.io/djvdj/articles
