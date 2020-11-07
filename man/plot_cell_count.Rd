@@ -27,7 +27,8 @@ plot_cell_count(
 
 \item{fill_col}{meta.data column to use for coloring bars}
 
-\item{facet_col}{meta.data column containing groups to use for spliting bars}
+\item{facet_col}{meta.data column containing groups to use for spliting plot
+into facets}
 
 \item{yaxis}{Units to plot on the y-axis, either "fraction" or "count"}
 

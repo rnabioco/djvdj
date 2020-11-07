@@ -24,19 +24,19 @@ plot_reads(
 \item{data_cols}{meta.data columns containing UMI and/or read counts}
 
 \item{chain_col}{meta.data column containing chains. If chain_col is
-provided, reads and UMIs will be plotted separately for each chain.}
+provided, reads and UMIs will be plotted separately for each chain}
 
 \item{cluster_col}{meta.data column containing cluster IDs. If cluster_col
 is provided reads and UMIs will be plotted separately for each cluster.}
 
-\item{type}{Type of plot to create, can be 'violin', 'histogram' or 'density'.}
+\item{type}{Type of plot to create, can be 'violin', 'histogram' or 'density'}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
 \item{facet_rows}{The number of facet rows. Use this argument if both
-chain_col and cluster_col are provided.}
+chain_col and cluster_col are provided}
 
 \item{facet_scales}{This argument passes a scales specification to
 facet_wrap. Can be "fixed", "free", "free_x", or "free_y"}

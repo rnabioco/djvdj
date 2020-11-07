@@ -9,7 +9,7 @@ calc_similarity(
   clonotype_col,
   cluster_col,
   method = abdiv::jaccard,
-  prefix = "sim_",
+  prefix = NULL,
   return_seurat = TRUE
 )
 }
