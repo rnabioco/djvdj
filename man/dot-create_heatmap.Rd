@@ -9,9 +9,9 @@
   x,
   y,
   .fill,
-  plot_colors = NULL,
+  clrs = NULL,
   na_color = "white",
-  legd_ttl = .fill,
+  ttl = .fill,
   ang = 45,
   hjst = 1,
   ...
@@ -26,11 +26,11 @@
 
 \item{.fill}{Variable to use for the fill color}
 
-\item{plot_colors}{Vector of colors for plotting}
+\item{clrs}{Vector of colors for plotting}
 
 \item{na_color}{Color to use for missing values}
 
-\item{legd_ttl}{Legend title}
+\item{ttl}{Legend title}
 
 \item{ang}{Angle of x-axis text}
 

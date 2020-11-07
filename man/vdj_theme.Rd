@@ -4,12 +4,20 @@
 \alias{vdj_theme}
 \title{Theme for djvdj plotting functions}
 \usage{
-vdj_theme(txt_size = 8, ttl_size = 12, txt_col = "black", ln_col = "grey85")
+vdj_theme(
+  ttl_size = 12,
+  txt_size = 8,
+  ln_size = 0.5,
+  txt_col = "black",
+  ln_col = "grey85"
+)
 }
 \arguments{
+\item{ttl_size}{Size of axis titles}
+
 \item{txt_size}{Size of axis text}
 
-\item{ttl_size}{Size of axis titles}
+\item{ln_size}{Size of axis lines}
 
 \item{txt_col}{Color of axis text}
 

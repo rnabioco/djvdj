@@ -378,7 +378,6 @@ mutate_vdj <- function(sobj_in, ..., clonotype_col = "clonotype_id", sep = ";", 
 #' If csv_file already exists and overwrite = FALSE, the existing file will be
 #' loaded. To re-run enclone, set overwrite = TRUE.
 #' @return Seurat object
-#' @export
 identify_clonotypes <- function(sobj_in, vdj_dir, csv_file = "enclone_output.csv", prefix = "",
                                 cell_prefix = "", overwrite = FALSE) {
 
@@ -481,46 +480,37 @@ calc_abundance <- function(sobj_in, clonotype_col, cluster_col = NULL,
     .data$.cell_id, all_of(c(cluster_col, clonotype_col))
   )
 
-  # Calculate abundance
-  if (!is.null(cluster_col)) {
-    meta_df <- dplyr::group_by(meta_df, !!sym(cluster_col))
-  }
-
-  meta_df <- dplyr::mutate(
-    meta_df,
-    n_cells = dplyr::n_distinct(.data$.cell_id)
+  # Calculate clonotype abundance
+  meta_df <- .calc_abund(
+    df_in     = meta_df,
+    cell_col  = ".cell_id",
+    clone_col = clonotype_col,
+    clust_col = cluster_col
   )
-
-  meta_df <- dplyr::group_by(
-    meta_df,
-    !!sym(clonotype_col),
-    .add = TRUE
-  )
-
-  meta_df <- dplyr::mutate(
-    meta_df,
-    freq = dplyr::n_distinct(.data$.cell_id),
-    pct  = (.data$freq / .data$n_cells) * 100
-  )
-
-  meta_df <- dplyr::ungroup(meta_df)
 
   # Add results to meta.data
   if (!return_seurat) {
     res <- dplyr::select(meta_df, -.data$.cell_id)
-    res <- unique(res)
+    res <- dplyr::distinct(res)
 
     return(res)
   }
 
-  freq_col <- paste0(prefix, "clone_freq")
-  pct_col  <- paste0(prefix, "clone_pct")
+  new_cols <- c("freq", "pct")
 
-  meta_df <- dplyr::select(
+  if (!is.null(cluster_col)) {
+    new_cols <- c(new_cols, "shared")
+  }
+
+  new_cols <- purrr::set_names(
+    new_cols,
+    paste0(prefix, "clone_", new_cols)
+  )
+
+  meta_df <- select(
     meta_df,
     -all_of(c("n_cells", cluster_col)),
-    !!sym(freq_col) := .data$freq,
-    !!sym(pct_col)  := .data$pct
+    !!!syms(new_cols)
   )
 
   meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
@@ -555,10 +545,9 @@ calc_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
 
   if (length(method) == 1 && is.null(names(method))) {
     nm <- as.character(substitute(method))
-    nm <- dplyr::last(nm)
+    nm <- last(nm)
 
-    method        <- list(method)
-    names(method) <- nm
+    method <- purrr::set_names(list(method), nm)
   }
 
   # Format meta.data
@@ -650,7 +639,13 @@ calc_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
 #' @return Seurat object with similarity index added to meta.data
 #' @export
 calc_similarity <- function(sobj_in, clonotype_col, cluster_col, method = abdiv::jaccard,
-                            prefix = "sim_", return_seurat = TRUE) {
+                            prefix = NULL, return_seurat = TRUE) {
+
+  if (is.null(prefix)) {
+    prefix <- as.character(substitute(method))
+    prefix <- dplyr::last(prefix)
+    prefix <- paste0(prefix, "_")
+  }
 
   # Format meta.data
   meta_df <- sobj_in@meta.data
@@ -692,8 +687,8 @@ calc_similarity <- function(sobj_in, clonotype_col, cluster_col, method = abdiv:
   res <- map_dfr(combs, ~ {
     ins <- paste0("vdj_df$", .x)
 
-    x <- dplyr::pull(vdj_df, .x[1])
-    y <- dplyr::pull(vdj_df, .x[2])
+    x <- pull(vdj_df, .x[1])
+    y <- pull(vdj_df, .x[2])
 
     tibble::tibble(
       Var1 = .x[1],
@@ -822,7 +817,7 @@ calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
 
   # Calculate percentage used
   if (!is.null(cluster_col)) {
-    clusts       <- dplyr::pull(meta_df, cluster_col)
+    clusts       <- pull(meta_df, cluster_col)
     clust_counts <- table(clusts)
     clusts       <- unique(clusts)
 
@@ -911,6 +906,50 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
 }
 
 
+#' Calculate clonotype abundance
+#'
+#' @param df_in Input data.frame
+#' @param cell_col Column containing cell IDs
+#' @param clone_col Column containing clonotype IDs
+#' @param clust_col Column containing cluster IDs
+#' @return data.frame
+.calc_abund <- function(df_in, cell_col, clone_col, clust_col = NULL) {
+
+  # Count number of cells in each group
+  if (!is.null(clust_col)) {
+    df_in <- dplyr::group_by(df_in, !!sym(clust_col))
+  }
+
+  df_in <- dplyr::mutate(
+    df_in,
+    n_cells = dplyr::n_distinct(!!sym(cell_col))
+  )
+
+  # Calculate frequency
+  res <- dplyr::group_by(df_in, !!sym(clone_col), .add = TRUE)
+
+  res <- dplyr::mutate(
+    res,
+    freq = dplyr::n_distinct(!!sym(cell_col)),
+    pct  = (.data$freq / .data$n_cells) * 100
+  )
+
+  # Identify shared clonotypes
+  if (!is.null(clust_col)) {
+    res <- dplyr::group_by(res, !!sym(clone_col))
+
+    res <- dplyr::mutate(
+      res,
+      shared = dplyr::n_distinct(!!sym(clust_col)) > 1
+    )
+  }
+
+  res <- dplyr::ungroup(res)
+
+  res
+}
+
+
 #' Split V(D)J meta.data columns into vectors
 #'
 #' @param df_in data.frame to modify
@@ -973,7 +1012,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
 
     cols_in <- purrr::keep(
       cols_in,
-      ~ identical(.x, dplyr::pull(cols_in, clone_col))
+      ~ identical(.x, pull(cols_in, clone_col))
     )
 
     cols_in <- colnames(cols_in)

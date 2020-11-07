@@ -25,15 +25,15 @@ calculating clonotype abundance}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
 
-\item{method}{Method to use for calculating diversity. Can pass also pass
-a named list to use multiple methods.}
+\item{method}{Method to use for calculating diversity. Can also pass a named
+list to use multiple methods.}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
 \item{facet_rows}{The number of facet rows. Use this argument if a list of
-functions is passed to method.}
+functions is passed to method}
 
 \item{...}{Additional arguments to pass to ggplot}
 }

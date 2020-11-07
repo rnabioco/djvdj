@@ -9,7 +9,7 @@
   x,
   y,
   .fill,
-  plot_colors = NULL,
+  clrs = NULL,
   y_ttl = y,
   ang = 45,
   hjst = 1,
@@ -25,7 +25,7 @@
 
 \item{.fill}{Variable to use for fill color}
 
-\item{plot_colors}{Vector of colors for plotting}
+\item{clrs}{Vector of colors for plotting}
 
 \item{y_ttl}{Title for y-axis}
 

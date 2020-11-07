@@ -12,10 +12,10 @@ test_lvls <- unique(tiny_vdj$seurat_clusters)
 tiny_dat <- tiny_vdj@meta.data %>%
   as_tibble(rownames = ".cell_id")
 
-# Check all plot_features arguments
-lst <- list(
+# Check all plot_features arguments for character feature
+arg_lst <- list(
   sobj_in     = list(tiny_vdj, tiny_dat),
-  feature     = c("seurat_clusters", "nCount_RNA"),
+  feature     = "seurat_clusters",
   data_slot   = c("data", "counts"),
   plot_colors = list(NULL, test_cols),
   feat_lvls   = list(NULL, test_lvls),
@@ -27,15 +27,37 @@ lst <- list(
 )
 
 test_all_args(
-  lst     = lst,
+  arg_lst = arg_lst,
   .fn     = plot_features,
   ttl     = "plot_features args",
   chk_fn  = expect_s3_class,
   chk_arg = "ggplot"
 )
 
+# Check all plot_features arguments for numeric feature
+arg_lst$feature <- "nCount_RNA"
+arg_lst$feat_lvls <- NULL
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_features,
+  ttl     = "plot_features args",
+  chk_fn  = expect_s3_class,
+  chk_arg = "ggplot"
+)
+
+# Check plot_features warning for numeric feature
+arg_lst$feat_lvls <- list(test_lvls)
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_features,
+  ttl     = "plot_features args",
+  chk_fn  = expect_warning
+)
+
 # Check all plot_cell_count arguments
-lst <- list(
+arg_lst <- list(
   sobj_in     = list(tiny_vdj, tiny_dat),
   x           = "orig.ident",
   fill_col    = list(NULL, "seurat_clusters"),
@@ -48,7 +70,7 @@ lst <- list(
 )
 
 test_all_args(
-  lst     = lst,
+  arg_lst = arg_lst,
   .fn     = plot_cell_count,
   ttl     = "plot_cell_count args",
   chk_fn  = expect_s3_class,
@@ -56,7 +78,7 @@ test_all_args(
 )
 
 # Check all plot_reads arguments
-lst <- list(
+arg_lst <- list(
   sobj_in     = list(tiny_vdj),
   data_cols   = list("reads", "umis", c("reads", "umis")),
   chain_col   = list(NULL, "chains"),
@@ -67,7 +89,7 @@ lst <- list(
 )
 
 test_all_args(
-  lst     = lst,
+  arg_lst = arg_lst,
   .fn     = plot_reads,
   ttl     = "plot_reads args",
   chk_fn  = expect_s3_class,
@@ -88,7 +110,7 @@ ab_lst <- list(
 )
 
 test_all_args(
-  lst     = ab_lst,
+  arg_lst     = ab_lst,
   .fn     = plot_abundance,
   ttl     = "plot_abundance args",
   chk_fn  = expect_s3_class,
@@ -100,7 +122,7 @@ ab_lst$type <- "bar"
 ab_lst$label_col <- "cdr3"
 
 test_all_args(
-  lst     = ab_lst,
+  arg_lst     = ab_lst,
   .fn     = plot_abundance,
   ttl     = "plot_abundance args",
   chk_fn  = expect_s3_class,
@@ -111,7 +133,7 @@ test_all_args(
 mets <- abdiv::alpha_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
-lst <- list(
+arg_lst <- list(
   sobj_in       = list(tiny_vdj),
   clonotype_col = "cdr3",
   cluster_col   = list(NULL, "seurat_clusters"),
@@ -121,7 +143,7 @@ lst <- list(
 )
 
 test_all_args(
-  lst     = lst,
+  arg_lst = arg_lst,
   .fn     = plot_diversity,
   ttl     = "plot_diversity args",
   chk_fn  = expect_s3_class,
@@ -132,7 +154,7 @@ test_all_args(
 mets <- abdiv::beta_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
-lst <- list(
+arg_lst <- list(
   sobj_in       = list(tiny_vdj),
   clonotype_col = "cdr3",
   cluster_col   = "seurat_clusters",
@@ -141,7 +163,7 @@ lst <- list(
 )
 
 test_all_args(
-  lst     = lst,
+  arg_lst = arg_lst,
   .fn     = plot_similarity,
   ttl     = "plot_similarity args",
   chk_fn  = expect_s3_class,
@@ -149,7 +171,7 @@ test_all_args(
 )
 
 # Check all plot_usage arguments
-lst <- list(
+arg_lst <- list(
   sobj_in     = list(tiny_vdj),
   gene_cols   = list("v_gene", "d_gene", "j_gene", "c_gene", c("v_gene", "j_gene")),
   cluster_col = list(NULL, "seurat_clusters"),
@@ -162,7 +184,7 @@ lst <- list(
 )
 
 test_all_args(
-  lst    = lst,
+  arg_lst    = arg_lst,
   .fn    = plot_usage,
   ttl    = "plot_usage args",
   chk_fn = expect_silent

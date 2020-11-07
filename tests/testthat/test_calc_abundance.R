@@ -1,6 +1,6 @@
 
 # Check all calc_abundance arguments
-lst <- list(
+arg_lst <- list(
   sobj_in       = list(tiny_vdj),
   clonotype_col = "cdr3",
   cluster_col   = list(NULL, "seurat_clusters"),
@@ -9,10 +9,10 @@ lst <- list(
 )
 
 test_all_args(
-  lst    = lst,
-  .fn    = calc_abundance,
-  ttl    = "calc_abundance args",
-  chk_fn = expect_silent
+  arg_lst = arg_lst,
+  .fn     = calc_abundance,
+  ttl     = "calc_abundance args",
+  chk_fn  = expect_silent
 )
 
 test_that("Check Seurat output", {

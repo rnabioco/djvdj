@@ -3,7 +3,7 @@
 mets <- abdiv::alpha_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
-lst <- list(
+arg_lst <- list(
   sobj_in       = list(tiny_vdj),
   clonotype_col = "cdr3",
   cluster_col   = list(NULL, "seurat_clusters"),
@@ -13,10 +13,10 @@ lst <- list(
 )
 
 test_all_args(
-  lst    = lst,
-  .fn    = calc_diversity,
-  ttl    = "calc_diversity args",
-  chk_fn = expect_silent
+  arg_lst = arg_lst,
+  .fn     = calc_diversity,
+  ttl     = "calc_diversity args",
+  chk_fn  = expect_silent
 )
 
 # Check diversity calculation

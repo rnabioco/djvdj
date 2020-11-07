@@ -9,7 +9,7 @@ plot_usage(
   gene_cols,
   cluster_col = NULL,
   chain = NULL,
-  type = "heatmap",
+  type = "bar",
   plot_colors = NULL,
   plot_genes = NULL,
   n_genes = NULL,
@@ -28,8 +28,8 @@ plot_usage(
 \item{cluster_col}{meta.data column containing cell clusters to use for
 calculating gene usage}
 
-\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
-all chains.}
+\item{chain}{Chain to use for calculating gene usage, set to NULL to include
+all chains}
 
 \item{type}{Type of plot to create, can be either 'heatmap' or 'bar'}
 

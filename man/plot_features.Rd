@@ -13,7 +13,7 @@ plot_features(
   pt_size = 0.25,
   plot_colors = NULL,
   feat_lvls = NULL,
-  facet_id = NULL,
+  facet_col = NULL,
   facet_lvls = NULL,
   min_pct = NULL,
   max_pct = NULL,
@@ -33,7 +33,7 @@ plot_features(
 
 \item{feature}{Variable to use for coloring points}
 
-\item{data_slot}{Slot in the Seurat object to pull data from}
+\item{data_slot}{Slot in the Seurat object to pull data}
 
 \item{pt_size}{Point size}
 
@@ -41,7 +41,7 @@ plot_features(
 
 \item{feat_lvls}{Levels to use for ordering feature}
 
-\item{facet_id}{Variable to use for splitting plot into facets}
+\item{facet_col}{Variable to use for splitting plot into facets}
 
 \item{facet_lvls}{Levels to use for ordering plot facets}
 
