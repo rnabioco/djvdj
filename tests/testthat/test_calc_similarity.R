@@ -21,7 +21,7 @@ test_all_args(
   arg_lst = arg_lst,
   .fn     = calc_similarity,
   ttl     = "calc_similarity args",
-  chk_fn  = expect_silent
+  chk     = expect_silent
 )
 
 # Check similarity calculation

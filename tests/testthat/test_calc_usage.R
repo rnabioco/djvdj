@@ -12,6 +12,5 @@ test_all_args(
   arg_lst = arg_lst,
   .fn     = calc_usage,
   ttl     = "calc_usage args",
-  chk_fn  = expect_s3_class,
-  chk_arg = "tbl"
+  chk     = expr(expect_s3_class(.res, "tbl"))
 )

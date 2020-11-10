@@ -60,4 +60,19 @@ test_that("filter_vdj Seurat return all cells", {
   expect_identical(colnames(res), colnames(tiny_vdj))
 })
 
+# Check NULL clonotype_col and FALSE filter_cells
+test_that("filter_vdj NULL clonotype_col FALSE filter_cells", {
+  expect_error(
+    filter_vdj(
+      sobj_in       = tiny_vdj,
+      filt          = any(chains %in% c("IGH", "IGK", "IGL")),
+      clonotype_col = NULL,
+      filter_cells  = FALSE
+    )
+  )
+})
+
+
+
+
 
