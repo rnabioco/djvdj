@@ -5,7 +5,7 @@ library(purrr)
 library(djvdj)
 
 # Helper to test all combinations of provided arguments
-test_all_args <- function(arg_lst, .fn, ttl, chk_fn, chk_arg = NULL) {
+test_all_args <- function(arg_lst, .fn, ttl, chk) {
   arg_lst <- arg_lst %>%
     expand.grid(stringsAsFactors = FALSE)
 
@@ -14,11 +14,13 @@ test_all_args <- function(arg_lst, .fn, ttl, chk_fn, chk_arg = NULL) {
   pwalk(arg_lst, ~ {
     test_that(paste(ttl, n), {
 
-      if (!is.null(chk_arg)) {
-        return(chk_fn(.fn(...), chk_arg))
+      if (is.call(chk)) {
+        .res <- .fn(...)
+
+        return(eval(chk))
       }
 
-      chk_fn(.fn(...))
+      chk(.fn(...))
     })
 
     n <<- n + 1

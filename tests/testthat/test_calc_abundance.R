@@ -12,7 +12,7 @@ test_all_args(
   arg_lst = arg_lst,
   .fn     = calc_abundance,
   ttl     = "calc_abundance args",
-  chk_fn  = expect_silent
+  chk     = expect_silent
 )
 
 test_that("Check Seurat output", {

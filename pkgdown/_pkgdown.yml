@@ -22,5 +22,10 @@ reference:
 
 - title: Plotting
   contents:
-  - starts_with("plot")
+  - plot_abundance
+  - plot_cell_count
+  - plot_diversity
+  - plot_reads
+  - plot_similarity
+  - plot_usage
   - vdj_theme

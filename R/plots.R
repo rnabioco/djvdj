@@ -44,10 +44,10 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
     )
 
     meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
+  }
 
-    if (!feature %in% colnames(meta_df)) {
-      stop(paste(feature, "not found in object."))
-    }
+  if (!feature %in% colnames(meta_df)) {
+    stop(paste(feature, "not found in object."))
   }
 
   # Rename features
@@ -525,20 +525,19 @@ plot_abundance <- function(sobj_in, clonotype_col, cluster_col = NULL, type = "b
 
   # Create bar graph
   if (type == "bar") {
-    top_genes <- dplyr::arrange(top_genes, rank)
+    top_genes <- dplyr::arrange(top_genes, !!sym(data_col))
 
-    top_genes <- dplyr::mutate(
-      top_genes,
-      !!sym(label_col) := factor(
-        !!sym(label_col),
-        levels = unique(!!sym(label_col))
-      )
+    top_genes <- .set_lvls(
+      df_in = top_genes,
+      clmn  = label_col,
+      lvls  = dplyr::pull(top_genes, label_col)
     )
 
     res <- .create_bars(
       df_in = top_genes,
       x     = label_col,
       y     = data_col,
+      y_ttl = yaxis,
       .fill = color_col,
       clrs  = plot_colors,
       ang   = 45,
@@ -1260,9 +1259,4 @@ vdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "bla
 
   df_in
 }
-
-
-
-
-
 
