@@ -89,7 +89,7 @@ arg_lst <- list(
   x           = "orig.ident",
   fill_col    = list(NULL, "seurat_clusters"),
   facet_col   = list(NULL, "orig.ident"),
-  yaxis       = c("fraction", "count"),
+  yaxis       = c("fraction", "counts"),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, "AVID-seq"),
   n_label     = c(TRUE, FALSE),

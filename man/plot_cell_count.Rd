@@ -30,7 +30,7 @@ plot_cell_count(
 \item{facet_col}{meta.data column containing groups to use for spliting plot
 into facets}
 
-\item{yaxis}{Units to plot on the y-axis, either "fraction" or "count"}
+\item{yaxis}{Units to plot on the y-axis, either "fraction" or "counts"}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 

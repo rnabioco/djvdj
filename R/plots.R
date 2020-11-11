@@ -143,7 +143,7 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
 #' @param fill_col meta.data column to use for coloring bars
 #' @param facet_col meta.data column containing groups to use for spliting plot
 #' into facets
-#' @param yaxis Units to plot on the y-axis, either "fraction" or "count"
+#' @param yaxis Units to plot on the y-axis, either "fraction" or "counts"
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param na_color Color to use for missing values
@@ -163,13 +163,13 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, facet_col = NULL, yaxis
                             label_aes = list(), facet_rows = 1, facet_scales = "free_x", ...) {
 
   # Set y-axis unit
-  y_types <- c("fraction", "count")
+  y_types <- c("fraction", "counts")
 
   if (!yaxis %in% y_types) {
-    stop("yaxis must be either fraction or count.")
+    stop("yaxis must be either 'fraction' or 'counts'.")
   }
 
-  y_types <- purrr::set_names(c("fill", "identity"), y_types)
+  y_types <- purrr::set_names(c("fill", "stack"), y_types)
 
   bar_pos <- y_types[[yaxis]]
 
