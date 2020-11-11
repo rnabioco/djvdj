@@ -42,33 +42,7 @@ vdj_colors <- c(
 
 <br>
 
-## V(D)J Sequencing
-
-For 10x single-cell immune profiling, the initial steps of GEM formation and reverse transcription are the same. After reverse transcription within each GEM, a portion of the pooled cDNA is further amplified using a primer specific for the V(D)J constant region. The amplified cDNA is then fragmented which results in fragments of various length that span the entire gene. The remaining cDNA that was not amplified using V(D)J specific primers is used to generate the gene expression library. This ultimately results in separate gene expression and V(D)J libraries that include the same cell barcodes.
-
-<br>
-
-<img src="10x_GEM_generation.png" width="400"> <img src="10x_GEM_vdj_cDNA.png" width="400"> 
-
-<br>
-
-Single-cell V(D)J libraries are typically sequenced at a depth of ~10k reads per cell. After sequencing, the raw fastq files are processed separately from the gene expression libraries using the [Cell Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj) software available through 10x Genomics.
-
-<br>
-
-<img src="10x_vdj_workflow.png" width="800"> 
-
-<br>
-
-When analyzing the V(D)J results alongside single-cell gene expression data, there are several key differences to keep in mind. The main goal of V(D)J sequencing is to accurately assemble each chain expressed in the cell, not to quantify changes in expression. Due to this difference, the total number of UMIs obtained for each cell can be much lower than the gene expression libraries. In addition, when processing gene expression data, reads with the same UMI are normally discarded. However, for V(D)J sequencing these reads are kept and are important for obtaining sufficient coverage to accurately assemble each chain.
-
-<br>
-
-<img src="10x_vdj_read_layout.png" width="800"> 
-
-<br>
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. In nec molestie risus. Duis vitae eros odio. Proin condimentum odio dolor, at vehicula lorem tempus sit amet. Nunc id metus vehicula, facilisis velit in, tincidunt augue. Donec at semper turpis, nec cursus justo. Suspendisse est lorem, vulputate vitae diam sit amet, luctus volutpat sem. Aenean at odio sed nibh tempor eleifend. Duis ultrices turpis sit amet velit luctus, eu commodo urna lacinia. In porttitor tristique quam ac molestie. In s
+For this vignette we are using single-cell TCR data provided by the Rincon lab. Thymocytes were collected for wild type and mutant mice and sorted for two developmental timepoints, DN3 and DN4. UMAP projections are shown below with cells colored by sample and cell cluster (based on gene expression).
 
 ```{r "rna_umap", fig.width = 12.5, fig.height = 5, echo = FALSE}
 load(here("data/tcr/so_tcr.rda"))
@@ -279,9 +253,8 @@ To identify the top clonotypes in each sample or cluster, clonotype abundance ca
 
 ```{r}
 so_tcr <- calc_abundance(
-  sobj_in       = so_tcr,                   # Seurat object
-  clonotype_col = "cdr3_nt",                # meta.data column containing clonotype IDs
-  cluster_col   = "orig.ident"              # meta.data column containing cell labels
+  sobj_in     = so_tcr,                     # Seurat object
+  cluster_col = "orig.ident"                # meta.data column containing cell labels
 )
 ```
 
@@ -291,12 +264,11 @@ For each 'calc' function provided by djvdj, there is a matching 'plot' function 
 
 ```{r "abund_plots", fig.width = 10, fig.height = 4}
 plot_abundance(
-  sobj_in       = so_tcr,                   # Seurat object
-  clonotype_col = "cdr3_nt",                # meta.data column containing clonotype IDs
-  cluster_col   = "orig.ident",             # meta.data column containing cell labels
-  label_col     = "cdr3",                   # meta.data column containing labels
-  n_clonotypes  = 12,                       # Number of top clonotypes
-  plot_colors   = vdj_colors
+  sobj_in      = so_tcr,                    # Seurat object
+  cluster_col  = "orig.ident",              # meta.data column containing cell labels
+  label_col    = "cdr3",                    # meta.data column containing labels
+  n_clonotypes = 12,                        # Number of top clonotypes
+  plot_colors  = vdj_colors
 ) +
   theme(
     legend.position = "none",
@@ -321,10 +293,9 @@ In this example we are calculating the Shannon diversity for each sample in the 
 
 ```{r}
 so_tcr <- calc_diversity(
-  sobj_in       = so_tcr,                   # Seurat object
-  clonotype_col = "cdr3_nt",                # meta.data column containing clonotype ids
-  cluster_col   = "orig.ident",             # meta.data column containing cell labels
-  method        = abdiv::shannon            # abdiv method to use
+  sobj_in     = so_tcr,                     # Seurat object
+  cluster_col = "orig.ident",               # meta.data column containing cell labels
+  method      = abdiv::shannon              # abdiv method to use
 )
 ```
 
@@ -343,11 +314,10 @@ fns <- list(
 )
 
 plot_diversity(
-  sobj_in       = so_tcr,                   # Seurat object
-  clonotype_col = "cdr3_nt",                # meta.data column containing clonotype ids
-  cluster_col   = "orig.ident",             # meta.data column containing cell labels
-  method        = fns,                      # abdiv method to use
-  plot_colors   = vdj_colors
+  sobj_in     = so_tcr,                     # Seurat object
+  cluster_col = "orig.ident",               # meta.data column containing cell labels
+  method      = fns,                        # abdiv method to use
+  plot_colors = vdj_colors
 ) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
@@ -370,10 +340,9 @@ By default `calc_similarity()` will add a new meta.data column for each comparis
 
 ```{r}
 so_tcr <- calc_similarity(
-  sobj_in       = so_tcr,                   # Seurat object
-  clonotype_col = "cdr3_nt",                # meta.data column containing clonotype ids
-  cluster_col   = "orig.ident",             # meta.data column containing cell labels
-  method        = abdiv::jaccard            # abdiv method to use
+  sobj_in     = so_tcr,                     # Seurat object
+  cluster_col = "orig.ident",               # meta.data column containing cell labels
+  method      = abdiv::jaccard              # abdiv method to use
 )
 ```
 
@@ -385,23 +354,21 @@ A heatmap summarizing the results can be generated using the `plot_similarity()`
 
 # Sample heatmap
 ident_heat <- plot_similarity(
-  sobj_in       = so_tcr,                   # Seurat object
-  clonotype_col = "cdr3_nt",                # meta.data column containing clonotype IDs
-  cluster_col   = "orig.ident",             # meta.data column containing cell labels
-  method        = abdiv::jaccard,           # Method to use
-  plot_colors   = "#009E73"
+  sobj_in     = so_tcr,                     # Seurat object
+  cluster_col = "orig.ident",               # meta.data column containing cell labels
+  method      = abdiv::jaccard,             # Method to use
+  plot_colors = "#009E73"
 ) +
   theme(legend.text = element_text(size = 8))
 
 # Cluster heatmap
 clust_heat <- plot_similarity(
-  sobj_in       = so_tcr,
-  clonotype_col = "cdr3_nt",
-  cluster_col   = "seurat_clusters",
-  method        = abdiv::jaccard,
-  plot_colors   = "#56B4E9",
-  size          = 0.2,                      # Additional ggplot options
-  color         = "white"                   # Additional ggplot options
+  sobj_in     = so_tcr,
+  cluster_col = "seurat_clusters",
+  method      = abdiv::jaccard,
+  plot_colors = "#56B4E9",
+  size        = 0.2,                        # Additional ggplot options
+  color       = "white"                     # Additional ggplot options
 ) +
   theme(
     legend.text = element_text(size = 8),
@@ -441,7 +408,6 @@ plot_usage(
   cluster_col = "orig.ident",               # meta.data column containing cell labels
   type        = "bar",                      # Type of plot
   chain       = "TRB",                      # Chain to use for filtering genes
-  chain_col   = "chains",                   # meta.data column containing chains
   
   plot_genes  = NULL,                       # A list of genes to plot
   n_genes     = NULL,                       # The number of top genes to plot
@@ -458,8 +424,7 @@ calc_usage(
   sobj_in     = so_tcr,                     # Seurat object
   gene_cols   = c("v_gene", "j_gene"),      # meta.data column(s) containing genes
   cluster_col = "orig.ident",               # meta.data column containing cell labels
-  chain       = "TRB",                      # Chain to use for filtering genes
-  chain_col   = "chains"                    # meta.data column containing chains
+  chain       = "TRB"                       # Chain to use for filtering genes
 )
 ```
 
@@ -473,7 +438,6 @@ ggs <- plot_usage(
   gene_cols   = c("v_gene", "j_gene"),      # meta.data column(s) containing genes
   cluster_col = "orig.ident",               # meta.data column containing cell labels
   chain       = "TRB",                      # Chain to use for filtering genes
-  chain_col   = "chains",                   # meta.data column containing chains identified
   plot_colors = "#6A51A3"
 ) %>%
   imap(~ .x + ggtitle(.y))
@@ -495,46 +459,9 @@ plot_usage(
   
   type        = "bar",
   chain       = "TRB",
-  chain_col   = "chains",
   plot_colors = vdj_colors,
   n_genes     = 12                          # Number of CDR3 sequences to plot
 ) +
   facet_wrap(~ orig.ident, nrow = 1, scales = "free_x") +
   theme(legend.position = "none")
 ```
-
-```{r "DIM RED EX", eval = F, echo = F}
-library(forcats)
-
-ex_theme <- vdj_theme() +
-  theme(
-    legend.position = "none",
-    panel.border    = element_rect(size = 1, color = "grey85", fill = NA),
-    axis.line       = element_blank(),
-    axis.title      = element_blank(),
-    axis.text       = element_blank(),
-    axis.ticks      = element_blank()
-  )
-
-# PC example
-pc_mat <- so_tcr@reductions$pca@cell.embeddings
-pcs <- colnames(pc_mat)
-
-pc_df <- pc_mat %>%
-  as_tibble(rownames = ".cell_id") %>%
-  pivot_longer(cols = c(-.cell_id, -PC_1)) %>%
-  mutate(name = fct_relevel(name, pcs))
-
-pc_ex <- pc_df %>%
-  filter(name %in% pcs[1:20]) %>%
-  ggplot(aes(PC_1, value, color = name)) +
-  geom_point(size = 0.1, color = "#56B4E9") +
-  facet_wrap(~ name, scales = "free") +
-  ex_theme
-
-umap_ex <- so_tcr@meta.data %>%
-  ggplot(aes(UMAP_1, UMAP_2)) +
-  geom_point(size = 0.5, color = "#009E73") +
-  ex_theme
-```
-

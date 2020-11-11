@@ -86,10 +86,9 @@ fns <- list(
 )
 
 so_tcr <- calc_diversity(
-  sobj_in       = so_tcr,        # Seurat object
-  clonotype_col = "cdr3",        # meta.data column containing clonotype ids
-  cluster_col   = "orig.ident",  # meta.data column containing cell labels
-  method        = fns            # abdiv method to use
+  sobj_in     = so_tcr,                       # Seurat object
+  cluster_col = "orig.ident",                 # meta.data column containing cell labels
+  method      = fns                           # List of diversity metrics
 )
 ```
 
@@ -100,12 +99,10 @@ For each 'calc' function, djvdj also provides a corresponding 'plot' function to
 ```{r "usage", fig.width = 14, fig.height = 8}
 # Compare the usage of different V and J genes
 ggs <- plot_usage(
-  sobj_in     = so_tcr,                 # Seurat object
-  gene_cols   = c("v_gene", "j_gene"),  # meta.data column(s) containing genes
-  cluster_col = "orig.ident",           # meta.data column containing cell labels
-  chain       = "TRB",                  # Chain to use for filtering genes
-  chain_col   = "chains",               # meta.data column containing chains identified
-  plot_colors = c("grey90", "#6A51A3")  # Colors to use for heatmap
+  sobj_in     = so_tcr,                       # Seurat object
+  gene_cols   = c("v_gene", "j_gene"),        # meta.data column(s) containing genes
+  cluster_col = "orig.ident",                 # meta.data column containing cell labels
+  chain       = "TRB"                         # Chain to use for filtering genes
 ) %>%
   imap(~ .x + ggtitle(.y))
 
