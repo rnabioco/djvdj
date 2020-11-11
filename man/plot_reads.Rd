@@ -7,7 +7,7 @@
 plot_reads(
   sobj_in,
   data_cols = c("reads", "umis"),
-  chain_col = NULL,
+  chain_col = "chains",
   cluster_col = NULL,
   type = "violin",
   plot_colors = NULL,

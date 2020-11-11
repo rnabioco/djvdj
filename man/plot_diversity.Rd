@@ -6,7 +6,7 @@
 \usage{
 plot_diversity(
   sobj_in,
-  clonotype_col,
+  clonotype_col = "cdr3_nt",
   cluster_col = NULL,
   method = abdiv::shannon,
   plot_colors = NULL,
