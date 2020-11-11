@@ -218,7 +218,8 @@ chain_bars <- so_tcr %>%
   plot_cell_count(
     x           = "orig.ident",             # Cell labels to plot
     fill_col    = "uniq_chains",            # Cell labels to color each bar
-    plot_colors = chain_cols
+    plot_colors = chain_cols,
+    yaxis       = "counts"
   ) +
   theme(
     plot.margin     = unit(c(120, 10, 10, 10), "pt"),
@@ -351,7 +352,6 @@ so_tcr <- calc_similarity(
 A heatmap summarizing the results can be generated using the `plot_similarity()` function. Here we are creating two heatmaps, one to compare the different samples and one to compare cell clusters.
 
 ```{r "sim_plots", fig.width = 10, fig.height = 4}
-
 # Sample heatmap
 ident_heat <- plot_similarity(
   sobj_in     = so_tcr,                     # Seurat object
