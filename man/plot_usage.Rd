@@ -15,7 +15,7 @@ plot_usage(
   n_genes = NULL,
   plot_lvls = NULL,
   yaxis = "percent",
-  chain_col = NULL,
+  chain_col = "chains",
   sep = ";",
   ...
 )
@@ -23,7 +23,8 @@ plot_usage(
 \arguments{
 \item{sobj_in}{Seurat object containing V(D)J data}
 
-\item{gene_cols}{meta.data column containing genes used for each clonotype}
+\item{gene_cols}{meta.data column containing genes used for each clonotype,
+provide a vector with two column names to plot paired usage of genes}
 
 \item{cluster_col}{meta.data column containing cell clusters to use for
 calculating gene usage}
@@ -31,7 +32,8 @@ calculating gene usage}
 \item{chain}{Chain to use for calculating gene usage, set to NULL to include
 all chains}
 
-\item{type}{Type of plot to create, can be either 'heatmap' or 'bar'}
+\item{type}{Type of plot to create, can be either 'heatmap' or 'bar', a
+bar plot can only be created when a single gene_col is provided}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 

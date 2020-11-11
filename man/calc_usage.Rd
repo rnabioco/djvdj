@@ -9,7 +9,7 @@ calc_usage(
   gene_cols,
   cluster_col = NULL,
   chain = NULL,
-  chain_col = NULL,
+  chain_col = "chains",
   sep = ";"
 )
 }

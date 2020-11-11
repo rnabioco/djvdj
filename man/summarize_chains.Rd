@@ -8,7 +8,7 @@ summarize_chains(
   sobj_in,
   data_cols = c("umis", "reads"),
   fn,
-  chain_col = NULL,
+  chain_col = "chains",
   include_cols = NULL,
   sep = ";"
 )

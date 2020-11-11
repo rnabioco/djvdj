@@ -372,7 +372,7 @@ mutate_vdj <- function(sobj_in, ..., clonotype_col = "cdr3_nt", sep = ";", vdj_c
 #' summarizing the results is returned.
 #' @return Seurat object with clonotype abundance added to meta.data
 #' @export
-calc_abundance <- function(sobj_in, clonotype_col, cluster_col = NULL,
+calc_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NULL,
                            prefix = "", return_seurat = TRUE) {
 
   # Format meta.data
@@ -441,7 +441,7 @@ calc_abundance <- function(sobj_in, clonotype_col, cluster_col = NULL,
 #' table is returned.
 #' @return Seurat object with diversity index added to meta.data
 #' @export
-calc_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
+calc_diversity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NULL,
                            method = abdiv::simpson, prefix = "", return_seurat = TRUE) {
 
   if (length(method) > 1 && is.null(names(method))) {
@@ -543,7 +543,7 @@ calc_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
 #' returned
 #' @return Seurat object with similarity index added to meta.data
 #' @export
-calc_similarity <- function(sobj_in, clonotype_col, cluster_col, method = abdiv::jaccard,
+calc_similarity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col, method = abdiv::jaccard,
                             prefix = NULL, return_seurat = TRUE) {
 
   if (is.null(prefix)) {
@@ -660,7 +660,7 @@ calc_similarity <- function(sobj_in, clonotype_col, cluster_col, method = abdiv:
 #' @return data.frame containing gene usage summary
 #' @export
 calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
-                       chain_col = NULL, sep = ";") {
+                       chain_col = "chains", sep = ";") {
 
   # data.frame to calculate usage
   sep_cols <- c(gene_cols, chain_col)
@@ -771,7 +771,7 @@ calc_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL,
 #' @return data.frame containing summary results
 #' @export
 summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
-                             chain_col = NULL, include_cols = NULL, sep = ";") {
+                             chain_col = "chains", include_cols = NULL, sep = ";") {
 
   # Fetch meta.data
   fetch_cols <- c(data_cols, chain_col, include_cols)

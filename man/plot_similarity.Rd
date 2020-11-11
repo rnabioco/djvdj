@@ -6,7 +6,7 @@
 \usage{
 plot_similarity(
   sobj_in,
-  clonotype_col,
+  clonotype_col = "cdr3_nt",
   cluster_col,
   method = abdiv::jaccard,
   plot_colors = NULL,

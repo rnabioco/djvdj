@@ -269,7 +269,7 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, facet_col = NULL, yaxis
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL, cluster_col = NULL,
+plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "chains", cluster_col = NULL,
                        type = "violin", plot_colors = NULL, plot_lvls = NULL, facet_rows = 1,
                        facet_scales = "free_x", ..., sep = ";") {
 
@@ -449,7 +449,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = NULL
 #' @param ... Additional arguments to pass to geom_line
 #' @return ggplot object
 #' @export
-plot_abundance <- function(sobj_in, clonotype_col, cluster_col = NULL, type = "bar",
+plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NULL, type = "bar",
                            yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, label_col = NULL,
                            n_clonotypes = 10, color_col = NULL, label_aes = list(), facet_rows = 1,
                            facet_scales = "free_x", ...) {
@@ -612,7 +612,7 @@ plot_abundance <- function(sobj_in, clonotype_col, cluster_col = NULL, type = "b
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
+plot_diversity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NULL,
                            method = abdiv::shannon, plot_colors = NULL, plot_lvls = NULL,
                            facet_rows = 1, ...) {
 
@@ -676,7 +676,12 @@ plot_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
   # Create facets
   if (length(method) > 1) {
     res <- res +
-      ggplot2::facet_wrap(~ name, nrow = facet_rows, scales = "free")
+      ggplot2::facet_wrap(~ name, nrow = facet_rows, scales = "free") +
+      ggplot2::theme(axis.title.y = ggplot2::element_blank())
+
+  } else {
+    res <- res +
+      ggplot2::labs(y = names(method))
   }
 
   # Set plot colors
@@ -715,7 +720,7 @@ plot_diversity <- function(sobj_in, clonotype_col, cluster_col = NULL,
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_similarity <- function(sobj_in, clonotype_col, cluster_col, method = abdiv::jaccard,
+plot_similarity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col, method = abdiv::jaccard,
                             plot_colors = NULL, ...) {
 
   # Calculate similarity
@@ -773,12 +778,14 @@ plot_similarity <- function(sobj_in, clonotype_col, cluster_col, method = abdiv:
 #' Plot V(D)J gene usage
 #'
 #' @param sobj_in Seurat object containing V(D)J data
-#' @param gene_cols meta.data column containing genes used for each clonotype
+#' @param gene_cols meta.data column containing genes used for each clonotype,
+#' provide a vector with two column names to plot paired usage of genes
 #' @param cluster_col meta.data column containing cell clusters to use for
 #' calculating gene usage
 #' @param chain Chain to use for calculating gene usage, set to NULL to include
 #' all chains
-#' @param type Type of plot to create, can be either 'heatmap' or 'bar'
+#' @param type Type of plot to create, can be either 'heatmap' or 'bar', a
+#' bar plot can only be created when a single gene_col is provided
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_genes Character vector containing genes to plot
 #' @param n_genes Number of top genes to plot based on average usage
@@ -791,7 +798,7 @@ plot_similarity <- function(sobj_in, clonotype_col, cluster_col, method = abdiv:
 #' @export
 plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, type = "bar",
                        plot_colors = NULL, plot_genes = NULL, n_genes = NULL, plot_lvls = NULL,
-                       yaxis = "percent", chain_col = NULL, sep = ";", ...) {
+                       yaxis = "percent", chain_col = "chains", sep = ";", ...) {
 
   # Check inputs
   if (!type %in% c("heatmap", "bar")) {
@@ -1144,7 +1151,7 @@ vdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "bla
                             ttl = .fill, ang = 45, hjst = 1, ...) {
 
   if (is.null(clrs)) {
-    clrs <- "#56B4E9"
+    clrs <- "#6A51A3"
   }
 
   if (length(clrs) == 1) {
