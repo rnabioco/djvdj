@@ -79,7 +79,7 @@
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>TCR analysis</h1>
             
-            <h4 class="date">November 10 2020</h4>
+            <h4 class="date">November 11 2020</h4>
       
       
       <div class="hidden name"><code>tcr.Rmd</code></div>
@@ -89,25 +89,9 @@
     
     
 <p><br></p>
-<div id="vdj-sequencing" class="section level2">
-<h2 class="hasAnchor">
-<a href="#vdj-sequencing" class="anchor"></a>V(D)J Sequencing</h2>
-<p>For 10x single-cell immune profiling, the initial steps of GEM formation and reverse transcription are the same. After reverse transcription within each GEM, a portion of the pooled cDNA is further amplified using a primer specific for the V(D)J constant region. The amplified cDNA is then fragmented which results in fragments of various length that span the entire gene. The remaining cDNA that was not amplified using V(D)J specific primers is used to generate the gene expression library. This ultimately results in separate gene expression and V(D)J libraries that include the same cell barcodes.</p>
-<p><br></p>
-<p><img src="10x_GEM_generation.png" width="400"><img src="10x_GEM_vdj_cDNA.png" width="400"></p>
-<p><br></p>
-<p>Single-cell V(D)J libraries are typically sequenced at a depth of ~10k reads per cell. After sequencing, the raw fastq files are processed separately from the gene expression libraries using the <a href="https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj">Cell Ranger</a> software available through 10x Genomics.</p>
-<p><br></p>
-<p><img src="10x_vdj_workflow.png" width="800"></p>
-<p><br></p>
-<p>When analyzing the V(D)J results alongside single-cell gene expression data, there are several key differences to keep in mind. The main goal of V(D)J sequencing is to accurately assemble each chain expressed in the cell, not to quantify changes in expression. Due to this difference, the total number of UMIs obtained for each cell can be much lower than the gene expression libraries. In addition, when processing gene expression data, reads with the same UMI are normally discarded. However, for V(D)J sequencing these reads are kept and are important for obtaining sufficient coverage to accurately assemble each chain.</p>
-<p><br></p>
-<p><img src="10x_vdj_read_layout.png" width="800"></p>
-<p><br></p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In nec molestie risus. Duis vitae eros odio. Proin condimentum odio dolor, at vehicula lorem tempus sit amet. Nunc id metus vehicula, facilisis velit in, tincidunt augue. Donec at semper turpis, nec cursus justo. Suspendisse est lorem, vulputate vitae diam sit amet, luctus volutpat sem. Aenean at odio sed nibh tempor eleifend. Duis ultrices turpis sit amet velit luctus, eu commodo urna lacinia. In porttitor tristique quam ac molestie. In s</p>
+<p>For this vignette we are using single-cell TCR data provided by the Rincon lab. Thymocytes were collected for wild type and mutant mice and sorted for two developmental timepoints, DN3 and DN4. UMAP projections are shown below with cells colored by sample and cell cluster (based on gene expression).</p>
 <p><img src="tcr_files/figure-html/rna_umap-1.png" width="1200"></p>
 <p><br></p>
-</div>
 <div id="import-vdj-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#import-vdj-data" class="anchor"></a>Import VDJ data</h2>
@@ -300,20 +284,18 @@
 <p>To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the <code><a href="../reference/calc_abundance.html">calc_abundance()</a></code> function. These calculations can be performed on a per-cluster or per-sample basis by also providing a meta.data column containing cell labels.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit">
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_abundance.html">calc_abundance</a></span><span class="op">(</span>
-  sobj_in       <span class="op">=</span> <span class="va">so_tcr</span>,                   <span class="co"># Seurat object</span>
-  clonotype_col <span class="op">=</span> <span class="st">"cdr3_nt"</span>,                <span class="co"># meta.data column containing clonotype IDs</span>
-  cluster_col   <span class="op">=</span> <span class="st">"orig.ident"</span>              <span class="co"># meta.data column containing cell labels</span>
+  sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
+  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>                <span class="co"># meta.data column containing cell labels</span>
 <span class="op">)</span></pre></div>
 <p><br></p>
 <p>For each ‘calc’ function provided by djvdj, there is a matching ‘plot’ function that will generate a summary plot. The <code><a href="../reference/plot_abundance.html">plot_abundance()</a></code> function will plot clonotypes ranked by abundance.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit">
 <span class="fu"><a href="../reference/plot_abundance.html">plot_abundance</a></span><span class="op">(</span>
-  sobj_in       <span class="op">=</span> <span class="va">so_tcr</span>,                   <span class="co"># Seurat object</span>
-  clonotype_col <span class="op">=</span> <span class="st">"cdr3_nt"</span>,                <span class="co"># meta.data column containing clonotype IDs</span>
-  cluster_col   <span class="op">=</span> <span class="st">"orig.ident"</span>,             <span class="co"># meta.data column containing cell labels</span>
-  label_col     <span class="op">=</span> <span class="st">"cdr3"</span>,                   <span class="co"># meta.data column containing labels</span>
-  n_clonotypes  <span class="op">=</span> <span class="fl">12</span>,                       <span class="co"># Number of top clonotypes</span>
-  plot_colors   <span class="op">=</span> <span class="va">vdj_colors</span>
+  sobj_in      <span class="op">=</span> <span class="va">so_tcr</span>,                    <span class="co"># Seurat object</span>
+  cluster_col  <span class="op">=</span> <span class="st">"orig.ident"</span>,              <span class="co"># meta.data column containing cell labels</span>
+  label_col    <span class="op">=</span> <span class="st">"cdr3"</span>,                    <span class="co"># meta.data column containing labels</span>
+  n_clonotypes <span class="op">=</span> <span class="fl">12</span>,                        <span class="co"># Number of top clonotypes</span>
+  plot_colors  <span class="op">=</span> <span class="va">vdj_colors</span>
 <span class="op">)</span> <span class="op">+</span>
   <span class="fu">theme</span><span class="op">(</span>
     legend.position <span class="op">=</span> <span class="st">"none"</span>,
@@ -335,10 +317,9 @@
 <p>In this example we are calculating the Shannon diversity for each sample in the orig.ident meta.data column.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit">
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_diversity.html">calc_diversity</a></span><span class="op">(</span>
-  sobj_in       <span class="op">=</span> <span class="va">so_tcr</span>,                   <span class="co"># Seurat object</span>
-  clonotype_col <span class="op">=</span> <span class="st">"cdr3_nt"</span>,                <span class="co"># meta.data column containing clonotype ids</span>
-  cluster_col   <span class="op">=</span> <span class="st">"orig.ident"</span>,             <span class="co"># meta.data column containing cell labels</span>
-  method        <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/shannon.html">shannon</a></span>            <span class="co"># abdiv method to use</span>
+  sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
+  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,               <span class="co"># meta.data column containing cell labels</span>
+  method      <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/shannon.html">shannon</a></span>              <span class="co"># abdiv method to use</span>
 <span class="op">)</span></pre></div>
 <p><br></p>
 <p>The <code><a href="../reference/plot_diversity.html">plot_diversity()</a></code> function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Four different diversity metrics are shown in the example below.</p>
@@ -353,11 +334,10 @@
 <span class="op">)</span>
 
 <span class="fu"><a href="../reference/plot_diversity.html">plot_diversity</a></span><span class="op">(</span>
-  sobj_in       <span class="op">=</span> <span class="va">so_tcr</span>,                   <span class="co"># Seurat object</span>
-  clonotype_col <span class="op">=</span> <span class="st">"cdr3_nt"</span>,                <span class="co"># meta.data column containing clonotype ids</span>
-  cluster_col   <span class="op">=</span> <span class="st">"orig.ident"</span>,             <span class="co"># meta.data column containing cell labels</span>
-  method        <span class="op">=</span> <span class="va">fns</span>,                      <span class="co"># abdiv method to use</span>
-  plot_colors   <span class="op">=</span> <span class="va">vdj_colors</span>
+  sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
+  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,               <span class="co"># meta.data column containing cell labels</span>
+  method      <span class="op">=</span> <span class="va">fns</span>,                        <span class="co"># abdiv method to use</span>
+  plot_colors <span class="op">=</span> <span class="va">vdj_colors</span>
 <span class="op">)</span> <span class="op">+</span>
   <span class="fu">theme</span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, hjust <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></pre></div>
 <p><img src="tcr_files/figure-html/div_plots-1.png" width="720"></p>
@@ -392,10 +372,9 @@
 <p>By default <code><a href="../reference/calc_similarity.html">calc_similarity()</a></code> will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of cell labels present in the <code>orig.ident</code> column.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit">
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_similarity.html">calc_similarity</a></span><span class="op">(</span>
-  sobj_in       <span class="op">=</span> <span class="va">so_tcr</span>,                   <span class="co"># Seurat object</span>
-  clonotype_col <span class="op">=</span> <span class="st">"cdr3_nt"</span>,                <span class="co"># meta.data column containing clonotype ids</span>
-  cluster_col   <span class="op">=</span> <span class="st">"orig.ident"</span>,             <span class="co"># meta.data column containing cell labels</span>
-  method        <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/jaccard.html">jaccard</a></span>            <span class="co"># abdiv method to use</span>
+  sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
+  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,               <span class="co"># meta.data column containing cell labels</span>
+  method      <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/jaccard.html">jaccard</a></span>              <span class="co"># abdiv method to use</span>
 <span class="op">)</span></pre></div>
 <p><br></p>
 <p>A heatmap summarizing the results can be generated using the <code><a href="../reference/plot_similarity.html">plot_similarity()</a></code> function. Here we are creating two heatmaps, one to compare the different samples and one to compare cell clusters.</p>
@@ -403,23 +382,21 @@
 
 <span class="co"># Sample heatmap</span>
 <span class="va">ident_heat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_similarity.html">plot_similarity</a></span><span class="op">(</span>
-  sobj_in       <span class="op">=</span> <span class="va">so_tcr</span>,                   <span class="co"># Seurat object</span>
-  clonotype_col <span class="op">=</span> <span class="st">"cdr3_nt"</span>,                <span class="co"># meta.data column containing clonotype IDs</span>
-  cluster_col   <span class="op">=</span> <span class="st">"orig.ident"</span>,             <span class="co"># meta.data column containing cell labels</span>
-  method        <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/jaccard.html">jaccard</a></span>,           <span class="co"># Method to use</span>
-  plot_colors   <span class="op">=</span> <span class="st">"#009E73"</span>
+  sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
+  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,               <span class="co"># meta.data column containing cell labels</span>
+  method      <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/jaccard.html">jaccard</a></span>,             <span class="co"># Method to use</span>
+  plot_colors <span class="op">=</span> <span class="st">"#009E73"</span>
 <span class="op">)</span> <span class="op">+</span>
   <span class="fu">theme</span><span class="op">(</span>legend.text <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>size <span class="op">=</span> <span class="fl">8</span><span class="op">)</span><span class="op">)</span>
 
 <span class="co"># Cluster heatmap</span>
 <span class="va">clust_heat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_similarity.html">plot_similarity</a></span><span class="op">(</span>
-  sobj_in       <span class="op">=</span> <span class="va">so_tcr</span>,
-  clonotype_col <span class="op">=</span> <span class="st">"cdr3_nt"</span>,
-  cluster_col   <span class="op">=</span> <span class="st">"seurat_clusters"</span>,
-  method        <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/jaccard.html">jaccard</a></span>,
-  plot_colors   <span class="op">=</span> <span class="st">"#56B4E9"</span>,
-  size          <span class="op">=</span> <span class="fl">0.2</span>,                      <span class="co"># Additional ggplot options</span>
-  color         <span class="op">=</span> <span class="st">"white"</span>                   <span class="co"># Additional ggplot options</span>
+  sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,
+  cluster_col <span class="op">=</span> <span class="st">"seurat_clusters"</span>,
+  method      <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/jaccard.html">jaccard</a></span>,
+  plot_colors <span class="op">=</span> <span class="st">"#56B4E9"</span>,
+  size        <span class="op">=</span> <span class="fl">0.2</span>,                        <span class="co"># Additional ggplot options</span>
+  color       <span class="op">=</span> <span class="st">"white"</span>                     <span class="co"># Additional ggplot options</span>
 <span class="op">)</span> <span class="op">+</span>
   <span class="fu">theme</span><span class="op">(</span>
     legend.text <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>size <span class="op">=</span> <span class="fl">8</span><span class="op">)</span>,
@@ -467,7 +444,6 @@
   cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,               <span class="co"># meta.data column containing cell labels</span>
   type        <span class="op">=</span> <span class="st">"bar"</span>,                      <span class="co"># Type of plot</span>
   chain       <span class="op">=</span> <span class="st">"TRB"</span>,                      <span class="co"># Chain to use for filtering genes</span>
-  chain_col   <span class="op">=</span> <span class="st">"chains"</span>,                   <span class="co"># meta.data column containing chains</span>
   
   plot_genes  <span class="op">=</span> <span class="cn">NULL</span>,                       <span class="co"># A list of genes to plot</span>
   n_genes     <span class="op">=</span> <span class="cn">NULL</span>,                       <span class="co"># The number of top genes to plot</span>
@@ -481,8 +457,7 @@
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,      <span class="co"># meta.data column(s) containing genes</span>
   cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,               <span class="co"># meta.data column containing cell labels</span>
-  chain       <span class="op">=</span> <span class="st">"TRB"</span>,                      <span class="co"># Chain to use for filtering genes</span>
-  chain_col   <span class="op">=</span> <span class="st">"chains"</span>                    <span class="co"># meta.data column containing chains</span>
+  chain       <span class="op">=</span> <span class="st">"TRB"</span>                       <span class="co"># Chain to use for filtering genes</span>
 <span class="op">)</span></pre></div>
 <p><br></p>
 <p>When multiple gene columns are passed to <code><a href="../reference/plot_usage.html">plot_usage()</a></code>, a list of plots will be returned, one for each cell label in the <code>cluster_col</code> column.</p>
@@ -492,7 +467,6 @@
   gene_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,      <span class="co"># meta.data column(s) containing genes</span>
   cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,               <span class="co"># meta.data column containing cell labels</span>
   chain       <span class="op">=</span> <span class="st">"TRB"</span>,                      <span class="co"># Chain to use for filtering genes</span>
-  chain_col   <span class="op">=</span> <span class="st">"chains"</span>,                   <span class="co"># meta.data column containing chains identified</span>
   plot_colors <span class="op">=</span> <span class="st">"#6A51A3"</span>
 <span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu">imap</span><span class="op">(</span><span class="op">~</span> <span class="va">.x</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="va">.y</span><span class="op">)</span><span class="op">)</span>
@@ -513,7 +487,6 @@
   
   type        <span class="op">=</span> <span class="st">"bar"</span>,
   chain       <span class="op">=</span> <span class="st">"TRB"</span>,
-  chain_col   <span class="op">=</span> <span class="st">"chains"</span>,
   plot_colors <span class="op">=</span> <span class="va">vdj_colors</span>,
   n_genes     <span class="op">=</span> <span class="fl">12</span>                          <span class="co"># Number of CDR3 sequences to plot</span>
 <span class="op">)</span> <span class="op">+</span>

@@ -132,10 +132,9 @@
 <span class="op">)</span>
 
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/calc_diversity.html">calc_diversity</a></span><span class="op">(</span>
-  sobj_in       <span class="op">=</span> <span class="va">so_tcr</span>,        <span class="co"># Seurat object</span>
-  clonotype_col <span class="op">=</span> <span class="st">"cdr3"</span>,        <span class="co"># meta.data column containing clonotype ids</span>
-  cluster_col   <span class="op">=</span> <span class="st">"orig.ident"</span>,  <span class="co"># meta.data column containing cell labels</span>
-  method        <span class="op">=</span> <span class="va">fns</span>            <span class="co"># abdiv method to use</span>
+  sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                       <span class="co"># Seurat object</span>
+  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,                 <span class="co"># meta.data column containing cell labels</span>
+  method      <span class="op">=</span> <span class="va">fns</span>                           <span class="co"># List of diversity metrics</span>
 <span class="op">)</span></pre></div>
 </div>
 <div id="plot" class="section level3">
@@ -146,12 +145,10 @@
 <div class="sourceCode" id="cb4"><pre class="downlit">
 <span class="co"># Compare the usage of different V and J genes</span>
 <span class="va">ggs</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
-  sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                 <span class="co"># Seurat object</span>
-  gene_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,  <span class="co"># meta.data column(s) containing genes</span>
-  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,           <span class="co"># meta.data column containing cell labels</span>
-  chain       <span class="op">=</span> <span class="st">"TRB"</span>,                  <span class="co"># Chain to use for filtering genes</span>
-  chain_col   <span class="op">=</span> <span class="st">"chains"</span>,               <span class="co"># meta.data column containing chains identified</span>
-  plot_colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"grey90"</span>, <span class="st">"#6A51A3"</span><span class="op">)</span>  <span class="co"># Colors to use for heatmap</span>
+  sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                       <span class="co"># Seurat object</span>
+  gene_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,        <span class="co"># meta.data column(s) containing genes</span>
+  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,                 <span class="co"># meta.data column containing cell labels</span>
+  chain       <span class="op">=</span> <span class="st">"TRB"</span>                         <span class="co"># Chain to use for filtering genes</span>
 <span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu">imap</span><span class="op">(</span><span class="op">~</span> <span class="va">.x</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="va">.y</span><span class="op">)</span><span class="op">)</span>
 
