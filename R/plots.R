@@ -663,7 +663,7 @@ plot_diversity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
   }
 
   # Set plot levels
-  meta_df <- .set_lvls(meta_df, "name", unique(meta_df$name))
+  meta_df <- .set_lvls(meta_df, "name", meta_df$name)
 
   # Create bar graphs
   res <- ggplot2::ggplot(meta_df, ggplot2::aes(
@@ -1260,7 +1260,7 @@ vdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "bla
 
     df_in <- dplyr::mutate(
       df_in,
-      !!sym(clmn) := factor(!!sym(clmn), levels = lvls)
+      !!sym(clmn) := factor(!!sym(clmn), levels = unique(lvls))
     )
   }
 
