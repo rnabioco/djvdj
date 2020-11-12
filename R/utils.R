@@ -107,10 +107,13 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     .groups = "drop"
   )
 
-  # Merge rows for each cell
+  # Order chains and CDR3 sequences
+  # When the rows are collapsed, the cdr3 sequences must be in the same order
+  # for every cell. This is required so the cdr3 columns can be used directly
+  # as the clonotype ID
   contigs <- dplyr::arrange(
     contigs,
-    .data$barcode, .data$clonotype_id, .data$chains
+    .data$barcode, .data$chains, .data$cdr3_nt
   )
 
   # Extract isotypes from c_gene for IGH chain
@@ -142,6 +145,8 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   }
 
   # Collapse chains into a single row for each cell
+  # Include isotype and clonotype_id as groups so that they are included in the
+  # summarized results
   contigs <- dplyr::group_by(
     contigs,
     .data$barcode, .data$clonotype_id,
