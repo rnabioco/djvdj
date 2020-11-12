@@ -450,7 +450,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
 #' @return ggplot object
 #' @export
 plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NULL, type = "bar",
-                           yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, label_col = NULL,
+                           yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, label_col = clonotype_col,
                            n_clonotypes = 10, color_col = NULL, label_aes = list(), facet_rows = 1,
                            facet_scales = "free_x", ...) {
 
