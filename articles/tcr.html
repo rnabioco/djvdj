@@ -321,15 +321,12 @@
   method      <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/shannon.html">shannon</a></span>              <span class="co"># abdiv method to use</span>
 <span class="op">)</span></pre></div>
 <p><br></p>
-<p>The <code><a href="../reference/plot_diversity.html">plot_diversity()</a></code> function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Four different diversity metrics are shown in the example below.</p>
+<p>The <code><a href="../reference/plot_diversity.html">plot_diversity()</a></code> function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Two different metrics are shown in the example below.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit">
 <span class="co"># Metrics to plot</span>
 <span class="va">fns</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
-  <span class="st">"simpson"</span>     <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/simpson.html">simpson</a></span>,
-  <span class="st">"shannon"</span>     <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/shannon.html">shannon</a></span>,
-  <span class="st">"margalef"</span>    <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/margalef.html">margalef</a></span>,
-  <span class="st">"menhinick"</span>   <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/menhinick.html">menhinick</a></span>,
-  <span class="st">"brillouin_d"</span> <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/shannon.html">brillouin_d</a></span>
+  <span class="st">"simpson"</span>  <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/simpson.html">simpson</a></span>,
+  <span class="st">"mcintosh"</span> <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/mcintosh_d.html">mcintosh_d</a></span>
 <span class="op">)</span>
 
 <span class="fu"><a href="../reference/plot_diversity.html">plot_diversity</a></span><span class="op">(</span>
@@ -339,7 +336,7 @@
   plot_colors <span class="op">=</span> <span class="va">vdj_colors</span>
 <span class="op">)</span> <span class="op">+</span>
   <span class="fu">theme</span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, hjust <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></pre></div>
-<p><img src="tcr_files/figure-html/div_plots-1.png" width="720"></p>
+<p><img src="tcr_files/figure-html/div_plots-1.png" width="528"></p>
 <p><br></p>
 </div>
 <div id="repertoire-overlap" class="section level2">
