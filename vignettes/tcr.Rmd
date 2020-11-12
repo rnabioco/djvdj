@@ -88,10 +88,10 @@ If the Seurat object contains data for multiple runs, a vector containing paths 
 ```{r "import_vdj"}
 # Create vector of paths pointing to cellranger output
 paths <- c(
-  KI_DN3_GE = "data/tcr/KI_DN3_TCR",
-  KI_DN4_GE = "data/tcr/KI_DN4_TCR",
-  WT_DN3_GE = "data/tcr/WT_DN3_TCR",
-  WT_DN4_GE = "data/tcr/WT_DN4_TCR"
+  KI_DN3_GE = "../data/tcr/KI_DN3_TCR",
+  KI_DN4_GE = "../data/tcr/KI_DN4_TCR",
+  WT_DN3_GE = "../data/tcr/WT_DN3_TCR",
+  WT_DN4_GE = "../data/tcr/WT_DN4_TCR"
 )
 
 so_tcr <- import_vdj(
