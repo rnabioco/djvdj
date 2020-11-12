@@ -300,16 +300,13 @@ so_tcr <- calc_diversity(
 
 <br>
 
-The `plot_diversity()` function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Four different diversity metrics are shown in the example below.
+The `plot_diversity()` function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Two different metrics are shown in the example below.
 
-```{r "div_plots", fig.width = 7.5, fig.height = 3}
+```{r "div_plots", fig.width = 5.5, fig.height = 3}
 # Metrics to plot
 fns <- list(
-  "simpson"     = abdiv::simpson,
-  "shannon"     = abdiv::shannon,
-  "margalef"    = abdiv::margalef,
-  "menhinick"   = abdiv::menhinick,
-  "brillouin_d" = abdiv::brillouin_d
+  "simpson"  = abdiv::simpson,
+  "mcintosh" = abdiv::mcintosh_d
 )
 
 plot_diversity(
