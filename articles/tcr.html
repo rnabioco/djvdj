@@ -79,7 +79,7 @@
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>TCR analysis</h1>
             
-            <h4 class="date">November 11 2020</h4>
+            <h4 class="date">November 12 2020</h4>
       
       
       <div class="hidden name"><code>tcr.Rmd</code></div>
@@ -109,7 +109,6 @@
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span>
   sobj_in        <span class="op">=</span> <span class="va">so_tcr</span>,                  <span class="co"># Seurat object</span>
   vdj_dir        <span class="op">=</span> <span class="va">paths</span>,                   <span class="co"># cellranger directories</span>
-  prefix         <span class="op">=</span> <span class="st">""</span>,                      <span class="co"># Prefix to add to new meta.data columns</span>
   filter_contigs <span class="op">=</span> <span class="cn">TRUE</span>                     <span class="co"># Only include productive chains</span>
 <span class="op">)</span></pre></div>
 <p><br></p>
@@ -214,16 +213,16 @@
 <span class="co">#&gt; # A tibble: 83 x 8</span>
 <span class="co">#&gt;    clonotype_id  cdr3       chains  v_gene    j_gene    reads  umis  uniq_chains</span>
 <span class="co">#&gt;    &lt;chr&gt;         &lt;chr&gt;      &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt;     &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;      </span>
-<span class="co">#&gt;  1 WT_DN4_GE_cl… CALVMNYNQ… TRA;TR… TRAV13-1… TRAJ23;T… 16886… 13;1… TRA_TRB    </span>
-<span class="co">#&gt;  2 WT_DN4_GE_cl… CAAYSGGSN… TRA;TR… TRAV14-3… TRAJ53;T… 12106… 14;8… TRA_TRB    </span>
-<span class="co">#&gt;  3 WT_DN4_GE_cl… CVVVDLPGT… TRA;TR… TRAV11;T… TRAJ28;T… 6974;… 7;11… TRA_TRB    </span>
+<span class="co">#&gt;  1 WT_DN4_GE_cl… CALVMNYNQ… TRA;TR… TRAV13-1… TRAJ23;T… 16886… 13;2… TRA_TRB    </span>
+<span class="co">#&gt;  2 WT_DN4_GE_cl… CILRVVWGT… TRA;TR… TRAV21-D… TRAJ58;T… 6254;… 8;14… TRA_TRB    </span>
+<span class="co">#&gt;  3 WT_DN4_GE_cl… CAAPTSSGS… TRA;TR… TRAV14D-… TRAJ22;T… 16924… 11;7… TRA_TRB    </span>
 <span class="co">#&gt;  4 WT_DN4_GE_cl… CAARRGSNY… TRA;TR… TRAV14D-… TRAJ33;T… 20144… 13;3… TRA_TRB    </span>
-<span class="co">#&gt;  5 WT_DN4_GE_cl… CVAHNNAGA… TRA;TR… TRAV11D;… TRAJ39;T… 7230;… 5;10… TRA_TRB    </span>
-<span class="co">#&gt;  6 WT_DN4_GE_cl… CAASTSGSW… TRA;TR… TRAV7D-2… TRAJ22;T… 18152… 11;8… TRA_TRB    </span>
+<span class="co">#&gt;  5 WT_DN4_GE_cl… CAAAMSNYN… TRA;TR… TRAV4-3;… TRAJ21;T… 16622… 10;5… TRA_TRB    </span>
+<span class="co">#&gt;  6 WT_DN4_GE_cl… CAASTSGSW… TRA;TR… TRAV7D-2… TRAJ22;T… 18152… 11;1… TRA_TRB    </span>
 <span class="co">#&gt;  7 WT_DN4_GE_cl… CALLASSSF… TRA;TR… TRAV12-1… TRAJ50;T… 12942… 19;5… TRA_TRB    </span>
-<span class="co">#&gt;  8 WT_DN4_GE_cl… CAPGTGGYK… TRA;TR… TRAV13-2… TRAJ12;T… 11882… 13;4… TRA_TRB    </span>
+<span class="co">#&gt;  8 WT_DN4_GE_cl… CAPGTGGYK… TRA;TR… TRAV13-2… TRAJ12;T… 11882… 13;2… TRA_TRB    </span>
 <span class="co">#&gt;  9 WT_DN4_GE_cl… CAASALRDS… TRA;TR… TRAV14N-… TRAJ13;T… 13372… 8;15… TRA_TRB    </span>
-<span class="co">#&gt; 10 WT_DN4_GE_cl… CAPDTNAYK… TRA;TR… TRAV13D-… TRAJ30;T… 11016… 7;13… TRA_TRB    </span>
+<span class="co">#&gt; 10 WT_DN4_GE_cl… CAMERGSAL… TRA;TR… TRAV13N-… TRAJ18;T… 20338… 13;7… TRA_TRB    </span>
 <span class="co">#&gt; # … with 73 more rows</span></pre></div>
 <p>For row 1 shown above, this is equivalent to:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit">
@@ -253,8 +252,7 @@
   <span class="fu"><a href="../reference/plot_cell_count.html">plot_cell_count</a></span><span class="op">(</span>
     x           <span class="op">=</span> <span class="st">"orig.ident"</span>,             <span class="co"># Cell labels to plot</span>
     fill_col    <span class="op">=</span> <span class="st">"uniq_chains"</span>,            <span class="co"># Cell labels to color each bar</span>
-    plot_colors <span class="op">=</span> <span class="va">chain_cols</span>,
-    yaxis       <span class="op">=</span> <span class="st">"counts"</span>
+    plot_colors <span class="op">=</span> <span class="va">chain_cols</span>
   <span class="op">)</span> <span class="op">+</span>
   <span class="fu">theme</span><span class="op">(</span>
     plot.margin     <span class="op">=</span> <span class="fu">unit</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span>, <span class="st">"pt"</span><span class="op">)</span>,
