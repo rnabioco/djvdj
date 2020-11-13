@@ -19,8 +19,14 @@ Authors@R:
              family = "Riemondy",
              role = "ctb",
              email = "kent.riemondy@ucdenver.edu"))
-Description: djvdj provides a range of tools to analyze single-cell V(D)J data.
+Description: djvdj provides a range of tools to analyze
+    single-cell V(D)J data.
 License: MIT + file LICENSE
+URL: https://rnabioco.github.io/djvdj,
+    https://github.com/rnabioco/djvdj
+BugReports: https://github.com/rnabioco/djvdj/issues
+Depends: 
+    R (>= 3.6)
 Imports: 
     dplyr,
     magrittr,
@@ -40,11 +46,11 @@ Suggests:
     roxygen2,
     testthat,
     covr
+VignetteBuilder: 
+    knitr
+Remotes:
+    tidyverse/magrittr
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
-Remotes:
-    tidyverse/magrittr
-Depends: 
-    R (>= 3.6)
