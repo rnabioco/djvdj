@@ -71,7 +71,7 @@ abundances (`calc_abundance()`) and relative gene usage
 so_tcr <- calc_diversity(
   sobj_in     = so_tcr,                       # Seurat object
   cluster_col = "orig.ident",                 # meta.data column containing cell labels
-  method      = abdiv::simpson                # List of diversity metrics
+  method      = abdiv::simpson                # Diversity metric to use
 )
 ```
 
