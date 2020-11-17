@@ -6,7 +6,17 @@
 \alias{djvdj-package}
 \title{djvdj: A collection of single-cell V(D)J tools}
 \description{
-djvdj provides a range of tools to analyze single-cell V(D)J data.
+djvdj provides a range of tools to analyze
+    single-cell V(D)J data.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://rnabioco.github.io/djvdj}
+  \item \url{https://github.com/rnabioco/djvdj}
+  \item Report bugs at \url{https://github.com/rnabioco/djvdj/issues}
+}
+
 }
 \author{
 \strong{Maintainer}: Ryan Sheridan \email{ryan.sheridan@cuanschutz.edu} (\href{https://orcid.org/0000-0003-4012-3147}{ORCID})

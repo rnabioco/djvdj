@@ -12,7 +12,7 @@ plot_abundance(
   yaxis = "percent",
   plot_colors = NULL,
   plot_lvls = NULL,
-  label_col = NULL,
+  label_col = clonotype_col,
   n_clonotypes = 10,
   color_col = NULL,
   label_aes = list(),

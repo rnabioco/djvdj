@@ -76,19 +76,10 @@ so_filt <- filter_vdj(
 djvdj allows you to calculate a range of population diversity and similarity metrics implemented with the [abdiv](https://github.com/kylebittinger/abdiv) package. The function `calc_diversity()` can be used to measure diversity on a per-cluster or per-sample basis to allow for comparison across conditions. `calc_similarity()` will measure repertoire overlap between clusters or samples to allow for direct comparisons between cells of interest. Additional functions are also available to calculate clonotype abundances (`calc_abundance()`) and relative gene usage (`calc_usage()`).
 
 ```{r}
-# Calculate five different diversity metrics for each sample
-fns <- list(
-  "simpson"     = abdiv::simpson,
-  "shannon"     = abdiv::shannon,
-  "margalef"    = abdiv::margalef,
-  "menhinick"   = abdiv::menhinick,
-  "brillouin_d" = abdiv::brillouin_d
-)
-
 so_tcr <- calc_diversity(
   sobj_in     = so_tcr,                       # Seurat object
   cluster_col = "orig.ident",                 # meta.data column containing cell labels
-  method      = fns                           # List of diversity metrics
+  method      = abdiv::simpson                # List of diversity metrics
 )
 ```
 

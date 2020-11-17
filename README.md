@@ -68,19 +68,10 @@ abundances (`calc_abundance()`) and relative gene usage
 (`calc_usage()`).
 
 ``` r
-# Calculate five different diversity metrics for each sample
-fns <- list(
-  "simpson"     = abdiv::simpson,
-  "shannon"     = abdiv::shannon,
-  "margalef"    = abdiv::margalef,
-  "menhinick"   = abdiv::menhinick,
-  "brillouin_d" = abdiv::brillouin_d
-)
-
 so_tcr <- calc_diversity(
   sobj_in     = so_tcr,                       # Seurat object
   cluster_col = "orig.ident",                 # meta.data column containing cell labels
-  method      = fns                           # List of diversity metrics
+  method      = abdiv::simpson                # List of diversity metrics
 )
 ```
 

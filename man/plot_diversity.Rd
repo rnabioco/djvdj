@@ -8,7 +8,7 @@ plot_diversity(
   sobj_in,
   clonotype_col = "cdr3_nt",
   cluster_col = NULL,
-  method = abdiv::shannon,
+  method = abdiv::simpson,
   plot_colors = NULL,
   plot_lvls = NULL,
   facet_rows = 1,

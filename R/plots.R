@@ -613,7 +613,7 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
 #' @return ggplot object
 #' @export
 plot_diversity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                           method = abdiv::shannon, plot_colors = NULL, plot_lvls = NULL,
+                           method = abdiv::simpson, plot_colors = NULL, plot_lvls = NULL,
                            facet_rows = 1, ...) {
 
   if (length(method) > 1 && is.null(names(method))) {

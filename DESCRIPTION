@@ -45,7 +45,8 @@ Imports:
 Suggests: 
     roxygen2,
     testthat,
-    covr
+    covr,
+    knitr
 VignetteBuilder: 
     knitr
 Remotes:
