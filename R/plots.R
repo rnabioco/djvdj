@@ -645,8 +645,8 @@ plot_diversity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
 
   if (is.null(cluster_col)) {
     meta_df <- tibble::tibble(
-      diversity = unname(sobj_in),
-      name      = names(sobj_in),
+      div  = unname(sobj_in),
+      name = names(sobj_in),
     )
 
     include_strips <- FALSE

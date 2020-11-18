@@ -145,7 +145,7 @@ test_that("plot_reads bad type", {
 # Check all plot_abundance arguments for line plot
 arg_lst <- list(
   sobj_in       = list(tiny_vdj),
-  clonotype_col = "cdr3",
+  clonotype_col = "cdr3_nt",
   cluster_col   = list(NULL, "seurat_clusters"),
   type          = "line",
   label_col     = list(NULL, "cdr3"),
@@ -242,7 +242,7 @@ names(mets) <- abdiv::alpha_diversities
 
 arg_lst <- list(
   sobj_in       = list(tiny_vdj),
-  clonotype_col = "cdr3",
+  clonotype_col = "cdr3_nt",
   cluster_col   = list(NULL, "seurat_clusters"),
   method        = append(mets, list(mets)),
   plot_colors   = list(NULL, test_cols),
@@ -276,7 +276,7 @@ mets <- abdiv::beta_diversities %>%
 
 arg_lst <- list(
   sobj_in       = list(tiny_vdj),
-  clonotype_col = "cdr3",
+  clonotype_col = "cdr3_nt",
   cluster_col   = "seurat_clusters",
   method        = mets,
   plot_colors   = list(NULL, test_cols)

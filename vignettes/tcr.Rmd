@@ -21,22 +21,24 @@ knitr::opts_chunk$set(
 )
 
 # Packages
-library(dplyr)
-library(tidyr)
-library(purrr)
 library(stringr)
+library(tibble)
+library(purrr)
+library(dplyr)
 library(ggplot2)
 library(cowplot)
-library(colorblindr)
-library(here)
 library(Seurat)
+library(here)
 library(djvdj)
 
-# Okabe Ito color palettes
+# Color palette
 vdj_colors <- c(
-  palette_OkabeIto[1:4], "#d7301f", 
-  palette_OkabeIto[5:6], "#6A51A3", 
-  palette_OkabeIto[7:8], "#875C04"
+  "#E69F00", "#56B4E9",
+  "#009E73", "#F0E442",
+  "#d7301f", "#0072B2",
+  "#D55E00", "#6A51A3",
+  "#CC79A7", "#999999",
+  "#875C04"
 )
 ```
 
@@ -88,11 +90,12 @@ If the Seurat object contains data for multiple runs, a vector containing paths 
 ```{r "import_vdj"}
 # Create vector of paths pointing to cellranger output
 paths <- c(
-  KI_DN3_GE = "../data/tcr/KI_DN3_TCR",
-  KI_DN4_GE = "../data/tcr/KI_DN4_TCR",
-  WT_DN3_GE = "../data/tcr/WT_DN3_TCR",
-  WT_DN4_GE = "../data/tcr/WT_DN4_TCR"
-)
+  KI_DN3_GE = "data/tcr/KI_DN3_TCR",
+  KI_DN4_GE = "data/tcr/KI_DN4_TCR",
+  WT_DN3_GE = "data/tcr/WT_DN3_TCR",
+  WT_DN4_GE = "data/tcr/WT_DN4_TCR"
+) %>%
+  map_chr(here)
 
 so_tcr <- import_vdj(
   sobj_in        = so_tcr,                  # Seurat object
@@ -138,39 +141,11 @@ plot_reads(
 
 <br>
 
-The djvdj package provides several functions that can be used to manipulate the object meta.data, which is useful for identifying cells that should be removed. This includes a function to modify meta.data columns (`mutate_vdj()`) and a function to filter cells from the object (`filter_vdj()`). Since cells can have multiple values present in each V(D)J column (separated by a semicolon), when using these functions each string of V(D)J values for a cell should be thought of as a vector.
-
-For example using `filter_vdj()` we can remove V(D)J data for cells that have minimal UMI support. To do this we use the expression `all(umis > 2)`{.R}. This means that all semicolon-separated values present in the `umis` column must be greater than 2. Setting `filter_cells = FALSE`{.R} means the cell will remain in the object, but the V(D)J data will be removed.
-
-```{r}
-so_tcr <- filter_vdj(
-  sobj_in      = so_tcr,                    # Seurat object
-  filt         = all(umis > 2),             # Condition for filtering
-  filter_cells = FALSE                      # Should cells be removed from object
-)
-
-# Take a look at the meta.data
-so_tcr@meta.data %>%
-  as_tibble() %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(all_of(vdj_cols))
-```
-
-To further illustrate how `filter_vdj()` works we can look at row 7 shown above, which has two beta chains with 7 UMIs for the first and 171 UMIs for the second. When filtering this row we are evaluating whether the following condition is `TRUE`:
-
-```{r}
-vec <- c(7, 171)
-
-all(vec > 2)
-```
-
-<br>
-
 ### Paired Chains
 
-The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired alpha and beta chains. Using the `mutate_vdj()` function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.
+The djvdj package provides several functions that can be used to manipulate the object meta.data. This includes a function to modify meta.data columns (`mutate_vdj()`) and a function to filter cells from the object (`filter_vdj()`). Since cells can have multiple values present in each V(D)J column, when using these functions each string of values for a cell should be thought of as a vector.
 
-In this example we create a new column (`uniq_chains`) that summarizes the unique chains identified for each cell. We can then overlay these cell labels on a UMAP projection.
+The V(D)J data imported from Cell Ranger may include clonotypes that do not have paired alpha and beta chains. Using the `mutate_vdj()` function, we can add a new column (`uniq_chains`) to the meta.data to allow for easy visualization of these cells.
 
 ```{r}
 so_tcr <- mutate_vdj(
@@ -234,7 +209,7 @@ plot_grid(
 
 <br>
 
-Clonotypes that lack paired alpha and beta chains can be filtered using `filter_vdj()`. However, for this dataset we expect a large fraction of cells to have unpaired chains, so we can skip this step.
+Since we are using DN3 and DN4 thymocytes for this dataset, we expect a large fraction of cells to have unpaired alpha and beta chains. However, for other TCR datasets `filter_vdj()` can be used to remove V(D)J data for cells that lack paired chains. Setting `filter_cells` to `FALSE` (the default) will keep all cells in the object, but the V(D)J data will be removed.
 
 ```{r}
 so_filt <- filter_vdj(
