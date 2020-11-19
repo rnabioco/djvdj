@@ -86,7 +86,7 @@
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>TCR analysis</h1>
             
-            <h4 class="date">November 17 2020</h4>
+            <h4 class="date">November 19 2020</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/rnabioco/djvdj/blob/master/vignettes/tcr.Rmd"><code>vignettes/tcr.Rmd</code></a></small>
       <div class="hidden name"><code>tcr.Rmd</code></div>
@@ -107,11 +107,12 @@
 <div class="sourceCode" id="cb1"><pre class="downlit">
 <span class="co"># Create vector of paths pointing to cellranger output</span>
 <span class="va">paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>
-  KI_DN3_GE <span class="op">=</span> <span class="st">"../data/tcr/KI_DN3_TCR"</span>,
-  KI_DN4_GE <span class="op">=</span> <span class="st">"../data/tcr/KI_DN4_TCR"</span>,
-  WT_DN3_GE <span class="op">=</span> <span class="st">"../data/tcr/WT_DN3_TCR"</span>,
-  WT_DN4_GE <span class="op">=</span> <span class="st">"../data/tcr/WT_DN4_TCR"</span>
-<span class="op">)</span>
+  KI_DN3_GE <span class="op">=</span> <span class="st">"data/tcr/KI_DN3_TCR"</span>,
+  KI_DN4_GE <span class="op">=</span> <span class="st">"data/tcr/KI_DN4_TCR"</span>,
+  WT_DN3_GE <span class="op">=</span> <span class="st">"data/tcr/WT_DN3_TCR"</span>,
+  WT_DN4_GE <span class="op">=</span> <span class="st">"data/tcr/WT_DN4_TCR"</span>
+<span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu">map_chr</span><span class="op">(</span><span class="va">here</span><span class="op">)</span>
 
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span>
   sobj_in        <span class="op">=</span> <span class="va">so_tcr</span>,                  <span class="co"># Seurat object</span>
@@ -165,48 +166,13 @@
   <span class="fu">guides</span><span class="op">(</span>fill <span class="op">=</span> <span class="cn">FALSE</span>, color <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></pre></div>
 <p><img src="tcr_files/figure-html/read_support-1.png" width="624"></p>
 <p><br></p>
-<p>The djvdj package provides several functions that can be used to manipulate the object meta.data, which is useful for identifying cells that should be removed. This includes a function to modify meta.data columns (<code><a href="../reference/mutate_vdj.html">mutate_vdj()</a></code>) and a function to filter cells from the object (<code><a href="../reference/filter_vdj.html">filter_vdj()</a></code>). Since cells can have multiple values present in each V(D)J column (separated by a semicolon), when using these functions each string of V(D)J values for a cell should be thought of as a vector.</p>
-<p>For example using <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code> we can remove V(D)J data for cells that have minimal UMI support. To do this we use the expression <code class="sourceCode r"><span class="kw">all</span>(umis <span class="op">&gt;</span><span class="st"> </span><span class="dv">2</span>)</code>. This means that all semicolon-separated values present in the <code>umis</code> column must be greater than 2. Setting <code class="sourceCode r">filter_cells =<span class="st"> </span><span class="ot">FALSE</span></code> means the cell will remain in the object, but the V(D)J data will be removed.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit">
-<span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span>
-  sobj_in      <span class="op">=</span> <span class="va">so_tcr</span>,                    <span class="co"># Seurat object</span>
-  filt         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span><span class="op">(</span><span class="va">umis</span> <span class="op">&gt;</span> <span class="fl">2</span><span class="op">)</span>,             <span class="co"># Condition for filtering</span>
-  filter_cells <span class="op">=</span> <span class="cn">FALSE</span>                      <span class="co"># Should cells be removed from object</span>
-<span class="op">)</span>
-
-<span class="co"># Take a look at the meta.data</span>
-<span class="va">so_tcr</span><span class="op">@</span><span class="va">meta.data</span> <span class="op">%&gt;%</span>
-  <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">clonotype_id</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu">select</span><span class="op">(</span><span class="fu">all_of</span><span class="op">(</span><span class="va">vdj_cols</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 3,725 x 7</span>
-<span class="co">#&gt;    clonotype_id     cdr3             chains  v_gene      j_gene    reads   umis </span>
-<span class="co">#&gt;    &lt;chr&gt;            &lt;chr&gt;            &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;</span>
-<span class="co">#&gt;  1 WT_DN3_GE_clono… CAVQGANTEVFF     TRB     TRBV17      TRBJ1-1   42590   72   </span>
-<span class="co">#&gt;  2 WT_DN3_GE_clono… CASSHPGQNSGNTLYF TRB     TRBV5       TRBJ1-3   12670   17   </span>
-<span class="co">#&gt;  3 WT_DN3_GE_clono… CASSHWGETLYF     TRB     TRBV5       TRBJ2-3   31772   46   </span>
-<span class="co">#&gt;  4 WT_DN3_GE_clono… CGARAQGLYNSPLYF  TRB     TRBV20      TRBJ1-6   7124    15   </span>
-<span class="co">#&gt;  5 WT_DN3_GE_clono… CTAPAGGQNTEVFF   TRB     TRBV1       TRBJ1-1   4744    8    </span>
-<span class="co">#&gt;  6 WT_DN3_GE_clono… CASSQDLDWGGEQFF  TRB     TRBV5       TRBJ2-1   34966   52   </span>
-<span class="co">#&gt;  7 WT_DN3_GE_clono… CASRTGGCYEQYF;C… TRB;TRB TRBV13-1;T… TRBJ2-7;… 4166;6… 7;171</span>
-<span class="co">#&gt;  8 WT_DN3_GE_clono… CASSPGTENTLYF    TRB     TRBV12-2    TRBJ2-4   9180    18   </span>
-<span class="co">#&gt;  9 WT_DN3_GE_clono… CASSLKGARSDYTF   TRB     TRBV12-1    TRBJ1-2   19742   29   </span>
-<span class="co">#&gt; 10 WT_DN3_GE_clono… CASRLTGRDSDYTF;… TRB;TRB TRBV15;TRB… TRBJ1-2;… 28860;… 48;22</span>
-<span class="co">#&gt; # … with 3,715 more rows</span></pre></div>
-<p>To further illustrate how <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code> works we can look at row 7 shown above, which has two beta chains with 7 UMIs for the first and 171 UMIs for the second. When filtering this row we are evaluating whether the following condition is <code>TRUE</code>:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit">
-<span class="va">vec</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">7</span>, <span class="fl">171</span><span class="op">)</span>
-
-<span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span><span class="op">(</span><span class="va">vec</span> <span class="op">&gt;</span> <span class="fl">2</span><span class="op">)</span>
-<span class="co">#&gt; [1] TRUE</span></pre></div>
-<p><br></p>
 </div>
 <div id="paired-chains" class="section level3">
 <h3 class="hasAnchor">
 <a href="#paired-chains" class="anchor"></a>Paired Chains</h3>
-<p>The V(D)J data imported from Cell Ranger will include clonotypes that do not have paired alpha and beta chains. Using the <code><a href="../reference/mutate_vdj.html">mutate_vdj()</a></code> function, we can add a new cell label to the meta.data to allow for easy visualization of these cells.</p>
-<p>In this example we create a new column (<code>uniq_chains</code>) that summarizes the unique chains identified for each cell. We can then overlay these cell labels on a UMAP projection.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit">
+<p>The djvdj package provides several functions that can be used to manipulate the object meta.data. This includes a function to modify meta.data columns (<code><a href="../reference/mutate_vdj.html">mutate_vdj()</a></code>) and a function to filter cells from the object (<code><a href="../reference/filter_vdj.html">filter_vdj()</a></code>). Since cells can have multiple values present in each V(D)J column, when using these functions each string of values for a cell should be thought of as a vector.</p>
+<p>The V(D)J data imported from Cell Ranger may include clonotypes that do not have paired alpha and beta chains. Using the <code><a href="../reference/mutate_vdj.html">mutate_vdj()</a></code> function, we can add a new column (<code>uniq_chains</code>) to the meta.data to allow for easy visualization of these cells.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit">
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mutate_vdj.html">mutate_vdj</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                                <span class="co"># Seurat object</span>
   uniq_chains <span class="op">=</span> <span class="fu">str_c</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html">unique</a></span><span class="op">(</span><span class="va">chains</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"_"</span><span class="op">)</span>  <span class="co"># New column</span>
@@ -217,22 +183,22 @@
   <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">clonotype_id</span><span class="op">)</span>, <span class="va">n_chains</span> <span class="op">&gt;</span> <span class="fl">2</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu">select</span><span class="op">(</span><span class="fu">all_of</span><span class="op">(</span><span class="va">vdj_cols</span><span class="op">)</span>, <span class="va">uniq_chains</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 83 x 8</span>
+<span class="co">#&gt; # A tibble: 101 x 8</span>
 <span class="co">#&gt;    clonotype_id  cdr3       chains  v_gene    j_gene    reads  umis  uniq_chains</span>
 <span class="co">#&gt;    &lt;chr&gt;         &lt;chr&gt;      &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt;     &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;      </span>
-<span class="co">#&gt;  1 WT_DN4_GE_cl… CALVMNYNQ… TRA;TR… TRAV13-1… TRAJ23;T… 16886… 13;2… TRA_TRB    </span>
-<span class="co">#&gt;  2 WT_DN4_GE_cl… CILRVVWGT… TRA;TR… TRAV21-D… TRAJ58;T… 6254;… 8;14… TRA_TRB    </span>
-<span class="co">#&gt;  3 WT_DN4_GE_cl… CAAPTSSGS… TRA;TR… TRAV14D-… TRAJ22;T… 16924… 11;7… TRA_TRB    </span>
-<span class="co">#&gt;  4 WT_DN4_GE_cl… CAARRGSNY… TRA;TR… TRAV14D-… TRAJ33;T… 20144… 13;3… TRA_TRB    </span>
-<span class="co">#&gt;  5 WT_DN4_GE_cl… CAAAMSNYN… TRA;TR… TRAV4-3;… TRAJ21;T… 16622… 10;5… TRA_TRB    </span>
-<span class="co">#&gt;  6 WT_DN4_GE_cl… CAASTSGSW… TRA;TR… TRAV7D-2… TRAJ22;T… 18152… 11;1… TRA_TRB    </span>
-<span class="co">#&gt;  7 WT_DN4_GE_cl… CALLASSSF… TRA;TR… TRAV12-1… TRAJ50;T… 12942… 19;5… TRA_TRB    </span>
-<span class="co">#&gt;  8 WT_DN4_GE_cl… CAPGTGGYK… TRA;TR… TRAV13-2… TRAJ12;T… 11882… 13;2… TRA_TRB    </span>
-<span class="co">#&gt;  9 WT_DN4_GE_cl… CAASALRDS… TRA;TR… TRAV14N-… TRAJ13;T… 13372… 8;15… TRA_TRB    </span>
-<span class="co">#&gt; 10 WT_DN4_GE_cl… CAMERGSAL… TRA;TR… TRAV13N-… TRAJ18;T… 20338… 13;7… TRA_TRB    </span>
-<span class="co">#&gt; # … with 73 more rows</span></pre></div>
+<span class="co">#&gt;  1 WT_DN4_GE_cl… CATTGFASA… TRA;TR… TRAV16D-… TRAJ35;T… 904;9… 2;16… TRA_TRB    </span>
+<span class="co">#&gt;  2 WT_DN4_GE_cl… CALVMNYNQ… TRA;TR… TRAV13-1… TRAJ23;T… 16886… 13;2… TRA_TRB    </span>
+<span class="co">#&gt;  3 WT_DN4_GE_cl… CILRVVWGT… TRA;TR… TRAV21-D… TRAJ58;T… 6254;… 8;14… TRA_TRB    </span>
+<span class="co">#&gt;  4 WT_DN4_GE_cl… CAAPTSSGS… TRA;TR… TRAV14D-… TRAJ22;T… 16924… 11;7… TRA_TRB    </span>
+<span class="co">#&gt;  5 WT_DN4_GE_cl… CAARRGSNY… TRA;TR… TRAV14D-… TRAJ33;T… 20144… 13;3… TRA_TRB    </span>
+<span class="co">#&gt;  6 WT_DN4_GE_cl… CAAAMSNYN… TRA;TR… TRAV4-3;… TRAJ21;T… 16622… 10;5… TRA_TRB    </span>
+<span class="co">#&gt;  7 WT_DN4_GE_cl… CAASTSGSW… TRA;TR… TRAV7D-2… TRAJ22;T… 18152… 11;1… TRA_TRB    </span>
+<span class="co">#&gt;  8 WT_DN4_GE_cl… CALLASSSF… TRA;TR… TRAV12-1… TRAJ50;T… 12942… 19;5… TRA_TRB    </span>
+<span class="co">#&gt;  9 WT_DN4_GE_cl… CAPGTGGYK… TRA;TR… TRAV13-2… TRAJ12;T… 11882… 13;2… TRA_TRB    </span>
+<span class="co">#&gt; 10 WT_DN4_GE_cl… CAASALRDS… TRA;TR… TRAV14N-… TRAJ13;T… 13372… 8;15… TRA_TRB    </span>
+<span class="co">#&gt; # … with 91 more rows</span></pre></div>
 <p>For row 1 shown above, this is equivalent to:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit">
+<div class="sourceCode" id="cb5"><pre class="downlit">
 <span class="va">vec</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"TRA"</span>, <span class="st">"TRB"</span>, <span class="st">"TRB"</span><span class="op">)</span>
 <span class="va">vec</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html">unique</a></span><span class="op">(</span><span class="va">vec</span><span class="op">)</span>
 
@@ -240,7 +206,7 @@
 <span class="co">#&gt; [1] "TRA_TRB"</span></pre></div>
 <p><br></p>
 <p>We can then overlay the new labels present in the <code>uniq_chains</code> column on a UMAP projection. djvdj also provides a simple wrapper function (<code><a href="../reference/plot_cell_count.html">plot_cell_count()</a></code>) that will summarize the fraction of cells that belong to each group.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit">
+<div class="sourceCode" id="cb6"><pre class="downlit">
 <span class="va">chain_cols</span> <span class="op">&lt;-</span> <span class="va">vdj_colors</span>
 <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">chain_cols</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html">unique</a></span><span class="op">(</span><span class="va">so_tcr</span><span class="op">$</span><span class="va">uniq_chains</span><span class="op">)</span>
 
@@ -274,8 +240,8 @@
 <span class="op">)</span></pre></div>
 <p><img src="tcr_files/figure-html/chains_umap-1.png" width="624"></p>
 <p><br></p>
-<p>Clonotypes that lack paired alpha and beta chains can be filtered using <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code>. However, for this dataset we expect a large fraction of cells to have unpaired chains, so we can skip this step.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit">
+<p>Since we are using DN3 and DN4 thymocytes for this dataset, we expect a large fraction of cells to have unpaired alpha and beta chains. However, for other TCR datasets <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code> can be used to remove V(D)J data for cells that lack paired chains. Setting <code>filter_cells</code> to <code>FALSE</code> (the default) will keep all cells in the object, but the V(D)J data will be removed.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit">
 <span class="va">so_filt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span>
   sobj_in      <span class="op">=</span> <span class="va">so_tcr</span>,                            <span class="co"># Seurat object</span>
   filt         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"TRA"</span>, <span class="st">"TRB"</span><span class="op">)</span> <span class="op">%in%</span> <span class="va">chains</span><span class="op">)</span>,  <span class="co"># Condition for filtering</span>
@@ -288,14 +254,14 @@
 <h2 class="hasAnchor">
 <a href="#clonotype-abundance" class="anchor"></a>Clonotype Abundance</h2>
 <p>To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the <code><a href="../reference/calc_abundance.html">calc_abundance()</a></code> function. These calculations can be performed on a per-cluster or per-sample basis by also providing a meta.data column containing cell labels.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit">
+<div class="sourceCode" id="cb8"><pre class="downlit">
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_abundance.html">calc_abundance</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
   cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>                <span class="co"># meta.data column containing cell labels</span>
 <span class="op">)</span></pre></div>
 <p><br></p>
 <p>For each ‘calc’ function provided by djvdj, there is a matching ‘plot’ function that will generate a summary plot. The <code><a href="../reference/plot_abundance.html">plot_abundance()</a></code> function will plot clonotypes ranked by abundance.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit">
+<div class="sourceCode" id="cb9"><pre class="downlit">
 <span class="fu"><a href="../reference/plot_abundance.html">plot_abundance</a></span><span class="op">(</span>
   sobj_in      <span class="op">=</span> <span class="va">so_tcr</span>,                    <span class="co"># Seurat object</span>
   cluster_col  <span class="op">=</span> <span class="st">"orig.ident"</span>,              <span class="co"># meta.data column containing cell labels</span>
@@ -321,7 +287,7 @@
 [13] "shannon"          "simpson"          "simpson_e"        "strong"          </code></pre>
 <p><br></p>
 <p>In this example we are calculating the Shannon diversity for each sample in the orig.ident meta.data column.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit">
+<div class="sourceCode" id="cb11"><pre class="downlit">
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_diversity.html">calc_diversity</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
   cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,               <span class="co"># meta.data column containing cell labels</span>
@@ -329,7 +295,7 @@
 <span class="op">)</span></pre></div>
 <p><br></p>
 <p>The <code><a href="../reference/plot_diversity.html">plot_diversity()</a></code> function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Two different metrics are shown in the example below.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit">
+<div class="sourceCode" id="cb12"><pre class="downlit">
 <span class="co"># Metrics to plot</span>
 <span class="va">fns</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
   <span class="st">"simpson"</span>  <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/simpson.html">simpson</a></span>,
@@ -373,7 +339,7 @@
 [39] "weighted_kulczynski_second"         "yule_dissimilarity"                </code></pre>
 <p><br></p>
 <p>By default <code><a href="../reference/calc_similarity.html">calc_similarity()</a></code> will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of cell labels present in the <code>orig.ident</code> column.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit">
+<div class="sourceCode" id="cb14"><pre class="downlit">
 <span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_similarity.html">calc_similarity</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
   cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,               <span class="co"># meta.data column containing cell labels</span>
@@ -381,7 +347,7 @@
 <span class="op">)</span></pre></div>
 <p><br></p>
 <p>A heatmap summarizing the results can be generated using the <code><a href="../reference/plot_similarity.html">plot_similarity()</a></code> function. Here we are creating two heatmaps, one to compare the different samples and one to compare cell clusters.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit">
+<div class="sourceCode" id="cb15"><pre class="downlit">
 <span class="co"># Sample heatmap</span>
 <span class="va">ident_heat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_similarity.html">plot_similarity</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
@@ -415,7 +381,7 @@
 <a href="#gene-usage" class="anchor"></a>Gene Usage</h2>
 <p>The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function <code><a href="../reference/calc_usage.html">calc_usage()</a></code> can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the <code>chain</code> and <code>chain_col</code> arguments can be used to specify the meta.data column containing the chains detected for each cell. By default the results for all chains will be included.</p>
 <p>In this example we are summarizing the usage of different V genes for the TRB chain</p>
-<div class="sourceCode" id="cb18"><pre class="downlit">
+<div class="sourceCode" id="cb16"><pre class="downlit">
 <span class="fu"><a href="../reference/calc_usage.html">calc_usage</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,                   <span class="co"># meta.data column containing genes</span>
@@ -426,20 +392,20 @@
 <span class="co">#&gt; # A tibble: 92 x 5</span>
 <span class="co">#&gt;    v_gene orig.ident n_cells  freq   pct</span>
 <span class="co">#&gt;    &lt;chr&gt;  &lt;chr&gt;        &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt;</span>
-<span class="co">#&gt;  1 None   WT_DN3         592     0 0    </span>
-<span class="co">#&gt;  2 None   WT_DN4         866    11 1.27 </span>
-<span class="co">#&gt;  3 None   KI_DN3         719     0 0    </span>
-<span class="co">#&gt;  4 None   KI_DN4        1548     6 0.388</span>
-<span class="co">#&gt;  5 TRBV1  WT_DN3         592    23 3.89 </span>
-<span class="co">#&gt;  6 TRBV1  WT_DN4         866    37 4.27 </span>
-<span class="co">#&gt;  7 TRBV1  KI_DN3         719    34 4.73 </span>
-<span class="co">#&gt;  8 TRBV1  KI_DN4        1548    64 4.13 </span>
-<span class="co">#&gt;  9 TRBV10 WT_DN3         592    31 5.24 </span>
-<span class="co">#&gt; 10 TRBV10 WT_DN4         866    57 6.58 </span>
+<span class="co">#&gt;  1 None   WT_DN3         597     0 0    </span>
+<span class="co">#&gt;  2 None   WT_DN4         909    12 1.32 </span>
+<span class="co">#&gt;  3 None   KI_DN3         728     0 0    </span>
+<span class="co">#&gt;  4 None   KI_DN4        1616     8 0.495</span>
+<span class="co">#&gt;  5 TRBV1  WT_DN3         597    23 3.85 </span>
+<span class="co">#&gt;  6 TRBV1  WT_DN4         909    38 4.18 </span>
+<span class="co">#&gt;  7 TRBV1  KI_DN3         728    34 4.67 </span>
+<span class="co">#&gt;  8 TRBV1  KI_DN4        1616    66 4.08 </span>
+<span class="co">#&gt;  9 TRBV10 WT_DN3         597    31 5.19 </span>
+<span class="co">#&gt; 10 TRBV10 WT_DN4         909    59 6.49 </span>
 <span class="co">#&gt; # … with 82 more rows</span></pre></div>
 <p><br></p>
 <p>The function <code><a href="../reference/plot_usage.html">plot_usage()</a></code> can be used to summarize these results. Using the <code>yaxis</code> argument, the percent or absolute count (frequency) can be used for plotting. The genes plotted can also be selected using the <code>plot_genes</code> argument, or the number of top genes (most frequent) to plot can be specified with <code>n_genes</code>.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit">
+<div class="sourceCode" id="cb17"><pre class="downlit">
 <span class="fu"><a href="../reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,                   <span class="co"># meta.data column(s) containing genes</span>
@@ -454,7 +420,7 @@
 <p><img src="tcr_files/figure-html/gene_usage_1-1.png" width="1056"></p>
 <p><br></p>
 <p>By passing multiple columns to <code>gene_cols</code>, the frequency that different genes are used together can also be summarized.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit">
+<div class="sourceCode" id="cb18"><pre class="downlit">
 <span class="fu"><a href="../reference/calc_usage.html">calc_usage</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,      <span class="co"># meta.data column(s) containing genes</span>
@@ -463,7 +429,7 @@
 <span class="op">)</span></pre></div>
 <p><br></p>
 <p>When multiple gene columns are passed to <code><a href="../reference/plot_usage.html">plot_usage()</a></code>, a list of plots will be returned, one for each cell label in the <code>cluster_col</code> column.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit">
+<div class="sourceCode" id="cb19"><pre class="downlit">
 <span class="va">ggs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                     <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,      <span class="co"># meta.data column(s) containing genes</span>
@@ -481,7 +447,7 @@
 <h2 class="hasAnchor">
 <a href="#cdr3-usage" class="anchor"></a>CDR3 Usage</h2>
 <p>The <code><a href="../reference/calc_usage.html">calc_usage()</a></code> and <code><a href="../reference/plot_usage.html">plot_usage()</a></code> functions can also be used to calculate the fraction of cells that have a certain CDR3 sequence. To do this, the meta.data column containing the CDR3 sequences for each cell can be passed to the <code>gene_cols</code> argument. The plot can be divided into facets based on sample using simple ggplot2 commands.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit">
+<div class="sourceCode" id="cb20"><pre class="downlit">
 <span class="fu"><a href="../reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,
   gene_cols   <span class="op">=</span> <span class="st">"cdr3"</span>,                     <span class="co"># Column containing CDR3 sequences</span>
