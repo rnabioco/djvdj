@@ -13,11 +13,11 @@ reference:
   contents:
   - import_vdj
   - filter_vdj
-  - mutate_vdj
+  - starts_with("mutate_")
 
 - title: Calculate
   contents:
-  - starts_with("calc")
+  - starts_with("calc_")
   - summarize_chains
 
 - title: Plotting

@@ -292,6 +292,36 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = 
 }
 
 
+#' Manipulate Seurat object meta.data
+#'
+#' @param sobj_in Seurat object
+#' @param .fun Function or formula to use for modifying the meta.data. If a
+#' formula is provided, use .x to refer to the meta.data table.
+#' @param ... Arguments to pass to the provided function
+#' @return Seurat object
+#' @export
+mutate_meta <- function(sobj_in, .fun, ...) {
+
+  if (!is_function(.fun) && !is_formula(.fun)) {
+    stop(".fun must be either a function or a formula.")
+  }
+
+  .x <- sobj_in@meta.data
+  .x <- tibble::rownames_to_column(.x, ".cell_id")
+
+  if (is_formula(.fun)) {
+    .fun <- as_mapper(.fun, ...)
+  }
+
+  res <- .fun(.x, ...)
+  res <- tibble::column_to_rownames(res, ".cell_id")
+
+  sobj_in@meta.data <- res
+
+  sobj_in
+}
+
+
 #' Mutate V(D)J meta.data
 #'
 #' @param sobj_in Seurat object containing V(D)J data
