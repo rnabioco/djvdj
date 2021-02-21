@@ -11,9 +11,9 @@
 
 \item{ft}{Name of column containing feature values}
 
-\item{mn}{Minimum percent rank}
+\item{mn}{Minimum quantile}
 
-\item{mx}{Maximum percent rank}
+\item{mx}{Maximum quantile}
 }
 \value{
 data.frame with modified feature values

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{plot_features}
 \alias{plot_features}
-\title{Create two dimensional scatter plot}
+\title{Create 2D feature plot}
 \usage{
 plot_features(
   sobj_in,
@@ -11,16 +11,13 @@ plot_features(
   feature,
   data_slot = "data",
   pt_size = 0.25,
+  pt_outline = NULL,
+  outline_pos = "all",
   plot_colors = NULL,
   feat_lvls = NULL,
-  facet_col = NULL,
-  facet_lvls = NULL,
-  min_pct = NULL,
-  max_pct = NULL,
+  min_q = NULL,
+  max_q = NULL,
   na_color = "grey90",
-  lm_line = FALSE,
-  cor_label = c(0.8, 0.9),
-  label_size = 3.7,
   ...
 )
 }
@@ -37,25 +34,22 @@ plot_features(
 
 \item{pt_size}{Point size}
 
+\item{pt_outline}{Width of point outline to add to feature groups, set to
+NULL to exclude.}
+
+\item{outline_pos}{Position of point outline. Set to 'all' to outline all
+feature groups, set to 'bottom' to only outline the bottom layer of
+points.}
+
 \item{plot_colors}{Vector of colors to use for plot}
 
 \item{feat_lvls}{Levels to use for ordering feature}
 
-\item{facet_col}{Variable to use for splitting plot into facets}
+\item{min_q}{Minimum quantile cutoff for color scale.}
 
-\item{facet_lvls}{Levels to use for ordering plot facets}
-
-\item{min_pct}{Minimum value to plot for feature}
-
-\item{max_pct}{Maximum value to plot for feature}
+\item{max_q}{Maximum quantile cutoff for color scale.}
 
 \item{na_color}{Color to use for missing values}
-
-\item{lm_line}{Add regression line to plot}
-
-\item{cor_label}{Position of correlation coefficient label}
-
-\item{label_size}{Size of correlation coefficient label}
 
 \item{...}{Additional parameters to pass to facet_wrap}
 }
@@ -63,5 +57,5 @@ plot_features(
 ggplot object
 }
 \description{
-Create two dimensional scatter plot
+Create 2D feature plot
 }

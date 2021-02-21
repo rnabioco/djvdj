@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{.add_lm}
 \alias{.add_lm}
-\title{Add regression line to ggplot object}
+\title{Add regression line to ggplot}
 \usage{
 .add_lm(gg_in, lab_pos = NULL, lab_size = 3.5, ...)
 }
@@ -20,5 +20,5 @@ omit label}
 ggplot object with added regression line
 }
 \description{
-Add regression line to ggplot object
+Add regression line to ggplot
 }

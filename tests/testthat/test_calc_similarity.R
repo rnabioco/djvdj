@@ -33,17 +33,20 @@ test_sim <- tiny_vdj@meta.data %>%
   pivot_wider(names_from = "seurat_clusters", values_from = "n") %>%
   mutate(across(all_of(test_clsts), replace_na, 0))
 
+clst <- test_clsts[1]
+nm   <- paste0("x", clst)
+
 test_sim <- map_dfr(test_clsts, ~ {
-  x <- test_sim$`6`
+  x <- pull(test_sim, clst)
   y <- pull(test_sim, .x)
 
   tibble(
     seurat_clusters = .x,
-    x6 = abdiv::binomial_deviance(x, y)
+    !!sym(nm) := abdiv::binomial_deviance(x, y)
   )
 }) %>%
   arrange(seurat_clusters) %>%
-  mutate(x6 = if_else(seurat_clusters == "6", 1, x6))
+  mutate(!!sym(nm) := if_else(seurat_clusters == clst, 1, !!sym(nm)))
 
 test_that("sim calc", {
   res <- tiny_vdj %>%
@@ -57,8 +60,8 @@ test_that("sim calc", {
 
   res <- res@meta.data %>%
     as_tibble() %>%
-    select(seurat_clusters, x6) %>%
-    filter(!is.na(x6)) %>%
+    select(seurat_clusters, all_of(nm)) %>%
+    filter(!is.na(!!sym(nm))) %>%
     distinct() %>%
     arrange(seurat_clusters)
 

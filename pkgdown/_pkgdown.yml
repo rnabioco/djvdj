@@ -23,9 +23,10 @@ reference:
 - title: Plotting
   contents:
   - plot_abundance
-  - plot_cell_count
   - plot_diversity
   - plot_reads
   - plot_similarity
   - plot_usage
-  - vdj_theme
+  - plot_features
+  - plot_cell_count
+  - djvdj_theme
