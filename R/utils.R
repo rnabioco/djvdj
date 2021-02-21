@@ -155,11 +155,11 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 
   meta_df <- summarize(
     contigs,
-    n_chains = n(),
     across(
       all_of(sep_cols),
       ~ paste0(as.character(.x), collapse = sep)
     ),
+    n_chains = n(),
     .groups = "drop"
   )
 

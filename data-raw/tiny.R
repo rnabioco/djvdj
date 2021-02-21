@@ -146,9 +146,9 @@ tiny_vdj <- tiny_so %>%
 # Test contigs
 contigs <- read_csv(file.path(vdj_path, "filtered_contig_annotations.csv"))
 
-# contigs %>%
-#   filter(barcode %in% tiny_cells) %>%
-#   write_csv("inst/outs/filtered_contig_annotations.csv")
+contigs %>%
+  filter(barcode %in% tiny_cells) %>%
+  write_csv("inst/extdata/outs/filtered_contig_annotations.csv")
 
 # Save objects
 usethis::use_data(
