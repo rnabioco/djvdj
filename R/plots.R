@@ -1,4 +1,4 @@
-#' Create two dimensional scatter plot
+#' Create 2D feature plot
 #'
 #' @param sobj_in Seurat object or data.frame containing data for plotting
 #' @param x Variable to plot on x-axis
@@ -6,98 +6,124 @@
 #' @param feature Variable to use for coloring points
 #' @param data_slot Slot in the Seurat object to pull data
 #' @param pt_size Point size
+#' @param pt_outline Width of point outline to add to feature groups, set to
+#' NULL to exclude.
+#' @param outline_pos Position of point outline. Set to 'all' to outline all
+#' feature groups, set to 'bottom' to only outline the bottom layer of
+#' points.
 #' @param plot_colors Vector of colors to use for plot
 #' @param feat_lvls Levels to use for ordering feature
-#' @param facet_col Variable to use for splitting plot into facets
-#' @param facet_lvls Levels to use for ordering plot facets
-#' @param min_pct Minimum value to plot for feature
-#' @param max_pct Maximum value to plot for feature
+#' @param min_q Minimum quantile cutoff for color scale.
+#' @param max_q Maximum quantile cutoff for color scale.
 #' @param na_color Color to use for missing values
-#' @param lm_line Add regression line to plot
-#' @param cor_label Position of correlation coefficient label
-#' @param label_size Size of correlation coefficient label
 #' @param ... Additional parameters to pass to facet_wrap
 #' @return ggplot object
 plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
-                          pt_size = 0.25, plot_colors = NULL, feat_lvls = NULL, facet_col = NULL,
-                          facet_lvls = NULL, min_pct = NULL, max_pct = NULL, na_color = "grey90",
-                          lm_line = FALSE, cor_label = c(0.8, 0.9), label_size = 3.7, ...) {
+                          pt_size = 0.25, pt_outline = NULL, outline_pos = "all", plot_colors = NULL,
+                          feat_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90", ...) {
 
+  # Check arguments
   if (x == y) {
     stop("'x' and 'y' must be different.")
   }
 
-  # Format imput data
+  if (!outline_pos %in% c("all", "bottom")) {
+    stop("outline_pos must be either 'all' or 'bottom'")
+  }
+
+  # Format input data
   meta_df <- sobj_in
 
   if ("Seurat" %in% class(sobj_in)) {
     vars <- c(x, y, feature)
 
-    if (!is.null(facet_col)) {
-      vars <- c(vars, facet_col)
-    }
-
+    # Fetch variables and add to meta.data
     meta_df <- Seurat::FetchData(
       sobj_in,
       vars = unique(vars),
       slot = as.character(data_slot)
     )
 
-    meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
+    meta_df <- Seurat::AddMetaData(sobj_in, meta_df)
+    meta_df <- tibble::as_tibble(meta_df@meta.data, rownames = ".cell_id")
   }
 
   if (!feature %in% colnames(meta_df)) {
     stop(paste(feature, "not found in object."))
   }
 
-  # Rename features
-  if (!is.null(names(feature))) {
-    meta_df  <- dplyr::rename(meta_df, !!!syms(feature))
-    feature <- names(feature)
-  }
-
-  if (!is.null(names(x))) {
-    meta_df <- dplyr::rename(meta_df, !!!syms(x))
-    x <- names(x)
-  }
-
-  if (!is.null(names(y))) {
-    meta_df <- dplyr::rename(meta_df, !!!syms(y))
-    y <- names(y)
-  }
-
-  # Adjust values based on min_pct and max_pct
+  # Adjust values based on min_q and max_q
   meta_df <- .set_lims(
     meta_df,
     ft = feature,
-    mn = min_pct,
-    mx = max_pct
+    mn = min_q,
+    mx = max_q
   )
 
   # Set feature and facet order
   meta_df <- .set_lvls(meta_df, feature, feat_lvls)
 
-  if (!is.null(facet_col) && length(facet_col) == 1) {
-    meta_df <- .set_lvls(meta_df, facet_col, facet_lvls)
-  }
-
   # Create scatter plot
-  meta_df <- dplyr::arrange(meta_df, !!sym(feature))
+  # To add outline for each cluster create separate layers
+  res <- arrange(meta_df, !!sym(feature))
 
-  res <- ggplot2::ggplot(
-    meta_df,
-    ggplot2::aes(!!sym(x), !!sym(y), color = !!sym(feature))
-  ) +
-    ggplot2::geom_point(size = pt_size) +
-    vdj_theme()
+  if (!is.null(pt_outline)) {
 
-  # Add regression line
-  if (lm_line) {
-    res <- .add_lm(
+    pt_outline <- pt_size + pt_outline
+
+    # Add outline for each feature group
+    if (!is.numeric(meta_df[[feature]]) && outline_pos == "all") {
+      res <- ggplot2::ggplot(
+        res,
+        ggplot2::aes(
+          !!sym(x), !!sym(y),
+          color = !!sym(feature),
+          fill = !!sym(feature)
+        )
+      )
+
+      feats <- unique(meta_df[[feature]])
+
+      if (!is.null(feat_lvls)) {
+        feats <- feat_lvls[feat_lvls %in% feats]
+      }
+
+      walk(feats, ~ {
+        f_counts <- filter(meta_df, !!sym(feature) == .x)
+
+        res <<- res +
+          ggplot2::geom_point(
+            ggplot2::aes(fill = !!sym(feature)),
+            data        = f_counts,
+            size        = pt_outline,
+            color       = "black",
+            show.legend = FALSE
+          ) +
+          ggplot2::geom_point(data = f_counts, size = pt_size)
+      })
+
+    # Only add bottom outline
+    } else {
+      res <- ggplot2::ggplot(
+        res,
+        ggplot2::aes(!!sym(x), !!sym(y), color = !!sym(feature))
+      ) +
+        ggplot2::geom_point(
+          ggplot2::aes(fill = !!sym(feature)),
+          size        = pt_outline,
+          color       = "black",
+          show.legend = FALSE
+        ) +
+        ggplot2::geom_point(size = pt_size)
+    }
+
+  # Create scatter plot without point outline
+  } else {
+    res <- ggplot2::ggplot(
       res,
-      lab_pos = cor_label,
-      lab_size = label_size
-    )
+      ggplot2::aes(!!sym(x), !!sym(y), color = !!sym(feature))
+    ) +
+      ggplot2::geom_point(size = pt_size)
   }
 
   # Set feature colors
@@ -116,27 +142,21 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
           na.value = na_color
         )
     }
+
   }
 
-  # Split plot into facets
-  if (!is.null(facet_col)) {
-    if (length(facet_col) == 1) {
-      res <- res +
-        ggplot2::facet_wrap(~ !!sym(facet_col), ...)
-
-    } else if (length(facet_col) == 2) {
-      eq <- paste0(facet_col[1], " ~ ", facet_col[2])
-
-      res <- res +
-        ggplot2::facet_grid(stats::as.formula(eq), ...)
-    }
-  }
+  # Set theme
+  res <- res +
+    djvdj_theme() +
+    ggplot2::guides(
+      color = ggplot2::guide_legend(override.aes = list(size = 3))
+    )
 
   res
 }
 
 
-#' Create bar graphs summarizing cell counts for clusters
+#' Plot cell counts for clusters
 #'
 #' @param sobj_in Seurat object or data.frame containing data
 #' @param x meta.data column containing clusters to use for creating bars
@@ -169,7 +189,7 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, facet_col = NULL, yaxis
     stop("yaxis must be either 'fraction' or 'counts'.")
   }
 
-  y_types <- purrr::set_names(c("fill", "stack"), y_types)
+  y_types <- set_names(c("fill", "stack"), y_types)
 
   bar_pos <- y_types[[yaxis]]
 
@@ -177,15 +197,13 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, facet_col = NULL, yaxis
   meta_df <- sobj_in
 
   if ("Seurat" %in% class(sobj_in)) {
-    meta_df <- sobj_in@meta.data %>%
-      as_tibble(rownames = ".cell_id")
+    meta_df <- as_tibble(sobj_in@meta.data, rownames = ".cell_id")
   }
 
   meta_df <- .set_lvls(meta_df, x, plot_lvls)
 
   # Create bar graphs
-  res <- meta_df %>%
-    ggplot2::ggplot(ggplot2::aes(!!sym(x)))
+  res <- ggplot2::ggplot(meta_df, ggplot2::aes(!!sym(x)))
 
   if (!is.null(fill_col)) {
     res <- ggplot2::ggplot(
@@ -197,7 +215,7 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, facet_col = NULL, yaxis
   res <- res +
     ggplot2::geom_bar(position = bar_pos, ...) +
     ggplot2::labs(y = yaxis) +
-    vdj_theme() +
+    djvdj_theme() +
     ggplot2::theme(
       axis.title.x = ggplot2::element_blank(),
       axis.text.x  = ggplot2::element_text(angle = 45, hjust = 1)
@@ -392,7 +410,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
   }
 
   res <- res +
-    vdj_theme() +
+    djvdj_theme() +
     ggplot2::theme(legend.title = ggplot2::element_blank())
 
   if (!is.null(cluster_col) && cluster_col != chain_col) {
@@ -559,7 +577,7 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
   # Plot abundance vs rank
   res <- ggplot2::ggplot(meta_df, ggplot2::aes(rank, !!sym(data_col))) +
     ggplot2::labs(y = yaxis) +
-    vdj_theme()
+    djvdj_theme()
 
   if (is.null(color_col)) {
     res <- res +
@@ -666,11 +684,10 @@ plot_diversity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
   meta_df <- .set_lvls(meta_df, "name", meta_df$name)
 
   # Create bar graphs
-  res <- ggplot2::ggplot(meta_df, ggplot2::aes(
-    !!sym(cluster_col),
-    .data$div,
-    fill = !!sym(cluster_col)
-  )) +
+  res <- ggplot2::ggplot(
+    meta_df,
+    ggplot2::aes(!!sym(cluster_col), .data$div, fill = !!sym(cluster_col))
+  ) +
     ggplot2::geom_col(...)
 
   # Create facets
@@ -692,7 +709,7 @@ plot_diversity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
 
   # Set theme
   res <- res +
-    vdj_theme() +
+    djvdj_theme() +
     ggplot2::theme(
       legend.position = "none",
       axis.title.x    = ggplot2::element_blank()
@@ -879,10 +896,10 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
 
   # Filter genes to plot
   if (!is.null(plot_genes)) {
-    gg_df <- dplyr::filter(gg_df, dplyr::across(
-      dplyr::all_of(gene_cols),
-      ~ .x %in% plot_genes
-    ))
+    gg_df <- dplyr::filter(
+      gg_df,
+      dplyr::across(dplyr::all_of(gene_cols), ~ .x %in% plot_genes)
+    )
   }
 
   # Create heatmap or bar graph for single gene
@@ -930,7 +947,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
   names(res) <- grps
 
   # Format data for plotting
-  res <- purrr::map(res, ~ {
+  res <- map(res, ~ {
     res <- dplyr::select(.x, dplyr::all_of(c(gene_cols, usage_col)))
 
     res <- tidyr::pivot_wider(
@@ -939,10 +956,10 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
       values_from = all_of(usage_col)
     )
 
-    res <- dplyr::mutate(res, dplyr::across(
-      -dplyr::all_of(gene_cols[1]),
-      ~ tidyr::replace_na(.x, 0)
-    ))
+    res <- dplyr::mutate(
+      res,
+      dplyr::across(-dplyr::all_of(gene_cols[1]), ~ tidyr::replace_na(.x, 0))
+    )
 
     res <- tidyr::pivot_longer(
       res,
@@ -963,7 +980,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
   })
 
   # Create heatmaps
-  res <- purrr::map(
+  res <- map(
     res,
     .create_heatmap,
     x     = gene_cols[1],
@@ -991,8 +1008,8 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
 #' @param ln_col Color of axis lines
 #' @return ggplot theme
 #' @export
-vdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "black",
-                      ln_col = "grey85") {
+djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "black",
+                        ln_col = "grey85") {
   res <- ggplot2::theme(
     strip.background  = ggplot2::element_blank(),
     strip.text        = ggplot2::element_text(size = ttl_size),
@@ -1001,8 +1018,8 @@ vdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "bla
     legend.title      = ggplot2::element_text(size = ttl_size),
     legend.key        = ggplot2::element_blank(),
     legend.text       = ggplot2::element_text(size = txt_size, color = txt_col),
-    axis.line         = ggplot2::element_line(size = ln_size, color = ln_col),
-    axis.ticks        = ggplot2::element_line(size = ln_size, color = ln_col),
+    axis.line         = ggplot2::element_line(size = ln_size,  color = ln_col),
+    axis.ticks        = ggplot2::element_line(size = ln_size,  color = ln_col),
     axis.text         = ggplot2::element_text(size = txt_size, color = txt_col),
     axis.title        = ggplot2::element_text(size = ttl_size, color = txt_col)
   )
@@ -1015,8 +1032,8 @@ vdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "bla
 #'
 #' @param df_in Input data.frame
 #' @param ft Name of column containing feature values
-#' @param mn Minimum percent rank
-#' @param mx Maximum percent rank
+#' @param mn Minimum quantile
+#' @param mx Maximum quantile
 #' @return data.frame with modified feature values
 .set_lims <- function(df_in, ft, mn = NULL, mx = NULL) {
 
@@ -1026,12 +1043,11 @@ vdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "bla
 
   ft <- sym(ft)
 
-  res <- dplyr::mutate(
-    df_in,
-    pct = dplyr::percent_rank(!!ft)
-  )
+  res <- mutate(df_in, pct = dplyr::percent_rank(!!ft))
 
   if (!is.null(mn)) {
+    mn <- mn / 100
+
     res <- dplyr::mutate(
       res,
       !!ft := ifelse(.data$pct > mn, !!ft, NA),
@@ -1040,6 +1056,8 @@ vdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "bla
   }
 
   if (!is.null(mx)) {
+    mx <- mx / 100
+
     res <- dplyr::mutate(
       res,
       !!ft := ifelse(.data$pct < mx, !!ft, NA),
@@ -1053,7 +1071,7 @@ vdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "bla
 }
 
 
-#' Add regression line to ggplot object
+#' Add regression line to ggplot
 #'
 #' @param gg_in ggplot object
 #' @param lab_pos Position of correlation coefficient label. Set to NULL to
@@ -1066,36 +1084,44 @@ vdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "bla
   # Add regression line
   res <- gg_in +
     ggplot2::geom_smooth(
-      method   = "lm",
-      formula  = y ~ x,
-      se       = F,
-      color    = "black",
-      size     = 0.5,
-      linetype = 2,
+      method      = "lm",
+      formula     = y ~ x,
+      se          = F,
+      color       = "black",
+      size        = 0.5,
+      linetype    = 2,
+      show.legend = FALSE,
       ...
     )
 
-  # Calculate correlation
-  if (!is.null(lab_pos)) {
-    gg_df <- gg_in$data
-
-    x <- as_name(gg_in$mapping$x)
-    y <- as_name(gg_in$mapping$y)
-
-    gg_df <- dplyr::mutate(
-      gg_df,
-      r       = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$estimate,
-      r       = round(.data$r, digits = 2),
-      pval    = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$p.value,
-      cor_lab = paste0("r = ", .data$r, ", p = ", format(.data$pval, digits = 2)),
-      min_x   = min(!!sym(x)),
-      max_x   = max(!!sym(x)),
-      min_y   = min(!!sym(y)),
-      max_y   = max(!!sym(y)),
-      lab_x   = (.data$max_x - .data$min_x) * lab_pos[1] + .data$min_x,
-      lab_y   = (.data$max_y - .data$min_y) * lab_pos[2] + .data$min_y
-    )
+  if (is.null(lab_pos)) {
+    return(res)
   }
+
+  # Calculate correlation
+  gg_df <- gg_in$data
+  color <- gg_in$mapping$colour
+  x     <- as_name(gg_in$mapping$x)
+  y     <- as_name(gg_in$mapping$y)
+
+  if (!is.null(color)) {
+    color <- as_name(color)
+    gg_df <- group_by(gg_df, !!sym(color))
+  }
+
+  gg_df <- dplyr::mutate(
+    gg_df,
+    r       = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$estimate,
+    r       = round(.data$r, digits = 2),
+    pval    = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$p.value,
+    cor_lab = paste0("r = ", .data$r, ", p = ", format(.data$pval, digits = 2)),
+    min_x   = min(!!sym(x)),
+    max_x   = max(!!sym(x)),
+    min_y   = min(!!sym(y)),
+    max_y   = max(!!sym(y)),
+    lab_x   = (.data$max_x - .data$min_x) * lab_pos[1] + .data$min_x,
+    lab_y   = (.data$max_y - .data$min_y) * lab_pos[2] + .data$min_y
+  )
 
   # Add correlation coefficient label
   res <- res +
@@ -1175,7 +1201,7 @@ vdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "bla
     ggplot2::geom_tile(...) +
     ggplot2::guides(fill = ggplot2::guide_colorbar(title = ttl)) +
     ggplot2::scale_fill_gradientn(colors = clrs, na.value = na_color) +
-    vdj_theme() +
+    djvdj_theme() +
     ggplot2::theme(
       axis.title  = ggplot2::element_blank(),
       axis.line   = ggplot2::element_blank(),
@@ -1222,7 +1248,7 @@ vdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "bla
   res <- res +
     ggplot2::geom_col(..., position = "dodge") +
     ggplot2::labs(y = y_ttl) +
-    vdj_theme() +
+    djvdj_theme() +
     ggplot2::theme(
       axis.title.x = ggplot2::element_blank(),
       axis.text.x  = ggplot2::element_text(angle = ang, hjust = hjst)

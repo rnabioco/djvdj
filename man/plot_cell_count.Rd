@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{plot_cell_count}
 \alias{plot_cell_count}
-\title{Create bar graphs summarizing cell counts for clusters}
+\title{Plot cell counts for clusters}
 \usage{
 plot_cell_count(
   sobj_in,
@@ -56,5 +56,5 @@ specification to facet_wrap. Can be "fixed", "free", "free_x", or "free_y"}
 ggplot object
 }
 \description{
-Create bar graphs summarizing cell counts for clusters
+Plot cell counts for clusters
 }

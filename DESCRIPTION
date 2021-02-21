@@ -26,7 +26,7 @@ URL: https://rnabioco.github.io/djvdj,
     https://github.com/rnabioco/djvdj
 BugReports: https://github.com/rnabioco/djvdj/issues
 Depends: 
-    R (>= 3.6)
+    R (>= 4.0.0)
 Imports: 
     dplyr,
     magrittr,
