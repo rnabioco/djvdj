@@ -44,7 +44,7 @@ vdj_colors <- c(
 
 <br>
 
-For this vignette we are using AVID-seq data. This is a method developed by the Hesselberth lab which involves staining cells with DNA-tagged antigen. The DNA tag is similar to the tags present on CITE-seq antibodies and can be detected in a standard 10x 5' single-cell run. For this experiment we mixed splenocytes from BL6 and MD4 mice and then stained with a HEL-DNA conjugate. MD4 B cells are monoclonal and specifically bind HEL.   
+For this vignette we are using AVID-seq data. This is a method developed by the Hesselberth lab which involves staining cells with DNA-tagged antigen. The DNA tag is similar to the tags present on CITE-seq antibodies and can be detected using the 10x Genomics 5’ immune profiling kit. For this experiment we mixed splenocytes from BL6 and MD4 mice and stained with a HEL-DNA conjugate. MD4 B cells are monoclonal and specifically bind HEL.
 
 ```{r "rna_umap", fig.width = 12.5, fig.height = 5, echo = FALSE}
 load(here("data/avid/so_avid.rda"))
