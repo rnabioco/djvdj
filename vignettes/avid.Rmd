@@ -214,7 +214,7 @@ plot_grid(
 
 <br>
 
-Due to a technical issue, we do not detect a heavy chain for the MD4 cells. However, for other datasets `filter_vdj()` can be used to remove V(D)J data for cells that lack paired chains. Setting `filter_cells` to `FALSE` (the default) will keep all cells in the object, but the V(D)J data will be removed.
+The `filter_vdj()` function can be used to remove V(D)J data for cells that lack paired chains. Setting `filter_cells` to `FALSE` (the default) will keep all cells in the object, but the V(D)J information will be removed.
 
 ```{r}
 so_filt <- filter_vdj(
