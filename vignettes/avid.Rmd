@@ -56,30 +56,45 @@ so_avid <- so_avid %>%
     type = if_else(!type %in% c("B cell", "T cell"), "other", type)
   )
 
+# Plot colors
+m_cols <- c(
+  BL6 = "#E69F00",
+  MD4 = "#56B4E9"
+)
+
+t_cols <- c(
+  "B cell" = "#56B4E9",
+  "T cell" = "#009E73",
+  other    = "#F0E442"
+)
+
 # Create mouse UMAP
 mouse_umap <- so_avid %>%
   plot_features(
     feature     = "mouse",
-    plot_colors = vdj_colors
+    plot_colors = m_cols
   ) +
+  ggtitle("Mouse") +
   theme_nothing() +
   theme(
-    plot.title = element_text(),
-    legend.position = "right"
+    plot.title      = element_text(),
+    legend.position = "right",
+    legend.title    = element_blank()
   )
   
-# Create HEL UMAP
+# Create cell type UMAP
 hel_umap <- so_avid %>%
   plot_features(
-    feature     = "adt_HEL",
-    plot_colors = c("white", vdj_colors[5]),
-    pt_size     = 1,
-    pt_outline  = 0.1
+    feature     = "type",
+    plot_colors = t_cols,
+    feat_lvls   = names(t_cols)
   ) +
+  ggtitle("Cell type") +
   theme_nothing() +
   theme(
-    plot.title = element_text(),
-    legend.position = "right"
+    plot.title      = element_text(),
+    legend.position = "right",
+    legend.title    = element_blank()
   )
 
 # Final figure
@@ -87,6 +102,28 @@ plot_grid(
   mouse_umap, hel_umap,
   rel_widths = c(1, 0.9)
 )
+```
+
+<br>
+
+Signal from the HEL-DNA conjugate is shown below. Most signal is localized within MD4 B cells.
+
+```{r "hel_umap", fig.width = 6, fig.height = 5, echo = FALSE}
+so_avid %>%
+  plot_features(
+    feature     = "adt_HEL",
+    plot_colors = c("white", vdj_colors[5]),
+    pt_size     = 1,
+    pt_outline  = 0.2
+  ) +
+  ggtitle("HEL signal") +
+  guides(color = guide_colorbar(barwidth = unit(6, "pt"))) +
+  theme_nothing() +
+  theme(
+    plot.title      = element_text(),
+    legend.position = "right",
+    legend.title    = element_blank()
+  )
 ```
 
 <br>
@@ -239,27 +276,24 @@ so_avid <- calc_abundance(
 
 <br>
 
-For each 'calc' function provided by djvdj, there is a matching 'plot' function that will generate a summary plot. The `plot_abundance()` function will plot clonotypes ranked by abundance. As expected we see that most MD4 B cells share the same clonotype.
+For each 'calc' function provided by djvdj, there is a matching 'plot' function that will generate a summary plot. The `plot_abundance()` function will plot clonotypes ranked by abundance. As expected we see that most MD4 B cells share the same clonotype ID.
 
-```{r "abund_plots", fig.width = 6, fig.height = 4}
+```{r "abund_plots", fig.width = 8, fig.height = 3.5}
 plot_abundance(
   sobj_in      = so_avid,                   # Seurat object
   cluster_col  = "mouse",                   # meta.data column for grouping
-  label_col    = "cdr3",                    # meta.data column containing labels
+  label_col    = "clonotype_id",            # meta.data column containing labels
   n_clonotypes = 12,                        # Number of top clonotypes
-  plot_colors  = vdj_colors
+  plot_colors  = m_cols
 ) +
-  theme(
-    legend.position = "none",
-    axis.text.x     = element_text(size = 6)
-  )
+  theme(legend.position = "none")
 ```
 
 <br>
 
 ## Repertoire Diversity
 
-The function `calc_diversity()` will calculate repertoire diversity on number of cells that share each clonotype. Using the `cluster_col` argument, any meta.data column containing cell labels can be used for calculations. `calc_diversity()` uses the R package [abdiv](https://github.com/kylebittinger/abdiv) for performing diversity calculations and any [abdiv](https://github.com/kylebittinger/abdiv) diversity function can be specified using the `method` argument.
+The function `calc_diversity()` will calculate repertoire diversity on number of cells that share each clonotype. Using the `cluster_col` argument, any meta.data column containing cell labels can be used for calculations. `calc_diversity()` uses the R package [abdiv](https://github.com/kylebittinger/abdiv) for performing diversity calculations and any [abdiv](https://github.com/kylebittinger/abdiv) diversity function can be specified using the `method` argument. It is important to read the [abdiv](https://github.com/kylebittinger/abdiv) documentation to ensure the selected function is appropriate for your analysis. 
 
 Possible methods for calculating diversity include:
 
@@ -280,7 +314,7 @@ so_avid <- calc_diversity(
 
 <br>
 
-The `plot_diversity()` function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Two different metrics are shown in the example below.
+The `plot_diversity()` function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Two different metrics are shown in the example below. As expected, BL6 B cells have a very diverse repertoire, while MD4 cells show low diversity values. 
 
 ```{r "div_plots", fig.width = 3.5, fig.height = 3}
 # Metrics to plot
@@ -302,7 +336,7 @@ plot_diversity(
 
 ## Repertoire Overlap
 
-To compare repertoires for different samples or clusters, `calc_similarity()` can calculate a variety of different similarity metrics. The `cluster_col` should be used to specify the meta.data column containing cell labels for comparison. Like `calc_diversity()`, an [abdiv](https://github.com/kylebittinger/abdiv) function can be specified with the `method` argument.
+To compare repertoires for different samples or clusters, `calc_similarity()` can calculate a variety of different similarity metrics. The `cluster_col` should be used to specify the meta.data column containing cell labels for comparison. Like `calc_diversity()`, an [abdiv](https://github.com/kylebittinger/abdiv) function can be specified with the `method` argument. It is important to read the [abdiv](https://github.com/kylebittinger/abdiv) documentation to ensure the selected function is appropriate for your analysis.
 
 Possible methods for calculating repertoire similarity include:
 
@@ -345,7 +379,7 @@ plot_similarity(
 
 ## Gene Usage
 
-The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function `calc_usage()` can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the `chain` and `chain_col` arguments can be used to specify the meta.data column containing the chains detected for each cell. By default the results for all chains will be included.
+The V(D)J data imported from Cell Ranger also includes the specific genes detected for each cell. The function `calc_usage()` can be used to calculate the fraction of cells that express different V(D)J genes. This function will produce a table summarizing the results. To only include results for a certain chain, the `chain` and `chain_col` arguments can be used to specify the meta.data column containing the chains for each cell. By default the results for all chains will be included.
 
 In this example we are summarizing the usage of different V genes for the TRB chain 
 

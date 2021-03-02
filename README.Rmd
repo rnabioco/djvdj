@@ -42,7 +42,6 @@ The djvdj package provides a range of tools to analyze and manipulate single cel
 You can install the development version of djvdj from [github](https://github.com/rnabioco/djvdj) with:
 
 ```{r, eval = FALSE}
-# install.packages("devtools")
 devtools::install_github("rnabioco/djvdj")
 ```
 

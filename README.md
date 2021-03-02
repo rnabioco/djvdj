@@ -20,7 +20,6 @@ You can install the development version of djvdj from
 [github](https://github.com/rnabioco/djvdj) with:
 
 ``` r
-# install.packages("devtools")
 devtools::install_github("rnabioco/djvdj")
 ```
 
