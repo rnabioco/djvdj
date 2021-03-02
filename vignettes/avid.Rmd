@@ -46,7 +46,7 @@ vdj_colors <- c(
 
 For this vignette we are using AVID-seq data. This is a method developed by the Hesselberth lab which involves staining cells with DNA-tagged antigen. The DNA tag is similar to the tags present on CITE-seq antibodies and can be detected using the 10x Genomics 5’ immune profiling kit. For this experiment we mixed splenocytes from BL6 and MD4 mice and stained with a HEL-DNA conjugate. MD4 B cells are monoclonal and specifically bind HEL.
 
-```{r "rna_umap", fig.width = 12.5, fig.height = 5, echo = FALSE}
+```{r "rna_umap", fig.width = 12.5, fig.height = 3, echo = FALSE}
 load(here("data/avid/so_avid.rda"))
 
 # Rename cell types
@@ -72,7 +72,8 @@ t_cols <- c(
 mouse_umap <- so_avid %>%
   plot_features(
     feature     = "mouse",
-    plot_colors = m_cols
+    plot_colors = m_cols,
+    pt_size     = 0.001
   ) +
   ggtitle("Mouse") +
   theme_nothing() +
@@ -83,11 +84,12 @@ mouse_umap <- so_avid %>%
   )
   
 # Create cell type UMAP
-hel_umap <- so_avid %>%
+type_umap <- so_avid %>%
   plot_features(
     feature     = "type",
     plot_colors = t_cols,
-    feat_lvls   = names(t_cols)
+    feat_lvls   = names(t_cols),
+    pt_size     = 0.001
   ) +
   ggtitle("Cell type") +
   theme_nothing() +
@@ -97,24 +99,13 @@ hel_umap <- so_avid %>%
     legend.title    = element_blank()
   )
 
-# Final figure
-plot_grid(
-  mouse_umap, hel_umap,
-  rel_widths = c(1, 0.9)
-)
-```
-
-<br>
-
-Signal from the HEL-DNA conjugate is shown below. Most signal is localized within MD4 B cells.
-
-```{r "hel_umap", fig.width = 6, fig.height = 5, echo = FALSE}
-so_avid %>%
+# Create HEL UMAP
+hel_umap <- so_avid %>%
   plot_features(
     feature     = "adt_HEL",
     plot_colors = c("white", vdj_colors[5]),
-    pt_size     = 1,
-    pt_outline  = 0.2
+    pt_size     = 0.1,
+    pt_outline  = 0.1
   ) +
   ggtitle("HEL signal") +
   guides(color = guide_colorbar(barwidth = unit(6, "pt"))) +
@@ -122,8 +113,17 @@ so_avid %>%
   theme(
     plot.title      = element_text(),
     legend.position = "right",
-    legend.title    = element_blank()
+    legend.title    = element_blank(),
+    legend.text     = element_text(size = 8)
   )
+
+# Final figure
+plot_grid(
+  mouse_umap, type_umap, hel_umap,
+  align = "vh",
+  axis  = "trbl",
+  nrow  = 1
+)
 ```
 
 <br>
