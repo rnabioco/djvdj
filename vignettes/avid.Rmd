@@ -6,7 +6,7 @@ output:
     toc_float: true
     toc_depth: 2
     vignette: >
-      %\VignetteIndexEntry{TCR analysis}
+      %\VignetteIndexEntry{V(D)J analysis}
       %\VignetteEncoding{UTF-8}
       %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -28,7 +28,7 @@ library(dplyr)
 library(ggplot2)
 library(cowplot)
 library(Seurat)
-library(here)
+# library(here)
 library(djvdj)
 
 # Color palette
@@ -47,7 +47,7 @@ vdj_colors <- c(
 For this vignette we are using AVID-seq data. This is a method developed by the Hesselberth lab which involves staining cells with DNA-tagged antigen. The DNA tag is similar to the tags present on CITE-seq antibodies and can be detected using the 10x Genomics 5’ immune profiling kit. For this experiment we mixed splenocytes from BL6 and MD4 mice and stained with a HEL-DNA conjugate. MD4 B cells are monoclonal and specifically bind HEL.
 
 ```{r "rna_umap", fig.width = 12.5, fig.height = 5, echo = FALSE}
-load(here("data/avid/so_avid.rda"))
+load("data/avid/so_avid.rda")
 
 # Rename cell types
 so_avid <- so_avid %>%
@@ -99,7 +99,7 @@ If the Seurat object contains data for multiple runs, a vector containing paths 
 
 ```{r "import_vdj"}
 # Create vector of paths pointing to cellranger output
-paths <- here("data/avid/bcr")
+paths <- "data/avid/bcr"
 
 so_avid <- import_vdj(
   sobj_in        = so_avid,                 # Seurat object
