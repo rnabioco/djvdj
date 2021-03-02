@@ -18,6 +18,7 @@
 #' @param na_color Color to use for missing values
 #' @param ... Additional parameters to pass to facet_wrap
 #' @return ggplot object
+#' @export
 plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
                           pt_size = 0.25, pt_outline = NULL, outline_pos = "all", plot_colors = NULL,
                           feat_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90", ...) {
