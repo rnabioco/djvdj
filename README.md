@@ -11,7 +11,8 @@ status](https://github.com/rnabioco/djvdj/workflows/R-CMD-check/badge.svg)](http
 The djvdj package provides a range of tools to analyze and manipulate
 single cell V(D)J sequencing data. These tools are straightforward and
 easily integrate into a standard [Seurat](https://satijalab.org/seurat/)
-workflow.
+workflow. This is a work in progress, please report any bugs by opening
+a new issue.
 
 ### **Installation**
 
