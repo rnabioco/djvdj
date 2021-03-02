@@ -147,10 +147,14 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
 
   # Set theme
   res <- res +
-    djvdj_theme() +
-    ggplot2::guides(
-      color = ggplot2::guide_legend(override.aes = list(size = 3))
-    )
+    djvdj_theme()
+
+  if (!is.numeric(meta_df[[feature]])) {
+    res <- res +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(size = 3))
+      )
+  }
 
   res
 }
@@ -1236,17 +1240,19 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
     res <- ggplot2::ggplot(
       df_in,
       ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(.fill))
-    )
+    ) +
+    ggplot2::geom_col(..., position = "dodge")
 
   } else {
     res <- ggplot2::ggplot(
       df_in,
       ggplot2::aes(!!sym(x), !!sym(y))
-    )
+    ) +
+    ggplot2::geom_col(..., fill = clrs, position = "dodge")
   }
 
   res <- res +
-    ggplot2::geom_col(..., position = "dodge") +
+    # ggplot2::geom_col(..., position = "dodge") +
     ggplot2::labs(y = y_ttl) +
     djvdj_theme() +
     ggplot2::theme(

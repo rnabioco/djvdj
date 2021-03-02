@@ -71,6 +71,9 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     col_types = readr::cols()
   )
 
+  # Remove contigs that do not have an assigned clonotype_id
+  contigs <- purrr::map(contigs, dplyr::filter, !is.na(.data$raw_clonotype_id))
+
   # Add cell prefixes
   contigs <- purrr::imap(contigs, ~ {
     .x <- dplyr::mutate(
@@ -162,6 +165,11 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     n_chains = n(),
     .groups = "drop"
   )
+
+  # Check for duplicated cell barcodes
+  if (any(duplicated(meta_df$barcode))) {
+    stop("Multiple clonotype_ids are associated with the same cell barcode.")
+  }
 
   # Filter for cells present in sobj_in
   cells <- Seurat::Cells(sobj_in)

@@ -1,12 +1,12 @@
 ---
-title: "TCR analysis"
+title: "V(D)J analysis"
 date: '`r format(Sys.Date(), "%B %d %Y")`'
 output:
   rmarkdown::html_vignette:
     toc_float: true
     toc_depth: 2
     vignette: >
-      %\VignetteIndexEntry{TCR analysis}
+      %\VignetteIndexEntry{V(D)J analysis}
       %\VignetteEncoding{UTF-8}
       %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -44,28 +44,38 @@ vdj_colors <- c(
 
 <br>
 
-For this vignette we are using single-cell TCR data provided by the Rincon lab. Thymocytes were collected for wild type and mutant mice and sorted for two developmental timepoints, DN3 and DN4. UMAP projections are shown below with cells colored by sample and cell cluster (based on gene expression).
+For this vignette we are using AVID-seq data. This is a method developed by the Hesselberth lab which involves staining cells with DNA-tagged antigen. The DNA tag is similar to the tags present on CITE-seq antibodies and can be detected using the 10x Genomics 5’ immune profiling kit. For this experiment we mixed splenocytes from BL6 and MD4 mice and stained with a HEL-DNA conjugate. MD4 B cells are monoclonal and specifically bind HEL.
 
 ```{r "rna_umap", fig.width = 12.5, fig.height = 5, echo = FALSE}
-load(here("data/tcr/so_tcr.rda"))
+load(here("data/avid/so_avid.rda"))
 
-# Sample UMAP
-key_umap <- so_tcr %>%
-  DimPlot(
-    group.by = "orig.ident",
-    cols     = vdj_colors
+# Rename cell types
+so_avid <- so_avid %>%
+  mutate_meta(
+    .fun = mutate,
+    type = if_else(!type %in% c("B cell", "T cell"), "other", type)
+  )
+
+# Create mouse UMAP
+mouse_umap <- so_avid %>%
+  plot_features(
+    feature     = "mouse",
+    plot_colors = vdj_colors
   ) +
-  ggtitle("Sample") +
   theme_nothing() +
   theme(
     plot.title = element_text(),
     legend.position = "right"
   )
-
-# Cluster UMAP
-clust_umap <- so_tcr %>%
-  DimPlot(group.by = "seurat_clusters") +
-  ggtitle("Cluster") +
+  
+# Create HEL UMAP
+hel_umap <- so_avid %>%
+  plot_features(
+    feature     = "adt_HEL",
+    plot_colors = c("white", vdj_colors[5]),
+    pt_size     = 1,
+    pt_outline  = 0.1
+  ) +
   theme_nothing() +
   theme(
     plot.title = element_text(),
@@ -74,7 +84,7 @@ clust_umap <- so_tcr %>%
 
 # Final figure
 plot_grid(
-  key_umap, clust_umap,
+  mouse_umap, hel_umap,
   rel_widths = c(1, 0.9)
 )
 ```
@@ -89,23 +99,18 @@ If the Seurat object contains data for multiple runs, a vector containing paths 
 
 ```{r "import_vdj"}
 # Create vector of paths pointing to cellranger output
-paths <- c(
-  KI_DN3_GE = "data/tcr/KI_DN3_TCR",
-  KI_DN4_GE = "data/tcr/KI_DN4_TCR",
-  WT_DN3_GE = "data/tcr/WT_DN3_TCR",
-  WT_DN4_GE = "data/tcr/WT_DN4_TCR"
-) %>%
-  map_chr(here)
+paths <- here("data/avid/bcr")
 
-so_tcr <- import_vdj(
-  sobj_in        = so_tcr,                  # Seurat object
+so_avid <- import_vdj(
+  sobj_in        = so_avid,                 # Seurat object
   vdj_dir        = paths,                   # cellranger directories
   filter_contigs = TRUE                     # Only include productive chains
 )
 ```
+
 <br>
 
-Take a look at the meta.data to see the V(D)J data added to the object.
+Take a look at the meta.data to see the V(D)J data added to the object. 
 
 ```{r}
 vdj_cols <- c(
@@ -115,7 +120,7 @@ vdj_cols <- c(
   "umis"
 )
 
-so_tcr@meta.data %>%
+so_avid@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id)) %>%
   select(all_of(vdj_cols))
@@ -129,11 +134,10 @@ so_tcr@meta.data %>%
 
 The read support for each chain can be visualized with the `plot_reads()` function. This will create plots summarizing the number of UMIs and total reads that were obtained for each chain.
 
-```{r "read_support", fig.width = 6.5, fig.height = 3}
+```{r "read_support", fig.width = 5, fig.height = 3}
 plot_reads(
-  sobj_in     = so_tcr,                     # Seurat object
+  sobj_in     = so_avid,                    # Seurat object
   chain_col   = "chains",                   # Column containing chains for each cell
-  cluster_col = "orig.ident",               # Column containing labels to group by
   plot_colors = vdj_colors
 ) +
   guides(fill = FALSE, color = FALSE)
@@ -145,25 +149,25 @@ plot_reads(
 
 The djvdj package provides several functions that can be used to manipulate the object meta.data. This includes a function to modify meta.data columns (`mutate_vdj()`) and a function to filter cells from the object (`filter_vdj()`). Since cells can have multiple values present in each V(D)J column, when using these functions each string of values for a cell should be thought of as a vector.
 
-The V(D)J data imported from Cell Ranger may include clonotypes that do not have paired alpha and beta chains. Using the `mutate_vdj()` function, we can add a new column (`uniq_chains`) to the meta.data to allow for easy visualization of these cells.
+The V(D)J data imported from Cell Ranger may include clonotypes that do not have paired heavy and light chains. Using the `mutate_vdj()` function, we can add a new column (`uniq_chains`) to the meta.data to shows the unique chains detected in each cell.
 
 ```{r}
-so_tcr <- mutate_vdj(
-  sobj_in     = so_tcr,                                # Seurat object
+so_avid <- mutate_vdj(
+  sobj_in     = so_avid,                               # Seurat object
   uniq_chains = str_c(unique(chains), collapse = "_")  # New column
 )
 
 # Take a look at the meta.data
-so_tcr@meta.data %>%
+so_avid@meta.data %>%
   as_tibble() %>%
   filter(!is.na(clonotype_id), n_chains > 2) %>%
   select(all_of(vdj_cols), uniq_chains)
 ```
 
-For row 1 shown above, this is equivalent to:
+For row 2 shown above, this is equivalent to:
 
 ```{r}
-vec <- c("TRA", "TRB", "TRB")
+vec <- c("IGH", "IGH", "IGK", "IGK")
 vec <- unique(vec)
 
 str_c(vec, collapse = "_")
@@ -175,10 +179,10 @@ We can then overlay the new labels present in the `uniq_chains` column on a UMAP
 
 ```{r "chains_umap", fig.width = 6.5, fig.height = 4.2}
 chain_cols <- vdj_colors
-names(chain_cols) <- unique(so_tcr$uniq_chains)
+names(chain_cols) <- unique(so_avid$uniq_chains)
 
 # Chains UMAP
-chain_umap <- so_tcr %>%
+chain_umap <- so_avid %>%
   DimPlot(
     group.by = "uniq_chains",
     cols     = chain_cols,
@@ -186,13 +190,14 @@ chain_umap <- so_tcr %>%
   ) +
   theme_nothing() +
   theme(legend.position = "top")
-  
+
 # Chains bar graphs
-chain_bars <- so_tcr %>%
+chain_bars <- so_avid %>%
   plot_cell_count(
-    x           = "orig.ident",             # Cell labels to plot
+    x           = "type",                   # Cell labels to plot
     fill_col    = "uniq_chains",            # Cell labels to color each bar
-    plot_colors = chain_cols
+    plot_colors = chain_cols,
+    n_label     = FALSE
   ) +
   theme(
     plot.margin     = unit(c(120, 10, 10, 10), "pt"),
@@ -209,13 +214,13 @@ plot_grid(
 
 <br>
 
-Since we are using DN3 and DN4 thymocytes for this dataset, we expect a large fraction of cells to have unpaired alpha and beta chains. However, for other TCR datasets `filter_vdj()` can be used to remove V(D)J data for cells that lack paired chains. Setting `filter_cells` to `FALSE` (the default) will keep all cells in the object, but the V(D)J data will be removed.
+The `filter_vdj()` function can be used to remove V(D)J data for cells that lack paired chains. Setting `filter_cells` to `FALSE` (the default) will keep all cells in the object, but the V(D)J information will be removed.
 
 ```{r}
 so_filt <- filter_vdj(
-  sobj_in      = so_tcr,                            # Seurat object
-  filt         = all(c("TRA", "TRB") %in% chains),  # Condition for filtering
-  filter_cells = FALSE                              # Should cells be removed
+  sobj_in      = so_avid,                                                # Seurat object
+  filt         = "IGH" %in% chains && any(chains %in% c("IGK", "IGL")),  # Condition for filtering
+  filter_cells = FALSE                                                   # Should cells be removed
 )
 ```
 
@@ -226,20 +231,20 @@ so_filt <- filter_vdj(
 To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_abundance()` function. These calculations can be performed on a per-cluster or per-sample basis by also providing a meta.data column containing cell labels.
 
 ```{r}
-so_tcr <- calc_abundance(
-  sobj_in     = so_tcr,                     # Seurat object
-  cluster_col = "orig.ident"                # meta.data column containing cell labels
+so_avid <- calc_abundance(
+  sobj_in     = so_avid,                    # Seurat object
+  cluster_col = "mouse"                     # meta.data column for grouping
 )
 ```
 
 <br>
 
-For each 'calc' function provided by djvdj, there is a matching 'plot' function that will generate a summary plot. The `plot_abundance()` function will plot clonotypes ranked by abundance.
+For each 'calc' function provided by djvdj, there is a matching 'plot' function that will generate a summary plot. The `plot_abundance()` function will plot clonotypes ranked by abundance. As expected we see that most MD4 B cells share the same clonotype.
 
-```{r "abund_plots", fig.width = 10, fig.height = 4}
+```{r "abund_plots", fig.width = 6, fig.height = 4}
 plot_abundance(
-  sobj_in      = so_tcr,                    # Seurat object
-  cluster_col  = "orig.ident",              # meta.data column containing cell labels
+  sobj_in      = so_avid,                   # Seurat object
+  cluster_col  = "mouse",                   # meta.data column for grouping
   label_col    = "cdr3",                    # meta.data column containing labels
   n_clonotypes = 12,                        # Number of top clonotypes
   plot_colors  = vdj_colors
@@ -266,9 +271,9 @@ abdiv::alpha_diversities
 In this example we are calculating the Shannon diversity for each sample in the orig.ident meta.data column.
 
 ```{r}
-so_tcr <- calc_diversity(
-  sobj_in     = so_tcr,                     # Seurat object
-  cluster_col = "orig.ident",               # meta.data column containing cell labels
+so_avid <- calc_diversity(
+  sobj_in     = so_avid,                    # Seurat object
+  cluster_col = "mouse",                    # meta.data column for grouping
   method      = abdiv::shannon              # abdiv method to use
 )
 ```
@@ -277,7 +282,7 @@ so_tcr <- calc_diversity(
 
 The `plot_diversity()` function will create plots summarizing repertoire diversity for each sample. A named list of functions to run can also be passed to plot multiple metrics. Two different metrics are shown in the example below.
 
-```{r "div_plots", fig.width = 5.5, fig.height = 3}
+```{r "div_plots", fig.width = 3.5, fig.height = 3}
 # Metrics to plot
 fns <- list(
   "simpson"  = abdiv::simpson,
@@ -285,8 +290,8 @@ fns <- list(
 )
 
 plot_diversity(
-  sobj_in     = so_tcr,                     # Seurat object
-  cluster_col = "orig.ident",               # meta.data column containing cell labels
+  sobj_in     = so_avid,                    # Seurat object
+  cluster_col = "mouse",                    # meta.data column for grouping
   method      = fns,                        # abdiv method to use
   plot_colors = vdj_colors
 ) +
@@ -307,36 +312,26 @@ abdiv::beta_diversities
 
 <br>
 
-By default `calc_similarity()` will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of cell labels present in the `orig.ident` column.
+By default `calc_similarity()` will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of clusters present in the `seurat_clusters` column.
 
 ```{r}
-so_tcr <- calc_similarity(
-  sobj_in     = so_tcr,                     # Seurat object
-  cluster_col = "orig.ident",               # meta.data column containing cell labels
+so_avid <- calc_similarity(
+  sobj_in     = so_avid,                    # Seurat object
+  cluster_col = "seurat_clusters",          # meta.data column for grouping
   method      = abdiv::jaccard              # abdiv method to use
 )
 ```
 
 <br>
 
-A heatmap summarizing the results can be generated using the `plot_similarity()` function. Here we are creating two heatmaps, one to compare the different samples and one to compare cell clusters.
+A heatmap summarizing the results can be generated using the `plot_similarity()` function. Values closer to 1 indicate the repertoires are very different.
 
-```{r "sim_plots", fig.width = 10, fig.height = 4}
-# Sample heatmap
-ident_heat <- plot_similarity(
-  sobj_in     = so_tcr,                     # Seurat object
-  cluster_col = "orig.ident",               # meta.data column containing cell labels
+```{r "sim_plots", fig.width = 5, fig.height = 4}
+plot_similarity(
+  sobj_in     = so_avid,                    # Seurat object
+  cluster_col = "seurat_clusters",          # meta.data column for grouping
   method      = abdiv::jaccard,             # Method to use
-  plot_colors = "#009E73"
-) +
-  theme(legend.text = element_text(size = 8))
-
-# Cluster heatmap
-clust_heat <- plot_similarity(
-  sobj_in     = so_tcr,
-  cluster_col = "seurat_clusters",
-  method      = abdiv::jaccard,
-  plot_colors = "#56B4E9",
+  plot_colors = "#009E73",
   size        = 0.2,                        # Additional ggplot options
   color       = "white"                     # Additional ggplot options
 ) +
@@ -344,9 +339,6 @@ clust_heat <- plot_similarity(
     legend.text = element_text(size = 8),
     axis.text.x = element_text(angle = 0)
   )
-
-# Combine heatmaps
-plot_grid(ident_heat, clust_heat, align = "h")
 ```
 
 <br>
@@ -359,10 +351,10 @@ In this example we are summarizing the usage of different V genes for the TRB ch
 
 ```{r}
 calc_usage(
-  sobj_in     = so_tcr,                     # Seurat object
+  sobj_in     = so_avid,                    # Seurat object
   gene_cols   = "v_gene",                   # meta.data column containing genes
-  cluster_col = "orig.ident",               # meta.data column containing cell labels
-  chain       = "TRB",                      # Chain to use for filtering genes
+  cluster_col = "mouse",                    # meta.data column for grouping
+  chain       = "IGH",                      # Chain to use for filtering genes
   chain_col   = "chains"                    # meta.data column containing chains
 )
 ```
@@ -373,15 +365,14 @@ The function `plot_usage()` can be used to summarize these results. Using the `y
 
 ```{r "gene_usage_1", fig.width = 11, fig.height = 3.5}
 plot_usage(
-  sobj_in     = so_tcr,                     # Seurat object
+  sobj_in     = so_avid,                    # Seurat object
   gene_cols   = "v_gene",                   # meta.data column(s) containing genes
-  cluster_col = "orig.ident",               # meta.data column containing cell labels
   type        = "bar",                      # Type of plot
-  chain       = "TRB",                      # Chain to use for filtering genes
+  chain       = "IGH",                      # Chain to use for filtering genes
   
   plot_genes  = NULL,                       # A list of genes to plot
-  n_genes     = NULL,                       # The number of top genes to plot
-  plot_colors = vdj_colors
+  n_genes     = 50,                         # The number of top genes to plot
+  plot_colors = "#0072B2"
 )
 ```
 
@@ -391,10 +382,10 @@ By passing multiple columns to `gene_cols`, the frequency that different genes a
 
 ```{r, eval = F}
 calc_usage(
-  sobj_in     = so_tcr,                     # Seurat object
+  sobj_in     = so_avid,                    # Seurat object
   gene_cols   = c("v_gene", "j_gene"),      # meta.data column(s) containing genes
-  cluster_col = "orig.ident",               # meta.data column containing cell labels
-  chain       = "TRB"                       # Chain to use for filtering genes
+  cluster_col = "mouse",                    # meta.data column for grouping
+  chain       = "IGK"                       # Chain to use for filtering genes
 )
 ```
 
@@ -402,13 +393,14 @@ calc_usage(
 
 When multiple gene columns are passed to `plot_usage()`, a list of plots will be returned, one for each cell label in the `cluster_col` column.
 
-```{r "gene_usage_2", fig.width = 12, fig.height = 8}
+```{r "gene_usage_2", fig.width = 12, fig.height = 2.5}
 ggs <- plot_usage(
-  sobj_in     = so_tcr,                     # Seurat object
+  sobj_in     = so_avid,                    # Seurat object
   gene_cols   = c("v_gene", "j_gene"),      # meta.data column(s) containing genes
-  cluster_col = "orig.ident",               # meta.data column containing cell labels
-  chain       = "TRB",                      # Chain to use for filtering genes
-  plot_colors = "#6A51A3"
+  cluster_col = "mouse",                    # meta.data column for grouping
+  chain       = "IGK",                      # Chain to use for filtering genes
+  plot_colors = "#6A51A3",
+  n_genes     = 20
 ) %>%
   imap(~ .x + ggtitle(.y))
 
@@ -421,18 +413,18 @@ plot_grid(plotlist = ggs)
 
 The `calc_usage()` and `plot_usage()` functions can also be used to calculate the fraction of cells that have a certain CDR3 sequence. To do this, the meta.data column containing the CDR3 sequences for each cell can be passed to the `gene_cols` argument. The plot can be divided into facets based on sample using simple ggplot2 commands.
 
-```{r "cdr3_usage", fig.width = 10, fig.height = 4}
+```{r "cdr3_usage", fig.width = 8, fig.height = 3.5}
 plot_usage(
-  sobj_in     = so_tcr,
+  sobj_in     = so_avid,
   gene_cols   = "cdr3",                     # Column containing CDR3 sequences
-  cluster_col = "orig.ident",
+  cluster_col = "mouse",
   
   type        = "bar",
-  chain       = "TRB",
+  chain       = "IGK",
   plot_colors = vdj_colors,
   n_genes     = 12                          # Number of CDR3 sequences to plot
 ) +
-  facet_wrap(~ orig.ident, nrow = 1, scales = "free_x") +
+  facet_wrap(~ mouse, nrow = 1, scales = "free_x") +
   theme(legend.position = "none")
 ```
 
