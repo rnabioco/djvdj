@@ -8,4 +8,4 @@
 ^\.github$
 ^data-raw$
 ^codecov\.yml$
-^vignettes$
+^vignettes/avid\.Rmd$

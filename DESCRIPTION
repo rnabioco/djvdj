@@ -46,8 +46,7 @@ Suggests:
     roxygen2,
     testthat,
     covr,
-    knitr,
-    rmarkdown
+    knitr
 VignetteBuilder: 
     knitr
 Remotes:
