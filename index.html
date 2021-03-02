@@ -41,7 +41,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -56,7 +56,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/tcr.html">TCR analysis</a>
+      <a href="articles/avid.html">V(D)J analysis</a>
     </li>
   </ul>
 </li>
@@ -67,7 +67,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/rnabioco/djvdj/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -89,23 +89,23 @@
 </h1></div>
 <!-- badges: start -->
 
-<p>The djvdj package provides a range of tools to analyze and manipulate single cell V(D)J sequencing data. These tools are straightforward and easily integrate into a standard <a href="https://satijalab.org/seurat/">Seurat</a> workflow.</p>
+<p>The djvdj package provides a range of tools to analyze and manipulate single cell V(D)J sequencing data. These tools are straightforward and easily integrate into a standard <a href="https://satijalab.org/seurat/">Seurat</a> workflow. This is a work in progress, please report any bugs by opening a new issue.</p>
 <div id="installation" class="section level3">
 <h3 class="hasAnchor">
 <a href="#installation" class="anchor"></a><strong>Installation</strong>
 </h3>
 <p>You can install the development version of djvdj from <a href="https://github.com/rnabioco/djvdj">github</a> with:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit">
-<span class="co"># install.packages("devtools")</span>
-<span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"rnabioco/djvdj"</span><span class="op">)</span></pre></div>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># install.packages("devtools")</span>
+<span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"rnabioco/djvdj"</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="import" class="section level3">
 <h3 class="hasAnchor">
 <a href="#import" class="anchor"></a><strong>Import</strong>
 </h3>
 <p>With djvdj you can import V(D)J sequencing results from <a href="https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header">Cell Ranger</a> and add these data to your current <a href="https://satijalab.org/seurat/">Seurat</a> object using <code><a href="reference/import_vdj.html">import_vdj()</a></code>. Additional functions are provided to filter (<code><a href="reference/filter_vdj.html">filter_vdj()</a></code>) and manipulate (<code><a href="reference/mutate_vdj.html">mutate_vdj()</a></code>) the Seurat object based on a range of V(D)J metrics including chains, clonotypes, and CDR3 sequences.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit">
-<span class="co"># Import VDJ data</span>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Import VDJ data</span>
 <span class="va">paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>
   KI_DN3_GE <span class="op">=</span> <span class="st">"data/tcr/KI_DN3_TCR"</span>,
   KI_DN4_GE <span class="op">=</span> <span class="st">"data/tcr/KI_DN4_TCR"</span>,
@@ -122,27 +122,27 @@
 <span class="va">so_filt</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span>
   sobj_in <span class="op">=</span> <span class="va">so_tcr</span>,                           <span class="co"># Seurat object</span>
   filt    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"TRA"</span>, <span class="st">"TRB"</span><span class="op">)</span> <span class="op">%in%</span> <span class="va">chains</span><span class="op">)</span>  <span class="co"># Condition for filtering</span>
-<span class="op">)</span></pre></div>
+<span class="op">)</span></code></pre></div>
 </div>
 <div id="calculate" class="section level3">
 <h3 class="hasAnchor">
 <a href="#calculate" class="anchor"></a><strong>Calculate</strong>
 </h3>
 <p>djvdj allows you to calculate a range of population diversity and similarity metrics implemented with the <a href="https://github.com/kylebittinger/abdiv">abdiv</a> package. The function <code><a href="reference/calc_diversity.html">calc_diversity()</a></code> can be used to measure diversity on a per-cluster or per-sample basis to allow for comparison across conditions. <code><a href="reference/calc_similarity.html">calc_similarity()</a></code> will measure repertoire overlap between clusters or samples to allow for direct comparisons between cells of interest. Additional functions are also available to calculate clonotype abundances (<code><a href="reference/calc_abundance.html">calc_abundance()</a></code>) and relative gene usage (<code><a href="reference/calc_usage.html">calc_usage()</a></code>).</p>
-<div class="sourceCode" id="cb3"><pre class="downlit">
-<span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/calc_diversity.html">calc_diversity</a></span><span class="op">(</span>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/calc_diversity.html">calc_diversity</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                       <span class="co"># Seurat object</span>
   cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,                 <span class="co"># meta.data column containing cell labels</span>
   method      <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/simpson.html">simpson</a></span>                <span class="co"># Diversity metric to use</span>
-<span class="op">)</span></pre></div>
+<span class="op">)</span></code></pre></div>
 </div>
 <div id="plot" class="section level3">
 <h3 class="hasAnchor">
 <a href="#plot" class="anchor"></a><strong>Plot</strong>
 </h3>
 <p>For each ‘calc’ function, djvdj also provides a corresponding ‘plot’ function to summarize the results.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit">
-<span class="co"># Compare the usage of different V and J genes</span>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Compare the usage of different V and J genes</span>
 <span class="va">ggs</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
   sobj_in     <span class="op">=</span> <span class="va">so_tcr</span>,                       <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,        <span class="co"># meta.data column(s) containing genes</span>
@@ -151,7 +151,7 @@
 <span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu">imap</span><span class="op">(</span><span class="op">~</span> <span class="va">.x</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="va">.y</span><span class="op">)</span><span class="op">)</span>
 
-<span class="fu">plot_grid</span><span class="op">(</span>plotlist <span class="op">=</span> <span class="va">ggs</span><span class="op">)</span></pre></div>
+<span class="fu">plot_grid</span><span class="op">(</span>plotlist <span class="op">=</span> <span class="va">ggs</span><span class="op">)</span></code></pre></div>
 <p><img src="reference/figures/README-usage-1.png"><!-- --></p>
 </div>
 </div>

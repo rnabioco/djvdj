@@ -19,6 +19,9 @@
     <loc>https://rnabioco.github.io/djvdj/reference/djvdj-package.html</loc>
   </url>
   <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/djvdj_theme.html</loc>
+  </url>
+  <url>
     <loc>https://rnabioco.github.io/djvdj/reference/dot-add_aes.html</loc>
   </url>
   <url>
@@ -53,6 +56,9 @@
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/import_vdj.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/mutate_meta.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/mutate_vdj.html</loc>
@@ -94,9 +100,6 @@
     <loc>https://rnabioco.github.io/djvdj/reference/tiny_vdj.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/vdj_theme.html</loc>
-  </url>
-  <url>
-    <loc>https://rnabioco.github.io/djvdj/articles/tcr.html</loc>
+    <loc>https://rnabioco.github.io/djvdj/articles/avid.html</loc>
   </url>
 </urlset>

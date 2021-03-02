@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Create two dimensional scatter plot — plot_features • djvdj</title>
+<title>Create 2D feature plot — plot_features • djvdj</title>
 
 
 <!-- jquery -->
@@ -41,8 +41,8 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Create two dimensional scatter plot — plot_features" />
-<meta property="og:description" content="Create two dimensional scatter plot" />
+<meta property="og:title" content="Create 2D feature plot — plot_features" />
+<meta property="og:description" content="Create 2D feature plot" />
 
 
 
@@ -82,7 +82,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -97,7 +97,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/tcr.html">TCR analysis</a>
+      <a href="../articles/avid.html">V(D)J analysis</a>
     </li>
   </ul>
 </li>
@@ -108,7 +108,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/rnabioco/djvdj/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -125,13 +125,13 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Create two dimensional scatter plot</h1>
+    <h1>Create 2D feature plot</h1>
     <small class="dont-index">Source: <a href='https://github.com/rnabioco/djvdj/blob/master/R/plots.R'><code>R/plots.R</code></a></small>
     <div class="hidden name"><code>plot_features.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Create two dimensional scatter plot</p>
+    <p>Create 2D feature plot</p>
     </div>
 
     <pre class="usage"><span class='fu'>plot_features</span><span class='op'>(</span>
@@ -141,16 +141,13 @@
   <span class='va'>feature</span>,
   data_slot <span class='op'>=</span> <span class='st'>"data"</span>,
   pt_size <span class='op'>=</span> <span class='fl'>0.25</span>,
+  pt_outline <span class='op'>=</span> <span class='cn'>NULL</span>,
+  outline_pos <span class='op'>=</span> <span class='st'>"all"</span>,
   plot_colors <span class='op'>=</span> <span class='cn'>NULL</span>,
   feat_lvls <span class='op'>=</span> <span class='cn'>NULL</span>,
-  facet_col <span class='op'>=</span> <span class='cn'>NULL</span>,
-  facet_lvls <span class='op'>=</span> <span class='cn'>NULL</span>,
-  min_pct <span class='op'>=</span> <span class='cn'>NULL</span>,
-  max_pct <span class='op'>=</span> <span class='cn'>NULL</span>,
+  min_q <span class='op'>=</span> <span class='cn'>NULL</span>,
+  max_q <span class='op'>=</span> <span class='cn'>NULL</span>,
   na_color <span class='op'>=</span> <span class='st'>"grey90"</span>,
-  lm_line <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  cor_label <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.8</span>, <span class='fl'>0.9</span><span class='op'>)</span>,
-  label_size <span class='op'>=</span> <span class='fl'>3.7</span>,
   <span class='va'>...</span>
 <span class='op'>)</span></pre>
 
@@ -182,6 +179,17 @@
       <td><p>Point size</p></td>
     </tr>
     <tr>
+      <th>pt_outline</th>
+      <td><p>Width of point outline to add to feature groups, set to
+NULL to exclude.</p></td>
+    </tr>
+    <tr>
+      <th>outline_pos</th>
+      <td><p>Position of point outline. Set to 'all' to outline all
+feature groups, set to 'bottom' to only outline the bottom layer of
+points.</p></td>
+    </tr>
+    <tr>
       <th>plot_colors</th>
       <td><p>Vector of colors to use for plot</p></td>
     </tr>
@@ -190,36 +198,16 @@
       <td><p>Levels to use for ordering feature</p></td>
     </tr>
     <tr>
-      <th>facet_col</th>
-      <td><p>Variable to use for splitting plot into facets</p></td>
+      <th>min_q</th>
+      <td><p>Minimum quantile cutoff for color scale.</p></td>
     </tr>
     <tr>
-      <th>facet_lvls</th>
-      <td><p>Levels to use for ordering plot facets</p></td>
-    </tr>
-    <tr>
-      <th>min_pct</th>
-      <td><p>Minimum value to plot for feature</p></td>
-    </tr>
-    <tr>
-      <th>max_pct</th>
-      <td><p>Maximum value to plot for feature</p></td>
+      <th>max_q</th>
+      <td><p>Maximum quantile cutoff for color scale.</p></td>
     </tr>
     <tr>
       <th>na_color</th>
       <td><p>Color to use for missing values</p></td>
-    </tr>
-    <tr>
-      <th>lm_line</th>
-      <td><p>Add regression line to plot</p></td>
-    </tr>
-    <tr>
-      <th>cor_label</th>
-      <td><p>Position of correlation coefficient label</p></td>
-    </tr>
-    <tr>
-      <th>label_size</th>
-      <td><p>Size of correlation coefficient label</p></td>
     </tr>
     <tr>
       <th>...</th>
