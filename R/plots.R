@@ -544,16 +544,19 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
     with_ties = FALSE
   )
 
-  meta_df <- dplyr::ungroup(meta_df)
+  meta_df   <- dplyr::ungroup(meta_df)
+  top_genes <- dplyr::ungroup(top_genes)
 
   # Create bar graph
   if (type == "bar") {
-    top_genes <- dplyr::arrange(top_genes, !!sym(data_col))
+    top_genes <- dplyr::arrange(top_genes, desc(!!sym(data_col)))
+
+    lvls <- rev(unique(dplyr::pull(top_genes, label_col)))
 
     top_genes <- .set_lvls(
       df_in = top_genes,
       clmn  = label_col,
-      lvls  = dplyr::pull(top_genes, label_col)
+      lvls  = lvls
     )
 
     res <- .create_bars(
@@ -1237,6 +1240,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
   lvls  <- rev(levels(pull(df_in, x)))
   df_in <- .set_lvls(df_in, x, lvls)
 
+  # Color fill by variable
   if (!is.null(.fill)) {
     res <- ggplot2::ggplot(
       df_in,
@@ -1244,27 +1248,35 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
     ) +
     ggplot2::geom_col(..., position = "dodge")
 
+    if (!is.null(clrs)) {
+      res <- res +
+        ggplot2::scale_fill_manual(values = clrs)
+    }
+
+  # Use single fill color
   } else {
     res <- ggplot2::ggplot(
       df_in,
       ggplot2::aes(!!sym(x), !!sym(y))
-    ) +
-    ggplot2::geom_col(..., fill = clrs, position = "dodge")
+    )
+
+    if (!is.null(clrs)) {
+      res <- res +
+        ggplot2::geom_col(..., fill = clrs, position = "dodge")
+
+    } else {
+      res <- res +
+        ggplot2::geom_col(..., position = "dodge")
+    }
   }
 
   res <- res +
-    # ggplot2::geom_col(..., position = "dodge") +
     ggplot2::labs(y = y_ttl) +
     djvdj_theme() +
     ggplot2::theme(
       axis.title.x = ggplot2::element_blank(),
       axis.text.x  = ggplot2::element_text(angle = ang, hjust = hjst)
     )
-
-  if (!is.null(clrs)) {
-    res <- res +
-      ggplot2::scale_fill_manual(values = clrs)
-  }
 
   res
 }
