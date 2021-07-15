@@ -134,13 +134,21 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
         )
       ),
       isotype = map_chr(.data$isotype, ~ {
-        isos <- ifelse(all(.x == ""), "", unique(.x[.x != ""]))
+        isos <- unique(.x)
+        isos <- tidyr::replace_na(isos, "")
+        isos <- isos[isos != ""]
 
-        dplyr::case_when(
-          isos == ""        ~ "None",
-          length(isos) > 1  ~ "Multi",
-          length(isos) == 1 ~ isos
+        if (length(isos) == 0) {
+          isos <- ""
+        }
+
+        isos <- dplyr::case_when(
+          length(isos) > 1 ~ "Multi",
+          isos == ""       ~ "None",
+          TRUE             ~ isos
         )
+
+        unique(isos)
       })
     )
 
