@@ -1,19 +1,25 @@
 #' Add V(D)J data to Seurat object
 #'
-#' @param sobj_in Seurat object
-#' @param vdj_dir cellranger vdj output directories. If a vector of multiple
-#' paths is provided, an equal number of cell prefixes must also be provided.
-#' If a named vector is given, the names will be used to prefix each cell
-#' barcode.
+#' @param sobj_in Seurat object, if set to NULL a tibble containing the V(D)J
+#' data will be returned
+#' @param vdj_dir Directory containing the output from cellranger vdj. A vector
+#' or named vector can be given to load data from several runs. If a named
+#' vector is given, the cell barcodes will be prefixed with the provided names.
+#' This mimics the behavior of the Read10X function found in the Seurat
+#' package. Cell barcode prefixes can also be provided using the cell_prefix
+#' argument.
 #' @param prefix Prefix to add to new meta.data columns
-#' @param cell_prefix Prefix to add to cell barcodes
+#' @param cell_prefix Prefix to add to cell barcodes, this is helpful when
+#' loading data from multiple runs into a single object. If set to NULL, cell
+#' barcode prefixes will be automatically generated in a similar way as the
+#' Read10X function found in the Seurat package.
 #' @param filter_contigs Only include chains with at least one productive
 #' contig
 #' @param sep Separator to use for storing per cell clonotype information in
 #' the meta.data
 #' @return Seurat object with V(D)J data added to meta.data
 #' @export
-import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
+import_vdj <- function(sobj_in = NULL, vdj_dir, prefix = "", cell_prefix = NULL,
                        filter_contigs = TRUE, sep = ";") {
 
   # VDJ columns
@@ -33,33 +39,48 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   )
 
   # Check path names
+  # if no cell prefixes are provided, auto generate prefixes
+  # add an underscore if not included in the provided cell prefixes
   if (is.null(names(vdj_dir))) {
+
+    if (length(vdj_dir) > 1 && is.null(cell_prefix)) {
+      cell_prefix <- c("", paste0(2:length(vdj_dir), "_"))
+    }
+
     if (length(vdj_dir) != length(cell_prefix)) {
-      stop("Must provide a cell prefix for each path passed to vdj_dir.")
+      stop("cell_prefix must be the same length as vdj_dir (", length(vdj_dir),").")
     }
 
     names(vdj_dir) <- cell_prefix
   }
 
   if (any(is.na(names(vdj_dir)))) {
-    stop("Cell prefixes must not include NAs.")
+    stop("Cell prefixes cannot include NAs.")
   }
 
-  nms <- names(vdj_dir) != "" & !grepl("_$", names(vdj_dir))
+  if (any(duplicated(names(vdj_dir)))) {
+    dups <- duplicated(names(vdj_dir))
+    dups <- names(vdj_dir)[dups]
+    dups <- paste0(dups, collapse = ", ")
+
+    warning("Some cell barcode prefixes are duplicated: ", dups)
+  }
+
+  nms                 <- names(vdj_dir) != "" & !grepl("_$", names(vdj_dir))
   names(vdj_dir)[nms] <- paste0(names(vdj_dir)[nms], "_")
 
   # Load contigs
-  # Check given dir before adding outs to path
+  # Check given dir before adding "outs" to path
   contigs <- "filtered_contig_annotations.csv"
 
   contigs <- purrr::map_chr(vdj_dir, ~ {
     path <- case_when(
-      file.exists(file.path(.x, contigs)) ~ file.path(.x, contigs),
+      file.exists(file.path(.x, contigs))         ~ file.path(.x, contigs),
       file.exists(file.path(.x, "outs", contigs)) ~ file.path(.x, "outs", contigs)
     )
 
     if (is.na(path)) {
-      stop(paste0(contigs, " not found in ", vdj_dir, "."))
+      stop(contigs, " not found in ", vdj_dir, ".")
     }
 
     path
@@ -72,20 +93,28 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   )
 
   # Remove contigs that do not have an assigned clonotype_id
-  contigs <- purrr::map(contigs, dplyr::filter, !is.na(.data$raw_clonotype_id))
+  contigs <- purrr::map(contigs, ~ {
+    n_remove <- .x$raw_clonotype_id
+    n_remove <- n_remove[is.na(n_remove)]
+    n_remove <- length(n_remove)
 
-  # Add cell prefixes
-  contigs <- purrr::imap(contigs, ~ {
+    if (n_remove > 0) {
+      warning(n_remove, " contigs do not have an assigned clonotype_id, these contigs will be removed.")
+    }
+
+    dplyr::filter(.x, !is.na(.data$raw_clonotype_id))
+  })
+
+  # Add cell prefixes and bind rows
+  contigs <- purrr::imap_dfr(contigs, ~ {
     .x <- dplyr::mutate(
       .x,
       barcode      = paste0(.y, .data$barcode),
       clonotype_id = paste0(.y, raw_clonotype_id)
     )
 
-    .x <- dplyr::rename(.x, chains = .data$chain)
+    dplyr::rename(.x, chains = .data$chain)
   })
-
-  contigs <- dplyr::bind_rows(contigs)
 
   # Filter for productive contigs
   if (filter_contigs) {
@@ -95,8 +124,10 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
   # Check if sep is already in sep_cols
+  sep <- gsub("[[:space:]]", "", sep)
+
   if (any(grepl(sep, contigs[, sep_cols]))) {
-    stop(paste0("sep '", sep, "' is already present, select a different seperator."))
+    stop("The string '", sep, "' is already present in the V(D)J data, select a different value for sep.")
   }
 
   # Sum contig reads and UMIs for chains
@@ -104,7 +135,7 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   grp_cols <- vdj_cols[!vdj_cols %in% count_cols]
   contigs  <- dplyr::group_by(contigs, !!!syms(grp_cols))
 
-  contigs  <- dplyr::summarize(
+  contigs <- dplyr::summarize(
     contigs,
     across(all_of(count_cols), sum),
     .groups = "drop"
@@ -176,17 +207,40 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 
   # Check for duplicated cell barcodes
   if (any(duplicated(meta_df$barcode))) {
-    stop("Multiple clonotype_ids are associated with the same cell barcode.")
+    stop("Malformed inport data, multiple clonotype_ids are associated with the same cell barcode.")
+  }
+
+  # Return tibble if sobj_in is NULL
+  if (is.null(sobj_in)) {
+    return(meta_df)
+  }
+
+  # Check overlap between V(D)J data and the Seurat object
+  so_bcs  <- Seurat::Cells(sobj_in)
+  vdj_bcs <- meta_df$barcode
+
+  n_overlap <- length(so_bcs[so_bcs %in% vdj_bcs])
+  pct_so    <- round(n_overlap / length(so_bcs), 2) * 100
+  pct_vdj   <- round(n_overlap / length(vdj_bcs), 2) * 100
+
+  if (n_overlap == 0) {
+    stop("
+      Cell barcodes present in the V(D)J data were not found in the Seurat object, are you using
+      the correct cell barcode prefixes? Cell barcode prefixes can be provided to the cell_prefix
+      argument or by passing a named vector to the vdj_dir argument.
+    ")
+  }
+
+  if (pct_so < 50) {
+    warning("Only ", pct_so, "% (", n_overlap, ") of cell barcodes present in the Seurat object overlap with the V(D)J data.")
+  }
+
+  if (pct_vdj < 50) {
+    warning("Only ", pct_vdj, "% (", n_overlap, ") of cell barcodes present in the V(D)J data overlap with the Seurat object.")
   }
 
   # Filter for cells present in sobj_in
-  cells <- Seurat::Cells(sobj_in)
-
-  if (!any(cells %in% meta_df$barcode)) {
-    stop("No VDJ cell barcodes are present in the Seurat object. Are you sure you are using the correct cell prefixes?")
-  }
-
-  meta_df <- dplyr::filter(meta_df, .data$barcode %in% cells)
+  meta_df <- dplyr::filter(meta_df, .data$barcode %in% so_bcs)
 
   # Add meta.data to Seurat object
   meta_df <- tibble::column_to_rownames(meta_df, "barcode")
