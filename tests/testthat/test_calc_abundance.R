@@ -11,7 +11,7 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = calc_abundance,
-  ttl     = "calc_abundance args",
+  desc    = "calc_abundance args",
   chk     = expect_silent
 )
 

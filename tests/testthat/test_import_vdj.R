@@ -31,17 +31,27 @@ arg_lst %>%
     test_all_args(
       arg_lst = .x,
       .fn     = import_vdj,
-      ttl     = paste("import_vdj", .y, "path class"),
+      desc    = paste("import_vdj", .y, "path class"),
       chk     = expr(expect_s4_class(.res, "Seurat"))
     )
 
     test_all_args(
       arg_lst = .x,
       .fn     = import_vdj,
-      ttl     = paste("import_vdj", .y, "path cells"),
+      desc    = paste("import_vdj", .y, "path cells"),
       chk     = expr(expect_identical(colnames(.res), colnames(tiny_so)))
     )
   })
+
+# Check bad path
+test_that("import_vdj bad path", {
+  fn <- function() {
+    res <- tiny_so %>%
+      import_vdj(vdj_dir = "BAD_PATH")
+  }
+
+  expect_error(fn())
+})
 
 # Check filtered contigs
 test_that("import_vdj filtered contigs", {
@@ -127,3 +137,70 @@ test_that("import_vdj bad sep", {
 
   expect_error(fn())
 })
+
+# Check duplicated cell barcode prefixes
+test_that("import_vdj duplicate cell prefix", {
+  prfxs <- rep("", 2)
+  dat   <- set_names(ctigs, prfxs)
+
+  fn <- function() {
+    res <- tiny_so %>%
+      import_vdj(vdj_dir = dat)
+  }
+
+  expect_warning(fn())
+
+  fn <- function() {
+    res <- tiny_so %>%
+      import_vdj(
+        vdj_dir     = ctigs,
+        cell_prefix = prfxs
+      )
+  }
+
+  expect_warning(fn())
+})
+
+# Check barcode prefix length
+test_that("import_vdj cell prefix length", {
+  fn <- function() {
+    res <- tiny_so %>%
+      import_vdj(
+        vdj_dir     = ctigs,
+        cell_prefix = "A"
+      )
+  }
+
+  expect_error(fn())
+})
+
+# Check cell barcode prefix NAs
+test_that("import_vdj cell prefix NAs", {
+  prfxs <- c(NA, "2")
+  dat   <- set_names(ctigs, prfxs)
+
+  fn <- function() {
+    res <- tiny_so %>%
+      import_vdj(vdj_dir = dat)
+  }
+
+  expect_error(fn())
+
+  fn <- function() {
+    res <- tiny_so %>%
+      import_vdj(
+        vdj_dir     = ctigs,
+        cell_prefix = prfxs
+      )
+  }
+
+  expect_error(fn())
+})
+
+
+
+
+
+
+
+

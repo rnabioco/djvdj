@@ -11,6 +11,6 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = summarize_chains,
-  ttl     = "summarize_chains args",
+  desc    = "summarize_chains args",
   chk     = expr(expect_s3_class(.res, "tbl"))
 )

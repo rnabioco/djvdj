@@ -11,6 +11,6 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = calc_usage,
-  ttl     = "calc_usage args",
+  desc    = "calc_usage args",
   chk     = expr(expect_s3_class(.res, "tbl"))
 )
