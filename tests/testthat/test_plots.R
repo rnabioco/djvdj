@@ -22,7 +22,7 @@ arg_lst <- list(
   plot_colors = list(NULL, test_cols),
   feat_lvls   = list(NULL, test_lvls),
   facet_col   = list(NULL, "orig.ident", c("orig.ident", "seurat_clusters")),
-  facet_lvls  = list(NULL, "AVID-seq"),
+  facet_lvls  = list(NULL, c("avid_2", "avid_1")),
   min_pct     = list(NULL, 0.05),
   max_pct     = list(NULL, 0.95),
   lm_line     = c(TRUE, FALSE)
@@ -91,7 +91,7 @@ arg_lst <- list(
   facet_col   = list(NULL, "orig.ident"),
   yaxis       = c("fraction", "counts"),
   plot_colors = list(NULL, test_cols),
-  plot_lvls   = list(NULL, "AVID-seq"),
+  plot_lvls   = list(NULL, c("avid_2", "avid_1")),
   n_label     = c(TRUE, FALSE),
   label_aes   = list(list(), list(size = 2))
 )

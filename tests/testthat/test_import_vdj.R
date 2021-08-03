@@ -1,39 +1,50 @@
 
-# Contig files for test
+# Test inputs
 ctigs <- c(
   system.file("extdata/bcr_1", package = "djvdj"),
   system.file("extdata/bcr_2", package = "djvdj")
 )
 
-test_that("Single import with full path", {
-  res <- tiny_so %>%
-    import_vdj(vdj_dir = file.path(ctigs[1], "outs"))
+ctigs_2 <- ctigs_3 <- ctigs
 
-  expect_s4_class(res, "Seurat")
-  expect_identical(colnames(res), colnames(tiny_so))
-})
+names(ctigs_2) <- c("", "2_")
+names(ctigs_3) <- c("", "2")
 
-test_that("Single import without full path", {
-  res <- tiny_so %>%
-    import_vdj(vdj_dir = ctigs[1])
+# Check arguments for different path inputs
+arg_lst <- list(
+  single = list(
+    sobj_in     = list(tiny_so),
+    vdj_dir     = list(ctigs[1], ctigs_2[1], ctigs_3[1], paste0(ctigs[1], "/outs")),
+    cell_prefix = list(NULL, ""),
+    prefix      = c("", "PREFIX")
+  ),
+  multi = list(
+    sobj_in     = list(tiny_so),
+    vdj_dir     = list(ctigs, ctigs_2, ctigs_3, paste0(ctigs, "/outs")),
+    cell_prefix = list(NULL, c("", "2_"), c("", "2")),
+    prefix      = c("", "PREFIX")
+  )
+)
 
-  expect_s4_class(res, "Seurat")
-  expect_identical(colnames(res), colnames(tiny_so))
-})
+arg_lst %>%
+  iwalk(~ {
+    test_all_args(
+      arg_lst = .x,
+      .fn     = import_vdj,
+      ttl     = paste("import_vdj", .y, "path class"),
+      chk     = expr(expect_s4_class(.res, "Seurat"))
+    )
 
-test_that("Multiple named import", {
-  dat <- ctigs
+    test_all_args(
+      arg_lst = .x,
+      .fn     = import_vdj,
+      ttl     = paste("import_vdj", .y, "path cells"),
+      chk     = expr(expect_identical(colnames(.res), colnames(tiny_so)))
+    )
+  })
 
-  names(dat) <- c("", "2_")
-
-  res <- tiny_so %>%
-    import_vdj(vdj_dir = dat)
-
-  expect_s4_class(res, "Seurat")
-  expect_identical(colnames(res), colnames(tiny_so))
-})
-
-test_that("Filtered contigs", {
+# Check filtered contigs
+test_that("import_vdj filtered contigs", {
   res <- tiny_so %>%
     import_vdj(
       vdj_dir        = ctigs,
@@ -46,14 +57,13 @@ test_that("Filtered contigs", {
   expect_identical(colnames(res), colnames(tiny_so))
 })
 
-test_that("Unfiltered contigs", {
-  suppressWarnings({
-    res <- tiny_so %>%
-      import_vdj(
-        vdj_dir        = ctigs,
-        filter_contigs = FALSE
-      )
-  })
+# Check unfiltered contigs
+test_that("import_vdj unfiltered contigs", {
+  res <- tiny_so %>%
+    import_vdj(
+      vdj_dir        = ctigs[1],
+      filter_contigs = FALSE
+    )
 
   expect_true(any(grepl("FALSE", res$productive)))
   expect_true(any(grepl("FALSE", res$full_length)))
@@ -61,21 +71,15 @@ test_that("Unfiltered contigs", {
   expect_identical(colnames(res), colnames(tiny_so))
 })
 
-test_that("Multiple unnamed import", {
-  res <- tiny_so %>%
-    import_vdj(ctigs)
-
-  expect_s4_class(res, "Seurat")
-  expect_identical(colnames(res), colnames(tiny_so))
-})
-
-test_that("tibble output", {
+# Check tibble output
+test_that("import_vdj tibble output", {
   res <- import_vdj(vdj_dir = ctigs)
 
   expect_s3_class(res, "tbl")
 })
 
-test_that("Bad cell barcode prefixes", {
+# Check bad barcode prefixes
+test_that("import_vdj bad prefixes", {
   dat <- setNames(ctigs, c("A", "B"))
 
   fn <- function() {
@@ -86,7 +90,8 @@ test_that("Bad cell barcode prefixes", {
   expect_error(fn())
 })
 
-test_that("Low overlap warning", {
+# Check low overlap warning
+test_that("import_vdj low overlap", {
   dat <- c("2_" = ctigs[2])
 
   fn <- function() {
@@ -97,7 +102,8 @@ test_that("Low overlap warning", {
   expect_warning(fn())
 })
 
-test_that("Missing clonotype_id warning", {
+# Check missing clonotype_id warning
+test_that("import_vdj missing clonotype_id", {
   fn <- function() {
     res <- tiny_so %>%
       import_vdj(
@@ -109,7 +115,8 @@ test_that("Missing clonotype_id warning", {
   expect_warning(fn())
 })
 
-test_that("Bad separator", {
+# Check bad separator
+test_that("import_vdj bad sep", {
   fn <- function() {
     res <- tiny_so %>%
       import_vdj(

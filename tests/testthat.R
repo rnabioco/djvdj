@@ -5,9 +5,13 @@ library(purrr)
 library(djvdj)
 
 # Helper to test all combinations of provided arguments
-test_all_args <- function(arg_lst, .fn, ttl, chk) {
+test_all_args <- function(arg_lst, .fn, ttl, chk, dryrun = FALSE) {
   arg_lst <- arg_lst %>%
     expand.grid(stringsAsFactors = FALSE)
+
+  if (dryrun) {
+    return(arg_lst)
+  }
 
   n <- 1
 
