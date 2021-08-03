@@ -5,25 +5,31 @@
 \title{Add V(D)J data to Seurat object}
 \usage{
 import_vdj(
-  sobj_in,
+  sobj_in = NULL,
   vdj_dir,
   prefix = "",
-  cell_prefix = "",
+  cell_prefix = NULL,
   filter_contigs = TRUE,
   sep = ";"
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object}
+\item{sobj_in}{Seurat object, if set to NULL a tibble containing the V(D)J
+data will be returned}
 
-\item{vdj_dir}{cellranger vdj output directories. If a vector of multiple
-paths is provided, an equal number of cell prefixes must also be provided.
-If a named vector is given, the names will be used to prefix each cell
-barcode.}
+\item{vdj_dir}{Directory containing the output from cellranger vdj. A vector
+or named vector can be given to load data from several runs. If a named
+vector is given, the cell barcodes will be prefixed with the provided names.
+This mimics the behavior of the Read10X function found in the Seurat
+package. Cell barcode prefixes can also be provided using the cell_prefix
+argument.}
 
 \item{prefix}{Prefix to add to new meta.data columns}
 
-\item{cell_prefix}{Prefix to add to cell barcodes}
+\item{cell_prefix}{Prefix to add to cell barcodes, this is helpful when
+loading data from multiple runs into a single object. If set to NULL, cell
+barcode prefixes will be automatically generated in a similar way as the
+Read10X function found in the Seurat package.}
 
 \item{filter_contigs}{Only include chains with at least one productive
 contig}

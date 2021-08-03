@@ -43,8 +43,9 @@ import_vdj <- function(sobj_in = NULL, vdj_dir, prefix = "", cell_prefix = NULL,
   # add an underscore if not included in the provided cell prefixes
   if (is.null(names(vdj_dir))) {
 
-    if (length(vdj_dir) > 1 && is.null(cell_prefix)) {
-      cell_prefix <- c("", paste0(2:length(vdj_dir), "_"))
+    if (is.null(cell_prefix)) {
+      cell_prefix    <- paste0(seq_along(vdj_dir), "_")
+      cell_prefix[1] <- ""
     }
 
     if (length(vdj_dir) != length(cell_prefix)) {
@@ -70,7 +71,7 @@ import_vdj <- function(sobj_in = NULL, vdj_dir, prefix = "", cell_prefix = NULL,
   names(vdj_dir)[nms] <- paste0(names(vdj_dir)[nms], "_")
 
   # Load contigs
-  # Check given dir before adding "outs" to path
+  # check given dir before adding "outs" to path
   contigs <- "filtered_contig_annotations.csv"
 
   contigs <- purrr::map_chr(vdj_dir, ~ {
@@ -92,19 +93,6 @@ import_vdj <- function(sobj_in = NULL, vdj_dir, prefix = "", cell_prefix = NULL,
     col_types = readr::cols()
   )
 
-  # Remove contigs that do not have an assigned clonotype_id
-  contigs <- purrr::map(contigs, ~ {
-    n_remove <- .x$raw_clonotype_id
-    n_remove <- n_remove[is.na(n_remove)]
-    n_remove <- length(n_remove)
-
-    if (n_remove > 0) {
-      warning(n_remove, " contigs do not have an assigned clonotype_id, these contigs will be removed.")
-    }
-
-    dplyr::filter(.x, !is.na(.data$raw_clonotype_id))
-  })
-
   # Add cell prefixes and bind rows
   contigs <- purrr::imap_dfr(contigs, ~ {
     .x <- dplyr::mutate(
@@ -116,11 +104,29 @@ import_vdj <- function(sobj_in = NULL, vdj_dir, prefix = "", cell_prefix = NULL,
     dplyr::rename(.x, chains = .data$chain)
   })
 
+
+
+  # CHECK BARCODE OVERLAP BEFORE BINDING ROWS
+
+
+
   # Filter for productive contigs
   if (filter_contigs) {
     contigs <- dplyr::filter(contigs, .data$productive, .data$full_length)
   }
 
+  # Remove contigs that do not have an assigned clonotype_id
+  n_remove <- contigs$raw_clonotype_id
+  n_remove <- n_remove[is.na(n_remove)]
+  n_remove <- length(n_remove)
+
+  if (n_remove > 0) {
+    warning(n_remove, " contigs do not have an assigned clonotype_id, these contigs will be removed.")
+
+    contigs <- dplyr::filter(contigs, !is.na(.data$raw_clonotype_id))
+  }
+
+  # Select V(D)J columns to keep
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
   # Check if sep is already in sep_cols
@@ -131,7 +137,7 @@ import_vdj <- function(sobj_in = NULL, vdj_dir, prefix = "", cell_prefix = NULL,
   }
 
   # Sum contig reads and UMIs for chains
-  # Some chains are supported by multiple contigs
+  # some chains are supported by multiple contigs
   grp_cols <- vdj_cols[!vdj_cols %in% count_cols]
   contigs  <- dplyr::group_by(contigs, !!!syms(grp_cols))
 
@@ -142,7 +148,7 @@ import_vdj <- function(sobj_in = NULL, vdj_dir, prefix = "", cell_prefix = NULL,
   )
 
   # Order chains and CDR3 sequences
-  # When the rows are collapsed, the cdr3 sequences must be in the same order
+  # when the rows are collapsed, the cdr3 sequences must be in the same order
   # for every cell. This is required so the cdr3 columns can be used directly
   # as the clonotype ID
   contigs <- dplyr::arrange(
@@ -225,17 +231,17 @@ import_vdj <- function(sobj_in = NULL, vdj_dir, prefix = "", cell_prefix = NULL,
 
   if (n_overlap == 0) {
     stop("
-      Cell barcodes present in the V(D)J data were not found in the Seurat object, are you using
-      the correct cell barcode prefixes? Cell barcode prefixes can be provided to the cell_prefix
+      Cell barcodes from the V(D)J data were not found in the Seurat object, are you using the
+      correct cell barcode prefixes? Cell barcode prefixes can be provided to the cell_prefix
       argument or by passing a named vector to the vdj_dir argument.
     ")
   }
 
-  if (pct_so < 50) {
+  if (pct_so < 25) {
     warning("Only ", pct_so, "% (", n_overlap, ") of cell barcodes present in the Seurat object overlap with the V(D)J data.")
   }
 
-  if (pct_vdj < 50) {
+  if (pct_vdj < 25) {
     warning("Only ", pct_vdj, "% (", n_overlap, ") of cell barcodes present in the V(D)J data overlap with the Seurat object.")
   }
 
