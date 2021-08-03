@@ -10,6 +10,15 @@ ctigs_2 <- ctigs_3 <- ctigs
 names(ctigs_2) <- c("", "2_")
 names(ctigs_3) <- c("", "2")
 
+vdj_cols <- c(
+  "v_gene", "d_gene",
+  "j_gene", "c_gene",
+  "chains", "clonotype_id",
+  "cdr3",   "cdr3_nt",
+  "reads",  "productive",
+  "umis",   "full_length"
+)
+
 # Check arguments for different path inputs
 arg_lst <- list(
   single = list(
@@ -51,6 +60,21 @@ test_that("import_vdj bad path", {
   }
 
   expect_error(fn())
+})
+
+# Check column prefix
+test_that("import_vdj column prefix", {
+  prfx     <- "TEST_"
+  new_cols <- paste0(prfx, vdj_cols)
+
+  res <- tiny_so %>%
+    import_vdj(
+      vdj_dir = ctigs,
+      prefix  = prfx
+    )
+
+  expect_false(any(vdj_cols %in% colnames(res@meta.data)))
+  expect_true(all(new_cols %in% colnames(res@meta.data)))
 })
 
 # Check filtered contigs
@@ -196,11 +220,3 @@ test_that("import_vdj cell prefix NAs", {
 
   expect_error(fn())
 })
-
-
-
-
-
-
-
-
