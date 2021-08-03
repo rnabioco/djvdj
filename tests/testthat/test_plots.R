@@ -7,7 +7,9 @@ test_cols <- c(
   "#999999", "#875C04", "#000000"
 )
 
-test_lvls <- unique(tiny_vdj$seurat_clusters)
+test_lvls <- unique(tiny_vdj$seurat_clusters) %>%
+  as.character() %>%
+  rev()
 
 tiny_dat <- tiny_vdj@meta.data %>%
   as_tibble(rownames = ".cell_id")

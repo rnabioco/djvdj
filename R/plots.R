@@ -39,11 +39,13 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
     vars <- c(x, y, feature)
 
     # Fetch variables and add to meta.data
-    meta_df <- Seurat::FetchData(
-      sobj_in,
-      vars = unique(vars),
-      slot = as.character(data_slot)
-    )
+    suppressWarnings({
+      meta_df <- Seurat::FetchData(
+        sobj_in,
+        vars = unique(vars),
+        slot = as.character(data_slot)
+      )
+    })
 
     meta_df <- Seurat::AddMetaData(sobj_in, meta_df)
     meta_df <- tibble::as_tibble(meta_df@meta.data, rownames = ".cell_id")

@@ -84,7 +84,7 @@ test_that("import_vdj bad prefixes", {
 
   fn <- function() {
     res <- tiny_so %>%
-      import_vdj(vdj_dir = dat, filter_contigs = FALSE)
+      import_vdj(vdj_dir = dat)
   }
 
   expect_error(fn())
