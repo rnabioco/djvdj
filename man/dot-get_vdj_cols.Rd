@@ -10,7 +10,7 @@
 \item{df_in}{data.frame}
 
 \item{clone_col}{Column containing clonotype IDs to use for identifying
-columns with V(D)J data}
+columns with V(D)J data. If NULL all columns are used.}
 
 \item{cols_in}{meta.data columns containing VDJ data to use for filtering.
 If set to NULL (recommended) columns are automatically selected.}

@@ -266,12 +266,13 @@ import_vdj <- function(sobj_in = NULL, vdj_dir, prefix = "", cell_prefix = NULL,
 #' is used to determine which cells have V(D)J data. If clonotype_col is set to
 #' NULL, filtering is performed regardless of whether V(D)J data is present for
 #' the cell
-#' @param filter_cells Should cells be removed from object? If set FALSE
-#' (default) V(D)J data will be removed from meta.data but no cells will be
-#' removed from the object
+#' @param filter_cells Should cells be removed from the object? If FALSE
+#' (default) V(D)J data will be removed from the meta.data but no cells will be
+#' removed from the object.
 #' @param sep Separator to use for expanding meta.data columns
 #' @param vdj_cols meta.data columns containing VDJ data to use for filtering.
-#' If set to NULL (recommended) columns are automatically selected.
+#' If set to NULL (recommended) columns are automatically selected based on the
+#' given separator.
 #' @return Seurat object
 #' @export
 filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = FALSE,
@@ -294,6 +295,10 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = 
 
   vdj_cols <- col_list$vdj
   sep_cols <- col_list$sep
+
+  if (purrr::is_empty(sep_cols)) {
+    warning("The separator '", sep, "' is not present in the data")
+  }
 
   # Create list-cols for VDJ columns that contain sep
   if (!purrr::is_empty(sep_cols)) {
@@ -326,7 +331,7 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = 
     )
 
   # Filter cells from object
-  # In clonotype_col != NULL only filter cells with VDJ data
+  # when clonotype_col != NULL only filter cells with VDJ data
   } else {
     if (!is.null(clonotype_col)) {
       meta_df <- dplyr::mutate(
@@ -349,13 +354,11 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = 
       nm = unname(sep_cols)
     )
 
-    meta_df <- dplyr::select(
-      meta_df,
-      !all_of(c(names(sep_cols), ".KEEP"))
-    )
-
+    meta_df <- dplyr::select(meta_df, -all_of(names(sep_cols)))
     meta_df <- dplyr::rename(meta_df, !!!syms(sep_cols))
   }
+
+  meta_df <- dplyr::select(meta_df, -.KEEP)
 
   # Add meta.data to Seurat object
   meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
@@ -1006,7 +1009,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
 #'
 #' @param df_in data.frame
 #' @param clone_col Column containing clonotype IDs to use for identifying
-#' columns with V(D)J data
+#' columns with V(D)J data. If NULL all columns are used.
 #' @param cols_in meta.data columns containing VDJ data to use for filtering.
 #' If set to NULL (recommended) columns are automatically selected.
 #' @param sep Separator to search for in columns

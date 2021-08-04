@@ -62,14 +62,39 @@ test_that("filter_vdj Seurat return all cells", {
 
 # Check NULL clonotype_col and FALSE filter_cells
 test_that("filter_vdj NULL clonotype_col FALSE filter_cells", {
-  expect_error(
-    filter_vdj(
+  fn <- function() {
+    res <- filter_vdj(
       sobj_in       = tiny_vdj,
       filt          = any(chains %in% c("IGH", "IGK", "IGL")),
       clonotype_col = NULL,
       filter_cells  = FALSE
     )
+  }
+
+  expect_error(fn())
+})
+
+# Check for .KEEP
+test_that("filter_vdj .KEEP check", {
+  res <- filter_vdj(
+    sobj_in = tiny_vdj,
+    filt    = orig.ident == "avid_1"
   )
+
+  expect_false(".KEEP" %in% colnames(res@meta.data))
+
+  fn <- function() {
+    filter_vdj(
+      sobj_in = tiny_vdj,
+      filt    = orig.ident == "avid_1",
+      sep     = "BED_SEP"
+    )
+  }
+
+  res <- suppressWarnings(fn())
+
+  expect_warning(fn())
+  expect_false(".KEEP" %in% colnames(res@meta.data))
 })
 
 
