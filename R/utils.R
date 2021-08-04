@@ -381,8 +381,12 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = 
 #' @export
 mutate_meta <- function(sobj_in, .fun, ...) {
 
+  if (!"Seurat" %in% class(sobj_in)) {
+    stop("sobj_in must be a Seurat object")
+  }
+
   if (!is_function(.fun) && !is_formula(.fun)) {
-    stop(".fun must be either a function or a formula.")
+    stop(".fun must be either a function or a formula")
   }
 
   .x <- sobj_in@meta.data
