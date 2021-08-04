@@ -358,7 +358,7 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = 
     meta_df <- dplyr::rename(meta_df, !!!syms(sep_cols))
   }
 
-  meta_df <- dplyr::select(meta_df, -.KEEP)
+  meta_df <- dplyr::select(meta_df, -.data$.KEEP)
 
   # Add meta.data to Seurat object
   meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
