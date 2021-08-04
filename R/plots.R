@@ -16,12 +16,11 @@
 #' @param min_q Minimum quantile cutoff for color scale.
 #' @param max_q Maximum quantile cutoff for color scale.
 #' @param na_color Color to use for missing values
-#' @param ... Additional parameters to pass to facet_wrap
 #' @return ggplot object
 #' @export
 plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
                           pt_size = 0.25, pt_outline = NULL, outline_pos = "all", plot_colors = NULL,
-                          feat_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90", ...) {
+                          feat_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90") {
 
   # Check arguments
   if (x == y) {
@@ -56,12 +55,14 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
   }
 
   # Adjust values based on min_q and max_q
-  meta_df <- .set_lims(
-    meta_df,
-    ft = feature,
-    mn = min_q,
-    mx = max_q
-  )
+  if ((!is.null(min_q) || !is.null(max_q)) && is.numeric(meta_df[[feature]])) {
+    meta_df <- .set_lims(
+      meta_df,
+      ft = feature,
+      mn = min_q,
+      mx = max_q
+    )
+  }
 
   # Set feature and facet order
   meta_df <- .set_lvls(meta_df, feature, feat_lvls)
@@ -1047,8 +1048,12 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @return data.frame with modified feature values
 .set_lims <- function(df_in, ft, mn = NULL, mx = NULL) {
 
+  if (!is.numeric(df_in[[ft]])) {
+    stop(ft, " is not numeric")
+  }
+
   if (is.null(mn) && is.null(mx)) {
-    return(df_in)
+    stop("mn or mx must be provided")
   }
 
   ft <- sym(ft)

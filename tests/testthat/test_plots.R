@@ -21,13 +21,12 @@ arg_lst <- list(
   sobj_in     = list(tiny_vdj, tiny_dat),
   feature     = list("seurat_clusters", c(clust = "seurat_clusters")),
   data_slot   = c("data", "counts"),
+  pt_outline  = list(NULL, 1),
+  outline_pos = c("all", "bottom"),
   plot_colors = list(NULL, test_cols),
   feat_lvls   = list(NULL, test_lvls),
-  facet_col   = list(NULL, "orig.ident", c("orig.ident", "seurat_clusters")),
-  facet_lvls  = list(NULL, c("avid_2", "avid_1")),
-  min_pct     = list(NULL, 0.05),
-  max_pct     = list(NULL, 0.95),
-  lm_line     = c(TRUE, FALSE)
+  min_q       = list(NULL, 0.05),
+  max_q       = list(NULL, 0.95)
 )
 
 test_all_args(
@@ -84,6 +83,19 @@ test_all_args(
   desc    = "plot_features no feat found",
   chk     = expect_error
 )
+
+# Check check plot_features bad outline_pos
+test_that("plot_features bad outline_pos", {
+  expect_error(
+    plot_features(
+      sobj_in     = tiny_vdj,
+      x           = "UMAP_1",
+      y           = "UMAP_2",
+      feature     = "seurat_clusters",
+      outline_pos = "BAD_POS"
+    )
+  )
+})
 
 # Check all plot_cell_count arguments
 arg_lst <- list(
