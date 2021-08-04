@@ -17,8 +17,7 @@ plot_features(
   feat_lvls = NULL,
   min_q = NULL,
   max_q = NULL,
-  na_color = "grey90",
-  ...
+  na_color = "grey90"
 )
 }
 \arguments{
@@ -50,8 +49,6 @@ points.}
 \item{max_q}{Maximum quantile cutoff for color scale.}
 
 \item{na_color}{Color to use for missing values}
-
-\item{...}{Additional parameters to pass to facet_wrap}
 }
 \value{
 ggplot object

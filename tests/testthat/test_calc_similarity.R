@@ -20,7 +20,7 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = calc_similarity,
-  ttl     = "calc_similarity args",
+  desc    = "calc_similarity args",
   chk     = expect_silent
 )
 

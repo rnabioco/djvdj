@@ -1,19 +1,25 @@
 #' Add V(D)J data to Seurat object
 #'
-#' @param sobj_in Seurat object
-#' @param vdj_dir cellranger vdj output directories. If a vector of multiple
-#' paths is provided, an equal number of cell prefixes must also be provided.
-#' If a named vector is given, the names will be used to prefix each cell
-#' barcode.
+#' @param sobj_in Seurat object, if set to NULL a tibble containing the V(D)J
+#' data will be returned
+#' @param vdj_dir Directory containing the output from cellranger vdj. A vector
+#' or named vector can be given to load data from several runs. If a named
+#' vector is given, the cell barcodes will be prefixed with the provided names.
+#' This mimics the behavior of the Read10X function found in the Seurat
+#' package. Cell barcode prefixes can also be provided using the cell_prefix
+#' argument.
 #' @param prefix Prefix to add to new meta.data columns
-#' @param cell_prefix Prefix to add to cell barcodes
+#' @param cell_prefix Prefix to add to cell barcodes, this is helpful when
+#' loading data from multiple runs into a single object. If set to NULL, cell
+#' barcode prefixes will be automatically generated in a similar way as the
+#' Read10X function found in the Seurat package.
 #' @param filter_contigs Only include chains with at least one productive
 #' contig
 #' @param sep Separator to use for storing per cell clonotype information in
 #' the meta.data
 #' @return Seurat object with V(D)J data added to meta.data
 #' @export
-import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
+import_vdj <- function(sobj_in = NULL, vdj_dir, prefix = "", cell_prefix = NULL,
                        filter_contigs = TRUE, sep = ";") {
 
   # VDJ columns
@@ -33,33 +39,49 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
   )
 
   # Check path names
+  # if no cell prefixes are provided, auto generate prefixes
+  # add an underscore if not included in the provided cell prefixes
   if (is.null(names(vdj_dir))) {
+
+    if (is.null(cell_prefix)) {
+      cell_prefix    <- paste0(seq_along(vdj_dir), "_")
+      cell_prefix[1] <- ""
+    }
+
     if (length(vdj_dir) != length(cell_prefix)) {
-      stop("Must provide a cell prefix for each path passed to vdj_dir.")
+      stop("cell_prefix must be the same length as vdj_dir (", length(vdj_dir),").")
     }
 
     names(vdj_dir) <- cell_prefix
   }
 
   if (any(is.na(names(vdj_dir)))) {
-    stop("Cell prefixes must not include NAs.")
+    stop("Cell prefixes cannot include NAs.")
   }
 
-  nms <- names(vdj_dir) != "" & !grepl("_$", names(vdj_dir))
+  if (any(duplicated(names(vdj_dir)))) {
+    dups <- duplicated(names(vdj_dir))
+    dups <- names(vdj_dir)[dups]
+    dups <- paste0(dups, collapse = ", ")
+
+    warning("Some cell barcode prefixes are duplicated: ", dups)
+  }
+
+  nms                 <- names(vdj_dir) != "" & !grepl("_$", names(vdj_dir))
   names(vdj_dir)[nms] <- paste0(names(vdj_dir)[nms], "_")
 
   # Load contigs
-  # Check given dir before adding outs to path
+  # check given dir before adding "outs" to path
   contigs <- "filtered_contig_annotations.csv"
 
   contigs <- purrr::map_chr(vdj_dir, ~ {
     path <- case_when(
-      file.exists(file.path(.x, contigs)) ~ file.path(.x, contigs),
+      file.exists(file.path(.x, contigs))         ~ file.path(.x, contigs),
       file.exists(file.path(.x, "outs", contigs)) ~ file.path(.x, "outs", contigs)
     )
 
     if (is.na(path)) {
-      stop(paste0(contigs, " not found in ", vdj_dir, "."))
+      stop(contigs, " not found in ", vdj_dir, ".")
     }
 
     path
@@ -71,47 +93,62 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
     col_types = readr::cols()
   )
 
-  # Remove contigs that do not have an assigned clonotype_id
-  contigs <- purrr::map(contigs, dplyr::filter, !is.na(.data$raw_clonotype_id))
-
-  # Add cell prefixes
-  contigs <- purrr::imap(contigs, ~ {
+  # Add cell prefixes and bind rows
+  contigs <- purrr::imap_dfr(contigs, ~ {
     .x <- dplyr::mutate(
       .x,
       barcode      = paste0(.y, .data$barcode),
       clonotype_id = paste0(.y, raw_clonotype_id)
     )
 
-    .x <- dplyr::rename(.x, chains = .data$chain)
+    dplyr::rename(.x, chains = .data$chain)
   })
 
-  contigs <- dplyr::bind_rows(contigs)
+
+
+  # CHECK BARCODE OVERLAP BEFORE BINDING ROWS
+
+
 
   # Filter for productive contigs
   if (filter_contigs) {
     contigs <- dplyr::filter(contigs, .data$productive, .data$full_length)
   }
 
+  # Remove contigs that do not have an assigned clonotype_id
+  n_remove <- contigs$raw_clonotype_id
+  n_remove <- n_remove[is.na(n_remove)]
+  n_remove <- length(n_remove)
+
+  if (n_remove > 0) {
+    warning(n_remove, " contigs do not have an assigned clonotype_id, these contigs will be removed.")
+
+    contigs <- dplyr::filter(contigs, !is.na(.data$raw_clonotype_id))
+  }
+
+  # Select V(D)J columns to keep
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
   # Check if sep is already in sep_cols
+  sep <- gsub("[[:space:]]", "", sep)
+
   if (any(grepl(sep, contigs[, sep_cols]))) {
-    stop(paste0("sep '", sep, "' is already present, select a different seperator."))
+    stop("The string '", sep, "' is already present in the V(D)J data, select a different value for sep.")
   }
 
   # Sum contig reads and UMIs for chains
-  # Some chains are supported by multiple contigs
+  # some chains are supported by multiple contigs
   grp_cols <- vdj_cols[!vdj_cols %in% count_cols]
   contigs  <- dplyr::group_by(contigs, !!!syms(grp_cols))
 
-  contigs  <- dplyr::summarize(
+  contigs <- dplyr::summarize(
     contigs,
     across(all_of(count_cols), sum),
     .groups = "drop"
   )
 
   # Order chains and CDR3 sequences
-  # When the rows are collapsed, the cdr3 sequences must be in the same order
+  # when the rows are collapsed, the cdr3 sequences must be in the same order
   # for every cell. This is required so the cdr3 columns can be used directly
   # as the clonotype ID
   contigs <- dplyr::arrange(
@@ -176,17 +213,40 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 
   # Check for duplicated cell barcodes
   if (any(duplicated(meta_df$barcode))) {
-    stop("Multiple clonotype_ids are associated with the same cell barcode.")
+    stop("Malformed inport data, multiple clonotype_ids are associated with the same cell barcode.")
+  }
+
+  # Return tibble if sobj_in is NULL
+  if (is.null(sobj_in)) {
+    return(meta_df)
+  }
+
+  # Check overlap between V(D)J data and the Seurat object
+  so_bcs  <- Seurat::Cells(sobj_in)
+  vdj_bcs <- meta_df$barcode
+
+  n_overlap <- length(so_bcs[so_bcs %in% vdj_bcs])
+  pct_so    <- round(n_overlap / length(so_bcs), 2) * 100
+  pct_vdj   <- round(n_overlap / length(vdj_bcs), 2) * 100
+
+  if (n_overlap == 0) {
+    stop("
+      Cell barcodes from the V(D)J data were not found in the Seurat object, are you using the
+      correct cell barcode prefixes? Cell barcode prefixes can be provided to the cell_prefix
+      argument or by passing a named vector to the vdj_dir argument.
+    ")
+  }
+
+  if (pct_so < 25) {
+    warning("Only ", pct_so, "% (", n_overlap, ") of cell barcodes present in the Seurat object overlap with the V(D)J data.")
+  }
+
+  if (pct_vdj < 25) {
+    warning("Only ", pct_vdj, "% (", n_overlap, ") of cell barcodes present in the V(D)J data overlap with the Seurat object.")
   }
 
   # Filter for cells present in sobj_in
-  cells <- Seurat::Cells(sobj_in)
-
-  if (!any(cells %in% meta_df$barcode)) {
-    stop("No VDJ cell barcodes are present in the Seurat object. Are you sure you are using the correct cell prefixes?")
-  }
-
-  meta_df <- dplyr::filter(meta_df, .data$barcode %in% cells)
+  meta_df <- dplyr::filter(meta_df, .data$barcode %in% so_bcs)
 
   # Add meta.data to Seurat object
   meta_df <- tibble::column_to_rownames(meta_df, "barcode")
@@ -206,12 +266,13 @@ import_vdj <- function(sobj_in, vdj_dir, prefix = "", cell_prefix = "",
 #' is used to determine which cells have V(D)J data. If clonotype_col is set to
 #' NULL, filtering is performed regardless of whether V(D)J data is present for
 #' the cell
-#' @param filter_cells Should cells be removed from object? If set FALSE
-#' (default) V(D)J data will be removed from meta.data but no cells will be
-#' removed from the object
+#' @param filter_cells Should cells be removed from the object? If FALSE
+#' (default) V(D)J data will be removed from the meta.data but no cells will be
+#' removed from the object.
 #' @param sep Separator to use for expanding meta.data columns
 #' @param vdj_cols meta.data columns containing VDJ data to use for filtering.
-#' If set to NULL (recommended) columns are automatically selected.
+#' If set to NULL (recommended) columns are automatically selected based on the
+#' given separator.
 #' @return Seurat object
 #' @export
 filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = FALSE,
@@ -234,6 +295,10 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = 
 
   vdj_cols <- col_list$vdj
   sep_cols <- col_list$sep
+
+  if (purrr::is_empty(sep_cols)) {
+    warning("The separator '", sep, "' is not present in the data")
+  }
 
   # Create list-cols for VDJ columns that contain sep
   if (!purrr::is_empty(sep_cols)) {
@@ -266,7 +331,7 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = 
     )
 
   # Filter cells from object
-  # In clonotype_col != NULL only filter cells with VDJ data
+  # when clonotype_col != NULL only filter cells with VDJ data
   } else {
     if (!is.null(clonotype_col)) {
       meta_df <- dplyr::mutate(
@@ -289,13 +354,11 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = 
       nm = unname(sep_cols)
     )
 
-    meta_df <- dplyr::select(
-      meta_df,
-      !all_of(c(names(sep_cols), ".KEEP"))
-    )
-
+    meta_df <- dplyr::select(meta_df, -all_of(names(sep_cols)))
     meta_df <- dplyr::rename(meta_df, !!!syms(sep_cols))
   }
+
+  meta_df <- dplyr::select(meta_df, -.data$.KEEP)
 
   # Add meta.data to Seurat object
   meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
@@ -318,8 +381,12 @@ filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = 
 #' @export
 mutate_meta <- function(sobj_in, .fun, ...) {
 
+  if (!"Seurat" %in% class(sobj_in)) {
+    stop("sobj_in must be a Seurat object")
+  }
+
   if (!is_function(.fun) && !is_formula(.fun)) {
-    stop(".fun must be either a function or a formula.")
+    stop(".fun must be either a function or a formula")
   }
 
   .x <- sobj_in@meta.data
@@ -946,7 +1013,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
 #'
 #' @param df_in data.frame
 #' @param clone_col Column containing clonotype IDs to use for identifying
-#' columns with V(D)J data
+#' columns with V(D)J data. If NULL all columns are used.
 #' @param cols_in meta.data columns containing VDJ data to use for filtering.
 #' If set to NULL (recommended) columns are automatically selected.
 #' @param sep Separator to search for in columns
@@ -1010,3 +1077,41 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
 
   suppressWarnings(ifelse(!is.na(fn(x)) | is.na(x), fn(x), x))
 }
+
+
+#' Helper to test all combinations of provided arguments
+#'
+#' @param arg_lst Named list of arguments to test
+#' @param .fn Function to test
+#' @param desc Description to pass to test_that
+#' @param chk Function or expression to using for testing
+#' @param dryrun Do not run tests, just return table of arguments that will be
+#' tested
+#' @return Output from test_that
+test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
+  arg_lst <- arg_lst %>%
+    expand.grid(stringsAsFactors = FALSE)
+
+  if (dryrun) {
+    return(arg_lst)
+  }
+
+  n <- 1
+
+  pwalk(arg_lst, ~ {
+    test_that(paste(desc, n), {
+
+      if (is.call(chk)) {
+        .res <- .fn(...)
+
+        return(eval(chk))
+      }
+
+      chk(.fn(...))
+    })
+
+    n <<- n + 1
+  })
+}
+
+

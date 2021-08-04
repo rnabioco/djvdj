@@ -17,7 +17,7 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = calc_diversity,
-  ttl     = "calc_diversity args",
+  desc    = "calc_diversity args",
   chk     = expect_silent
 )
 

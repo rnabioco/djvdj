@@ -16,12 +16,11 @@
 #' @param min_q Minimum quantile cutoff for color scale.
 #' @param max_q Maximum quantile cutoff for color scale.
 #' @param na_color Color to use for missing values
-#' @param ... Additional parameters to pass to facet_wrap
 #' @return ggplot object
 #' @export
 plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
                           pt_size = 0.25, pt_outline = NULL, outline_pos = "all", plot_colors = NULL,
-                          feat_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90", ...) {
+                          feat_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90") {
 
   # Check arguments
   if (x == y) {
@@ -39,11 +38,13 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
     vars <- c(x, y, feature)
 
     # Fetch variables and add to meta.data
-    meta_df <- Seurat::FetchData(
-      sobj_in,
-      vars = unique(vars),
-      slot = as.character(data_slot)
-    )
+    suppressWarnings({
+      meta_df <- Seurat::FetchData(
+        sobj_in,
+        vars = unique(vars),
+        slot = as.character(data_slot)
+      )
+    })
 
     meta_df <- Seurat::AddMetaData(sobj_in, meta_df)
     meta_df <- tibble::as_tibble(meta_df@meta.data, rownames = ".cell_id")
@@ -54,12 +55,14 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
   }
 
   # Adjust values based on min_q and max_q
-  meta_df <- .set_lims(
-    meta_df,
-    ft = feature,
-    mn = min_q,
-    mx = max_q
-  )
+  if ((!is.null(min_q) || !is.null(max_q)) && is.numeric(meta_df[[feature]])) {
+    meta_df <- .set_lims(
+      meta_df,
+      ft = feature,
+      mn = min_q,
+      mx = max_q
+    )
+  }
 
   # Set feature and facet order
   meta_df <- .set_lvls(meta_df, feature, feat_lvls)
@@ -1045,8 +1048,12 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @return data.frame with modified feature values
 .set_lims <- function(df_in, ft, mn = NULL, mx = NULL) {
 
+  if (!is.numeric(df_in[[ft]])) {
+    stop(ft, " is not numeric")
+  }
+
   if (is.null(mn) && is.null(mx)) {
-    return(df_in)
+    stop("mn or mx must be provided")
   }
 
   ft <- sym(ft)
@@ -1074,73 +1081,6 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
   }
 
   res <- dplyr::select(res, -.data$pct)
-
-  res
-}
-
-
-#' Add regression line to ggplot
-#'
-#' @param gg_in ggplot object
-#' @param lab_pos Position of correlation coefficient label. Set to NULL to
-#' omit label
-#' @param lab_size Size of label
-#' @param ... Additional arguments to pass to geom_smooth
-#' @return ggplot object with added regression line
-.add_lm <- function(gg_in, lab_pos = NULL, lab_size = 3.5, ...) {
-
-  # Add regression line
-  res <- gg_in +
-    ggplot2::geom_smooth(
-      method      = "lm",
-      formula     = y ~ x,
-      se          = F,
-      color       = "black",
-      size        = 0.5,
-      linetype    = 2,
-      show.legend = FALSE,
-      ...
-    )
-
-  if (is.null(lab_pos)) {
-    return(res)
-  }
-
-  # Calculate correlation
-  gg_df <- gg_in$data
-  color <- gg_in$mapping$colour
-  x     <- as_name(gg_in$mapping$x)
-  y     <- as_name(gg_in$mapping$y)
-
-  if (!is.null(color)) {
-    color <- as_name(color)
-    gg_df <- group_by(gg_df, !!sym(color))
-  }
-
-  gg_df <- dplyr::mutate(
-    gg_df,
-    r       = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$estimate,
-    r       = round(.data$r, digits = 2),
-    pval    = broom::tidy(stats::cor.test(!!sym(x), !!sym(y)))$p.value,
-    cor_lab = paste0("r = ", .data$r, ", p = ", format(.data$pval, digits = 2)),
-    min_x   = min(!!sym(x)),
-    max_x   = max(!!sym(x)),
-    min_y   = min(!!sym(y)),
-    max_y   = max(!!sym(y)),
-    lab_x   = (.data$max_x - .data$min_x) * lab_pos[1] + .data$min_x,
-    lab_y   = (.data$max_y - .data$min_y) * lab_pos[2] + .data$min_y
-  )
-
-  # Add correlation coefficient label
-  res <- res +
-    ggplot2::geom_text(
-      data          = gg_df,
-      mapping       = ggplot2::aes(.data$lab_x, .data$lab_y, label = .data$cor_lab),
-      color         = "black",
-      size          = lab_size,
-      check_overlap = T,
-      show.legend   = F
-    )
 
   res
 }

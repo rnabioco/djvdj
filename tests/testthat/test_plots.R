@@ -7,7 +7,9 @@ test_cols <- c(
   "#999999", "#875C04", "#000000"
 )
 
-test_lvls <- unique(tiny_vdj$seurat_clusters)
+test_lvls <- unique(tiny_vdj$seurat_clusters) %>%
+  as.character() %>%
+  rev()
 
 tiny_dat <- tiny_vdj@meta.data %>%
   as_tibble(rownames = ".cell_id")
@@ -19,19 +21,18 @@ arg_lst <- list(
   sobj_in     = list(tiny_vdj, tiny_dat),
   feature     = list("seurat_clusters", c(clust = "seurat_clusters")),
   data_slot   = c("data", "counts"),
+  pt_outline  = list(NULL, 1),
+  outline_pos = c("all", "bottom"),
   plot_colors = list(NULL, test_cols),
   feat_lvls   = list(NULL, test_lvls),
-  facet_col   = list(NULL, "orig.ident", c("orig.ident", "seurat_clusters")),
-  facet_lvls  = list(NULL, "AVID-seq"),
-  min_pct     = list(NULL, 0.05),
-  max_pct     = list(NULL, 0.95),
-  lm_line     = c(TRUE, FALSE)
+  min_q       = list(NULL, 0.05),
+  max_q       = list(NULL, 0.95)
 )
 
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_features,
-  ttl     = "plot_features args chr feat",
+  desc    = "plot_features args chr feat",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
@@ -42,7 +43,7 @@ arg_lst$feat_lvls <- NULL
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_features,
-  ttl     = "plot_features args num feat",
+  desc    = "plot_features args num feat",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
@@ -79,9 +80,22 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_features,
-  ttl     = "plot_features no feat found",
+  desc    = "plot_features no feat found",
   chk     = expect_error
 )
+
+# Check check plot_features bad outline_pos
+test_that("plot_features bad outline_pos", {
+  expect_error(
+    plot_features(
+      sobj_in     = tiny_vdj,
+      x           = "UMAP_1",
+      y           = "UMAP_2",
+      feature     = "seurat_clusters",
+      outline_pos = "BAD_POS"
+    )
+  )
+})
 
 # Check all plot_cell_count arguments
 arg_lst <- list(
@@ -91,7 +105,7 @@ arg_lst <- list(
   facet_col   = list(NULL, "orig.ident"),
   yaxis       = c("fraction", "counts"),
   plot_colors = list(NULL, test_cols),
-  plot_lvls   = list(NULL, "AVID-seq"),
+  plot_lvls   = list(NULL, c("avid_2", "avid_1")),
   n_label     = c(TRUE, FALSE),
   label_aes   = list(list(), list(size = 2))
 )
@@ -99,7 +113,7 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_cell_count,
-  ttl     = "plot_cell_count args",
+  desc    = "plot_cell_count args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
@@ -128,7 +142,7 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_reads,
-  ttl     = "plot_reads args",
+  desc    = "plot_reads args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
@@ -159,7 +173,7 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_abundance,
-  ttl     = "plot_abundance bar args",
+  desc    = "plot_abundance bar args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
@@ -170,7 +184,7 @@ arg_lst$label_col <- "cdr3"
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_abundance,
-  ttl     = "plot_abundance line args",
+  desc    = "plot_abundance line args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
@@ -186,7 +200,7 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_abundance,
-  ttl     = "plot_abundance axis labels",
+  desc    = "plot_abundance axis labels",
   chk     = expr(expect_true(.res$label$y == "percent"))
 )
 
@@ -195,7 +209,7 @@ arg_lst$yaxis <- "frequency"
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_abundance,
-  ttl     = "plot_abundance axis labels",
+  desc    = "plot_abundance axis labels",
   chk     = expr(expect_true(.res$label$y == "frequency"))
 )
 
@@ -252,7 +266,7 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_diversity,
-  ttl     = "plot_diversity args",
+  desc    = "plot_diversity args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
@@ -285,7 +299,7 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_similarity,
-  ttl     = "plot_similarity args",
+  desc    = "plot_similarity args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
@@ -335,7 +349,7 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_usage,
-  ttl     = "plot_usage args",
+  desc    = "plot_usage args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
@@ -345,7 +359,7 @@ arg_lst$cluster_col <- "seurat_clusters"
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_usage,
-  ttl     = "plot_usage args",
+  desc    = "plot_usage args",
   chk     = expr(expect_type(.res, "list"))
 )
 

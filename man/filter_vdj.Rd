@@ -23,14 +23,15 @@ is used to determine which cells have V(D)J data. If clonotype_col is set to
 NULL, filtering is performed regardless of whether V(D)J data is present for
 the cell}
 
-\item{filter_cells}{Should cells be removed from object? If set FALSE
-(default) V(D)J data will be removed from meta.data but no cells will be
-removed from the object}
+\item{filter_cells}{Should cells be removed from the object? If FALSE
+(default) V(D)J data will be removed from the meta.data but no cells will be
+removed from the object.}
 
 \item{sep}{Separator to use for expanding meta.data columns}
 
 \item{vdj_cols}{meta.data columns containing VDJ data to use for filtering.
-If set to NULL (recommended) columns are automatically selected.}
+If set to NULL (recommended) columns are automatically selected based on the
+given separator.}
 }
 \value{
 Seurat object
