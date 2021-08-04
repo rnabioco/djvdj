@@ -135,10 +135,10 @@
     </div>
 
     <pre class="usage"><span class='fu'>import_vdj</span><span class='op'>(</span>
-  <span class='va'>sobj_in</span>,
+  sobj_in <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>vdj_dir</span>,
   prefix <span class='op'>=</span> <span class='st'>""</span>,
-  cell_prefix <span class='op'>=</span> <span class='st'>""</span>,
+  cell_prefix <span class='op'>=</span> <span class='cn'>NULL</span>,
   filter_contigs <span class='op'>=</span> <span class='cn'>TRUE</span>,
   sep <span class='op'>=</span> <span class='st'>";"</span>
 <span class='op'>)</span></pre>
@@ -148,14 +148,17 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>sobj_in</th>
-      <td><p>Seurat object</p></td>
+      <td><p>Seurat object, if set to NULL a tibble containing the V(D)J
+data will be returned</p></td>
     </tr>
     <tr>
       <th>vdj_dir</th>
-      <td><p>cellranger vdj output directories. If a vector of multiple
-paths is provided, an equal number of cell prefixes must also be provided.
-If a named vector is given, the names will be used to prefix each cell
-barcode.</p></td>
+      <td><p>Directory containing the output from cellranger vdj. A vector
+or named vector can be given to load data from several runs. If a named
+vector is given, the cell barcodes will be prefixed with the provided names.
+This mimics the behavior of the Read10X function found in the Seurat
+package. Cell barcode prefixes can also be provided using the cell_prefix
+argument.</p></td>
     </tr>
     <tr>
       <th>prefix</th>
@@ -163,7 +166,10 @@ barcode.</p></td>
     </tr>
     <tr>
       <th>cell_prefix</th>
-      <td><p>Prefix to add to cell barcodes</p></td>
+      <td><p>Prefix to add to cell barcodes, this is helpful when
+loading data from multiple runs into a single object. If set to NULL, cell
+barcode prefixes will be automatically generated in a similar way as the
+Read10X function found in the Seurat package.</p></td>
     </tr>
     <tr>
       <th>filter_contigs</th>

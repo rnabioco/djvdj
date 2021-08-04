@@ -3,7 +3,7 @@ pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
   avid: avid.html
-last_built: 2021-07-20T14:50Z
+last_built: 2021-08-04T19:58Z
 urls:
   reference: https://rnabioco.github.io/djvdj/reference
   article: https://rnabioco.github.io/djvdj/articles

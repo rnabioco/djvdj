@@ -25,9 +25,6 @@
     <loc>https://rnabioco.github.io/djvdj/reference/dot-add_aes.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/dot-add_lm.html</loc>
-  </url>
-  <url>
     <loc>https://rnabioco.github.io/djvdj/reference/dot-calc_abund.html</loc>
   </url>
   <url>
@@ -89,6 +86,9 @@
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/summarize_chains.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/test_all_args.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/tidyeval.html</loc>
