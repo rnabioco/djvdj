@@ -162,29 +162,30 @@ arg_lst <- list(
   clonotype_col = "cdr3_nt",
   cluster_col   = list(NULL, "seurat_clusters"),
   type          = "line",
-  label_col     = list(NULL, "cdr3"),
+  label_col     = c("cdr3", "orig.ident"),
   color_col     = list(NULL, "seurat_clusters"),
   yaxis         = c("percent", "frequency"),
   plot_colors   = list(NULL, test_cols),
   plot_lvls     = list(NULL, test_lvls),
-  label_aes     = list(list(), list(size = 2))
+  label_aes     = list(list(), list(size = 2)),
+  n_clonotypes  = c(0, 5)
 )
-
-test_all_args(
-  arg_lst = arg_lst,
-  .fn     = plot_abundance,
-  desc    = "plot_abundance bar args",
-  chk     = expr(expect_s3_class(.res, "ggplot"))
-)
-
-# Check all plot_abundance arguments for bar plot
-arg_lst$type <- "bar"
-arg_lst$label_col <- "cdr3"
 
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_abundance,
   desc    = "plot_abundance line args",
+  chk     = expr(expect_s3_class(.res, "ggplot"))
+)
+
+# Check all plot_abundance arguments for bar plot
+arg_lst$type <- "bar"
+arg_lst$n_clonotypes <- 5
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_abundance,
+  desc    = "plot_abundance bar args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
@@ -232,6 +233,18 @@ test_that("plot_abundance bad type", {
       sobj_in       = tiny_vdj,
       type          = "BAD",
       clonotype_col = "cdr3_nt"
+    )
+  )
+})
+
+# Check plot_abundance bad n_clonotypes
+test_that("plot_abundance bad n_clonotypes", {
+  expect_error(
+    plot_abundance(
+      sobj_in       = tiny_vdj,
+      type          = "bar",
+      clonotype_col = "cdr3_nt",
+      n_clonotypes  = 0
     )
   )
 })

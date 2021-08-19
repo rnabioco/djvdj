@@ -463,8 +463,11 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
 #' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
-#' @param label_col meta.data column containing labels to use for plot
-#' @param n_clonotypes Number of clonotypes to label
+#' @param label_col meta.data column to use for labeling clonotypes. This is
+#' useful if clonotype_col contains names that are too long to include on the
+#' plot.
+#' @param n_clonotypes Number of clonotypes to plot. If type is set to 'line',
+#' this will specify the number of clonotypes to label.
 #' @param color_col meta.data column to use for coloring bars
 #' @param label_aes Named list providing additional label aesthetics (color,
 #' size, etc.)
@@ -477,7 +480,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
 #' @export
 plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NULL, type = "bar",
                            yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, label_col = clonotype_col,
-                           n_clonotypes = 10, color_col = NULL, label_aes = list(), facet_rows = 1,
+                           n_clonotypes = 10, color_col = cluster_col, label_aes = list(), facet_rows = 1,
                            facet_scales = "free_x", ...) {
 
   if (!yaxis %in% c("frequency", "percent")) {
@@ -488,12 +491,8 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
     stop("type must be either 'bar' or 'line'.")
   }
 
-  if (type == "bar" && is.null(label_col)) {
-    stop("Must include label_col when type = 'bar'.")
-  }
-
-  if (is.null(color_col)) {
-    color_col <- cluster_col
+  if (type == "bar" && n_clonotypes <= 0) {
+    stop("If type is set to 'bar', n_clonotypes must be >0.")
   }
 
   # Calculate clonotype abundance
@@ -506,10 +505,10 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
     return_seurat = TRUE
   )
 
-  data_col <- ".clone_pct"
+  dat_col <- ".clone_pct"
 
   if (yaxis == "frequency") {
-    data_col <- ".clone_freq"
+    dat_col <- ".clone_freq"
   }
 
   meta_df <- sobj_in@meta.data
@@ -518,29 +517,44 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
 
   abund_cols <- c(
     cluster_col, clonotype_col, label_col,
-    data_col, color_col
+    dat_col, color_col
   )
 
-  meta_df <- dplyr::select(
+  meta_df <- dplyr::distinct(meta_df, !!!syms(abund_cols))
+
+  # Add and format label column for plotting
+  len <- 25
+
+  meta_df <- dplyr::rowwise(meta_df)
+
+  meta_df <- dplyr::mutate(
     meta_df,
-    all_of(abund_cols)
+    x    = !!sym(clonotype_col),
+    .len = length(unlist(strsplit(!!sym(label_col), ""))),
+    .lab = strtrim(!!sym(label_col), len),
+    .lab = paste0(.lab, ifelse(.len > len, "...", ""))
   )
 
-  meta_df <- dplyr::distinct(meta_df)
+  meta_df <- dplyr::ungroup(meta_df)
 
   # Rank by abundance
   if (!is.null(cluster_col)) {
     meta_df <- .set_lvls(meta_df, cluster_col, plot_lvls)
     meta_df <- dplyr::group_by(meta_df, !!sym(cluster_col))
+
+    meta_df <- dplyr::mutate(
+      meta_df,
+      x = paste0(!!sym(cluster_col), "_", !!sym(clonotype_col))
+    )
   }
 
   meta_df <- dplyr::mutate(
     meta_df,
-    rank = dplyr::row_number(dplyr::desc(!!sym(data_col)))
+    rank = dplyr::row_number(dplyr::desc(!!sym(dat_col)))
   )
 
   # Identify top clonotypes
-  top_genes <- dplyr::slice_min(
+  top_clones <- dplyr::slice_min(
     meta_df,
     order_by  = rank,
     n         = n_clonotypes,
@@ -548,30 +562,35 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
   )
 
   meta_df   <- dplyr::ungroup(meta_df)
-  top_genes <- dplyr::ungroup(top_genes)
+  top_clones <- dplyr::ungroup(top_clones)
 
   # Create bar graph
   if (type == "bar") {
-    top_genes <- dplyr::arrange(top_genes, desc(!!sym(data_col)))
+    plt_labs <- setNames(top_clones$.lab, top_clones$x)
 
-    lvls <- rev(unique(dplyr::pull(top_genes, label_col)))
+    top_clones <- dplyr::arrange(top_clones, desc(!!sym(dat_col)))
 
-    top_genes <- .set_lvls(
-      df_in = top_genes,
-      clmn  = label_col,
+    lvls <- rev(unique(pull(top_clones, x)))
+
+    top_clones <- .set_lvls(
+      df_in = top_clones,
+      clmn  = "x",
       lvls  = lvls
     )
 
     res <- .create_bars(
-      df_in = top_genes,
-      x     = label_col,
-      y     = data_col,
+      df_in = top_clones,
+      x     = "x",
+      y     = dat_col,
       y_ttl = yaxis,
       .fill = color_col,
       clrs  = plot_colors,
       ang   = 45,
       hjst  = 1
     )
+
+    res <- res +
+      ggplot2::scale_x_discrete(labels = plt_labs)
 
     if (!is.null(cluster_col)){
       res <- res +
@@ -586,7 +605,7 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
   }
 
   # Plot abundance vs rank
-  res <- ggplot2::ggplot(meta_df, ggplot2::aes(rank, !!sym(data_col))) +
+  res <- ggplot2::ggplot(meta_df, ggplot2::aes(rank, !!sym(dat_col))) +
     ggplot2::labs(y = yaxis) +
     djvdj_theme()
 
@@ -605,11 +624,11 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
   }
 
   # Add labels
-  if (!is.null(label_col)) {
+  if (n_clonotypes > 0) {
     res <- res +
       ggrepel::geom_text_repel(
-        ggplot2::aes(label = !!sym(label_col)),
-        data          = top_genes,
+        ggplot2::aes(label = .lab),
+        data          = top_clones,
         nudge_x       = 500,
         direction     = "y",
         segment.size  = 0.2,
