@@ -33,7 +33,7 @@ Imports:
     purrr,
     readr,
     rlang (>= 0.1.2),
-    Seurat,
+    Seurat (>= 4),
     tibble,
     tidyr,
     broom,
