@@ -158,7 +158,7 @@ test_that("plot_reads bad type", {
 
 # Check all plot_abundance arguments for line plot
 arg_lst <- list(
-  sobj_in       = list(tiny_vdj),
+  input         = list(tiny_vdj),
   clonotype_col = "cdr3_nt",
   cluster_col   = list(NULL, "seurat_clusters"),
   type          = "line",
@@ -191,7 +191,7 @@ test_all_args(
 
 # Check plot_abundance axis labels
 arg_lst <- list(
-  sobj_in       = list(tiny_vdj),
+  input         = list(tiny_vdj),
   clonotype_col = "cdr3_nt",
   label_col     = "cdr3",
   yaxis         = "percent",
@@ -218,7 +218,7 @@ test_all_args(
 test_that("plot_abundance bad yaxis", {
   expect_error(
     plot_abundance(
-      sobj_in       = tiny_vdj,
+      input         = tiny_vdj,
       type          = "line",
       clonotype_col = "cdr3_nt",
       yaxis         = "BAD"
@@ -230,7 +230,7 @@ test_that("plot_abundance bad yaxis", {
 test_that("plot_abundance bad type", {
   expect_error(
     plot_abundance(
-      sobj_in       = tiny_vdj,
+      input         = tiny_vdj,
       type          = "BAD",
       clonotype_col = "cdr3_nt"
     )
@@ -241,7 +241,7 @@ test_that("plot_abundance bad type", {
 test_that("plot_abundance bad n_clonotypes", {
   expect_error(
     plot_abundance(
-      sobj_in       = tiny_vdj,
+      input         = tiny_vdj,
       type          = "bar",
       clonotype_col = "cdr3_nt",
       n_clonotypes  = 0
@@ -253,7 +253,7 @@ test_that("plot_abundance bad n_clonotypes", {
 test_that("plot_abundance bad label_col", {
   expect_error(
     plot_abundance(
-      sobj_in       = tiny_vdj,
+      input         = tiny_vdj,
       type          = "bar",
       clonotype_col = "cdr3_nt",
       label_col     = NULL
@@ -268,7 +268,7 @@ mets <- abdiv::alpha_diversities %>%
 names(mets) <- abdiv::alpha_diversities
 
 arg_lst <- list(
-  sobj_in       = list(tiny_vdj),
+  input         = list(tiny_vdj),
   clonotype_col = "cdr3_nt",
   cluster_col   = list(NULL, "seurat_clusters"),
   method        = append(mets, list(mets)),
@@ -290,7 +290,7 @@ mets <- abdiv::alpha_diversities %>%
 test_that("plot_diversity bad names", {
   expect_error(
     plot_diversity(
-      sobj_in       = tiny_vdj,
+      input         = tiny_vdj,
       clonotype_col = "cdr3_nt",
       method        = mets
     )
@@ -302,7 +302,7 @@ mets <- abdiv::beta_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 arg_lst <- list(
-  sobj_in       = list(tiny_vdj),
+  input         = list(tiny_vdj),
   clonotype_col = "cdr3_nt",
   cluster_col   = "seurat_clusters",
   method        = mets,
@@ -320,7 +320,7 @@ test_all_args(
 test_that("plot_similarity bad clonotype col", {
   expect_error(
     plot_similarity(
-      sobj_in       = tiny_vdj,
+      input         = tiny_vdj,
       clonotype_col = NULL,
       cluster_col   = "orig.ident"
     )
@@ -331,7 +331,7 @@ test_that("plot_similarity bad clonotype col", {
 test_that("plot_similarity bad cluster col", {
   expect_error(
     plot_similarity(
-      sobj_in       = tiny_vdj,
+      input         = tiny_vdj,
       cluster_col   = NULL,
       clonotype_col = "cdr3_nt"
     )
@@ -346,9 +346,9 @@ test_genes <- c(
 )
 
 arg_lst <- list(
-  sobj_in     = list(tiny_vdj),
+  input       = list(tiny_vdj),
   gene_cols   = list("v_gene", "j_gene", c("v_gene", "j_gene")),
-  cluster_col = NULL,
+  cluster_col = list(NULL),
   chain       = list(NULL, "IGH", "IGL", "IGK"),
   chain_col   = "chains",
   type        = c("heatmap", "bar"),
@@ -380,7 +380,7 @@ test_all_args(
 test_that("plot_usage bad type", {
   expect_error(
     plot_usage(
-      sobj_in   = tiny_vdj,
+      input     = tiny_vdj,
       gene_cols = "v_gene",
       type      = "BAD"
     )
@@ -391,7 +391,7 @@ test_that("plot_usage bad type", {
 test_that("plot_usage bad type", {
   expect_error(
     plot_usage(
-      sobj_in   = tiny_vdj,
+      input     = tiny_vdj,
       gene_cols = "v_gene",
       yaxis     = "BAD"
     )
@@ -402,7 +402,7 @@ test_that("plot_usage bad type", {
 test_that("plot_usage bad gene_cols", {
   expect_error(
     plot_usage(
-      sobj_in   = tiny_vdj,
+      input     = tiny_vdj,
       gene_cols = c("v_gene", "d_gene", "j_gene")
     )
   )
@@ -431,3 +431,4 @@ test_that(".set_lvls bad lvls", {
     )
   )
 })
+

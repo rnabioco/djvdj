@@ -22,13 +22,13 @@ vdj_cols <- c(
 # Check arguments for different path inputs
 arg_lst <- list(
   single = list(
-    sobj_in     = list(tiny_so),
+    input       = list(tiny_so),
     vdj_dir     = list(ctigs[1], ctigs_2[1], ctigs_3[1], paste0(ctigs[1], "/outs")),
     cell_prefix = list(NULL, ""),
     prefix      = c("", "PREFIX")
   ),
   multi = list(
-    sobj_in     = list(tiny_so),
+    input       = list(tiny_so),
     vdj_dir     = list(ctigs, ctigs_2, ctigs_3, paste0(ctigs, "/outs")),
     cell_prefix = list(NULL, c("", "2_"), c("", "2")),
     prefix      = c("", "PREFIX")
@@ -105,11 +105,11 @@ test_that("import_vdj unfiltered contigs", {
   expect_identical(colnames(res), colnames(tiny_so))
 })
 
-# Check tibble output
-test_that("import_vdj tibble output", {
+# Check data.frame output
+test_that("import_vdj df out", {
   res <- import_vdj(vdj_dir = ctigs)
 
-  expect_s3_class(res, "tbl")
+  expect_s3_class(res, "data.frame")
 })
 
 # Check bad barcode prefixes

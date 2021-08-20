@@ -1,7 +1,7 @@
 
 # Check all calc_usage arguments
 arg_lst <- list(
-  sobj_in     = list(tiny_vdj),
+  input       = list(tiny_vdj),
   gene_cols   = list("v_gene", "d_gene", "j_gene", "c_gene", c("v_gene", "j_gene")),
   cluster_col = list(NULL, "seurat_clusters"),
   chain       = list(NULL, "IGH", "IGL", "IGK"),

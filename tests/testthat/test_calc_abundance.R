@@ -1,7 +1,7 @@
 
 # Check all calc_abundance arguments
 arg_lst <- list(
-  sobj_in       = list(tiny_vdj),
+  input         = list(tiny_vdj),
   clonotype_col = "cdr3",
   cluster_col   = list(NULL, "seurat_clusters"),
   prefix        = c("", "X"),
@@ -26,15 +26,23 @@ test_that("Check Seurat output", {
   expect_identical(colnames(res), colnames(tiny_vdj))
 })
 
-# Check tibble output
-test_that("calc_abundance tbl out", {
+# Check data.frame output
+test_that("calc_abundance df out", {
   res <- tiny_vdj %>%
     calc_abundance(
       clonotype_col = "cdr3",
       return_seurat = FALSE
     )
 
-  expect_s3_class(res, "tbl")
+  expect_s3_class(res, "data.frame")
+})
+
+# Check data.frame input
+test_that("calc_abundance df in", {
+  res <- tiny_vdj@meta.data %>%
+    calc_abundance(clonotype_col = "cdr3")
+
+  expect_s3_class(res, "data.frame")
 })
 
 # Check empty clonotype_col

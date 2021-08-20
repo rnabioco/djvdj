@@ -5,7 +5,7 @@
 \title{Plot repertoire overlap}
 \usage{
 plot_similarity(
-  sobj_in,
+  input,
   clonotype_col = "cdr3_nt",
   cluster_col,
   method = abdiv::jaccard,
@@ -14,8 +14,8 @@ plot_similarity(
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object containing V(D)J data or matrix containing
-similarity values to plot}
+\item{input}{Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating overlap}

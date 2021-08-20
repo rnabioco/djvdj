@@ -5,7 +5,7 @@
 \title{Plot clonotype abundance}
 \usage{
 plot_abundance(
-  sobj_in,
+  input,
   clonotype_col = "cdr3_nt",
   cluster_col = NULL,
   type = "bar",
@@ -22,7 +22,8 @@ plot_abundance(
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object containing V(D)J data}
+\item{input}{Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating clonotype abundance}
@@ -56,7 +57,7 @@ size, etc.)}
 \item{facet_scales}{If type = 'bar', this argument passes a scales
 specification to facet_wrap, can be "fixed", "free", "free_x", or "free_y"}
 
-\item{...}{Additional arguments to pass to geom_line}
+\item{...}{Additional arguments to pass to ggplot}
 }
 \value{
 ggplot object

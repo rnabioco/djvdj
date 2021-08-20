@@ -304,7 +304,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
   }
 
   # calculate average reads/umis each chain for each cell
-  gg_df <- summarize_chains(
+  plt_dat <- summarize_chains(
     sobj_in,
     data_cols    = data_cols,
     fn           = mean,
@@ -314,20 +314,20 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
   )
 
   # Format data for plotting
-  gg_df <- tidyr::pivot_longer(
-    gg_df,
+  plt_dat <- tidyr::pivot_longer(
+    plt_dat,
     cols      = all_of(data_cols),
     names_to  = "key",
     values_to = "counts"
   )
 
   if (!is.null(cluster_col)) {
-    gg_df <- .set_lvls(gg_df, cluster_col, plot_lvls)
+    plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
   }
 
   # Calculate median counts for each chain
   box_stats <- dplyr::group_by(
-    gg_df,
+    plt_dat,
     !!!syms(c(chain_col, cluster_col, "key"))
   )
 
@@ -339,7 +339,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
 
   # Set chain_col
   if (!is.null(chain_col)) {
-    lvls <- dplyr::group_by(gg_df, !!sym(chain_col))
+    lvls <- dplyr::group_by(plt_dat, !!sym(chain_col))
 
     lvls <- dplyr::summarise(
       lvls,
@@ -350,7 +350,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
     lvls <- dplyr::arrange(lvls, desc(n))
     lvls <- pull(lvls, chain_col)
 
-    gg_df <- .set_lvls(gg_df, chain_col, lvls)
+    plt_dat <- .set_lvls(plt_dat, chain_col, lvls)
 
     chain_col <- sym(chain_col)
 
@@ -364,7 +364,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
 
   # Create violin plots
   if (type == "violin") {
-    res <- ggplot2::ggplot(gg_df, ggplot2::aes(!!chain_col, .data$counts)) +
+    res <- ggplot2::ggplot(plt_dat, ggplot2::aes(!!chain_col, .data$counts)) +
       ggplot2::geom_violin(
         ggplot2::aes(
           color = !!chain_col,
@@ -391,7 +391,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
   # Create histogram
   } else {
     res <- ggplot2::ggplot(
-      gg_df,
+      plt_dat,
       ggplot2::aes(
         .data$counts,
         color = !!chain_col,
@@ -454,7 +454,8 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
 
 #' Plot clonotype abundance
 #'
-#' @param sobj_in Seurat object containing V(D)J data
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating clonotype abundance
 #' @param cluster_col meta.data column containing cluster IDs to use for
@@ -475,10 +476,10 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
 #' 'bar'
 #' @param facet_scales If type = 'bar', this argument passes a scales
 #' specification to facet_wrap, can be "fixed", "free", "free_x", or "free_y"
-#' @param ... Additional arguments to pass to geom_line
+#' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NULL, type = "bar",
+plot_abundance <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL, type = "bar",
                            yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, label_col = clonotype_col,
                            n_clonotypes = 10, color_col = cluster_col, label_aes = list(), facet_rows = 1,
                            facet_scales = "free_x", ...) {
@@ -497,12 +498,12 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
 
   # Calculate clonotype abundance
   # Return seurat since label_col is needed from meta.data
-  sobj_in <- djvdj::calc_abundance(
-    sobj_in,
+  plt_dat <- djvdj::calc_abundance(
+    input         = input,
     clonotype_col = clonotype_col,
     cluster_col   = cluster_col,
     prefix        = ".",
-    return_seurat = TRUE
+    return_seurat = FALSE
   )
 
   dat_col <- ".clone_pct"
@@ -511,57 +512,57 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
     dat_col <- ".clone_freq"
   }
 
-  meta_df <- sobj_in@meta.data
-  meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
-  meta_df <- dplyr::filter(meta_df, !is.na(!!sym(clonotype_col)))
+  plt_dat <- tibble::as_tibble(plt_dat, rownames = ".cell_id")
+  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
 
   abund_cols <- c(
-    cluster_col, clonotype_col, label_col,
-    dat_col, color_col
+    cluster_col, clonotype_col,
+    label_col,   dat_col,
+    color_col
   )
 
-  meta_df <- dplyr::distinct(meta_df, !!!syms(abund_cols))
+  plt_dat <- dplyr::distinct(plt_dat, !!!syms(abund_cols))
 
   # Add and format label column for plotting
   len <- 25
 
-  meta_df <- dplyr::rowwise(meta_df)
+  plt_dat <- dplyr::rowwise(plt_dat)
 
-  meta_df <- dplyr::mutate(
-    meta_df,
+  plt_dat <- dplyr::mutate(
+    plt_dat,
     .x   = !!sym(clonotype_col),
     .len = length(unlist(strsplit(!!sym(label_col), ""))),
     .lab = strtrim(!!sym(label_col), len),
     .lab = paste0(.data$.lab, ifelse(.data$.len > len, "...", ""))
   )
 
-  meta_df <- dplyr::ungroup(meta_df)
+  plt_dat <- dplyr::ungroup(plt_dat)
 
   # Rank by abundance
   if (!is.null(cluster_col)) {
-    meta_df <- .set_lvls(meta_df, cluster_col, plot_lvls)
-    meta_df <- dplyr::group_by(meta_df, !!sym(cluster_col))
+    plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+    plt_dat <- dplyr::group_by(plt_dat, !!sym(cluster_col))
 
-    meta_df <- dplyr::mutate(
-      meta_df,
+    plt_dat <- dplyr::mutate(
+      plt_dat,
       .x = paste0(!!sym(cluster_col), "_", .data$.x)
     )
   }
 
-  meta_df <- dplyr::mutate(
-    meta_df,
+  plt_dat <- dplyr::mutate(
+    plt_dat,
     rank = dplyr::row_number(dplyr::desc(!!sym(dat_col)))
   )
 
   # Identify top clonotypes
   top_clones <- dplyr::slice_min(
-    meta_df,
+    plt_dat,
     order_by  = rank,
     n         = n_clonotypes,
     with_ties = FALSE
   )
 
-  meta_df   <- dplyr::ungroup(meta_df)
+  plt_dat   <- dplyr::ungroup(plt_dat)
   top_clones <- dplyr::ungroup(top_clones)
 
   # Create bar graph
@@ -586,7 +587,8 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
       .fill = color_col,
       clrs  = plot_colors,
       ang   = 45,
-      hjst  = 1
+      hjst  = 1,
+      ...
     )
 
     res <- res +
@@ -605,7 +607,7 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
   }
 
   # Plot abundance vs rank
-  res <- ggplot2::ggplot(meta_df, ggplot2::aes(rank, !!sym(dat_col))) +
+  res <- ggplot2::ggplot(plt_dat, ggplot2::aes(rank, !!sym(dat_col))) +
     ggplot2::labs(y = yaxis) +
     djvdj_theme()
 
@@ -645,8 +647,8 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
 
 #' Plot repertoire diversity
 #'
-#' @param sobj_in Seurat object containing V(D)J data or data.frame containing
-#' diversity values to plot. If a data.frame is used
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating clonotype abundance
 #' @param cluster_col meta.data column containing cluster IDs to use for
@@ -660,7 +662,7 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_diversity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NULL,
+plot_diversity <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
                            method = abdiv::simpson, plot_colors = NULL, plot_lvls = NULL,
                            facet_rows = 1, ...) {
 
@@ -677,45 +679,46 @@ plot_diversity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
   }
 
   # Calculate diversity
-  if ("Seurat" %in% class(sobj_in)) {
-    sobj_in <- calc_diversity(
-      sobj_in       = sobj_in,
-      clonotype_col = clonotype_col,
-      cluster_col   = cluster_col,
-      method        = method,
-      prefix        = "",
-      return_seurat = FALSE
-    )
-  }
+  plt_dat <- calc_diversity(
+    input         = input,
+    clonotype_col = clonotype_col,
+    cluster_col   = cluster_col,
+    method        = method,
+    prefix        = "",
+    return_seurat = FALSE
+  )
+
+  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
+  plt_dat <- dplyr::distinct(plt_dat, !!!syms(c(cluster_col, names(method))))
 
   # Format data for plotting
   include_strips <- TRUE
 
   if (is.null(cluster_col)) {
-    meta_df <- tibble::tibble(
-      div  = unname(sobj_in),
-      name = names(sobj_in),
+    plt_dat <- tibble::tibble(
+      div  = unlist(plt_dat, use.names = FALSE),
+      name = names(plt_dat),
     )
 
     include_strips <- FALSE
     cluster_col <- "name"
 
   } else {
-    meta_df <- tidyr::pivot_longer(
-      sobj_in,
-      cols = all_of(names(method)),
+    plt_dat <- tidyr::pivot_longer(
+      plt_dat,
+      cols      = all_of(names(method)),
       values_to = "div"
     )
 
-    meta_df <- .set_lvls(meta_df, cluster_col, plot_lvls)
+    plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
   }
 
   # Set plot levels
-  meta_df <- .set_lvls(meta_df, "name", meta_df$name)
+  plt_dat <- .set_lvls(plt_dat, "name", plt_dat$name)
 
   # Create bar graphs
   res <- ggplot2::ggplot(
-    meta_df,
+    plt_dat,
     ggplot2::aes(!!sym(cluster_col), .data$div, fill = !!sym(cluster_col))
   ) +
     ggplot2::geom_col(...)
@@ -756,8 +759,8 @@ plot_diversity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
 
 #' Plot repertoire overlap
 #'
-#' @param sobj_in Seurat object containing V(D)J data or matrix containing
-#' similarity values to plot
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating overlap
 #' @param cluster_col meta.data column containing cluster IDs to use for
@@ -767,50 +770,44 @@ plot_diversity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_similarity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col, method = abdiv::jaccard,
+plot_similarity <- function(input, clonotype_col = "cdr3_nt", cluster_col, method = abdiv::jaccard,
                             plot_colors = NULL, ...) {
 
   # Calculate similarity
-  if ("Seurat" %in% class(sobj_in)) {
-    if (is.null(clonotype_col) || is.null(cluster_col)) {
-      stop("If a Seurat object is provided, clonotype_col and cluster_col must be specified.")
-    }
-
-    sobj_in <- calc_similarity(
-      sobj_in       = sobj_in,
-      clonotype_col = clonotype_col,
-      cluster_col   = cluster_col,
-      method        = method,
-      prefix        = "",
-      return_seurat = FALSE
-    )
-  }
+  plt_dat <- calc_similarity(
+    input         = input,
+    clonotype_col = clonotype_col,
+    cluster_col   = cluster_col,
+    method        = method,
+    prefix        = "",
+    return_matrix = TRUE
+  )
 
   sim_col <- as.character(substitute(method))
   sim_col <- dplyr::last(sim_col)
 
-  var_lvls <- unique(c(rownames(sobj_in), colnames(sobj_in)))
+  var_lvls <- unique(c(rownames(plt_dat), colnames(plt_dat)))
   var_lvls <- sort(var_lvls)
 
-  gg_df <- tibble::as_tibble(sobj_in, rownames = "Var1")
+  plt_dat <- tibble::as_tibble(plt_dat, rownames = "Var1")
 
-  gg_df <- tidyr::pivot_longer(
-    gg_df,
+  plt_dat <- tidyr::pivot_longer(
+    plt_dat,
     cols      = -.data$Var1,
     names_to  = "Var2",
     values_to = sim_col
   )
 
   # Set Var levels
-  gg_df <- dplyr::mutate(
-    gg_df,
+  plt_dat <- dplyr::mutate(
+    plt_dat,
     Var1 = factor(.data$Var1, levels = rev(var_lvls)),
     Var2 = factor(.data$Var2, levels = var_lvls)
   )
 
   # Create heatmap
   res <- .create_heatmap(
-    gg_df,
+    plt_dat,
     x     = "Var1",
     y     = "Var2",
     .fill = sim_col,
@@ -824,7 +821,8 @@ plot_similarity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col, met
 
 #' Plot V(D)J gene usage
 #'
-#' @param sobj_in Seurat object containing V(D)J data
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param gene_cols meta.data column containing genes used for each clonotype,
 #' provide a vector with two column names to plot paired usage of genes
 #' @param cluster_col meta.data column containing cell clusters to use for
@@ -843,7 +841,7 @@ plot_similarity <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col, met
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, type = "bar",
+plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type = "bar",
                        plot_colors = NULL, plot_genes = NULL, n_genes = NULL, plot_lvls = NULL,
                        yaxis = "percent", chain_col = "chains", sep = ";", ...) {
 
@@ -868,8 +866,8 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
   }
 
   # Calculate gene usage
-  gg_df <- calc_usage(
-    sobj_in,
+  plt_dat <- calc_usage(
+    input       = input,
     gene_cols   = gene_cols,
     cluster_col = cluster_col,
     chain       = chain,
@@ -877,13 +875,13 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
     sep         = sep
   )
 
-  gg_df <- dplyr::filter(gg_df, dplyr::across(
+  plt_dat <- dplyr::filter(plt_dat, dplyr::across(
     dplyr::all_of(gene_cols),
     ~ .x != "None"
   ))
 
   # Order genes by average usage
-  top_genes <- gg_df
+  top_genes <- plt_dat
 
   if (!is.null(cluster_col)) {
     top_genes <- dplyr::group_by(top_genes, !!sym(cluster_col))
@@ -910,7 +908,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
   if (!is.null(n_genes)) {
     gene_lst <- unlist(top_genes[, gene_cols], use.names = FALSE)
 
-    gg_df <- dplyr::filter(gg_df, dplyr::across(
+    plt_dat <- dplyr::filter(plt_dat, dplyr::across(
       dplyr::all_of(gene_cols),
       ~ .x %in% gene_lst
     ))
@@ -918,16 +916,16 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
 
   if (length(gene_cols) == 1) {
     lvls  <- pull(top_genes, gene_cols)
-    gg_df <- .set_lvls(gg_df, gene_cols, lvls)
+    plt_dat <- .set_lvls(plt_dat, gene_cols, lvls)
   }
 
   # Order clusters
-  gg_df <- .set_lvls(gg_df, cluster_col, plot_lvls)
+  plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
 
   # Filter genes to plot
   if (!is.null(plot_genes)) {
-    gg_df <- dplyr::filter(
-      gg_df,
+    plt_dat <- dplyr::filter(
+      plt_dat,
       dplyr::across(dplyr::all_of(gene_cols), ~ .x %in% plot_genes)
     )
   }
@@ -935,10 +933,10 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
   # Create heatmap or bar graph for single gene
   if (length(gene_cols) == 1) {
     if (type == "bar") {
-      gg_df <- dplyr::filter(gg_df, !!sym(usage_col) > 0)
+      plt_dat <- dplyr::filter(plt_dat, !!sym(usage_col) > 0)
 
       res <- .create_bars(
-        gg_df,
+        plt_dat,
         x     = gene_cols,
         y     = usage_col,
         .fill = cluster_col,
@@ -951,7 +949,7 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
     }
 
     res <- .create_heatmap(
-      gg_df,
+      plt_dat,
       x     = cluster_col,
       y     = gene_cols,
       .fill = usage_col,
@@ -967,13 +965,13 @@ plot_usage <- function(sobj_in, gene_cols, cluster_col = NULL, chain = NULL, typ
   grps <- NULL
 
   if (!is.null(cluster_col)) {
-    gg_df <- dplyr::group_by(gg_df, !!sym(cluster_col))
+    plt_dat <- dplyr::group_by(plt_dat, !!sym(cluster_col))
 
-    grps <- pull(gg_df, cluster_col)
+    grps <- pull(plt_dat, cluster_col)
     grps <- sort(unique(grps))
   }
 
-  res <- dplyr::group_split(gg_df)
+  res <- dplyr::group_split(plt_dat)
   names(res) <- grps
 
   # Format data for plotting

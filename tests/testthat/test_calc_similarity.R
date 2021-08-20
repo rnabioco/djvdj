@@ -10,11 +10,11 @@ mets <- abdiv::beta_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 arg_lst <- list(
-  sobj_in       = list(tiny_vdj),
+  input         = list(tiny_vdj, tiny_vdj@meta.data),
   clonotype_col = "cdr3",
   cluster_col   = "seurat_clusters",
   method        = mets,
-  return_seurat = c(TRUE, FALSE)
+  return_matrix = c(TRUE, FALSE)
 )
 
 test_all_args(
@@ -54,7 +54,7 @@ test_that("sim calc", {
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
       method        = abdiv::binomial_deviance,
-      return_seurat = TRUE,
+      return_matrix = FALSE,
       prefix        = "x"
     )
 
@@ -75,7 +75,7 @@ test_that("calc_similarity Seurat out", {
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
       method        = abdiv::binomial_deviance,
-      return_seurat = TRUE,
+      return_matrix = FALSE,
       prefix        = "x"
     )
 
@@ -87,6 +87,62 @@ test_that("calc_similarity Seurat out", {
   expect_identical(res, tiny_vdj)
 })
 
+# Check data.frame output
+test_that("calc_similarity df out", {
+  res <- tiny_vdj@meta.data %>%
+    calc_similarity(
+      clonotype_col = "cdr3",
+      cluster_col   = "seurat_clusters",
+      method        = abdiv::binomial_deviance,
+      return_matrix = FALSE,
+      prefix        = "x"
+    )
+
+  expect_s3_class(res, "data.frame")
+
+  res_2 <- res %>%
+    select(-all_of(paste0("x", test_clsts)))
+
+  expect_identical(res_2, tiny_vdj@meta.data)
+
+  res <- res %>%
+    as_tibble() %>%
+    select(seurat_clusters, all_of(nm)) %>%
+    filter(!is.na(!!sym(nm))) %>%
+    distinct() %>%
+    arrange(seurat_clusters)
+
+  expect_identical(res, test_sim)
+})
+
+# Check data.frame output
+test_that("calc_similarity df out", {
+  res <- tiny_vdj@meta.data %>%
+    calc_similarity(
+      clonotype_col = "cdr3",
+      cluster_col   = "seurat_clusters",
+      method        = abdiv::binomial_deviance,
+      return_matrix = FALSE,
+      prefix        = "x"
+    )
+
+  expect_s3_class(res, "data.frame")
+
+  res_2 <- res %>%
+    select(-all_of(paste0("x", test_clsts)))
+
+  expect_identical(res_2, tiny_vdj@meta.data)
+
+  res <- res %>%
+    as_tibble() %>%
+    select(seurat_clusters, all_of(nm)) %>%
+    filter(!is.na(!!sym(nm))) %>%
+    distinct() %>%
+    arrange(seurat_clusters)
+
+  expect_identical(res, test_sim)
+})
+
 # Check matrix output
 test_that("calc_similarity mat out", {
   res <- tiny_vdj %>%
@@ -94,7 +150,7 @@ test_that("calc_similarity mat out", {
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
       method        = abdiv::binomial_deviance,
-      return_seurat = FALSE,
+      return_matrix = TRUE,
       prefix        = "x"
     )
 
@@ -104,3 +160,4 @@ test_that("calc_similarity mat out", {
 
   expect_true(all(sort(test_clsts) == sort(res)))
 })
+

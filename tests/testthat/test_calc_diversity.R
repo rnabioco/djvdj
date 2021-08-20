@@ -6,7 +6,7 @@ mets <- abdiv::alpha_diversities %>%
 names(mets) <- abdiv::alpha_diversities
 
 arg_lst <- list(
-  sobj_in       = list(tiny_vdj),
+  input         = list(tiny_vdj),
   clonotype_col = "cdr3",
   cluster_col   = list(NULL, "seurat_clusters"),
   method        = append(append(abdiv::shannon, mets), list(mets)),
@@ -38,7 +38,8 @@ test_div <- tiny_vdj@meta.data %>%
     simpson = abdiv::simpson(n),
     .groups = "drop"
   ) %>%
-  arrange(seurat_clusters)
+  arrange(seurat_clusters) %>%
+  as.data.frame()
 
 test_that("div calc Seurat out", {
   res <- tiny_vdj %>%
@@ -54,12 +55,13 @@ test_that("div calc Seurat out", {
     filter(!is.na(cdr3)) %>%
     select(seurat_clusters, all_of(names(mets))) %>%
     distinct() %>%
-    arrange(seurat_clusters)
+    arrange(seurat_clusters) %>%
+    as.data.frame()
 
   expect_identical(res, test_div)
 })
 
-test_that("div calc tbl out", {
+test_that("div calc df out", {
   res <- tiny_vdj %>%
     calc_diversity(
       clonotype_col = "cdr3",
@@ -67,9 +69,12 @@ test_that("div calc tbl out", {
       return_seurat = FALSE,
       method        = mets
     ) %>%
-    arrange(seurat_clusters)
+    arrange(seurat_clusters) %>%
+    distinct(seurat_clusters, !!!syms(names(mets))) %>%
+    filter(across(all_of(names(mets)), ~ !is.na(.x))) %>%
+    remove_rownames()
 
-  expect_s3_class(res, "tbl")
+  expect_s3_class(res, "data.frame")
   expect_identical(res, test_div)
 })
 
@@ -92,16 +97,19 @@ test_that("calc_diversity Seurat out", {
   expect_identical(res, tiny_vdj)
 })
 
-# Check single method no cluster_col
-test_that("single met no cluster_col", {
-  res <- tiny_vdj %>%
+# Check data.frame input
+test_that("calc_diversity df in", {
+  res <- tiny_vdj@meta.data %>%
     calc_diversity(
       clonotype_col = "cdr3",
-      return_seurat = FALSE,
-      method        = abdiv::simpson
-    )
+      cluster_col   = "seurat_clusters",
+      method        = mets
+    ) %>%
+    arrange(seurat_clusters) %>%
+    distinct(seurat_clusters, !!!syms(names(mets))) %>%
+    filter(across(all_of(names(mets)), ~ !is.na(.x))) %>%
+    remove_rownames()
 
-  expect_type(res, "double")
-  expect_identical(names(res), "simpson")
+  expect_s3_class(res, "data.frame")
+  expect_identical(res, test_div)
 })
-
