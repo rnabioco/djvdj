@@ -11,7 +11,7 @@ arg_lst <- list(
   cluster_col   = list(NULL, "seurat_clusters"),
   method        = append(append(abdiv::shannon, mets), list(mets)),
   prefix        = c("", "X"),
-  return_seurat = c(TRUE, FALSE)
+  return_df     = c(TRUE, FALSE)
 )
 
 test_all_args(
@@ -46,7 +46,7 @@ test_that("div calc Seurat out", {
     calc_diversity(
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
-      return_seurat = TRUE,
+      return_df     = FALSE,
       method        = mets
     )
 
@@ -66,7 +66,7 @@ test_that("div calc df out", {
     calc_diversity(
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
-      return_seurat = FALSE,
+      return_df     = TRUE,
       method        = mets
     ) %>%
     arrange(seurat_clusters) %>%
@@ -88,7 +88,7 @@ test_that("calc_diversity Seurat out", {
   res <- tiny_vdj %>%
     calc_diversity(
       clonotype_col = "cdr3",
-      method = fns
+      method        = fns
     )
 
   res@meta.data <- res@meta.data %>%

@@ -1,7 +1,9 @@
 #' Calculate repertoire overlap
 #'
 #' @export
-calc_similarity <- function(input, ...) {
+calc_similarity <- function(input, clonotype_col = "cdr3_nt", cluster_col, method = abdiv::jaccard,
+                            prefix = NULL, return_matrix = FALSE) {
+
   UseMethod("calc_similarity", input)
 }
 
@@ -13,9 +15,10 @@ calc_similarity <- function(input, ...) {
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating overlap
 #' @param method Method to use for calculating similarity between clusters
-#' @param prefix Prefix to add to new meta.data columns
-#' @param return_matrix Return a matrix with similarity values
-#' @return Seurat object with similarity index added to meta.data
+#' @param prefix Prefix to add to new columns
+#' @param return_matrix Return a matrix with similarity values. If set to
+#' FALSE, results will be added to the input object.
+#' @return Single cell object or data.frame with similarity values
 #' @export
 calc_similarity.default <- function(input, clonotype_col = "cdr3_nt", cluster_col, method = abdiv::jaccard,
                                     prefix = NULL, return_matrix = FALSE) {

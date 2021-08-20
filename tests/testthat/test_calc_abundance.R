@@ -5,7 +5,7 @@ arg_lst <- list(
   clonotype_col = "cdr3",
   cluster_col   = list(NULL, "seurat_clusters"),
   prefix        = c("", "X"),
-  return_seurat = c(TRUE, FALSE)
+  return_df     = c(TRUE, FALSE)
 )
 
 test_all_args(
@@ -19,7 +19,7 @@ test_that("Check Seurat output", {
   res <- tiny_vdj %>%
     calc_abundance(
       clonotype_col = "cdr3",
-      return_seurat = TRUE
+      return_df     = FALSE
     )
 
   expect_s4_class(res, "Seurat")
@@ -31,7 +31,7 @@ test_that("calc_abundance df out", {
   res <- tiny_vdj %>%
     calc_abundance(
       clonotype_col = "cdr3",
-      return_seurat = FALSE
+      return_df     = TRUE
     )
 
   expect_s3_class(res, "data.frame")
@@ -49,7 +49,7 @@ test_that("calc_abundance df in", {
 test_that("calc_abundance NULL clonotype_col", {
   .fn<- function() {
     tiny_vdj %>%
-      calc_abundance(return_seurat = TRUE)
+      calc_abundance(return_df = FALSE)
   }
 
   expect_error(fn())

@@ -1,7 +1,9 @@
 #' Calculate repertoire diversity
 #'
 #' @export
-calc_diversity <- function(input, ...) {
+calc_diversity <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
+                           method = abdiv::simpson, prefix = "", return_df = FALSE) {
+
   UseMethod("calc_diversity", input)
 }
 
@@ -16,14 +18,13 @@ calc_diversity <- function(input, ...) {
 #' @param method Method to use for calculating diversity. A named list can also
 #' be passed to use multiple methods. The names should specify names for the
 #' output columns.
-#' names.
-#' @param prefix Prefix to add to new meta.data columns
-#' @param return_seurat Return a Seurat object. If set to FALSE, the meta.data
-#' table is returned.
-#' @return Seurat object with diversity index added to meta.data
+#' @param prefix Prefix to add to new columns
+#' @param return_df Return results as a data.frame. If set to FALSE, results
+#' will be added to the input object.
+#' @return Single cell object or data.frame with diversity metrics
 #' @export
 calc_diversity.default <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                                   method = abdiv::simpson, prefix = "", ...) {
+                                   method = abdiv::simpson, prefix = "") {
 
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if using a list of methods.")
@@ -99,7 +100,7 @@ calc_diversity.default <- function(input, clonotype_col = "cdr3_nt", cluster_col
 #' @rdname calc_diversity
 #' @export
 calc_diversity.Seurat <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                                  method = abdiv::simpson, prefix = "", return_seurat = TRUE) {
+                                  method = abdiv::simpson, prefix = "", return_df = FALSE) {
 
   if (length(method) == 1 && is.null(names(method))) {
     nm <- as.character(substitute(method))
@@ -116,7 +117,7 @@ calc_diversity.Seurat <- function(input, clonotype_col = "cdr3_nt", cluster_col 
     prefix        = prefix
   )
 
-  if (return_seurat) {
+  if (!return_df) {
     res <- Seurat::AddMetaData(input, metadata = res)
   }
 

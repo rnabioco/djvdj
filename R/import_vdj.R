@@ -1,29 +1,30 @@
 #' Import V(D)J data
 #'
 #' @export
-import_vdj <- function(...) {
+import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL,
+                       filter_contigs = TRUE, sep = ";") {
+
   UseMethod("import_vdj")
 }
 
 #' @rdname import_vdj
-#' @param input Single cell object, if set to NULL a tibble containing the V(D)J
-#' data will be returned.
+#' @param input Single cell object, if set to NULL a data.frame containing
+#' V(D)J results will be returned
 #' @param vdj_dir Directory containing the output from cellranger vdj. A vector
 #' or named vector can be given to load data from several runs. If a named
 #' vector is given, the cell barcodes will be prefixed with the provided names.
 #' This mimics the behavior of the Read10X function found in the Seurat
 #' package. Cell barcode prefixes can also be provided using the cell_prefix
 #' argument.
-#' @param prefix Prefix to add to new meta.data columns
+#' @param prefix Prefix to add to new columns
 #' @param cell_prefix Prefix to add to cell barcodes, this is helpful when
 #' loading data from multiple runs into a single object. If set to NULL, cell
 #' barcode prefixes will be automatically generated in a similar way as the
 #' Read10X function found in the Seurat package.
 #' @param filter_contigs Only include chains with at least one productive
 #' contig
-#' @param sep Separator to use for storing per cell clonotype information in
-#' the meta.data
-#' @return Seurat object with V(D)J data added to meta.data
+#' @param sep Separator to use for storing per cell clonotype information
+#' @return Single cell object or data.frame with added V(D)J data
 #' @export
 import_vdj.default <- function(vdj_dir, prefix = "", cell_prefix = NULL,
                                filter_contigs = TRUE, sep = ";") {

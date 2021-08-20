@@ -1,7 +1,9 @@
 #' Calculate clonotype abundance
 #'
 #' @export
-calc_abundance <- function(input, ...) {
+calc_abundance <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL, prefix = "",
+                           return_df = FALSE) {
+
   UseMethod("calc_abundance", input)
 }
 
@@ -11,13 +13,13 @@ calc_abundance <- function(input, ...) {
 #' @param clonotype_col meta.data column containing clonotype IDs
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
-#' @param prefix Prefix to add to new meta.data columns
-#' @param return_seurat Return a Seurat object. If set to FALSE, a tibble
-#' summarizing the results is returned.
-#' @return Seurat object with clonotype abundance added to meta.data
+#' @param prefix Prefix to add to new columns
+#' @param return_df Return results as a data.frame. If set to FALSE, results
+#' will be added to the input object.
+#' @return Single cell object or data.frame with clonotype abundance metrics
 #' @export
 calc_abundance.default <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                                   prefix = "", ...) {
+                                   prefix = "") {
 
   # Format meta.data
   input   <- tibble::as_tibble(input, rownames = ".cell_id")
@@ -47,7 +49,7 @@ calc_abundance.default <- function(input, clonotype_col = "cdr3_nt", cluster_col
     paste0(prefix, "clone_", new_cols)
   )
 
-  meta_df <- select(meta_df, .cell_id, !!!syms(new_cols))
+  meta_df <- select(meta_df, .data$.cell_id, !!!syms(new_cols))
 
   res <- dplyr::left_join(input, meta_df, by = ".cell_id")
   res <- tibble::column_to_rownames(res, ".cell_id")
@@ -58,7 +60,7 @@ calc_abundance.default <- function(input, clonotype_col = "cdr3_nt", cluster_col
 #' @rdname calc_abundance
 #' @export
 calc_abundance.Seurat <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                                  prefix = "", return_seurat = TRUE) {
+                                  prefix = "", return_df = FALSE) {
 
   res <- calc_abundance(
     input         = input@meta.data,
@@ -67,7 +69,7 @@ calc_abundance.Seurat <- function(input, clonotype_col = "cdr3_nt", cluster_col 
     prefix        = prefix
   )
 
-  if (return_seurat) {
+  if (!return_df) {
     res <- Seurat::AddMetaData(input, metadata = res)
   }
 

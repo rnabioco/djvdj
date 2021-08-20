@@ -6,14 +6,19 @@
 \alias{calc_abundance.Seurat}
 \title{Calculate clonotype abundance}
 \usage{
-calc_abundance(input, ...)
+calc_abundance(
+  input,
+  clonotype_col = "cdr3_nt",
+  cluster_col = NULL,
+  prefix = "",
+  return_df = FALSE
+)
 
 \method{calc_abundance}{default}(
   input,
   clonotype_col = "cdr3_nt",
   cluster_col = NULL,
-  prefix = "",
-  ...
+  prefix = ""
 )
 
 \method{calc_abundance}{Seurat}(
@@ -21,7 +26,7 @@ calc_abundance(input, ...)
   clonotype_col = "cdr3_nt",
   cluster_col = NULL,
   prefix = "",
-  return_seurat = TRUE
+  return_df = FALSE
 )
 }
 \arguments{
@@ -33,13 +38,13 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
 
-\item{prefix}{Prefix to add to new meta.data columns}
+\item{prefix}{Prefix to add to new columns}
 
-\item{return_seurat}{Return a Seurat object. If set to FALSE, a tibble
-summarizing the results is returned.}
+\item{return_df}{Return results as a data.frame. If set to FALSE, results
+will be added to the input object.}
 }
 \value{
-Seurat object with clonotype abundance added to meta.data
+Single cell object or data.frame with clonotype abundance metrics
 }
 \description{
 Calculate clonotype abundance

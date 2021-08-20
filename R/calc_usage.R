@@ -5,19 +5,23 @@
 #' in gene_cols are excluded from this calculation.
 #'
 #' @export
-calc_usage <- function(input, ...) {
+calc_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, chain_col = "chains",
+                       sep = ";") {
+
   UseMethod("calc_usage", input)
 }
 
 #' @rdname calc_usage
-#' @param input Seurat object containing V(D)J data
-#' @param gene_cols meta.data column containing genes used for each clonotype
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param gene_cols meta.data column containing genes identified for each
+#' clonotype
 #' @param cluster_col meta.data column containing cell clusters to use when
 #' calculating gene usage
 #' @param chain Chain to use for calculating gene usage. Set to NULL to include
 #' all chains.
 #' @param chain_col meta.data column containing chains for each cell
-#' @param sep Separator to use for expanding gene_cols
+#' @param sep Separator used in gene_cols for storing gene names
 #' @return data.frame containing gene usage summary
 #' @export
 calc_usage.default <- function(input, gene_cols, cluster_col = NULL, chain = NULL,

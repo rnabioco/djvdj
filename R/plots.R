@@ -503,7 +503,7 @@ plot_abundance <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
     clonotype_col = clonotype_col,
     cluster_col   = cluster_col,
     prefix        = ".",
-    return_seurat = FALSE
+    return_df     = TRUE
   )
 
   dat_col <- ".clone_pct"
@@ -685,7 +685,7 @@ plot_diversity <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
     cluster_col   = cluster_col,
     method        = method,
     prefix        = "",
-    return_seurat = FALSE
+    return_df     = TRUE
   )
 
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))

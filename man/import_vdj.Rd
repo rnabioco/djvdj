@@ -6,7 +6,14 @@
 \alias{import_vdj.Seurat}
 \title{Import V(D)J data}
 \usage{
-import_vdj(...)
+import_vdj(
+  input = NULL,
+  vdj_dir,
+  prefix = "",
+  cell_prefix = NULL,
+  filter_contigs = TRUE,
+  sep = ";"
+)
 
 \method{import_vdj}{default}(
   vdj_dir,
@@ -26,6 +33,9 @@ import_vdj(...)
 )
 }
 \arguments{
+\item{input}{Single cell object, if set to NULL a data.frame containing
+V(D)J results will be returned}
+
 \item{vdj_dir}{Directory containing the output from cellranger vdj. A vector
 or named vector can be given to load data from several runs. If a named
 vector is given, the cell barcodes will be prefixed with the provided names.
@@ -33,7 +43,7 @@ This mimics the behavior of the Read10X function found in the Seurat
 package. Cell barcode prefixes can also be provided using the cell_prefix
 argument.}
 
-\item{prefix}{Prefix to add to new meta.data columns}
+\item{prefix}{Prefix to add to new columns}
 
 \item{cell_prefix}{Prefix to add to cell barcodes, this is helpful when
 loading data from multiple runs into a single object. If set to NULL, cell
@@ -43,14 +53,10 @@ Read10X function found in the Seurat package.}
 \item{filter_contigs}{Only include chains with at least one productive
 contig}
 
-\item{sep}{Separator to use for storing per cell clonotype information in
-the meta.data}
-
-\item{input}{Single cell object, if set to NULL a tibble containing the V(D)J
-data will be returned.}
+\item{sep}{Separator to use for storing per cell clonotype information}
 }
 \value{
-Seurat object with V(D)J data added to meta.data
+Single cell object or data.frame with added V(D)J data
 }
 \description{
 Import V(D)J data

@@ -6,15 +6,21 @@
 \alias{calc_diversity.Seurat}
 \title{Calculate repertoire diversity}
 \usage{
-calc_diversity(input, ...)
+calc_diversity(
+  input,
+  clonotype_col = "cdr3_nt",
+  cluster_col = NULL,
+  method = abdiv::simpson,
+  prefix = "",
+  return_df = FALSE
+)
 
 \method{calc_diversity}{default}(
   input,
   clonotype_col = "cdr3_nt",
   cluster_col = NULL,
   method = abdiv::simpson,
-  prefix = "",
-  ...
+  prefix = ""
 )
 
 \method{calc_diversity}{Seurat}(
@@ -23,7 +29,7 @@ calc_diversity(input, ...)
   cluster_col = NULL,
   method = abdiv::simpson,
   prefix = "",
-  return_seurat = TRUE
+  return_df = FALSE
 )
 }
 \arguments{
@@ -39,16 +45,15 @@ calculated for all clonotypes.}
 
 \item{method}{Method to use for calculating diversity. A named list can also
 be passed to use multiple methods. The names should specify names for the
-output columns.
-names.}
+output columns.}
 
-\item{prefix}{Prefix to add to new meta.data columns}
+\item{prefix}{Prefix to add to new columns}
 
-\item{return_seurat}{Return a Seurat object. If set to FALSE, the meta.data
-table is returned.}
+\item{return_df}{Return results as a data.frame. If set to FALSE, results
+will be added to the input object.}
 }
 \value{
-Seurat object with diversity index added to meta.data
+Single cell object or data.frame with diversity metrics
 }
 \description{
 Calculate repertoire diversity

@@ -6,7 +6,14 @@
 \alias{calc_similarity.Seurat}
 \title{Calculate repertoire overlap}
 \usage{
-calc_similarity(input, ...)
+calc_similarity(
+  input,
+  clonotype_col = "cdr3_nt",
+  cluster_col,
+  method = abdiv::jaccard,
+  prefix = NULL,
+  return_matrix = FALSE
+)
 
 \method{calc_similarity}{default}(
   input,
@@ -38,12 +45,13 @@ calculating overlap}
 
 \item{method}{Method to use for calculating similarity between clusters}
 
-\item{prefix}{Prefix to add to new meta.data columns}
+\item{prefix}{Prefix to add to new columns}
 
-\item{return_matrix}{Return a matrix with similarity values}
+\item{return_matrix}{Return a matrix with similarity values. If set to
+FALSE, results will be added to the input object.}
 }
 \value{
-Seurat object with similarity index added to meta.data
+Single cell object or data.frame with similarity values
 }
 \description{
 Calculate repertoire overlap
