@@ -529,10 +529,10 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
 
   meta_df <- dplyr::mutate(
     meta_df,
-    x    = !!sym(clonotype_col),
+    .x   = !!sym(clonotype_col),
     .len = length(unlist(strsplit(!!sym(label_col), ""))),
     .lab = strtrim(!!sym(label_col), len),
-    .lab = paste0(.lab, ifelse(.len > len, "...", ""))
+    .lab = paste0(.data$.lab, ifelse(.data$.len > len, "...", ""))
   )
 
   meta_df <- dplyr::ungroup(meta_df)
@@ -544,7 +544,7 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
 
     meta_df <- dplyr::mutate(
       meta_df,
-      x = paste0(!!sym(cluster_col), "_", !!sym(clonotype_col))
+      .x = paste0(!!sym(cluster_col), "_", .data$.x)
     )
   }
 
@@ -566,21 +566,21 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
 
   # Create bar graph
   if (type == "bar") {
-    plt_labs <- setNames(top_clones$.lab, top_clones$x)
+    plt_labs <- set_names(top_clones$.lab, top_clones$.x)
 
     top_clones <- dplyr::arrange(top_clones, desc(!!sym(dat_col)))
 
-    lvls <- rev(unique(pull(top_clones, x)))
+    lvls <- rev(unique(top_clones$.x))
 
     top_clones <- .set_lvls(
       df_in = top_clones,
-      clmn  = "x",
+      clmn  = ".x",
       lvls  = lvls
     )
 
     res <- .create_bars(
       df_in = top_clones,
-      x     = "x",
+      x     = ".x",
       y     = dat_col,
       y_ttl = yaxis,
       .fill = color_col,
@@ -627,7 +627,7 @@ plot_abundance <- function(sobj_in, clonotype_col = "cdr3_nt", cluster_col = NUL
   if (n_clonotypes > 0) {
     res <- res +
       ggrepel::geom_text_repel(
-        ggplot2::aes(label = .lab),
+        ggplot2::aes(label = .data$.lab),
         data          = top_clones,
         nudge_x       = 500,
         direction     = "y",

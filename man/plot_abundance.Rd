@@ -14,7 +14,7 @@ plot_abundance(
   plot_lvls = NULL,
   label_col = clonotype_col,
   n_clonotypes = 10,
-  color_col = NULL,
+  color_col = cluster_col,
   label_aes = list(),
   facet_rows = 1,
   facet_scales = "free_x",
@@ -38,9 +38,12 @@ grouping cells when calculating clonotype abundance}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{label_col}{meta.data column containing labels to use for plot}
+\item{label_col}{meta.data column to use for labeling clonotypes. This is
+useful if clonotype_col contains names that are too long to include on the
+plot.}
 
-\item{n_clonotypes}{Number of clonotypes to label}
+\item{n_clonotypes}{Number of clonotypes to plot. If type is set to 'line',
+this will specify the number of clonotypes to label.}
 
 \item{color_col}{meta.data column to use for coloring bars}
 
