@@ -1,9 +1,7 @@
 #' Import V(D)J data
 #'
 #' @export
-import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL,
-                       filter_contigs = TRUE, sep = ";") {
-
+import_vdj <- function(...) {
   UseMethod("import_vdj")
 }
 
@@ -24,10 +22,11 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL,
 #' @param filter_contigs Only include chains with at least one productive
 #' contig
 #' @param sep Separator to use for storing per cell clonotype information
+#' @param ... Arguments passed to other methods
 #' @return Single cell object or data.frame with added V(D)J data
 #' @export
 import_vdj.default <- function(vdj_dir, prefix = "", cell_prefix = NULL,
-                               filter_contigs = TRUE, sep = ";") {
+                               filter_contigs = TRUE, sep = ";", ...) {
 
   # VDJ columns
   count_cols <- c("reads", "umis")
@@ -234,7 +233,7 @@ import_vdj.default <- function(vdj_dir, prefix = "", cell_prefix = NULL,
 #' @rdname import_vdj
 #' @export
 import_vdj.Seurat <- function(input, vdj_dir, prefix = "", cell_prefix = NULL,
-                              filter_contigs = TRUE, sep = ";") {
+                              filter_contigs = TRUE, sep = ";", ...) {
 
   meta_df <- import_vdj(
     vdj_dir        = vdj_dir,

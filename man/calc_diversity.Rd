@@ -6,21 +6,15 @@
 \alias{calc_diversity.Seurat}
 \title{Calculate repertoire diversity}
 \usage{
-calc_diversity(
-  input,
-  clonotype_col = "cdr3_nt",
-  cluster_col = NULL,
-  method = abdiv::simpson,
-  prefix = "",
-  return_df = FALSE
-)
+calc_diversity(input, ...)
 
 \method{calc_diversity}{default}(
   input,
   clonotype_col = "cdr3_nt",
   cluster_col = NULL,
   method = abdiv::simpson,
-  prefix = ""
+  prefix = "",
+  ...
 )
 
 \method{calc_diversity}{Seurat}(
@@ -29,12 +23,15 @@ calc_diversity(
   cluster_col = NULL,
   method = abdiv::simpson,
   prefix = "",
-  return_df = FALSE
+  return_df = FALSE,
+  ...
 )
 }
 \arguments{
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
+
+\item{...}{Arguments passed to other methods}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating diversity}

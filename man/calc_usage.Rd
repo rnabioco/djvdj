@@ -6,14 +6,7 @@
 \alias{calc_usage.Seurat}
 \title{Calculate gene usage}
 \usage{
-calc_usage(
-  input,
-  gene_cols,
-  cluster_col = NULL,
-  chain = NULL,
-  chain_col = "chains",
-  sep = ";"
-)
+calc_usage(input, ...)
 
 \method{calc_usage}{default}(
   input,
@@ -21,7 +14,8 @@ calc_usage(
   cluster_col = NULL,
   chain = NULL,
   chain_col = "chains",
-  sep = ";"
+  sep = ";",
+  ...
 )
 
 \method{calc_usage}{Seurat}(
@@ -30,12 +24,15 @@ calc_usage(
   cluster_col = NULL,
   chain = NULL,
   chain_col = "chains",
-  sep = ";"
+  sep = ";",
+  ...
 )
 }
 \arguments{
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
+
+\item{...}{Arguments passed to other methods}
 
 \item{gene_cols}{meta.data column containing genes identified for each
 clonotype}

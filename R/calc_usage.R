@@ -5,9 +5,7 @@
 #' in gene_cols are excluded from this calculation.
 #'
 #' @export
-calc_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, chain_col = "chains",
-                       sep = ";") {
-
+calc_usage <- function(input, ...) {
   UseMethod("calc_usage", input)
 }
 
@@ -22,10 +20,11 @@ calc_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, chain
 #' all chains.
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used in gene_cols for storing gene names
+#' @param ... Arguments passed to other methods
 #' @return data.frame containing gene usage summary
 #' @export
 calc_usage.default <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
-                               chain_col = "chains", sep = ";") {
+                               chain_col = "chains", sep = ";", ...) {
 
   # data.frame to calculate usage
   sep_cols <- c(gene_cols, chain_col)
@@ -120,7 +119,7 @@ calc_usage.default <- function(input, gene_cols, cluster_col = NULL, chain = NUL
 #' @rdname calc_usage
 #' @export
 calc_usage.Seurat <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
-                              chain_col = "chains", sep = ";") {
+                              chain_col = "chains", sep = ";", ...) {
 
   res <- calc_usage(
     input       = input@meta.data,

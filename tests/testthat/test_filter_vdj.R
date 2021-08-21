@@ -49,12 +49,12 @@ test_that("filter_vdj Seurat return VDJ cells", {
 
 # Check Seurat return for only VDJ cells
 test_that("filter_vdj Seurat return all cells", {
-  res <- filter_vdj(
-    sobj_in       = tiny_vdj,
-    filt          = any(chains %in% c("IGH", "IGK", "IGL")),
-    clonotype_col = "cdr3_nt",
-    filter_cells  = TRUE
-  )
+  res <- tiny_vdj %>%
+    filter_vdj(
+      filt          = any(chains %in% c("IGH", "IGK", "IGL")),
+      clonotype_col = "cdr3_nt",
+      filter_cells  = TRUE
+    )
 
   expect_s4_class(res, "Seurat")
   expect_identical(colnames(res), colnames(tiny_vdj))
@@ -63,12 +63,12 @@ test_that("filter_vdj Seurat return all cells", {
 # Check NULL clonotype_col and FALSE filter_cells
 test_that("filter_vdj NULL clonotype_col FALSE filter_cells", {
   fn <- function() {
-    res <- filter_vdj(
-      sobj_in       = tiny_vdj,
-      filt          = any(chains %in% c("IGH", "IGK", "IGL")),
-      clonotype_col = NULL,
-      filter_cells  = FALSE
-    )
+    res <- tiny_vdj %>%
+      filter_vdj(
+        filt          = any(chains %in% c("IGH", "IGK", "IGL")),
+        clonotype_col = NULL,
+        filter_cells  = FALSE
+      )
   }
 
   expect_error(fn())
@@ -76,19 +76,17 @@ test_that("filter_vdj NULL clonotype_col FALSE filter_cells", {
 
 # Check for .KEEP
 test_that("filter_vdj .KEEP check", {
-  res <- filter_vdj(
-    sobj_in = tiny_vdj,
-    filt    = orig.ident == "avid_1"
-  )
+  res <- tiny_vdj %>%
+    filter_vdj(filt = orig.ident == "avid_1")
 
   expect_false(".KEEP" %in% colnames(res@meta.data))
 
   fn <- function() {
-    filter_vdj(
-      sobj_in = tiny_vdj,
-      filt    = orig.ident == "avid_1",
-      sep     = "BED_SEP"
-    )
+    tiny_vdj %>%
+      filter_vdj(
+        filt = orig.ident == "avid_1",
+        sep  = "BED_SEP"
+      )
   }
 
   res <- suppressWarnings(fn())

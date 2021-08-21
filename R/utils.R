@@ -145,80 +145,6 @@ mutate_meta <- function(sobj_in, .fun, ...) {
 }
 
 
-#' Mutate V(D)J meta.data
-#'
-#' @param sobj_in Seurat object containing V(D)J data
-#' @param ... Name-value pairs to use for creating or modifying meta.data
-#' columns
-#' @param clonotype_col meta.data column containing clonotype IDs. This column
-#' is used to determine which cells have V(D)J data
-#' @param sep Separator to use for expanding meta.data columns
-#' @param vdj_cols meta.data columns containing VDJ data to use for filtering.
-#' If set to NULL (recommended) columns are automatically selected.
-#' @return Seurat object
-#' @export
-mutate_vdj <- function(sobj_in, ..., clonotype_col = "cdr3_nt", sep = ";", vdj_cols = NULL) {
-
-  # Identify columns with VDJ data
-  meta_df <- sobj_in@meta.data
-  meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
-
-  col_list <- .get_vdj_cols(
-    df_in     = meta_df,
-    clone_col = clonotype_col,
-    cols_in   = vdj_cols,
-    sep       = sep
-  )
-
-  vdj_cols <- col_list$vdj
-  sep_cols <- col_list$sep
-
-  # Create list-cols for VDJ columns that contain sep
-  if (!purrr::is_empty(sep_cols)) {
-    sep_cols <- set_names(
-      x  = sep_cols,
-      nm = paste0(".", sep_cols)
-    )
-
-    meta_df <- .split_vdj(
-      df_in    = meta_df,
-      sep_cols = sep_cols,
-      sep      = sep
-    )
-
-    meta_df <- dplyr::rowwise(meta_df)
-  }
-
-  # Mutate meta.data
-  meta_df <- dplyr::mutate(meta_df, ...)
-  meta_df <- dplyr::ungroup(meta_df)
-
-  # Remove columns created for mutate
-  if (!purrr::is_empty(sep_cols)) {
-    sep_cols <- purrr::set_names(
-      x  = names(sep_cols),
-      nm = unname(sep_cols)
-    )
-
-    meta_df <- dplyr::select(
-      meta_df,
-      !all_of(names(sep_cols))
-    )
-
-    meta_df <- dplyr::rename(meta_df, !!!syms(sep_cols))
-  }
-
-  # Add meta.data to Seurat object
-  meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
-
-  cells <- rownames(meta_df)
-  res   <- subset(sobj_in, cells = cells)
-  res   <- Seurat::AddMetaData(res, meta_df)
-
-  res
-}
-
-
 #' Summarize values for chains
 #'
 #' Summarize values present for each column provided to the data_cols argument.
@@ -320,7 +246,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
 #' @param cols_in meta.data columns containing VDJ data to use for filtering.
 #' If set to NULL (recommended) columns are automatically selected.
 #' @param sep Separator to search for in columns
-#' @return data.frame
+#' @return list of vectors containing columns with V(D)J data and sep
 .get_vdj_cols <- function(df_in, clone_col, cols_in, sep) {
 
   # Identify columns with VDJ data based on NAs in clonotype_col

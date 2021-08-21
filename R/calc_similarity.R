@@ -1,9 +1,7 @@
 #' Calculate repertoire overlap
 #'
 #' @export
-calc_similarity <- function(input, clonotype_col = "cdr3_nt", cluster_col, method = abdiv::jaccard,
-                            prefix = NULL, return_matrix = FALSE) {
-
+calc_similarity <- function(input, ...) {
   UseMethod("calc_similarity", input)
 }
 
@@ -16,12 +14,13 @@ calc_similarity <- function(input, clonotype_col = "cdr3_nt", cluster_col, metho
 #' calculating overlap
 #' @param method Method to use for calculating similarity between clusters
 #' @param prefix Prefix to add to new columns
-#' @param return_matrix Return a matrix with similarity values. If set to
+#' @param return_mat Return a matrix with similarity values. If set to
 #' FALSE, results will be added to the input object.
+#' @param ... Arguments passed to other methods
 #' @return Single cell object or data.frame with similarity values
 #' @export
 calc_similarity.default <- function(input, clonotype_col = "cdr3_nt", cluster_col, method = abdiv::jaccard,
-                                    prefix = NULL, return_matrix = FALSE) {
+                                    prefix = NULL, return_mat = FALSE, ...) {
 
   if (is.null(prefix)) {
     prefix <- as.character(substitute(method))
@@ -79,7 +78,7 @@ calc_similarity.default <- function(input, clonotype_col = "cdr3_nt", cluster_co
   })
 
   # Return matrix
-  if (return_matrix) {
+  if (return_mat) {
     res <- tidyr::pivot_wider(
       res,
       names_from  = .data$Var1,
@@ -129,7 +128,7 @@ calc_similarity.default <- function(input, clonotype_col = "cdr3_nt", cluster_co
 #' @rdname calc_similarity
 #' @export
 calc_similarity.Seurat <- function(input, clonotype_col = "cdr3_nt", cluster_col, method = abdiv::jaccard,
-                                   prefix = NULL, return_matrix = FALSE) {
+                                   prefix = NULL, return_mat = FALSE, ...) {
 
   if (is.null(prefix)) {
     prefix <- as.character(substitute(method))
@@ -143,10 +142,10 @@ calc_similarity.Seurat <- function(input, clonotype_col = "cdr3_nt", cluster_col
     cluster_col   = cluster_col,
     method        = method,
     prefix        = prefix,
-    return_matrix = return_matrix
+    return_mat    = return_mat
   )
 
-  if (!return_matrix) {
+  if (!return_mat) {
     res <- Seurat::AddMetaData(input, metadata = res)
   }
 

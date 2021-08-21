@@ -50,24 +50,24 @@ test_all_args(
 # Check plot_features warning for numeric feature
 test_that("plot_features warning num feat", {
   expect_warning(
-    plot_features(
-      sobj_in   = tiny_vdj,
-      feature   = "nCount_RNA",
-      feat_lvls = test_lvls
-    )
+    tiny_vdj %>%
+      plot_features(
+        feature   = "nCount_RNA",
+        feat_lvls = test_lvls
+      )
   )
 })
 
 # Check plot_features error for same x and y
 test_that("plot_features error same x y", {
   expect_error(
-    plot_features(
-      sobj_in   = tiny_vdj,
-      x         = "UMAP_1",
-      y         = "UMAP_1",
-      feature   = "nCount_RNA",
-      feat_lvls = test_lvls
-    )
+    tiny_vdj %>%
+      plot_features(
+        x         = "UMAP_1",
+        y         = "UMAP_1",
+        feature   = "nCount_RNA",
+        feat_lvls = test_lvls
+      )
   )
 })
 
@@ -87,13 +87,13 @@ test_all_args(
 # Check check plot_features bad outline_pos
 test_that("plot_features bad outline_pos", {
   expect_error(
-    plot_features(
-      sobj_in     = tiny_vdj,
-      x           = "UMAP_1",
-      y           = "UMAP_2",
-      feature     = "seurat_clusters",
-      outline_pos = "BAD_POS"
-    )
+    tiny_vdj %>%
+      plot_features(
+        x           = "UMAP_1",
+        y           = "UMAP_2",
+        feature     = "seurat_clusters",
+        outline_pos = "BAD_POS"
+      )
   )
 })
 
@@ -120,11 +120,11 @@ test_all_args(
 # Check plot_cell_count bad yaxis
 test_that("plot_cell_count bad yaxis", {
   expect_error(
-    plot_cell_count(
-      sobj_in = tiny_vdj,
-      x       = "orig.ident",
-      yaxis   = "BAD"
-    )
+    tiny_vdj %>%
+      plot_cell_count(
+        x     = "orig.ident",
+        yaxis = "BAD"
+      )
   )
 })
 
@@ -149,10 +149,8 @@ test_all_args(
 # Check plot_reads bad type
 test_that("plot_reads bad type", {
   expect_error(
-    plot_reads(
-      sobj_in = tiny_vdj,
-      type    = "BAD"
-    )
+    tiny_vdj %>%
+      plot_reads(type = "BAD")
   )
 })
 
@@ -217,47 +215,47 @@ test_all_args(
 # Check plot_abundance bad yaxis
 test_that("plot_abundance bad yaxis", {
   expect_error(
-    plot_abundance(
-      input         = tiny_vdj,
-      type          = "line",
-      clonotype_col = "cdr3_nt",
-      yaxis         = "BAD"
-    )
+    tiny_vdj %>%
+      plot_abundance(
+        type          = "line",
+        clonotype_col = "cdr3_nt",
+        yaxis         = "BAD"
+      )
   )
 })
 
 # Check plot_abundance bad type
 test_that("plot_abundance bad type", {
   expect_error(
-    plot_abundance(
-      input         = tiny_vdj,
-      type          = "BAD",
-      clonotype_col = "cdr3_nt"
-    )
+    tiny_vdj %>%
+      plot_abundance(
+        type          = "BAD",
+        clonotype_col = "cdr3_nt"
+      )
   )
 })
 
 # Check plot_abundance bad n_clonotypes
 test_that("plot_abundance bad n_clonotypes", {
   expect_error(
-    plot_abundance(
-      input         = tiny_vdj,
-      type          = "bar",
-      clonotype_col = "cdr3_nt",
-      n_clonotypes  = 0
-    )
+    tiny_vdj %>%
+      plot_abundance(
+        type          = "bar",
+        clonotype_col = "cdr3_nt",
+        n_clonotypes  = 0
+      )
   )
 })
 
 # Check plot_abundance bad label_col
 test_that("plot_abundance bad label_col", {
   expect_error(
-    plot_abundance(
-      input         = tiny_vdj,
-      type          = "bar",
-      clonotype_col = "cdr3_nt",
-      label_col     = NULL
-    )
+    tiny_vdj %>%
+      plot_abundance(
+        type          = "bar",
+        clonotype_col = "cdr3_nt",
+        label_col     = NULL
+      )
   )
 })
 
@@ -289,11 +287,11 @@ mets <- abdiv::alpha_diversities %>%
 
 test_that("plot_diversity bad names", {
   expect_error(
-    plot_diversity(
-      input         = tiny_vdj,
-      clonotype_col = "cdr3_nt",
-      method        = mets
-    )
+    tiny_vdj %>%
+      plot_diversity(
+        clonotype_col = "cdr3_nt",
+        method        = mets
+      )
   )
 })
 
@@ -319,22 +317,22 @@ test_all_args(
 # Check plot_similarity bad clonotype_col
 test_that("plot_similarity bad clonotype col", {
   expect_error(
-    plot_similarity(
-      input         = tiny_vdj,
-      clonotype_col = NULL,
-      cluster_col   = "orig.ident"
-    )
+    tiny_vdj %>%
+      plot_similarity(
+        clonotype_col = NULL,
+        cluster_col   = "orig.ident"
+      )
   )
 })
 
 # Check plot_similarity bad cluster_col
 test_that("plot_similarity bad cluster col", {
   expect_error(
-    plot_similarity(
-      input         = tiny_vdj,
-      cluster_col   = NULL,
-      clonotype_col = "cdr3_nt"
-    )
+    tiny_vdj %>%
+      plot_similarity(
+        cluster_col   = NULL,
+        clonotype_col = "cdr3_nt"
+      )
   )
 })
 
@@ -379,42 +377,40 @@ test_all_args(
 # Check plot_usage bad type
 test_that("plot_usage bad type", {
   expect_error(
-    plot_usage(
-      input     = tiny_vdj,
-      gene_cols = "v_gene",
-      type      = "BAD"
-    )
+    tiny_vdj %>%
+      plot_usage(
+        gene_cols = "v_gene",
+        type      = "BAD"
+      )
   )
 })
 
 # Check plot_usage bad yaxis
 test_that("plot_usage bad type", {
   expect_error(
-    plot_usage(
-      input     = tiny_vdj,
-      gene_cols = "v_gene",
-      yaxis     = "BAD"
-    )
+    tiny_vdj %>%
+      plot_usage(
+        gene_cols = "v_gene",
+        yaxis     = "BAD"
+      )
   )
 })
 
 # Check plot_usage bad gene_cols
 test_that("plot_usage bad gene_cols", {
   expect_error(
-    plot_usage(
-      input     = tiny_vdj,
-      gene_cols = c("v_gene", "d_gene", "j_gene")
-    )
+    tiny_vdj %>%
+      plot_usage(gene_cols = c("v_gene", "d_gene", "j_gene"))
   )
 })
 
 # Check .set_lvls levels
 test_that(".set_lvls args", {
-  res <- .set_lvls(
-    df_in = tiny_dat,
-    clmn  = "seurat_clusters",
-    lvls  = test_lvls
-  )
+  res <- tiny_dat %>%
+    .set_lvls(
+      clmn  = "seurat_clusters",
+      lvls  = test_lvls
+    )
 
   expect_identical(test_lvls, levels(res$seurat_clusters))
 })
@@ -424,11 +420,11 @@ test_that(".set_lvls bad lvls", {
   lvls <- test_lvls[2:length(test_lvls)]
 
   expect_error(
-    .set_lvls(
-      df_in = tiny_dat,
-      clmn  = "seurat_clusters",
-      lvls  = lvls
-    )
+    tiny_dat %>%
+      .set_lvls(
+        clmn  = "seurat_clusters",
+        lvls  = lvls
+      )
   )
 })
 

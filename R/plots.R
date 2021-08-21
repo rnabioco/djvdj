@@ -780,7 +780,7 @@ plot_similarity <- function(input, clonotype_col = "cdr3_nt", cluster_col, metho
     cluster_col   = cluster_col,
     method        = method,
     prefix        = "",
-    return_matrix = TRUE
+    return_mat    = TRUE
   )
 
   sim_col <- as.character(substitute(method))

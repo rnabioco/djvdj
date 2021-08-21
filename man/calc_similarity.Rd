@@ -6,14 +6,7 @@
 \alias{calc_similarity.Seurat}
 \title{Calculate repertoire overlap}
 \usage{
-calc_similarity(
-  input,
-  clonotype_col = "cdr3_nt",
-  cluster_col,
-  method = abdiv::jaccard,
-  prefix = NULL,
-  return_matrix = FALSE
-)
+calc_similarity(input, ...)
 
 \method{calc_similarity}{default}(
   input,
@@ -21,7 +14,8 @@ calc_similarity(
   cluster_col,
   method = abdiv::jaccard,
   prefix = NULL,
-  return_matrix = FALSE
+  return_mat = FALSE,
+  ...
 )
 
 \method{calc_similarity}{Seurat}(
@@ -30,12 +24,15 @@ calc_similarity(
   cluster_col,
   method = abdiv::jaccard,
   prefix = NULL,
-  return_matrix = FALSE
+  return_mat = FALSE,
+  ...
 )
 }
 \arguments{
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
+
+\item{...}{Arguments passed to other methods}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating overlap}
@@ -47,7 +44,7 @@ calculating overlap}
 
 \item{prefix}{Prefix to add to new columns}
 
-\item{return_matrix}{Return a matrix with similarity values. If set to
+\item{return_mat}{Return a matrix with similarity values. If set to
 FALSE, results will be added to the input object.}
 }
 \value{

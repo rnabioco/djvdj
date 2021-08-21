@@ -18,7 +18,7 @@ If set to NULL (recommended) columns are automatically selected.}
 \item{sep}{Separator to search for in columns}
 }
 \value{
-data.frame
+list of vectors containing columns with V(D)J data and sep
 }
 \description{
 Identify columns with V(D)J data

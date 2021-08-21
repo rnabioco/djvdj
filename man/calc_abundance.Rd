@@ -6,19 +6,14 @@
 \alias{calc_abundance.Seurat}
 \title{Calculate clonotype abundance}
 \usage{
-calc_abundance(
-  input,
-  clonotype_col = "cdr3_nt",
-  cluster_col = NULL,
-  prefix = "",
-  return_df = FALSE
-)
+calc_abundance(input, ...)
 
 \method{calc_abundance}{default}(
   input,
   clonotype_col = "cdr3_nt",
   cluster_col = NULL,
-  prefix = ""
+  prefix = "",
+  ...
 )
 
 \method{calc_abundance}{Seurat}(
@@ -26,12 +21,15 @@ calc_abundance(
   clonotype_col = "cdr3_nt",
   cluster_col = NULL,
   prefix = "",
-  return_df = FALSE
+  return_df = FALSE,
+  ...
 )
 }
 \arguments{
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
+
+\item{...}{Arguments passed to other methods}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs}
 

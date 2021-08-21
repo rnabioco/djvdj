@@ -1,9 +1,7 @@
 #' Calculate repertoire diversity
 #'
 #' @export
-calc_diversity <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                           method = abdiv::simpson, prefix = "", return_df = FALSE) {
-
+calc_diversity <- function(input, ...) {
   UseMethod("calc_diversity", input)
 }
 
@@ -21,10 +19,11 @@ calc_diversity <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
 #' @param prefix Prefix to add to new columns
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.
+#' @param ... Arguments passed to other methods
 #' @return Single cell object or data.frame with diversity metrics
 #' @export
 calc_diversity.default <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                                   method = abdiv::simpson, prefix = "") {
+                                   method = abdiv::simpson, prefix = "", ...) {
 
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if using a list of methods.")
@@ -90,7 +89,7 @@ calc_diversity.default <- function(input, clonotype_col = "cdr3_nt", cluster_col
   vdj_df <- dplyr::ungroup(vdj_df)
   vdj_df <- dplyr::select(vdj_df, all_of(c(vdj_cols, div_cols)))
 
-  # Add results to meta.data
+  # Format results
   res <- dplyr::left_join(input, vdj_df, by = vdj_cols)
   res <- tibble::column_to_rownames(res, ".cell_id")
 
@@ -100,7 +99,7 @@ calc_diversity.default <- function(input, clonotype_col = "cdr3_nt", cluster_col
 #' @rdname calc_diversity
 #' @export
 calc_diversity.Seurat <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                                  method = abdiv::simpson, prefix = "", return_df = FALSE) {
+                                  method = abdiv::simpson, prefix = "", return_df = FALSE, ...) {
 
   if (length(method) == 1 && is.null(names(method))) {
     nm <- as.character(substitute(method))

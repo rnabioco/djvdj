@@ -1,9 +1,7 @@
 #' Calculate clonotype abundance
 #'
 #' @export
-calc_abundance <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL, prefix = "",
-                           return_df = FALSE) {
-
+calc_abundance <- function(input, ...) {
   UseMethod("calc_abundance", input)
 }
 
@@ -16,12 +14,13 @@ calc_abundance <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
 #' @param prefix Prefix to add to new columns
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.
+#' @param ... Arguments passed to other methods
 #' @return Single cell object or data.frame with clonotype abundance metrics
 #' @export
 calc_abundance.default <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                                   prefix = "") {
+                                   prefix = "", ...) {
 
-  # Format meta.data
+  # Format input data
   input   <- tibble::as_tibble(input, rownames = ".cell_id")
   meta_df <- dplyr::filter(input, !is.na(!!sym(clonotype_col)))
 
@@ -51,6 +50,7 @@ calc_abundance.default <- function(input, clonotype_col = "cdr3_nt", cluster_col
 
   meta_df <- select(meta_df, .data$.cell_id, !!!syms(new_cols))
 
+  # Format results
   res <- dplyr::left_join(input, meta_df, by = ".cell_id")
   res <- tibble::column_to_rownames(res, ".cell_id")
 
@@ -60,7 +60,7 @@ calc_abundance.default <- function(input, clonotype_col = "cdr3_nt", cluster_col
 #' @rdname calc_abundance
 #' @export
 calc_abundance.Seurat <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                                  prefix = "", return_df = FALSE) {
+                                  prefix = "", return_df = FALSE, ...) {
 
   res <- calc_abundance(
     input         = input@meta.data,

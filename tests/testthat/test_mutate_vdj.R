@@ -59,6 +59,33 @@ test_that("mutate_vdj Seurat out", {
 
   expect_s4_class(res, "Seurat")                       # class
   expect_identical(colnames(res), colnames(tiny_vdj))  # cells in object
+
+  expect_identical(select(res@meta.data, -NEW), tiny_vdj@meta.data)
+})
+
+# Check data.frame output
+test_that("mutate_vdj df out", {
+  res <- tiny_vdj %>%
+    mutate_vdj(
+      NEW       = paste0(unique(chains), collapse = "_"),
+      return_df = TRUE
+    )
+
+  expect_s3_class(res, "data.frame")                   # class
+  expect_identical(rownames(res), colnames(tiny_vdj))  # cells in object
+
+  expect_identical(select(res, -NEW), tiny_vdj@meta.data)
+})
+
+# Check data.frame input
+test_that("mutate_vdj df in", {
+  res <- tiny_vdj@meta.data %>%
+    mutate_vdj(NEW = paste0(unique(chains), collapse = "_"))
+
+  expect_s3_class(res, "data.frame")                   # class
+  expect_identical(rownames(res), colnames(tiny_vdj))  # cells in object
+
+  expect_identical(select(res, -NEW), tiny_vdj@meta.data)
 })
 
 # test_that("Default separator", {
