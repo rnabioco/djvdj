@@ -2,33 +2,20 @@
 % Please edit documentation in R/import_vdj.R
 \name{import_vdj}
 \alias{import_vdj}
-\alias{import_vdj.default}
-\alias{import_vdj.Seurat}
 \title{Import V(D)J data}
 \usage{
-import_vdj(...)
-
-\method{import_vdj}{default}(
+import_vdj(
+  input = NULL,
   vdj_dir,
   prefix = "",
   cell_prefix = NULL,
   filter_contigs = TRUE,
-  sep = ";",
-  ...
-)
-
-\method{import_vdj}{Seurat}(
-  input,
-  vdj_dir,
-  prefix = "",
-  cell_prefix = NULL,
-  filter_contigs = TRUE,
-  sep = ";",
-  ...
+  sep = ";"
 )
 }
 \arguments{
-\item{...}{Arguments passed to other methods}
+\item{input}{Object containing single cell data, if set to NULL a data.frame
+containing V(D)J results will be returned}
 
 \item{vdj_dir}{Directory containing the output from cellranger vdj. A vector
 or named vector can be given to load data from several runs. If a named
@@ -47,10 +34,7 @@ Read10X function found in the Seurat package.}
 \item{filter_contigs}{Only include chains with at least one productive
 contig}
 
-\item{sep}{Separator to use for storing per cell clonotype information}
-
-\item{input}{Single cell object, if set to NULL a data.frame containing
-V(D)J results will be returned}
+\item{sep}{Separator to use for storing per cell V(D)J data}
 }
 \value{
 Single cell object or data.frame with added V(D)J data

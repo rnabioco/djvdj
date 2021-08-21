@@ -14,7 +14,7 @@ arg_lst <- list(
   clonotype_col = "cdr3",
   cluster_col   = "seurat_clusters",
   method        = mets,
-  return_matrix = c(TRUE, FALSE)
+  return_mat    = c(TRUE, FALSE)
 )
 
 test_all_args(
@@ -54,7 +54,7 @@ test_that("sim calc", {
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
       method        = abdiv::binomial_deviance,
-      return_matrix = FALSE,
+      return_mat    = FALSE,
       prefix        = "x"
     )
 
@@ -75,7 +75,7 @@ test_that("calc_similarity Seurat out", {
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
       method        = abdiv::binomial_deviance,
-      return_matrix = FALSE,
+      return_mat    = FALSE,
       prefix        = "x"
     )
 
@@ -94,7 +94,7 @@ test_that("calc_similarity df out", {
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
       method        = abdiv::binomial_deviance,
-      return_matrix = FALSE,
+      return_mat    = FALSE,
       prefix        = "x"
     )
 
@@ -122,7 +122,7 @@ test_that("calc_similarity df out", {
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
       method        = abdiv::binomial_deviance,
-      return_matrix = FALSE,
+      return_mat    = FALSE,
       prefix        = "x"
     )
 
@@ -150,7 +150,7 @@ test_that("calc_similarity mat out", {
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
       method        = abdiv::binomial_deviance,
-      return_matrix = TRUE,
+      return_mat    = TRUE,
       prefix        = "x"
     )
 

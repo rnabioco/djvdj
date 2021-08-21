@@ -1,10 +1,8 @@
 
 # Check Seurat return without filtering
 test_that("filter_vdj Seurat out no filt", {
-  res <- filter_vdj(
-    sobj_in = tiny_vdj,
-    filt    = any(chains %in% c("IGH", "IGK", "IGL")),
-  )
+  res <- tiny_vdj %>%
+    filter_vdj(any(chains %in% c("IGH", "IGK", "IGL")))
 
   expect_s4_class(res, "Seurat")
   expect_identical(colnames(res), colnames(tiny_vdj))                          # cells in object
@@ -17,10 +15,8 @@ test_that("filter_vdj Seurat out no filt", {
 
 # Check data.frame return without filtering
 test_that("filter_vdj df out no filt", {
-  res <- filter_vdj(
-    sobj_in = tiny_vdj,
-    filt    = any(chains %in% c("IGH", "IGK", "IGL"))
-  )
+  res <- tiny_vdj %>%
+    filter_vdj(any(chains %in% c("IGH", "IGK", "IGL")))
 
   res <- res@meta.data
 
@@ -34,12 +30,12 @@ test_that("filter_vdj df out no filt", {
 
 # Check Seurat return for all cells
 test_that("filter_vdj Seurat return VDJ cells", {
-  res <- filter_vdj(
-    sobj_in       = tiny_vdj,
-    filt          = any(chains %in% c("IGH", "IGK", "IGL")),
-    clonotype_col = NULL,
-    filter_cells  = TRUE
-  )
+  res <- tiny_vdj %>%
+    filter_vdj(
+      any(chains %in% c("IGH", "IGK", "IGL")),
+      clonotype_col = NULL,
+      filter_cells  = TRUE
+    )
 
   old_na <- colnames(tiny_vdj)[!is.na(tiny_vdj$clonotype_id)]
 
@@ -51,7 +47,7 @@ test_that("filter_vdj Seurat return VDJ cells", {
 test_that("filter_vdj Seurat return all cells", {
   res <- tiny_vdj %>%
     filter_vdj(
-      filt          = any(chains %in% c("IGH", "IGK", "IGL")),
+      any(chains %in% c("IGH", "IGK", "IGL")),
       clonotype_col = "cdr3_nt",
       filter_cells  = TRUE
     )
@@ -65,7 +61,7 @@ test_that("filter_vdj NULL clonotype_col FALSE filter_cells", {
   fn <- function() {
     res <- tiny_vdj %>%
       filter_vdj(
-        filt          = any(chains %in% c("IGH", "IGK", "IGL")),
+        any(chains %in% c("IGH", "IGK", "IGL")),
         clonotype_col = NULL,
         filter_cells  = FALSE
       )
@@ -77,15 +73,15 @@ test_that("filter_vdj NULL clonotype_col FALSE filter_cells", {
 # Check for .KEEP
 test_that("filter_vdj .KEEP check", {
   res <- tiny_vdj %>%
-    filter_vdj(filt = orig.ident == "avid_1")
+    filter_vdj(orig.ident == "avid_1")
 
   expect_false(".KEEP" %in% colnames(res@meta.data))
 
   fn <- function() {
     tiny_vdj %>%
       filter_vdj(
-        filt = orig.ident == "avid_1",
-        sep  = "BED_SEP"
+        orig.ident == "avid_1",
+        sep = "BED_SEP"
       )
   }
 

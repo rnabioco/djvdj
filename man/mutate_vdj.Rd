@@ -2,26 +2,20 @@
 % Please edit documentation in R/mutate_vdj.R
 \name{mutate_vdj}
 \alias{mutate_vdj}
-\alias{mutate_vdj.default}
-\alias{mutate_vdj.Seurat}
 \title{Mutate V(D)J data}
 \usage{
-mutate_vdj(input, ...)
-
-\method{mutate_vdj}{default}(input, ..., clonotype_col = "cdr3_nt", sep = ";", vdj_cols = NULL)
-
-\method{mutate_vdj}{Seurat}(
+mutate_vdj(
   input,
   ...,
   clonotype_col = "cdr3_nt",
-  sep = ";",
   vdj_cols = NULL,
-  return_df = FALSE
+  return_df = FALSE,
+  sep = ";"
 )
 }
 \arguments{
-\item{input}{Single cell object or data.frame containing V(D)J data. If a
-data.frame is provided, the cell barcodes should be stored as row names.}
+\item{input}{Object containing V(D)J data. If a data.frame is provided, the
+cell barcodes should be stored as row names.}
 
 \item{...}{Name-value pairs to use for creating or modifying meta.data
 columns}
@@ -29,16 +23,16 @@ columns}
 \item{clonotype_col}{meta.data column containing clonotype IDs. This column
 is used to determine which cells have V(D)J data}
 
-\item{sep}{Separator to use for expanding meta.data columns}
-
 \item{vdj_cols}{meta.data columns containing VDJ data to use for filtering.
 If set to NULL (recommended) columns are automatically selected.}
 
 \item{return_df}{Return results as a data.frame. If set to FALSE, results
 will be added to the input object.}
+
+\item{sep}{Separator used for storing per cell V(D)J data}
 }
 \value{
-Modified single cell object or data.frame
+Object with mutated meta.data
 }
 \description{
 Mutate V(D)J data

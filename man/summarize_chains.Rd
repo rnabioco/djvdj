@@ -5,7 +5,7 @@
 \title{Summarize values for chains}
 \usage{
 summarize_chains(
-  sobj_in,
+  input,
   data_cols = c("umis", "reads"),
   fn,
   chain_col = "chains",
@@ -14,7 +14,7 @@ summarize_chains(
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object containing V(D)J data}
+\item{input}{Object containing single cell data}
 
 \item{data_cols}{meta.data columns to summarize}
 
@@ -22,11 +22,11 @@ summarize_chains(
 
 \item{chain_col}{meta.data column(s) containing labels for each chain
 expressed in the cell. These labels are used for grouping the summary
-output. Set chain_col to NULL to group solely based on the cell ID.}
+output. Set chain_col to NULL to group solely based on the cell barcodes.}
 
 \item{include_cols}{Additional columns to include in the output data.frame}
 
-\item{sep}{Separator to use for expanding data_cols and chain_col}
+\item{sep}{Separator used for storing per cell V(D)J data}
 }
 \value{
 data.frame containing summary results

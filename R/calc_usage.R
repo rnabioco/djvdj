@@ -1,17 +1,7 @@
 #' Calculate gene usage
 #'
-#' Gene usage is calculated as the percent of cells that express each V(D)J
-#' gene present in gene_cols. Cells that lack V(D)J data and have NAs present
-#' in gene_cols are excluded from this calculation.
-#'
-#' @export
-calc_usage <- function(input, ...) {
-  UseMethod("calc_usage", input)
-}
-
-#' @rdname calc_usage
-#' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param input Object containing V(D)J data. If a data.frame is provided, the
+#' cell barcodes should be stored as row names.
 #' @param gene_cols meta.data column containing genes identified for each
 #' clonotype
 #' @param cluster_col meta.data column containing cell clusters to use when
@@ -19,26 +9,25 @@ calc_usage <- function(input, ...) {
 #' @param chain Chain to use for calculating gene usage. Set to NULL to include
 #' all chains.
 #' @param chain_col meta.data column containing chains for each cell
-#' @param sep Separator used in gene_cols for storing gene names
-#' @param ... Arguments passed to other methods
+#' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame containing gene usage summary
 #' @export
-calc_usage.default <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
-                               chain_col = "chains", sep = ";", ...) {
+calc_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
+                       chain_col = "chains", sep = ";") {
 
-  # data.frame to calculate usage
+  # Format input data
   sep_cols <- c(gene_cols, chain_col)
-  vdj_cols   <- c(".cell_id", cluster_col, sep_cols)
+  vdj_cols <- c(".cell_id", cluster_col, sep_cols)
 
-  input   <- tibble::as_tibble(input, rownames = ".cell_id")
-  meta_df <- dplyr::select(input, all_of(vdj_cols))
+  meta <- .get_meta(input)
+  meta <- dplyr::select(meta, all_of(vdj_cols))
 
-  meta_df <- dplyr::filter(meta_df, across(
+  meta <- dplyr::filter(meta, across(
     all_of(gene_cols),
     ~ !is.na(.x)
   ))
 
-  res <- dplyr::mutate(meta_df, across(
+  res <- dplyr::mutate(meta, across(
     all_of(sep_cols),
     ~ strsplit(as.character(.x), sep)
   ))
@@ -46,7 +35,7 @@ calc_usage.default <- function(input, gene_cols, cluster_col = NULL, chain = NUL
   # Filter chains
   if (!is.null(chain)) {
     if (is.null(chain_col)) {
-      stop("Must specify chain_col.")
+      stop("Must specify chain_col")
     }
 
     res <- dplyr::mutate(res, across(all_of(gene_cols), ~ {
@@ -78,16 +67,16 @@ calc_usage.default <- function(input, gene_cols, cluster_col = NULL, chain = NUL
 
   res <- dplyr::summarize(
     res,
-    n_cells = n_distinct(meta_df$.cell_id),
+    n_cells = n_distinct(meta$.cell_id),
     freq    = dplyr::n_distinct(.data$.cell_id),
     .groups = "drop"
   )
 
   # Calculate percentage used
   if (!is.null(cluster_col)) {
-    clusts       <- pull(meta_df, cluster_col)
-    clust_counts <- table(clusts)
-    clusts       <- unique(clusts)
+    clsts       <- pull(meta, cluster_col)
+    clst_counts <- table(clsts)
+    clsts       <- unique(clsts)
 
     res <- tidyr::pivot_wider(
       res,
@@ -98,14 +87,14 @@ calc_usage.default <- function(input, gene_cols, cluster_col = NULL, chain = NUL
 
     res <- tidyr::pivot_longer(
       res,
-      cols      = all_of(clusts),
+      cols      = all_of(clsts),
       names_to  = cluster_col,
       values_to = "freq"
     )
 
     res <- dplyr::mutate(  # why doesn't .before work here??
       res,
-      n_cells = as.numeric(clust_counts[!!sym(cluster_col)])
+      n_cells = as.numeric(clst_counts[!!sym(cluster_col)])
     )
 
     res <- dplyr::relocate(res, .data$n_cells, .before = .data$freq)
@@ -115,22 +104,3 @@ calc_usage.default <- function(input, gene_cols, cluster_col = NULL, chain = NUL
 
   res
 }
-
-#' @rdname calc_usage
-#' @export
-calc_usage.Seurat <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
-                              chain_col = "chains", sep = ";", ...) {
-
-  res <- calc_usage(
-    input       = input@meta.data,
-    gene_cols   = gene_cols,
-    cluster_col = cluster_col,
-    chain       = chain,
-    chain_col   = chain_col,
-    sep         = sep
-  )
-
-  res
-}
-
-

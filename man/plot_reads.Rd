@@ -14,8 +14,8 @@ plot_reads(
   plot_lvls = NULL,
   facet_rows = 1,
   facet_scales = "free_x",
-  ...,
-  sep = ";"
+  sep = ";",
+  ...
 )
 }
 \arguments{
@@ -41,9 +41,9 @@ chain_col and cluster_col are provided}
 \item{facet_scales}{This argument passes a scales specification to
 facet_wrap. Can be "fixed", "free", "free_x", or "free_y"}
 
-\item{...}{Additional arguments to pass to ggplot}
+\item{sep}{Separator used for storing per cell V(D)J data}
 
-\item{sep}{Separator to use for expanding data_cols}
+\item{...}{Additional arguments to pass to ggplot}
 }
 \value{
 ggplot object

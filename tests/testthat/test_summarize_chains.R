@@ -1,7 +1,7 @@
 
 # Check all summarize_chains arguments
 arg_lst <- list(
-  sobj_in      = list(tiny_vdj),
+  input        = list(tiny_vdj),
   data_cols    = list("reads", "umis", c("reads", "umis")),
   fn           = list(mean, median),
   chain_col    = list(NULL, "chains"),

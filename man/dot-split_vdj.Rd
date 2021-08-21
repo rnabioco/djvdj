@@ -15,7 +15,7 @@
 \arguments{
 \item{df_in}{data.frame to modify}
 
-\item{sep}{Separator to use for expanding meta.data columns}
+\item{sep}{Separator used for storing per cell V(D)J data}
 
 \item{sep_cols}{Columns to split based on sep}
 

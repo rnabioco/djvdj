@@ -1,147 +1,95 @@
-#' Filter V(D)J meta.data
+#' Add meta.data to single cell object
 #'
-#' @param sobj_in Seurat object containing V(D)J data
-#' @param filt Condition to use for filtering meta.data
-#' @param clonotype_col meta.data column containing clonotype IDs. This column
-#' is used to determine which cells have V(D)J data. If clonotype_col is set to
-#' NULL, filtering is performed regardless of whether V(D)J data is present for
-#' the cell
-#' @param filter_cells Should cells be removed from the object? If FALSE
-#' (default) V(D)J data will be removed from the meta.data but no cells will be
-#' removed from the object.
-#' @param sep Separator to use for expanding meta.data columns
-#' @param vdj_cols meta.data columns containing VDJ data to use for filtering.
-#' If set to NULL (recommended) columns are automatically selected based on the
-#' given separator.
-#' @return Seurat object
-#' @export
-filter_vdj <- function(sobj_in, filt, clonotype_col = "cdr3_nt", filter_cells = FALSE,
-                       sep = ";", vdj_cols = NULL) {
-
-  if (!filter_cells && is.null(clonotype_col)) {
-    stop("clonotype_col must be provided when filter_cells is set to FALSE.")
-  }
-
-  # Identify columns with VDJ data
-  meta_df <- sobj_in@meta.data
-  meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
-
-  col_list <- .get_vdj_cols(
-    df_in     = meta_df,
-    clone_col = clonotype_col,
-    cols_in   = vdj_cols,
-    sep       = sep
-  )
-
-  vdj_cols <- col_list$vdj
-  sep_cols <- col_list$sep
-
-  if (purrr::is_empty(sep_cols)) {
-    warning("The separator '", sep, "' is not present in the data")
-  }
-
-  # Create list-cols for VDJ columns that contain sep
-  if (!purrr::is_empty(sep_cols)) {
-    sep_cols <- set_names(
-      x  = sep_cols,
-      nm = paste0(".", sep_cols)
-    )
-
-    meta_df <- .split_vdj(
-      df_in    = meta_df,
-      sep_cols = sep_cols,
-      sep      = sep
-    )
-
-    meta_df <- dplyr::rowwise(meta_df)
-  }
-
-  # Store results for filtering
-  meta_df <- dplyr::mutate(meta_df, .KEEP = {{filt}})
-  meta_df <- dplyr::ungroup(meta_df)
-
-  # Remove VDJ data from meta.data (without filtering cells)
-  if (!filter_cells) {
-    meta_df <- dplyr::mutate(
-      meta_df,
-      across(
-        all_of(c(vdj_cols, names(sep_cols))),
-        ~ ifelse(.KEEP, .x, NA)
-      )
-    )
-
-  # Filter cells from object
-  # when clonotype_col != NULL only filter cells with VDJ data
-  } else {
-    if (!is.null(clonotype_col)) {
-      meta_df <- dplyr::mutate(
-        meta_df,
-        .KEEP = dplyr::if_else(
-          is.na(!!sym(clonotype_col)),
-          TRUE,
-          .data$.KEEP
-        )
-      )
-    }
-
-    meta_df <- dplyr::filter(meta_df, .data$.KEEP)
-  }
-
-  # Remove columns created for filtering
-  if (!purrr::is_empty(sep_cols)) {
-    sep_cols <- purrr::set_names(
-      x  = names(sep_cols),
-      nm = unname(sep_cols)
-    )
-
-    meta_df <- dplyr::select(meta_df, -all_of(names(sep_cols)))
-    meta_df <- dplyr::rename(meta_df, !!!syms(sep_cols))
-  }
-
-  meta_df <- dplyr::select(meta_df, -.data$.KEEP)
-
-  # Add meta.data to Seurat object
-  meta_df <- tibble::column_to_rownames(meta_df, ".cell_id")
-
-  cells <- rownames(meta_df)
-  res   <- subset(sobj_in, cells = cells)
-  res   <- Seurat::AddMetaData(res, meta_df)
-
-  res
+.add_meta <- function(input, ...) {
+  UseMethod(".add_meta", input)
 }
 
+#' @rdname dot-add_meta
+#' @param input Object containing single cell data
+#' @param meta meta.data to add to object
+#' @param ... Arguments passed to other methods
+#' @return Object with added meta.data
+.add_meta.default <- function(input, meta) {
 
-#' Manipulate Seurat object meta.data
+  meta <- tibble::column_to_rownames(meta, ".cell_id")
+
+  meta
+}
+
+#' @rdname dot-add_meta
+.add_meta.Seurat <- function(input, meta) {
+
+  .check_pkg("Seurat")
+
+  meta <- tibble::column_to_rownames(meta, ".cell_id")
+
+  input@meta.data <- meta
+
+  input
+}
+
+#' @rdname dot-add_meta
+#' @importFrom SingleCellExperiment colData
+#' @importFrom S4Vectors DataFrame
+#' @importFrom SummarizedExperiment `colData<-`
+.add_meta.SingleCellExperiment <- function(input, meta) {
+
+  .check_pkg("SingleCellExperiment")
+
+  meta <- tibble::column_to_rownames(meta, ".cell_id")
+
+  colData(input) <- S4Vectors::DataFrame(meta)
+
+  input
+}
+
+#' Add meta.data to single cell object
 #'
-#' @param sobj_in Seurat object
-#' @param .fun Function or formula to use for modifying the meta.data. If a
-#' formula is provided, use .x to refer to the meta.data table.
-#' @param ... Arguments to pass to the provided function
-#' @return Seurat object
-#' @export
-mutate_meta <- function(sobj_in, .fun, ...) {
+.get_meta <- function(input) {
+  UseMethod(".get_meta", input)
+}
 
-  if (!"Seurat" %in% class(sobj_in)) {
-    stop("sobj_in must be a Seurat object")
+#' @rdname dot-get_meta
+#' @param input Object containing single cell data
+#' @return tibble containing meta.data pulled from object
+.get_meta.default <- function(input) {
+
+  meta <- tibble::as_tibble(input, rownames = ".cell_id")
+
+  meta
+}
+
+#' @rdname dot-get_meta
+.get_meta.Seurat <- function(input) {
+
+  .check_pkg("Seurat")
+
+  meta <- tibble::as_tibble(input@meta.data, rownames = ".cell_id")
+
+  meta
+}
+
+#' @rdname dot-get_meta
+#' @importFrom SingleCellExperiment colData
+.get_meta.SingleCellExperiment <- function(input) {
+
+  .check_pkg("SingleCellExperiment")
+
+  meta <- colData(input)
+  meta <- tibble::as_tibble(meta, rownames = ".cell_id")
+
+  meta
+}
+
+#' Check for loaded package
+#'
+#' @param pkg Name of package
+.check_pkg <- function(pkg) {
+
+  if (!pkg %in% loadedNamespaces()) {
+    message(pkg, " not loaded")
   }
 
-  if (!is_function(.fun) && !is_formula(.fun)) {
-    stop(".fun must be either a function or a formula")
-  }
-
-  .x <- sobj_in@meta.data
-  .x <- tibble::rownames_to_column(.x, ".cell_id")
-
-  if (is_formula(.fun)) {
-    .fun <- as_mapper(.fun, ...)
-  }
-
-  res <- .fun(.x, ...)
-  res <- tibble::column_to_rownames(res, ".cell_id")
-
-  sobj_in@meta.data <- res
-
-  sobj_in
 }
 
 
@@ -151,32 +99,32 @@ mutate_meta <- function(sobj_in, .fun, ...) {
 #' For each cell, the function(s) provided will be applied to each unique label
 #' in chain_col.
 #'
-#' @param sobj_in Seurat object containing V(D)J data
+#' @param input Object containing single cell data
 #' @param data_cols meta.data columns to summarize
 #' @param fn Function to use for summarizing data_cols
 #' @param chain_col meta.data column(s) containing labels for each chain
 #' expressed in the cell. These labels are used for grouping the summary
-#' output. Set chain_col to NULL to group solely based on the cell ID.
+#' output. Set chain_col to NULL to group solely based on the cell barcodes.
 #' @param include_cols Additional columns to include in the output data.frame
-#' @param sep Separator to use for expanding data_cols and chain_col
+#' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame containing summary results
 #' @export
-summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
-                             chain_col = "chains", include_cols = NULL, sep = ";") {
+summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_col = "chains",
+                             include_cols = NULL, sep = ";") {
 
-  # Fetch meta.data
-  fetch_cols <- c(data_cols, chain_col, include_cols)
+  # Format input data
+  fetch_cols <- c(".cell_id", data_cols, chain_col, include_cols)
 
-  meta_df <- Seurat::FetchData(sobj_in, fetch_cols)
-  meta_df <- tibble::as_tibble(meta_df, rownames = ".cell_id")
+  meta <- .get_meta(input)
+  meta <- dplyr::select(meta, all_of(fetch_cols))
 
-  meta_df <- dplyr::filter(
-    meta_df,
+  meta <- dplyr::filter(
+    meta,
     across(all_of(data_cols), ~ !is.na(.x))
   )
 
   # Expand meta.data
-  res <- dplyr::mutate(meta_df, across(
+  res <- dplyr::mutate(meta, across(
     all_of(c(data_cols, chain_col)),
     ~ strsplit(as.character(.x), sep)
   ))
@@ -205,7 +153,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
 #' Split V(D)J meta.data columns into vectors
 #'
 #' @param df_in data.frame to modify
-#' @param sep Separator to use for expanding meta.data columns
+#' @param sep Separator used for storing per cell V(D)J data
 #' @param sep_cols Columns to split based on sep
 #' @param num_cols Columns to convert to numeric
 #' @param lgl_cols Columns to convert to logical
@@ -245,7 +193,7 @@ summarize_chains <- function(sobj_in, data_cols = c("umis", "reads"), fn,
 #' columns with V(D)J data. If NULL all columns are used.
 #' @param cols_in meta.data columns containing VDJ data to use for filtering.
 #' If set to NULL (recommended) columns are automatically selected.
-#' @param sep Separator to search for in columns
+#' @param sep Separator used for storing per cell V(D)J data
 #' @return list of vectors containing columns with V(D)J data and sep
 .get_vdj_cols <- function(df_in, clone_col, cols_in, sep) {
 

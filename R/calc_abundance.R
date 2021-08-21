@@ -1,11 +1,5 @@
 #' Calculate clonotype abundance
 #'
-#' @export
-calc_abundance <- function(input, ...) {
-  UseMethod("calc_abundance", input)
-}
-
-#' @rdname calc_abundance
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param clonotype_col meta.data column containing clonotype IDs
@@ -14,24 +8,23 @@ calc_abundance <- function(input, ...) {
 #' @param prefix Prefix to add to new columns
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.
-#' @param ... Arguments passed to other methods
 #' @return Single cell object or data.frame with clonotype abundance metrics
 #' @export
-calc_abundance.default <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                                   prefix = "", ...) {
+calc_abundance <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
+                           prefix = "", return_df = FALSE) {
 
   # Format input data
-  input   <- tibble::as_tibble(input, rownames = ".cell_id")
-  meta_df <- dplyr::filter(input, !is.na(!!sym(clonotype_col)))
+  meta <- .get_meta(input)
+  vdj  <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
 
-  meta_df <- dplyr::select(
-    meta_df,
+  vdj <- dplyr::select(
+    vdj,
     .data$.cell_id, all_of(c(cluster_col, clonotype_col))
   )
 
   # Calculate clonotype abundance
-  meta_df <- .calc_abund(
-    df_in     = meta_df,
+  vdj <- .calc_abund(
+    df_in     = vdj,
     cell_col  = ".cell_id",
     clone_col = clonotype_col,
     clust_col = cluster_col
@@ -48,30 +41,16 @@ calc_abundance.default <- function(input, clonotype_col = "cdr3_nt", cluster_col
     paste0(prefix, "clone_", new_cols)
   )
 
-  meta_df <- select(meta_df, .data$.cell_id, !!!syms(new_cols))
+  vdj <- select(vdj, .data$.cell_id, !!!syms(new_cols))
 
   # Format results
-  res <- dplyr::left_join(input, meta_df, by = ".cell_id")
-  res <- tibble::column_to_rownames(res, ".cell_id")
+  res <- dplyr::left_join(meta, vdj, by = ".cell_id")
 
-  res
-}
-
-#' @rdname calc_abundance
-#' @export
-calc_abundance.Seurat <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                                  prefix = "", return_df = FALSE, ...) {
-
-  res <- calc_abundance(
-    input         = input@meta.data,
-    clonotype_col = clonotype_col,
-    cluster_col   = cluster_col,
-    prefix        = prefix
-  )
-
-  if (!return_df) {
-    res <- Seurat::AddMetaData(input, metadata = res)
+  if (return_df) {
+    input <- meta
   }
+
+  res <- .add_meta(input, res)
 
   res
 }

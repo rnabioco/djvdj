@@ -16,8 +16,8 @@ plot_diversity(
 )
 }
 \arguments{
-\item{input}{Single cell object or data.frame containing V(D)J data. If a
-data.frame is provided, the cell barcodes should be stored as row names.}
+\item{input}{Object containing V(D)J data. If a data.frame is provided, the
+cell barcodes should be stored as row names.}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating clonotype abundance}

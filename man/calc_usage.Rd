@@ -2,37 +2,20 @@
 % Please edit documentation in R/calc_usage.R
 \name{calc_usage}
 \alias{calc_usage}
-\alias{calc_usage.default}
-\alias{calc_usage.Seurat}
 \title{Calculate gene usage}
 \usage{
-calc_usage(input, ...)
-
-\method{calc_usage}{default}(
+calc_usage(
   input,
   gene_cols,
   cluster_col = NULL,
   chain = NULL,
   chain_col = "chains",
-  sep = ";",
-  ...
-)
-
-\method{calc_usage}{Seurat}(
-  input,
-  gene_cols,
-  cluster_col = NULL,
-  chain = NULL,
-  chain_col = "chains",
-  sep = ";",
-  ...
+  sep = ";"
 )
 }
 \arguments{
-\item{input}{Single cell object or data.frame containing V(D)J data. If a
-data.frame is provided, the cell barcodes should be stored as row names.}
-
-\item{...}{Arguments passed to other methods}
+\item{input}{Object containing V(D)J data. If a data.frame is provided, the
+cell barcodes should be stored as row names.}
 
 \item{gene_cols}{meta.data column containing genes identified for each
 clonotype}
@@ -45,13 +28,11 @@ all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
-\item{sep}{Separator used in gene_cols for storing gene names}
+\item{sep}{Separator used for storing per cell V(D)J data}
 }
 \value{
 data.frame containing gene usage summary
 }
 \description{
-Gene usage is calculated as the percent of cells that express each V(D)J
-gene present in gene_cols. Cells that lack V(D)J data and have NAs present
-in gene_cols are excluded from this calculation.
+Calculate gene usage
 }

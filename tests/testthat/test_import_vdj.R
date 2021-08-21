@@ -107,8 +107,7 @@ test_that("import_vdj unfiltered contigs", {
 
 # Check data.frame output
 test_that("import_vdj df out", {
-  res <- ctigs %>%
-    import_vdj()
+  res <- import_vdj(vdj_dir = ctigs)
 
   expect_s3_class(res, "data.frame")
 })

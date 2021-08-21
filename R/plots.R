@@ -291,19 +291,19 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, facet_col = NULL, yaxis
 #' chain_col and cluster_col are provided
 #' @param facet_scales This argument passes a scales specification to
 #' facet_wrap. Can be "fixed", "free", "free_x", or "free_y"
-#' @param sep Separator to use for expanding data_cols
+#' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
 plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "chains", cluster_col = NULL,
                        type = "violin", plot_colors = NULL, plot_lvls = NULL, facet_rows = 1,
-                       facet_scales = "free_x", ..., sep = ";") {
+                       facet_scales = "free_x", sep = ";", ...) {
 
   if (!type %in% c("violin", "histogram", "density")) {
     stop("type must be 'violin', 'histogram' or 'density'.")
   }
 
-  # calculate average reads/umis each chain for each cell
+  # Calculate mean reads/umis each chain for each cell
   plt_dat <- summarize_chains(
     sobj_in,
     data_cols    = data_cols,
@@ -454,8 +454,8 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
 
 #' Plot clonotype abundance
 #'
-#' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param input Object containing V(D)J data. If a data.frame is provided, the
+#' cell barcodes should be stored as row names.
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating clonotype abundance
 #' @param cluster_col meta.data column containing cluster IDs to use for
@@ -647,8 +647,8 @@ plot_abundance <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
 
 #' Plot repertoire diversity
 #'
-#' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param input Object containing V(D)J data. If a data.frame is provided, the
+#' cell barcodes should be stored as row names.
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating clonotype abundance
 #' @param cluster_col meta.data column containing cluster IDs to use for
@@ -759,8 +759,8 @@ plot_diversity <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
 
 #' Plot repertoire overlap
 #'
-#' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param input Object containing V(D)J data. If a data.frame is provided, the
+#' cell barcodes should be stored as row names.
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating overlap
 #' @param cluster_col meta.data column containing cluster IDs to use for
@@ -821,8 +821,8 @@ plot_similarity <- function(input, clonotype_col = "cdr3_nt", cluster_col, metho
 
 #' Plot V(D)J gene usage
 #'
-#' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param input Object containing V(D)J data. If a data.frame is provided, the
+#' cell barcodes should be stored as row names.
 #' @param gene_cols meta.data column containing genes used for each clonotype,
 #' provide a vector with two column names to plot paired usage of genes
 #' @param cluster_col meta.data column containing cell clusters to use for
@@ -837,7 +837,7 @@ plot_similarity <- function(input, clonotype_col = "cdr3_nt", cluster_col, metho
 #' @param plot_lvls Levels to use for ordering clusters
 #' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
 #' @param chain_col meta.data column containing chains for each cell
-#' @param sep Separator to use for expanding gene_cols
+#' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export

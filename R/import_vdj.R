@@ -1,13 +1,7 @@
 #' Import V(D)J data
 #'
-#' @export
-import_vdj <- function(...) {
-  UseMethod("import_vdj")
-}
-
-#' @rdname import_vdj
-#' @param input Single cell object, if set to NULL a data.frame containing
-#' V(D)J results will be returned
+#' @param input Object containing single cell data, if set to NULL a data.frame
+#' containing V(D)J results will be returned
 #' @param vdj_dir Directory containing the output from cellranger vdj. A vector
 #' or named vector can be given to load data from several runs. If a named
 #' vector is given, the cell barcodes will be prefixed with the provided names.
@@ -21,12 +15,13 @@ import_vdj <- function(...) {
 #' Read10X function found in the Seurat package.
 #' @param filter_contigs Only include chains with at least one productive
 #' contig
-#' @param sep Separator to use for storing per cell clonotype information
-#' @param ... Arguments passed to other methods
+#' @param sep Separator to use for storing per cell V(D)J data
 #' @return Single cell object or data.frame with added V(D)J data
 #' @export
-import_vdj.default <- function(vdj_dir, prefix = "", cell_prefix = NULL,
-                               filter_contigs = TRUE, sep = ";", ...) {
+import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, filter_contigs = TRUE,
+                       sep = ";") {
+
+  # SHOULD CHECK BARCODE OVERLAP BEFORE BINDING ROWS
 
   # VDJ columns
   count_cols <- c("reads", "umis")
@@ -110,12 +105,6 @@ import_vdj.default <- function(vdj_dir, prefix = "", cell_prefix = NULL,
     dplyr::rename(.x, chains = .data$chain)
   })
 
-
-
-  # CHECK BARCODE OVERLAP BEFORE BINDING ROWS
-
-
-
   # Filter for productive contigs
   if (filter_contigs) {
     contigs <- dplyr::filter(contigs, .data$productive, .data$full_length)
@@ -127,7 +116,7 @@ import_vdj.default <- function(vdj_dir, prefix = "", cell_prefix = NULL,
   n_remove <- length(n_remove)
 
   if (n_remove > 0) {
-    warning(n_remove, " contigs do not have an assigned clonotype_id, these contigs will be removed.")
+    warning(n_remove, " contigs do not have an assigned clonotype_id, these contigs will be removed")
 
     contigs <- dplyr::filter(contigs, !is.na(.data$raw_clonotype_id))
   }
@@ -139,7 +128,7 @@ import_vdj.default <- function(vdj_dir, prefix = "", cell_prefix = NULL,
   sep <- gsub("[[:space:]]", "", sep)
 
   if (any(grepl(sep, contigs[, sep_cols]))) {
-    stop("The string '", sep, "' is already present in the V(D)J data, select a different value for sep.")
+    stop("The string '", sep, "' is already present in the V(D)J data, select a different value for sep")
   }
 
   # Sum contig reads and UMIs for chains
@@ -207,7 +196,7 @@ import_vdj.default <- function(vdj_dir, prefix = "", cell_prefix = NULL,
     .add = TRUE
   )
 
-  meta_df <- summarize(
+  meta <- summarize(
     contigs,
     across(
       all_of(sep_cols),
@@ -218,59 +207,66 @@ import_vdj.default <- function(vdj_dir, prefix = "", cell_prefix = NULL,
   )
 
   # Check for duplicated cell barcodes
-  if (any(duplicated(meta_df$barcode))) {
-    stop("Malformed inport data, multiple clonotype_ids are associated with the same cell barcode.")
+  if (any(duplicated(meta$barcode))) {
+    stop("Malformed inport data, multiple clonotype_ids are associated with the same cell barcode")
   }
 
-  # Add meta.data to Seurat object
-  res <- tibble::remove_rownames(meta_df)
+  # Format meta.data
+  res <- tibble::remove_rownames(meta)
   res <- tibble::column_to_rownames(res, "barcode")
   res <- dplyr::rename_with(res, ~ paste0(prefix, .x))
 
+  if (!is.null(input)) {
+    res <- .merge_meta(input, res)
+  }
+
   res
 }
 
-#' @rdname import_vdj
-#' @export
-import_vdj.Seurat <- function(input, vdj_dir, prefix = "", cell_prefix = NULL,
-                              filter_contigs = TRUE, sep = ";", ...) {
 
-  meta_df <- import_vdj(
-    vdj_dir        = vdj_dir,
-    prefix         = prefix,
-    cell_prefix    = cell_prefix,
-    filter_contigs = filter_contigs,
-    sep            = sep
-  )
+#' Merge new meta.data with object
+#'
+#' @param input Object containing single cell data
+#' @param meta meta.data to merge with object
+#' @param by Columns to use for merging
+#' @return Object with added meta.data
+.merge_meta <- function(input, meta, by = ".cell_id") {
 
-  # Check overlap between V(D)J data and the Seurat object
-  so_bcs  <- Seurat::Cells(input)
-  vdj_bcs <- rownames(meta_df)
+  obj_meta <- .get_meta(input)
 
-  n_overlap <- length(so_bcs[so_bcs %in% vdj_bcs])
-  pct_so    <- round(n_overlap / length(so_bcs), 2) * 100
-  pct_vdj   <- round(n_overlap / length(vdj_bcs), 2) * 100
+  # Check overlap between cell barcodes
+  obj_cells <- obj_meta$.cell_id
+  met_cells <- rownames(meta)
+
+  n_overlap <- length(obj_cells[obj_cells %in% met_cells])
+  pct_obj   <- round(n_overlap / length(obj_cells), 2) * 100
+  pct_met   <- round(n_overlap / length(met_cells), 2) * 100
 
   if (n_overlap == 0) {
-    stop("
-      Cell barcodes from the V(D)J data were not found in the Seurat object, are you using the
-      correct cell barcode prefixes? Cell barcode prefixes can be provided to the cell_prefix
-      argument or by passing a named vector to the vdj_dir argument.
-    ")
+    stop("Cell barcodes do not match those in the object, are you using the correct cell barcode prefixes?")
   }
 
-  if (pct_so < 25) {
-    warning("Only ", pct_so, "% (", n_overlap, ") of cell barcodes present in the Seurat object overlap with the V(D)J data.")
+  if (pct_obj < 25) {
+    warning("Only ", pct_obj, "% (", n_overlap, ") of cell barcodes present in the object overlap")
   }
 
-  if (pct_vdj < 25) {
-    warning("Only ", pct_vdj, "% (", n_overlap, ") of cell barcodes present in the V(D)J data overlap with the Seurat object.")
+  if (pct_met < 25) {
+    warning("Only ", pct_met, "% (", n_overlap, ") of cell barcodes overlap with the provided object")
   }
 
-  # Filter for cells present in input
-  meta_df <- meta_df[so_bcs, ]
+  # Join meta.data
+  # remove columns already present in input object to prevent duplicates
+  meta    <- tibble::rownames_to_column(meta, ".cell_id")
+  rm_cols <- colnames(obj_meta)
+  rm_cols <- rm_cols[!rm_cols %in% by]
 
-  res <- Seurat::AddMetaData(input, metadata = meta_df)
+  meta <- dplyr::select(meta, !any_of(rm_cols))
+  meta <- dplyr::left_join(obj_meta, meta, by = by)
+
+  res <- .add_meta(input, meta)
 
   res
 }
+
+
+
