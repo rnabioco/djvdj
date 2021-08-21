@@ -266,8 +266,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' tested
 #' @return Output from test_that
 test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
-  arg_lst <- arg_lst %>%
-    expand.grid(stringsAsFactors = FALSE)
+  arg_lst <- expand.grid(arg_lst, stringsAsFactors = FALSE)
 
   if (dryrun) {
     return(arg_lst)
