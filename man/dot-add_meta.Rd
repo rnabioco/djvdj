@@ -9,11 +9,11 @@
 \usage{
 .add_meta(input, ...)
 
-\method{.add_meta}{default}(input, meta)
+\method{.add_meta}{default}(meta, ..., row_col = ".cell_id")
 
-\method{.add_meta}{Seurat}(input, meta)
+\method{.add_meta}{Seurat}(input, meta, row_col = ".cell_id")
 
-\method{.add_meta}{SingleCellExperiment}(input, meta)
+\method{.add_meta}{SingleCellExperiment}(input, meta, row_col = ".cell_id")
 }
 \arguments{
 \item{input}{Object containing single cell data}
@@ -21,6 +21,8 @@
 \item{...}{Arguments passed to other methods}
 
 \item{meta}{meta.data to add to object}
+
+\item{row_col}{Column containing meta.data rownames}
 }
 \value{
 Object with added meta.data

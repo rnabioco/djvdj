@@ -89,7 +89,7 @@ calc_diversity <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
     input <- meta
   }
 
-  res <- .add_meta(input, res)
+  res <- .add_meta(input, meta = res)
 
   res
 }

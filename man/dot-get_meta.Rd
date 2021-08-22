@@ -7,16 +7,20 @@
 \alias{.get_meta.SingleCellExperiment}
 \title{Add meta.data to single cell object}
 \usage{
-.get_meta(input)
+.get_meta(input, ...)
 
-\method{.get_meta}{default}(input)
+\method{.get_meta}{default}(input, row_col = ".cell_id")
 
-\method{.get_meta}{Seurat}(input)
+\method{.get_meta}{Seurat}(input, row_col = ".cell_id")
 
-\method{.get_meta}{SingleCellExperiment}(input)
+\method{.get_meta}{SingleCellExperiment}(input, row_col = ".cell_id")
 }
 \arguments{
 \item{input}{Object containing single cell data}
+
+\item{...}{Arguments passed to other methods}
+
+\item{row_col}{New column to store meta.data rownames}
 }
 \value{
 tibble containing meta.data pulled from object

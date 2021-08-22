@@ -1,5 +1,6 @@
 #' Add meta.data to single cell object
 #'
+#' @export
 .add_meta <- function(input, ...) {
   UseMethod(".add_meta", input)
 }
@@ -7,21 +8,22 @@
 #' @rdname dot-add_meta
 #' @param input Object containing single cell data
 #' @param meta meta.data to add to object
+#' @param row_col Column containing meta.data rownames
 #' @param ... Arguments passed to other methods
 #' @return Object with added meta.data
-.add_meta.default <- function(input, meta) {
+#' @export
+.add_meta.default <- function(meta, ..., row_col = ".cell_id") {
 
-  meta <- tibble::column_to_rownames(meta, ".cell_id")
+  res <- tibble::column_to_rownames(meta, row_col)
 
-  meta
+  res
 }
 
 #' @rdname dot-add_meta
-.add_meta.Seurat <- function(input, meta) {
+#' @export
+.add_meta.Seurat <- function(input, meta, row_col = ".cell_id") {
 
-  .check_pkg("Seurat")
-
-  meta <- tibble::column_to_rownames(meta, ".cell_id")
+  meta <- tibble::column_to_rownames(meta, row_col)
 
   input@meta.data <- meta
 
@@ -29,67 +31,54 @@
 }
 
 #' @rdname dot-add_meta
-#' @importFrom SingleCellExperiment colData
 #' @importFrom S4Vectors DataFrame
-#' @importFrom SummarizedExperiment `colData<-`
-.add_meta.SingleCellExperiment <- function(input, meta) {
+#' @export
+.add_meta.SingleCellExperiment <- function(input, meta, row_col = ".cell_id") {
 
-  .check_pkg("SingleCellExperiment")
+  meta <- tibble::column_to_rownames(meta, row_col)
 
-  meta <- tibble::column_to_rownames(meta, ".cell_id")
-
-  colData(input) <- S4Vectors::DataFrame(meta)
+  input@colData <- S4Vectors::DataFrame(meta)
 
   input
 }
 
+
 #' Add meta.data to single cell object
 #'
-.get_meta <- function(input) {
+#'@export
+.get_meta <- function(input, ...) {
   UseMethod(".get_meta", input)
 }
 
 #' @rdname dot-get_meta
 #' @param input Object containing single cell data
+#' @param row_col New column to store meta.data rownames
+#' @param ... Arguments passed to other methods
 #' @return tibble containing meta.data pulled from object
-.get_meta.default <- function(input) {
+#' @export
+.get_meta.default <- function(input, row_col = ".cell_id") {
 
-  meta <- tibble::as_tibble(input, rownames = ".cell_id")
-
-  meta
-}
-
-#' @rdname dot-get_meta
-.get_meta.Seurat <- function(input) {
-
-  .check_pkg("Seurat")
-
-  meta <- tibble::as_tibble(input@meta.data, rownames = ".cell_id")
+  meta <- tibble::as_tibble(input, rownames = row_col)
 
   meta
 }
 
 #' @rdname dot-get_meta
-#' @importFrom SingleCellExperiment colData
-.get_meta.SingleCellExperiment <- function(input) {
+#' @export
+.get_meta.Seurat <- function(input, row_col = ".cell_id") {
 
-  .check_pkg("SingleCellExperiment")
-
-  meta <- colData(input)
-  meta <- tibble::as_tibble(meta, rownames = ".cell_id")
+  meta <- tibble::as_tibble(input@meta.data, rownames = row_col)
 
   meta
 }
 
-#' Check for loaded package
-#'
-#' @param pkg Name of package
-.check_pkg <- function(pkg) {
+#' @rdname dot-get_meta
+#' @export
+.get_meta.SingleCellExperiment <- function(input, row_col = ".cell_id") {
 
-  if (!pkg %in% loadedNamespaces()) {
-    message(pkg, " not loaded")
-  }
+  meta <- tibble::as_tibble(input@colData, rownames = row_col)
 
+  meta
 }
 
 

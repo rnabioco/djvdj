@@ -213,7 +213,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   # Format meta.data
   res <- tibble::remove_rownames(meta)
-  res <- tibble::column_to_rownames(res, "barcode")
+  res <- .add_meta(res, row_col = "barcode")
   res <- dplyr::rename_with(res, ~ paste0(prefix, .x))
 
   if (!is.null(input)) {
@@ -256,14 +256,14 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   # Join meta.data
   # remove columns already present in input object to prevent duplicates
-  meta    <- tibble::rownames_to_column(meta, ".cell_id")
+  meta    <- .get_meta(meta, row_col = ".cell_id")
   rm_cols <- colnames(obj_meta)
   rm_cols <- rm_cols[!rm_cols %in% by]
 
   meta <- dplyr::select(meta, !any_of(rm_cols))
   meta <- dplyr::left_join(obj_meta, meta, by = by)
 
-  res <- .add_meta(input, meta)
+  res <- .add_meta(input, meta = meta)
 
   res
 }

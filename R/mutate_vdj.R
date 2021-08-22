@@ -70,7 +70,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "cdr3_nt", vdj_cols = NULL, r
     input <- meta
   }
 
-  res <- .add_meta(input, res)
+  res <- .add_meta(input, meta = res)
 
   res
 }
@@ -98,7 +98,7 @@ mutate_meta <- function(input, .fun, ...) {
 
   res <- .fun(meta, ...)
 
-  res <- .add_meta(input, res)
+  res <- .add_meta(input, meta = res)
 
   res
 }

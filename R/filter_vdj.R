@@ -109,7 +109,7 @@ filter_vdj <- function(input, filt, clonotype_col = "cdr3_nt", filter_cells = FA
 
   cells <- vdj$.cell_id
   res   <- .subset_cells(input, cells)
-  res   <- .add_meta(res, vdj)
+  res   <- .add_meta(res, meta = vdj)
 
   res
 }

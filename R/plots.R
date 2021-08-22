@@ -16,6 +16,7 @@
 #' @param min_q Minimum quantile cutoff for color scale.
 #' @param max_q Maximum quantile cutoff for color scale.
 #' @param na_color Color to use for missing values
+#' @importFrom Seurat FetchData
 #' @return ggplot object
 #' @export
 plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
@@ -46,7 +47,8 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
       )
     })
 
-    meta_df <- Seurat::AddMetaData(sobj_in, meta_df)
+    # meta_df <- Seurat::AddMetaData(sobj_in, meta_df)
+    meta_df <- .merge_meta(sobj_in, meta_df)
     meta_df <- tibble::as_tibble(meta_df@meta.data, rownames = ".cell_id")
   }
 

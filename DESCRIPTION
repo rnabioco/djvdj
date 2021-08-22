@@ -33,7 +33,6 @@ Imports:
     purrr,
     readr,
     rlang (>= 0.1.2),
-    Seurat (>= 4.0.0),
     tibble,
     tidyr,
     broom,
@@ -41,15 +40,16 @@ Imports:
     abdiv,
     stats,
     ggrepel,
-    scales,
-    S4Vectors,
-    SingleCellExperiment,
-    SummarizedExperiment
+    scales
 Suggests: 
     roxygen2,
     testthat,
     covr,
-    knitr
+    knitr,
+    Seurat (>= 4.0.0),
+    SummarizedExperiment,
+    SingleCellExperiment,
+    S4Vectors
 VignetteBuilder: 
     knitr
 Remotes:
