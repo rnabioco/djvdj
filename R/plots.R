@@ -1,5 +1,11 @@
 #' Create 2D feature plot
 #'
+#' @export
+plot_features <- function(input, ...) {
+  UseMethod("plot_features", input)
+}
+
+#' @rdname plot_features
 #' @param sobj_in Seurat object or data.frame containing data for plotting
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
@@ -12,54 +18,38 @@
 #' feature groups, set to 'bottom' to only outline the bottom layer of
 #' points.
 #' @param plot_colors Vector of colors to use for plot
-#' @param feat_lvls Levels to use for ordering feature
+#' @param plot_lvls Levels to use for ordering feature
 #' @param min_q Minimum quantile cutoff for color scale.
 #' @param max_q Maximum quantile cutoff for color scale.
 #' @param na_color Color to use for missing values
-#' @importFrom Seurat FetchData
 #' @return ggplot object
 #' @export
-plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
-                          pt_size = 0.25, pt_outline = NULL, outline_pos = "all", plot_colors = NULL,
-                          feat_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90") {
+plot_features.default <- function(input, x = "UMAP_1", y = "UMAP_2", feature, pt_size = 0.25,
+                                  pt_outline = NULL, outline_pos = "all", plot_colors = NULL,
+                                  plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90") {
 
   # Check arguments
   if (x == y) {
-    stop("'x' and 'y' must be different.")
+    stop("'x' and 'y' must be different")
   }
 
   if (!outline_pos %in% c("all", "bottom")) {
     stop("outline_pos must be either 'all' or 'bottom'")
   }
 
-  # Format input data
-  meta_df <- sobj_in
+  plt_dat <- .get_meta(input)
 
-  if ("Seurat" %in% class(sobj_in)) {
-    vars <- c(x, y, feature)
+  plt_vars <- c(x, y, feature)
+  miss_vars <- plt_vars[!plt_vars %in% colnames(plt_dat)]
 
-    # Fetch variables and add to meta.data
-    suppressWarnings({
-      meta_df <- Seurat::FetchData(
-        sobj_in,
-        vars = unique(vars),
-        slot = as.character(data_slot)
-      )
-    })
-
-    # meta_df <- Seurat::AddMetaData(sobj_in, meta_df)
-    meta_df <- .merge_meta(sobj_in, meta_df)
-    meta_df <- tibble::as_tibble(meta_df@meta.data, rownames = ".cell_id")
-  }
-
-  if (!feature %in% colnames(meta_df)) {
-    stop(paste(feature, "not found in object."))
+  if (length(miss_vars) > 0) {
+    stop(paste(miss_vars, collapse = ", "), " not found in object")
   }
 
   # Adjust values based on min_q and max_q
-  if ((!is.null(min_q) || !is.null(max_q)) && is.numeric(meta_df[[feature]])) {
-    meta_df <- .set_lims(
-      meta_df,
+  if ((!is.null(min_q) || !is.null(max_q)) && is.numeric(plt_dat[[feature]])) {
+    plt_dat <- .set_lims(
+      plt_dat,
       ft = feature,
       mn = min_q,
       mx = max_q
@@ -67,18 +57,18 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
   }
 
   # Set feature and facet order
-  meta_df <- .set_lvls(meta_df, feature, feat_lvls)
+  plt_dat <- .set_lvls(plt_dat, feature, plot_lvls)
 
   # Create scatter plot
   # To add outline for each cluster create separate layers
-  res <- arrange(meta_df, !!sym(feature))
+  res <- arrange(plt_dat, !!sym(feature))
 
   if (!is.null(pt_outline)) {
 
     pt_outline <- pt_size + pt_outline
 
     # Add outline for each feature group
-    if (!is.numeric(meta_df[[feature]]) && outline_pos == "all") {
+    if (!is.numeric(plt_dat[[feature]]) && outline_pos == "all") {
       res <- ggplot2::ggplot(
         res,
         ggplot2::aes(
@@ -88,14 +78,14 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
         )
       )
 
-      feats <- unique(meta_df[[feature]])
+      feats <- unique(plt_dat[[feature]])
 
-      if (!is.null(feat_lvls)) {
-        feats <- feat_lvls[feat_lvls %in% feats]
+      if (!is.null(plot_lvls)) {
+        feats <- plot_lvls[plot_lvls %in% feats]
       }
 
       walk(feats, ~ {
-        f_counts <- filter(meta_df, !!sym(feature) == .x)
+        f_counts <- filter(plt_dat, !!sym(feature) == .x)
 
         res <<- res +
           ggplot2::geom_point(
@@ -134,7 +124,7 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
 
   # Set feature colors
   if (!is.null(plot_colors)) {
-    if (is.numeric(meta_df[[feature]])) {
+    if (is.numeric(plt_dat[[feature]])) {
       res <- res +
         ggplot2::scale_color_gradientn(
           colors   = plot_colors,
@@ -155,7 +145,7 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
   res <- res +
     djvdj_theme()
 
-  if (!is.numeric(meta_df[[feature]])) {
+  if (!is.numeric(plt_dat[[feature]])) {
     res <- res +
       ggplot2::guides(
         color = ggplot2::guide_legend(override.aes = list(size = 3))
@@ -163,6 +153,46 @@ plot_features <- function(sobj_in, x = "UMAP_1", y = "UMAP_2", feature, data_slo
   }
 
   res
+}
+
+#' @rdname plot_features
+#' @importFrom Seurat FetchData
+#' @export
+plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
+                                 pt_size = 0.25, pt_outline = NULL, outline_pos = "all", plot_colors = NULL,
+                                 plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90") {
+
+  # Fetch variables and add to meta.data
+  # want input data to include meta.data and any features from FetchData
+  plt_vars <- c(x, y, feature)
+
+  suppressWarnings({
+    plt_dat <- Seurat::FetchData(
+      input,
+      vars = unique(plt_vars),
+      slot = as.character(data_slot)
+    )
+  })
+
+  # Format input data
+  # keep rownames since default mathod will create rowname column
+  plt_dat <- .merge_meta(input, plt_dat)
+  plt_dat <- .get_meta(plt_dat, row_col = NA)
+
+  plot_features(
+    input       = plt_dat,
+    x           = x,
+    y           = y,
+    feature     = feature,
+    pt_size     = pt_size,
+    pt_outline  = pt_outline,
+    outline_pos = outline_pos,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    min_q       = min_q,
+    max_q       = max_q,
+    na_color    = na_color
+  )
 }
 
 
@@ -849,15 +879,15 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
 
   # Check inputs
   if (!type %in% c("heatmap", "bar")) {
-    stop("type must be either 'heatmap' or 'bar'.")
+    stop("type must be either 'heatmap' or 'bar'")
   }
 
   if (length(gene_cols) > 2) {
-    stop("Cannot specify more than two values for gene_cols.")
+    stop("Cannot specify more than two values for gene_cols")
   }
 
   if (!yaxis %in% c("percent", "frequency")) {
-    stop("yaxis must be either 'percent' or 'frequency'.")
+    stop("yaxis must be either 'percent' or 'frequency'")
   }
 
   # Set y-axis
@@ -1253,13 +1283,13 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
     dat <- pull(df_in, clmn)
 
     if (!is.character(dat) && !is.factor(dat)) {
-      warning("Plot levels were not modified, levels are only modified for characters and factors.")
+      warning("Plot levels were not modified, levels are only modified for characters and factors")
 
       return(df_in)
     }
 
     if (!all(pull(df_in, clmn) %in% lvls)) {
-      stop(paste0("Not all labels in ", clmn, " are included in plot_levels."))
+      stop("Not all labels in ", clmn, " are included in plot_levels")
     }
 
     df_in <- dplyr::mutate(

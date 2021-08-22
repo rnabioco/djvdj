@@ -40,16 +40,14 @@ Imports:
     abdiv,
     stats,
     ggrepel,
-    scales
+    scales,
+    Seurat (>= 4.0.0),
+    S4Vectors
 Suggests: 
     roxygen2,
     testthat,
     covr,
-    knitr,
-    Seurat (>= 4.0.0),
-    SummarizedExperiment,
-    SingleCellExperiment,
-    S4Vectors
+    knitr
 VignetteBuilder: 
     knitr
 Remotes:

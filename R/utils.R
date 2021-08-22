@@ -58,9 +58,9 @@
 #' @export
 .get_meta.default <- function(input, row_col = ".cell_id") {
 
-  meta <- tibble::as_tibble(input, rownames = row_col)
+  input <- tibble::as_tibble(input, rownames = row_col)
 
-  meta
+  input
 }
 
 #' @rdname dot-get_meta
@@ -79,6 +79,52 @@
   meta <- tibble::as_tibble(input@colData, rownames = row_col)
 
   meta
+}
+
+
+#' Merge new meta.data with object
+#'
+#' @param input Object containing single cell data
+#' @param meta meta.data to merge with object
+#' @param by Columns to use for merging
+#' @return Object with added meta.data
+#' @export
+.merge_meta <- function(input, meta, by = ".cell_id") {
+
+  obj_meta <- .get_meta(input)
+
+  # Check overlap between cell barcodes
+  obj_cells <- obj_meta$.cell_id
+  met_cells <- rownames(meta)
+
+  n_overlap <- length(obj_cells[obj_cells %in% met_cells])
+  pct_obj   <- round(n_overlap / length(obj_cells), 2) * 100
+  pct_met   <- round(n_overlap / length(met_cells), 2) * 100
+
+  if (n_overlap == 0) {
+    stop("Cell barcodes do not match those in the object, are you using the correct cell barcode prefixes?")
+  }
+
+  if (pct_obj < 25) {
+    warning("Only ", pct_obj, "% (", n_overlap, ") of cell barcodes present in the object overlap")
+  }
+
+  if (pct_met < 25) {
+    warning("Only ", pct_met, "% (", n_overlap, ") of cell barcodes overlap with the provided object")
+  }
+
+  # Join meta.data
+  # remove columns already present in input object to prevent duplicates
+  # this mimics behavior of Seurat::AddMetaData
+  meta     <- .get_meta(meta, row_col = ".cell_id")
+  rm_cols  <- colnames(meta)
+  rm_cols  <- rm_cols[!rm_cols %in% by]
+  obj_meta <- dplyr::select(obj_meta, !any_of(rm_cols))
+
+  meta <- dplyr::left_join(obj_meta, meta, by = by)
+  res  <- .add_meta(input, meta = meta)
+
+  res
 }
 
 
