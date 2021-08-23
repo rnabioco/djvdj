@@ -1,7 +1,12 @@
+# Test data
+df_1 <- vdj_so@meta.data
+
+df_2 <- vdj_so@meta.data %>%
+  as_tibble(rownames = ".cell_id")
 
 # Check all calc_abundance arguments
 arg_lst <- list(
-  input         = list(tiny_vdj),
+  input         = list(vdj_so, vdj_sce, df_1, df_1),
   clonotype_col = "cdr3",
   cluster_col   = list(NULL, "seurat_clusters"),
   prefix        = c("", "X"),
@@ -16,19 +21,19 @@ test_all_args(
 )
 
 test_that("Check Seurat output", {
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     calc_abundance(
       clonotype_col = "cdr3",
       return_df     = FALSE
     )
 
   expect_s4_class(res, "Seurat")
-  expect_identical(colnames(res), colnames(tiny_vdj))
+  expect_identical(colnames(res), colnames(vdj_so))
 })
 
 # Check data.frame output
 test_that("calc_abundance df out", {
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     calc_abundance(
       clonotype_col = "cdr3",
       return_df     = TRUE
@@ -39,7 +44,7 @@ test_that("calc_abundance df out", {
 
 # Check data.frame input
 test_that("calc_abundance df in", {
-  res <- tiny_vdj@meta.data %>%
+  res <- vdj_so@meta.data %>%
     calc_abundance(clonotype_col = "cdr3")
 
   expect_s3_class(res, "data.frame")
@@ -48,7 +53,7 @@ test_that("calc_abundance df in", {
 # Check empty clonotype_col
 test_that("calc_abundance NULL clonotype_col", {
   .fn<- function() {
-    tiny_vdj %>%
+    vdj_so %>%
       calc_abundance(return_df = FALSE)
   }
 

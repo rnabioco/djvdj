@@ -42,7 +42,8 @@ Imports:
     ggrepel,
     scales,
     Seurat (>= 4.0.0),
-    S4Vectors
+    S4Vectors,
+    SingleCellExperiment
 Suggests: 
     roxygen2,
     testthat,

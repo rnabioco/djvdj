@@ -1,5 +1,4 @@
-
-# Test inputs
+# Test data
 test_cols <- c(
   "#E69F00", "#56B4E9", "#009E73",
   "#F0E442", "#d7301f", "#0072B2",
@@ -7,24 +6,23 @@ test_cols <- c(
   "#999999", "#875C04", "#000000"
 )
 
-test_lvls <- unique(tiny_vdj$seurat_clusters) %>%
+test_lvls <- unique(vdj_so$seurat_clusters) %>%
   as.character() %>%
   rev()
 
-tiny_dat <- tiny_vdj@meta.data %>%
+df_1 <- vdj_so@meta.data
+
+df_2 <- vdj_so@meta.data %>%
   as_tibble(rownames = ".cell_id")
 
-# Check all plot_features arguments for character feature
+# Check all plot_features arguments except data_slot
 arg_lst <- list(
   x           = list("UMAP_1", c(x = "UMAP_1")),
   y           = list("UMAP_2", c(y = "UMAP_2")),
-  sobj_in     = list(tiny_vdj, tiny_dat),
+  input       = list(vdj_so, vdj_sce, df_1),
   feature     = list("seurat_clusters", c(clust = "seurat_clusters")),
-  data_slot   = c("data", "counts"),
-  pt_outline  = list(NULL, 1),
-  outline_pos = c("all", "bottom"),
   plot_colors = list(NULL, test_cols),
-  feat_lvls   = list(NULL, test_lvls),
+  plot_lvls   = list(NULL, test_lvls),
   min_q       = list(NULL, 0.05),
   max_q       = list(NULL, 0.95)
 )
@@ -36,9 +34,20 @@ test_all_args(
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
+# Check all plot_features arguments with data_slot
+arg_lst$input     <- list(vdj_so)
+arg_lst$data_slot <- c("data", "counts")
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_features,
+  desc    = "plot_features args chr feat",
+  chk     = expr(expect_s3_class(.res, "ggplot"))
+)
+
 # Check all plot_features arguments for numeric feature
 arg_lst$feature   <- "nCount_RNA"
-arg_lst$feat_lvls <- NULL
+arg_lst$plot_lvls <- list(NULL)
 
 test_all_args(
   arg_lst = arg_lst,
@@ -50,10 +59,10 @@ test_all_args(
 # Check plot_features warning for numeric feature
 test_that("plot_features warning num feat", {
   expect_warning(
-    tiny_vdj %>%
+    vdj_so %>%
       plot_features(
         feature   = "nCount_RNA",
-        feat_lvls = test_lvls
+        plot_lvls = test_lvls
       )
   )
 })
@@ -61,19 +70,19 @@ test_that("plot_features warning num feat", {
 # Check plot_features error for same x and y
 test_that("plot_features error same x y", {
   expect_error(
-    tiny_vdj %>%
+    vdj_so %>%
       plot_features(
         x         = "UMAP_1",
         y         = "UMAP_1",
         feature   = "nCount_RNA",
-        feat_lvls = test_lvls
+        plot_lvls = test_lvls
       )
   )
 })
 
 # Check plot_features feature not found
 arg_lst <- list(
-  sobj_in = list(tiny_vdj, tiny_dat),
+  input   = list(vdj_so, vdj_sce, df_1),
   feature = "BAD_FEATURE"
 )
 
@@ -84,53 +93,9 @@ test_all_args(
   chk     = expect_error
 )
 
-# Check check plot_features bad outline_pos
-test_that("plot_features bad outline_pos", {
-  expect_error(
-    tiny_vdj %>%
-      plot_features(
-        x           = "UMAP_1",
-        y           = "UMAP_2",
-        feature     = "seurat_clusters",
-        outline_pos = "BAD_POS"
-      )
-  )
-})
-
-# Check all plot_cell_count arguments
-arg_lst <- list(
-  sobj_in     = list(tiny_vdj, tiny_dat),
-  x           = "orig.ident",
-  fill_col    = list(NULL, "seurat_clusters"),
-  facet_col   = list(NULL, "orig.ident"),
-  yaxis       = c("fraction", "counts"),
-  plot_colors = list(NULL, test_cols),
-  plot_lvls   = list(NULL, c("avid_2", "avid_1")),
-  n_label     = c(TRUE, FALSE),
-  label_aes   = list(list(), list(size = 2))
-)
-
-test_all_args(
-  arg_lst = arg_lst,
-  .fn     = plot_cell_count,
-  desc    = "plot_cell_count args",
-  chk     = expr(expect_s3_class(.res, "ggplot"))
-)
-
-# Check plot_cell_count bad yaxis
-test_that("plot_cell_count bad yaxis", {
-  expect_error(
-    tiny_vdj %>%
-      plot_cell_count(
-        x     = "orig.ident",
-        yaxis = "BAD"
-      )
-  )
-})
-
 # Check all plot_reads arguments
 arg_lst <- list(
-  sobj_in     = list(tiny_vdj),
+  input       = list(vdj_so),
   data_cols   = list("reads", "umis", c("reads", "umis")),
   chain_col   = list(NULL, "chains"),
   cluster_col = list(NULL, "seurat_clusters"),
@@ -149,14 +114,14 @@ test_all_args(
 # Check plot_reads bad type
 test_that("plot_reads bad type", {
   expect_error(
-    tiny_vdj %>%
+    vdj_so %>%
       plot_reads(type = "BAD")
   )
 })
 
 # Check all plot_abundance arguments for line plot
 arg_lst <- list(
-  input         = list(tiny_vdj),
+  input         = list(vdj_so),
   clonotype_col = "cdr3_nt",
   cluster_col   = list(NULL, "seurat_clusters"),
   type          = "line",
@@ -189,7 +154,7 @@ test_all_args(
 
 # Check plot_abundance axis labels
 arg_lst <- list(
-  input         = list(tiny_vdj),
+  input         = list(vdj_so),
   clonotype_col = "cdr3_nt",
   label_col     = "cdr3",
   yaxis         = "percent",
@@ -215,7 +180,7 @@ test_all_args(
 # Check plot_abundance bad yaxis
 test_that("plot_abundance bad yaxis", {
   expect_error(
-    tiny_vdj %>%
+    vdj_so %>%
       plot_abundance(
         type          = "line",
         clonotype_col = "cdr3_nt",
@@ -227,7 +192,7 @@ test_that("plot_abundance bad yaxis", {
 # Check plot_abundance bad type
 test_that("plot_abundance bad type", {
   expect_error(
-    tiny_vdj %>%
+    vdj_so %>%
       plot_abundance(
         type          = "BAD",
         clonotype_col = "cdr3_nt"
@@ -238,7 +203,7 @@ test_that("plot_abundance bad type", {
 # Check plot_abundance bad n_clonotypes
 test_that("plot_abundance bad n_clonotypes", {
   expect_error(
-    tiny_vdj %>%
+    vdj_so %>%
       plot_abundance(
         type          = "bar",
         clonotype_col = "cdr3_nt",
@@ -250,7 +215,7 @@ test_that("plot_abundance bad n_clonotypes", {
 # Check plot_abundance bad label_col
 test_that("plot_abundance bad label_col", {
   expect_error(
-    tiny_vdj %>%
+    vdj_so %>%
       plot_abundance(
         type          = "bar",
         clonotype_col = "cdr3_nt",
@@ -266,7 +231,7 @@ mets <- abdiv::alpha_diversities %>%
 names(mets) <- abdiv::alpha_diversities
 
 arg_lst <- list(
-  input         = list(tiny_vdj),
+  input         = list(vdj_so),
   clonotype_col = "cdr3_nt",
   cluster_col   = list(NULL, "seurat_clusters"),
   method        = append(mets, list(mets)),
@@ -287,7 +252,7 @@ mets <- abdiv::alpha_diversities %>%
 
 test_that("plot_diversity bad names", {
   expect_error(
-    tiny_vdj %>%
+    vdj_so %>%
       plot_diversity(
         clonotype_col = "cdr3_nt",
         method        = mets
@@ -300,7 +265,7 @@ mets <- abdiv::beta_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 arg_lst <- list(
-  input         = list(tiny_vdj),
+  input         = list(vdj_so),
   clonotype_col = "cdr3_nt",
   cluster_col   = "seurat_clusters",
   method        = mets,
@@ -317,7 +282,7 @@ test_all_args(
 # Check plot_similarity bad clonotype_col
 test_that("plot_similarity bad clonotype col", {
   expect_error(
-    tiny_vdj %>%
+    vdj_so %>%
       plot_similarity(
         clonotype_col = NULL,
         cluster_col   = "orig.ident"
@@ -328,7 +293,7 @@ test_that("plot_similarity bad clonotype col", {
 # Check plot_similarity bad cluster_col
 test_that("plot_similarity bad cluster col", {
   expect_error(
-    tiny_vdj %>%
+    vdj_so %>%
       plot_similarity(
         cluster_col   = NULL,
         clonotype_col = "cdr3_nt"
@@ -344,7 +309,7 @@ test_genes <- c(
 )
 
 arg_lst <- list(
-  input       = list(tiny_vdj),
+  input       = list(vdj_so),
   gene_cols   = list("v_gene", "j_gene", c("v_gene", "j_gene")),
   cluster_col = list(NULL),
   chain       = list(NULL, "IGH", "IGL", "IGK"),
@@ -377,7 +342,7 @@ test_all_args(
 # Check plot_usage bad type
 test_that("plot_usage bad type", {
   expect_error(
-    tiny_vdj %>%
+    vdj_so %>%
       plot_usage(
         gene_cols = "v_gene",
         type      = "BAD"
@@ -388,7 +353,7 @@ test_that("plot_usage bad type", {
 # Check plot_usage bad yaxis
 test_that("plot_usage bad type", {
   expect_error(
-    tiny_vdj %>%
+    vdj_so %>%
       plot_usage(
         gene_cols = "v_gene",
         yaxis     = "BAD"
@@ -399,32 +364,38 @@ test_that("plot_usage bad type", {
 # Check plot_usage bad gene_cols
 test_that("plot_usage bad gene_cols", {
   expect_error(
-    tiny_vdj %>%
+    vdj_so %>%
       plot_usage(gene_cols = c("v_gene", "d_gene", "j_gene"))
   )
 })
 
 # Check .set_lvls levels
-test_that(".set_lvls args", {
-  res <- tiny_dat %>%
-    .set_lvls(
+arg_lst <- list(df_in = list(df_1, df_2))
+
+pwalk(arg_lst, ~ {
+  test_that(".set_lvls args", {
+    res <- .set_lvls(
+      ...,
       clmn  = "seurat_clusters",
       lvls  = test_lvls
     )
 
-  expect_identical(test_lvls, levels(res$seurat_clusters))
+    expect_identical(test_lvls, levels(res$seurat_clusters))
+  })
 })
 
 # Check .set_lvls bad levels
-test_that(".set_lvls bad lvls", {
-  lvls <- test_lvls[2:length(test_lvls)]
+lvls <- test_lvls[2:length(test_lvls)]
 
-  expect_error(
-    tiny_dat %>%
-      .set_lvls(
-        clmn  = "seurat_clusters",
-        lvls  = lvls
-      )
-  )
-})
+arg_lst <- list(
+  df_in = list(df_1, df_2),
+  clmn  = "seurat_clusters",
+  lvls  = lvls
+)
 
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = .set_lvls,
+  desc    = ".set_lvls bad lvls",
+  chk     = expect_error
+)

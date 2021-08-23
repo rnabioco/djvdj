@@ -5,9 +5,9 @@
 \alias{.get_meta.default}
 \alias{.get_meta.Seurat}
 \alias{.get_meta.SingleCellExperiment}
-\title{Add meta.data to single cell object}
+\title{Pull meta.data from single cell object}
 \usage{
-.get_meta(input, ...)
+.get_meta(input, row_col)
 
 \method{.get_meta}{default}(input, row_col = ".cell_id")
 
@@ -18,13 +18,11 @@
 \arguments{
 \item{input}{Object containing single cell data}
 
-\item{...}{Arguments passed to other methods}
-
 \item{row_col}{New column to store meta.data rownames}
 }
 \value{
 tibble containing meta.data pulled from object
 }
 \description{
-Add meta.data to single cell object
+Pull meta.data from single cell object
 }

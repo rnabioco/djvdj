@@ -2,44 +2,37 @@
 #'
 #' @export
 plot_features <- function(input, ...) {
+
   UseMethod("plot_features", input)
+
 }
 
 #' @rdname plot_features
-#' @param sobj_in Seurat object or data.frame containing data for plotting
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
 #' @param feature Variable to use for coloring points
 #' @param data_slot Slot in the Seurat object to pull data
-#' @param pt_size Point size
-#' @param pt_outline Width of point outline to add to feature groups, set to
-#' NULL to exclude.
-#' @param outline_pos Position of point outline. Set to 'all' to outline all
-#' feature groups, set to 'bottom' to only outline the bottom layer of
-#' points.
 #' @param plot_colors Vector of colors to use for plot
 #' @param plot_lvls Levels to use for ordering feature
 #' @param min_q Minimum quantile cutoff for color scale.
 #' @param max_q Maximum quantile cutoff for color scale.
 #' @param na_color Color to use for missing values
+#' @param ... Additional arguments to pass to geom_point()
 #' @return ggplot object
 #' @export
-plot_features.default <- function(input, x = "UMAP_1", y = "UMAP_2", feature, pt_size = 0.25,
-                                  pt_outline = NULL, outline_pos = "all", plot_colors = NULL,
-                                  plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90") {
+plot_features.default <- function(input, x = "UMAP_1", y = "UMAP_2", feature, plot_colors = NULL,
+                                  plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90", ...) {
 
   # Check arguments
   if (x == y) {
     stop("'x' and 'y' must be different")
   }
 
-  if (!outline_pos %in% c("all", "bottom")) {
-    stop("outline_pos must be either 'all' or 'bottom'")
-  }
-
   plt_dat <- .get_meta(input)
 
-  plt_vars <- c(x, y, feature)
+  plt_vars  <- c(x, y, feature)
   miss_vars <- plt_vars[!plt_vars %in% colnames(plt_dat)]
 
   if (length(miss_vars) > 0) {
@@ -63,64 +56,11 @@ plot_features.default <- function(input, x = "UMAP_1", y = "UMAP_2", feature, pt
   # To add outline for each cluster create separate layers
   res <- arrange(plt_dat, !!sym(feature))
 
-  if (!is.null(pt_outline)) {
-
-    pt_outline <- pt_size + pt_outline
-
-    # Add outline for each feature group
-    if (!is.numeric(plt_dat[[feature]]) && outline_pos == "all") {
-      res <- ggplot2::ggplot(
-        res,
-        ggplot2::aes(
-          !!sym(x), !!sym(y),
-          color = !!sym(feature),
-          fill = !!sym(feature)
-        )
-      )
-
-      feats <- unique(plt_dat[[feature]])
-
-      if (!is.null(plot_lvls)) {
-        feats <- plot_lvls[plot_lvls %in% feats]
-      }
-
-      walk(feats, ~ {
-        f_counts <- filter(plt_dat, !!sym(feature) == .x)
-
-        res <<- res +
-          ggplot2::geom_point(
-            ggplot2::aes(fill = !!sym(feature)),
-            data        = f_counts,
-            size        = pt_outline,
-            color       = "black",
-            show.legend = FALSE
-          ) +
-          ggplot2::geom_point(data = f_counts, size = pt_size)
-      })
-
-    # Only add bottom outline
-    } else {
-      res <- ggplot2::ggplot(
-        res,
-        ggplot2::aes(!!sym(x), !!sym(y), color = !!sym(feature))
-      ) +
-        ggplot2::geom_point(
-          ggplot2::aes(fill = !!sym(feature)),
-          size        = pt_outline,
-          color       = "black",
-          show.legend = FALSE
-        ) +
-        ggplot2::geom_point(size = pt_size)
-    }
-
-  # Create scatter plot without point outline
-  } else {
-    res <- ggplot2::ggplot(
-      res,
-      ggplot2::aes(!!sym(x), !!sym(y), color = !!sym(feature))
-    ) +
-      ggplot2::geom_point(size = pt_size)
-  }
+  res <- ggplot2::ggplot(
+    res,
+    ggplot2::aes(!!sym(x), !!sym(y), color = !!sym(feature))
+  ) +
+    ggplot2::geom_point(...)
 
   # Set feature colors
   if (!is.null(plot_colors)) {
@@ -159,8 +99,8 @@ plot_features.default <- function(input, x = "UMAP_1", y = "UMAP_2", feature, pt
 #' @importFrom Seurat FetchData
 #' @export
 plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
-                                 pt_size = 0.25, pt_outline = NULL, outline_pos = "all", plot_colors = NULL,
-                                 plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90") {
+                                 plot_colors = NULL, plot_lvls = NULL, min_q = NULL, max_q = NULL,
+                                 na_color = "grey90", ...) {
 
   # Fetch variables and add to meta.data
   # want input data to include meta.data and any features from FetchData
@@ -177,16 +117,13 @@ plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, dat
   # Format input data
   # keep rownames since default mathod will create rowname column
   plt_dat <- .merge_meta(input, plt_dat)
-  plt_dat <- .get_meta(plt_dat, row_col = NA)
+  plt_dat <- .get_meta(plt_dat)
 
   plot_features(
     input       = plt_dat,
     x           = x,
     y           = y,
     feature     = feature,
-    pt_size     = pt_size,
-    pt_outline  = pt_outline,
-    outline_pos = outline_pos,
     plot_colors = plot_colors,
     plot_lvls   = plot_lvls,
     min_q       = min_q,
@@ -196,121 +133,10 @@ plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, dat
 }
 
 
-#' Plot cell counts for clusters
-#'
-#' @param sobj_in Seurat object or data.frame containing data
-#' @param x meta.data column containing clusters to use for creating bars
-#' @param fill_col meta.data column to use for coloring bars
-#' @param facet_col meta.data column containing groups to use for spliting plot
-#' into facets
-#' @param yaxis Units to plot on the y-axis, either "fraction" or "counts"
-#' @param plot_colors Character vector containing colors for plotting
-#' @param plot_lvls Character vector containing levels for ordering
-#' @param na_color Color to use for missing values
-#' @param n_label Include label showing the number of cells represented by each
-#' bar
-#' @param label_aes Named list providing additional label aesthetics
-#' (color, size, etc.)
-#' @param facet_rows The number of facet rows. Use this argument if facet_col
-#' is specified
-#' @param facet_scales If facet_col is used, this argument passes a scales
-#' specification to facet_wrap. Can be "fixed", "free", "free_x", or "free_y"
-#' @param ... Additional arguments to pass to ggplot
-#' @return ggplot object
-#' @export
-plot_cell_count <- function(sobj_in, x, fill_col = NULL, facet_col = NULL, yaxis = "fraction",
-                            plot_colors = NULL, plot_lvls = NULL, na_color = "grey90", n_label = TRUE,
-                            label_aes = list(), facet_rows = 1, facet_scales = "free_x", ...) {
-
-  # Set y-axis unit
-  y_types <- c("fraction", "counts")
-
-  if (!yaxis %in% y_types) {
-    stop("yaxis must be either 'fraction' or 'counts'.")
-  }
-
-  y_types <- set_names(c("fill", "stack"), y_types)
-
-  bar_pos <- y_types[[yaxis]]
-
-  # Format meta.data for plotting
-  meta_df <- sobj_in
-
-  if ("Seurat" %in% class(sobj_in)) {
-    meta_df <- as_tibble(sobj_in@meta.data, rownames = ".cell_id")
-  }
-
-  meta_df <- .set_lvls(meta_df, x, plot_lvls)
-
-  # Create bar graphs
-  res <- ggplot2::ggplot(meta_df, ggplot2::aes(!!sym(x)))
-
-  if (!is.null(fill_col)) {
-    res <- ggplot2::ggplot(
-      meta_df,
-      ggplot2::aes(!!sym(x), fill = !!sym(fill_col))
-    )
-  }
-
-  res <- res +
-    ggplot2::geom_bar(position = bar_pos, ...) +
-    ggplot2::labs(y = yaxis) +
-    djvdj_theme() +
-    ggplot2::theme(
-      axis.title.x = ggplot2::element_blank(),
-      axis.text.x  = ggplot2::element_text(angle = 45, hjust = 1)
-    )
-
-  if (!is.null(facet_col)) {
-    res <- res +
-      ggplot2::facet_wrap(
-        stats::as.formula(paste0("~ ", facet_col)),
-        nrow   = facet_rows,
-        scales = facet_scales
-      )
-  }
-
-  # Add n labels
-  if (n_label) {
-    cell_counts <- dplyr::group_by(meta_df, !!sym(x))
-
-    if (!is.null(facet_col)) {
-      cell_counts <- group_by(cell_counts, !!sym(facet_col), .add = T)
-    }
-
-    cell_counts <- summarize(
-      cell_counts,
-      cell_count = paste0("n = ", dplyr::n_distinct(.data$.cell_id)),
-      .groups = "drop"
-    )
-
-    res <- res +
-      ggplot2::geom_text(
-        ggplot2::aes(!!sym(x), 0, label = .data$cell_count),
-        data          = cell_counts,
-        inherit.aes   = F,
-        check_overlap = T,
-        size          = 3,
-        angle         = 90,
-        hjust         = -0.1
-      )
-
-    res <- .add_aes(res, label_aes, 2)
-  }
-
-  # Set plot colors
-  if (!is.null(plot_colors)) {
-    res <- res +
-      ggplot2::scale_fill_manual(values = plot_colors, na.value = na_color)
-  }
-
-  res
-}
-
-
 #' Plot read support for chains
 #'
-#' @param sobj_in Seurat object
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param data_cols meta.data columns containing UMI and/or read counts
 #' @param chain_col meta.data column containing chains. If chain_col is
 #' provided, reads and UMIs will be plotted separately for each chain
@@ -327,7 +153,7 @@ plot_cell_count <- function(sobj_in, x, fill_col = NULL, facet_col = NULL, yaxis
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "chains", cluster_col = NULL,
+plot_reads <- function(input, data_cols = c("reads", "umis"), chain_col = "chains", cluster_col = NULL,
                        type = "violin", plot_colors = NULL, plot_lvls = NULL, facet_rows = 1,
                        facet_scales = "free_x", sep = ";", ...) {
 
@@ -337,7 +163,7 @@ plot_reads <- function(sobj_in, data_cols = c("reads", "umis"), chain_col = "cha
 
   # Calculate mean reads/umis each chain for each cell
   plt_dat <- summarize_chains(
-    sobj_in,
+    input,
     data_cols    = data_cols,
     fn           = mean,
     chain_col    = chain_col,

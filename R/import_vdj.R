@@ -212,8 +212,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   }
 
   # Format meta.data
-  res <- tibble::remove_rownames(meta)
-  res <- .add_meta(res, row_col = "barcode")
+  res <- tibble::column_to_rownames(meta, "barcode")
   res <- dplyr::rename_with(res, ~ paste0(prefix, .x))
 
   if (!is.null(input)) {

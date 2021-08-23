@@ -5,7 +5,7 @@
 \title{Plot read support for chains}
 \usage{
 plot_reads(
-  sobj_in,
+  input,
   data_cols = c("reads", "umis"),
   chain_col = "chains",
   cluster_col = NULL,
@@ -19,7 +19,8 @@ plot_reads(
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object}
+\item{input}{Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{data_cols}{meta.data columns containing UMI and/or read counts}
 

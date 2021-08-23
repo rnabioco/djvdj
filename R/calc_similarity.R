@@ -77,7 +77,7 @@ calc_similarity <- function(input, clonotype_col = "cdr3_nt", cluster_col, metho
       values_from = .data$sim
     )
 
-    res <- .add_meta(res, row_col = "Var2")
+    res <- tibble::column_to_rownames(res, "Var2")
     res <- as.matrix(res)
 
     return(res)

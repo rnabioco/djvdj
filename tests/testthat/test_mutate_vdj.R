@@ -1,7 +1,6 @@
-
 # Check mutate_meta with function
 test_that("mutate_meta function input", {
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     mutate_meta(select, .cell_id, orig.ident)
 
   expect_true(colnames(res@meta.data) == "orig.ident")
@@ -10,7 +9,7 @@ test_that("mutate_meta function input", {
 
 # Check mutate_meta with formula
 test_that("mutate_meta formula input", {
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     mutate_meta(~ select(.x, .cell_id, orig.ident))
 
   expect_true(colnames(res@meta.data) == "orig.ident")
@@ -19,19 +18,11 @@ test_that("mutate_meta formula input", {
 
 # Check mutate_meta overwrite column
 test_that("mutate_meta column overwrite", {
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     mutate_meta(mutate, orig.ident = "HELLO")
 
   expect_true(all(res$orig.ident == "HELLO"))
   expect_s4_class(res, "Seurat")
-})
-
-# Check mutate_meta bad sobj_in
-test_that("mutate_meta bad sobj_in", {
-  expect_error(
-    tiny_dat %>%
-      mutate_meta(select, -orig.ident)
-  )
 })
 
 # Check mutate_meta bad function
@@ -54,73 +45,73 @@ test_that("mutate_meta bad .fun", {
 
 # Check Seurat output
 test_that("mutate_vdj Seurat out", {
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     mutate_vdj(NEW = paste0(unique(chains), collapse = "_"))
 
   expect_s4_class(res, "Seurat")                       # class
-  expect_identical(colnames(res), colnames(tiny_vdj))  # cells in object
+  expect_identical(colnames(res), colnames(vdj_so))  # cells in object
 
-  expect_identical(select(res@meta.data, -NEW), tiny_vdj@meta.data)
+  expect_identical(select(res@meta.data, -NEW), vdj_so@meta.data)
 })
 
 # Check data.frame output
 test_that("mutate_vdj df out", {
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     mutate_vdj(
       NEW       = paste0(unique(chains), collapse = "_"),
       return_df = TRUE
     )
 
   expect_s3_class(res, "data.frame")                   # class
-  expect_identical(rownames(res), colnames(tiny_vdj))  # cells in object
+  expect_identical(rownames(res), colnames(vdj_so))  # cells in object
 
-  expect_identical(select(res, -NEW), tiny_vdj@meta.data)
+  expect_identical(select(res, -NEW), vdj_so@meta.data)
 })
 
 # Check data.frame input
 test_that("mutate_vdj df in", {
-  res <- tiny_vdj@meta.data %>%
+  res <- vdj_so@meta.data %>%
     mutate_vdj(NEW = paste0(unique(chains), collapse = "_"))
 
   expect_s3_class(res, "data.frame")                   # class
-  expect_identical(rownames(res), colnames(tiny_vdj))  # cells in object
+  expect_identical(rownames(res), colnames(vdj_so))  # cells in object
 
-  expect_identical(select(res, -NEW), tiny_vdj@meta.data)
+  expect_identical(select(res, -NEW), vdj_so@meta.data)
 })
 
 # test_that("Default separator", {
-#   res <- tiny_vdj %>%
+#   res <- vdj_so %>%
 #     mutate_vdj(
 #       NEW = str_c(chains, collapse = "_"),
 #       sep = ";"
 #     )
 #
-#   old_nms <- str_replace_all(tiny_vdj$chains, ";", "_")
+#   old_nms <- str_replace_all(vdj_so$chains, ";", "_")
 #
 #   expect_s4_class(res, "Seurat")                       # class
-#   expect_identical(colnames(res), colnames(tiny_vdj))  # cells in object
+#   expect_identical(colnames(res), colnames(vdj_so))  # cells in object
 #   expect_identical(unname(res$NEW), old_nms)           # new column
 # })
 
 # Check NULL separator
 test_that("mutate_vdj NULL sep", {
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     mutate_vdj(
       NEW = paste0(chains, nCount_RNA, sep = "_"),
       sep = NULL
     )
 
-  old_nms <- paste0(tiny_vdj$chains, tiny_vdj$nCount_RNA, sep = "_")
+  old_nms <- paste0(vdj_so$chains, vdj_so$nCount_RNA, sep = "_")
 
   expect_s4_class(res, "Seurat")                       # class
-  expect_identical(colnames(res), colnames(tiny_vdj))  # cells in object
+  expect_identical(colnames(res), colnames(vdj_so))  # cells in object
   expect_identical(unname(res$NEW), old_nms)           # new column
 })
 
 # Check bad command
 test_that("mutate_vdj bad command", {
   expect_error(
-    tiny_vdj %>%
+    vdj_so %>%
       mutate_vdj(
         NEW = paste0(chains, nCount_RNA, sep = "_"),
         sep = ";"

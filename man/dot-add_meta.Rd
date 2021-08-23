@@ -7,9 +7,9 @@
 \alias{.add_meta.SingleCellExperiment}
 \title{Add meta.data to single cell object}
 \usage{
-.add_meta(input, ...)
+.add_meta(input, meta, row_col)
 
-\method{.add_meta}{default}(meta, ..., row_col = ".cell_id")
+\method{.add_meta}{default}(input, meta, row_col = ".cell_id")
 
 \method{.add_meta}{Seurat}(input, meta, row_col = ".cell_id")
 
@@ -17,8 +17,6 @@
 }
 \arguments{
 \item{input}{Object containing single cell data}
-
-\item{...}{Arguments passed to other methods}
 
 \item{meta}{meta.data to add to object}
 

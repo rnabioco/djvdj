@@ -1,133 +1,3 @@
-#' Add meta.data to single cell object
-#'
-#' @export
-.add_meta <- function(input, ...) {
-  UseMethod(".add_meta", input)
-}
-
-#' @rdname dot-add_meta
-#' @param input Object containing single cell data
-#' @param meta meta.data to add to object
-#' @param row_col Column containing meta.data rownames
-#' @param ... Arguments passed to other methods
-#' @return Object with added meta.data
-#' @export
-.add_meta.default <- function(meta, ..., row_col = ".cell_id") {
-
-  res <- tibble::column_to_rownames(meta, row_col)
-
-  res
-}
-
-#' @rdname dot-add_meta
-#' @export
-.add_meta.Seurat <- function(input, meta, row_col = ".cell_id") {
-
-  meta <- tibble::column_to_rownames(meta, row_col)
-
-  input@meta.data <- meta
-
-  input
-}
-
-#' @rdname dot-add_meta
-#' @importFrom S4Vectors DataFrame
-#' @export
-.add_meta.SingleCellExperiment <- function(input, meta, row_col = ".cell_id") {
-
-  meta <- tibble::column_to_rownames(meta, row_col)
-
-  input@colData <- S4Vectors::DataFrame(meta)
-
-  input
-}
-
-
-#' Add meta.data to single cell object
-#'
-#'@export
-.get_meta <- function(input, ...) {
-  UseMethod(".get_meta", input)
-}
-
-#' @rdname dot-get_meta
-#' @param input Object containing single cell data
-#' @param row_col New column to store meta.data rownames
-#' @param ... Arguments passed to other methods
-#' @return tibble containing meta.data pulled from object
-#' @export
-.get_meta.default <- function(input, row_col = ".cell_id") {
-
-  input <- tibble::as_tibble(input, rownames = row_col)
-
-  input
-}
-
-#' @rdname dot-get_meta
-#' @export
-.get_meta.Seurat <- function(input, row_col = ".cell_id") {
-
-  meta <- tibble::as_tibble(input@meta.data, rownames = row_col)
-
-  meta
-}
-
-#' @rdname dot-get_meta
-#' @export
-.get_meta.SingleCellExperiment <- function(input, row_col = ".cell_id") {
-
-  meta <- tibble::as_tibble(input@colData, rownames = row_col)
-
-  meta
-}
-
-
-#' Merge new meta.data with object
-#'
-#' @param input Object containing single cell data
-#' @param meta meta.data to merge with object
-#' @param by Columns to use for merging
-#' @return Object with added meta.data
-#' @export
-.merge_meta <- function(input, meta, by = ".cell_id") {
-
-  obj_meta <- .get_meta(input)
-
-  # Check overlap between cell barcodes
-  obj_cells <- obj_meta$.cell_id
-  met_cells <- rownames(meta)
-
-  n_overlap <- length(obj_cells[obj_cells %in% met_cells])
-  pct_obj   <- round(n_overlap / length(obj_cells), 2) * 100
-  pct_met   <- round(n_overlap / length(met_cells), 2) * 100
-
-  if (n_overlap == 0) {
-    stop("Cell barcodes do not match those in the object, are you using the correct cell barcode prefixes?")
-  }
-
-  if (pct_obj < 25) {
-    warning("Only ", pct_obj, "% (", n_overlap, ") of cell barcodes present in the object overlap")
-  }
-
-  if (pct_met < 25) {
-    warning("Only ", pct_met, "% (", n_overlap, ") of cell barcodes overlap with the provided object")
-  }
-
-  # Join meta.data
-  # remove columns already present in input object to prevent duplicates
-  # this mimics behavior of Seurat::AddMetaData
-  meta     <- .get_meta(meta, row_col = ".cell_id")
-  rm_cols  <- colnames(meta)
-  rm_cols  <- rm_cols[!rm_cols %in% by]
-  obj_meta <- dplyr::select(obj_meta, !any_of(rm_cols))
-
-  meta <- dplyr::left_join(obj_meta, meta, by = by)
-  res  <- .add_meta(input, meta = meta)
-
-  res
-}
-
-
 #' Summarize values for chains
 #'
 #' Summarize values present for each column provided to the data_cols argument.
@@ -180,6 +50,149 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
     across(all_of(data_cols), fn),
     .groups = "drop"
   )
+
+  res
+}
+
+
+#' Add meta.data to single cell object
+#'
+.add_meta <- function(input, meta, row_col) {
+
+  UseMethod(".add_meta", input)
+
+}
+
+#' @rdname dot-add_meta
+#' @param input Object containing single cell data
+#' @param meta meta.data to add to object
+#' @param row_col Column containing meta.data rownames
+#' @return Object with added meta.data
+.add_meta.default <- function(input, meta, row_col = ".cell_id") {
+
+  tibble::column_to_rownames(meta, row_col)
+
+}
+
+#' @rdname dot-add_meta
+.add_meta.Seurat <- function(input, meta, row_col = ".cell_id") {
+
+  meta <- tibble::column_to_rownames(meta, row_col)
+
+  input@meta.data <- meta
+
+  input
+}
+
+#' @rdname dot-add_meta
+#' @importFrom S4Vectors DataFrame
+.add_meta.SingleCellExperiment <- function(input, meta, row_col = ".cell_id") {
+
+  meta <- tibble::column_to_rownames(meta, row_col)
+
+  input@colData <- S4Vectors::DataFrame(meta)
+
+  input
+}
+
+
+#' Pull meta.data from single cell object
+#'
+.get_meta <- function(input, row_col) {
+
+  UseMethod(".get_meta", input)
+
+}
+
+#' @rdname dot-get_meta
+#' @param input Object containing single cell data
+#' @param row_col New column to store meta.data rownames
+#' @return tibble containing meta.data pulled from object
+.get_meta.default <- function(input, row_col = ".cell_id") {
+
+  .to_tibble(input, row_col)
+
+}
+
+#' @rdname dot-get_meta
+.get_meta.Seurat <- function(input, row_col = ".cell_id") {
+
+  .to_tibble(input@meta.data, row_col)
+
+}
+
+#' @rdname dot-get_meta
+.get_meta.SingleCellExperiment <- function(input, row_col = ".cell_id") {
+
+  .to_tibble(input@colData, row_col)
+
+}
+
+#' Convert to tibble
+#'
+#' The point of this function is to handle situations where the name passed to
+#' rownames already exists in the data.frame. This occurs when running
+#' .get_meta() multiple times on the same object. The default behavior of
+#' as_tibble is to throw an error. This function just returns the tibble
+#' without adding a new rowname column.
+#'
+#' @param input Object to coerce to tibble
+#' @param row_col Name of new column to store rownames
+#' @return tibble with rownames added to new column
+.to_tibble <- function(input, row_col) {
+
+  res <- tibble::as_tibble(input, rownames = NA)
+
+  if (!is.null(row_col) && !row_col %in% colnames(res)) {
+    res <- tibble::rownames_to_column(res, row_col)
+  }
+
+  res
+}
+
+
+#' Merge new meta.data with object
+#'
+#' @param input Object containing single cell data
+#' @param meta meta.data to merge with object
+#' @param by Columns to use for merging
+#' @param pct_min If the percent overlap is less than pct_min, and error is
+#' thrown
+#' @return Object with added meta.data
+.merge_meta <- function(input, meta, by = ".cell_id", pct_min = 25) {
+
+  obj_meta <- .get_meta(input)
+
+  # Check overlap between cell barcodes
+  obj_cells <- obj_meta$.cell_id
+  met_cells <- rownames(meta)
+
+  n_overlap <- length(obj_cells[obj_cells %in% met_cells])
+  pct_obj   <- round(n_overlap / length(obj_cells), 2) * 100
+  pct_met   <- round(n_overlap / length(met_cells), 2) * 100
+
+  if (n_overlap == 0) {
+    stop("Cell barcodes do not match those in the object, are you using the correct cell barcode prefixes?")
+  }
+
+  if (pct_obj < pct_min) {
+    warning("Only ", pct_obj, "% (", n_overlap, ") of cell barcodes present in the object overlap")
+  }
+
+  if (pct_met < pct_min) {
+    warning("Only ", pct_met, "% (", n_overlap, ") of cell barcodes overlap with the provided object")
+  }
+
+  # Join meta.data
+  # remove columns already present in input object to prevent duplicates
+  # this mimics behavior of Seurat::AddMetaData
+  meta     <- .get_meta(meta, row_col = ".cell_id")
+  rm_cols  <- colnames(meta)
+  rm_cols  <- rm_cols[!rm_cols %in% by]
+  obj_meta <- dplyr::select(obj_meta, !any_of(rm_cols))
+
+  meta <- dplyr::left_join(obj_meta, meta, by = by)
+  res  <- .add_meta(input, meta = meta)
 
   res
 }
@@ -283,6 +296,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' @param fn Function to try
 #' @return Value converted using fn
 .convert_char <- function(x, fn) {
+
   if (!is.character(x)) {
     return(x)
   }
@@ -301,6 +315,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' tested
 #' @return Output from test_that
 test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
+
   arg_lst <- expand.grid(arg_lst, stringsAsFactors = FALSE)
 
   if (dryrun) {

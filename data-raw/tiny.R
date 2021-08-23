@@ -71,8 +71,11 @@ tiny_so <- tiny_so %>%
     dims  = 1:40
   )
 
+tiny_so <- tiny_so %>%
+  AddMetaData(FetchData(., c("UMAP_1", "UMAP_2")))
+
 # Format contig data
-# add some NAs to raw_clonotype_id
+# add some NAs to raw_clonotype_id for testing
 contigs <- vdj_path %>%
   map(str_c, "/filtered_contig_annotations.csv") %>%
   map(read_csv)

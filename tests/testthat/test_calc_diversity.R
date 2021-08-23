@@ -1,3 +1,8 @@
+# Test data
+df_1 <- vdj_so@meta.data
+
+df_2 <- vdj_so@meta.data %>%
+  as_tibble(rownames = ".cell_id")
 
 # Check all calc_diversity arguments
 mets <- abdiv::alpha_diversities %>%
@@ -6,7 +11,7 @@ mets <- abdiv::alpha_diversities %>%
 names(mets) <- abdiv::alpha_diversities
 
 arg_lst <- list(
-  input         = list(tiny_vdj),
+  input         = list(vdj_so, vdj_sce, df_1, df_2),
   clonotype_col = "cdr3",
   cluster_col   = list(NULL, "seurat_clusters"),
   method        = append(append(abdiv::shannon, mets), list(mets)),
@@ -27,7 +32,7 @@ mets <- list(
   simpson = abdiv::simpson
 )
 
-test_div <- tiny_vdj@meta.data %>%
+test_div <- vdj_so@meta.data %>%
   as_tibble(rownames = ".cell_id") %>%
   filter(!is.na(cdr3)) %>%
   group_by(cdr3, seurat_clusters) %>%
@@ -42,7 +47,7 @@ test_div <- tiny_vdj@meta.data %>%
   as.data.frame()
 
 test_that("div calc Seurat out", {
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     calc_diversity(
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
@@ -62,7 +67,7 @@ test_that("div calc Seurat out", {
 })
 
 test_that("div calc df out", {
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     calc_diversity(
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
@@ -85,7 +90,7 @@ test_that("calc_diversity Seurat out", {
 
   names(fns) <- abdiv::alpha_diversities
 
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     calc_diversity(
       clonotype_col = "cdr3",
       method        = fns
@@ -94,12 +99,12 @@ test_that("calc_diversity Seurat out", {
   res@meta.data <- res@meta.data %>%
     select(-all_of(names(fns)))
 
-  expect_identical(res, tiny_vdj)
+  expect_identical(res, vdj_so)
 })
 
 # Check data.frame input
 test_that("calc_diversity df in", {
-  res <- tiny_vdj@meta.data %>%
+  res <- vdj_so@meta.data %>%
     calc_diversity(
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",

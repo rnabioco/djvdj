@@ -1,6 +1,10 @@
+# Test data
+df_1 <- vdj_so@meta.data
 
-# Test inputs
-test_clsts <- tiny_vdj@meta.data %>%
+df_2 <- vdj_so@meta.data %>%
+  as_tibble(rownames = ".cell_id")
+
+test_clsts <- df_1 %>%
   na.omit() %>%
   pull(seurat_clusters) %>%
   unique()
@@ -10,7 +14,7 @@ mets <- abdiv::beta_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 arg_lst <- list(
-  input         = list(tiny_vdj, tiny_vdj@meta.data),
+  input         = list(vdj_so, vdj_sce, df_1, df_2),
   clonotype_col = "cdr3",
   cluster_col   = "seurat_clusters",
   method        = mets,
@@ -25,7 +29,7 @@ test_all_args(
 )
 
 # Check similarity calculation
-test_sim <- tiny_vdj@meta.data %>%
+test_sim <- vdj_so@meta.data %>%
   as_tibble(rownames = ".cell_id") %>%
   filter(!is.na(cdr3)) %>%
   group_by(cdr3, seurat_clusters) %>%
@@ -49,7 +53,7 @@ test_sim <- map_dfr(test_clsts, ~ {
   mutate(!!sym(nm) := if_else(seurat_clusters == clst, 1, !!sym(nm)))
 
 test_that("sim calc", {
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     calc_similarity(
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
@@ -70,7 +74,7 @@ test_that("sim calc", {
 
 # Check Seurat output
 test_that("calc_similarity Seurat out", {
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     calc_similarity(
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
@@ -84,12 +88,12 @@ test_that("calc_similarity Seurat out", {
   res@meta.data <- res@meta.data %>%
     select(-all_of(paste0("x", test_clsts)))
 
-  expect_identical(res, tiny_vdj)
+  expect_identical(res, vdj_so)
 })
 
 # Check data.frame output
 test_that("calc_similarity df out", {
-  res <- tiny_vdj@meta.data %>%
+  res <- vdj_so@meta.data %>%
     calc_similarity(
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
@@ -103,7 +107,7 @@ test_that("calc_similarity df out", {
   res_2 <- res %>%
     select(-all_of(paste0("x", test_clsts)))
 
-  expect_identical(res_2, tiny_vdj@meta.data)
+  expect_identical(res_2, vdj_so@meta.data)
 
   res <- res %>%
     as_tibble() %>%
@@ -117,7 +121,7 @@ test_that("calc_similarity df out", {
 
 # Check data.frame output
 test_that("calc_similarity df out", {
-  res <- tiny_vdj@meta.data %>%
+  res <- vdj_so@meta.data %>%
     calc_similarity(
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
@@ -131,7 +135,7 @@ test_that("calc_similarity df out", {
   res_2 <- res %>%
     select(-all_of(paste0("x", test_clsts)))
 
-  expect_identical(res_2, tiny_vdj@meta.data)
+  expect_identical(res_2, vdj_so@meta.data)
 
   res <- res %>%
     as_tibble() %>%
@@ -145,7 +149,7 @@ test_that("calc_similarity df out", {
 
 # Check matrix output
 test_that("calc_similarity mat out", {
-  res <- tiny_vdj %>%
+  res <- vdj_so %>%
     calc_similarity(
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
