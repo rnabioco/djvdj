@@ -1,4 +1,9 @@
 # Test data
+df_1 <- vdj_so@meta.data
+
+df_2 <- vdj_so@meta.data %>%
+  as_tibble(rownames = ".cell_id")
+
 ctigs <- c(
   system.file("extdata/bcr_1", package = "djvdj"),
   system.file("extdata/bcr_2", package = "djvdj")
