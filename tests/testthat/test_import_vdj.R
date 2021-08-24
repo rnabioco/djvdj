@@ -78,6 +78,11 @@ arg_lst %>%
   })
 
 # Check arguments for different path inputs with data.frame
+df_1 <- tiny_so@meta.data
+
+df_2 <- tiny_so@meta.data %>%
+  as_tibble(rownames = ".cell_id")
+
 pluck(arg_lst, 1, 1) <- list(df_1)
 pluck(arg_lst, 2, 1) <- list(df_1)
 
