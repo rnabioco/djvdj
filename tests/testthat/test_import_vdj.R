@@ -1,9 +1,4 @@
 # Test data
-df_1 <- vdj_so@meta.data
-
-df_2 <- vdj_so@meta.data %>%
-  as_tibble(rownames = ".cell_id")
-
 ctigs <- c(
   system.file("extdata/bcr_1", package = "djvdj"),
   system.file("extdata/bcr_2", package = "djvdj")
@@ -22,6 +17,11 @@ vdj_cols <- c(
   "reads",  "productive",
   "umis",   "full_length"
 )
+
+df_1 <- tiny_so@meta.data
+
+df_2 <- tiny_so@meta.data %>%
+  as_tibble(rownames = ".cell_id")
 
 # Check arguments for different path inputs with Seurat
 arg_lst <- list(
