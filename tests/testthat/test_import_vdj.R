@@ -18,9 +18,9 @@ vdj_cols <- c(
   "umis",   "full_length"
 )
 
-df_1 <- tiny_so@meta.data
+df_1 <- vdj_so@meta.data
 
-df_2 <- tiny_so@meta.data %>%
+df_2 <- vdj_so@meta.data %>%
   as_tibble(rownames = ".cell_id")
 
 # Check arguments for different path inputs with Seurat
@@ -78,11 +78,6 @@ arg_lst %>%
   })
 
 # Check arguments for different path inputs with data.frame
-df_1 <- tiny_so@meta.data
-
-df_2 <- tiny_so@meta.data %>%
-  as_tibble(rownames = ".cell_id")
-
 pluck(arg_lst, 1, 1) <- list(df_1)
 pluck(arg_lst, 2, 1) <- list(df_1)
 
@@ -99,7 +94,7 @@ arg_lst %>%
       arg_lst = .x,
       .fn     = import_vdj,
       desc    = paste("import_vdj", .y, "path cells"),
-      chk     = expr(expect_identical(rownames(.res), rownames(df_1)))
+      chk     = expr(expect_identical(rownames(.res), rownames(vdj_so@meta.data)))
     )
   })
 
@@ -120,7 +115,7 @@ arg_lst %>%
       arg_lst = .x,
       .fn     = import_vdj,
       desc    = paste("import_vdj", .y, "path cells"),
-      chk     = expr(expect_identical(rownames(.res), df_2$.cell_id))
+      chk     = expr(expect_identical(rownames(.res), rownames(vdj_so@meta.data)))
     )
   })
 
