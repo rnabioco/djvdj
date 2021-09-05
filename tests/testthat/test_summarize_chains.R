@@ -1,7 +1,12 @@
+# Test data
+df_1 <- vdj_so@meta.data
+
+df_2 <- vdj_so@meta.data %>%
+  as_tibble(rownames = ".cell_id")
 
 # Check all summarize_chains arguments
 arg_lst <- list(
-  sobj_in      = list(tiny_vdj),
+  input        = list(vdj_so, vdj_sce, df_1, df_2),
   data_cols    = list("reads", "umis", c("reads", "umis")),
   fn           = list(mean, median),
   chain_col    = list(NULL, "chains"),

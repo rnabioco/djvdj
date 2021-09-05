@@ -1,7 +1,12 @@
+# Test data
+df_1 <- vdj_so@meta.data
+
+df_2 <- vdj_so@meta.data %>%
+  as_tibble(rownames = ".cell_id")
 
 # Check all calc_usage arguments
 arg_lst <- list(
-  sobj_in     = list(tiny_vdj),
+  input       = list(vdj_so, vdj_sce, df_1, df_2),
   gene_cols   = list("v_gene", "d_gene", "j_gene", "c_gene", c("v_gene", "j_gene")),
   cluster_col = list(NULL, "seurat_clusters"),
   chain       = list(NULL, "IGH", "IGL", "IGK"),

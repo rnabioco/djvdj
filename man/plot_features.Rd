@@ -2,26 +2,44 @@
 % Please edit documentation in R/plots.R
 \name{plot_features}
 \alias{plot_features}
+\alias{plot_features.default}
+\alias{plot_features.Seurat}
 \title{Create 2D feature plot}
 \usage{
-plot_features(
-  sobj_in,
+plot_features(input, ...)
+
+\method{plot_features}{default}(
+  input,
+  x = "UMAP_1",
+  y = "UMAP_2",
+  feature,
+  plot_colors = NULL,
+  plot_lvls = NULL,
+  min_q = NULL,
+  max_q = NULL,
+  na_color = "grey90",
+  ...
+)
+
+\method{plot_features}{Seurat}(
+  input,
   x = "UMAP_1",
   y = "UMAP_2",
   feature,
   data_slot = "data",
-  pt_size = 0.25,
-  pt_outline = NULL,
-  outline_pos = "all",
   plot_colors = NULL,
-  feat_lvls = NULL,
+  plot_lvls = NULL,
   min_q = NULL,
   max_q = NULL,
-  na_color = "grey90"
+  na_color = "grey90",
+  ...
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object or data.frame containing data for plotting}
+\item{input}{Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.}
+
+\item{...}{Additional arguments to pass to geom_point()}
 
 \item{x}{Variable to plot on x-axis}
 
@@ -29,26 +47,17 @@ plot_features(
 
 \item{feature}{Variable to use for coloring points}
 
-\item{data_slot}{Slot in the Seurat object to pull data}
-
-\item{pt_size}{Point size}
-
-\item{pt_outline}{Width of point outline to add to feature groups, set to
-NULL to exclude.}
-
-\item{outline_pos}{Position of point outline. Set to 'all' to outline all
-feature groups, set to 'bottom' to only outline the bottom layer of
-points.}
-
 \item{plot_colors}{Vector of colors to use for plot}
 
-\item{feat_lvls}{Levels to use for ordering feature}
+\item{plot_lvls}{Levels to use for ordering feature}
 
 \item{min_q}{Minimum quantile cutoff for color scale.}
 
 \item{max_q}{Maximum quantile cutoff for color scale.}
 
 \item{na_color}{Color to use for missing values}
+
+\item{data_slot}{Slot in the Seurat object to pull data}
 }
 \value{
 ggplot object

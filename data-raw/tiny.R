@@ -1,6 +1,9 @@
-library(tidyverse)
-library(Seurat)
 library(djvdj)
+library(tidyverse)
+library(usethis)
+library(Seurat)
+library(SingleCellExperiment)
+
 
 # Parameters
 dat_dir <- "~/Projects/Smith_AVIDseq"
@@ -68,8 +71,11 @@ tiny_so <- tiny_so %>%
     dims  = 1:40
   )
 
+tiny_so <- tiny_so %>%
+  AddMetaData(FetchData(., c("UMAP_1", "UMAP_2")))
+
 # Format contig data
-# add some NAs to raw_clonotype_id
+# add some NAs to raw_clonotype_id for testing
 contigs <- vdj_path %>%
   map(str_c, "/filtered_contig_annotations.csv") %>%
   map(read_csv)
@@ -88,20 +94,27 @@ names(contigs) <- str_c("bcr_", 1:2) %>%
 contigs %>%
   iwalk(write_csv)
 
-# Add V(D)J data to object
-tiny_vdj <- tiny_so %>%
+# Add V(D)J data to Seurat object
+vdj_so <- tiny_so %>%
+  import_vdj(
+    vdj_dir        = vdj_path,
+    filter_contigs = TRUE
+  )
+
+# Create tiny SingleCellExperiment object
+tiny_sce <- SingleCellExperiment(
+  list(counts = GetAssayData(tiny_so, "counts")),
+  colData = tiny_so@meta.data
+)
+
+vdj_sce <- tiny_sce %>%
   import_vdj(
     vdj_dir        = vdj_path,
     filter_contigs = TRUE
   )
 
 # Save objects
-usethis::use_data(
-  tiny_so,
-  overwrite = TRUE
-)
-
-usethis::use_data(
-  tiny_vdj,
-  overwrite = TRUE
-)
+use_data(tiny_so, overwrite = TRUE)
+use_data(vdj_so, overwrite = TRUE)
+use_data(tiny_sce, overwrite = TRUE)
+use_data(vdj_sce, overwrite = TRUE)

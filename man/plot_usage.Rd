@@ -5,7 +5,7 @@
 \title{Plot V(D)J gene usage}
 \usage{
 plot_usage(
-  sobj_in,
+  input,
   gene_cols,
   cluster_col = NULL,
   chain = NULL,
@@ -21,7 +21,8 @@ plot_usage(
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object containing V(D)J data}
+\item{input}{Object containing V(D)J data. If a data.frame is provided, the
+cell barcodes should be stored as row names.}
 
 \item{gene_cols}{meta.data column containing genes used for each clonotype,
 provide a vector with two column names to plot paired usage of genes}
@@ -47,7 +48,7 @@ bar plot can only be created when a single gene_col is provided}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
-\item{sep}{Separator to use for expanding gene_cols}
+\item{sep}{Separator used for storing per cell V(D)J data}
 
 \item{...}{Additional arguments to pass to ggplot}
 }

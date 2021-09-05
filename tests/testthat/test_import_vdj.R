@@ -1,5 +1,4 @@
-
-# Test inputs
+# Test data
 ctigs <- c(
   system.file("extdata/bcr_1", package = "djvdj"),
   system.file("extdata/bcr_2", package = "djvdj")
@@ -19,16 +18,21 @@ vdj_cols <- c(
   "umis",   "full_length"
 )
 
-# Check arguments for different path inputs
+df_1 <- vdj_so@meta.data
+
+df_2 <- vdj_so@meta.data %>%
+  as_tibble(rownames = ".cell_id")
+
+# Check arguments for different path inputs with Seurat
 arg_lst <- list(
   single = list(
-    sobj_in     = list(tiny_so),
+    input       = list(tiny_so),
     vdj_dir     = list(ctigs[1], ctigs_2[1], ctigs_3[1], paste0(ctigs[1], "/outs")),
     cell_prefix = list(NULL, ""),
     prefix      = c("", "PREFIX")
   ),
   multi = list(
-    sobj_in     = list(tiny_so),
+    input       = list(tiny_so),
     vdj_dir     = list(ctigs, ctigs_2, ctigs_3, paste0(ctigs, "/outs")),
     cell_prefix = list(NULL, c("", "2_"), c("", "2")),
     prefix      = c("", "PREFIX")
@@ -49,6 +53,69 @@ arg_lst %>%
       .fn     = import_vdj,
       desc    = paste("import_vdj", .y, "path cells"),
       chk     = expr(expect_identical(colnames(.res), colnames(tiny_so)))
+    )
+  })
+
+# Check arguments for different path inputs with SCE
+pluck(arg_lst, 1, 1) <- list(tiny_sce)
+pluck(arg_lst, 2, 1) <- list(tiny_sce)
+
+arg_lst %>%
+  iwalk(~ {
+    test_all_args(
+      arg_lst = .x,
+      .fn     = import_vdj,
+      desc    = paste("import_vdj", .y, "path class"),
+      chk     = expr(expect_s4_class(.res, "SingleCellExperiment"))
+    )
+
+    test_all_args(
+      arg_lst = .x,
+      .fn     = import_vdj,
+      desc    = paste("import_vdj", .y, "path cells"),
+      chk     = expr(expect_identical(colnames(.res), colnames(tiny_so)))
+    )
+  })
+
+# Check arguments for different path inputs with data.frame
+pluck(arg_lst, 1, 1) <- list(df_1)
+pluck(arg_lst, 2, 1) <- list(df_1)
+
+arg_lst %>%
+  iwalk(~ {
+    test_all_args(
+      arg_lst = .x,
+      .fn     = import_vdj,
+      desc    = paste("import_vdj", .y, "path class"),
+      chk     = expr(expect_s3_class(.res, "data.frame"))
+    )
+
+    test_all_args(
+      arg_lst = .x,
+      .fn     = import_vdj,
+      desc    = paste("import_vdj", .y, "path cells"),
+      chk     = expr(expect_identical(rownames(.res), rownames(vdj_so@meta.data)))
+    )
+  })
+
+# Check arguments for different path inputs with tibble
+pluck(arg_lst, 1, 1) <- list(df_2)
+pluck(arg_lst, 2, 1) <- list(df_2)
+
+arg_lst %>%
+  iwalk(~ {
+    test_all_args(
+      arg_lst = .x,
+      .fn     = import_vdj,
+      desc    = paste("import_vdj", .y, "path class"),
+      chk     = expr(expect_s3_class(.res, "data.frame"))
+    )
+
+    test_all_args(
+      arg_lst = .x,
+      .fn     = import_vdj,
+      desc    = paste("import_vdj", .y, "path cells"),
+      chk     = expr(expect_identical(rownames(.res), rownames(vdj_so@meta.data)))
     )
   })
 
@@ -105,11 +172,11 @@ test_that("import_vdj unfiltered contigs", {
   expect_identical(colnames(res), colnames(tiny_so))
 })
 
-# Check tibble output
-test_that("import_vdj tibble output", {
+# Check data.frame output
+test_that("import_vdj df out", {
   res <- import_vdj(vdj_dir = ctigs)
 
-  expect_s3_class(res, "tbl")
+  expect_s3_class(res, "data.frame")
 })
 
 # Check bad barcode prefixes

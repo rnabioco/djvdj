@@ -5,7 +5,7 @@
 \title{Plot repertoire diversity}
 \usage{
 plot_diversity(
-  sobj_in,
+  input,
   clonotype_col = "cdr3_nt",
   cluster_col = NULL,
   method = abdiv::simpson,
@@ -16,8 +16,8 @@ plot_diversity(
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object containing V(D)J data or data.frame containing
-diversity values to plot. If a data.frame is used}
+\item{input}{Object containing V(D)J data. If a data.frame is provided, the
+cell barcodes should be stored as row names.}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating clonotype abundance}

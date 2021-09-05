@@ -5,7 +5,7 @@
 \title{Plot clonotype abundance}
 \usage{
 plot_abundance(
-  sobj_in,
+  input,
   clonotype_col = "cdr3_nt",
   cluster_col = NULL,
   type = "bar",
@@ -14,7 +14,7 @@ plot_abundance(
   plot_lvls = NULL,
   label_col = clonotype_col,
   n_clonotypes = 10,
-  color_col = NULL,
+  color_col = cluster_col,
   label_aes = list(),
   facet_rows = 1,
   facet_scales = "free_x",
@@ -22,7 +22,8 @@ plot_abundance(
 )
 }
 \arguments{
-\item{sobj_in}{Seurat object containing V(D)J data}
+\item{input}{Object containing V(D)J data. If a data.frame is provided, the
+cell barcodes should be stored as row names.}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating clonotype abundance}
@@ -38,9 +39,12 @@ grouping cells when calculating clonotype abundance}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{label_col}{meta.data column containing labels to use for plot}
+\item{label_col}{meta.data column to use for labeling clonotypes. This is
+useful if clonotype_col contains names that are too long to include on the
+plot.}
 
-\item{n_clonotypes}{Number of clonotypes to label}
+\item{n_clonotypes}{Number of clonotypes to plot. If type is set to 'line',
+this will specify the number of clonotypes to label.}
 
 \item{color_col}{meta.data column to use for coloring bars}
 
@@ -53,7 +57,7 @@ size, etc.)}
 \item{facet_scales}{If type = 'bar', this argument passes a scales
 specification to facet_wrap, can be "fixed", "free", "free_x", or "free_y"}
 
-\item{...}{Additional arguments to pass to geom_line}
+\item{...}{Additional arguments to pass to ggplot}
 }
 \value{
 ggplot object
