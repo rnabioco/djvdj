@@ -19,36 +19,35 @@ Authors@R:
              family = "Riemondy",
              role = "ctb",
              email = "kent.riemondy@ucdenver.edu"))
-Description: djvdj provides a range of tools to analyze
-    single-cell V(D)J data.
+Description: djvdj provides a range of tools to analyze single-cell V(D)J
+    data.
 License: MIT + file LICENSE
-URL: https://rnabioco.github.io/djvdj,
-    https://github.com/rnabioco/djvdj
+URL: https://rnabioco.github.io/djvdj, https://github.com/rnabioco/djvdj
 BugReports: https://github.com/rnabioco/djvdj/issues
 Depends: 
     R (>= 4.0.0)
 Imports: 
+    abdiv,
+    broom,
     dplyr,
+    ggplot2,
+    ggrepel,
     magrittr,
     purrr,
     readr,
     rlang (>= 0.1.2),
-    tibble,
-    tidyr,
-    broom,
-    ggplot2,
-    abdiv,
-    stats,
-    ggrepel,
+    S4Vectors,
     scales,
     Seurat (>= 4.0.0),
-    S4Vectors,
-    SingleCellExperiment
+    SingleCellExperiment,
+    stats,
+    tibble,
+    tidyr
 Suggests: 
-    roxygen2,
-    testthat,
     covr,
-    knitr
+    knitr,
+    roxygen2,
+    testthat
 VignetteBuilder: 
     knitr
 Remotes:
