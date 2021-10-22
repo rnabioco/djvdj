@@ -55,42 +55,6 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 }
 
 
-#' Helper to test all combinations of provided arguments
-#'
-#' @param arg_lst Named list of arguments to test
-#' @param .fn Function to test
-#' @param desc Description to pass to test_that
-#' @param chk Function or expression to using for testing
-#' @param dryrun Do not run tests, just return table of arguments that will be
-#' tested
-#' @return Output from test_that
-test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
-
-  arg_lst <- expand.grid(arg_lst, stringsAsFactors = FALSE)
-
-  if (dryrun) {
-    return(arg_lst)
-  }
-
-  n <- 1
-
-  pwalk(arg_lst, ~ {
-    test_that(paste(desc, n), {
-
-      if (is.call(chk)) {
-        .res <- .fn(...)
-
-        return(eval(chk))
-      }
-
-      chk(.fn(...))
-    })
-
-    n <<- n + 1
-  })
-}
-
-
 #' Add meta.data to single cell object
 #'
 .add_meta <- function(input, meta, row_col) {
@@ -187,36 +151,52 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 }
 
 
+#' Check cell barcode overlap with object
+#'
+#' @param input Object containing single cell data
+#' @param meta meta.data to check against object
+#' @param nm Sample name to use for messages
+#' @param pct_min Warn user if the percent overlap is less than pct_min
+#' @return checked meta.data
+.check_overlap <- function(input, meta, nm, pct_min = 25) {
+
+  if (is.null(input)) {
+    return(meta)
+  }
+
+  obj_meta  <- .get_meta(input)
+  obj_cells <- obj_meta$.cell_id
+  met_cells <- unique(meta$barcode)
+
+  n_overlap   <- length(obj_cells[obj_cells %in% met_cells])
+  pct_overlap <- round(n_overlap / length(met_cells), 2) * 100
+
+  if (nm != "") {
+    nm <- paste0(nm, " ")
+  }
+
+  if (n_overlap == 0) {
+    stop(nm, "cell barcodes do not match those in the object, are you using the correct cell barcode prefixes?")
+  }
+
+  if (pct_overlap < pct_min) {
+    warning("Only ", pct_overlap, "% (", n_overlap, ") of ", nm, "cell barcodes overlap with the provided object")
+  }
+
+  meta
+}
+
+
 #' Merge new meta.data with object
 #'
 #' @param input Object containing single cell data
 #' @param meta meta.data to merge with object
 #' @param by Columns to use for merging
-#' @param pct_min If the percent overlap is less than pct_min, and error is
-#' thrown
 #' @return Object with added meta.data
-.merge_meta <- function(input, meta, by = ".cell_id", pct_min = 25) {
+.merge_meta <- function(input, meta, by = ".cell_id") {
 
-  obj_meta <- .get_meta(input)
-
-  # Check overlap between cell barcodes
-  obj_cells <- obj_meta$.cell_id
-  met_cells <- rownames(meta)
-
-  n_overlap <- length(obj_cells[obj_cells %in% met_cells])
-  pct_obj   <- round(n_overlap / length(obj_cells), 2) * 100
-  pct_met   <- round(n_overlap / length(met_cells), 2) * 100
-
-  if (n_overlap == 0) {
-    stop("Cell barcodes do not match those in the object, are you using the correct cell barcode prefixes?")
-  }
-
-  if (pct_obj < pct_min) {
-    warning("Only ", pct_obj, "% (", n_overlap, ") of cell barcodes present in the object overlap")
-  }
-
-  if (pct_met < pct_min) {
-    warning("Only ", pct_met, "% (", n_overlap, ") of cell barcodes overlap with the provided object")
+  if (is.null(input)) {
+    return(meta)
   }
 
   # Join meta.data
@@ -225,6 +205,7 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
   meta     <- .get_meta(meta, row_col = ".cell_id")
   rm_cols  <- colnames(meta)
   rm_cols  <- rm_cols[!rm_cols %in% by]
+  obj_meta <- .get_meta(input)
   obj_meta <- dplyr::select(obj_meta, !any_of(rm_cols))
 
   meta <- dplyr::left_join(obj_meta, meta, by = by)

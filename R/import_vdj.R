@@ -21,8 +21,6 @@
 import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, filter_contigs = TRUE,
                        sep = ";") {
 
-  # SHOULD CHECK BARCODE OVERLAP BEFORE BINDING ROWS
-
   # VDJ columns
   count_cols <- c("reads", "umis")
   cdr3_cols  <- c("cdr3", "cdr3_nt")
@@ -95,8 +93,8 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     col_types = readr::cols()
   )
 
-  # Add cell prefixes and bind rows
-  contigs <- purrr::imap_dfr(contigs, ~ {
+  # Add cell prefixes
+  contigs <- purrr::imap(contigs, ~ {
     .x <- dplyr::mutate(
       .x,
       barcode      = paste0(.y, .data$barcode),
@@ -105,6 +103,10 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
     dplyr::rename(.x, chains = .data$chain)
   })
+
+  # Check cell barcode overlap
+  # give warning for low overlap
+  contigs <- purrr::imap_dfr(contigs, ~ .check_overlap(input, .x, .y))
 
   # Filter for productive contigs
   if (filter_contigs) {
@@ -144,18 +146,10 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   )
 
   # Calculate CDR3 length
-  contigs <- dplyr::rowwise(contigs)
-
   contigs <- dplyr::mutate(
     contigs,
-    across(
-      all_of(cdr3_cols),
-      ~ length(strsplit(.x, "")[[1]]),
-      .names = "{.col}_length"
-    )
+    across(all_of(cdr3_cols), nchar, .names = "{.col}_length")
   )
-
-  contigs <- dplyr::ungroup(contigs)
 
   sep_cols <- c(sep_cols, paste0(cdr3_cols, "_length"))
 
@@ -229,12 +223,12 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   }
 
   # Format meta.data
+  # currently the number of cell barcodes that overlap with the object is
+  # checked with .merge_meta, ideally each sample would be checked separately
   res <- tibble::column_to_rownames(meta, "barcode")
   res <- dplyr::rename_with(res, ~ paste0(prefix, .x))
 
-  if (!is.null(input)) {
-    res <- .merge_meta(input, res)
-  }
+  res <- .merge_meta(input, res)
 
   res
 }
