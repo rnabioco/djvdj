@@ -25,13 +25,14 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   # VDJ columns
   count_cols <- c("reads", "umis")
+  cdr3_cols  <- c("cdr3", "cdr3_nt")
 
   sep_cols <- c(
-    "v_gene",     "d_gene",
-    "j_gene",     "c_gene",
-    "chains",     "cdr3",
-    "cdr3_nt",    count_cols,
-    "productive", "full_length"
+    "v_gene",   "d_gene",
+    "j_gene",   "c_gene",
+    "chains",   cdr3_cols,
+    count_cols, "productive",
+    "full_length"
   )
 
   vdj_cols <- c(
@@ -141,6 +142,22 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     across(all_of(count_cols), sum),
     .groups = "drop"
   )
+
+  # Calculate CDR3 length
+  contigs <- dplyr::rowwise(contigs)
+
+  contigs <- dplyr::mutate(
+    contigs,
+    across(
+      all_of(cdr3_cols),
+      ~ length(strsplit(.x, "")[[1]]),
+      .names = "{.col}_length"
+    )
+  )
+
+  contigs <- dplyr::ungroup(contigs)
+
+  sep_cols <- c(sep_cols, paste0(cdr3_cols, "_length"))
 
   # Order chains and CDR3 sequences
   # when the rows are collapsed, the cdr3 sequences must be in the same order
