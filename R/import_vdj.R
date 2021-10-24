@@ -38,71 +38,18 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     sep_cols
   )
 
-  # Check path names
-  # if no cell prefixes are provided, auto generate prefixes
-  # add an underscore if not included in the provided cell prefixes
-  if (is.null(names(vdj_dir))) {
+  # Format/check cell prefixes
+  vdj_dir <- .format_cell_prefixes(vdj_dir, cell_prefix)
 
-    if (is.null(cell_prefix)) {
-      cell_prefix    <- paste0(seq_along(vdj_dir), "_")
-      cell_prefix[1] <- ""
-    }
+  # Load V(D)J data and add cell prefixes
+  contigs <- .load_vdj_data(vdj_dir)
 
-    if (length(vdj_dir) != length(cell_prefix)) {
-      stop("cell_prefix must be the same length as vdj_dir (", length(vdj_dir),").")
-    }
+  # Classify input data as TCR or BCR
+  vdj_class <- purrr::map_chr(contigs, .classify_vdj)
 
-    names(vdj_dir) <- cell_prefix
+  if (length(unique(vdj_class)) > 1) {
+    stop("Provided data must be either TCR or BCR. To add both TCR and BCR data to the same object, run import_vdj separately for each and use the 'prefix' argument to add different column names.")
   }
-
-  if (any(is.na(names(vdj_dir)))) {
-    stop("Cell prefixes cannot include NAs.")
-  }
-
-  if (any(duplicated(names(vdj_dir)))) {
-    dups <- duplicated(names(vdj_dir))
-    dups <- names(vdj_dir)[dups]
-    dups <- paste0(dups, collapse = ", ")
-
-    warning("Some cell barcode prefixes are duplicated: ", dups)
-  }
-
-  nms                 <- names(vdj_dir) != "" & !grepl("_$", names(vdj_dir))
-  names(vdj_dir)[nms] <- paste0(names(vdj_dir)[nms], "_")
-
-  # Load contigs
-  # check given dir before adding "outs" to path
-  contigs <- "filtered_contig_annotations.csv"
-
-  contigs <- purrr::map_chr(vdj_dir, ~ {
-    path <- case_when(
-      file.exists(file.path(.x, contigs))         ~ file.path(.x, contigs),
-      file.exists(file.path(.x, "outs", contigs)) ~ file.path(.x, "outs", contigs)
-    )
-
-    if (is.na(path)) {
-      stop(contigs, " not found in ", vdj_dir, ".")
-    }
-
-    path
-  })
-
-  contigs <- purrr::map(
-    contigs,
-    readr::read_csv,
-    col_types = readr::cols()
-  )
-
-  # Add cell prefixes
-  contigs <- purrr::imap(contigs, ~ {
-    .x <- dplyr::mutate(
-      .x,
-      barcode      = paste0(.y, .data$barcode),
-      clonotype_id = paste0(.y, raw_clonotype_id)
-    )
-
-    dplyr::rename(.x, chains = .data$chain)
-  })
 
   # Check cell barcode overlap
   # give warning for low overlap
@@ -154,52 +101,22 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   sep_cols <- c(sep_cols, paste0(cdr3_cols, "_length"))
 
   # Order chains and CDR3 sequences
-  # when the rows are collapsed, the cdr3 sequences must be in the same order
-  # for every cell. This is required so the cdr3 columns can be used directly
-  # as the clonotype ID
+  # when rows are collapsed, the cdr3 sequences must be in the same order for
+  # every cell. This is required so the cdr3 columns can be used directly as
+  # the clonotype ID
   contigs <- dplyr::arrange(
     contigs,
     .data$barcode, .data$chains, .data$cdr3_nt
   )
 
-  # Extract isotypes from c_gene for IGH chain
-  iso_pat <- "^IGH[ADEGM]"
-
-  if (any(grepl(iso_pat, contigs$c_gene))) {
-    contigs <- dplyr::group_by(contigs, .data$barcode)
-
-    contigs <- dplyr::mutate(
-      contigs,
-      isotype = list(
-        substr(
-          .data$c_gene, 1,
-          attr(regexpr(iso_pat, .data$c_gene), "match.length", exact = TRUE)
-        )
-      ),
-      isotype = map_chr(.data$isotype, ~ {
-        isos <- unique(.x)
-        isos <- tidyr::replace_na(isos, "")
-        isos <- isos[isos != ""]
-
-        if (length(isos) == 0) {
-          isos <- ""
-        }
-
-        isos <- dplyr::case_when(
-          length(isos) > 1 ~ "Multi",
-          isos == ""       ~ "None",
-          TRUE             ~ isos
-        )
-
-        unique(isos)
-      })
-    )
-
+  # Extract isotypes from c_gene for IGH chain (for BCR data only)
+  if (vdj_class == "BCR") {
+    contigs <- .extract_isotypes(contigs)
     contigs <- dplyr::group_by(contigs, .data$isotype)
   }
 
   # Collapse chains into a single row for each cell
-  # Include isotype and clonotype_id as groups so that they are included in the
+  # include isotype and clonotype_id as groups so they are included in the
   # summarized results
   contigs <- dplyr::group_by(
     contigs,
@@ -232,3 +149,222 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   res
 }
+
+#' Format and add cell prefixes
+#'
+#' @param vdj_dir Directory containing the output from cellranger vdj. A vector
+#' or named vector can be given to load data from several runs. If a named
+#' vector is given, the cell barcodes will be prefixed with the provided names.
+#' This mimics the behavior of the Read10X function found in the Seurat
+#' package. Cell barcode prefixes can also be provided using the cell_prefix
+#' argument.
+#' @param cell_prefix Prefix to add to cell barcodes, this is helpful when
+#' loading data from multiple runs into a single object. If set to NULL, cell
+#' barcode prefixes will be automatically generated in a similar way as the
+#' Read10X function found in the Seurat package.
+#' @param sep Separator to use when appending prefixes to cell barcodes. Set to
+#' NULL to not add a separator.
+#' @return Paths provided to vdj_dir with cell prefixes added as names.
+.format_cell_prefixes <- function(vdj_dir, cell_prefix, sep = "_") {
+
+  res <- vdj_dir
+
+  # If vdj_dir is not named, check cell_prefix
+  if (is.null(names(res))) {
+
+    # If no cell prefixes are provided, auto generate
+    if (is.null(cell_prefix)) {
+      cell_prefix    <- paste0(seq_along(res), "_")
+      cell_prefix[1] <- ""
+    }
+
+    # Check there is a cell prefix provided for each path
+    if (length(res) != length(cell_prefix)) {
+      stop("cell_prefix must be the same length as vdj_dir (", length(res),").")
+    }
+
+    names(res) <- cell_prefix
+  }
+
+  # Check for NAs in cell prefixes
+  if (any(is.na(names(res)))) {
+    stop("Cell prefixes cannot include NAs.")
+  }
+
+  # Check for duplicated cell prefixes
+  if (any(duplicated(names(res)))) {
+    dups <- duplicated(names(res))
+    dups <- names(res)[dups]
+    dups <- paste0(dups, collapse = ", ")
+
+    warning("Some cell barcode prefixes are duplicated: ", dups)
+  }
+
+  # Add separator if one is not included in cell prefixes
+  if (!is.null(sep)) {
+    sep_regex <- paste0(sep, "$")
+
+    nms <- names(res) != "" & !grepl(sep_regex, names(res))
+
+    names(res)[nms] <- paste0(names(res)[nms], sep)
+  }
+
+  res
+}
+
+#' Load V(D)J data
+#'
+#' @param vdj_dir Directory containing the output from cellranger vdj. A vector
+#' or named vector can be given to load data from several runs. If a named
+#' vector is given, the cell barcodes will be prefixed with the provided names.
+#' This mimics the behavior of the Read10X function found in the Seurat
+#' package.
+#' @param contig_file cellranger vdj output file containing data for each
+#' contig annotation.
+#' @return List containing one data.frame for each path provided to vdj_dir.
+.load_vdj_data <- function(vdj_dir, contig_file = "filtered_contig_annotations.csv") {
+
+  # Check vdj_dir for contig_file
+  # try adding "outs" to path if contig_file is not found
+  res <- purrr::map_chr(vdj_dir, ~ {
+    path <- case_when(
+      file.exists(file.path(.x, contig_file))         ~ file.path(.x, contig_file),
+      file.exists(file.path(.x, "outs", contig_file)) ~ file.path(.x, "outs", contig_file)
+    )
+
+    if (is.na(path)) {
+      stop(res, " not found in ", vdj_dir, ".")
+    }
+
+    path
+  })
+
+  # Load data
+  res <- purrr::map(res, readr::read_csv, col_types = readr::cols())
+
+  # Add cell prefixes
+  res <- purrr::imap(res, ~ {
+    .x <- dplyr::mutate(
+      .x,
+      barcode      = paste0(.y, .data$barcode),
+      clonotype_id = paste0(.y, raw_clonotype_id)
+    )
+
+    dplyr::rename(.x, chains = .data$chain)
+  })
+
+  res
+}
+
+#' Determine whether TCR or BCR data were provided
+#'
+#' @param input data.frame containing V(D)J data formatted so that each row
+#' represents a single contig.
+#' @param chain_col Column in input data containing chain identity.
+#' @return Character string indicating whether TCR or BCR data were provided.
+.classify_vdj <- function(input, chain_col = "chains") {
+  get_chain_class <- function(chains) {
+    any(chains %in% input[[chain_col]])
+  }
+
+  chains <- list(
+    "TCR" = c("TRA", "TRB", "TRD", "TRG"),
+    "BCR" = c("IGH", "IGK", "IGL")
+  )
+
+  res <- purrr::map_lgl(chains, get_chain_class)
+  res <- names(res[res])
+
+  if (length(res) == 0) {
+    chains <- unlist(chains, use.names = FALSE)
+    chains <- paste0(chains, collapse = ", ")
+
+    stop("None of the expected chains (", chains, ") were found in the '", chain_col, "' column, unable to determine whether TCR or BCR data were provided.")
+
+  } else if (length(res) > 1) {
+    stop("Malformed input data, both TCR and BCR chains are present.")
+  }
+
+  res
+}
+
+#' Check cell barcode overlap with object
+#'
+#' @param input Object containing single cell data.
+#' @param meta meta.data to check against object.
+#' @param nm Sample name to use for messages.
+#' @param pct_min Warn user if the percent overlap is less than pct_min.
+#' @return input data.
+.check_overlap <- function(input, meta, nm, pct_min = 25) {
+
+  if (is.null(input)) {
+    return(meta)
+  }
+
+  obj_meta  <- .get_meta(input)
+  obj_cells <- obj_meta$.cell_id
+  met_cells <- unique(meta$barcode)
+
+  n_overlap   <- length(obj_cells[obj_cells %in% met_cells])
+  pct_overlap <- round(n_overlap / length(met_cells), 2) * 100
+
+  if (nm != "") {
+    nm <- paste0(nm, " ")
+  }
+
+  if (n_overlap == 0) {
+    stop(nm, "cell barcodes do not match those in the object, are you using the correct cell barcode prefixes?")
+  }
+
+  if (pct_overlap < pct_min) {
+    warning("Only ", pct_overlap, "% (", n_overlap, ") of ", nm, "cell barcodes overlap with the provided object")
+  }
+
+  meta
+}
+
+#' Add isotypes to V(D)J data
+#'
+#' @param input data.frame containing V(D)J data formatted so that each row
+#' represents a single contig.
+#' @param iso_pat Regular expression to use for extracting isotypes from
+#' iso_col.
+#' @param iso_col Column containing data to use for extracting isotypes.
+#' @return input data.frame with isotype column added.
+.extract_isotypes <- function(input, iso_pat = "^IGH[ADEGM]", iso_col = "c_gene") {
+
+  res <- dplyr::group_by(input, .data$barcode)
+
+  res <- dplyr::mutate(
+    res,
+    isotype = list(
+      substr(
+        !!sym(iso_col), 1,
+        attr(regexpr(iso_pat, !!sym(iso_col)), "match.length", exact = TRUE)
+      )
+    ),
+    isotype = map_chr(.data$isotype, ~ {
+      isos <- unique(.x)
+      isos <- tidyr::replace_na(isos, "")
+      isos <- isos[isos != ""]
+
+      if (length(isos) == 0) {
+        isos <- ""
+      }
+
+      isos <- dplyr::case_when(
+        length(isos) > 1 ~ "Multi",
+        isos == ""       ~ "None",
+        TRUE             ~ isos
+      )
+
+      unique(isos)
+    })
+  )
+
+  res <- dplyr::ungroup(res)
+
+  res
+}
+
+

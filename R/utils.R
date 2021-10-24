@@ -151,42 +151,6 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 }
 
 
-#' Check cell barcode overlap with object
-#'
-#' @param input Object containing single cell data
-#' @param meta meta.data to check against object
-#' @param nm Sample name to use for messages
-#' @param pct_min Warn user if the percent overlap is less than pct_min
-#' @return checked meta.data
-.check_overlap <- function(input, meta, nm, pct_min = 25) {
-
-  if (is.null(input)) {
-    return(meta)
-  }
-
-  obj_meta  <- .get_meta(input)
-  obj_cells <- obj_meta$.cell_id
-  met_cells <- unique(meta$barcode)
-
-  n_overlap   <- length(obj_cells[obj_cells %in% met_cells])
-  pct_overlap <- round(n_overlap / length(met_cells), 2) * 100
-
-  if (nm != "") {
-    nm <- paste0(nm, " ")
-  }
-
-  if (n_overlap == 0) {
-    stop(nm, "cell barcodes do not match those in the object, are you using the correct cell barcode prefixes?")
-  }
-
-  if (pct_overlap < pct_min) {
-    warning("Only ", pct_overlap, "% (", n_overlap, ") of ", nm, "cell barcodes overlap with the provided object")
-  }
-
-  meta
-}
-
-
 #' Merge new meta.data with object
 #'
 #' @param input Object containing single cell data
