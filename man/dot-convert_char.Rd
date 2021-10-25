@@ -2,18 +2,18 @@
 % Please edit documentation in R/utils.R
 \name{.convert_char}
 \alias{.convert_char}
-\title{Attempt to convert character vector using provided function}
+\title{Attempt to coerce character vector using provided function}
 \usage{
-.convert_char(x, fn)
+.convert_char(x, Class)
 }
 \arguments{
-\item{x}{Character vector to convert}
+\item{x}{Character vector to coerce}
 
-\item{fn}{Function to try}
+\item{Class}{Name of the class to which x should be coerced}
 }
 \value{
-Value converted using fn
+Coerced vector
 }
 \description{
-Attempt to convert character vector using provided function
+Attempt to coerce character vector using provided function
 }

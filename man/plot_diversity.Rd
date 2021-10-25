@@ -32,7 +32,7 @@ list to use multiple methods.}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{facet_rows}{The number of facet rows. Use this argument if a list of
+\item{facet_rows}{The number of facet rows, use this argument if a list of
 functions is passed to method}
 
 \item{...}{Additional arguments to pass to ggplot}

@@ -162,7 +162,7 @@ plot_reads <- function(input, data_cols = c("reads", "umis"), chain_col = "chain
     stop("type must be 'violin', 'histogram' or 'density'.")
   }
 
-  # Calculate mean reads/umis each chain for each cell
+  # Calculate mean reads/umis for each chain for each cell
   plt_dat <- summarize_chains(
     input,
     data_cols    = data_cols,
@@ -516,7 +516,7 @@ plot_abundance <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
 #' list to use multiple methods.
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
-#' @param facet_rows The number of facet rows. Use this argument if a list of
+#' @param facet_rows The number of facet rows, use this argument if a list of
 #' functions is passed to method
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object

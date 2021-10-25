@@ -65,19 +65,19 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
   )
 
   # Expand meta.data
-  res <- dplyr::mutate(meta, across(
-    all_of(c(data_cols, chain_col)),
-    ~ strsplit(as.character(.x), sep)
-  ))
+  coerce_cols <- purrr::set_names(
+    rep("numeric", length(data_cols)),
+    data_cols
+  )
 
-  res <- tidyr::unnest(res, cols = all_of(c(data_cols, chain_col)))
+  res <- .split_vdj(
+    meta,
+    sep_cols    = c(data_cols, chain_col),
+    expand      = TRUE,
+    coerce_cols = coerce_cols
+  )
 
-  # Summarize data_cols for each chain present for the cell
-  res <- dplyr::mutate(res, across(
-    all_of(data_cols),
-    ~ .convert_char(.x, as.numeric)
-  ))
-
+  # Summarize chains
   grp_cols <- c(".cell_id", chain_col, include_cols)
   res      <- dplyr::group_by(res, !!!syms(grp_cols))
 
@@ -221,32 +221,44 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' @param df_in data.frame to modify
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param sep_cols Columns to split based on sep
-#' @param num_cols Columns to convert to numeric
-#' @param lgl_cols Columns to convert to logical
+#' @param expand Should columns be unnested after splitting into vectors
+#' @param coerce_cols Named vector specifying columns that should be coerced to
+#' a new type. The vector names should be the name of each column,
+#' e.g., c(umis = "numeric")
 #' @return data.frame
-.split_vdj <- function(df_in, sep = ";", sep_cols, num_cols = c("umis", "reads"),
-                       lgl_cols = c("productive", "full_length")) {
+.split_vdj <- function(df_in, sep = ";", sep_cols, expand = FALSE,
+                       coerce_cols = c(
+                         umis        = "numeric", reads          = "numeric",
+                         cdr3_length = "numeric", cdr3_nt_length = "numeric",
+                         productive  = "logical", full_length    = "logical"
+                       )) {
 
-  # Split columns into vectors
+  # Add new set of columns based on sep_cols names
+  # this is useful if want to leave original columns unmodified
   res <- dplyr::mutate(df_in, !!!syms(sep_cols))
 
+  # Split columns into vectors
   res <- dplyr::mutate(res, across(
     all_of(unname(sep_cols)),
     ~ strsplit(as.character(.x), sep)
   ))
 
-  # Convert to numeric or logical
-  res <- dplyr::mutate(
-    res,
-    across(
-      all_of(num_cols),
-      map, ~ .convert_char(.x, as.numeric)
-    ),
-    across(
-      all_of(lgl_cols),
-      map, ~ .convert_char(.x, as.logical)
-    )
-  )
+  # Coerce columns to correct types
+  if (!is.null(coerce_cols)) {
+    coerce_cols <- coerce_cols[names(coerce_cols) %in% sep_cols]
+
+    purrr::iwalk(coerce_cols, ~ {
+      Class <- .x
+      clmn <- sym(.y)
+
+      res <<- dplyr::mutate(res, !!clmn := map(!!clmn, .convert_char, Class))
+    })
+  }
+
+  # Unnest columns
+  if (expand) {
+    res <- tidyr::unnest(res, all_of(unname(sep_cols)))
+  }
 
   res
 }
@@ -308,17 +320,19 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 }
 
 
-#' Attempt to convert character vector using provided function
+#' Attempt to coerce character vector using provided function
 #'
-#' @param x Character vector to convert
-#' @param fn Function to try
-#' @return Value converted using fn
-.convert_char <- function(x, fn) {
+#' @param x Character vector to coerce
+#' @param Class Name of the class to which x should be coerced
+#' @return Coerced vector
+.convert_char <- function(x, Class) {
 
   if (!is.character(x)) {
     return(x)
   }
 
-  suppressWarnings(ifelse(!is.na(fn(x)) | is.na(x), fn(x), x))
+  fn <- function() as(x, Class)
+
+  suppressWarnings(ifelse(!is.na(fn()) | is.na(x), fn(), x))
 }
 

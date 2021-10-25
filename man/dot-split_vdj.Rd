@@ -8,8 +8,9 @@
   df_in,
   sep = ";",
   sep_cols,
-  num_cols = c("umis", "reads"),
-  lgl_cols = c("productive", "full_length")
+  expand = FALSE,
+  coerce_cols = c(umis = "numeric", reads = "numeric", cdr3_length = "numeric",
+    cdr3_nt_length = "numeric", productive = "logical", full_length = "logical")
 )
 }
 \arguments{
@@ -19,9 +20,11 @@
 
 \item{sep_cols}{Columns to split based on sep}
 
-\item{num_cols}{Columns to convert to numeric}
+\item{expand}{Should columns be unnested after splitting into vectors}
 
-\item{lgl_cols}{Columns to convert to logical}
+\item{coerce_cols}{Named vector specifying columns that should be coerced to
+a new type. The vector names should be the name of each column,
+e.g., c(umis = "numeric")}
 }
 \value{
 data.frame
