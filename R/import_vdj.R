@@ -372,15 +372,18 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     stop("vdj_class must be either 'TCR', or 'BCR'.")
   }
 
-  res <- dplyr::group_by(df_in, barcode)
+  res <- dplyr::group_by(df_in, .data$barcode)
 
   if (vdj_class == "TCR") {
-    res <- dplyr::mutate(res, paired = all(c("TRA", "TRB") %in% chains))
+    res <- dplyr::mutate(
+      res,
+      paired = all(c("TRA", "TRB") %in% .data$chains)
+    )
 
   } else if(vdj_class == "BCR") {
     res <- dplyr::mutate(
       res,
-      paired = "IGH" %in% chains & any(c("IGL", "IGK") %in% chains)
+      paired = "IGH" %in% .data$chains & any(c("IGL", "IGK") %in% .data$chains)
     )
   }
 
@@ -448,11 +451,11 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id") {
   meta <- dplyr::mutate(
     meta,
     .new_clone            = paste0(!!!syms(vdj_cols)),
-    .new_clone            = rank(.new_clone, ties.method = "min"),
-    !!sym(clonotype_col) := paste0("clonotype", .new_clone)
+    .new_clone            = rank(.data$.new_clone, ties.method = "min"),
+    !!sym(clonotype_col) := paste0("clonotype", .data$.new_clone)
   )
 
-  meta <- dplyr::select(meta, -.new_clone)
+  meta <- dplyr::select(meta, -.data$.new_clone)
 
   res <- .add_meta(input, meta)
 

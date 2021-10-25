@@ -10,6 +10,8 @@ import_vdj(
   prefix = "",
   cell_prefix = NULL,
   filter_contigs = TRUE,
+  filter_paired = FALSE,
+  define_clonotypes = NULL,
   sep = ";"
 )
 }
@@ -33,6 +35,19 @@ Read10X function found in the Seurat package.}
 
 \item{filter_contigs}{Only include chains with at least one productive
 contig}
+
+\item{filter_paired}{Only include clonotypes with paired chains. For TCR
+data each clonotype must have at least one TRA and TRB chain, for BCR data
+each clonotype must have at least one IGH chain and at least one IGK or IGL
+chain.}
+
+\item{define_clonotypes}{Define clonotype IDs based on V(D)J data. This is
+useful if the V(D)J datasets being loaded do not have consistent clonotype
+IDs, e.g., clonotype1 is not the same across samples.
+'cdr3aa' will use the CDR3 amino acid sequence, 'cdr3nt' will use the CDR3
+nucleotide sequence, and 'cdr3_gene' will use the combination of the CDR3
+nucleotide sequence and the V(D)J genes. Set to NULL (default) to use the
+clonotype IDs already present in the input data.}
 
 \item{sep}{Separator to use for storing per cell V(D)J data}
 }
