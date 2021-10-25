@@ -128,7 +128,8 @@ plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, dat
     plot_lvls   = plot_lvls,
     min_q       = min_q,
     max_q       = max_q,
-    na_color    = na_color
+    na_color    = na_color,
+    ...
   )
 }
 
