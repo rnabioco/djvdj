@@ -15,11 +15,22 @@
 #' Read10X function found in the Seurat package.
 #' @param filter_contigs Only include chains with at least one productive
 #' contig
+#' @param filter_paired Only include clonotypes with paired chains. For TCR
+#' data each clonotype must have at least one TRA and TRB chain, for BCR data
+#' each clonotype must have at least one IGH chain and at least one IGK or IGL
+#' chain.
+#' @param define_clonotypes Define clonotype IDs based on V(D)J data. This is
+#' useful if the V(D)J datasets being loaded do not have consistent clonotype
+#' IDs, e.g., clonotype1 is not the same across samples.
+#' 'cdr3aa' will use the CDR3 amino acid sequence, 'cdr3nt' will use the CDR3
+#' nucleotide sequence, and 'cdr3_gene' will use the combination of the CDR3
+#' nucleotide sequence and the V(D)J genes. Set to NULL (default) to use the
+#' clonotype IDs already present in the input data.
 #' @param sep Separator to use for storing per cell V(D)J data
 #' @return Single cell object or data.frame with added V(D)J data
 #' @export
 import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, filter_contigs = TRUE,
-                       sep = ";") {
+                       filter_paired = FALSE, define_clonotypes = NULL, sep = ";") {
 
   # VDJ columns
   count_cols <- c("reads", "umis")
@@ -92,6 +103,13 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     .groups = "drop"
   )
 
+  # Determine which clonotypes are paired
+  contigs <- .identify_paired(contigs, vdj_class = vdj_class)
+
+  if (filter_paired) {
+    contigs <- dplyr::filter(contigs, .data$paired)
+  }
+
   # Calculate CDR3 length
   contigs <- dplyr::mutate(
     contigs,
@@ -116,11 +134,11 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   }
 
   # Collapse chains into a single row for each cell
-  # include isotype and clonotype_id as groups so they are included in the
-  # summarized results
+  # include isotype, clonotype_id, and paired as groups so they are included in
+  # the summarized results
   contigs <- dplyr::group_by(
     contigs,
-    .data$barcode, .data$clonotype_id,
+    .data$barcode, .data$clonotype_id, .data$paired,
     .add = TRUE
   )
 
@@ -134,17 +152,36 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     .groups = "drop"
   )
 
+  meta <- dplyr::relocate(meta, .data$paired, .after = .data$full_length)
+
   # Check for duplicated cell barcodes
   if (any(duplicated(meta$barcode))) {
     stop("Malformed inport data, multiple clonotype_ids are associated with the same cell barcode")
   }
 
-  # Format meta.data
-  # currently the number of cell barcodes that overlap with the object is
-  # checked with .merge_meta, ideally each sample would be checked separately
+  # Allow user to redefine clonotypes
   res <- tibble::column_to_rownames(meta, "barcode")
+
+  if (!is.null(define_clonotypes)) {
+    clone_cols <- list(
+      cdr3aa    = "cdr3",
+      cdr3nt    = "cdr3_nt",
+      cdr3_gene = c("cdr3_nt", "v_gene", "d_gene", "j_gene")
+    )
+
+    if (!define_clonotypes %in% names(clone_cols)) {
+      stop("define_clonotypes must be one of ", paste0(names(clone_cols), collapse = ", "), ".")
+    }
+
+    clone_cols <- clone_cols[[define_clonotypes]]
+
+    res <- define_clonotypes(res, vdj_cols = clone_cols)
+  }
+
+  # Add prefix to V(D)J columns
   res <- dplyr::rename_with(res, ~ paste0(prefix, .x))
 
+  # Add new meta.data to input object
   res <- .merge_meta(input, res)
 
   res
@@ -162,9 +199,9 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' loading data from multiple runs into a single object. If set to NULL, cell
 #' barcode prefixes will be automatically generated in a similar way as the
 #' Read10X function found in the Seurat package.
-#' @param sep Separator to use when appending prefixes to cell barcodes. Set to
-#' NULL to not add a separator.
-#' @return Paths provided to vdj_dir with cell prefixes added as names.
+#' @param sep Separator to use when appending prefixes to cell barcodes, set to
+#' NULL to not add a separator
+#' @return Paths provided to vdj_dir with cell prefixes added as names
 .format_cell_prefixes <- function(vdj_dir, cell_prefix, sep = "_") {
 
   res <- vdj_dir
@@ -220,8 +257,8 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' This mimics the behavior of the Read10X function found in the Seurat
 #' package.
 #' @param contig_file cellranger vdj output file containing data for each
-#' contig annotation.
-#' @return List containing one data.frame for each path provided to vdj_dir.
+#' contig annotation
+#' @return List containing one data.frame for each path provided to vdj_dir
 .load_vdj_data <- function(vdj_dir, contig_file = "filtered_contig_annotations.csv") {
 
   # Check vdj_dir for contig_file
@@ -258,13 +295,13 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
 #' Determine whether TCR or BCR data were provided
 #'
-#' @param input data.frame containing V(D)J data formatted so that each row
-#' represents a single contig.
-#' @param chain_col Column in input data containing chain identity.
-#' @return Character string indicating whether TCR or BCR data were provided.
-.classify_vdj <- function(input, chain_col = "chains") {
+#' @param df_in data.frame containing V(D)J data formatted so that each row
+#' represents a single contig
+#' @param chain_col Column in input data containing chain identity
+#' @return Character string indicating whether TCR or BCR data were provided
+.classify_vdj <- function(df_in, chain_col = "chains") {
   get_chain_class <- function(chains) {
-    any(chains %in% input[[chain_col]])
+    any(chains %in% df_in[[chain_col]])
   }
 
   chains <- list(
@@ -290,11 +327,11 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
 #' Check cell barcode overlap with object
 #'
-#' @param input Object containing single cell data.
-#' @param meta meta.data to check against object.
-#' @param nm Sample name to use for messages.
-#' @param pct_min Warn user if the percent overlap is less than pct_min.
-#' @return input data.
+#' @param input Single cell object
+#' @param meta meta.data to check against object
+#' @param nm Sample name to use for messages
+#' @param pct_min Warn user if the percent overlap is less than pct_min
+#' @return input data
 .check_overlap <- function(input, meta, nm, pct_min = 25) {
 
   if (is.null(input)) {
@@ -323,17 +360,46 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   meta
 }
 
+#' Identify clonotypes with paired chains
+#'
+#' @param df_in data.frame containing V(D)J data formatted so each row
+#' represents a single contig
+#' @param vdj_class One of "TCR" or "BCR" to indicate type of data
+#' @return Input data.frame with paired column added
+.identify_paired <- function(df_in, vdj_class) {
+
+  if (!vdj_class %in% c("TCR", "BCR")) {
+    stop("vdj_class must be either 'TCR', or 'BCR'.")
+  }
+
+  res <- dplyr::group_by(df_in, barcode)
+
+  if (vdj_class == "TCR") {
+    res <- dplyr::mutate(res, paired = all(c("TRA", "TRB") %in% chains))
+
+  } else if(vdj_class == "BCR") {
+    res <- dplyr::mutate(
+      res,
+      paired = "IGH" %in% chains & any(c("IGL", "IGK") %in% chains)
+    )
+  }
+
+  res <- dplyr::ungroup(res)
+
+  res
+}
+
 #' Add isotypes to V(D)J data
 #'
-#' @param input data.frame containing V(D)J data formatted so that each row
-#' represents a single contig.
+#' @param df_in data.frame containing V(D)J data formatted so each row
+#' represents a single contig
 #' @param iso_pat Regular expression to use for extracting isotypes from
-#' iso_col.
-#' @param iso_col Column containing data to use for extracting isotypes.
-#' @return input data.frame with isotype column added.
-.extract_isotypes <- function(input, iso_pat = "^IGH[ADEGM]", iso_col = "c_gene") {
+#' iso_col
+#' @param iso_col Column containing data to use for extracting isotypes
+#' @return Input data.frame with isotype column added
+.extract_isotypes <- function(df_in, iso_pat = "^IGH[ADEGM]", iso_col = "c_gene") {
 
-  res <- dplyr::group_by(input, .data$barcode)
+  res <- dplyr::group_by(df_in, .data$barcode)
 
   res <- dplyr::mutate(
     res,
@@ -363,6 +429,32 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   )
 
   res <- dplyr::ungroup(res)
+
+  res
+}
+
+#' Define clonotypes based on V(D)J data
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param vdj_cols meta.data columns containing V(D)J data to use for defining
+#' clonotypes
+#' @param clonotype_col Name of column to use for storing clonotype IDs
+#' @return Single cell object or data.frame with new clonotype IDs
+#' @export
+define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id") {
+  meta <- .get_meta(input)
+
+  meta <- dplyr::mutate(
+    meta,
+    .new_clone            = paste0(!!!syms(vdj_cols)),
+    .new_clone            = rank(.new_clone, ties.method = "min"),
+    !!sym(clonotype_col) := paste0("clonotype", .new_clone)
+  )
+
+  meta <- dplyr::select(meta, -.new_clone)
+
+  res <- .add_meta(input, meta)
 
   res
 }
