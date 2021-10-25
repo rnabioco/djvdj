@@ -57,8 +57,9 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   # Classify input data as TCR or BCR
   vdj_class <- purrr::map_chr(contigs, .classify_vdj)
+  vdj_class <- unique(vdj_class)
 
-  if (length(unique(vdj_class)) > 1) {
+  if (length(vdj_class) > 1) {
     stop("Provided data must be either TCR or BCR. To add both TCR and BCR data to the same object, run import_vdj separately for each and use the 'prefix' argument to add different column names.")
   }
 
@@ -270,7 +271,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     )
 
     if (is.na(path)) {
-      stop(res, " not found in ", vdj_dir, ".")
+      stop(contig_file, " not found in ", vdj_dir, ".")
     }
 
     path
