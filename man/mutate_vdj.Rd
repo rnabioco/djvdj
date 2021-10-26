@@ -7,15 +7,15 @@
 mutate_vdj(
   input,
   ...,
-  clonotype_col = "cdr3_nt",
+  clonotype_col = "clonotype_id",
   vdj_cols = NULL,
   return_df = FALSE,
   sep = ";"
 )
 }
 \arguments{
-\item{input}{Object containing V(D)J data. If a data.frame is provided, the
-cell barcodes should be stored as row names.}
+\item{input}{Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{...}{Name-value pairs to use for creating or modifying meta.data
 columns}

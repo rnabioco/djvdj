@@ -14,7 +14,8 @@ summarize_chains(
 )
 }
 \arguments{
-\item{input}{Object containing single cell data}
+\item{input}{Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{data_cols}{meta.data columns to summarize}
 
@@ -33,6 +34,6 @@ data.frame containing summary results
 }
 \description{
 Summarize values present for each column provided to the data_cols argument.
-For each cell, the function(s) provided will be applied to each unique label
-in chain_col.
+For each cell, the function(s) provided will be applied to each unique
+chain.
 }

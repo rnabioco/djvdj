@@ -16,7 +16,7 @@
 \item{clust_col}{Column containing cluster IDs}
 }
 \value{
-data.frame
+data.frame containing clonotype abundances
 }
 \description{
 Calculate clonotype abundance

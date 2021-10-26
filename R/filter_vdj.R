@@ -1,7 +1,7 @@
 #' Filter V(D)J data
 #'
-#' @param input Object containing V(D)J data. If a data.frame is provided, the
-#' cell barcodes should be stored as row names.
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param filt Condition to use for filtering meta.data
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
 #' is used to determine which cells have V(D)J data. If clonotype_col is set to
@@ -16,7 +16,7 @@
 #' given separator.
 #' @return Object with filtered meta.data
 #' @export
-filter_vdj <- function(input, filt, clonotype_col = "cdr3_nt", filter_cells = FALSE,
+filter_vdj <- function(input, filt, clonotype_col = "clonotype_id", filter_cells = FALSE,
                        vdj_cols = NULL, sep = ";") {
 
   if (!filter_cells && is.null(clonotype_col)) {
@@ -51,8 +51,8 @@ filter_vdj <- function(input, filt, clonotype_col = "cdr3_nt", filter_cells = FA
 
     vdj <- .split_vdj(
       df_in    = vdj,
-      sep_cols = sep_cols,
-      sep      = sep
+      sep      = sep,
+      sep_cols = sep_cols
     )
 
     vdj <- dplyr::rowwise(vdj)
@@ -114,7 +114,7 @@ filter_vdj <- function(input, filt, clonotype_col = "cdr3_nt", filter_cells = FA
   res
 }
 
-#' Subset cells in object
+#' Subset object so it only contains given cells
 #'
 #' @export
 .subset_cells <- function(input, cells) {
@@ -122,7 +122,8 @@ filter_vdj <- function(input, filt, clonotype_col = "cdr3_nt", filter_cells = FA
 }
 
 #' @rdname dot-subset_cells
-#' @param input Object containing single cell data
+#' @param input Single cell object or data.frame. If a data.frame is provided, the
+#' cell barcodes should be stored as row names.
 #' @param cells Vector with cell barcodes to use for subsetting
 #' @return Subsetted object
 #' @export

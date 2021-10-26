@@ -7,15 +7,15 @@
 filter_vdj(
   input,
   filt,
-  clonotype_col = "cdr3_nt",
+  clonotype_col = "clonotype_id",
   filter_cells = FALSE,
   vdj_cols = NULL,
   sep = ";"
 )
 }
 \arguments{
-\item{input}{Object containing V(D)J data. If a data.frame is provided, the
-cell barcodes should be stored as row names.}
+\item{input}{Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{filt}{Condition to use for filtering meta.data}
 

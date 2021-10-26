@@ -12,7 +12,7 @@
 \item{clone_col}{Column containing clonotype IDs to use for identifying
 columns with V(D)J data. If NULL all columns are used.}
 
-\item{cols_in}{meta.data columns containing VDJ data to use for filtering.
+\item{cols_in}{meta.data columns containing V(D)J data to use for filtering.
 If set to NULL (recommended) columns are automatically selected.}
 
 \item{sep}{Separator used for storing per cell V(D)J data}

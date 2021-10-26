@@ -37,10 +37,11 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 #' Summarize values for chains
 #'
 #' Summarize values present for each column provided to the data_cols argument.
-#' For each cell, the function(s) provided will be applied to each unique label
-#' in chain_col.
+#' For each cell, the function(s) provided will be applied to each unique
+#' chain.
 #'
-#' @param input Object containing single cell data
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param data_cols meta.data columns to summarize
 #' @param fn Function to use for summarizing data_cols
 #' @param chain_col meta.data column(s) containing labels for each chain
@@ -269,7 +270,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' @param df_in data.frame
 #' @param clone_col Column containing clonotype IDs to use for identifying
 #' columns with V(D)J data. If NULL all columns are used.
-#' @param cols_in meta.data columns containing VDJ data to use for filtering.
+#' @param cols_in meta.data columns containing V(D)J data to use for filtering.
 #' If set to NULL (recommended) columns are automatically selected.
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return list of vectors containing columns with V(D)J data and sep
@@ -320,7 +321,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 }
 
 
-#' Attempt to coerce character vector using provided function
+#' Attempt to coerce a character vector to a given class
 #'
 #' @param x Character vector to coerce
 #' @param Class Name of the class to which x should be coerced

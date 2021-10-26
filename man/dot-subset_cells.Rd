@@ -4,7 +4,7 @@
 \alias{.subset_cells}
 \alias{.subset_cells.default}
 \alias{.subset_cells.data.frame}
-\title{Subset cells in object}
+\title{Subset object so it only contains given cells}
 \usage{
 .subset_cells(input, cells)
 
@@ -13,7 +13,8 @@
 \method{.subset_cells}{data.frame}(input, cells)
 }
 \arguments{
-\item{input}{Object containing single cell data}
+\item{input}{Single cell object or data.frame. If a data.frame is provided, the
+cell barcodes should be stored as row names.}
 
 \item{cells}{Vector with cell barcodes to use for subsetting}
 }
@@ -21,5 +22,5 @@
 Subsetted object
 }
 \description{
-Subset cells in object
+Subset object so it only contains given cells
 }

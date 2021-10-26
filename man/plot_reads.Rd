@@ -40,7 +40,7 @@ is provided reads and UMIs will be plotted separately for each cluster.}
 chain_col and cluster_col are provided}
 
 \item{facet_scales}{This argument passes a scales specification to
-facet_wrap. Can be "fixed", "free", "free_x", or "free_y"}
+facet_wrap. Can be "fixed", "free", "free_x", or "free_y".}
 
 \item{sep}{Separator used for storing per cell V(D)J data}
 

@@ -7,7 +7,8 @@
 mutate_meta(input, .fun, ...)
 }
 \arguments{
-\item{input}{Object containing single cell data}
+\item{input}{Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{.fun}{Function or formula to use for modifying the meta.data. If a
 formula is provided, use .x to refer to the meta.data table.}
