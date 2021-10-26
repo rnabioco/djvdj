@@ -326,6 +326,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' @param x Character vector to coerce
 #' @param Class Name of the class to which x should be coerced
 #' @return Coerced vector
+#' @importFrom methods as
 .convert_char <- function(x, Class) {
 
   if (!is.character(x)) {
