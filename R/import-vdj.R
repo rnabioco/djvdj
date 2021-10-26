@@ -365,7 +365,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #'
 #' @param df_in data.frame containing V(D)J data formatted so each row
 #' represents a single contig
-#' @param vdj_class One of "TCR" or "BCR" to indicate type of data
+#' @param vdj_class One of 'TCR' or 'BCR' to indicate type of data
 #' @return Input data.frame with paired column added
 .identify_paired <- function(df_in, vdj_class) {
 

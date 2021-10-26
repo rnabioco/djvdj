@@ -21,10 +21,11 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 columns}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs. This column
-is used to determine which cells have V(D)J data}
+is used to determine which cells have V(D)J data.}
 
 \item{vdj_cols}{meta.data columns containing VDJ data to use for filtering.
-If set to NULL (recommended) columns are automatically selected.}
+If set to NULL (recommended) columns are automatically selected by
+identifying columns that have NAs in the same rows as clonotype_col.}
 
 \item{return_df}{Return results as a data.frame. If set to FALSE, results
 will be added to the input object.}

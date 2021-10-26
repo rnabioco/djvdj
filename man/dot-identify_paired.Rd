@@ -10,7 +10,7 @@
 \item{df_in}{data.frame containing V(D)J data formatted so each row
 represents a single contig}
 
-\item{vdj_class}{One of "TCR" or "BCR" to indicate type of data}
+\item{vdj_class}{One of 'TCR' or 'BCR' to indicate type of data}
 }
 \value{
 Input data.frame with paired column added

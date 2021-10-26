@@ -271,9 +271,11 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' @param clone_col Column containing clonotype IDs to use for identifying
 #' columns with V(D)J data. If NULL all columns are used.
 #' @param cols_in meta.data columns containing V(D)J data to use for filtering.
-#' If set to NULL (recommended) columns are automatically selected.
+#' If set to NULL (the default) columns are automatically selected by
+#' identifying columns that have NAs in the same rows as clone_col.
 #' @param sep Separator used for storing per cell V(D)J data
-#' @return list of vectors containing columns with V(D)J data and sep
+#' @return List with two vectors, one containing columns with V(D)J data and
+#' the other containing columns where separator has been detected.
 .get_vdj_cols <- function(df_in, clone_col, cols_in, sep) {
 
   # Identify columns with VDJ data based on NAs in clonotype_col

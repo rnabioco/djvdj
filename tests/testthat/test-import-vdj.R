@@ -26,16 +26,18 @@ df_2 <- vdj_so@meta.data %>%
 # Check arguments for different path inputs with Seurat
 arg_lst <- list(
   single = list(
-    input       = list(tiny_so),
-    vdj_dir     = list(ctigs[1], ctigs_2[1], ctigs_3[1], paste0(ctigs[1], "/outs")),
-    cell_prefix = list(NULL, ""),
-    prefix      = c("", "PREFIX")
+    input         = list(tiny_so),
+    vdj_dir       = list(ctigs[1], ctigs_2[1], ctigs_3[1], paste0(ctigs[1], "/outs")),
+    cell_prefix   = list(NULL, ""),
+    filter_paired = c(TRUE, FALSE),
+    prefix        = c("", "PREFIX")
   ),
   multi = list(
-    input       = list(tiny_so),
-    vdj_dir     = list(ctigs, ctigs_2, ctigs_3, paste0(ctigs, "/outs")),
-    cell_prefix = list(NULL, c("", "2_"), c("", "2")),
-    prefix      = c("", "PREFIX")
+    input         = list(tiny_so),
+    vdj_dir       = list(ctigs, ctigs_2, ctigs_3, paste0(ctigs, "/outs")),
+    cell_prefix   = list(NULL, c("", "2_"), c("", "2")),
+    filter_paired = c(TRUE, FALSE),
+    prefix        = c("", "PREFIX")
   )
 )
 
@@ -170,6 +172,71 @@ test_that("import_vdj unfiltered contigs", {
   expect_true(any(grepl("FALSE", res$full_length)))
   expect_s4_class(res, "Seurat")
   expect_identical(colnames(res), colnames(tiny_so))
+})
+
+# Check only paired chains
+test_that("import_vdj only paired chains", {
+  res <- tiny_so %>%
+    import_vdj(
+      vdj_dir       = ctigs,
+      filter_paired = TRUE
+    )
+
+  expect_true(all(res$paired, na.rm = TRUE))
+  expect_s4_class(res, "Seurat")
+  expect_identical(colnames(res), colnames(tiny_so))
+})
+
+# Check include unpaired chains
+test_that("import_vdj include unpaired chains", {
+  res <- tiny_so %>%
+    import_vdj(
+      vdj_dir       = ctigs,
+      filter_paired = FALSE
+    )
+
+  expect_true(any(!res$paired, na.rm = TRUE))
+  expect_s4_class(res, "Seurat")
+  expect_identical(colnames(res), colnames(tiny_so))
+})
+
+# Check define_clonotypes options
+test_that("import_vdj define_clonotypes options", {
+  opts <- c(cdr3 = "cdr3aa", cdr3_nt = "cdr3nt")
+
+  opts %>%
+    iwalk(~ {
+      res <- tiny_so %>%
+        import_vdj(
+          vdj_dir = ctigs,
+          define_clonotypes = .x
+        )
+
+      expect_identical(n_distinct(res$clonotype_id), n_distinct(res[[.y]]))
+      expect_s4_class(res, "Seurat")
+      expect_identical(colnames(res), colnames(tiny_so))
+    })
+
+  res <- tiny_so %>%
+    import_vdj(
+      vdj_dir = ctigs,
+      define_clonotypes = "cdr3_gene"
+    )
+
+  x <- n_distinct(res$clonotype_id)
+  y <- nrow(distinct(res@meta.data, cdr3_nt, v_gene, d_gene, j_gene))
+
+  expect_identical(x, y)
+  expect_s4_class(res, "Seurat")
+  expect_identical(colnames(res), colnames(tiny_so))
+})
+
+# Check define_clonotypes bad define_clonotypes
+test_that("import_vdj bad define_clonotypes", {
+  expect_error(
+    tiny_so %>% import_vdj(vdj_dir = ctigs, define_clonotypes = "BAD"),
+    "define_clonotypes must be one of"
+  )
 })
 
 # Check data.frame output
