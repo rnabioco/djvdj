@@ -271,7 +271,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     )
 
     if (is.na(path)) {
-      stop(contig_file, " not found in ", vdj_dir, ".")
+      stop(contig_file, " not found in ", .x, ".")
     }
 
     path
