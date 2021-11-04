@@ -442,23 +442,3 @@ plot_grid(plotlist = ggs)
 ```
 
 <br>
-
-## CDR3 Usage
-
-The `calc_usage()` and `plot_usage()` functions can also be used to calculate the fraction of cells that have a certain CDR3 sequence. To do this, the meta.data column containing the CDR3 sequences for each cell can be passed to the `gene_cols` argument. The plot can be divided into facets based on sample using simple ggplot2 commands.
-
-```{r "cdr3_usage", fig.width = 8, fig.height = 3.5}
-plot_usage(
-  input       = so_avid,
-  gene_cols   = "cdr3",                     # Column containing CDR3 sequences
-  cluster_col = "mouse",
-  
-  type        = "bar",
-  chain       = "IGK",
-  plot_colors = vdj_colors,
-  n_genes     = 12                          # Number of CDR3 sequences to plot
-) +
-  facet_wrap(~ mouse, nrow = 1, scales = "free_x") +
-  theme(legend.position = "none")
-```
-
