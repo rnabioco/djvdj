@@ -421,25 +421,6 @@
 <p><img src="avid_files/figure-html/gene_usage_2-1.png" width="1152"></p>
 <p><br></p>
 </div>
-<div id="cdr3-usage" class="section level2">
-<h2 class="hasAnchor">
-<a href="#cdr3-usage" class="anchor"></a>CDR3 Usage</h2>
-<p>The <code><a href="../reference/calc_usage.html">calc_usage()</a></code> and <code><a href="../reference/plot_usage.html">plot_usage()</a></code> functions can also be used to calculate the fraction of cells that have a certain CDR3 sequence. To do this, the meta.data column containing the CDR3 sequences for each cell can be passed to the <code>gene_cols</code> argument. The plot can be divided into facets based on sample using simple ggplot2 commands.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
-  input       <span class="op">=</span> <span class="va">so_avid</span>,
-  gene_cols   <span class="op">=</span> <span class="st">"cdr3"</span>,                     <span class="co"># Column containing CDR3 sequences</span>
-  cluster_col <span class="op">=</span> <span class="st">"mouse"</span>,
-  
-  type        <span class="op">=</span> <span class="st">"bar"</span>,
-  chain       <span class="op">=</span> <span class="st">"IGK"</span>,
-  plot_colors <span class="op">=</span> <span class="va">vdj_colors</span>,
-  n_genes     <span class="op">=</span> <span class="fl">12</span>                          <span class="co"># Number of CDR3 sequences to plot</span>
-<span class="op">)</span> <span class="op">+</span>
-  <span class="fu">facet_wrap</span><span class="op">(</span><span class="op">~</span> <span class="va">mouse</span>, nrow <span class="op">=</span> <span class="fl">1</span>, scales <span class="op">=</span> <span class="st">"free_x"</span><span class="op">)</span> <span class="op">+</span>
-  <span class="fu">theme</span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></code></pre></div>
-<p><img src="avid_files/figure-html/cdr3_usage-1.png" width="768"></p>
-</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
