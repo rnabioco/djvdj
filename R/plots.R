@@ -356,8 +356,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   }
 
   # Calculate clonotype abundance
-  # Return seurat since label_col is needed from meta.data
-  plt_dat <- djvdj::calc_abundance(
+  plt_dat <- calc_abundance(
     input         = input,
     cluster_col   = cluster_col,
     clonotype_col = clonotype_col,
@@ -381,6 +380,20 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   )
 
   plt_dat <- dplyr::distinct(plt_dat, !!!syms(abund_cols))
+
+  # Collapse values in label_col so there is a single label for each value in
+  # clonotype_col
+  if (label_col != clonotype_col) {
+    plt_dat <- dplyr::group_by(plt_dat, !!!syms(c(clonotype_col, cluster_col)))
+
+    plt_dat <- dplyr::mutate(
+      plt_dat,
+      !!sym(label_col) := paste0(!!sym(label_col), collapse = ";")
+    )
+
+    plt_dat <- dplyr::distinct(plt_dat)
+    plt_dat <- dplyr::ungroup(plt_dat)
+  }
 
   # Add and format label column for plotting
   len <- 25
@@ -421,7 +434,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
     with_ties = FALSE
   )
 
-  plt_dat   <- dplyr::ungroup(plt_dat)
+  plt_dat    <- dplyr::ungroup(plt_dat)
   top_clones <- dplyr::ungroup(top_clones)
 
   # Create bar graph
