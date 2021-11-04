@@ -2,21 +2,21 @@
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating diversity
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating diversity. If cluster_col is omitted, diversity index will be
 #' calculated for all clonotypes.
 #' @param method Method to use for calculating diversity. A named list can also
 #' be passed to use multiple methods. The names should specify names for the
 #' output columns.
+#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' calculating diversity
 #' @param prefix Prefix to add to new columns
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.
 #' @return Single cell object or data.frame with diversity metrics
 #' @export
-calc_diversity <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                           method = abdiv::simpson, prefix = "", return_df = FALSE) {
+calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
+                           clonotype_col = "clonotype_id", prefix = "", return_df = FALSE) {
 
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if using a list of methods.")

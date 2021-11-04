@@ -4,7 +4,7 @@
 \alias{.merge_meta}
 \title{Merge new meta.data with object}
 \usage{
-.merge_meta(input, meta, by = ".cell_id", pct_min = 25)
+.merge_meta(input, meta, by = ".cell_id")
 }
 \arguments{
 \item{input}{Object containing single cell data}
@@ -12,9 +12,6 @@
 \item{meta}{meta.data to merge with object}
 
 \item{by}{Columns to use for merging}
-
-\item{pct_min}{If the percent overlap is less than pct_min, and error is
-thrown}
 }
 \value{
 Object with added meta.data

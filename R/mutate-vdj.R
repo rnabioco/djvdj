@@ -1,19 +1,21 @@
 #' Mutate V(D)J data
 #'
-#' @param input Object containing V(D)J data. If a data.frame is provided, the
-#' cell barcodes should be stored as row names.
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param ... Name-value pairs to use for creating or modifying meta.data
 #' columns
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
-#' is used to determine which cells have V(D)J data
+#' is used to determine which cells have V(D)J data.
 #' @param vdj_cols meta.data columns containing VDJ data to use for filtering.
-#' If set to NULL (recommended) columns are automatically selected.
+#' If set to NULL (recommended) columns are automatically selected by
+#' identifying columns that have NAs in the same rows as clonotype_col.
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return Object with mutated meta.data
 #' @export
-mutate_vdj <- function(input, ..., clonotype_col = "cdr3_nt", vdj_cols = NULL, return_df = FALSE, sep = ";") {
+mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NULL,
+                       return_df = FALSE, sep = ";") {
 
   # Format input data
   meta <- .get_meta(input)
@@ -78,7 +80,8 @@ mutate_vdj <- function(input, ..., clonotype_col = "cdr3_nt", vdj_cols = NULL, r
 
 #' Mutate object meta.data
 #'
-#' @param input Object containing single cell data
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param .fun Function or formula to use for modifying the meta.data. If a
 #' formula is provided, use .x to refer to the meta.data table.
 #' @param ... Arguments to pass to the provided function

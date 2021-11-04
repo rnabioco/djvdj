@@ -115,7 +115,7 @@ plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, dat
   })
 
   # Format input data
-  # keep rownames since default mathod will create rowname column
+  # keep rownames since default method will create rowname column
   plt_dat <- .merge_meta(input, plt_dat)
   plt_dat <- .get_meta(plt_dat)
 
@@ -128,7 +128,8 @@ plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, dat
     plot_lvls   = plot_lvls,
     min_q       = min_q,
     max_q       = max_q,
-    na_color    = na_color
+    na_color    = na_color,
+    ...
   )
 }
 
@@ -148,7 +149,7 @@ plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, dat
 #' @param facet_rows The number of facet rows. Use this argument if both
 #' chain_col and cluster_col are provided
 #' @param facet_scales This argument passes a scales specification to
-#' facet_wrap. Can be "fixed", "free", "free_x", or "free_y"
+#' facet_wrap. Can be "fixed", "free", "free_x", or "free_y".
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
@@ -161,7 +162,7 @@ plot_reads <- function(input, data_cols = c("reads", "umis"), chain_col = "chain
     stop("type must be 'violin', 'histogram' or 'density'.")
   }
 
-  # Calculate mean reads/umis each chain for each cell
+  # Calculate mean reads/umis for each chain for each cell
   plt_dat <- summarize_chains(
     input,
     data_cols    = data_cols,
@@ -312,12 +313,12 @@ plot_reads <- function(input, data_cols = c("reads", "umis"), chain_col = "chain
 
 #' Plot clonotype abundance
 #'
-#' @param input Object containing V(D)J data. If a data.frame is provided, the
-#' cell barcodes should be stored as row names.
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating clonotype abundance
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
+#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' calculating clonotype abundance
 #' @param type Type of plot to create, can be 'bar' or 'line'
 #' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
 #' @param plot_colors Character vector containing colors for plotting
@@ -330,14 +331,14 @@ plot_reads <- function(input, data_cols = c("reads", "umis"), chain_col = "chain
 #' @param color_col meta.data column to use for coloring bars
 #' @param label_aes Named list providing additional label aesthetics (color,
 #' size, etc.)
-#' @param facet_rows The number of facet rows. Use this argument if type =
-#' 'bar'
-#' @param facet_scales If type = 'bar', this argument passes a scales
+#' @param facet_rows The number of facet rows. Use this argument if type is set
+#' to 'bar'
+#' @param facet_scales If type is 'bar', this argument passes a scales
 #' specification to facet_wrap, can be "fixed", "free", "free_x", or "free_y"
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_abundance <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL, type = "bar",
+plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id", type = "bar",
                            yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, label_col = clonotype_col,
                            n_clonotypes = 10, color_col = cluster_col, label_aes = list(), facet_rows = 1,
                            facet_scales = "free_x", ...) {
@@ -358,8 +359,8 @@ plot_abundance <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
   # Return seurat since label_col is needed from meta.data
   plt_dat <- djvdj::calc_abundance(
     input         = input,
-    clonotype_col = clonotype_col,
     cluster_col   = cluster_col,
+    clonotype_col = clonotype_col,
     prefix        = ".",
     return_df     = TRUE
   )
@@ -505,24 +506,23 @@ plot_abundance <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
 
 #' Plot repertoire diversity
 #'
-#' @param input Object containing V(D)J data. If a data.frame is provided, the
-#' cell barcodes should be stored as row names.
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating clonotype abundance
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
 #' @param method Method to use for calculating diversity. Can also pass a named
 #' list to use multiple methods.
+#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' calculating clonotype abundance
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
-#' @param facet_rows The number of facet rows. Use this argument if a list of
+#' @param facet_rows The number of facet rows, use this argument if a list of
 #' functions is passed to method
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_diversity <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
-                           method = abdiv::simpson, plot_colors = NULL, plot_lvls = NULL,
-                           facet_rows = 1, ...) {
+plot_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson, clonotype_col = "clonotype_id",
+                           plot_colors = NULL, plot_lvls = NULL, facet_rows = 1, ...) {
 
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if using a list of methods.")
@@ -539,9 +539,9 @@ plot_diversity <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
   # Calculate diversity
   plt_dat <- calc_diversity(
     input         = input,
-    clonotype_col = clonotype_col,
     cluster_col   = cluster_col,
     method        = method,
+    clonotype_col = clonotype_col,
     prefix        = "",
     return_df     = TRUE
   )
@@ -617,26 +617,26 @@ plot_diversity <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
 
 #' Plot repertoire overlap
 #'
-#' @param input Object containing V(D)J data. If a data.frame is provided, the
-#' cell barcodes should be stored as row names.
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating overlap
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating overlap
 #' @param method Method to use for calculating similarity between clusters
+#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' calculating overlap
 #' @param plot_colors Character vector containing colors for plotting
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
-plot_similarity <- function(input, clonotype_col = "cdr3_nt", cluster_col, method = abdiv::jaccard,
+plot_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonotype_col = "clonotype_id",
                             plot_colors = NULL, ...) {
 
   # Calculate similarity
   plt_dat <- calc_similarity(
     input         = input,
-    clonotype_col = clonotype_col,
     cluster_col   = cluster_col,
     method        = method,
+    clonotype_col = clonotype_col,
     prefix        = "",
     return_mat    = TRUE
   )

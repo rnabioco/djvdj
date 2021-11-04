@@ -12,13 +12,15 @@
 \item{clone_col}{Column containing clonotype IDs to use for identifying
 columns with V(D)J data. If NULL all columns are used.}
 
-\item{cols_in}{meta.data columns containing VDJ data to use for filtering.
-If set to NULL (recommended) columns are automatically selected.}
+\item{cols_in}{meta.data columns containing V(D)J data to use for filtering.
+If set to NULL (the default) columns are automatically selected by
+identifying columns that have NAs in the same rows as clone_col.}
 
 \item{sep}{Separator used for storing per cell V(D)J data}
 }
 \value{
-list of vectors containing columns with V(D)J data and sep
+List with two vectors, one containing columns with V(D)J data and
+the other containing columns where separator has been detected.
 }
 \description{
 Identify columns with V(D)J data

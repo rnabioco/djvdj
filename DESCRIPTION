@@ -32,6 +32,7 @@ Imports:
     dplyr,
     ggplot2,
     ggrepel,
+    methods,
     magrittr,
     purrr,
     readr,

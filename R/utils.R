@@ -1,60 +1,3 @@
-#' Summarize values for chains
-#'
-#' Summarize values present for each column provided to the data_cols argument.
-#' For each cell, the function(s) provided will be applied to each unique label
-#' in chain_col.
-#'
-#' @param input Object containing single cell data
-#' @param data_cols meta.data columns to summarize
-#' @param fn Function to use for summarizing data_cols
-#' @param chain_col meta.data column(s) containing labels for each chain
-#' expressed in the cell. These labels are used for grouping the summary
-#' output. Set chain_col to NULL to group solely based on the cell barcodes.
-#' @param include_cols Additional columns to include in the output data.frame
-#' @param sep Separator used for storing per cell V(D)J data
-#' @return data.frame containing summary results
-#' @export
-summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_col = "chains",
-                             include_cols = NULL, sep = ";") {
-
-  # Format input data
-  fetch_cols <- c(".cell_id", data_cols, chain_col, include_cols)
-
-  meta <- .get_meta(input)
-  meta <- dplyr::select(meta, all_of(fetch_cols))
-
-  meta <- dplyr::filter(
-    meta,
-    across(all_of(data_cols), ~ !is.na(.x))
-  )
-
-  # Expand meta.data
-  res <- dplyr::mutate(meta, across(
-    all_of(c(data_cols, chain_col)),
-    ~ strsplit(as.character(.x), sep)
-  ))
-
-  res <- tidyr::unnest(res, cols = all_of(c(data_cols, chain_col)))
-
-  # Summarize data_cols for each chain present for the cell
-  res <- dplyr::mutate(res, across(
-    all_of(data_cols),
-    ~ .convert_char(.x, as.numeric)
-  ))
-
-  grp_cols <- c(".cell_id", chain_col, include_cols)
-  res      <- dplyr::group_by(res, !!!syms(grp_cols))
-
-  res <- dplyr::summarize(
-    res,
-    across(all_of(data_cols), fn),
-    .groups = "drop"
-  )
-
-  res
-}
-
-
 #' Helper to test all combinations of provided arguments
 #'
 #' @param arg_lst Named list of arguments to test
@@ -88,6 +31,64 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
     n <<- n + 1
   })
+}
+
+
+#' Summarize values for chains
+#'
+#' Summarize values present for each column provided to the data_cols argument.
+#' For each cell, the function(s) provided will be applied to each unique
+#' chain.
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_cols meta.data columns to summarize
+#' @param fn Function to use for summarizing data_cols
+#' @param chain_col meta.data column(s) containing labels for each chain
+#' expressed in the cell. These labels are used for grouping the summary
+#' output. Set chain_col to NULL to group solely based on the cell barcodes.
+#' @param include_cols Additional columns to include in the output data.frame
+#' @param sep Separator used for storing per cell V(D)J data
+#' @return data.frame containing summary results
+#' @export
+summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_col = "chains",
+                             include_cols = NULL, sep = ";") {
+
+  # Format input data
+  fetch_cols <- c(".cell_id", data_cols, chain_col, include_cols)
+
+  meta <- .get_meta(input)
+  meta <- dplyr::select(meta, all_of(fetch_cols))
+
+  meta <- dplyr::filter(
+    meta,
+    across(all_of(data_cols), ~ !is.na(.x))
+  )
+
+  # Expand meta.data
+  coerce_cols <- purrr::set_names(
+    rep("numeric", length(data_cols)),
+    data_cols
+  )
+
+  res <- .split_vdj(
+    meta,
+    sep_cols    = c(data_cols, chain_col),
+    expand      = TRUE,
+    coerce_cols = coerce_cols
+  )
+
+  # Summarize chains
+  grp_cols <- c(".cell_id", chain_col, include_cols)
+  res      <- dplyr::group_by(res, !!!syms(grp_cols))
+
+  res <- dplyr::summarize(
+    res,
+    across(all_of(data_cols), fn),
+    .groups = "drop"
+  )
+
+  res
 }
 
 
@@ -164,6 +165,7 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
 }
 
+
 #' Convert to tibble
 #'
 #' The point of this function is to handle situations where the name passed to
@@ -192,31 +194,11 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 #' @param input Object containing single cell data
 #' @param meta meta.data to merge with object
 #' @param by Columns to use for merging
-#' @param pct_min If the percent overlap is less than pct_min, and error is
-#' thrown
 #' @return Object with added meta.data
-.merge_meta <- function(input, meta, by = ".cell_id", pct_min = 25) {
+.merge_meta <- function(input, meta, by = ".cell_id") {
 
-  obj_meta <- .get_meta(input)
-
-  # Check overlap between cell barcodes
-  obj_cells <- obj_meta$.cell_id
-  met_cells <- rownames(meta)
-
-  n_overlap <- length(obj_cells[obj_cells %in% met_cells])
-  pct_obj   <- round(n_overlap / length(obj_cells), 2) * 100
-  pct_met   <- round(n_overlap / length(met_cells), 2) * 100
-
-  if (n_overlap == 0) {
-    stop("Cell barcodes do not match those in the object, are you using the correct cell barcode prefixes?")
-  }
-
-  if (pct_obj < pct_min) {
-    warning("Only ", pct_obj, "% (", n_overlap, ") of cell barcodes present in the object overlap")
-  }
-
-  if (pct_met < pct_min) {
-    warning("Only ", pct_met, "% (", n_overlap, ") of cell barcodes overlap with the provided object")
+  if (is.null(input)) {
+    return(meta)
   }
 
   # Join meta.data
@@ -225,6 +207,7 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
   meta     <- .get_meta(meta, row_col = ".cell_id")
   rm_cols  <- colnames(meta)
   rm_cols  <- rm_cols[!rm_cols %in% by]
+  obj_meta <- .get_meta(input)
   obj_meta <- dplyr::select(obj_meta, !any_of(rm_cols))
 
   meta <- dplyr::left_join(obj_meta, meta, by = by)
@@ -239,32 +222,44 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 #' @param df_in data.frame to modify
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param sep_cols Columns to split based on sep
-#' @param num_cols Columns to convert to numeric
-#' @param lgl_cols Columns to convert to logical
+#' @param expand Should columns be unnested after splitting into vectors
+#' @param coerce_cols Named vector specifying columns that should be coerced to
+#' a new type. The vector names should be the name of each column,
+#' e.g., c(umis = "numeric")
 #' @return data.frame
-.split_vdj <- function(df_in, sep = ";", sep_cols, num_cols = c("umis", "reads"),
-                       lgl_cols = c("productive", "full_length")) {
+.split_vdj <- function(df_in, sep = ";", sep_cols, expand = FALSE,
+                       coerce_cols = c(
+                         umis        = "numeric", reads          = "numeric",
+                         cdr3_length = "numeric", cdr3_nt_length = "numeric",
+                         productive  = "logical", full_length    = "logical"
+                       )) {
 
-  # Split columns into vectors
+  # Add new set of columns based on sep_cols names
+  # this is useful if want to leave original columns unmodified
   res <- dplyr::mutate(df_in, !!!syms(sep_cols))
 
+  # Split columns into vectors
   res <- dplyr::mutate(res, across(
     all_of(unname(sep_cols)),
     ~ strsplit(as.character(.x), sep)
   ))
 
-  # Convert to numeric or logical
-  res <- dplyr::mutate(
-    res,
-    across(
-      all_of(num_cols),
-      map, ~ .convert_char(.x, as.numeric)
-    ),
-    across(
-      all_of(lgl_cols),
-      map, ~ .convert_char(.x, as.logical)
-    )
-  )
+  # Coerce columns to correct types
+  if (!is.null(coerce_cols)) {
+    coerce_cols <- coerce_cols[names(coerce_cols) %in% sep_cols]
+
+    purrr::iwalk(coerce_cols, ~ {
+      Class <- .x
+      clmn <- sym(.y)
+
+      res <<- dplyr::mutate(res, !!clmn := map(!!clmn, .convert_char, Class))
+    })
+  }
+
+  # Unnest columns
+  if (expand) {
+    res <- tidyr::unnest(res, all_of(unname(sep_cols)))
+  }
 
   res
 }
@@ -275,10 +270,12 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 #' @param df_in data.frame
 #' @param clone_col Column containing clonotype IDs to use for identifying
 #' columns with V(D)J data. If NULL all columns are used.
-#' @param cols_in meta.data columns containing VDJ data to use for filtering.
-#' If set to NULL (recommended) columns are automatically selected.
+#' @param cols_in meta.data columns containing V(D)J data to use for filtering.
+#' If set to NULL (the default) columns are automatically selected by
+#' identifying columns that have NAs in the same rows as clone_col.
 #' @param sep Separator used for storing per cell V(D)J data
-#' @return list of vectors containing columns with V(D)J data and sep
+#' @return List with two vectors, one containing columns with V(D)J data and
+#' the other containing columns where separator has been detected.
 .get_vdj_cols <- function(df_in, clone_col, cols_in, sep) {
 
   # Identify columns with VDJ data based on NAs in clonotype_col
@@ -326,17 +323,20 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 }
 
 
-#' Attempt to convert character vector using provided function
+#' Attempt to coerce a character vector to a given class
 #'
-#' @param x Character vector to convert
-#' @param fn Function to try
-#' @return Value converted using fn
-.convert_char <- function(x, fn) {
+#' @param x Character vector to coerce
+#' @param Class Name of the class to which x should be coerced
+#' @return Coerced vector
+#' @importFrom methods as
+.convert_char <- function(x, Class) {
 
   if (!is.character(x)) {
     return(x)
   }
 
-  suppressWarnings(ifelse(!is.na(fn(x)) | is.na(x), fn(x), x))
+  fn <- function() as(x, Class)
+
+  suppressWarnings(ifelse(!is.na(fn()) | is.na(x), fn(), x))
 }
 

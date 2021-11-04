@@ -2,15 +2,15 @@
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param clonotype_col meta.data column containing clonotype IDs
 #' @param cluster_col meta.data column containing cluster IDs to use for
+#' @param clonotype_col meta.data column containing clonotype IDs
 #' grouping cells when calculating clonotype abundance
 #' @param prefix Prefix to add to new columns
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.
 #' @return Single cell object or data.frame with clonotype abundance metrics
 #' @export
-calc_abundance <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
+calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id",
                            prefix = "", return_df = FALSE) {
 
   # Format input data
@@ -61,7 +61,7 @@ calc_abundance <- function(input, clonotype_col = "cdr3_nt", cluster_col = NULL,
 #' @param cell_col Column containing cell IDs
 #' @param clone_col Column containing clonotype IDs
 #' @param clust_col Column containing cluster IDs
-#' @return data.frame
+#' @return data.frame containing clonotype abundances
 .calc_abund <- function(df_in, cell_col, clone_col, clust_col = NULL) {
 
   # Count number of cells in each group

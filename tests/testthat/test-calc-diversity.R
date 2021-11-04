@@ -118,3 +118,16 @@ test_that("calc_diversity df in", {
   expect_s3_class(res, "data.frame")
   expect_identical(res, test_div)
 })
+
+# Check bad method list
+test_that("calc_diversity bad method list", {
+  expect_error(
+    vdj_so %>% calc_diversity(method = list(abdiv::simpson, abdiv::mcintosh_d)),
+    "Must include names if using a list of methods"
+  )
+
+  res <- vdj_so %>%
+    calc_diversity(method = abdiv::simpson)
+
+  expect_true("simpson" %in% colnames(res@meta.data))
+})

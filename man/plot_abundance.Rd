@@ -6,8 +6,8 @@
 \usage{
 plot_abundance(
   input,
-  clonotype_col = "cdr3_nt",
   cluster_col = NULL,
+  clonotype_col = "clonotype_id",
   type = "bar",
   yaxis = "percent",
   plot_colors = NULL,
@@ -22,14 +22,14 @@ plot_abundance(
 )
 }
 \arguments{
-\item{input}{Object containing V(D)J data. If a data.frame is provided, the
-cell barcodes should be stored as row names.}
-
-\item{clonotype_col}{meta.data column containing clonotype IDs to use for
-calculating clonotype abundance}
+\item{input}{Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
+
+\item{clonotype_col}{meta.data column containing clonotype IDs to use for
+calculating clonotype abundance}
 
 \item{type}{Type of plot to create, can be 'bar' or 'line'}
 
@@ -51,10 +51,10 @@ this will specify the number of clonotypes to label.}
 \item{label_aes}{Named list providing additional label aesthetics (color,
 size, etc.)}
 
-\item{facet_rows}{The number of facet rows. Use this argument if type =
-'bar'}
+\item{facet_rows}{The number of facet rows. Use this argument if type is set
+to 'bar'}
 
-\item{facet_scales}{If type = 'bar', this argument passes a scales
+\item{facet_scales}{If type is 'bar', this argument passes a scales
 specification to facet_wrap, can be "fixed", "free", "free_x", or "free_y"}
 
 \item{...}{Additional arguments to pass to ggplot}

@@ -6,24 +6,24 @@
 \usage{
 plot_similarity(
   input,
-  clonotype_col = "cdr3_nt",
   cluster_col,
   method = abdiv::jaccard,
+  clonotype_col = "clonotype_id",
   plot_colors = NULL,
   ...
 )
 }
 \arguments{
-\item{input}{Object containing V(D)J data. If a data.frame is provided, the
-cell barcodes should be stored as row names.}
-
-\item{clonotype_col}{meta.data column containing clonotype IDs to use for
-calculating overlap}
+\item{input}{Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 calculating overlap}
 
 \item{method}{Method to use for calculating similarity between clusters}
+
+\item{clonotype_col}{meta.data column containing clonotype IDs to use for
+calculating overlap}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 

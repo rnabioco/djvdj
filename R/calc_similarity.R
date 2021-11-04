@@ -2,17 +2,17 @@
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating overlap
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating overlap
 #' @param method Method to use for calculating similarity between clusters
+#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' calculating overlap
 #' @param prefix Prefix to add to new columns
 #' @param return_mat Return a matrix with similarity values. If set to
 #' FALSE, results will be added to the input object.
 #' @return Single cell object or data.frame with similarity values
 #' @export
-calc_similarity <- function(input, clonotype_col = "cdr3_nt", cluster_col, method = abdiv::jaccard,
+calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonotype_col = "clonotype_id",
                             prefix = NULL, return_mat = FALSE) {
 
   # If no prefix provided, use method name
