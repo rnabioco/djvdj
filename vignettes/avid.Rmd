@@ -177,7 +177,7 @@ plot_reads(
   chain_col   = "chains",                   # Column containing chains for each cell
   plot_colors = vdj_colors
 ) +
-  guides(fill = FALSE, color = FALSE)
+  guides(fill = "none", color = "none")
 ```
 
 <br>
