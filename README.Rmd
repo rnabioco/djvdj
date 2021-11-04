@@ -63,7 +63,7 @@ paths <- c(
 so_tcr <- import_vdj(
   input         = so_tcr,                     # Seurat object
   vdj_dir       = paths,                      # Cellranger output directories
-  filter_paired = TRUE                        # Only include clonotypes with paired chains
+  filter_paired = FALSE                       # Only include clonotypes with paired chains
 )
 ```
 
