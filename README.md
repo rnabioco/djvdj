@@ -17,7 +17,7 @@ a new issue.
 ### **Installation**
 
 You can install the development version of djvdj from
-[github](https://github.com/rnabioco/djvdj) with:
+[GitHub](https://github.com/rnabioco/djvdj) with:
 
 ``` r
 devtools::install_github("rnabioco/djvdj")
@@ -35,6 +35,9 @@ metrics including chains, clonotypes, and CDR3 sequences.
 
 ``` r
 # Import VDJ data
+# A vector of paths can be provided to load multiple datasets
+# If prefixes were added to the cell barcodes when the object was generated,
+# include these as the vector names
 paths <- c(
   KI_DN3_GE = "data/tcr/KI_DN3_TCR",
   KI_DN4_GE = "data/tcr/KI_DN4_TCR",
@@ -43,14 +46,9 @@ paths <- c(
 )
 
 so_tcr <- import_vdj(
-  sobj_in = so_tcr,                           # Seurat object
-  vdj_dir = paths                             # Cellranger output directories
-)
-
-# Filter for paired chains
-so_filt <- filter_vdj(
-  sobj_in = so_tcr,                           # Seurat object
-  filt    = all(c("TRA", "TRB") %in% chains)  # Condition for filtering
+  input         = so_tcr,                     # Seurat object
+  vdj_dir       = paths,                      # Cellranger output directories
+  filter_paired = FALSE                       # Only include clonotypes with paired chains
 )
 ```
 
@@ -69,8 +67,8 @@ abundances (`calc_abundance()`) and relative gene usage
 
 ``` r
 so_tcr <- calc_diversity(
-  sobj_in     = so_tcr,                       # Seurat object
-  cluster_col = "orig.ident",                 # meta.data column containing cell labels
+  input       = so_tcr,                       # Seurat object
+  cluster_col = "orig.ident",                 # Column containing cell clusters to compare
   method      = abdiv::simpson                # Diversity metric to use
 )
 ```
@@ -83,14 +81,14 @@ function to summarize the results.
 ``` r
 # Compare the usage of different V and J genes
 ggs <- plot_usage(
-  sobj_in     = so_tcr,                       # Seurat object
-  gene_cols   = c("v_gene", "j_gene"),        # meta.data column(s) containing genes
-  cluster_col = "orig.ident",                 # meta.data column containing cell labels
-  chain       = "TRB"                         # Chain to use for filtering genes
+  input       = so_tcr,                       # Seurat object
+  gene_cols   = c("v_gene", "j_gene"),        # Column(s) containing V(D)J genes to plot
+  cluster_col = "orig.ident",                 # Column containing cell clusters to compare
+  chain       = "TRB"                         # Chain to plot
 ) %>%
-  imap(~ .x + ggtitle(.y))
+  purrr::imap(~ .x + ggtitle(.y))
 
-plot_grid(plotlist = ggs)
+cowplot::plot_grid(plotlist = ggs)
 ```
 
 ![](man/figures/README-usage-1.png)<!-- -->

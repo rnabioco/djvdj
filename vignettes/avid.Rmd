@@ -21,15 +21,15 @@ knitr::opts_chunk$set(
 )
 
 # Packages
+library(djvdj)
+library(Seurat)
+library(here)
 library(stringr)
 library(tibble)
 library(purrr)
 library(dplyr)
 library(ggplot2)
 library(cowplot)
-library(Seurat)
-library(here)
-library(djvdj)
 
 # Color palette
 vdj_colors <- c(
@@ -73,7 +73,7 @@ mouse_umap <- so_avid %>%
   plot_features(
     feature     = "mouse",
     plot_colors = m_cols,
-    pt_size     = 0.001
+    size        = 0.001
   ) +
   ggtitle("Mouse") +
   theme_nothing() +
@@ -88,8 +88,8 @@ type_umap <- so_avid %>%
   plot_features(
     feature     = "type",
     plot_colors = t_cols,
-    feat_lvls   = names(t_cols),
-    pt_size     = 0.001
+    plot_lvls   = names(t_cols),
+    size        = 0.001
   ) +
   ggtitle("Cell type") +
   theme_nothing() +
@@ -103,9 +103,8 @@ type_umap <- so_avid %>%
 hel_umap <- so_avid %>%
   plot_features(
     feature     = "adt_HEL",
-    plot_colors = c("white", vdj_colors[5]),
-    pt_size     = 0.1,
-    pt_outline  = 0.1
+    plot_colors = c("grey85", vdj_colors[5]),
+    size        = 0.1
   ) +
   ggtitle("HEL signal") +
   guides(color = guide_colorbar(barwidth = unit(6, "pt"))) +
@@ -139,9 +138,10 @@ If the Seurat object contains data for multiple runs, a vector containing paths 
 paths <- here("data/avid/bcr")
 
 so_avid <- import_vdj(
-  sobj_in        = so_avid,                 # Seurat object
+  input          = so_avid,                 # Seurat object
   vdj_dir        = paths,                   # cellranger directories
-  filter_contigs = TRUE                     # Only include productive chains
+  filter_contigs = TRUE,                    # Only include productive chains
+  filter_paired  = FALSE                    # Only include clonotypes with paired chains
 )
 ```
 
@@ -152,8 +152,8 @@ Take a look at the meta.data to see the V(D)J data added to the object.
 ```{r}
 vdj_cols <- c(
   "clonotype_id", "cdr3",
-  "chains", "v_gene", 
-  "j_gene", "reads",
+  "chains",       "v_gene", 
+  "j_gene",       "reads",
   "umis"
 )
 
@@ -173,11 +173,11 @@ The read support for each chain can be visualized with the `plot_reads()` functi
 
 ```{r "read_support", fig.width = 5, fig.height = 3}
 plot_reads(
-  sobj_in     = so_avid,                    # Seurat object
+  input       = so_avid,                    # Seurat object
   chain_col   = "chains",                   # Column containing chains for each cell
   plot_colors = vdj_colors
 ) +
-  guides(fill = FALSE, color = FALSE)
+  guides(fill = "none", color = "none")
 ```
 
 <br>
@@ -190,7 +190,7 @@ The V(D)J data imported from Cell Ranger may include clonotypes that do not have
 
 ```{r}
 so_avid <- mutate_vdj(
-  sobj_in     = so_avid,                               # Seurat object
+  input       = so_avid,                               # Seurat object
   uniq_chains = str_c(unique(chains), collapse = "_")  # New column
 )
 
@@ -212,7 +212,7 @@ str_c(vec, collapse = "_")
 
 <br>
 
-We can then overlay the new labels present in the `uniq_chains` column on a UMAP projection. djvdj also provides a simple wrapper function (`plot_cell_count()`) that will summarize the fraction of cells that belong to each group.
+We can then overlay the new labels present in the `uniq_chains` column on a UMAP projection.
 
 ```{r "chains_umap", fig.width = 6.5, fig.height = 4.2}
 chain_cols <- vdj_colors
@@ -229,16 +229,16 @@ chain_umap <- so_avid %>%
   theme(legend.position = "top")
 
 # Chains bar graphs
-chain_bars <- so_avid %>%
-  plot_cell_count(
-    x           = "type",                   # Cell labels to plot
-    fill_col    = "uniq_chains",            # Cell labels to color each bar
-    plot_colors = chain_cols,
-    n_label     = FALSE
-  ) +
+chain_bars <- so_avid@meta.data %>%
+  ggplot(aes(type, fill = uniq_chains)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = chain_cols, na.value = "grey90") +
+  djvdj_theme() +
   theme(
     plot.margin     = unit(c(120, 10, 10, 10), "pt"),
-    legend.position = "none"
+    legend.position = "none",
+    axis.title      = element_blank(),
+    axis.text.x     = element_text(angle = 45, hjust = 1)
   )
 
 # Final figure
@@ -251,12 +251,12 @@ plot_grid(
 
 <br>
 
-The `filter_vdj()` function can be used to remove V(D)J data for cells that lack paired chains. Setting `filter_cells` to `FALSE` (the default) will keep all cells in the object, but the V(D)J information will be removed.
+Clonotypes that do not have paired chains can be excluded when using the `import_vdj()` function. The `filter_vdj()` function can also be used to remove V(D)J data for cells that lack paired chains. Setting `filter_cells` to `FALSE` (the default) will keep all cells in the object, but the V(D)J information will be removed.
 
 ```{r}
-so_filt <- filter_vdj(
-  sobj_in      = so_avid,                                                # Seurat object
-  filt         = "IGH" %in% chains && any(chains %in% c("IGK", "IGL")),  # Condition for filtering
+ so_filt <- filter_vdj(
+  input        = so_avid,                                                # Seurat object
+  filt         = "IGH" %in% chains && any(c("IGK", "IGL") %in% chains),  # Condition for filtering
   filter_cells = FALSE                                                   # Should cells be removed
 )
 ```
@@ -269,8 +269,8 @@ To identify the top clonotypes in each sample or cluster, clonotype abundance ca
 
 ```{r}
 so_avid <- calc_abundance(
-  sobj_in     = so_avid,                    # Seurat object
-  cluster_col = "mouse"                     # meta.data column for grouping
+  input       = so_avid,                    # Seurat object
+  cluster_col = "mouse"                     # meta.data column containing cell clusters to compare
 )
 ```
 
@@ -280,9 +280,9 @@ For each 'calc' function provided by djvdj, there is a matching 'plot' function 
 
 ```{r "abund_plots", fig.width = 8, fig.height = 3.5}
 plot_abundance(
-  sobj_in      = so_avid,                   # Seurat object
-  cluster_col  = "mouse",                   # meta.data column for grouping
-  label_col    = "clonotype_id",            # meta.data column containing labels
+  input        = so_avid,                   # Seurat object
+  cluster_col  = "mouse",                   # meta.data column containing cell clusters to compare
+  label_col    = "clonotype_id",            # meta.data column containing labels to use for plot
   n_clonotypes = 12,                        # Number of top clonotypes
   plot_colors  = m_cols
 ) +
@@ -306,8 +306,8 @@ In this example we are calculating the Shannon diversity for each sample in the 
 
 ```{r}
 so_avid <- calc_diversity(
-  sobj_in     = so_avid,                    # Seurat object
-  cluster_col = "mouse",                    # meta.data column for grouping
+  input       = so_avid,                    # Seurat object
+  cluster_col = "mouse",                    # meta.data column containing cell clusters to compare
   method      = abdiv::shannon              # abdiv method to use
 )
 ```
@@ -324,8 +324,8 @@ fns <- list(
 )
 
 plot_diversity(
-  sobj_in     = so_avid,                    # Seurat object
-  cluster_col = "mouse",                    # meta.data column for grouping
+  input       = so_avid,                    # Seurat object
+  cluster_col = "mouse",                    # meta.data column containing cell clusters to compare
   method      = fns,                        # abdiv method to use
   plot_colors = vdj_colors
 ) +
@@ -350,8 +350,8 @@ By default `calc_similarity()` will add a new meta.data column for each comparis
 
 ```{r}
 so_avid <- calc_similarity(
-  sobj_in     = so_avid,                    # Seurat object
-  cluster_col = "seurat_clusters",          # meta.data column for grouping
+  input       = so_avid,                    # Seurat object
+  cluster_col = "seurat_clusters",          # meta.data column containing cell clusters to compare
   method      = abdiv::jaccard              # abdiv method to use
 )
 ```
@@ -362,9 +362,9 @@ A heatmap summarizing the results can be generated using the `plot_similarity()`
 
 ```{r "sim_plots", fig.width = 5, fig.height = 4}
 plot_similarity(
-  sobj_in     = so_avid,                    # Seurat object
-  cluster_col = "seurat_clusters",          # meta.data column for grouping
-  method      = abdiv::jaccard,             # Method to use
+  input       = so_avid,                    # Seurat object
+  cluster_col = "seurat_clusters",          # meta.data column containing cell clusters to compare
+  method      = abdiv::jaccard,             # abdiv method to use
   plot_colors = "#009E73",
   size        = 0.2,                        # Additional ggplot options
   color       = "white"                     # Additional ggplot options
@@ -385,10 +385,10 @@ In this example we are summarizing the usage of different V genes for the TRB ch
 
 ```{r}
 calc_usage(
-  sobj_in     = so_avid,                    # Seurat object
+  input       = so_avid,                    # Seurat object
   gene_cols   = "v_gene",                   # meta.data column containing genes
-  cluster_col = "mouse",                    # meta.data column for grouping
-  chain       = "IGH",                      # Chain to use for filtering genes
+  cluster_col = "mouse",                    # meta.data column containing cell clusters to compare
+  chain       = "IGH",                      # Chain to calculate gene usage for
   chain_col   = "chains"                    # meta.data column containing chains
 )
 ```
@@ -399,10 +399,10 @@ The function `plot_usage()` can be used to summarize these results. Using the `y
 
 ```{r "gene_usage_1", fig.width = 11, fig.height = 3.5}
 plot_usage(
-  sobj_in     = so_avid,                    # Seurat object
+  input       = so_avid,                    # Seurat object
   gene_cols   = "v_gene",                   # meta.data column(s) containing genes
   type        = "bar",                      # Type of plot
-  chain       = "IGH",                      # Chain to use for filtering genes
+  chain       = "IGH",                      # Chain to plot
   
   plot_genes  = NULL,                       # A list of genes to plot
   n_genes     = 50,                         # The number of top genes to plot
@@ -416,10 +416,10 @@ By passing multiple columns to `gene_cols`, the frequency that different genes a
 
 ```{r, eval = F}
 calc_usage(
-  sobj_in     = so_avid,                    # Seurat object
+  input       = so_avid,                    # Seurat object
   gene_cols   = c("v_gene", "j_gene"),      # meta.data column(s) containing genes
-  cluster_col = "mouse",                    # meta.data column for grouping
-  chain       = "IGK"                       # Chain to use for filtering genes
+  cluster_col = "mouse",                    # meta.data column containing cell clusters to compare
+  chain       = "IGK"                       # Chain to plot
 )
 ```
 
@@ -429,10 +429,10 @@ When multiple gene columns are passed to `plot_usage()`, a list of plots will be
 
 ```{r "gene_usage_2", fig.width = 12, fig.height = 2.5}
 ggs <- plot_usage(
-  sobj_in     = so_avid,                    # Seurat object
+  input       = so_avid,                    # Seurat object
   gene_cols   = c("v_gene", "j_gene"),      # meta.data column(s) containing genes
-  cluster_col = "mouse",                    # meta.data column for grouping
-  chain       = "IGK",                      # Chain to use for filtering genes
+  cluster_col = "mouse",                    # meta.data column containing cell clusters to compare
+  chain       = "IGK",                      # Chain to plot
   plot_colors = "#6A51A3",
   n_genes     = 20
 ) %>%
@@ -449,7 +449,7 @@ The `calc_usage()` and `plot_usage()` functions can also be used to calculate th
 
 ```{r "cdr3_usage", fig.width = 8, fig.height = 3.5}
 plot_usage(
-  sobj_in     = so_avid,
+  input       = so_avid,
   gene_cols   = "cdr3",                     # Column containing CDR3 sequences
   cluster_col = "mouse",
   

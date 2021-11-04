@@ -26,6 +26,12 @@ jobs:
           extra-packages: pkgdown
           needs: website
 
+      - name: Download data
+        run: |
+          wget https://djvdj-data.s3-us-west-2.amazonaws.com/avid.zip
+          unzip avid.zip
+          mv avid data
+
       - name: Deploy package
         run: |
           git config --local user.name "$GITHUB_ACTOR"
