@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Manipulate Seurat object meta.data — mutate_meta • djvdj</title>
+<title>Mutate object meta.data — mutate_meta • djvdj</title>
 
 
 <!-- jquery -->
@@ -41,8 +41,8 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Manipulate Seurat object meta.data — mutate_meta" />
-<meta property="og:description" content="Manipulate Seurat object meta.data" />
+<meta property="og:title" content="Mutate object meta.data — mutate_meta" />
+<meta property="og:description" content="Mutate object meta.data" />
 
 
 
@@ -125,23 +125,24 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Manipulate Seurat object meta.data</h1>
-    <small class="dont-index">Source: <a href='https://github.com/rnabioco/djvdj/blob/master/R/utils.R'><code>R/utils.R</code></a></small>
+    <h1>Mutate object meta.data</h1>
+    <small class="dont-index">Source: <a href='https://github.com/rnabioco/djvdj/blob/master/R/mutate-vdj.R'><code>R/mutate-vdj.R</code></a></small>
     <div class="hidden name"><code>mutate_meta.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Manipulate Seurat object meta.data</p>
+    <p>Mutate object meta.data</p>
     </div>
 
-    <pre class="usage"><span class='fu'>mutate_meta</span><span class='op'>(</span><span class='va'>sobj_in</span>, <span class='va'>.fun</span>, <span class='va'>...</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>mutate_meta</span><span class='op'>(</span><span class='va'>input</span>, <span class='va'>.fun</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>sobj_in</th>
-      <td><p>Seurat object</p></td>
+      <th>input</th>
+      <td><p>Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.</p></td>
     </tr>
     <tr>
       <th>.fun</th>
@@ -156,7 +157,7 @@ formula is provided, use .x to refer to the meta.data table.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Seurat object</p>
+    <p>Object with mutated meta.data</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

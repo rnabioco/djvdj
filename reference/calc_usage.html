@@ -42,9 +42,7 @@
   
 
 <meta property="og:title" content="Calculate gene usage — calc_usage" />
-<meta property="og:description" content="Gene usage is calculated as the percent of cells that express each V(D)J
-gene present in gene_cols. Cells that lack V(D)J data and have NAs present
-in gene_cols are excluded from this calculation." />
+<meta property="og:description" content="Calculate gene usage" />
 
 
 
@@ -128,18 +126,16 @@ in gene_cols are excluded from this calculation." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Calculate gene usage</h1>
-    <small class="dont-index">Source: <a href='https://github.com/rnabioco/djvdj/blob/master/R/utils.R'><code>R/utils.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/rnabioco/djvdj/blob/master/R/calc-usage.R'><code>R/calc-usage.R</code></a></small>
     <div class="hidden name"><code>calc_usage.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Gene usage is calculated as the percent of cells that express each V(D)J
-gene present in gene_cols. Cells that lack V(D)J data and have NAs present
-in gene_cols are excluded from this calculation.</p>
+    <p>Calculate gene usage</p>
     </div>
 
     <pre class="usage"><span class='fu'>calc_usage</span><span class='op'>(</span>
-  <span class='va'>sobj_in</span>,
+  <span class='va'>input</span>,
   <span class='va'>gene_cols</span>,
   cluster_col <span class='op'>=</span> <span class='cn'>NULL</span>,
   chain <span class='op'>=</span> <span class='cn'>NULL</span>,
@@ -151,12 +147,14 @@ in gene_cols are excluded from this calculation.</p>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>sobj_in</th>
-      <td><p>Seurat object containing V(D)J data</p></td>
+      <th>input</th>
+      <td><p>Object containing V(D)J data. If a data.frame is provided, the
+cell barcodes should be stored as row names.</p></td>
     </tr>
     <tr>
       <th>gene_cols</th>
-      <td><p>meta.data column containing genes used for each clonotype</p></td>
+      <td><p>meta.data column containing genes identified for each
+clonotype</p></td>
     </tr>
     <tr>
       <th>cluster_col</th>
@@ -174,7 +172,7 @@ all chains.</p></td>
     </tr>
     <tr>
       <th>sep</th>
-      <td><p>Separator to use for expanding gene_cols</p></td>
+      <td><p>Separator used for storing per cell V(D)J data</p></td>
     </tr>
     </table>
 

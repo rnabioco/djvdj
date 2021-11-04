@@ -150,18 +150,20 @@ columns with V(D)J data. If NULL all columns are used.</p></td>
     </tr>
     <tr>
       <th>cols_in</th>
-      <td><p>meta.data columns containing VDJ data to use for filtering.
-If set to NULL (recommended) columns are automatically selected.</p></td>
+      <td><p>meta.data columns containing V(D)J data to use for filtering.
+If set to NULL (the default) columns are automatically selected by
+identifying columns that have NAs in the same rows as clone_col.</p></td>
     </tr>
     <tr>
       <th>sep</th>
-      <td><p>Separator to search for in columns</p></td>
+      <td><p>Separator used for storing per cell V(D)J data</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>data.frame</p>
+    <p>List with two vectors, one containing columns with V(D)J data and
+the other containing columns where separator has been detected.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

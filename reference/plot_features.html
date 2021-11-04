@@ -134,28 +134,48 @@
     <p>Create 2D feature plot</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plot_features</span><span class='op'>(</span>
-  <span class='va'>sobj_in</span>,
+    <pre class="usage"><span class='fu'>plot_features</span><span class='op'>(</span><span class='va'>input</span>, <span class='va'>...</span><span class='op'>)</span>
+
+<span class='co'># S3 method for default</span>
+<span class='fu'>plot_features</span><span class='op'>(</span>
+  <span class='va'>input</span>,
+  x <span class='op'>=</span> <span class='st'>"UMAP_1"</span>,
+  y <span class='op'>=</span> <span class='st'>"UMAP_2"</span>,
+  <span class='va'>feature</span>,
+  plot_colors <span class='op'>=</span> <span class='cn'>NULL</span>,
+  plot_lvls <span class='op'>=</span> <span class='cn'>NULL</span>,
+  min_q <span class='op'>=</span> <span class='cn'>NULL</span>,
+  max_q <span class='op'>=</span> <span class='cn'>NULL</span>,
+  na_color <span class='op'>=</span> <span class='st'>"grey90"</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span>
+
+<span class='co'># S3 method for Seurat</span>
+<span class='fu'>plot_features</span><span class='op'>(</span>
+  <span class='va'>input</span>,
   x <span class='op'>=</span> <span class='st'>"UMAP_1"</span>,
   y <span class='op'>=</span> <span class='st'>"UMAP_2"</span>,
   <span class='va'>feature</span>,
   data_slot <span class='op'>=</span> <span class='st'>"data"</span>,
-  pt_size <span class='op'>=</span> <span class='fl'>0.25</span>,
-  pt_outline <span class='op'>=</span> <span class='cn'>NULL</span>,
-  outline_pos <span class='op'>=</span> <span class='st'>"all"</span>,
   plot_colors <span class='op'>=</span> <span class='cn'>NULL</span>,
-  feat_lvls <span class='op'>=</span> <span class='cn'>NULL</span>,
+  plot_lvls <span class='op'>=</span> <span class='cn'>NULL</span>,
   min_q <span class='op'>=</span> <span class='cn'>NULL</span>,
   max_q <span class='op'>=</span> <span class='cn'>NULL</span>,
-  na_color <span class='op'>=</span> <span class='st'>"grey90"</span>
+  na_color <span class='op'>=</span> <span class='st'>"grey90"</span>,
+  <span class='va'>...</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>sobj_in</th>
-      <td><p>Seurat object or data.frame containing data for plotting</p></td>
+      <th>input</th>
+      <td><p>Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Additional arguments to pass to geom_point()</p></td>
     </tr>
     <tr>
       <th>x</th>
@@ -170,30 +190,11 @@
       <td><p>Variable to use for coloring points</p></td>
     </tr>
     <tr>
-      <th>data_slot</th>
-      <td><p>Slot in the Seurat object to pull data</p></td>
-    </tr>
-    <tr>
-      <th>pt_size</th>
-      <td><p>Point size</p></td>
-    </tr>
-    <tr>
-      <th>pt_outline</th>
-      <td><p>Width of point outline to add to feature groups, set to
-NULL to exclude.</p></td>
-    </tr>
-    <tr>
-      <th>outline_pos</th>
-      <td><p>Position of point outline. Set to 'all' to outline all
-feature groups, set to 'bottom' to only outline the bottom layer of
-points.</p></td>
-    </tr>
-    <tr>
       <th>plot_colors</th>
       <td><p>Vector of colors to use for plot</p></td>
     </tr>
     <tr>
-      <th>feat_lvls</th>
+      <th>plot_lvls</th>
       <td><p>Levels to use for ordering feature</p></td>
     </tr>
     <tr>
@@ -207,6 +208,10 @@ points.</p></td>
     <tr>
       <th>na_color</th>
       <td><p>Color to use for missing values</p></td>
+    </tr>
+    <tr>
+      <th>data_slot</th>
+      <td><p>Slot in the Seurat object to pull data</p></td>
     </tr>
     </table>
 

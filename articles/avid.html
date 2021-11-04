@@ -85,7 +85,7 @@
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>V(D)J analysis</h1>
             
-            <h4 class="date">August 04 2021</h4>
+            <h4 class="date">November 04 2021</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/rnabioco/djvdj/blob/master/vignettes/avid.Rmd"><code>vignettes/avid.Rmd</code></a></small>
       <div class="hidden name"><code>avid.Rmd</code></div>
@@ -108,17 +108,18 @@
 <span class="va">paths</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="op">(</span><span class="st">"data/avid/bcr"</span><span class="op">)</span>
 
 <span class="va">so_avid</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span>
-  sobj_in        <span class="op">=</span> <span class="va">so_avid</span>,                 <span class="co"># Seurat object</span>
+  input          <span class="op">=</span> <span class="va">so_avid</span>,                 <span class="co"># Seurat object</span>
   vdj_dir        <span class="op">=</span> <span class="va">paths</span>,                   <span class="co"># cellranger directories</span>
-  filter_contigs <span class="op">=</span> <span class="cn">TRUE</span>                     <span class="co"># Only include productive chains</span>
+  filter_contigs <span class="op">=</span> <span class="cn">TRUE</span>,                    <span class="co"># Only include productive chains</span>
+  filter_paired  <span class="op">=</span> <span class="cn">FALSE</span>                    <span class="co"># Only include clonotypes with paired chains</span>
 <span class="op">)</span></code></pre></div>
 <p><br></p>
 <p>Take a look at the meta.data to see the V(D)J data added to the object.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">vdj_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>
   <span class="st">"clonotype_id"</span>, <span class="st">"cdr3"</span>,
-  <span class="st">"chains"</span>, <span class="st">"v_gene"</span>, 
-  <span class="st">"j_gene"</span>, <span class="st">"reads"</span>,
+  <span class="st">"chains"</span>,       <span class="st">"v_gene"</span>, 
+  <span class="st">"j_gene"</span>,       <span class="st">"reads"</span>,
   <span class="st">"umis"</span>
 <span class="op">)</span>
 
@@ -151,11 +152,11 @@
 <p>The read support for each chain can be visualized with the <code><a href="../reference/plot_reads.html">plot_reads()</a></code> function. This will create plots summarizing the number of UMIs and total reads that were obtained for each chain.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plot_reads.html">plot_reads</a></span><span class="op">(</span>
-  sobj_in     <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
+  input       <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
   chain_col   <span class="op">=</span> <span class="st">"chains"</span>,                   <span class="co"># Column containing chains for each cell</span>
   plot_colors <span class="op">=</span> <span class="va">vdj_colors</span>
 <span class="op">)</span> <span class="op">+</span>
-  <span class="fu">guides</span><span class="op">(</span>fill <span class="op">=</span> <span class="cn">FALSE</span>, color <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+  <span class="fu">guides</span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"none"</span>, color <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></code></pre></div>
 <p><img src="avid_files/figure-html/read_support-1.png" width="480"></p>
 <p><br></p>
 </div>
@@ -166,7 +167,7 @@
 <p>The V(D)J data imported from Cell Ranger may include clonotypes that do not have paired heavy and light chains. Using the <code><a href="../reference/mutate_vdj.html">mutate_vdj()</a></code> function, we can add a new column (<code>uniq_chains</code>) to the meta.data to shows the unique chains detected in each cell.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">so_avid</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mutate_vdj.html">mutate_vdj</a></span><span class="op">(</span>
-  sobj_in     <span class="op">=</span> <span class="va">so_avid</span>,                               <span class="co"># Seurat object</span>
+  input       <span class="op">=</span> <span class="va">so_avid</span>,                               <span class="co"># Seurat object</span>
   uniq_chains <span class="op">=</span> <span class="fu">str_c</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html">unique</a></span><span class="op">(</span><span class="va">chains</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"_"</span><span class="op">)</span>  <span class="co"># New column</span>
 <span class="op">)</span>
 
@@ -197,7 +198,7 @@
 <span class="fu">str_c</span><span class="op">(</span><span class="va">vec</span>, collapse <span class="op">=</span> <span class="st">"_"</span><span class="op">)</span>
 <span class="co">#&gt; [1] "IGH_IGK"</span></code></pre></div>
 <p><br></p>
-<p>We can then overlay the new labels present in the <code>uniq_chains</code> column on a UMAP projection. djvdj also provides a simple wrapper function (<code><a href="../reference/plot_cell_count.html">plot_cell_count()</a></code>) that will summarize the fraction of cells that belong to each group.</p>
+<p>We can then overlay the new labels present in the <code>uniq_chains</code> column on a UMAP projection.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">chain_cols</span> <span class="op">&lt;-</span> <span class="va">vdj_colors</span>
 <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">chain_cols</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html">unique</a></span><span class="op">(</span><span class="va">so_avid</span><span class="op">$</span><span class="va">uniq_chains</span><span class="op">)</span>
@@ -213,16 +214,16 @@
   <span class="fu">theme</span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span>
 
 <span class="co"># Chains bar graphs</span>
-<span class="va">chain_bars</span> <span class="op">&lt;-</span> <span class="va">so_avid</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="../reference/plot_cell_count.html">plot_cell_count</a></span><span class="op">(</span>
-    x           <span class="op">=</span> <span class="st">"type"</span>,                   <span class="co"># Cell labels to plot</span>
-    fill_col    <span class="op">=</span> <span class="st">"uniq_chains"</span>,            <span class="co"># Cell labels to color each bar</span>
-    plot_colors <span class="op">=</span> <span class="va">chain_cols</span>,
-    n_label     <span class="op">=</span> <span class="cn">FALSE</span>
-  <span class="op">)</span> <span class="op">+</span>
+<span class="va">chain_bars</span> <span class="op">&lt;-</span> <span class="va">so_avid</span><span class="op">@</span><span class="va">meta.data</span> <span class="op">%&gt;%</span>
+  <span class="fu">ggplot</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span><span class="va">type</span>, fill <span class="op">=</span> <span class="va">uniq_chains</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu">geom_bar</span><span class="op">(</span>position <span class="op">=</span> <span class="st">"fill"</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu">scale_fill_manual</span><span class="op">(</span>values <span class="op">=</span> <span class="va">chain_cols</span>, na.value <span class="op">=</span> <span class="st">"grey90"</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="../reference/djvdj_theme.html">djvdj_theme</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu">theme</span><span class="op">(</span>
     plot.margin     <span class="op">=</span> <span class="fu">unit</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span>, <span class="st">"pt"</span><span class="op">)</span>,
-    legend.position <span class="op">=</span> <span class="st">"none"</span>
+    legend.position <span class="op">=</span> <span class="st">"none"</span>,
+    axis.title      <span class="op">=</span> <span class="fu">element_blank</span><span class="op">(</span><span class="op">)</span>,
+    axis.text.x     <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, hjust <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>
   <span class="op">)</span>
 
 <span class="co"># Final figure</span>
@@ -233,11 +234,11 @@
 <span class="op">)</span></code></pre></div>
 <p><img src="avid_files/figure-html/chains_umap-1.png" width="624"></p>
 <p><br></p>
-<p>The <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code> function can be used to remove V(D)J data for cells that lack paired chains. Setting <code>filter_cells</code> to <code>FALSE</code> (the default) will keep all cells in the object, but the V(D)J information will be removed.</p>
+<p>Clonotypes that do not have paired chains can be excluded when using the <code><a href="../reference/import_vdj.html">import_vdj()</a></code> function. The <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code> function can also be used to remove V(D)J data for cells that lack paired chains. Setting <code>filter_cells</code> to <code>FALSE</code> (the default) will keep all cells in the object, but the V(D)J information will be removed.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">so_filt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span>
-  sobj_in      <span class="op">=</span> <span class="va">so_avid</span>,                                                <span class="co"># Seurat object</span>
-  filt         <span class="op">=</span> <span class="st">"IGH"</span> <span class="op">%in%</span> <span class="va">chains</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/any.html">any</a></span><span class="op">(</span><span class="va">chains</span> <span class="op">%in%</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"IGK"</span>, <span class="st">"IGL"</span><span class="op">)</span><span class="op">)</span>,  <span class="co"># Condition for filtering</span>
+<code class="sourceCode R"> <span class="va">so_filt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span>
+  input        <span class="op">=</span> <span class="va">so_avid</span>,                                                <span class="co"># Seurat object</span>
+  filt         <span class="op">=</span> <span class="st">"IGH"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html">%in%</a></span> <span class="va">chains</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/any.html">any</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"IGK"</span>, <span class="st">"IGL"</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html">%in%</a></span> <span class="va">chains</span><span class="op">)</span>,  <span class="co"># Condition for filtering</span>
   filter_cells <span class="op">=</span> <span class="cn">FALSE</span>                                                   <span class="co"># Should cells be removed</span>
 <span class="op">)</span></code></pre></div>
 <p><br></p>
@@ -249,16 +250,16 @@
 <p>To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the <code><a href="../reference/calc_abundance.html">calc_abundance()</a></code> function. These calculations can be performed on a per-cluster or per-sample basis by also providing a meta.data column containing cell labels.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">so_avid</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_abundance.html">calc_abundance</a></span><span class="op">(</span>
-  sobj_in     <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
-  cluster_col <span class="op">=</span> <span class="st">"mouse"</span>                     <span class="co"># meta.data column for grouping</span>
+  input       <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
+  cluster_col <span class="op">=</span> <span class="st">"mouse"</span>                     <span class="co"># meta.data column containing cell clusters to compare</span>
 <span class="op">)</span></code></pre></div>
 <p><br></p>
 <p>For each ‘calc’ function provided by djvdj, there is a matching ‘plot’ function that will generate a summary plot. The <code><a href="../reference/plot_abundance.html">plot_abundance()</a></code> function will plot clonotypes ranked by abundance. As expected we see that most MD4 B cells share the same clonotype ID.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plot_abundance.html">plot_abundance</a></span><span class="op">(</span>
-  sobj_in      <span class="op">=</span> <span class="va">so_avid</span>,                   <span class="co"># Seurat object</span>
-  cluster_col  <span class="op">=</span> <span class="st">"mouse"</span>,                   <span class="co"># meta.data column for grouping</span>
-  label_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,            <span class="co"># meta.data column containing labels</span>
+  input        <span class="op">=</span> <span class="va">so_avid</span>,                   <span class="co"># Seurat object</span>
+  cluster_col  <span class="op">=</span> <span class="st">"mouse"</span>,                   <span class="co"># meta.data column containing cell clusters to compare</span>
+  label_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,            <span class="co"># meta.data column containing labels to use for plot</span>
   n_clonotypes <span class="op">=</span> <span class="fl">12</span>,                        <span class="co"># Number of top clonotypes</span>
   plot_colors  <span class="op">=</span> <span class="va">m_cols</span>
 <span class="op">)</span> <span class="op">+</span>
@@ -279,8 +280,8 @@
 <p>In this example we are calculating the Shannon diversity for each sample in the orig.ident meta.data column.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">so_avid</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_diversity.html">calc_diversity</a></span><span class="op">(</span>
-  sobj_in     <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
-  cluster_col <span class="op">=</span> <span class="st">"mouse"</span>,                    <span class="co"># meta.data column for grouping</span>
+  input       <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
+  cluster_col <span class="op">=</span> <span class="st">"mouse"</span>,                    <span class="co"># meta.data column containing cell clusters to compare</span>
   method      <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/shannon.html">shannon</a></span>              <span class="co"># abdiv method to use</span>
 <span class="op">)</span></code></pre></div>
 <p><br></p>
@@ -293,8 +294,8 @@
 <span class="op">)</span>
 
 <span class="fu"><a href="../reference/plot_diversity.html">plot_diversity</a></span><span class="op">(</span>
-  sobj_in     <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
-  cluster_col <span class="op">=</span> <span class="st">"mouse"</span>,                    <span class="co"># meta.data column for grouping</span>
+  input       <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
+  cluster_col <span class="op">=</span> <span class="st">"mouse"</span>,                    <span class="co"># meta.data column containing cell clusters to compare</span>
   method      <span class="op">=</span> <span class="va">fns</span>,                        <span class="co"># abdiv method to use</span>
   plot_colors <span class="op">=</span> <span class="va">vdj_colors</span>
 <span class="op">)</span> <span class="op">+</span>
@@ -331,17 +332,17 @@
 <p>By default <code><a href="../reference/calc_similarity.html">calc_similarity()</a></code> will add a new meta.data column for each comparison. In this example we are calculating the jaccard dissimilarity index for all combinations of clusters present in the <code>seurat_clusters</code> column.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">so_avid</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_similarity.html">calc_similarity</a></span><span class="op">(</span>
-  sobj_in     <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
-  cluster_col <span class="op">=</span> <span class="st">"seurat_clusters"</span>,          <span class="co"># meta.data column for grouping</span>
+  input       <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
+  cluster_col <span class="op">=</span> <span class="st">"seurat_clusters"</span>,          <span class="co"># meta.data column containing cell clusters to compare</span>
   method      <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/jaccard.html">jaccard</a></span>              <span class="co"># abdiv method to use</span>
 <span class="op">)</span></code></pre></div>
 <p><br></p>
 <p>A heatmap summarizing the results can be generated using the <code><a href="../reference/plot_similarity.html">plot_similarity()</a></code> function. Values closer to 1 indicate the repertoires are very different.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plot_similarity.html">plot_similarity</a></span><span class="op">(</span>
-  sobj_in     <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
-  cluster_col <span class="op">=</span> <span class="st">"seurat_clusters"</span>,          <span class="co"># meta.data column for grouping</span>
-  method      <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/jaccard.html">jaccard</a></span>,             <span class="co"># Method to use</span>
+  input       <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
+  cluster_col <span class="op">=</span> <span class="st">"seurat_clusters"</span>,          <span class="co"># meta.data column containing cell clusters to compare</span>
+  method      <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/jaccard.html">jaccard</a></span>,             <span class="co"># abdiv method to use</span>
   plot_colors <span class="op">=</span> <span class="st">"#009E73"</span>,
   size        <span class="op">=</span> <span class="fl">0.2</span>,                        <span class="co"># Additional ggplot options</span>
   color       <span class="op">=</span> <span class="st">"white"</span>                     <span class="co"># Additional ggplot options</span>
@@ -360,10 +361,10 @@
 <p>In this example we are summarizing the usage of different V genes for the TRB chain</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/calc_usage.html">calc_usage</a></span><span class="op">(</span>
-  sobj_in     <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
+  input       <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,                   <span class="co"># meta.data column containing genes</span>
-  cluster_col <span class="op">=</span> <span class="st">"mouse"</span>,                    <span class="co"># meta.data column for grouping</span>
-  chain       <span class="op">=</span> <span class="st">"IGH"</span>,                      <span class="co"># Chain to use for filtering genes</span>
+  cluster_col <span class="op">=</span> <span class="st">"mouse"</span>,                    <span class="co"># meta.data column containing cell clusters to compare</span>
+  chain       <span class="op">=</span> <span class="st">"IGH"</span>,                      <span class="co"># Chain to calculate gene usage for</span>
   chain_col   <span class="op">=</span> <span class="st">"chains"</span>                    <span class="co"># meta.data column containing chains</span>
 <span class="op">)</span>
 <span class="co">#&gt; # A tibble: 192 × 5</span>
@@ -384,10 +385,10 @@
 <p>The function <code><a href="../reference/plot_usage.html">plot_usage()</a></code> can be used to summarize these results. Using the <code>yaxis</code> argument, the percent or absolute count (frequency) can be used for plotting. The genes plotted can also be selected using the <code>plot_genes</code> argument, or the number of top genes (most frequent) to plot can be specified with <code>n_genes</code>.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
-  sobj_in     <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
+  input       <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,                   <span class="co"># meta.data column(s) containing genes</span>
   type        <span class="op">=</span> <span class="st">"bar"</span>,                      <span class="co"># Type of plot</span>
-  chain       <span class="op">=</span> <span class="st">"IGH"</span>,                      <span class="co"># Chain to use for filtering genes</span>
+  chain       <span class="op">=</span> <span class="st">"IGH"</span>,                      <span class="co"># Chain to plot</span>
   
   plot_genes  <span class="op">=</span> <span class="cn">NULL</span>,                       <span class="co"># A list of genes to plot</span>
   n_genes     <span class="op">=</span> <span class="fl">50</span>,                         <span class="co"># The number of top genes to plot</span>
@@ -398,19 +399,19 @@
 <p>By passing multiple columns to <code>gene_cols</code>, the frequency that different genes are used together can also be summarized.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/calc_usage.html">calc_usage</a></span><span class="op">(</span>
-  sobj_in     <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
+  input       <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,      <span class="co"># meta.data column(s) containing genes</span>
-  cluster_col <span class="op">=</span> <span class="st">"mouse"</span>,                    <span class="co"># meta.data column for grouping</span>
-  chain       <span class="op">=</span> <span class="st">"IGK"</span>                       <span class="co"># Chain to use for filtering genes</span>
+  cluster_col <span class="op">=</span> <span class="st">"mouse"</span>,                    <span class="co"># meta.data column containing cell clusters to compare</span>
+  chain       <span class="op">=</span> <span class="st">"IGK"</span>                       <span class="co"># Chain to plot</span>
 <span class="op">)</span></code></pre></div>
 <p><br></p>
 <p>When multiple gene columns are passed to <code><a href="../reference/plot_usage.html">plot_usage()</a></code>, a list of plots will be returned, one for each cell label in the <code>cluster_col</code> column.</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ggs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
-  sobj_in     <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
+  input       <span class="op">=</span> <span class="va">so_avid</span>,                    <span class="co"># Seurat object</span>
   gene_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,      <span class="co"># meta.data column(s) containing genes</span>
-  cluster_col <span class="op">=</span> <span class="st">"mouse"</span>,                    <span class="co"># meta.data column for grouping</span>
-  chain       <span class="op">=</span> <span class="st">"IGK"</span>,                      <span class="co"># Chain to use for filtering genes</span>
+  cluster_col <span class="op">=</span> <span class="st">"mouse"</span>,                    <span class="co"># meta.data column containing cell clusters to compare</span>
+  chain       <span class="op">=</span> <span class="st">"IGK"</span>,                      <span class="co"># Chain to plot</span>
   plot_colors <span class="op">=</span> <span class="st">"#6A51A3"</span>,
   n_genes     <span class="op">=</span> <span class="fl">20</span>
 <span class="op">)</span> <span class="op">%&gt;%</span>
@@ -426,7 +427,7 @@
 <p>The <code><a href="../reference/calc_usage.html">calc_usage()</a></code> and <code><a href="../reference/plot_usage.html">plot_usage()</a></code> functions can also be used to calculate the fraction of cells that have a certain CDR3 sequence. To do this, the meta.data column containing the CDR3 sequences for each cell can be passed to the <code>gene_cols</code> argument. The plot can be divided into facets based on sample using simple ggplot2 commands.</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plot_usage.html">plot_usage</a></span><span class="op">(</span>
-  sobj_in     <span class="op">=</span> <span class="va">so_avid</span>,
+  input       <span class="op">=</span> <span class="va">so_avid</span>,
   gene_cols   <span class="op">=</span> <span class="st">"cdr3"</span>,                     <span class="co"># Column containing CDR3 sequences</span>
   cluster_col <span class="op">=</span> <span class="st">"mouse"</span>,
   

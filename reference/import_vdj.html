@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Add V(D)J data to Seurat object — import_vdj • djvdj</title>
+<title>Import V(D)J data — import_vdj • djvdj</title>
 
 
 <!-- jquery -->
@@ -41,8 +41,8 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Add V(D)J data to Seurat object — import_vdj" />
-<meta property="og:description" content="Add V(D)J data to Seurat object" />
+<meta property="og:title" content="Import V(D)J data — import_vdj" />
+<meta property="og:description" content="Import V(D)J data" />
 
 
 
@@ -125,21 +125,23 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Add V(D)J data to Seurat object</h1>
-    <small class="dont-index">Source: <a href='https://github.com/rnabioco/djvdj/blob/master/R/utils.R'><code>R/utils.R</code></a></small>
+    <h1>Import V(D)J data</h1>
+    <small class="dont-index">Source: <a href='https://github.com/rnabioco/djvdj/blob/master/R/import-vdj.R'><code>R/import-vdj.R</code></a></small>
     <div class="hidden name"><code>import_vdj.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Add V(D)J data to Seurat object</p>
+    <p>Import V(D)J data</p>
     </div>
 
     <pre class="usage"><span class='fu'>import_vdj</span><span class='op'>(</span>
-  sobj_in <span class='op'>=</span> <span class='cn'>NULL</span>,
+  input <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>vdj_dir</span>,
   prefix <span class='op'>=</span> <span class='st'>""</span>,
   cell_prefix <span class='op'>=</span> <span class='cn'>NULL</span>,
   filter_contigs <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  filter_paired <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  define_clonotypes <span class='op'>=</span> <span class='cn'>NULL</span>,
   sep <span class='op'>=</span> <span class='st'>";"</span>
 <span class='op'>)</span></pre>
 
@@ -147,9 +149,9 @@
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>sobj_in</th>
-      <td><p>Seurat object, if set to NULL a tibble containing the V(D)J
-data will be returned</p></td>
+      <th>input</th>
+      <td><p>Object containing single cell data, if set to NULL a data.frame
+containing V(D)J results will be returned</p></td>
     </tr>
     <tr>
       <th>vdj_dir</th>
@@ -162,7 +164,7 @@ argument.</p></td>
     </tr>
     <tr>
       <th>prefix</th>
-      <td><p>Prefix to add to new meta.data columns</p></td>
+      <td><p>Prefix to add to new columns</p></td>
     </tr>
     <tr>
       <th>cell_prefix</th>
@@ -177,15 +179,31 @@ Read10X function found in the Seurat package.</p></td>
 contig</p></td>
     </tr>
     <tr>
+      <th>filter_paired</th>
+      <td><p>Only include clonotypes with paired chains. For TCR
+data each clonotype must have at least one TRA and TRB chain, for BCR data
+each clonotype must have at least one IGH chain and at least one IGK or IGL
+chain.</p></td>
+    </tr>
+    <tr>
+      <th>define_clonotypes</th>
+      <td><p>Define clonotype IDs based on V(D)J data. This is
+useful if the V(D)J datasets being loaded do not have consistent clonotype
+IDs, e.g., clonotype1 is not the same across samples.
+'cdr3aa' will use the CDR3 amino acid sequence, 'cdr3nt' will use the CDR3
+nucleotide sequence, and 'cdr3_gene' will use the combination of the CDR3
+nucleotide sequence and the V(D)J genes. Set to NULL (default) to use the
+clonotype IDs already present in the input data.</p></td>
+    </tr>
+    <tr>
       <th>sep</th>
-      <td><p>Separator to use for storing per cell clonotype information in
-the meta.data</p></td>
+      <td><p>Separator to use for storing per cell V(D)J data</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Seurat object with V(D)J data added to meta.data</p>
+    <p>Single cell object or data.frame with added V(D)J data</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

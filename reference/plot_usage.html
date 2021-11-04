@@ -135,7 +135,7 @@
     </div>
 
     <pre class="usage"><span class='fu'>plot_usage</span><span class='op'>(</span>
-  <span class='va'>sobj_in</span>,
+  <span class='va'>input</span>,
   <span class='va'>gene_cols</span>,
   cluster_col <span class='op'>=</span> <span class='cn'>NULL</span>,
   chain <span class='op'>=</span> <span class='cn'>NULL</span>,
@@ -154,8 +154,9 @@
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>sobj_in</th>
-      <td><p>Seurat object containing V(D)J data</p></td>
+      <th>input</th>
+      <td><p>Object containing V(D)J data. If a data.frame is provided, the
+cell barcodes should be stored as row names.</p></td>
     </tr>
     <tr>
       <th>gene_cols</th>
@@ -203,7 +204,7 @@ bar plot can only be created when a single gene_col is provided</p></td>
     </tr>
     <tr>
       <th>sep</th>
-      <td><p>Separator to use for expanding gene_cols</p></td>
+      <td><p>Separator used for storing per cell V(D)J data</p></td>
     </tr>
     <tr>
       <th>...</th>

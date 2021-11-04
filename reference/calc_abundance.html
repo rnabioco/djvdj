@@ -126,7 +126,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Calculate clonotype abundance</h1>
-    <small class="dont-index">Source: <a href='https://github.com/rnabioco/djvdj/blob/master/R/utils.R'><code>R/utils.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/rnabioco/djvdj/blob/master/R/calc-abundance.R'><code>R/calc-abundance.R</code></a></small>
     <div class="hidden name"><code>calc_abundance.Rd</code></div>
     </div>
 
@@ -135,43 +135,44 @@
     </div>
 
     <pre class="usage"><span class='fu'>calc_abundance</span><span class='op'>(</span>
-  <span class='va'>sobj_in</span>,
-  clonotype_col <span class='op'>=</span> <span class='st'>"cdr3_nt"</span>,
+  <span class='va'>input</span>,
   cluster_col <span class='op'>=</span> <span class='cn'>NULL</span>,
+  clonotype_col <span class='op'>=</span> <span class='st'>"clonotype_id"</span>,
   prefix <span class='op'>=</span> <span class='st'>""</span>,
-  return_seurat <span class='op'>=</span> <span class='cn'>TRUE</span>
+  return_df <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>sobj_in</th>
-      <td><p>Seurat object containing V(D)J data</p></td>
-    </tr>
-    <tr>
-      <th>clonotype_col</th>
-      <td><p>meta.data column containing clonotype IDs</p></td>
+      <th>input</th>
+      <td><p>Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.</p></td>
     </tr>
     <tr>
       <th>cluster_col</th>
-      <td><p>meta.data column containing cluster IDs to use for
+      <td><p>meta.data column containing cluster IDs to use for</p></td>
+    </tr>
+    <tr>
+      <th>clonotype_col</th>
+      <td><p>meta.data column containing clonotype IDs
 grouping cells when calculating clonotype abundance</p></td>
     </tr>
     <tr>
       <th>prefix</th>
-      <td><p>Prefix to add to new meta.data columns</p></td>
+      <td><p>Prefix to add to new columns</p></td>
     </tr>
     <tr>
-      <th>return_seurat</th>
-      <td><p>Return a Seurat object. If set to FALSE, a tibble
-summarizing the results is returned.</p></td>
+      <th>return_df</th>
+      <td><p>Return results as a data.frame. If set to FALSE, results
+will be added to the input object.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Seurat object with clonotype abundance added to meta.data</p>
+    <p>Single cell object or data.frame with clonotype abundance metrics</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -135,16 +135,16 @@
     </div>
 
     <pre class="usage"><span class='fu'>plot_abundance</span><span class='op'>(</span>
-  <span class='va'>sobj_in</span>,
-  clonotype_col <span class='op'>=</span> <span class='st'>"cdr3_nt"</span>,
+  <span class='va'>input</span>,
   cluster_col <span class='op'>=</span> <span class='cn'>NULL</span>,
+  clonotype_col <span class='op'>=</span> <span class='st'>"clonotype_id"</span>,
   type <span class='op'>=</span> <span class='st'>"bar"</span>,
   yaxis <span class='op'>=</span> <span class='st'>"percent"</span>,
   plot_colors <span class='op'>=</span> <span class='cn'>NULL</span>,
   plot_lvls <span class='op'>=</span> <span class='cn'>NULL</span>,
   label_col <span class='op'>=</span> <span class='va'>clonotype_col</span>,
   n_clonotypes <span class='op'>=</span> <span class='fl'>10</span>,
-  color_col <span class='op'>=</span> <span class='cn'>NULL</span>,
+  color_col <span class='op'>=</span> <span class='va'>cluster_col</span>,
   label_aes <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
   facet_rows <span class='op'>=</span> <span class='fl'>1</span>,
   facet_scales <span class='op'>=</span> <span class='st'>"free_x"</span>,
@@ -155,18 +155,19 @@
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>sobj_in</th>
-      <td><p>Seurat object containing V(D)J data</p></td>
-    </tr>
-    <tr>
-      <th>clonotype_col</th>
-      <td><p>meta.data column containing clonotype IDs to use for
-calculating clonotype abundance</p></td>
+      <th>input</th>
+      <td><p>Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.</p></td>
     </tr>
     <tr>
       <th>cluster_col</th>
       <td><p>meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance</p></td>
+    </tr>
+    <tr>
+      <th>clonotype_col</th>
+      <td><p>meta.data column containing clonotype IDs to use for
+calculating clonotype abundance</p></td>
     </tr>
     <tr>
       <th>type</th>
@@ -186,11 +187,14 @@ grouping cells when calculating clonotype abundance</p></td>
     </tr>
     <tr>
       <th>label_col</th>
-      <td><p>meta.data column containing labels to use for plot</p></td>
+      <td><p>meta.data column to use for labeling clonotypes. This is
+useful if clonotype_col contains names that are too long to include on the
+plot.</p></td>
     </tr>
     <tr>
       <th>n_clonotypes</th>
-      <td><p>Number of clonotypes to label</p></td>
+      <td><p>Number of clonotypes to plot. If type is set to 'line',
+this will specify the number of clonotypes to label.</p></td>
     </tr>
     <tr>
       <th>color_col</th>
@@ -203,17 +207,17 @@ size, etc.)</p></td>
     </tr>
     <tr>
       <th>facet_rows</th>
-      <td><p>The number of facet rows. Use this argument if type =
-'bar'</p></td>
+      <td><p>The number of facet rows. Use this argument if type is set
+to 'bar'</p></td>
     </tr>
     <tr>
       <th>facet_scales</th>
-      <td><p>If type = 'bar', this argument passes a scales
+      <td><p>If type is 'bar', this argument passes a scales
 specification to facet_wrap, can be "fixed", "free", "free_x", or "free_y"</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Additional arguments to pass to geom_line</p></td>
+      <td><p>Additional arguments to pass to ggplot</p></td>
     </tr>
     </table>
 

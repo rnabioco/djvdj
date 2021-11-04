@@ -138,8 +138,9 @@
   <span class='va'>df_in</span>,
   sep <span class='op'>=</span> <span class='st'>";"</span>,
   <span class='va'>sep_cols</span>,
-  num_cols <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"umis"</span>, <span class='st'>"reads"</span><span class='op'>)</span>,
-  lgl_cols <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"productive"</span>, <span class='st'>"full_length"</span><span class='op'>)</span>
+  expand <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  coerce_cols <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>umis <span class='op'>=</span> <span class='st'>"numeric"</span>, reads <span class='op'>=</span> <span class='st'>"numeric"</span>, cdr3_length <span class='op'>=</span> <span class='st'>"numeric"</span>,
+    cdr3_nt_length <span class='op'>=</span> <span class='st'>"numeric"</span>, productive <span class='op'>=</span> <span class='st'>"logical"</span>, full_length <span class='op'>=</span> <span class='st'>"logical"</span><span class='op'>)</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -151,19 +152,21 @@
     </tr>
     <tr>
       <th>sep</th>
-      <td><p>Separator to use for expanding meta.data columns</p></td>
+      <td><p>Separator used for storing per cell V(D)J data</p></td>
     </tr>
     <tr>
       <th>sep_cols</th>
       <td><p>Columns to split based on sep</p></td>
     </tr>
     <tr>
-      <th>num_cols</th>
-      <td><p>Columns to convert to numeric</p></td>
+      <th>expand</th>
+      <td><p>Should columns be unnested after splitting into vectors</p></td>
     </tr>
     <tr>
-      <th>lgl_cols</th>
-      <td><p>Columns to convert to logical</p></td>
+      <th>coerce_cols</th>
+      <td><p>Named vector specifying columns that should be coerced to
+a new type. The vector names should be the name of each column,
+e.g., c(umis = "numeric")</p></td>
     </tr>
     </table>
 

@@ -135,10 +135,10 @@
     </div>
 
     <pre class="usage"><span class='fu'>plot_similarity</span><span class='op'>(</span>
-  <span class='va'>sobj_in</span>,
-  clonotype_col <span class='op'>=</span> <span class='st'>"cdr3_nt"</span>,
+  <span class='va'>input</span>,
   <span class='va'>cluster_col</span>,
   method <span class='op'>=</span> <span class='fu'>abdiv</span><span class='fu'>::</span><span class='va'><a href='https://rdrr.io/pkg/abdiv/man/jaccard.html'>jaccard</a></span>,
+  clonotype_col <span class='op'>=</span> <span class='st'>"clonotype_id"</span>,
   plot_colors <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>...</span>
 <span class='op'>)</span></pre>
@@ -147,14 +147,9 @@
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>sobj_in</th>
-      <td><p>Seurat object containing V(D)J data or matrix containing
-similarity values to plot</p></td>
-    </tr>
-    <tr>
-      <th>clonotype_col</th>
-      <td><p>meta.data column containing clonotype IDs to use for
-calculating overlap</p></td>
+      <th>input</th>
+      <td><p>Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.</p></td>
     </tr>
     <tr>
       <th>cluster_col</th>
@@ -164,6 +159,11 @@ calculating overlap</p></td>
     <tr>
       <th>method</th>
       <td><p>Method to use for calculating similarity between clusters</p></td>
+    </tr>
+    <tr>
+      <th>clonotype_col</th>
+      <td><p>meta.data column containing clonotype IDs to use for
+calculating overlap</p></td>
     </tr>
     <tr>
       <th>plot_colors</th>

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Calculate repertoire similarity between clusters — calc_similarity • djvdj</title>
+<title>Calculate repertoire overlap — calc_similarity • djvdj</title>
 
 
 <!-- jquery -->
@@ -41,8 +41,8 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Calculate repertoire similarity between clusters — calc_similarity" />
-<meta property="og:description" content="Calculate repertoire similarity between clusters" />
+<meta property="og:title" content="Calculate repertoire overlap — calc_similarity" />
+<meta property="og:description" content="Calculate repertoire overlap" />
 
 
 
@@ -125,35 +125,31 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Calculate repertoire similarity between clusters</h1>
-    <small class="dont-index">Source: <a href='https://github.com/rnabioco/djvdj/blob/master/R/utils.R'><code>R/utils.R</code></a></small>
+    <h1>Calculate repertoire overlap</h1>
+    <small class="dont-index">Source: <a href='https://github.com/rnabioco/djvdj/blob/master/R/calc_similarity.R'><code>R/calc_similarity.R</code></a></small>
     <div class="hidden name"><code>calc_similarity.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Calculate repertoire similarity between clusters</p>
+    <p>Calculate repertoire overlap</p>
     </div>
 
     <pre class="usage"><span class='fu'>calc_similarity</span><span class='op'>(</span>
-  <span class='va'>sobj_in</span>,
-  clonotype_col <span class='op'>=</span> <span class='st'>"cdr3_nt"</span>,
+  <span class='va'>input</span>,
   <span class='va'>cluster_col</span>,
   method <span class='op'>=</span> <span class='fu'>abdiv</span><span class='fu'>::</span><span class='va'><a href='https://rdrr.io/pkg/abdiv/man/jaccard.html'>jaccard</a></span>,
+  clonotype_col <span class='op'>=</span> <span class='st'>"clonotype_id"</span>,
   prefix <span class='op'>=</span> <span class='cn'>NULL</span>,
-  return_seurat <span class='op'>=</span> <span class='cn'>TRUE</span>
+  return_mat <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>sobj_in</th>
-      <td><p>Seurat object</p></td>
-    </tr>
-    <tr>
-      <th>clonotype_col</th>
-      <td><p>meta.data column containing clonotype IDs to use for
-calculating overlap</p></td>
+      <th>input</th>
+      <td><p>Object containing V(D)J data. If a data.frame is provided, the
+cell barcodes should be stored as row names.</p></td>
     </tr>
     <tr>
       <th>cluster_col</th>
@@ -165,19 +161,24 @@ calculating overlap</p></td>
       <td><p>Method to use for calculating similarity between clusters</p></td>
     </tr>
     <tr>
-      <th>prefix</th>
-      <td><p>Prefix to add to new meta.data columns</p></td>
+      <th>clonotype_col</th>
+      <td><p>meta.data column containing clonotype IDs to use for
+calculating overlap</p></td>
     </tr>
     <tr>
-      <th>return_seurat</th>
-      <td><p>Return a Seurat object. If set to FALSE, a matrix is
-returned</p></td>
+      <th>prefix</th>
+      <td><p>Prefix to add to new columns</p></td>
+    </tr>
+    <tr>
+      <th>return_mat</th>
+      <td><p>Return a matrix with similarity values. If set to
+FALSE, results will be added to the input object.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Seurat object with similarity index added to meta.data</p>
+    <p>Single cell object or data.frame with similarity values</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -16,6 +16,9 @@
     <loc>https://rnabioco.github.io/djvdj/reference/calc_usage.html</loc>
   </url>
   <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/define_clonotypes.html</loc>
+  </url>
+  <url>
     <loc>https://rnabioco.github.io/djvdj/reference/djvdj-package.html</loc>
   </url>
   <url>
@@ -25,7 +28,16 @@
     <loc>https://rnabioco.github.io/djvdj/reference/dot-add_aes.html</loc>
   </url>
   <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/dot-add_meta.html</loc>
+  </url>
+  <url>
     <loc>https://rnabioco.github.io/djvdj/reference/dot-calc_abund.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/dot-check_overlap.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/dot-classify_vdj.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/dot-convert_char.html</loc>
@@ -37,7 +49,25 @@
     <loc>https://rnabioco.github.io/djvdj/reference/dot-create_heatmap.html</loc>
   </url>
   <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/dot-extract_isotypes.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/dot-format_cell_prefixes.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/dot-get_meta.html</loc>
+  </url>
+  <url>
     <loc>https://rnabioco.github.io/djvdj/reference/dot-get_vdj_cols.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/dot-identify_paired.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/dot-load_vdj_data.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/dot-merge_meta.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/dot-set_lims.html</loc>
@@ -47,6 +77,12 @@
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/dot-split_vdj.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/dot-subset_cells.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/dot-to_tibble.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/filter_vdj.html</loc>
@@ -61,13 +97,7 @@
     <loc>https://rnabioco.github.io/djvdj/reference/mutate_vdj.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/pipe.html</loc>
-  </url>
-  <url>
     <loc>https://rnabioco.github.io/djvdj/reference/plot_abundance.html</loc>
-  </url>
-  <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/plot_cell_count.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/plot_diversity.html</loc>
@@ -94,10 +124,16 @@
     <loc>https://rnabioco.github.io/djvdj/reference/tidyeval.html</loc>
   </url>
   <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/tiny_sce.html</loc>
+  </url>
+  <url>
     <loc>https://rnabioco.github.io/djvdj/reference/tiny_so.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/tiny_vdj.html</loc>
+    <loc>https://rnabioco.github.io/djvdj/reference/vdj_sce.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/vdj_so.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/articles/avid.html</loc>
