@@ -68,7 +68,7 @@ abundances (`calc_abundance()`) and relative gene usage
 ``` r
 so_tcr <- calc_diversity(
   input       = so_tcr,                       # Seurat object
-  cluster_col = "orig.ident",                 # meta.data column containing cell clusters to compare
+  cluster_col = "orig.ident",                 # Column containing cell clusters to compare
   method      = abdiv::simpson                # Diversity metric to use
 )
 ```
@@ -82,8 +82,8 @@ function to summarize the results.
 # Compare the usage of different V and J genes
 ggs <- plot_usage(
   input       = so_tcr,                       # Seurat object
-  gene_cols   = c("v_gene", "j_gene"),        # meta.data column(s) containing V(D)J genes to plot
-  cluster_col = "orig.ident",                 # meta.data column containing cell clusters to compare
+  gene_cols   = c("v_gene", "j_gene"),        # Column(s) containing V(D)J genes to plot
+  cluster_col = "orig.ident",                 # Column containing cell clusters to compare
   chain       = "TRB"                         # Chain to plot
 ) %>%
   purrr::imap(~ .x + ggtitle(.y))
