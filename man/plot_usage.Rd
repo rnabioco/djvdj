@@ -12,7 +12,7 @@ plot_usage(
   type = "bar",
   plot_colors = NULL,
   plot_genes = NULL,
-  n_genes = NULL,
+  n_genes = 50,
   plot_lvls = NULL,
   yaxis = "percent",
   chain_col = "chains",
@@ -40,7 +40,8 @@ bar plot can only be created when a single gene_col is provided}
 
 \item{plot_genes}{Character vector containing genes to plot}
 
-\item{n_genes}{Number of top genes to plot based on average usage}
+\item{n_genes}{Number of top genes to plot based on usage. If cluster_col is
+provided, top genes will be identified for each cluster.}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
 
