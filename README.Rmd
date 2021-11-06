@@ -90,8 +90,7 @@ ggs <- plot_usage(
   gene_cols   = c("v_gene", "j_gene"),        # Column(s) containing V(D)J genes to plot
   cluster_col = "orig.ident",                 # Column containing cell clusters to compare
   chain       = "TRB"                         # Chain to plot
-) %>%
-  purrr::imap(~ .x + ggtitle(.y))
+)
 
 cowplot::plot_grid(plotlist = ggs)
 ```
