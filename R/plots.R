@@ -752,11 +752,25 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
     ~ .x != "None"
   ))
 
-  # If plot_genes not provided, identify top n_genes for each cluster based on
-  # usage
+  # If plot_genes provided check plt_dat
   top_genes <- plot_genes
 
-  if (is.null(top_genes)) {
+  if (!is.null(top_genes)) {
+    absent <- unlist(plt_dat[, gene_cols], use.names = FALSE)
+    absent <- top_genes[!top_genes %in% absent]
+
+    if (identical(absent, top_genes)) {
+      stop("None of the provided genes were found")
+
+    } else if (!is_empty(absent)) {
+      absent <- paste0(absent, collapse = ", ")
+
+      warning("Some genes not found: ", absent)
+    }
+
+  # If plot_genes not provided, identify top n_genes for each cluster based on
+  # usage
+  } else {
     top_genes <- plt_dat
 
     if (!is.null(cluster_col)) {
