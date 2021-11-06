@@ -24,7 +24,7 @@ plot_usage(
 \item{input}{Object containing V(D)J data. If a data.frame is provided, the
 cell barcodes should be stored as row names.}
 
-\item{gene_cols}{meta.data column containing genes used for each clonotype,
+\item{gene_cols}{meta.data column containing genes for each clonotype,
 provide a vector with two column names to plot paired usage of genes}
 
 \item{cluster_col}{meta.data column containing cell clusters to use for
