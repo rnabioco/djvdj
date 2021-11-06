@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macOS-11,       r: 'release'}
+          - {os: macOS-latest,   r: 'release'}
           - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,  r: 'release'}
@@ -46,6 +46,7 @@ jobs:
             SummarizedExperiment
             SingleCellExperiment
             S4Vectors
+            DBI
 
 
       - name: Check
