@@ -694,7 +694,7 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
-#' @param gene_cols meta.data column containing genes used for each clonotype,
+#' @param gene_cols meta.data column containing genes for each clonotype,
 #' provide a vector with two column names to plot paired usage of genes
 #' @param cluster_col meta.data column containing cell clusters to use for
 #' calculating gene usage
@@ -753,7 +753,7 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
   ))
 
   # If plot_genes provided check plt_dat
-  top_genes <- plot_genes
+  top_genes <- unique(plot_genes)
 
   if (!is.null(top_genes)) {
     absent <- unlist(plt_dat[, gene_cols], use.names = FALSE)
@@ -777,6 +777,7 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
       top_genes <- dplyr::group_by(top_genes, !!sym(cluster_col))
     }
 
+    # If two gene_cols are provided this will select the top gene pairs
     top_genes <- dplyr::slice_max(
       top_genes,
       order_by  = !!sym(usage_col),
@@ -786,9 +787,12 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
 
     # Do not use dplyr::pull since user can pass multiple gene_cols
     top_genes <- unlist(top_genes[, gene_cols], use.names = FALSE)
+    top_genes <- unique(top_genes)
   }
 
   # Filter for top genes
+  # if two gene_cols are provided, all gene pairs containing at least one gene
+  # from the top gene pairs will be included
   plt_dat <- dplyr::filter(plt_dat, dplyr::across(
     dplyr::all_of(gene_cols),
     ~ .x %in% top_genes
@@ -901,6 +905,10 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
     ttl   = yaxis,
     ...
   )
+
+  if (!is.null(names(res))) {
+    res <- imap(res, ~ .x + ggplot2::ggtitle(.y))
+  }
 
   if (length(res) == 1) {
     return(res[[1]])
