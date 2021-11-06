@@ -40,7 +40,7 @@ jobs:
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
           
-          if (!require(DBI, quietly = TRUE)) install.packages(DBI)
+          if (!require(DBI, quietly = TRUE)) install.packages("DBI")
           
         shell: Rscript {0}
 
