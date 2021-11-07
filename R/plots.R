@@ -1184,6 +1184,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
+#' @importFrom stats median
 plot_cdr3_length <- function(input, length_col = "cdr3_length", cluster_col = NULL, chain = NULL, type = "histogram",
                              yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, chain_col = "chains",
                              sep = ";", ...) {
@@ -1244,8 +1245,8 @@ plot_cdr3_length <- function(input, length_col = "cdr3_length", cluster_col = NU
     }
 
     res <- ggplot2::ggplot(plt_dat, plt_aes) +
-      geom_violin(...) +
-      stat_summary(geom = "point", fun = median, color = "black")
+      ggplot2::geom_violin(...) +
+      ggplot2::stat_summary(geom = "point", fun = stats::median, color = "black")
 
     return(res)
   }
@@ -1265,7 +1266,7 @@ plot_cdr3_length <- function(input, length_col = "cdr3_length", cluster_col = NU
 
       plt_aes <- ggplot2::aes(
         !!sym(length_col),
-        ..count.. / sum(..count..) * 100,
+        .data$..count.. / sum(.data$..count..) * 100,
         color = !!sym(cluster_col),
         fill  = !!sym(cluster_col)
       )
@@ -1279,7 +1280,7 @@ plot_cdr3_length <- function(input, length_col = "cdr3_length", cluster_col = NU
 
       plt_aes <- ggplot2::aes(
         !!sym(length_col),
-        ..count.. / sum(..count..) * 100
+        .data$..count.. / sum(.data$..count..) * 100
       )
     }
   }
@@ -1295,14 +1296,14 @@ plot_cdr3_length <- function(input, length_col = "cdr3_length", cluster_col = NU
 
   if (type == "density") {
     res <- res +
-      geom_density(..., alpha = 0.5)
+      ggplot2::geom_density(..., alpha = 0.5)
 
     return(res)
   }
 
   res <- res +
-    geom_histogram(...) +
-    labs(y = paste(y_lab, "CDR3 sequences"))
+    ggplot2::geom_histogram(...) +
+    ggplot2::labs(y = paste(y_lab, "CDR3 sequences"))
 
   res
 }
