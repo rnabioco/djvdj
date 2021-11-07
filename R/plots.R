@@ -320,7 +320,7 @@ plot_reads <- function(input, data_cols = c("reads", "umis"), chain_col = "chain
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating clonotype abundance
 #' @param type Type of plot to create, can be 'bar' or 'line'
-#' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
+#' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param label_col meta.data column to use for labeling clonotypes. This is
@@ -334,7 +334,7 @@ plot_reads <- function(input, data_cols = c("reads", "umis"), chain_col = "chain
 #' @param facet_rows The number of facet rows. Use this argument if type is set
 #' to 'bar'
 #' @param facet_scales If type is 'bar', this argument passes a scales
-#' specification to facet_wrap, can be "fixed", "free", "free_x", or "free_y"
+#' specification to facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
 #' @export
@@ -707,7 +707,7 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
 #' @param n_genes Number of top genes to plot based on usage. If cluster_col is
 #' provided, top genes will be identified for each cluster.
 #' @param plot_lvls Levels to use for ordering clusters
-#' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
+#' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional arguments to pass to ggplot
@@ -1161,5 +1161,149 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
   }
 
   df_in
+}
+
+
+#' Plot CDR3 lengths
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param length_col meta.data column containing CDR3 lengths to plot
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' grouping cells when plotting CDR3 lengths
+#' @param chain Chain to use for plotting CDR3 lengths, set to NULL to include
+#' all chains
+#' @param type Type of plot to create, can be 'histogram' or 'violin'
+#' @param yaxis Units to use for y-axis when plotting histogram. Use
+#' 'frequency' to show the raw number of CDR3 sequences or 'percent' to show
+#' the percentage of total CDR3 sequences.
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_lvls Character vector containing levels for ordering
+#' @param chain_col meta.data column containing chains for each cell
+#' @param sep Separator used for storing per cell V(D)J data
+#' @param ... Additional arguments to pass to ggplot
+#' @return ggplot object
+#' @export
+plot_cdr3_length <- function(input, length_col = "cdr3_length", cluster_col = NULL, chain = NULL, type = "histogram",
+                             yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, chain_col = "chains",
+                             sep = ";", ...) {
+
+  # Check inputs
+  if (!type %in% c("histogram", "density", "violin")) {
+    stop("type must be either 'histogram', 'density', or 'violin'")
+  }
+
+  if (length(length_col) != 1) {
+    stop("Must specify only one value for length_col")
+  }
+
+  if (!yaxis %in% c("percent", "frequency")) {
+    stop("yaxis must be either 'percent' or 'frequency'")
+  }
+
+  # Format input data
+  sep_cols <- c(length_col, chain_col)
+  vdj_cols <- c(".cell_id", cluster_col, sep_cols)
+
+  meta <- .get_meta(input)
+  meta <- dplyr::select(meta, all_of(vdj_cols))
+
+  meta <- dplyr::filter(meta, !is.na(!!sym(length_col)))
+
+  # Expand meta.data based on sep
+  coerce_cols <- purrr::set_names(c("numeric", "character"), sep_cols)
+
+  plt_dat <- .split_vdj(
+    meta,
+    sep         = sep,
+    sep_cols    = sep_cols,
+    coerce_cols = coerce_cols,
+    expand      = TRUE
+  )
+
+  # Filter for chain
+  if (!is.null(chain)) {
+    plt_dat <- dplyr::filter(plt_dat, !!sym(chain_col) %in% chain)
+  }
+
+  # Order clusters based on plot_lvls
+  plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+
+  # Create violin plot
+  if (type == "violin") {
+    if (!is.null(cluster_col)) {
+      plt_aes <- ggplot2::aes(
+        !!sym(cluster_col),
+        !!sym(length_col),
+        color = !!sym(cluster_col),
+        fill  = !!sym(cluster_col)
+      )
+
+    } else {
+      plt_aes <- ggplot2::aes(length_col, !!sym(length_col))
+    }
+
+    res <- ggplot2::ggplot(plt_dat, plt_aes) +
+      geom_violin(...) +
+      stat_summary(geom = "point", fun = median, color = "black")
+
+    return(res)
+  }
+
+  # Create histogram
+  y_lab <- "number of"
+
+  if (!is.null(cluster_col)) {
+    plt_aes <- ggplot2::aes(
+      !!sym(length_col),
+      color = !!sym(cluster_col),
+      fill  = !!sym(cluster_col)
+    )
+
+    if (yaxis == "percent" && type != "density") {
+      y_lab <- "percentage of"
+
+      plt_aes <- ggplot2::aes(
+        !!sym(length_col),
+        ..count.. / sum(..count..) * 100,
+        color = !!sym(cluster_col),
+        fill  = !!sym(cluster_col)
+      )
+    }
+
+  } else {
+    plt_aes <- ggplot2::aes(!!sym(length_col))
+
+    if (yaxis == "percent" && type != "density") {
+      y_lab <- "percentage of"
+
+      plt_aes <- ggplot2::aes(
+        !!sym(length_col),
+        ..count.. / sum(..count..) * 100
+      )
+    }
+  }
+
+  res <- ggplot2::ggplot(plt_dat, plt_aes)
+
+  # Set plot colors
+  if (!is.null(plot_colors)) {
+    res <- res +
+      ggplot2::scale_color_manual(values = plot_colors) +
+      ggplot2::scale_fill_manual(values = plot_colors)
+  }
+
+  if (type == "density") {
+    res <- res +
+      geom_density(..., alpha = 0.5)
+
+    return(res)
+  }
+
+  res <- res +
+    geom_histogram(...) +
+    labs(y = paste(y_lab, "CDR3 sequences"))
+
+  res
 }
 

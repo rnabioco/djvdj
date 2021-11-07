@@ -73,9 +73,10 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 
   res <- .split_vdj(
     meta,
+    sep         = sep,
     sep_cols    = c(data_cols, chain_col),
-    expand      = TRUE,
-    coerce_cols = coerce_cols
+    coerce_cols = coerce_cols,
+    expand      = TRUE
   )
 
   # Summarize chains
