@@ -46,6 +46,7 @@ jobs:
             SummarizedExperiment
             SingleCellExperiment
             S4Vectors
+            DBI
 
 
       - name: Check

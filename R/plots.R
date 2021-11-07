@@ -694,7 +694,7 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
-#' @param gene_cols meta.data column containing genes used for each clonotype,
+#' @param gene_cols meta.data column containing genes for each clonotype,
 #' provide a vector with two column names to plot paired usage of genes
 #' @param cluster_col meta.data column containing cell clusters to use for
 #' calculating gene usage
@@ -704,7 +704,8 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
 #' bar plot can only be created when a single gene_col is provided
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_genes Character vector containing genes to plot
-#' @param n_genes Number of top genes to plot based on average usage
+#' @param n_genes Number of top genes to plot based on usage. If cluster_col is
+#' provided, top genes will be identified for each cluster.
 #' @param plot_lvls Levels to use for ordering clusters
 #' @param yaxis Units to plot on the y-axis, either "frequency" or "percent"
 #' @param chain_col meta.data column containing chains for each cell
@@ -713,7 +714,7 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
 #' @return ggplot object
 #' @export
 plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type = "bar",
-                       plot_colors = NULL, plot_genes = NULL, n_genes = NULL, plot_lvls = NULL,
+                       plot_colors = NULL, plot_genes = NULL, n_genes = 50, plot_lvls = NULL,
                        yaxis = "percent", chain_col = "chains", sep = ";", ...) {
 
   # Check inputs
@@ -751,55 +752,70 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
     ~ .x != "None"
   ))
 
-  # Order genes by average usage
-  top_genes <- plt_dat
+  # If plot_genes provided check plt_dat
+  top_genes <- unique(plot_genes)
 
-  if (!is.null(cluster_col)) {
-    top_genes <- dplyr::group_by(top_genes, !!sym(cluster_col))
-  }
+  if (!is.null(top_genes)) {
+    absent <- unlist(plt_dat[, gene_cols], use.names = FALSE)
+    absent <- top_genes[!top_genes %in% absent]
 
-  if (!is.null(n_genes)) {
+    if (identical(absent, top_genes)) {
+      stop("None of the provided genes were found")
+
+    } else if (!is_empty(absent)) {
+      absent <- paste0(absent, collapse = ", ")
+
+      warning("Some genes not found: ", absent)
+    }
+
+  # If plot_genes not provided, identify top n_genes for each cluster based on
+  # usage
+  } else {
+    top_genes <- plt_dat
+
+    if (!is.null(cluster_col)) {
+      top_genes <- dplyr::group_by(top_genes, !!sym(cluster_col))
+    }
+
+    # If two gene_cols are provided this will select the top gene pairs
     top_genes <- dplyr::slice_max(
       top_genes,
       order_by  = !!sym(usage_col),
       n         = n_genes,
       with_ties = FALSE
     )
+
+    # Do not use dplyr::pull since user can pass multiple gene_cols
+    top_genes <- unlist(top_genes[, gene_cols], use.names = FALSE)
+    top_genes <- unique(top_genes)
   }
 
-  top_genes <- dplyr::group_by(top_genes, !!!syms(gene_cols))
+  # Filter for top genes
+  # if two gene_cols are provided, all gene pairs containing at least one gene
+  # from the top gene pairs will be included
+  plt_dat <- dplyr::filter(plt_dat, dplyr::across(
+    dplyr::all_of(gene_cols),
+    ~ .x %in% top_genes
+  ))
 
-  top_genes <- dplyr::summarize(
-    top_genes,
-    usage = mean(!!sym(usage_col)), .groups = "drop"
-  )
-
-  top_genes <- dplyr::arrange(top_genes, .data$usage)
-
-  if (!is.null(n_genes)) {
-    gene_lst <- unlist(top_genes[, gene_cols], use.names = FALSE)
-
-    plt_dat <- dplyr::filter(plt_dat, dplyr::across(
-      dplyr::all_of(gene_cols),
-      ~ .x %in% gene_lst
-    ))
-  }
-
+  # Order top genes based on max usage for clusters
   if (length(gene_cols) == 1) {
-    lvls  <- pull(top_genes, gene_cols)
+    lvls <- dplyr::group_by(plt_dat, !!!syms(gene_cols))
+
+    lvls <- dplyr::summarize(
+      lvls,
+      max_usage = max(!!sym(usage_col)),
+      .groups = "drop"
+    )
+
+    lvls <- dplyr::arrange(lvls, .data$max_usage)
+    lvls <- pull(lvls, gene_cols)
+
     plt_dat <- .set_lvls(plt_dat, gene_cols, lvls)
   }
 
-  # Order clusters
+  # Order clusters based on plot_lvls
   plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
-
-  # Filter genes to plot
-  if (!is.null(plot_genes)) {
-    plt_dat <- dplyr::filter(
-      plt_dat,
-      dplyr::across(dplyr::all_of(gene_cols), ~ .x %in% plot_genes)
-    )
-  }
 
   # Create heatmap or bar graph for single gene
   if (length(gene_cols) == 1) {
@@ -889,6 +905,10 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
     ttl   = yaxis,
     ...
   )
+
+  if (!is.null(names(res))) {
+    res <- imap(res, ~ .x + ggplot2::ggtitle(.y))
+  }
 
   if (length(res) == 1) {
     return(res[[1]])
@@ -1064,6 +1084,9 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 .create_bars <- function(df_in, x, y, .fill, clrs = NULL, y_ttl = y, ang = 45,
                          hjst = 1, ...) {
 
+  # Bar position to use for plot
+  bar_pos <- ggplot2::position_dodge(preserve = "single")
+
   # Reverse bar order
   lvls  <- rev(levels(pull(df_in, x)))
   df_in <- .set_lvls(df_in, x, lvls)
@@ -1074,7 +1097,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
       df_in,
       ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(.fill))
     ) +
-    ggplot2::geom_col(..., position = "dodge")
+    ggplot2::geom_col(..., position = bar_pos)
 
     if (!is.null(clrs)) {
       res <- res +
@@ -1090,11 +1113,11 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 
     if (!is.null(clrs)) {
       res <- res +
-        ggplot2::geom_col(..., fill = clrs, position = "dodge")
+        ggplot2::geom_col(..., fill = clrs, position = bar_pos)
 
     } else {
       res <- res +
-        ggplot2::geom_col(..., position = "dodge")
+        ggplot2::geom_col(..., position = bar_pos)
     }
   }
 

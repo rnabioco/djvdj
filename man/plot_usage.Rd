@@ -12,7 +12,7 @@ plot_usage(
   type = "bar",
   plot_colors = NULL,
   plot_genes = NULL,
-  n_genes = NULL,
+  n_genes = 50,
   plot_lvls = NULL,
   yaxis = "percent",
   chain_col = "chains",
@@ -24,7 +24,7 @@ plot_usage(
 \item{input}{Object containing V(D)J data. If a data.frame is provided, the
 cell barcodes should be stored as row names.}
 
-\item{gene_cols}{meta.data column containing genes used for each clonotype,
+\item{gene_cols}{meta.data column containing genes for each clonotype,
 provide a vector with two column names to plot paired usage of genes}
 
 \item{cluster_col}{meta.data column containing cell clusters to use for
@@ -40,7 +40,8 @@ bar plot can only be created when a single gene_col is provided}
 
 \item{plot_genes}{Character vector containing genes to plot}
 
-\item{n_genes}{Number of top genes to plot based on average usage}
+\item{n_genes}{Number of top genes to plot based on usage. If cluster_col is
+provided, top genes will be identified for each cluster.}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
 

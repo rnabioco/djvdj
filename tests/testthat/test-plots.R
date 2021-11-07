@@ -302,21 +302,11 @@ test_that("plot_similarity bad cluster col", {
 })
 
 # Check all plot_usage arguments return ggplot
-test_genes <- c(
-  "IGHV1",    "IGHJ3", "IGHM",
-  "IGKV4-53", "IGKJ2", "IGKC",
-  "IGLV1",    "IGLJ1", "IGLC1"
-)
-
 arg_lst <- list(
   input       = list(vdj_so),
   gene_cols   = list("v_gene", "j_gene", c("v_gene", "j_gene")),
-  cluster_col = list(NULL),
   chain       = list(NULL, "IGH", "IGL", "IGK"),
-  chain_col   = "chains",
   type        = c("heatmap", "bar"),
-  n_genes     = list(NULL, 10),
-  plot_genes  = list(NULL, test_genes),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls),
   yaxis       = c("percent", "frequency")
@@ -338,6 +328,42 @@ test_all_args(
   desc    = "plot_usage args",
   chk     = expr(expect_type(.res, "list"))
 )
+
+# Check plot_usage plot_genes
+test_genes <- c(
+  "IGHV1-26", "IGHV1-72", "IGHV1-64",
+  "IGHV3-6",  "IGHV1-82", "IGHV1-53"
+)
+
+arg_lst <- list(
+  input       = list(vdj_so),
+  gene_cols   = list("v_gene", c("v_gene", "j_gene")),
+  plot_genes  = list(test_genes),
+  type        = c("heatmap", "bar"),
+  plot_colors = list(NULL, test_cols),
+  plot_lvls   = list(NULL, test_lvls),
+  yaxis       = c("percent", "frequency")
+)
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_usage,
+  desc    = "plot_usage args",
+  chk     = expr(expect_s3_class(.res, "ggplot"))
+)
+
+# Check plot_usage bad plot_genes
+test_that("plot_usage bad plot_genes", {
+  expect_error(
+    plot_usage(vdj_so, gene_cols = "v_gene", plot_genes = "BAD"),
+    "None of the provided genes were found"
+  )
+
+  expect_warning(
+    plot_usage(vdj_so, gene_cols = "v_gene", plot_genes = c(test_genes, "BAD")),
+    "Some genes not found: "
+  )
+})
 
 # Check plot_usage bad type
 test_that("plot_usage bad type", {
