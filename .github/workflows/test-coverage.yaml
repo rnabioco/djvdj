@@ -10,7 +10,7 @@ name: test-coverage
 
 jobs:
   test-coverage:
-    runs-on: macos-latest
+    runs-on: macOS-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -39,7 +39,6 @@ jobs:
           install.packages(c("remotes"))
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
-          
         shell: Rscript {0}
 
       - name: Test coverage
