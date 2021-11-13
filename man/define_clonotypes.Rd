@@ -4,7 +4,13 @@
 \alias{define_clonotypes}
 \title{Define clonotypes based on V(D)J data}
 \usage{
-define_clonotypes(input, vdj_cols, clonotype_col = "clonotype_id")
+define_clonotypes(
+  input,
+  vdj_cols,
+  clonotype_col = "clonotype_id",
+  filter_contigs = c("productive", "full_length"),
+  sep = ";"
+)
 }
 \arguments{
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
@@ -14,9 +20,15 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 clonotypes}
 
 \item{clonotype_col}{Name of column to use for storing clonotype IDs}
+
+\item{filter_contigs}{To only use productive and full length chains when
+defining clonotypes, specify column names. If set to NULL chains are not
+filtered.}
+
+\item{sep}{Separator used for storing per cell V(D)J data}
 }
 \value{
-Single cell object or data.frame with new clonotype IDs
+Single cell object or data.frame with added clonotype IDs
 }
 \description{
 Define clonotypes based on V(D)J data

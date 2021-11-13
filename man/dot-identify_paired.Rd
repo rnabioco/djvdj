@@ -4,13 +4,11 @@
 \alias{.identify_paired}
 \title{Identify clonotypes with paired chains}
 \usage{
-.identify_paired(df_in, vdj_class)
+.identify_paired(df_in)
 }
 \arguments{
 \item{df_in}{data.frame containing V(D)J data formatted so each row
 represents a single contig}
-
-\item{vdj_class}{One of 'TCR' or 'BCR' to indicate type of data}
 }
 \value{
 Input data.frame with paired column added

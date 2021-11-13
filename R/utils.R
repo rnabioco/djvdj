@@ -270,7 +270,8 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #'
 #' @param df_in data.frame
 #' @param clone_col Column containing clonotype IDs to use for identifying
-#' columns with V(D)J data. If NULL all columns are used.
+#' columns with V(D)J data. If both clone_col and cols_in are set to NULL all
+#' columns are used.
 #' @param cols_in meta.data columns containing V(D)J data to use for filtering.
 #' If set to NULL (the default) columns are automatically selected by
 #' identifying columns that have NAs in the same rows as clone_col.
@@ -279,13 +280,14 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' the other containing columns where separator has been detected.
 .get_vdj_cols <- function(df_in, clone_col, cols_in, sep) {
 
-  # Identify columns with VDJ data based on NAs in clonotype_col
-  # If no clonotype_col is given use all columns
-  if (is.null(clone_col)) {
+  # If clone_col and cols_in are both NULL, use all columns
+  if (is.null(clone_col) && is.null(cols_in)) {
     cols_in <- colnames(df_in)
     cols_in <- cols_in[cols_in != ".cell_id"]
   }
 
+  # If cols_in is NULL, identify columns with VDJ data based on NAs in
+  # clone_col
   if (is.null(cols_in)) {
     cols_in <- dplyr::mutate(
       df_in,

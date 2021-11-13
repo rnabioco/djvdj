@@ -33,8 +33,9 @@ loading data from multiple runs into a single object. If set to NULL, cell
 barcode prefixes will be automatically generated in a similar way as the
 Read10X function found in the Seurat package.}
 
-\item{filter_contigs}{Only include chains with at least one productive
-contig}
+\item{filter_contigs}{Only include chains with at least one productive and
+full length contig. It is highly recommended that filter_contigs is set to
+TRUE when using the define_clonotypes argument.}
 
 \item{filter_paired}{Only include clonotypes with paired chains. For TCR
 data each clonotype must have at least one TRA and TRB chain, for BCR data
