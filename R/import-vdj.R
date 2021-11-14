@@ -507,8 +507,8 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
   meta <- meta %>%
     mutate(
       .new_clone            = paste(!!!syms(vdj_cols), sep = ""),
-      .new_id               = rank(.new_clone, ties.method = "min"),
-      !!sym(clonotype_col) := ifelse(.new_clone == "", "None", paste0("clonotype", .data$.new_id))
+      .new_id               = rank(.data$.new_clone, ties.method = "min"),
+      !!sym(clonotype_col) := ifelse(.data$.new_clone == "", "None", paste0("clonotype", .data$.new_id))
     )
 
   # Remove temporary columns
