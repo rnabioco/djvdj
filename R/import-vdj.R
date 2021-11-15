@@ -76,14 +76,14 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   }
 
   # Remove contigs that do not have an assigned clonotype_id
-  n_remove <- contigs$raw_clonotype_id
+  n_remove <- contigs$clonotype_id
   n_remove <- n_remove[is.na(n_remove)]
   n_remove <- length(n_remove)
 
   if (n_remove > 0) {
     warning(n_remove, " contigs do not have an assigned clonotype_id, these contigs will be removed.")
 
-    contigs <- dplyr::filter(contigs, !is.na(.data$raw_clonotype_id))
+    contigs <- dplyr::filter(contigs, !is.na(.data$clonotype_id))
   }
 
   # Select V(D)J columns to keep
@@ -117,7 +117,11 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   # Calculate CDR3 length
   contigs <- dplyr::mutate(
     contigs,
-    across(all_of(cdr3_cols), nchar, .names = "{.col}_length")
+    across(
+      all_of(cdr3_cols),
+      ~ ifelse(.x == "None", NA, nchar(.x)),
+      .names = "{.col}_length"
+    )
   )
 
   sep_cols <- c(sep_cols, paste0(cdr3_cols, "_length"))
@@ -156,8 +160,12 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     .groups = "drop"
   )
 
+  # Reorder columns
   meta <- dplyr::relocate(meta, .data$paired, .after = .data$full_length)
-  meta <- dplyr::relocate(meta, .data$isotype, .after = .data$chains)
+
+  if (vdj_class %in% c("BCR", "Multi")) {
+    meta <- dplyr::relocate(meta, .data$isotype, .after = .data$chains)
+  }
 
   # Check for duplicated cell barcodes
   if (any(duplicated(meta$barcode))) {
@@ -190,7 +198,11 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   # Filter to only include cells with valid clonotype_id
   # cells with missing clonotype have a clonotype_id of 'None'
-  res <- dplyr::filter(res, grepl("^clonotype", .data$clonotype_id))
+  res <- dplyr::filter(res, .data$clonotype_id != "None")
+
+  if (nrow(res) == 0) {
+    warning("No valid clonotypes present, check input data.")
+  }
 
   # Add prefix to V(D)J columns
   res <- dplyr::rename_with(res, ~ paste0(prefix, .x))
@@ -298,8 +310,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     .x <- dplyr::rowwise(.x)
     .x <- dplyr::mutate(
       .x,
-      barcode      = paste0(.y, .data$barcode),
-      clonotype_id = paste0(.y, raw_clonotype_id),
+      barcode = paste0(.y, .data$barcode),
       dplyr::across(c(full_length, productive), ~ {
         ifelse(
           is.character(.x),
@@ -311,7 +322,11 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
     .x <- dplyr::ungroup(.x)
 
-    dplyr::rename(.x, chains = .data$chain)
+    dplyr::rename(
+      .x,
+      chains       = .data$chain,
+      clonotype_id = .data$raw_clonotype_id
+    )
   })
 
   res
