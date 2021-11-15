@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Calculate repertoire overlap — calc_similarity • djvdj</title>
+<title>Plot CDR3 lengths — plot_cdr3_length • djvdj</title>
 
 
 <!-- jquery -->
@@ -41,8 +41,8 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Calculate repertoire overlap — calc_similarity" />
-<meta property="og:description" content="Calculate repertoire overlap" />
+<meta property="og:title" content="Plot CDR3 lengths — plot_cdr3_length" />
+<meta property="og:description" content="Plot CDR3 lengths" />
 
 
 
@@ -125,22 +125,27 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Calculate repertoire overlap</h1>
-    <small class="dont-index">Source: <a href='https://github.com/rnabioco/djvdj/blob/master/R/calc-similarity.R'><code>R/calc-similarity.R</code></a></small>
-    <div class="hidden name"><code>calc_similarity.Rd</code></div>
+    <h1>Plot CDR3 lengths</h1>
+    <small class="dont-index">Source: <a href='https://github.com/rnabioco/djvdj/blob/master/R/plots.R'><code>R/plots.R</code></a></small>
+    <div class="hidden name"><code>plot_cdr3_length.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Calculate repertoire overlap</p>
+    <p>Plot CDR3 lengths</p>
     </div>
 
-    <pre class="usage"><span class='fu'>calc_similarity</span><span class='op'>(</span>
+    <pre class="usage"><span class='fu'>plot_cdr3_length</span><span class='op'>(</span>
   <span class='va'>input</span>,
-  <span class='va'>cluster_col</span>,
-  method <span class='op'>=</span> <span class='fu'>abdiv</span><span class='fu'>::</span><span class='va'><a href='https://rdrr.io/pkg/abdiv/man/jaccard.html'>jaccard</a></span>,
-  clonotype_col <span class='op'>=</span> <span class='st'>"clonotype_id"</span>,
-  prefix <span class='op'>=</span> <span class='cn'>NULL</span>,
-  return_mat <span class='op'>=</span> <span class='cn'>FALSE</span>
+  length_col <span class='op'>=</span> <span class='st'>"cdr3_length"</span>,
+  cluster_col <span class='op'>=</span> <span class='cn'>NULL</span>,
+  chain <span class='op'>=</span> <span class='cn'>NULL</span>,
+  type <span class='op'>=</span> <span class='st'>"histogram"</span>,
+  yaxis <span class='op'>=</span> <span class='st'>"frequency"</span>,
+  plot_colors <span class='op'>=</span> <span class='cn'>NULL</span>,
+  plot_lvls <span class='op'>=</span> <span class='cn'>NULL</span>,
+  chain_col <span class='op'>=</span> <span class='st'>"chains"</span>,
+  sep <span class='op'>=</span> <span class='st'>";"</span>,
+  <span class='va'>...</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -148,37 +153,58 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>input</th>
-      <td><p>Object containing V(D)J data. If a data.frame is provided, the
-cell barcodes should be stored as row names.</p></td>
+      <td><p>Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.</p></td>
+    </tr>
+    <tr>
+      <th>length_col</th>
+      <td><p>meta.data column containing CDR3 lengths to plot</p></td>
     </tr>
     <tr>
       <th>cluster_col</th>
       <td><p>meta.data column containing cluster IDs to use for
-calculating overlap</p></td>
+grouping cells when plotting CDR3 lengths</p></td>
     </tr>
     <tr>
-      <th>method</th>
-      <td><p>Method to use for calculating similarity between clusters</p></td>
+      <th>chain</th>
+      <td><p>Chain to use for plotting CDR3 lengths, set to NULL to include
+all chains</p></td>
     </tr>
     <tr>
-      <th>clonotype_col</th>
-      <td><p>meta.data column containing clonotype IDs to use for
-calculating overlap</p></td>
+      <th>type</th>
+      <td><p>Type of plot to create, can be 'histogram' or 'violin'</p></td>
     </tr>
     <tr>
-      <th>prefix</th>
-      <td><p>Prefix to add to new columns</p></td>
+      <th>yaxis</th>
+      <td><p>Units to use for y-axis when plotting histogram. Use
+'frequency' to show the raw number of CDR3 sequences or 'percent' to show
+the percentage of total CDR3 sequences.</p></td>
     </tr>
     <tr>
-      <th>return_mat</th>
-      <td><p>Return a matrix with similarity values. If set to
-FALSE, results will be added to the input object.</p></td>
+      <th>plot_colors</th>
+      <td><p>Character vector containing colors for plotting</p></td>
+    </tr>
+    <tr>
+      <th>plot_lvls</th>
+      <td><p>Character vector containing levels for ordering</p></td>
+    </tr>
+    <tr>
+      <th>chain_col</th>
+      <td><p>meta.data column containing chains for each cell</p></td>
+    </tr>
+    <tr>
+      <th>sep</th>
+      <td><p>Separator used for storing per cell V(D)J data</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Additional arguments to pass to ggplot</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Single cell object or data.frame with similarity values</p>
+    <p>ggplot object</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

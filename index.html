@@ -145,8 +145,7 @@
   gene_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,        <span class="co"># Column(s) containing V(D)J genes to plot</span>
   cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,                 <span class="co"># Column containing cell clusters to compare</span>
   chain       <span class="op">=</span> <span class="st">"TRB"</span>                         <span class="co"># Chain to plot</span>
-<span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/imap.html">imap</a></span><span class="op">(</span><span class="op">~</span> <span class="va">.x</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="va">.y</span><span class="op">)</span><span class="op">)</span>
+<span class="op">)</span>
 
 <span class="fu">cowplot</span><span class="fu">::</span><span class="fu"><a href="https://wilkelab.org/cowplot/reference/plot_grid.html">plot_grid</a></span><span class="op">(</span>plotlist <span class="op">=</span> <span class="va">ggs</span><span class="op">)</span></code></pre></div>
 <p><img src="reference/figures/README-usage-1.png"><!-- --></p>
