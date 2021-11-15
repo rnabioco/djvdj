@@ -293,7 +293,7 @@ test_that("import_vdj bad sep", {
       )
   }
 
-  expect_error(fn(), "is already present in the V(D)J data, select a different value for sep", fixed = TRUE)
+  expect_error(fn(), "is already present in the input data, select a different value for 'sep'.", fixed = TRUE)
 })
 
 # Check duplicated cell barcode prefixes

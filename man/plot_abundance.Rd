@@ -33,7 +33,7 @@ calculating clonotype abundance}
 
 \item{type}{Type of plot to create, can be 'bar' or 'line'}
 
-\item{yaxis}{Units to plot on the y-axis, either "frequency" or "percent"}
+\item{yaxis}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
@@ -55,7 +55,7 @@ size, etc.)}
 to 'bar'}
 
 \item{facet_scales}{If type is 'bar', this argument passes a scales
-specification to facet_wrap, can be "fixed", "free", "free_x", or "free_y"}
+specification to facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'}
 
 \item{...}{Additional arguments to pass to ggplot}
 }

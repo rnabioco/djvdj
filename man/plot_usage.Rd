@@ -45,7 +45,7 @@ provided, top genes will be identified for each cluster.}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
 
-\item{yaxis}{Units to plot on the y-axis, either "frequency" or "percent"}
+\item{yaxis}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 

@@ -13,8 +13,9 @@
 #' loading data from multiple runs into a single object. If set to NULL, cell
 #' barcode prefixes will be automatically generated in a similar way as the
 #' Read10X function found in the Seurat package.
-#' @param filter_contigs Only include chains with at least one productive
-#' contig
+#' @param filter_contigs Only include chains with at least one productive and
+#' full length contig. It is highly recommended that filter_contigs is set to
+#' TRUE when using the define_clonotypes argument.
 #' @param filter_paired Only include clonotypes with paired chains. For TCR
 #' data each clonotype must have at least one TRA and TRB chain, for BCR data
 #' each clonotype must have at least one IGH chain and at least one IGK or IGL
@@ -60,7 +61,9 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   vdj_class <- unique(vdj_class)
 
   if (length(vdj_class) > 1) {
-    stop("Provided data must be either TCR or BCR. To add both TCR and BCR data to the same object, run import_vdj separately for each and use the 'prefix' argument to add different column names.")
+    vdj_class <- paste0(vdj_class, collapse = ", ")
+
+    stop("Multiple data types detected (", vdj_class, "), provided data must be either TCR or BCR. To add both TCR and BCR data to the same object, run import_vdj separately for each and use the 'prefix' argument to add different column names.")
   }
 
   # Check cell barcode overlap
@@ -73,14 +76,14 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   }
 
   # Remove contigs that do not have an assigned clonotype_id
-  n_remove <- contigs$raw_clonotype_id
+  n_remove <- contigs$clonotype_id
   n_remove <- n_remove[is.na(n_remove)]
   n_remove <- length(n_remove)
 
   if (n_remove > 0) {
-    warning(n_remove, " contigs do not have an assigned clonotype_id, these contigs will be removed")
+    warning(n_remove, " contigs do not have an assigned clonotype_id, these contigs will be removed.")
 
-    contigs <- dplyr::filter(contigs, !is.na(.data$raw_clonotype_id))
+    contigs <- dplyr::filter(contigs, !is.na(.data$clonotype_id))
   }
 
   # Select V(D)J columns to keep
@@ -90,7 +93,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   sep <- gsub("[[:space:]]", "", sep)
 
   if (any(grepl(sep, contigs[, sep_cols]))) {
-    stop("The string '", sep, "' is already present in the V(D)J data, select a different value for sep")
+    stop("The string '", sep, "' is already present in the input data, select a different value for 'sep'.")
   }
 
   # Sum contig reads and UMIs for chains
@@ -105,7 +108,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   )
 
   # Determine which clonotypes are paired
-  contigs <- .identify_paired(contigs, vdj_class = vdj_class)
+  contigs <- .identify_paired(contigs)
 
   if (filter_paired) {
     contigs <- dplyr::filter(contigs, .data$paired)
@@ -114,7 +117,11 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   # Calculate CDR3 length
   contigs <- dplyr::mutate(
     contigs,
-    across(all_of(cdr3_cols), nchar, .names = "{.col}_length")
+    across(
+      all_of(cdr3_cols),
+      ~ ifelse(.x == "None", NA, nchar(.x)),
+      .names = "{.col}_length"
+    )
   )
 
   sep_cols <- c(sep_cols, paste0(cdr3_cols, "_length"))
@@ -129,7 +136,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   )
 
   # Extract isotypes from c_gene for IGH chain (for BCR data only)
-  if (vdj_class == "BCR") {
+  if (vdj_class %in% c("BCR", "Multi")) {
     contigs <- .extract_isotypes(contigs)
     contigs <- dplyr::group_by(contigs, .data$isotype)
   }
@@ -153,17 +160,27 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     .groups = "drop"
   )
 
+  # Reorder columns
   meta <- dplyr::relocate(meta, .data$paired, .after = .data$full_length)
+
+  if (vdj_class %in% c("BCR", "Multi")) {
+    meta <- dplyr::relocate(meta, .data$isotype, .after = .data$chains)
+  }
 
   # Check for duplicated cell barcodes
   if (any(duplicated(meta$barcode))) {
-    stop("Malformed inport data, multiple clonotype_ids are associated with the same cell barcode")
+    stop("Malformed inport data, multiple clonotype_ids are associated with the same cell barcode.")
   }
 
   # Allow user to redefine clonotypes
   res <- tibble::column_to_rownames(meta, "barcode")
 
   if (!is.null(define_clonotypes)) {
+
+    if (!filter_contigs) {
+      warning("It is highly recommended that filter_contigs be set to TRUE when using the define_clonotypes argument.")
+    }
+
     clone_cols <- list(
       cdr3aa    = "cdr3",
       cdr3nt    = "cdr3_nt",
@@ -177,6 +194,14 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     clone_cols <- clone_cols[[define_clonotypes]]
 
     res <- define_clonotypes(res, vdj_cols = clone_cols)
+  }
+
+  # Filter to only include cells with valid clonotype_id
+  # cells with missing clonotype have a clonotype_id of 'None'
+  res <- dplyr::filter(res, .data$clonotype_id != "None")
+
+  if (nrow(res) == 0) {
+    warning("No valid clonotypes present, check input data.")
   }
 
   # Add prefix to V(D)J columns
@@ -280,15 +305,28 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   # Load data
   res <- purrr::map(res, readr::read_csv, col_types = readr::cols())
 
-  # Add cell prefixes
+  # Add cell prefixes and replace 'None' in productive with FALSE
   res <- purrr::imap(res, ~ {
+    .x <- dplyr::rowwise(.x)
     .x <- dplyr::mutate(
       .x,
-      barcode      = paste0(.y, .data$barcode),
-      clonotype_id = paste0(.y, raw_clonotype_id)
+      barcode = paste0(.y, .data$barcode),
+      dplyr::across(c(full_length, productive), ~ {
+        ifelse(
+          is.character(.x),
+          as.logical(gsub("None", "False", .x)),
+          .x
+        )
+      })
     )
 
-    dplyr::rename(.x, chains = .data$chain)
+    .x <- dplyr::ungroup(.x)
+
+    dplyr::rename(
+      .x,
+      chains       = .data$chain,
+      clonotype_id = .data$raw_clonotype_id
+    )
   })
 
   res
@@ -301,8 +339,12 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' @param chain_col Column in input data containing chain identity
 #' @return Character string indicating whether TCR or BCR data were provided
 .classify_vdj <- function(df_in, chain_col = "chains") {
-  get_chain_class <- function(chains) {
-    any(chains %in% df_in[[chain_col]])
+  .count_chain_class <- function(chains) {
+    dat <- df_in[[chain_col]]
+    res <- dat %in% chains
+    res <- length(dat[res])
+
+    res
   }
 
   chains <- list(
@@ -310,17 +352,25 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     "BCR" = c("IGH", "IGK", "IGL")
   )
 
-  res <- purrr::map_lgl(chains, get_chain_class)
-  res <- names(res[res])
+  # Count occurrences of BCR/TCR chains
+  n_chains <- purrr::map_int(chains, .count_chain_class)
 
-  if (length(res) == 0) {
+  if (all(n_chains == 0)) {
     chains <- unlist(chains, use.names = FALSE)
     chains <- paste0(chains, collapse = ", ")
 
     stop("None of the expected chains (", chains, ") were found in the '", chain_col, "' column, unable to determine whether TCR or BCR data were provided.")
+  }
 
-  } else if (length(res) > 1) {
-    stop("Malformed input data, both TCR and BCR chains are present.")
+  # Calculate fraction of BCR/TCR chains
+  # set type if >75% match
+  res <- n_chains / sum(n_chains)
+  res <- names(res[res > 0.5])
+
+  if (length(res) == 0) {
+    res <- "Multi"
+
+    warning("Equal number of BCR (", n_chains[["BCR"]], ") and TCR (", n_chains[["TCR"]], ") chains detected, unable to determine data type.")
   }
 
   res
@@ -365,28 +415,15 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #'
 #' @param df_in data.frame containing V(D)J data formatted so each row
 #' represents a single contig
-#' @param vdj_class One of 'TCR' or 'BCR' to indicate type of data
 #' @return Input data.frame with paired column added
-.identify_paired <- function(df_in, vdj_class) {
-
-  if (!vdj_class %in% c("TCR", "BCR")) {
-    stop("vdj_class must be either 'TCR', or 'BCR'.")
-  }
+.identify_paired <- function(df_in) {
 
   res <- dplyr::group_by(df_in, .data$barcode)
 
-  if (vdj_class == "TCR") {
-    res <- dplyr::mutate(
-      res,
-      paired = all(c("TRA", "TRB") %in% .data$chains)
-    )
-
-  } else if(vdj_class == "BCR") {
-    res <- dplyr::mutate(
-      res,
-      paired = "IGH" %in% .data$chains & any(c("IGL", "IGK") %in% .data$chains)
-    )
-  }
+  res <- dplyr::mutate(
+    res,
+    paired = (all(c("TRA", "TRB") %in% .data$chains)) | ("IGH" %in% .data$chains & any(c("IGL", "IGK") %in% .data$chains))
+  )
 
   res <- dplyr::ungroup(res)
 
@@ -444,20 +481,59 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' @param vdj_cols meta.data columns containing V(D)J data to use for defining
 #' clonotypes
 #' @param clonotype_col Name of column to use for storing clonotype IDs
-#' @return Single cell object or data.frame with new clonotype IDs
+#' @param filter_contigs To only use productive and full length chains when
+#' defining clonotypes, specify column names. If set to NULL chains are not
+#' filtered.
+#' @param sep Separator used for storing per cell V(D)J data
+#' @return Single cell object or data.frame with added clonotype IDs
 #' @export
-define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id") {
+define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
+                              filter_contigs = c("productive", "full_length"), sep = ";") {
+
+  # Get meta.data
   meta <- .get_meta(input)
 
-  meta <- dplyr::mutate(
+  if (!all(vdj_cols %in% colnames(meta))) {
+    stop("Not all vdj_cols (", paste0(vdj_cols, collapse = ", "), ") are present in meta.data.")
+  }
+
+  # Only use values in vdj_cols that are TRUE for all filter_contigs columns
+  # first identify contigs TRUE for all filter_contigs columns
+  # subset each vdj_cols column based on .clone_idx
+  if (!is.null(filter_contigs)) {
+    meta <- mutate_vdj(
+      input,
+      .clone_idx = list(purrr::reduce(list(!!!syms(filter_contigs)), ~ .x & .y)),
+      dplyr::across(
+        dplyr::all_of(vdj_cols),
+        ~ paste0(.x[.data$.clone_idx], collapse = ""),
+        .names = ".clone_{.col}"
+      ),
+      clonotype_col = NULL,
+      vdj_cols      = c(vdj_cols, "productive", "full_length")
+    )
+
+    vdj_cols <- paste0(".clone_", vdj_cols)
+
+    meta <- .get_meta(meta)
+  }
+
+  # Add new clonotype IDs
+  meta <- meta %>%
+    mutate(
+      .new_clone            = paste(!!!syms(vdj_cols), sep = ""),
+      .new_id               = rank(.data$.new_clone, ties.method = "min"),
+      !!sym(clonotype_col) := ifelse(.data$.new_clone == "", "None", paste0("clonotype", .data$.new_id))
+    )
+
+  # Remove temporary columns
+  meta <- dplyr::select(
     meta,
-    .new_clone            = paste0(!!!syms(vdj_cols)),
-    .new_clone            = rank(.data$.new_clone, ties.method = "min"),
-    !!sym(clonotype_col) := paste0("clonotype", .data$.new_clone)
+    -dplyr::matches("^.new_(clone|id)"),
+    -dplyr::starts_with(".clone_")
   )
 
-  meta <- dplyr::select(meta, -.data$.new_clone)
-
+  # Format results
   res <- .add_meta(input, meta)
 
   res
