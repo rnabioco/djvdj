@@ -1,24 +1,14 @@
 Package: djvdj
 Title: A collection of single-cell V(D)J tools
 Version: 0.0.0.9000
-Authors@R: 
-    c(person(given = "Ryan",
-             family = "Sheridan",
-             role = c("aut", "cre"),
-             email = "ryan.sheridan@cuanschutz.edu",
-             comment = c(ORCID = "0000-0003-4012-3147")),
-      person(given = "Jay",
-             family = "Hesselberth",
-             role = "ctb",
-             email = "jay.hesselberth@gmail.com"),
-      person(given = "Rui",
-             family = "Fu",
-             role = "ctb",
-             email = "raysinensis@gmail.com"),
-      person(given = "Kent",
-             family = "Riemondy",
-             role = "ctb",
-             email = "kent.riemondy@ucdenver.edu"))
+Authors@R: c(
+    person("Ryan", "Sheridan", , "ryan.sheridan@cuanschutz.edu", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-4012-3147")),
+    person("Jay", "Hesselberth", , "jay.hesselberth@gmail.com", role = "ctb"),
+    person("Rui", "Fu", , "raysinensis@gmail.com", role = "ctb"),
+    person("Kent", "Riemondy", , "kent.riemondy@ucdenver.edu", role = "ctb"),
+    person("RNA Bioscience Initiative", role = "fnd")
+  )
 Description: djvdj provides a range of tools to analyze single-cell V(D)J
     data.
 License: MIT + file LICENSE
@@ -32,8 +22,8 @@ Imports:
     dplyr,
     ggplot2,
     ggrepel,
-    methods,
     magrittr,
+    methods,
     purrr,
     readr,
     rlang (>= 0.1.2),
@@ -56,4 +46,4 @@ Remotes:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2

@@ -3,6 +3,10 @@ url: https://rnabioco.github.io/djvdj
 development:
   mode: auto
 
+authors:
+  RNA Bioscience Initiative:
+    href: https://medschool.cuanschutz.edu/rbi
+
 template:
   params:
     bootswatch: cosmo
