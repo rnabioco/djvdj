@@ -2,7 +2,7 @@
 % Please edit documentation in R/import-vdj.R
 \name{.classify_vdj}
 \alias{.classify_vdj}
-\title{Determine whether TCR or BCR data were provided}
+\title{Identify insertions and deletions for each contig}
 \usage{
 .classify_vdj(df_in, chain_col = "chains")
 }
@@ -11,10 +11,17 @@
 represents a single contig}
 
 \item{chain_col}{Column in input data containing chain identity}
+
+\item{vdj_dir}{Directory containing the output from cellranger vdj. A vector
+or named vector can be given to load data from several runs. If a named
+vector is given, the cell barcodes will be prefixed with the provided names.
+This mimics the behavior of the Read10X function found in the Seurat
+package.
+Determine whether TCR or BCR data were provided}
 }
 \value{
 Character string indicating whether TCR or BCR data were provided
 }
 \description{
-Determine whether TCR or BCR data were provided
+Identify insertions and deletions for each contig
 }

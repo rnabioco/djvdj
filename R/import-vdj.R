@@ -34,15 +34,16 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
                        filter_paired = FALSE, define_clonotypes = NULL, sep = ";") {
 
   # VDJ columns
-  count_cols <- c("reads", "umis")
   cdr3_cols  <- c("cdr3", "cdr3_nt")
+  count_cols <- c("reads", "umis")
+  indel_cols <- c("n_insertion", "n_deletion", "n_mismatch")
 
   sep_cols <- c(
-    "v_gene",   "d_gene",
-    "j_gene",   "c_gene",
-    "chains",   cdr3_cols,
-    count_cols, "productive",
-    "full_length"
+    "v_gene",     "d_gene",
+    "j_gene",     "c_gene",
+    "chains",     cdr3_cols,
+    count_cols,   indel_cols,
+    "productive", "full_length"
   )
 
   vdj_cols <- c(
@@ -66,8 +67,14 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     stop("Multiple data types detected (", vdj_class, "), provided data must be either TCR or BCR. To add both TCR and BCR data to the same object, run import_vdj separately for each and use the 'prefix' argument to add different column names.")
   }
 
+  # Add indel info for each contig
+  # indel info is only available for productive contigs
+  indels  <- .load_vdj_indels(vdj_dir)
+  contigs <- purrr::map2(contigs, indels, left_join, by = "contig_id")
+
   # Check cell barcode overlap
   # give warning for low overlap
+  # bind contig data.frames
   contigs <- purrr::imap_dfr(contigs, ~ .check_overlap(input, .x, .y))
 
   # Filter for productive contigs
@@ -176,11 +183,6 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   res <- tibble::column_to_rownames(meta, "barcode")
 
   if (!is.null(define_clonotypes)) {
-
-    if (!filter_contigs) {
-      warning("It is highly recommended that filter_contigs be set to TRUE when using the define_clonotypes argument.")
-    }
-
     clone_cols <- list(
       cdr3aa    = "cdr3",
       cdr3nt    = "cdr3_nt",
@@ -287,20 +289,8 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' @return List containing one data.frame for each path provided to vdj_dir
 .load_vdj_data <- function(vdj_dir, contig_file = "filtered_contig_annotations.csv") {
 
-  # Check vdj_dir for contig_file
-  # try adding "outs" to path if contig_file is not found
-  res <- purrr::map_chr(vdj_dir, ~ {
-    path <- case_when(
-      file.exists(file.path(.x, contig_file))         ~ file.path(.x, contig_file),
-      file.exists(file.path(.x, "outs", contig_file)) ~ file.path(.x, "outs", contig_file)
-    )
-
-    if (is.na(path)) {
-      stop(contig_file, " not found in ", .x, ".")
-    }
-
-    path
-  })
+  # Check for file and return path
+  res <- purrr::map_chr(vdj_dir, .get_vdj_path, file = contig_file)
 
   # Load data
   res <- purrr::map(res, readr::read_csv, col_types = readr::cols())
@@ -331,6 +321,100 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   res
 }
+
+#' Load insertion/deletion information for each contig
+#'
+#' @param vdj_dir Directory containing the output from cellranger vdj. A vector
+#' or named vector can be given to load data from several runs. If a named
+#' vector is given, the cell barcodes will be prefixed with the provided names.
+#' This mimics the behavior of the Read10X function found in the Seurat
+#' package.
+#' @param bam_file bam file from cellranger vdj containing alignment data comparing
+#' each contig with the germline reference
+#' @return List containing one data.frame for each path provided to vdj_dir
+#' @importFrom Rsamtools scanBam
+.load_vdj_indels <- function(vdj_dir, bam_file = "concat_ref.bam") {
+
+  .extract_indels <- function(bam_lst) {
+
+    .extract_pat <- function(string, pat) {
+      res <- map(string, ~ {
+        strg  <- .x
+        mtch  <- gregexpr(pat, strg, perl = TRUE)[[1]]
+        strts <- as.integer(mtch)
+        lens  <- attr(mtch, "match.length", exact = TRUE)
+
+        n <- map2_int(strts, lens, ~ as.integer(substr(strg, .x, .x + .y - 1)))
+
+        tidyr::replace_na(n, 0)
+      })
+
+      res
+    }
+
+    res <- tibble::tibble(
+      cigar     = bam_lst[[1]]$cigar,
+      contig_id = bam_lst[[1]]$qname
+    )
+
+    res <- dplyr::filter(res, grepl("_contig_[0-9]+$", .data$contig_id))
+
+    res <- dplyr::mutate(
+      res,
+      n_insertion = .extract_pat(.data$cigar, "[0-9]+(?=I)"),
+      n_deletion  = .extract_pat(.data$cigar, "[0-9]+(?=D)"),
+      n_mismatch  = .extract_pat(.data$cigar, "[0-9]+(?=X)"),
+      dplyr::across(
+        dplyr::starts_with("n_"),
+        ~ map_int(.x, ~ sum(as.integer(.x)))
+      )
+    )
+
+    res <- dplyr::select(res, -cigar)
+
+    res
+  }
+
+  # Check for file and return path
+  res <- purrr::map_chr(vdj_dir, .get_vdj_path, file = bam_file)
+
+  # Load data
+  res <- purrr::map(res, Rsamtools::scanBam)
+
+  # Extract indel data
+  res <- purrr::map(res, .extract_indels)
+
+  res
+}
+
+#' Check for V(D)J data file in provided directory
+#'
+#' @param vdj_dir Directory containing the output from cellranger vdj
+#' @param file Name of cellranger vdj output file
+#' @return path to cellranger vdj output file
+.get_vdj_path <- function(vdj_dir, file) {
+
+  # Check vdj_dir for file
+  # try adding "outs" to path if file not found
+  path <- case_when(
+    file.exists(file.path(vdj_dir, file))         ~ file.path(vdj_dir, file),
+    file.exists(file.path(vdj_dir, "outs", file)) ~ file.path(vdj_dir, "outs", file)
+  )
+
+  if (is.na(path)) {
+    stop(file, " not found in ", vdj_dir, ".")
+  }
+
+  path
+}
+
+#' Identify insertions and deletions for each contig
+#'
+#' @param vdj_dir Directory containing the output from cellranger vdj. A vector
+#' or named vector can be given to load data from several runs. If a named
+#' vector is given, the cell barcodes will be prefixed with the provided names.
+#' This mimics the behavior of the Read10X function found in the Seurat
+#' package.
 
 #' Determine whether TCR or BCR data were provided
 #'
