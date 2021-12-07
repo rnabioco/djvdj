@@ -6,16 +6,18 @@ ctigs <- c(
 
 ctigs_2 <- ctigs_3 <- ctigs
 
-names(ctigs_2) <- c("", "2_")
-names(ctigs_3) <- c("", "2")
+names(ctigs_2) <- c("1_", "2_")
+names(ctigs_3) <- c("1", "2")
 
 vdj_cols <- c(
-  "v_gene", "d_gene",
-  "j_gene", "c_gene",
-  "chains", "clonotype_id",
-  "cdr3",   "cdr3_nt",
-  "reads",  "productive",
-  "umis",   "full_length"
+  "v_gene",      "d_gene",
+  "j_gene",      "c_gene",
+  "chains",      "clonotype_id",
+  "cdr3",        "cdr3_nt",
+  "reads",       "umis",
+  "productive",  "full_length",
+  "n_insertion", "n_deletion",
+  "n_mismatch"
 )
 
 df_1 <- vdj_so@meta.data
@@ -28,14 +30,14 @@ arg_lst <- list(
   single = list(
     input         = list(tiny_so),
     vdj_dir       = list(ctigs[1], ctigs_2[1], ctigs_3[1], paste0(ctigs[1], "/outs")),
-    cell_prefix   = list(NULL, ""),
+    cell_prefix   = list(NULL, "1"),
     filter_paired = c(TRUE, FALSE),
     prefix        = c("", "PREFIX")
   ),
   multi = list(
     input         = list(tiny_so),
     vdj_dir       = list(ctigs, ctigs_2, ctigs_3, paste0(ctigs, "/outs")),
-    cell_prefix   = list(NULL, c("", "2_"), c("", "2")),
+    cell_prefix   = list(NULL, c("1_", "2_"), c("1", "2")),
     filter_paired = c(TRUE, FALSE),
     prefix        = c("", "PREFIX")
   )
