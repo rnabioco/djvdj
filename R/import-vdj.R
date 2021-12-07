@@ -64,7 +64,12 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   if (length(vdj_class) > 1) {
     vdj_class <- paste0(vdj_class, collapse = ", ")
 
-    stop("Multiple data types detected (", vdj_class, "), provided data must be either TCR or BCR. To add both TCR and BCR data to the same object, run import_vdj separately for each and use the 'prefix' argument to add different column names.")
+    stop(
+      "Multiple data types detected (", vdj_class, "), provided data must be ",
+      "either TCR or BCR. To add both TCR and BCR data to the same object, ",
+      "run import_vdj separately for each and use the 'prefix' argument to ",
+      "add different column names."
+    )
   }
 
   # Add indel info for each contig
@@ -239,8 +244,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
     # If no cell prefixes are provided, auto generate
     if (is.null(cell_prefix)) {
-      cell_prefix    <- paste0(seq_along(res), "_")
-      cell_prefix[1] <- ""
+      cell_prefix <- paste0(seq_along(res), "_")
     }
 
     # Check there is a cell prefix provided for each path
@@ -293,7 +297,12 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   res <- purrr::map_chr(vdj_dir, .get_vdj_path, file = contig_file)
 
   # Load data
-  res <- purrr::map(res, readr::read_csv, col_types = readr::cols())
+  res <- purrr::map(
+    res,
+    readr::read_csv,
+    col_types = readr::cols(),
+    progress  = FALSE
+  )
 
   # Add cell prefixes and replace 'None' in productive with FALSE
   res <- purrr::imap(res, ~ {
@@ -337,21 +346,6 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   .extract_indels <- function(bam_lst) {
 
-    .extract_pat <- function(string, pat) {
-      res <- map(string, ~ {
-        strg  <- .x
-        mtch  <- gregexpr(pat, strg, perl = TRUE)[[1]]
-        strts <- as.integer(mtch)
-        lens  <- attr(mtch, "match.length", exact = TRUE)
-
-        n <- map2_int(strts, lens, ~ as.integer(substr(strg, .x, .x + .y - 1)))
-
-        tidyr::replace_na(n, 0)
-      })
-
-      res
-    }
-
     res <- tibble::tibble(
       cigar     = bam_lst[[1]]$cigar,
       contig_id = bam_lst[[1]]$qname
@@ -359,18 +353,34 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
     res <- dplyr::filter(res, grepl("_contig_[0-9]+$", .data$contig_id))
 
+    # Add indel columns,
     res <- dplyr::mutate(
       res,
       n_insertion = .extract_pat(.data$cigar, "[0-9]+(?=I)"),
       n_deletion  = .extract_pat(.data$cigar, "[0-9]+(?=D)"),
       n_mismatch  = .extract_pat(.data$cigar, "[0-9]+(?=X)"),
-      dplyr::across(
-        dplyr::starts_with("n_"),
-        ~ map_int(.x, ~ sum(as.integer(.x)))
-      )
     )
 
     res <- dplyr::select(res, -cigar)
+
+    res
+  }
+
+  .extract_pat <- function(string, pat) {
+    res <- map(string, ~ {
+      strg  <- .x
+      mtch  <- gregexpr(pat, strg, perl = TRUE)[[1]]
+      strts <- as.integer(mtch)
+      lens  <- attr(mtch, "match.length", exact = TRUE)
+
+      n <- map2_int(strts, lens, ~ as.integer(substr(strg, .x, .x + .y - 1)))
+
+      # Multiple indel sites will result in vector with length > 1
+      # sum bp from all sites and replace NAs with 0
+      n <- tidyr::replace_na(sum(n), 0)
+
+      n
+    })
 
     res
   }
@@ -391,8 +401,10 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #'
 #' @param vdj_dir Directory containing the output from cellranger vdj
 #' @param file Name of cellranger vdj output file
+#' @param warn When the file is not found display a warning message instead of
+#' an error
 #' @return path to cellranger vdj output file
-.get_vdj_path <- function(vdj_dir, file) {
+.get_vdj_path <- function(vdj_dir, file, warn = FALSE) {
 
   # Check vdj_dir for file
   # try adding "outs" to path if file not found
@@ -402,7 +414,13 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   )
 
   if (is.na(path)) {
-    stop(file, " not found in ", vdj_dir, ".")
+    fun  <- stop
+
+    if (warn) {
+      fun <- warning
+    }
+
+    fun(file, " not found in ", vdj_dir, ".")
   }
 
   path
