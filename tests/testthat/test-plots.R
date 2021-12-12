@@ -95,7 +95,7 @@ test_all_args(
 
 # Check all plot_reads arguments
 arg_lst <- list(
-  input       = list(vdj_so),
+  input       = list(vdj_so, vdj_sce),
   data_cols   = list("reads", "umis", c("reads", "umis")),
   chain_col   = list(NULL, "chains"),
   cluster_col = list(NULL, "seurat_clusters"),
@@ -121,7 +121,7 @@ test_that("plot_reads bad type", {
 
 # Check all plot_abundance arguments for line plot
 arg_lst <- list(
-  input         = list(vdj_so),
+  input         = list(vdj_so, vdj_sce),
   clonotype_col = "cdr3_nt",
   cluster_col   = list(NULL, "seurat_clusters"),
   type          = "line",
@@ -154,7 +154,7 @@ test_all_args(
 
 # Check plot_abundance axis labels
 arg_lst <- list(
-  input         = list(vdj_so),
+  input         = list(vdj_so, vdj_sce),
   clonotype_col = "cdr3_nt",
   label_col     = "cdr3",
   yaxis         = "percent",
@@ -231,7 +231,7 @@ mets <- abdiv::alpha_diversities %>%
 names(mets) <- abdiv::alpha_diversities
 
 arg_lst <- list(
-  input         = list(vdj_so),
+  input         = list(vdj_so, vdj_sce),
   clonotype_col = "cdr3_nt",
   cluster_col   = list(NULL, "seurat_clusters"),
   method        = append(mets, list(mets)),
@@ -265,7 +265,7 @@ mets <- abdiv::beta_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 arg_lst <- list(
-  input         = list(vdj_so),
+  input         = list(vdj_so, vdj_sce),
   clonotype_col = "cdr3_nt",
   cluster_col   = "seurat_clusters",
   method        = mets,
@@ -303,7 +303,7 @@ test_that("plot_similarity bad cluster col", {
 
 # Check all plot_usage arguments return ggplot
 arg_lst <- list(
-  input       = list(vdj_so),
+  input       = list(vdj_so, vdj_sce),
   gene_cols   = list("v_gene", "j_gene", c("v_gene", "j_gene")),
   chain       = list(NULL, "IGH", "IGL", "IGK"),
   type        = c("heatmap", "bar"),
@@ -336,7 +336,7 @@ test_genes <- c(
 )
 
 arg_lst <- list(
-  input       = list(vdj_so),
+  input       = list(vdj_so, vdj_sce),
   gene_cols   = list("v_gene", c("v_gene", "j_gene")),
   plot_genes  = list(test_genes),
   type        = c("heatmap", "bar"),
@@ -395,6 +395,25 @@ test_that("plot_usage bad gene_cols", {
   )
 })
 
+# Check all plot_cdr3_length arguments
+arg_lst <- list(
+  input       = list(vdj_so, vdj_sce, df_1),
+  length_col  = c("cdr3_length", "cdr3_nt_length"),
+  cluster_col = list(NULL, "seurat_clusters"),
+  chain       = list(NULL, "IGH", c("IGH", "IGK")),
+  type        = c("histogram", "density", "violin"),
+  yaxis       = c("frequency", "percent"),
+  plot_colors = list(NULL, test_cols),
+  plot_lvls   = list(NULL, test_lvls)
+)
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_cdr3_length,
+  desc    = "plot_cdr3_length args",
+  chk     = expr(expect_s3_class(.res, "ggplot"))
+)
+
 # Check .set_lvls levels
 arg_lst <- list(df_in = list(df_1, df_2))
 
@@ -425,3 +444,4 @@ test_all_args(
   desc    = ".set_lvls bad lvls",
   chk     = expect_error
 )
+

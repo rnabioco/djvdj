@@ -9,6 +9,9 @@ ctigs_2 <- ctigs_3 <- ctigs
 names(ctigs_2) <- c("1_", "2_")
 names(ctigs_3) <- c("1", "2")
 
+tcr_ctigs <- system.file("extdata/tcr_1", package = "djvdj")
+bad_ctigs <- system.file("extdata/bad_bcr_1", package = "djvdj")
+
 vdj_cols <- c(
   "v_gene",      "d_gene",
   "j_gene",      "c_gene",
@@ -60,7 +63,7 @@ arg_lst %>%
     )
   })
 
-# Check arguments for different path inputs with SCE
+ # Check arguments for different path inputs with SCE
 pluck(arg_lst, 1, 1) <- list(tiny_sce)
 pluck(arg_lst, 2, 1) <- list(tiny_sce)
 
@@ -77,7 +80,7 @@ arg_lst %>%
       arg_lst = .x,
       .fn     = import_vdj,
       desc    = paste("import_vdj", .y, "path cells"),
-      chk     = expr(expect_identical(colnames(.res), colnames(tiny_so)))
+      chk     = expr(expect_identical(colnames(.res), colnames(tiny_sce)))
     )
   })
 
@@ -261,23 +264,23 @@ test_that("import_vdj bad prefixes", {
 })
 
 # Check low overlap warning
-# test_that("import_vdj low overlap", {
-#   dat <- c("2_" = ctigs[2])
-#
-#   fn <- function() {
-#     res <- tiny_so %>%
-#       import_vdj(vdj_dir = ctigs)
-#   }
-#
-#   expect_warning(fn())
-# })
+test_that("import_vdj low overlap", {
+  dat <- c("1" = bad_ctigs)
+
+  fn <- function() {
+    res <- tiny_so %>%
+      import_vdj(vdj_dir = bad_ctigs)
+  }
+
+  expect_warning(fn(), "Only.+cell barcodes overlap")
+})
 
 # Check missing clonotype_id warning
 test_that("import_vdj missing clonotype_id", {
   fn <- function() {
     res <- tiny_so %>%
       import_vdj(
-        vdj_dir        = ctigs,
+        vdj_dir        = tcr_ctigs,
         filter_contigs = FALSE
       )
   }
@@ -299,27 +302,28 @@ test_that("import_vdj bad sep", {
 })
 
 # Check duplicated cell barcode prefixes
-# test_that("import_vdj duplicate cell prefix", {
-#   prfxs <- rep("", 2)
-#   dat   <- set_names(ctigs, prfxs)
-#
-#   fn <- function() {
-#     res <- tiny_so %>%
-#       import_vdj(vdj_dir = dat)
-#   }
-#
-#   expect_warning(fn())
-#
-#   fn <- function() {
-#     res <- tiny_so %>%
-#       import_vdj(
-#         vdj_dir     = ctigs,
-#         cell_prefix = prfxs
-#       )
-#   }
-#
-#   expect_warning(fn())
-# })
+test_that("import_vdj duplicate cell prefix", {
+  prfxs    <- rep("1", 2)
+  ctigs_in <- c(ctigs[1], ctigs[1])
+  dat      <- set_names(ctigs_in, prfxs)
+
+  fn <- function() {
+    res <- tiny_so %>%
+      import_vdj(vdj_dir = dat)
+  }
+
+  expect_warning(fn(), "Some cell barcode prefixes are duplicated")
+
+  fn <- function() {
+    res <- tiny_so %>%
+      import_vdj(
+        vdj_dir     = ctigs_in,
+        cell_prefix = prfxs
+      )
+  }
+
+  expect_warning(fn(), "Some cell barcode prefixes are duplicated")
+})
 
 # Check barcode prefix length
 test_that("import_vdj cell prefix length", {
@@ -355,5 +359,15 @@ test_that("import_vdj cell prefix NAs", {
   }
 
   expect_error(fn(), "Cell prefixes cannot include NAs.")
+})
+
+# Check BCR and TCR
+test_that("import_vdj BCR and TCR", {
+  fn <- function() {
+    res <- tiny_so %>%
+      import_vdj(vdj_dir = c(tcr_ctigs, ctigs))
+  }
+
+  expect_error(fn(), "Multiple data types detected")
 })
 
