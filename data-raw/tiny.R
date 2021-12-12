@@ -118,14 +118,42 @@ names(bcr_bam) %>%
   str_c(".bai") %>%
   file.remove()
 
+# Format low overlap BCR contig data
+# this is to test low overlap warning
+bad_path <- "inst/extdata/bad_bcr_1/outs/"
+
+bad_contigs <- contigs[[1]] %>%
+  head(1) %>%
+  bind_rows(contigs[[2]])
+
+bad_contigs <- set_names(
+  list(bad_contigs),
+  str_c(bad_path, "filtered_contig_annotations.csv")
+)
+
+bad_contigs %>%
+  iwalk(write_csv)
+
+bad_bam <- set_names(
+  bcr_bam[[1]],
+  str_c(bad_path, "concat_ref.bam")
+)
+
+bad_bam %>%
+  imap(filterBam, filter = filt_rules)
+
+names(bad_bam) %>%
+  str_c(".bai") %>%
+  file.remove()
+
 # Format and write TCR contig data
 tcr_contigs <- tcr_path %>%
   str_c("/filtered_contig_annotations.csv") %>%
-  read_csv() %>%
-  mutate(raw_clonotype_id = ifelse(rownames(.) == 1, NA, raw_clonotype_id))
+  read_csv()
 
 tcr_contigs <- tcr_contigs %>%
-  filter(str_c("1_", barcode) %in% tiny_cells)
+  filter(str_c("1_", barcode) %in% tiny_cells) %>%
+  mutate(raw_clonotype_id = ifelse(rownames(.) == 1, NA, raw_clonotype_id))
 
 tcr_contigs %>%
   write_csv("inst/extdata/tcr_1/outs/filtered_contig_annotations.csv")
