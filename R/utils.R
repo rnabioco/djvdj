@@ -7,6 +7,7 @@
 #' @param dryrun Do not run tests, just return table of arguments that will be
 #' tested
 #' @return Output from test_that
+#' @noRd
 test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
   arg_lst <- expand.grid(arg_lst, stringsAsFactors = FALSE)

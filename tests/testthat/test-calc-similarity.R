@@ -29,6 +29,7 @@ test_all_args(
 )
 
 # Check similarity calculation
+# calculate similarity independently and compare to calc_similarity results
 test_sim <- vdj_so@meta.data %>%
   as_tibble(rownames = ".cell_id") %>%
   filter(!is.na(cdr3)) %>%
@@ -40,24 +41,38 @@ test_sim <- vdj_so@meta.data %>%
 clst <- test_clsts[1]
 nm   <- paste0("x", clst)
 
-test_sim <- map_dfr(test_clsts, ~ {
-  x <- pull(test_sim, clst)
-  y <- pull(test_sim, .x)
+clst_dat <- pull(test_sim, clst)
 
-  tibble(
-    seurat_clusters = .x,
-    !!sym(nm) := abdiv::binomial_deviance(x, y)
-  )
-}) %>%
-  arrange(seurat_clusters) %>%
-  mutate(!!sym(nm) := if_else(seurat_clusters == clst, 1, !!sym(nm)))
+get_sim_res <- function(method) {
+  map_dfr(test_clsts, ~ {
+    x <- pull(test_sim, clst)
+    y <- pull(test_sim, .x)
 
-test_that("sim calc", {
+    tibble(
+      seurat_clusters = .x,
+      !!sym(nm) := method(x, y)
+    )
+  }) %>%
+    arrange(seurat_clusters) %>%
+    mutate(
+      !!sym(nm) := if_else(
+        seurat_clusters == clst,
+        method(clst_dat, clst_dat),
+        !!sym(nm)
+      )
+    )
+}
+
+walk(abdiv::beta_diversities, ~ {
+  fn <- str_c("abdiv::", .x)
+
+  test_res <- get_sim_res(eval(parse(text = fn)))
+
   res <- vdj_so %>%
     calc_similarity(
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
-      method        = abdiv::binomial_deviance,
+      method        = eval(parse(text = fn)),
       return_mat    = FALSE,
       prefix        = "x"
     )
@@ -65,11 +80,13 @@ test_that("sim calc", {
   res <- res@meta.data %>%
     as_tibble() %>%
     select(seurat_clusters, all_of(nm)) %>%
-    filter(!is.na(!!sym(nm))) %>%
+    filter(!is.na(seurat_clusters)) %>%
     distinct() %>%
     arrange(seurat_clusters)
 
-  expect_identical(res, test_sim)
+  test_that(str_c("sim calc ", .x), {
+    expect_identical(res, test_res)
+  })
 })
 
 # Check Seurat output
@@ -91,9 +108,9 @@ test_that("calc_similarity Seurat out", {
   expect_identical(res, vdj_so)
 })
 
-# Check data.frame output
-test_that("calc_similarity df out", {
-  res <- vdj_so@meta.data %>%
+# Check SCE output
+test_that("calc_similarity Seurat out", {
+  res <- vdj_sce %>%
     calc_similarity(
       clonotype_col = "cdr3",
       cluster_col   = "seurat_clusters",
@@ -102,21 +119,14 @@ test_that("calc_similarity df out", {
       prefix        = "x"
     )
 
-  expect_s3_class(res, "data.frame")
+  expect_s4_class(res, "SingleCellExperiment")
 
-  res_2 <- res %>%
-    select(-all_of(paste0("x", test_clsts)))
+  new_clmns <- colnames(res@colData)
+  new_clmns <- new_clmns[!new_clmns %in% paste0("x", test_clsts)]
 
-  expect_identical(res_2, vdj_so@meta.data)
+  res@colData <- res@colData[, new_clmns]
 
-  res <- res %>%
-    as_tibble() %>%
-    select(seurat_clusters, all_of(nm)) %>%
-    filter(!is.na(!!sym(nm))) %>%
-    distinct() %>%
-    arrange(seurat_clusters)
-
-  expect_identical(res, test_sim)
+  expect_identical(res, vdj_sce)
 })
 
 # Check data.frame output
@@ -136,15 +146,6 @@ test_that("calc_similarity df out", {
     select(-all_of(paste0("x", test_clsts)))
 
   expect_identical(res_2, vdj_so@meta.data)
-
-  res <- res %>%
-    as_tibble() %>%
-    select(seurat_clusters, all_of(nm)) %>%
-    filter(!is.na(!!sym(nm))) %>%
-    distinct() %>%
-    arrange(seurat_clusters)
-
-  expect_identical(res, test_sim)
 })
 
 # Check matrix output

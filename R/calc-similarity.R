@@ -83,12 +83,22 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
     return(res)
   }
 
+  # Calculate self similarity
+  res_s <- map_dfr(clsts, ~ {
+    d <- pull(vdj, .x)
+
+    tibble::tibble(
+      Var1 = .x,
+      Var2 = .x,
+      sim  = method(d, d)
+    )
+  })
+
   # Add inverse combinations
   res_i <- dplyr::rename(res, Var1 = .data$Var2, Var2 = .data$Var1)
 
-  clsts <- tibble::tibble(Var1 = clsts, Var2 = clsts, sim = 1)
-  res   <- dplyr::bind_rows(res, res_i, clsts)
-  res   <- dplyr::mutate(res, Var1 = paste0(prefix, .data$Var1))
+  res <- dplyr::bind_rows(res, res_i, res_s)
+  res <- dplyr::mutate(res, Var1 = paste0(prefix, .data$Var1))
 
   res <- tidyr::pivot_wider(
     res,
