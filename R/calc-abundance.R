@@ -3,8 +3,8 @@
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param cluster_col meta.data column containing cluster IDs to use for
-#' @param clonotype_col meta.data column containing clonotype IDs
-#' grouping cells when calculating clonotype abundance
+#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' calculating clonotype abundance
 #' @param prefix Prefix to add to new columns
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.

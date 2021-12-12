@@ -18,8 +18,8 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for}
 
-\item{clonotype_col}{meta.data column containing clonotype IDs
-grouping cells when calculating clonotype abundance}
+\item{clonotype_col}{meta.data column containing clonotype IDs to use for
+calculating clonotype abundance}
 
 \item{prefix}{Prefix to add to new columns}
 
