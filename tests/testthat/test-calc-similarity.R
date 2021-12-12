@@ -64,7 +64,7 @@ get_sim_res <- function(method) {
 }
 
 walk(abdiv::beta_diversities, ~ {
-  fn <- str_c("abdiv::", .x)
+  fn <- paste0("abdiv::", .x)
 
   test_res <- get_sim_res(eval(parse(text = fn)))
 
@@ -84,7 +84,7 @@ walk(abdiv::beta_diversities, ~ {
     distinct() %>%
     arrange(seurat_clusters)
 
-  test_that(str_c("sim calc ", .x), {
+  test_that(paste0("sim calc ", .x), {
     expect_identical(res, test_res)
   })
 })

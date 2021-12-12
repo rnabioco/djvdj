@@ -361,7 +361,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
       n_mismatch  = .extract_pat(.data$cigar, "[0-9]+(?=X)"),
     )
 
-    res <- dplyr::select(res, -cigar)
+    res <- dplyr::select(res, -.data$cigar)
 
     res
   }
@@ -425,14 +425,6 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   path
 }
-
-#' Identify insertions and deletions for each contig
-#'
-#' @param vdj_dir Directory containing the output from cellranger vdj. A vector
-#' or named vector can be given to load data from several runs. If a named
-#' vector is given, the cell barcodes will be prefixed with the provided names.
-#' This mimics the behavior of the Read10X function found in the Seurat
-#' package.
 
 #' Determine whether TCR or BCR data were provided
 #'

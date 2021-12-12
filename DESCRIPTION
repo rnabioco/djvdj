@@ -27,13 +27,11 @@ BugReports: https://github.com/rnabioco/djvdj/issues
 Depends: 
     R (>= 4.0.0)
 Imports: 
-    abdiv,
     broom,
     dplyr,
     ggplot2,
     ggrepel,
     methods,
-    magrittr,
     purrr,
     readr,
     rlang (>= 0.1.2),
@@ -46,6 +44,7 @@ Imports:
     tidyr,
     Rsamtools
 Suggests: 
+    abdiv,
     covr,
     knitr,
     roxygen2,
