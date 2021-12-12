@@ -4,12 +4,15 @@
 \alias{.get_vdj_path}
 \title{Check for V(D)J data file in provided directory}
 \usage{
-.get_vdj_path(vdj_dir, file)
+.get_vdj_path(vdj_dir, file, warn = FALSE)
 }
 \arguments{
 \item{vdj_dir}{Directory containing the output from cellranger vdj}
 
 \item{file}{Name of cellranger vdj output file}
+
+\item{warn}{When the file is not found display a warning message instead of
+an error}
 }
 \value{
 path to cellranger vdj output file
