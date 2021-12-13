@@ -235,6 +235,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' @param sep Separator to use when appending prefixes to cell barcodes, set to
 #' NULL to not add a separator
 #' @return Paths provided to vdj_dir with cell prefixes added as names
+#' @noRd
 .format_cell_prefixes <- function(vdj_dir, cell_prefix, sep = "_") {
 
   res <- vdj_dir
@@ -291,6 +292,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' @param contig_file cellranger vdj output file containing data for each
 #' contig annotation
 #' @return List containing one data.frame for each path provided to vdj_dir
+#' @noRd
 .load_vdj_data <- function(vdj_dir, contig_file = "filtered_contig_annotations.csv") {
 
   # Check for file and return path
@@ -342,6 +344,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' each contig with the germline reference
 #' @return List containing one data.frame for each path provided to vdj_dir
 #' @importFrom Rsamtools scanBam
+#' @noRd
 .load_vdj_indels <- function(vdj_dir, bam_file = "concat_ref.bam") {
 
   .extract_indels <- function(bam_lst) {
@@ -404,6 +407,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' @param warn When the file is not found display a warning message instead of
 #' an error
 #' @return path to cellranger vdj output file
+#' @noRd
 .get_vdj_path <- function(vdj_dir, file, warn = FALSE) {
 
   # Check vdj_dir for file
@@ -432,6 +436,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' represents a single contig
 #' @param chain_col Column in input data containing chain identity
 #' @return Character string indicating whether TCR or BCR data were provided
+#' @noRd
 .classify_vdj <- function(df_in, chain_col = "chains") {
   .count_chain_class <- function(chains) {
     dat <- df_in[[chain_col]]
@@ -477,6 +482,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' @param nm Sample name to use for messages
 #' @param pct_min Warn user if the percent overlap is less than pct_min
 #' @return input data
+#' @noRd
 .check_overlap <- function(input, meta, nm, pct_min = 25) {
 
   if (is.null(input)) {
@@ -510,6 +516,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' @param df_in data.frame containing V(D)J data formatted so each row
 #' represents a single contig
 #' @return Input data.frame with paired column added
+#' @noRd
 .identify_paired <- function(df_in) {
 
   res <- dplyr::group_by(df_in, .data$barcode)
@@ -532,6 +539,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' iso_col
 #' @param iso_col Column containing data to use for extracting isotypes
 #' @return Input data.frame with isotype column added
+#' @noRd
 .extract_isotypes <- function(df_in, iso_pat = "^IGH[ADEGM]", iso_col = "c_gene") {
 
   res <- dplyr::group_by(df_in, .data$barcode)

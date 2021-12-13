@@ -954,6 +954,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @param mn Minimum quantile
 #' @param mx Maximum quantile
 #' @return data.frame with modified feature values
+#' @noRd
 .set_lims <- function(df_in, ft, mn = NULL, mx = NULL) {
 
   if (!is.numeric(df_in[[ft]])) {
@@ -1000,6 +1001,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @param add_aes List of aes params to add or override
 #' @param lay Layer number to modify
 #' @return ggplot object
+#' @noRd
 .add_aes <- function(gg_in, add_aes, lay) {
 
   # Need to use colour instead of color
@@ -1029,6 +1031,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @param hjst Horizontal justification for x-axis text
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
+#' @noRd
 .create_heatmap <- function(df_in, x, y, .fill, clrs = NULL, na_color = "white",
                             ttl = .fill, ang = 45, hjst = 1, ...) {
 
@@ -1081,6 +1084,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @param hjst Horizontal justification for x-axis text
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
+#' @noRd
 .create_bars <- function(df_in, x, y, .fill, clrs = NULL, y_ttl = y, ang = 45,
                          hjst = 1, ...) {
 
@@ -1139,6 +1143,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @param clmn Column to modify
 #' @param lvls Levels
 #' @return data.frame
+#' @noRd
 .set_lvls <- function(df_in, clmn, lvls) {
 
   if (!is.null(lvls) && !is.null(clmn)) {

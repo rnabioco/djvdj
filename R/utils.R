@@ -96,24 +96,23 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 
 #' Add meta.data to single cell object
 #'
+#' @param input Object containing single cell data
+#' @param meta meta.data to add to object
+#' @param row_col Column containing meta.data rownames
+#' @return Object with added meta.data
+#' @noRd
 .add_meta <- function(input, meta, row_col) {
 
   UseMethod(".add_meta", input)
 
 }
 
-#' @rdname dot-add_meta
-#' @param input Object containing single cell data
-#' @param meta meta.data to add to object
-#' @param row_col Column containing meta.data rownames
-#' @return Object with added meta.data
 .add_meta.default <- function(input, meta, row_col = ".cell_id") {
 
   tibble::column_to_rownames(meta, row_col)
 
 }
 
-#' @rdname dot-add_meta
 .add_meta.Seurat <- function(input, meta, row_col = ".cell_id") {
 
   meta <- tibble::column_to_rownames(meta, row_col)
@@ -123,8 +122,6 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
   input
 }
 
-#' @rdname dot-add_meta
-#' @importFrom S4Vectors DataFrame
 .add_meta.SingleCellExperiment <- function(input, meta, row_col = ".cell_id") {
 
   meta <- tibble::column_to_rownames(meta, row_col)
@@ -137,30 +134,28 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 
 #' Pull meta.data from single cell object
 #'
+#' @param input Object containing single cell data
+#' @param row_col New column to store meta.data rownames
+#' @return tibble containing meta.data pulled from object
+#' @noRd
 .get_meta <- function(input, row_col) {
 
   UseMethod(".get_meta", input)
 
 }
 
-#' @rdname dot-get_meta
-#' @param input Object containing single cell data
-#' @param row_col New column to store meta.data rownames
-#' @return tibble containing meta.data pulled from object
 .get_meta.default <- function(input, row_col = ".cell_id") {
 
   .to_tibble(input, row_col)
 
 }
 
-#' @rdname dot-get_meta
 .get_meta.Seurat <- function(input, row_col = ".cell_id") {
 
   .to_tibble(input@meta.data, row_col)
 
 }
 
-#' @rdname dot-get_meta
 .get_meta.SingleCellExperiment <- function(input, row_col = ".cell_id") {
 
   .to_tibble(input@colData, row_col)
@@ -179,6 +174,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' @param input Object to coerce to tibble
 #' @param row_col Name of new column to store rownames
 #' @return tibble with rownames added to new column
+#' @noRd
 .to_tibble <- function(input, row_col) {
 
   res <- tibble::as_tibble(input, rownames = NA)
@@ -197,6 +193,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' @param meta meta.data to merge with object
 #' @param by Columns to use for merging
 #' @return Object with added meta.data
+#' @noRd
 .merge_meta <- function(input, meta, by = ".cell_id") {
 
   if (is.null(input)) {
@@ -229,6 +226,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' a new type. The vector names should be the name of each column,
 #' e.g., c(umis = "numeric")
 #' @return data.frame
+#' @noRd
 .split_vdj <- function(df_in, sep = ";", sep_cols, expand = FALSE,
                        coerce_cols = c(
                          umis        = "numeric", reads          = "numeric",
@@ -279,6 +277,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return List with two vectors, one containing columns with V(D)J data and
 #' the other containing columns where separator has been detected.
+#' @noRd
 .get_vdj_cols <- function(df_in, clone_col, cols_in, sep) {
 
   # If clone_col and cols_in are both NULL, use all columns
@@ -333,6 +332,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' @param Class Name of the class to which x should be coerced
 #' @return Coerced vector
 #' @importFrom methods as
+#' @noRd
 .convert_char <- function(x, Class) {
 
   if (!is.character(x)) {

@@ -116,25 +116,21 @@ filter_vdj <- function(input, filt, clonotype_col = "clonotype_id", filter_cells
 
 #' Subset object so it only contains given cells
 #'
-#' @export
-.subset_cells <- function(input, cells) {
-  UseMethod(".subset_cells", input)
-}
-
-#' @rdname dot-subset_cells
 #' @param input Single cell object or data.frame. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
 #' @param cells Vector with cell barcodes to use for subsetting
 #' @return Subsetted object
-#' @export
+#' @noRd
+.subset_cells <- function(input, cells) {
+  UseMethod(".subset_cells", input)
+}
+
 .subset_cells.default <- function(input, cells) {
   res <- input[, cells]
 
   res
 }
 
-#' @rdname dot-subset_cells
-#' @export
 .subset_cells.data.frame <- function(input, cells) {
   res <- input[rownames(input) %in% cells, ]
 

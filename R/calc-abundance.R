@@ -62,6 +62,7 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #' @param clone_col Column containing clonotype IDs
 #' @param clust_col Column containing cluster IDs
 #' @return data.frame containing clonotype abundances
+#' @noRd
 .calc_abund <- function(df_in, cell_col, clone_col, clust_col = NULL) {
 
   # Count number of cells in each group
