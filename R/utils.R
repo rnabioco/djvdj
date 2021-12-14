@@ -59,6 +59,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
   fetch_cols <- c(".cell_id", data_cols, chain_col, include_cols)
 
   meta <- .get_meta(input)
+
   meta <- dplyr::select(meta, all_of(fetch_cols))
 
   meta <- dplyr::filter(
@@ -72,13 +73,18 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
     data_cols
   )
 
-  res <- .split_vdj(
+  res <- .unnest_vdj(
     meta,
     sep         = sep,
     sep_cols    = c(data_cols, chain_col),
     coerce_cols = coerce_cols,
     expand      = TRUE
   )
+
+  # Filter for chain
+  if (!is.null(chain)) {
+    plt_dat <- dplyr::filter(plt_dat, !!sym(chain_col) %in% chain)
+  }
 
   # Summarize chains
   grp_cols <- c(".cell_id", chain_col, include_cols)
@@ -92,6 +98,154 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 
   res
 }
+
+
+#' Fetch V(D)J data
+#'
+#' Fetch per-chain V(D)J data from object. Within the object meta.data, each
+#' row represents a single cell and can include information for multiple
+#' chains. This function returns an unnested data.frame where each row
+#' represents a single chain. This is useful for plotting per-chain metrics
+#' such as CDR3 length or the number of insertions/deletions.
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param clonotype_col meta.data column containing clonotype IDs. This column
+#' is used to determine which cells have V(D)J data.
+#' @param vdj_cols meta.data columns containing V(D)J data to fetch. If set to
+#' NULL columns are automatically selected by identifying columns that have NAs
+#' in the same rows as clonotype_col.
+#' @param sep Separator used for storing per cell V(D)J data
+#' @param unnest If FALSE, a nested data.frame is returned where each row
+#' represents a cell and V(D)J data is stored as list-cols
+#' @return data.frame containing per-chain V(D)J data
+#' @export
+fetch_vdj <- function(input, clonotype_col = "clonotype_id", vdj_cols = NULL, sep = ";",
+                      unnest = TRUE) {
+
+  # Format input data
+  meta <- .get_meta(input)
+
+  # Identify columns with V(D)J data
+  col_list <- .get_vdj_cols(
+    df_in     = meta,
+    clone_col = clonotype_col,
+    cols_in   = vdj_cols,
+    sep       = sep
+  )
+
+  vdj_cols <- col_list$vdj
+  sep_cols <- col_list$sep
+
+  if (purrr::is_empty(sep_cols)) {
+    warning(
+      "The separator '", sep, "' was not identified in any columns specified ",
+      "by vdj_cols, the unmodified meta.data will be returned"
+    )
+
+    return(meta)
+  }
+
+  # Unnest V(D)J data
+  res <- .unnest_vdj(
+    meta,
+    sep      = sep,
+    sep_cols = sep_cols,
+    unnest   = unnest
+  )
+
+  res
+}
+
+
+#' Summarize numeric V(D)J data
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param vdj_cols meta.data columns containing V(D)J data to summarize for
+#' each cell
+#' @param fn Function or list of funcitons to use for summarizing vdj_cols
+#' @param chain Chain to use for summarizing V(D)J data
+#' @param chain_col meta.data column(s) containing chains for each cell
+#' @param sep Separator used for storing per cell V(D)J data
+#' @return data.frame containing V(D)J data summarized for each cell
+#' @export
+summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = "chains",
+                          sep = ";") {
+
+  # Fetch V(D)J data
+  fetch_cols <- vdj_cols
+
+  if (!is.null(chain)) {
+    fetch_cols <- c(vdj_cols, chain_col)
+  }
+
+  res <- fetch_vdj(
+    input,
+    clonotype_col = NULL,
+    vdj_cols      = fetch_cols,
+    sep           = sep,
+    unnest        = FALSE
+  )
+
+  # Column names
+  fn_nm <- as.character(substitute(fn))
+  nms   <- "{fn_nm}_{.col}"
+
+  # Filter chains
+  if (!is.null(chain)) {
+    .map_fn <- function(x, chns) {
+      purrr::map2(x, chns, ~ {
+        r <- .x[.y %in% chain]
+
+        ifelse(is_empty(r), as.numeric(NA), r)
+      })
+    }
+
+    res <- dplyr::mutate(
+      res,
+      across(
+        all_of(vdj_cols),
+        ~ .map_fn(.x, !!sym(chain_col)),
+        .names = nms
+      )
+    )
+
+    vdj_cols <- paste0(fn_nm, "_", vdj_cols)
+    nms      <- NULL
+  }
+
+  # Summarize columns
+  .map_fn <- function(x) {
+    purrr::map_dbl(x, fn)
+  }
+
+  res <- dplyr::mutate(
+    res,
+    across(
+      all_of(vdj_cols),
+      .map_fn,
+      .names = nms
+    )
+  )
+
+  res
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #' Add meta.data to single cell object
@@ -227,11 +381,11 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' e.g., c(umis = "numeric")
 #' @return data.frame
 #' @noRd
-.split_vdj <- function(df_in, sep = ";", sep_cols, expand = FALSE,
-                       coerce_cols = c(
-                         umis        = "numeric", reads          = "numeric",
-                         cdr3_length = "numeric", cdr3_nt_length = "numeric",
-                         productive  = "logical", full_length    = "logical"
+.unnest_vdj <- function(df_in, sep = ";", sep_cols, unnest = FALSE,
+                        coerce_cols = c(
+                          umis        = "numeric", reads          = "numeric",
+                          cdr3_length = "numeric", cdr3_nt_length = "numeric",
+                          productive  = "logical", full_length    = "logical"
                        )) {
 
   # Add new set of columns based on sep_cols names
@@ -252,12 +406,15 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
       Class <- .x
       clmn <- sym(.y)
 
-      res <<- dplyr::mutate(res, !!clmn := map(!!clmn, .convert_char, Class))
+      res <<- dplyr::mutate(
+        res,
+        !!clmn := map(!!clmn, .convert_char, Class)
+      )
     })
   }
 
   # Unnest columns
-  if (expand) {
+  if (unnest) {
     res <- tidyr::unnest(res, all_of(unname(sep_cols)))
   }
 
@@ -286,7 +443,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
     cols_in <- cols_in[cols_in != ".cell_id"]
   }
 
-  # If cols_in is NULL, identify columns with VDJ data based on NAs in
+  # If cols_in is NULL, identify columns with V(D)J data based on NAs in
   # clone_col
   if (is.null(cols_in)) {
     cols_in <- dplyr::mutate(
@@ -302,7 +459,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
     cols_in <- colnames(cols_in)
   }
 
-  # Identify columns to split based on sep
+  # Identify columns to unnest based on sep
   sep_cols <- NULL
 
   if (!is.null(sep)) {
@@ -333,7 +490,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' @return Coerced vector
 #' @importFrom methods as
 #' @noRd
-.convert_char <- function(x, Class) {
+.convert_char <- function(x, Class = NULL) {
 
   if (!is.character(x)) {
     return(x)
