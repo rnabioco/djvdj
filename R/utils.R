@@ -117,8 +117,9 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' in the same rows as clonotype_col.
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param unnest If FALSE, a nested data.frame is returned where each row
-#' represents a cell and V(D)J data is stored as list-cols
-#' @return data.frame containing per-chain V(D)J data
+#' represents a cell and V(D)J data is stored as list-cols. If TRUE columns are
+#' unnested so each row represents a chain
+#' @return data.frame containing V(D)J data
 #' @export
 fetch_vdj <- function(input, clonotype_col = "clonotype_id", vdj_cols = NULL, sep = ";",
                       unnest = TRUE) {
@@ -134,7 +135,6 @@ fetch_vdj <- function(input, clonotype_col = "clonotype_id", vdj_cols = NULL, se
     sep       = sep
   )
 
-  vdj_cols <- col_list$vdj
   sep_cols <- col_list$sep
 
   if (purrr::is_empty(sep_cols)) {
@@ -149,8 +149,8 @@ fetch_vdj <- function(input, clonotype_col = "clonotype_id", vdj_cols = NULL, se
   # Unnest V(D)J data
   res <- .unnest_vdj(
     meta,
-    sep      = sep,
     sep_cols = sep_cols,
+    sep      = sep,
     unnest   = unnest
   )
 
@@ -158,20 +158,29 @@ fetch_vdj <- function(input, clonotype_col = "clonotype_id", vdj_cols = NULL, se
 }
 
 
-#' Summarize numeric V(D)J data
+#' Summarize V(D)J data for each cell
+#'
+#' Summarize values present for each column provided to the vdj_cols argument.
+#' The provided function will be applied to all values present for the cell.
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param vdj_cols meta.data columns containing V(D)J data to summarize for
 #' each cell
-#' @param fn Function or list of funcitons to use for summarizing vdj_cols
+#' @param fn Function to apply to each of the selected columns, possible values
+#' are: a function, e.g. mean; a purrr-style lambda, e.g. ~ mean(.x, na.rm =
+#' TRUE)
 #' @param chain Chain to use for summarizing V(D)J data
 #' @param chain_col meta.data column(s) containing chains for each cell
+#' @param .names A glue specification that describes how to name the output
+#' columns, this can use {.col} to stand for the selected column name
+#' @param return_df Return results as a data.frame. If FALSE, results will be
+#' added to the input object.
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame containing V(D)J data summarized for each cell
 #' @export
 summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = "chains",
-                          sep = ";") {
+                          sep = ";", .names = "{.col}", return_df = FALSE) {
 
   # Fetch V(D)J data
   fetch_cols <- vdj_cols
@@ -188,64 +197,87 @@ summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = 
     unnest        = FALSE
   )
 
-  # Column names
-  fn_nm <- as.character(substitute(fn))
-  nms   <- "{fn_nm}_{.col}"
-
   # Filter chains
   if (!is.null(chain)) {
-    .map_fn <- function(x, chns) {
-      purrr::map2(x, chns, ~ {
-        r <- .x[.y %in% chain]
 
-        ifelse(is_empty(r), as.numeric(NA), r)
-      })
+    # Function to filter chains
+    .map_fn <- function(x, chns) {
+      r <- x[chns %in% chain]
+
+      if (is_empty(r)) {
+        r <- as.numeric(NA)
+      }
+
+      list(r)
     }
+
+    # Prefix for temporary columns
+    prfx <- "FILT_"
+
+    # Filter chains
+    res  <- dplyr::rowwise(res)
 
     res <- dplyr::mutate(
       res,
       across(
         all_of(vdj_cols),
         ~ .map_fn(.x, !!sym(chain_col)),
-        .names = nms
+        .names = paste0(prfx, "{.col}")
       )
     )
 
-    vdj_cols <- paste0(fn_nm, "_", vdj_cols)
-    nms      <- NULL
+    res <- dplyr::ungroup(res)
+
+    # Add prefix to vdj_cols so the temporary columns are used
+    vdj_cols <- paste0(prfx, vdj_cols)
+
+    # Set .names so prefix is removed from columns
+    .names <- gsub(
+      "\\{.col\\}",
+      paste0('{sub(\\"^', prfx, '\\", "", .col)}'),
+      .names
+    )
   }
 
   # Summarize columns
-  .map_fn <- function(x) {
-    purrr::map_dbl(x, fn)
-  }
+  res <- dplyr::rowwise(res)
 
   res <- dplyr::mutate(
     res,
     across(
       all_of(vdj_cols),
-      .map_fn,
-      .names = nms
+      .fns   = fn,
+      .names = .names
     )
   )
 
+  # If chain provided remove extra columns
+  if (!is.null(chain)) {
+    res <- dplyr::select(res, -all_of(vdj_cols))
+  }
+
+  # Re-nest vdj_cols
+  res <- dplyr::rowwise(res)
+
+  res <- mutate(
+    res,
+    across(
+      any_of(fetch_cols),
+      ~ paste0(as.character(.x), collapse = sep)
+    )
+  )
+
+  res <- dplyr::ungroup(res)
+
+  # Add results back to object
+  if (return_df) {
+    input <- res
+  }
+
+  res <- .add_meta(input, meta = res)
+
   res
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #' Add meta.data to single cell object
@@ -373,20 +405,12 @@ summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = 
 #' Split V(D)J meta.data columns into vectors
 #'
 #' @param df_in data.frame to modify
-#' @param sep Separator used for storing per cell V(D)J data
 #' @param sep_cols Columns to split based on sep
-#' @param expand Should columns be unnested after splitting into vectors
-#' @param coerce_cols Named vector specifying columns that should be coerced to
-#' a new type. The vector names should be the name of each column,
-#' e.g., c(umis = "numeric")
-#' @return data.frame
+#' @param unnest Should columns be unnested after splitting into vectors
+#' @param sep Separator used for storing per cell V(D)J data
+#' @return data.frame with V(D)J data
 #' @noRd
-.unnest_vdj <- function(df_in, sep = ";", sep_cols, unnest = FALSE,
-                        coerce_cols = c(
-                          umis        = "numeric", reads          = "numeric",
-                          cdr3_length = "numeric", cdr3_nt_length = "numeric",
-                          productive  = "logical", full_length    = "logical"
-                       )) {
+.unnest_vdj <- function(df_in, sep_cols, unnest = TRUE, sep = ";") {
 
   # Add new set of columns based on sep_cols names
   # this is useful if want to leave original columns unmodified
@@ -398,24 +422,26 @@ summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = 
     ~ strsplit(as.character(.x), sep)
   ))
 
+  # Get types to use for coercing columns
+  # use first 1000 rows containing V(D)J data
+  typs <- dplyr::select(res, all_of(sep_cols))
+  typs <- dplyr::rowwise(typs)
+  typs <- dplyr::filter(typs, if_all(all_of(sep_cols), ~ any(!is.na(.x))))
+
+  typs <- head(typs, 1000)
+  typs <- tidyr::unnest(typs, everything())
+  typs <- purrr::map(typs, readr::guess_parser)
+
   # Coerce columns to correct types
-  if (!is.null(coerce_cols)) {
-    coerce_cols <- coerce_cols[names(coerce_cols) %in% sep_cols]
+  purrr::iwalk(typs, ~ {
+    res <-  dplyr::rowwise(res)
+    res <-  dplyr::mutate(res, !!sym(.y) := list(as(!!sym(.y), .x)))
+    res <<- dplyr::ungroup(res)
+  })
 
-    purrr::iwalk(coerce_cols, ~ {
-      Class <- .x
-      clmn <- sym(.y)
-
-      res <<- dplyr::mutate(
-        res,
-        !!clmn := map(!!clmn, .convert_char, Class)
-      )
-    })
-  }
-
-  # Unnest columns
+  # Unnest data.frame
   if (unnest) {
-    res <- tidyr::unnest(res, all_of(unname(sep_cols)))
+    res <- tidyr::unnest(res, all_of(sep_cols))
   }
 
   res
@@ -481,23 +507,3 @@ summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = 
 
   res
 }
-
-
-#' Attempt to coerce a character vector to a given class
-#'
-#' @param x Character vector to coerce
-#' @param Class Name of the class to which x should be coerced
-#' @return Coerced vector
-#' @importFrom methods as
-#' @noRd
-.convert_char <- function(x, Class = NULL) {
-
-  if (!is.character(x)) {
-    return(x)
-  }
-
-  fn <- function() as(x, Class)
-
-  suppressWarnings(ifelse(!is.na(fn()) | is.na(x), fn(), x))
-}
-
