@@ -110,19 +110,20 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param vdj_cols meta.data columns containing V(D)J data to unnest. If NULL
+#' data is automatically selected by identifying columns that have NAs in the
+#' same rows as clonotype_col.
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
-#' is used to determine which cells have V(D)J data.
-#' @param vdj_cols meta.data columns containing V(D)J data to fetch. If set to
-#' NULL columns are automatically selected by identifying columns that have NAs
-#' in the same rows as clonotype_col.
-#' @param sep Separator used for storing per cell V(D)J data
+#' is used to determine which cells have V(D)J data. If both clonotype_col and
+#' vdj_cols are NULL, all columns are included.
 #' @param unnest If FALSE, a nested data.frame is returned where each row
 #' represents a cell and V(D)J data is stored as list-cols. If TRUE columns are
 #' unnested so each row represents a chain
+#' @param sep Separator used for storing per cell V(D)J data. This is used to
+#' identify columns containing per-chain data that can be unnested.
 #' @return data.frame containing V(D)J data
 #' @export
-fetch_vdj <- function(input, clonotype_col = "clonotype_id", vdj_cols = NULL, sep = ";",
-                      unnest = TRUE) {
+fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRUE, sep = ";") {
 
   # Format input data
   meta <- .get_meta(input)
@@ -130,7 +131,7 @@ fetch_vdj <- function(input, clonotype_col = "clonotype_id", vdj_cols = NULL, se
   # Identify columns with V(D)J data
   col_list <- .get_vdj_cols(
     df_in     = meta,
-    clone_col = clonotype_col,
+    clone_col = NULL,
     cols_in   = vdj_cols,
     sep       = sep
   )
@@ -172,7 +173,7 @@ fetch_vdj <- function(input, clonotype_col = "clonotype_id", vdj_cols = NULL, se
 #' TRUE)
 #' @param chain Chain to use for summarizing V(D)J data
 #' @param chain_col meta.data column(s) containing chains for each cell
-#' @param .names A glue specification that describes how to name the output
+#' @param col_names A glue specification that describes how to name the output
 #' columns, this can use {.col} to stand for the selected column name
 #' @param return_df Return results as a data.frame. If FALSE, results will be
 #' added to the input object.
@@ -180,7 +181,7 @@ fetch_vdj <- function(input, clonotype_col = "clonotype_id", vdj_cols = NULL, se
 #' @return data.frame containing V(D)J data summarized for each cell
 #' @export
 summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = "chains",
-                          sep = ";", .names = "{.col}", return_df = FALSE) {
+                          sep = ";", col_names = "{.col}", return_df = FALSE) {
 
   # Fetch V(D)J data
   fetch_cols <- vdj_cols
@@ -228,14 +229,14 @@ summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = 
 
     res <- dplyr::ungroup(res)
 
-    # Add prefix to vdj_cols so the temporary columns are used
+    # Add prefix to vdj_cols so temporary columns are used
     vdj_cols <- paste0(prfx, vdj_cols)
 
-    # Set .names so prefix is removed from columns
-    .names <- gsub(
+    # Set col_names so prefix is removed from columns
+    col_names <- gsub(
       "\\{.col\\}",
       paste0('{sub(\\"^', prfx, '\\", "", .col)}'),
-      .names
+      col_names
     )
   }
 
@@ -247,11 +248,11 @@ summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = 
     across(
       all_of(vdj_cols),
       .fns   = fn,
-      .names = .names
+      .names = col_names
     )
   )
 
-  # If chain provided remove extra columns
+  # If chain provided remove temporary columns
   if (!is.null(chain)) {
     res <- dplyr::select(res, -all_of(vdj_cols))
   }
@@ -452,12 +453,13 @@ summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = 
 #'
 #' @param df_in data.frame
 #' @param clone_col Column containing clonotype IDs to use for identifying
-#' columns with V(D)J data. If both clone_col and cols_in are set to NULL all
-#' columns are used.
-#' @param cols_in meta.data columns containing V(D)J data to use for filtering.
-#' If set to NULL (the default) columns are automatically selected by
-#' identifying columns that have NAs in the same rows as clone_col.
-#' @param sep Separator used for storing per cell V(D)J data
+#' columns with V(D)J data. If both clone_col and cols_in are NULL, all columns
+#' are included.
+#' @param cols_in meta.data columns containing V(D)J data. If NULL (the
+#' default) data are selected by identifying columns that have NAs in the same
+#' rows as clone_col.
+#' @param sep Separator used for storing per cell V(D)J data. This is used to
+#' identify columns containing per-chain data that can be unnested.
 #' @return List with two vectors, one containing columns with V(D)J data and
 #' the other containing columns where separator has been detected.
 #' @noRd

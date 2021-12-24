@@ -28,11 +28,11 @@ the cell}
 (default) V(D)J data will be removed from the meta.data but no cells will be
 removed from the object.}
 
-\item{vdj_cols}{meta.data columns containing VDJ data to use for filtering.}
+\item{vdj_cols}{meta.data columns containing V(D)J data to use for filtering.
+If set to NULL (recommended) columns are automatically selected by
+identifying columns that have NAs in the same rows as clonotype_col.}
 
-\item{sep}{Separator used for storing per cell V(D)J data
-If set to NULL (recommended) columns are automatically selected based on the
-given separator.}
+\item{sep}{Separator used for storing per cell V(D)J data}
 }
 \value{
 Object with filtered meta.data
