@@ -7,13 +7,10 @@ plot_features <- function(input, ...) {
 
 }
 
-#' @rdname plot_features
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
-#' @param feature Variable to use for coloring points
-#' @param data_slot Slot in the Seurat object to pull data
 #' @param plot_colors Vector of colors to use for plot
 #' @param plot_lvls Levels to use for ordering feature
 #' @param min_q Minimum quantile cutoff for color scale.
@@ -22,6 +19,7 @@ plot_features <- function(input, ...) {
 #' @param ... Additional arguments to pass to geom_point()
 #' @return ggplot object
 #' @export
+#' @name plot_features
 plot_features.default <- function(input, x = "UMAP_1", y = "UMAP_2", feature, plot_colors = NULL,
                                   plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90", ...) {
 
@@ -96,6 +94,8 @@ plot_features.default <- function(input, x = "UMAP_1", y = "UMAP_2", feature, pl
 }
 
 #' @rdname plot_features
+#' @param feature Variable to use for coloring points
+#' @param data_slot Slot in the Seurat object to pull data
 #' @importFrom Seurat FetchData
 #' @export
 plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
@@ -119,7 +119,7 @@ plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, dat
   plt_dat <- .merge_meta(input, plt_dat)
   plt_dat <- .get_meta(plt_dat)
 
-  plot_features(
+  res <- plot_features(
     input       = plt_dat,
     x           = x,
     y           = y,
@@ -131,6 +131,320 @@ plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, dat
     na_color    = na_color,
     ...
   )
+
+  res
+}
+
+
+#' @rdname plot_features
+#' @export
+plot_vdj_umap <- function(input, ...) {
+
+  UseMethod("plot_vdj_umap", input)
+
+}
+
+#' @rdname plot_features
+#' @param data_col meta.data column containing V(D)J data to use for coloring
+#' cells
+#' @param summary_fn Function to use for summarizing values for each cell, e.g.
+#' specifying stats::median will plot the median value per cell
+#' @param chain Chain(s) to use for plotting, set to NULL to include all chains
+#' @param chain_col meta.data column containing chains for each cell
+#' @param sep Separator used for storing per cell V(D)J data
+#' @param ... Additional arguments to pass to ggplot geom
+#' @export
+plot_vdj_umap.default <- function(input, x = "UMAP_1", y = "UMAP_2", data_col, summary_fn = mean, chain = NULL,
+                                  plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
+                                  chain_col = "chains", sep = ";", ...) {
+
+  plt_dat <- .get_meta(input)
+
+  plt_dat <- summarize_vdj(
+    plt_dat,
+    vdj_cols  = data_col,
+    fn        = summary_fn,
+    chain     = chain,
+    chain_col = chain_col,
+    sep       = sep,
+    return_df = TRUE
+  )
+
+  res <- plot_features(
+    plt_dat,
+    x        = x,
+    y        = y,
+    feature  = data_col,
+    min_q    = min_q,
+    max_q    = max_q,
+    na_color = na_color,
+    ...
+  )
+
+  res
+}
+
+#' @rdname plot_features
+#' @param data_slot Slot in the Seurat object to pull data
+#' @importFrom Seurat FetchData
+#' @export
+plot_vdj_umap.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", data_col, data_slot = "data", summary_fn = mean,
+                                 chain = NULL, plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
+                                 chain_col = "chains", sep = ";", ...) {
+
+  # Fetch variables and add to meta.data
+  # want input data to include meta.data and any features from FetchData
+  plt_vars <- c(x, y, feature)
+
+  suppressWarnings({
+    plt_dat <- Seurat::FetchData(
+      input,
+      vars = unique(plt_vars),
+      slot = as.character(data_slot)
+    )
+  })
+
+  # Format input data
+  # keep rownames since default method will create rowname column
+  plt_dat <- .merge_meta(input, plt_dat)
+  plt_dat <- .get_meta(plt_dat)
+
+  res <- plot_vdj_umap(
+    plt_dat,
+    x          = x,
+    y          = y,
+    data_col   = data_col,
+    summary_fn = summary_fn,
+    chain      = chain_col,
+    plot_lvls  = plot_lvls,
+    min_q      = min_q,
+    max_q      = max_q,
+    na_color   = na_color,
+    chain_col  = chain_col,
+    sep        = sep,
+    ...
+  )
+
+  res
+}
+
+
+#' Plot continuous V(D)J data
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, cell barcodes should be stored as row names.
+#' @param data_cols meta.data column(s) containing continuous V(D)J data to
+#' plot
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' grouping cells when plotting CDR3 lengths
+#' @param chain Chain(s) to use for plotting, set to NULL to include all chains
+#' @param type Type of plot to create, can be 'histogram', 'density',
+#' 'boxplot', or 'violin'
+#' @param yaxis Units to use for y-axis when plotting histogram. Use
+#' 'frequency' to show the raw number of values or 'percent' to show
+#' the percentage of total values.
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_lvls Character vector containing levels for ordering
+#' @param chain_col meta.data column containing chains for each cell
+#' @param sep Separator used for storing per cell V(D)J data
+#' @param ... Additional arguments to pass to ggplot geom
+#' @return ggplot object
+#' @name plot_vdj
+NULL
+
+#' @rdname plot_vdj
+#' @param per_cell Should values be plotted per cell, i.e. each data point
+#' would represent one cell. If TRUE, values will be summarized for each cell
+#' using summary_fn. If FALSE, values will be plotted per chain.
+#' @param summary_fn Function to use for summarizing values for each cell, e.g.
+#' specifying stats::median will plot the median value per cell
+#' @param alpha Color transparency
+#' @param log_trans If TRUE, axis will be log10 transformed
+#' @export
+plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
+                     type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, alpha = 0.5,
+                     log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
+
+  fn <- function(clmn) {
+    .plot_vdj(
+      input,
+      data_col    = clmn,
+      per_cell    = per_cell,
+      cluster_col = cluster_col,
+      chain       = chain,
+      type        = type,
+      yaxis       = yaxis,
+      plot_colors = plot_colors,
+      plot_lvls   = plot_lvls,
+      log_trans   = log_trans,
+      chain_col   = chain_col,
+      sep         = sep,
+      ...
+    )
+  }
+
+  res <- purrr::map(data_cols, fn)
+
+  # Combine plots
+  res <- purrr::reduce(res, `+`)
+
+  res
+}
+
+#' @rdname plot_vdj
+#' @noRd
+.plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
+                      type = "boxplot", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, alpha = 0.5,
+                      log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
+
+  # Check inputs
+  if (length(data_col) != 1) {
+    stop("Must specify only one value for data_col")
+  }
+
+  # Format input data
+  if (per_cell) {
+    plt_dat <- summarize_vdj(
+      input,
+      vdj_cols  = data_col,
+      fn        = summary_fn,
+      chain     = chain,
+      chain_col = chain_col,
+      sep       = sep,
+      return_df = TRUE
+    )
+
+  } else {
+    fetch_cols <- data_col
+
+    if (!is.null(chain)) {
+      fetch_cols <- c(chain_col, fetch_cols)
+    }
+
+    plt_dat <- fetch_vdj(
+      input,
+      vdj_cols      = fetch_cols,
+      clonotype_col = clonotype_col,
+      unnest        = TRUE
+    )
+
+    if (!is.null(chain)) {
+      plt_dat <- dplyr::filter(plt_dat, !!sym(chain_col) %in% chain)
+    }
+  }
+
+  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
+
+  # Order clusters based on plot_lvls
+  plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+
+  # Create violin plot
+  if (type %in% c("histogram", "density")) {
+    res <- .create_hist(
+      plt_dat,
+      x         = data_col,
+      .color    = cluster_col,
+      .fill     = cluster_col,
+      clrs      = plot_colors,
+      type      = type,
+      yaxis     = yaxis,
+      log_trans = log_trans,
+      alpha     = alpha,
+      ...
+    )
+
+    return(res)
+  }
+
+  res <- .create_boxes(
+    plt_dat,
+    x         = cluster_col,
+    y         = data_col,
+    .color    = cluster_col,
+    .fill     = cluster_col,
+    clrs      = plot_colors,
+    type      = type,
+    log_trans = log_trans,
+    alpha     = alpha,
+    ...
+  )
+
+  res
+}
+
+#' @rdname plot_vdj
+#' @export
+plot_vdj_reads <- function(input, data_cols = c("reads", "umis"), cluster_col = NULL, chain = NULL,
+                           type = "violin", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
+                           chain_col = "chains", sep = ";", ...) {
+
+  res <- plot_vdj(
+    input,
+    data_cols   = data_cols,
+    per_cell    = FALSE,
+    cluster_col = cluster_col,
+    chain       = chain,
+    type        = type,
+    yaxis       = yaxis,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    log_trans   = TRUE,
+    chain_col   = chain_col,
+    sep         = sep,
+    ...
+  )
+
+  res
+}
+
+#' @rdname plot_vdj
+#' @export
+plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NULL, chain = NULL,
+                             type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
+                             chain_col = "chains", sep = ";", ...) {
+
+  res <- plot_vdj(
+    input,
+    data_cols   = data_cols,
+    per_cell    = FALSE,
+    cluster_col = cluster_col,
+    chain       = chain,
+    type        = type,
+    yaxis       = yaxis,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    log_trans   = TRUE,
+    chain_col   = chain_col,
+    sep         = sep,
+    ...
+  )
+
+  res
+}
+
+#' @rdname plot_vdj
+#' @export
+plot_vdj_indels <- function(input, data_cols = c("n_insertion", "n_deletion", "n_mismatch"), cluster_col = NULL, chain = NULL,
+                            type = "violin", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
+                            chain_col = "chains", sep = ";", ...) {
+
+  res <- plot_vdj(
+    input,
+    data_cols   = data_cols,
+    per_cell    = FALSE,
+    cluster_col = cluster_col,
+    chain       = chain,
+    type        = type,
+    yaxis       = yaxis,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    log_trans   = FALSE,
+    chain_col   = chain_col,
+    sep         = sep,
+    ...
+  )
+
+  res
 }
 
 
@@ -1148,224 +1462,5 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
   }
 
   df_in
-}
-
-
-#' Plot continuous V(D)J data
-#'
-#' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, cell barcodes should be stored as row names.
-#' @param data_cols meta.data column(s) containing continuous V(D)J data to
-#' plot
-#' @param cluster_col meta.data column containing cluster IDs to use for
-#' grouping cells when plotting CDR3 lengths
-#' @param chain Chain(s) to use for plotting, set to NULL to include all chains
-#' @param type Type of plot to create, can be 'histogram', 'density',
-#' 'boxplot', or 'violin'
-#' @param yaxis Units to use for y-axis when plotting histogram. Use
-#' 'frequency' to show the raw number of values or 'percent' to show
-#' the percentage of total values.
-#' @param plot_colors Character vector containing colors for plotting
-#' @param plot_lvls Character vector containing levels for ordering
-#' @param chain_col meta.data column containing chains for each cell
-#' @param sep Separator used for storing per cell V(D)J data
-#' @param ... Additional arguments to pass to ggplot geom
-#' @return ggplot object
-#' @name plot_vdj
-NULL
-
-#' @rdname plot_vdj
-#' @param per_cell Should values be plotted per cell, i.e. each data point
-#' would represent one cell. If TRUE, values will be summarized for each cell
-#' using summary_fn. If FALSE, values will be plotted per chain.
-#' @param summary_fn Function to use for summarizing values for each cell, e.g.
-#' specifying stats::median will plot the median value per cell
-#' @param alpha Color transparency
-#' @param log_trans If TRUE, axis will be log10 transformed
-#' @export
-plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
-                     type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, alpha = 0.5,
-                     log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
-
-  fn <- function(clmn) {
-    .plot_vdj(
-      input,
-      data_col    = clmn,
-      per_cell    = per_cell,
-      cluster_col = cluster_col,
-      chain       = chain,
-      type        = type,
-      yaxis       = yaxis,
-      plot_colors = plot_colors,
-      plot_lvls   = plot_lvls,
-      log_trans   = log_trans,
-      chain_col   = chain_col,
-      sep         = sep,
-      ...
-    )
-  }
-
-  res <- purrr::map(data_cols, fn)
-
-  # Combine plots
-  res <- purrr::reduce(res, `+`)
-
-  res
-}
-
-#' @rdname plot_vdj
-#' @noRd
-.plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
-                      type = "boxplot", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, alpha = 0.5,
-                      log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
-
-  # Check inputs
-  if (length(data_col) != 1) {
-    stop("Must specify only one value for data_col")
-  }
-
-  # Format input data
-  if (per_cell) {
-    plt_dat <- summarize_vdj(
-      input,
-      vdj_cols  = data_col,
-      fn        = summary_fn,
-      chain     = chain,
-      chain_col = chain_col,
-      sep       = sep,
-      return_df = TRUE
-    )
-
-  } else {
-    fetch_cols <- data_col
-
-    if (!is.null(chain)) {
-      fetch_cols <- c(chain_col, fetch_cols)
-    }
-
-    plt_dat <- fetch_vdj(
-      input,
-      vdj_cols      = fetch_cols,
-      clonotype_col = clonotype_col,
-      unnest        = TRUE
-    )
-
-    if (!is.null(chain)) {
-      plt_dat <- dplyr::filter(plt_dat, !!sym(chain_col) %in% chain)
-    }
-  }
-
-  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
-
-  # Order clusters based on plot_lvls
-  plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
-
-  # Create violin plot
-  if (type %in% c("histogram", "density")) {
-    res <- .create_hist(
-      plt_dat,
-      x         = data_col,
-      .color    = cluster_col,
-      .fill     = cluster_col,
-      clrs      = plot_colors,
-      type      = type,
-      yaxis     = yaxis,
-      log_trans = log_trans,
-      alpha     = alpha,
-      ...
-    )
-
-    return(res)
-  }
-
-  res <- .create_boxes(
-    plt_dat,
-    x         = cluster_col,
-    y         = data_col,
-    .color    = cluster_col,
-    .fill     = cluster_col,
-    clrs      = plot_colors,
-    type      = type,
-    log_trans = log_trans,
-    alpha     = alpha,
-    ...
-  )
-
-  res
-}
-
-#' @rdname plot_vdj
-#' @export
-plot_vdj_reads <- function(input, data_cols = c("reads", "umis"), cluster_col = NULL, chain = NULL,
-                           type = "violin", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
-                           chain_col = "chains", sep = ";", ...) {
-
-  res <- plot_vdj(
-    input,
-    data_cols   = data_cols,
-    per_cell    = FALSE,
-    cluster_col = cluster_col,
-    chain       = chain,
-    type        = type,
-    yaxis       = yaxis,
-    plot_colors = plot_colors,
-    plot_lvls   = plot_lvls,
-    log_trans   = TRUE,
-    chain_col   = chain_col,
-    sep         = sep,
-    ...
-  )
-
-  res
-}
-
-#' @rdname plot_vdj
-#' @export
-plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NULL, chain = NULL,
-                             type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
-                             chain_col = "chains", sep = ";", ...) {
-
-  res <- plot_vdj(
-    input,
-    data_cols   = data_cols,
-    per_cell    = FALSE,
-    cluster_col = cluster_col,
-    chain       = chain,
-    type        = type,
-    yaxis       = yaxis,
-    plot_colors = plot_colors,
-    plot_lvls   = plot_lvls,
-    log_trans   = TRUE,
-    chain_col   = chain_col,
-    sep         = sep,
-    ...
-  )
-
-  res
-}
-
-#' @rdname plot_vdj
-#' @export
-plot_vdj_indels <- function(input, data_cols = c("n_insertion", "n_deletion", "n_mismatch"), cluster_col = NULL, chain = NULL,
-                            type = "violin", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
-                            chain_col = "chains", sep = ";", ...) {
-
-  res <- plot_vdj(
-    input,
-    data_cols   = data_cols,
-    per_cell    = FALSE,
-    cluster_col = cluster_col,
-    chain       = chain,
-    type        = type,
-    yaxis       = yaxis,
-    plot_colors = plot_colors,
-    plot_lvls   = plot_lvls,
-    log_trans   = FALSE,
-    chain_col   = chain_col,
-    sep         = sep,
-    ...
-  )
-
-  res
 }
 

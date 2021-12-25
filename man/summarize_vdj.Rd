@@ -24,7 +24,7 @@ each cell}
 
 \item{fn}{Function to apply to each of the selected columns, possible values
 are: a function, e.g. mean; a purrr-style lambda, e.g. ~ mean(.x, na.rm =
-TRUE)}
+TRUE). If NULL, unmodified meta.data is returned.}
 
 \item{chain}{Chain to use for summarizing V(D)J data}
 

@@ -4,6 +4,9 @@
 \alias{plot_features}
 \alias{plot_features.default}
 \alias{plot_features.Seurat}
+\alias{plot_vdj_umap}
+\alias{plot_vdj_umap.default}
+\alias{plot_vdj_umap.Seurat}
 \title{Create 2D feature plot}
 \usage{
 plot_features(input, ...)
@@ -34,12 +37,47 @@ plot_features(input, ...)
   na_color = "grey90",
   ...
 )
+
+plot_vdj_umap(input, ...)
+
+\method{plot_vdj_umap}{default}(
+  input,
+  x = "UMAP_1",
+  y = "UMAP_2",
+  data_col,
+  summary_fn = mean,
+  chain = NULL,
+  plot_lvls = NULL,
+  min_q = NULL,
+  max_q = NULL,
+  na_color = "grey90",
+  chain_col = "chains",
+  sep = ";",
+  ...
+)
+
+\method{plot_vdj_umap}{Seurat}(
+  input,
+  x = "UMAP_1",
+  y = "UMAP_2",
+  data_col,
+  data_slot = "data",
+  summary_fn = mean,
+  chain = NULL,
+  plot_lvls = NULL,
+  min_q = NULL,
+  max_q = NULL,
+  na_color = "grey90",
+  chain_col = "chains",
+  sep = ";",
+  ...
+)
 }
 \arguments{
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{...}{Additional arguments to pass to geom_point()}
+\item{...}{Additional arguments to pass to ggplot geom}
 
 \item{x}{Variable to plot on x-axis}
 
@@ -58,6 +96,18 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 \item{na_color}{Color to use for missing values}
 
 \item{data_slot}{Slot in the Seurat object to pull data}
+
+\item{data_col}{meta.data column containing V(D)J data to use for coloring
+cells}
+
+\item{summary_fn}{Function to use for summarizing values for each cell, e.g.
+specifying stats::median will plot the median value per cell}
+
+\item{chain}{Chain(s) to use for plotting, set to NULL to include all chains}
+
+\item{chain_col}{meta.data column containing chains for each cell}
+
+\item{sep}{Separator used for storing per cell V(D)J data}
 }
 \value{
 ggplot object

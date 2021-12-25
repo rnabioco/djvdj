@@ -109,7 +109,7 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
 #' each cell
 #' @param fn Function to apply to each of the selected columns, possible values
 #' are: a function, e.g. mean; a purrr-style lambda, e.g. ~ mean(.x, na.rm =
-#' TRUE)
+#' TRUE). If NULL, unmodified meta.data is returned.
 #' @param chain Chain to use for summarizing V(D)J data
 #' @param chain_col meta.data column(s) containing chains for each cell
 #' @param col_names A glue specification that describes how to name the output
@@ -121,6 +121,15 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
 #' @export
 summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = "chains",
                           sep = ";", col_names = "{.col}", return_df = FALSE) {
+
+  # Return unmodified when fn NULL
+  if (is.null(fn)) {
+    if (return_df) {
+      input <- .get_meta(input)
+    }
+
+    return(input)
+  }
 
   # Fetch V(D)J data
   fetch_cols <- vdj_cols
