@@ -134,183 +134,6 @@ plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, dat
 }
 
 
-#' Plot read support for chains
-#'
-#' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param data_cols meta.data columns containing UMI and/or read counts
-#' @param chain_col meta.data column containing chains. If chain_col is
-#' provided, reads and UMIs will be plotted separately for each chain
-#' @param cluster_col meta.data column containing cluster IDs. If cluster_col
-#' is provided reads and UMIs will be plotted separately for each cluster.
-#' @param type Type of plot to create, can be 'violin', 'histogram' or 'density'
-#' @param plot_colors Character vector containing colors for plotting
-#' @param plot_lvls Character vector containing levels for ordering
-#' @param facet_rows The number of facet rows. Use this argument if both
-#' chain_col and cluster_col are provided
-#' @param facet_scales This argument passes a scales specification to
-#' facet_wrap. Can be "fixed", "free", "free_x", or "free_y".
-#' @param sep Separator used for storing per cell V(D)J data
-#' @param ... Additional arguments to pass to ggplot
-#' @return ggplot object
-#' @export
-plot_reads <- function(input, data_cols = c("reads", "umis"), chain_col = "chains", cluster_col = NULL,
-                       type = "violin", plot_colors = NULL, plot_lvls = NULL, facet_rows = 1,
-                       facet_scales = "free_x", sep = ";", ...) {
-
-  if (!type %in% c("violin", "histogram", "density")) {
-    stop("type must be 'violin', 'histogram' or 'density'.")
-  }
-
-  # Calculate mean reads/umis for each chain for each cell
-  plt_dat <- summarize_chains(
-    input,
-    data_cols    = data_cols,
-    fn           = mean,
-    chain_col    = chain_col,
-    include_cols = cluster_col,
-    sep          = sep
-  )
-
-  # Format data for plotting
-  plt_dat <- tidyr::pivot_longer(
-    plt_dat,
-    cols      = all_of(data_cols),
-    names_to  = "key",
-    values_to = "counts"
-  )
-
-  if (!is.null(cluster_col)) {
-    plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
-  }
-
-  # Calculate median counts for each chain
-  box_stats <- dplyr::group_by(
-    plt_dat,
-    !!!syms(c(chain_col, cluster_col, "key"))
-  )
-
-  box_stats <- dplyr::summarize(
-    box_stats,
-    med     = stats::median(.data$counts),
-    .groups = "drop"
-  )
-
-  # Set chain_col
-  if (!is.null(chain_col)) {
-    lvls <- dplyr::group_by(plt_dat, !!sym(chain_col))
-
-    lvls <- dplyr::summarise(
-      lvls,
-      n       = dplyr::n_distinct(.data$.cell_id),
-      .groups = "drop"
-    )
-
-    lvls <- dplyr::arrange(lvls, desc(n))
-    lvls <- pull(lvls, chain_col)
-
-    plt_dat <- .set_lvls(plt_dat, chain_col, lvls)
-
-    chain_col <- sym(chain_col)
-
-  } else if (!is.null(cluster_col)) {
-    chain_col <- sym(cluster_col)
-
-  } else {
-    chain_col <- "counts"
-    box_stats <- dplyr::mutate(box_stats, !!sym(chain_col) := chain_col)
-  }
-
-  # Create violin plots
-  if (type == "violin") {
-    res <- ggplot2::ggplot(plt_dat, ggplot2::aes(!!chain_col, .data$counts)) +
-      ggplot2::geom_violin(
-        ggplot2::aes(
-          color = !!chain_col,
-          fill  = !!chain_col,
-          alpha = .data$key
-        ),
-        position = "identity",
-        ...
-      ) +
-      ggplot2::geom_point(
-        ggplot2::aes(!!sym(chain_col), .data$med),
-        data        = box_stats,
-        show.legend = FALSE
-      ) +
-      ggplot2::scale_y_log10(
-        labels = scales::trans_format(
-          "log10",
-          scales::label_math()
-        ),
-        breaks = 10^(-10:10)
-      ) +
-      ggplot2::theme(axis.title.x = ggplot2::element_blank())
-
-  # Create histogram
-  } else {
-    res <- ggplot2::ggplot(
-      plt_dat,
-      ggplot2::aes(
-        .data$counts,
-        color = !!chain_col,
-        fill  = !!chain_col,
-        alpha = .data$key
-      )
-    ) +
-      ggplot2::scale_x_log10(
-        labels = scales::trans_format(
-          "log10",
-          scales::label_math()
-        ),
-        breaks = 10^(-10:10)
-      )
-
-    if (type == "histogram") {
-      res <- res +
-        ggplot2::geom_histogram(position = "identity", color = NA, ...)
-
-    } else {
-      res <- res +
-        ggplot2::geom_density(...)
-    }
-  }
-
-  res <- res +
-    djvdj_theme() +
-    ggplot2::theme(legend.title = ggplot2::element_blank())
-
-  if (!is.null(cluster_col) && cluster_col != chain_col) {
-    res <- res +
-      ggplot2::facet_wrap(
-        stats::as.formula(paste0("~ ", cluster_col)),
-        scales = facet_scales,
-        nrow   = facet_rows
-      )
-  }
-
-  # Adjust theme
-  if (length(data_cols) > 1) {
-    alphas <- 1 / length(data_cols)
-    alphas <- seq(alphas, 1, alphas)
-
-    res <- res +
-      ggplot2::scale_alpha_manual(values = alphas) +
-      ggplot2::guides(alpha = ggplot2::guide_legend(
-        override.aes = list(fill = "black")
-      ))
-  }
-
-  if (!is.null(plot_colors)) {
-    res <- res +
-      ggplot2::scale_color_manual(values = plot_colors) +
-      ggplot2::scale_fill_manual(values = plot_colors)
-  }
-
-  res
-}
-
-
 #' Plot clonotype abundance
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
@@ -523,8 +346,9 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
-#' @param method Method to use for calculating diversity. Can also pass a named
-#' list to use multiple methods.
+#' @param method Function to use for calculating diversity. A named list of
+#' functions can be passed to plot multiple diversity metrics,
+#' e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating clonotype abundance
 #' @param plot_colors Character vector containing colors for plotting
@@ -1137,6 +961,164 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 }
 
 
+#' Create ggplot boxplot
+#'
+#' @param df_in data.frame
+#' @param x Variable to plot on x-axis
+#' @param y Variable to plot on y-axis
+#' @param .color Variable to use for line color
+#' @param .fill Variable to use for fill color
+#' @param clrs Vector of colors for plotting
+#' @param type Type of plot to create, either 'boxplot' or 'violin'
+#' @param log_trans If TRUE, log10 transform the y-axis
+#' @param ... Additional arguments to pass to ggplot
+#' @return ggplot object
+#' @noRd
+.create_boxes <- function(df_in, x = NULL, y, .color = NULL, .fill = NULL, clrs = NULL,
+                          type = "boxplot", log_trans = FALSE, ...) {
+
+  # Check input
+  typs <- c("boxplot", "violin")
+
+  if (!type %in% typs) {
+    stop("type must be one of ", paste0(typs, collapse = ", "))
+  }
+
+  # Set aesthetics
+  plt_aes <- ggplot2::aes(y, !!sym(y))
+
+  if (!is.null(x)) {
+    plt_aes$x <- sym(x)
+  }
+
+  if (!is.null(.fill)) {
+    plt_aes$fill <- sym(.fill)
+  }
+
+  if (!is.null(.color)) {
+    plt_aes$colour <- sym(.color)
+  }
+
+  # Adjust theme
+  res <- ggplot2::ggplot(df_in, plt_aes) +
+    djvdj_theme() +
+    ggplot2::theme(
+      legend.position = "none",
+      axis.title.x    = ggplot2::element_blank()
+    )
+
+  if (!is.null(clrs)) {
+    res <- res +
+      ggplot2::scale_color_manual(values = clrs) +
+      ggplot2::scale_fill_manual(values = clrs)
+  }
+
+  # Log10 tranform y-axis
+  if (log_trans) {
+    res <- res +
+      ggplot2::scale_y_log10()
+  }
+
+  # Return violins
+  if (type == "violin") {
+    res <- res +
+      ggplot2::geom_violin(...) +
+      ggplot2::stat_summary(geom = "point", fun = stats::median, color = "black")
+
+    return(res)
+  }
+
+  # Return boxes
+  res <- res +
+    ggplot2::geom_boxplot(...)
+
+  res
+}
+
+
+#' Create ggplot histogram
+#'
+#' @param df_in data.frame
+#' @param x Variable to plot on x-axis
+#' @param .color Variable to use for line color
+#' @param .fill Variable to use for fill color
+#' @param clrs Vector of colors for plotting
+#' @param type Type of plot to create, either 'histogram' or 'density'
+#' @param yaxis Units to use for y-axis when plotting histogram. Use
+#' 'frequency' to show the raw number of values or 'percent' to show
+#' the percentage of total values.
+#' @param log_trans If TRUE, log10 transform the x-axis
+#' @param ... Additional arguments to pass to ggplot
+#' @return ggplot object
+#' @noRd
+.create_hist <- function(df_in, x, .color = NULL, .fill = NULL, clrs = NULL, type = "histogram",
+                         yaxis = "frequency", log_trans = FALSE, ...) {
+
+  # Check inputs
+  typs <- c("histogram", "density")
+
+  if (!type %in% typs) {
+    stop("type must be one of ", paste0(typs, collapse = ", "))
+  }
+
+  axs <- c("frequency", "percent")
+
+  if (!yaxis %in% axs) {
+    stop("yaxis must be one of ", paste0(axs, collapse = ", "))
+  }
+
+  # Set aesthetics
+  plt_aes <- ggplot2::aes()
+
+  # Only plot percent for histogram
+  if (yaxis == "percent" && type == "histogram") {
+    plt_aes <- ggplot2::aes(y = .data$..count.. / sum(.data$..count..) * 100)
+  }
+
+  plt_aes$x <- sym(x)
+
+  if (!is.null(.fill)) {
+    plt_aes$fill <- sym(.fill)
+  }
+
+  if (!is.null(.color)) {
+    plt_aes$colour <- sym(.color)
+  }
+
+  # Adjust theme
+  res <- ggplot2::ggplot(df_in, plt_aes) +
+    djvdj_theme() +
+    ggplot2::theme(legend.position = "top")
+
+  if (!is.null(clrs)) {
+    res <- res +
+      ggplot2::scale_color_manual(values = clrs) +
+      ggplot2::scale_fill_manual(values = clrs)
+  }
+
+  # Log10 transform axis
+  if (log_trans) {
+    res <- res +
+      ggplot2::scale_x_log10()
+  }
+
+  # Return density plot
+  if (type == "density") {
+    res <- res +
+      ggplot2::geom_density(...)
+
+    return(res)
+  }
+
+  # Return histogram
+  res <- res +
+    ggplot2::geom_histogram(...) +
+    ggplot2::labs(y = yaxis)
+
+  res
+}
+
+
 #' Set column levels
 #'
 #' @param df_in data.frame
@@ -1169,146 +1151,221 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 }
 
 
-#' Plot CDR3 lengths
+#' Plot continuous V(D)J data
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param length_col meta.data column containing CDR3 lengths to plot
+#' data.frame is provided, cell barcodes should be stored as row names.
+#' @param data_cols meta.data column(s) containing continuous V(D)J data to
+#' plot
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when plotting CDR3 lengths
-#' @param chain Chain to use for plotting CDR3 lengths, set to NULL to include
-#' all chains
-#' @param type Type of plot to create, can be 'histogram' or 'violin'
+#' @param chain Chain(s) to use for plotting, set to NULL to include all chains
+#' @param type Type of plot to create, can be 'histogram', 'density',
+#' 'boxplot', or 'violin'
 #' @param yaxis Units to use for y-axis when plotting histogram. Use
-#' 'frequency' to show the raw number of CDR3 sequences or 'percent' to show
-#' the percentage of total CDR3 sequences.
+#' 'frequency' to show the raw number of values or 'percent' to show
+#' the percentage of total values.
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used for storing per cell V(D)J data
-#' @param ... Additional arguments to pass to ggplot
+#' @param ... Additional arguments to pass to ggplot geom
 #' @return ggplot object
+#' @name plot_vdj
+NULL
+
+
+#' @rdname plot_vdj
+#' @param per_cell Should values be plotted per cell, i.e. each data point
+#' would represent one cell. If TRUE, values will be summarized for each cell
+#' using the function provided to summary_fn.
+#' @param summary_fn Function to use for summarizing values for each cell, e.g.
+#' specifying stats::median will plot the median value per cell
+#' @param alpha Color transparency
+#' @param log_trans If TRUE, axis will be log10 transformed
 #' @export
-#' @importFrom stats median
-plot_cdr3_length <- function(input, length_col = "cdr3_length", cluster_col = NULL, chain = NULL, type = "histogram",
-                             yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, chain_col = "chains",
-                             sep = ";", ...) {
+plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
+                     type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, alpha = 0.5,
+                     log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
+
+  fn <- function(clmn) {
+    .plot_vdj(
+      input,
+      data_col    = clmn,
+      per_cell    = per_cell,
+      cluster_col = cluster_col,
+      chain       = chain,
+      type        = type,
+      yaxis       = yaxis,
+      plot_colors = plot_colors,
+      plot_lvls   = plot_lvls,
+      log_trans   = log_trans,
+      chain_col   = chain_col,
+      sep         = sep,
+      ...
+    )
+  }
+
+  res <- purrr::map(data_cols, fn)
+
+  # Combine plots
+  res <- purrr::reduce(res, `+`)
+
+  res
+}
+
+#' @rdname plot_vdj
+#' @noRd
+.plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
+                      type = "boxplot", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, alpha = 0.5,
+                      log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
 
   # Check inputs
-  if (!type %in% c("histogram", "density", "violin")) {
-    stop("type must be either 'histogram', 'density', or 'violin'")
-  }
-
-  if (length(length_col) != 1) {
-    stop("Must specify only one value for length_col")
-  }
-
-  if (!yaxis %in% c("percent", "frequency")) {
-    stop("yaxis must be either 'percent' or 'frequency'")
+  if (length(data_col) != 1) {
+    stop("Must specify only one value for data_col")
   }
 
   # Format input data
-  sep_cols <- c(length_col, chain_col)
-  vdj_cols <- c(".cell_id", cluster_col, sep_cols)
+  if (per_cell) {
+    plt_dat <- summarize_vdj(
+      input,
+      vdj_cols  = data_col,
+      fn        = summary_fn,
+      chain     = chain,
+      chain_col = chain_col,
+      sep       = sep,
+      return_df = TRUE
+    )
 
-  meta <- .get_meta(input)
-  meta <- dplyr::select(meta, all_of(vdj_cols))
+  } else {
+    fetch_cols <- data_col
 
-  meta <- dplyr::filter(meta, !is.na(!!sym(length_col)))
+    if (!is.null(chain)) {
+      fetch_cols <- c(chain_col, fetch_cols)
+    }
 
-  # Expand meta.data based on sep
-  coerce_cols <- purrr::set_names(c("numeric", "character"), sep_cols)
+    plt_dat <- fetch_vdj(
+      input,
+      vdj_cols      = fetch_cols,
+      clonotype_col = clonotype_col,
+      unnest        = TRUE
+    )
 
-  plt_dat <- .split_vdj(
-    meta,
-    sep         = sep,
-    sep_cols    = sep_cols,
-    coerce_cols = coerce_cols,
-    expand      = TRUE
-  )
-
-  # Filter for chain
-  if (!is.null(chain)) {
-    plt_dat <- dplyr::filter(plt_dat, !!sym(chain_col) %in% chain)
+    if (!is.null(chain)) {
+      plt_dat <- dplyr::filter(plt_dat, !!sym(chain_col) %in% chain)
+    }
   }
+
+  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
   # Order clusters based on plot_lvls
   plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
 
   # Create violin plot
-  if (type == "violin") {
-    if (!is.null(cluster_col)) {
-      plt_aes <- ggplot2::aes(
-        !!sym(cluster_col),
-        !!sym(length_col),
-        color = !!sym(cluster_col),
-        fill  = !!sym(cluster_col)
-      )
-
-    } else {
-      plt_aes <- ggplot2::aes(length_col, !!sym(length_col))
-    }
-
-    res <- ggplot2::ggplot(plt_dat, plt_aes) +
-      ggplot2::geom_violin(...) +
-      ggplot2::stat_summary(geom = "point", fun = stats::median, color = "black")
-
-    return(res)
-  }
-
-  # Create histogram
-  y_lab <- "number of"
-
-  if (!is.null(cluster_col)) {
-    plt_aes <- ggplot2::aes(
-      !!sym(length_col),
-      color = !!sym(cluster_col),
-      fill  = !!sym(cluster_col)
+  if (type %in% c("histogram", "density")) {
+    res <- .create_hist(
+      plt_dat,
+      x         = data_col,
+      .color    = cluster_col,
+      .fill     = cluster_col,
+      clrs      = plot_colors,
+      type      = type,
+      yaxis     = yaxis,
+      log_trans = log_trans,
+      alpha     = alpha,
+      ...
     )
 
-    if (yaxis == "percent" && type != "density") {
-      y_lab <- "percentage of"
-
-      plt_aes <- ggplot2::aes(
-        !!sym(length_col),
-        .data$..count.. / sum(.data$..count..) * 100,
-        color = !!sym(cluster_col),
-        fill  = !!sym(cluster_col)
-      )
-    }
-
-  } else {
-    plt_aes <- ggplot2::aes(!!sym(length_col))
-
-    if (yaxis == "percent" && type != "density") {
-      y_lab <- "percentage of"
-
-      plt_aes <- ggplot2::aes(
-        !!sym(length_col),
-        .data$..count.. / sum(.data$..count..) * 100
-      )
-    }
-  }
-
-  res <- ggplot2::ggplot(plt_dat, plt_aes)
-
-  # Set plot colors
-  if (!is.null(plot_colors)) {
-    res <- res +
-      ggplot2::scale_color_manual(values = plot_colors) +
-      ggplot2::scale_fill_manual(values = plot_colors)
-  }
-
-  if (type == "density") {
-    res <- res +
-      ggplot2::geom_density(..., alpha = 0.5)
-
     return(res)
   }
 
-  res <- res +
-    ggplot2::geom_histogram(...) +
-    ggplot2::labs(y = paste(y_lab, "CDR3 sequences"))
+  res <- .create_boxes(
+    plt_dat,
+    x         = cluster_col,
+    y         = data_col,
+    .color    = cluster_col,
+    .fill     = cluster_col,
+    clrs      = plot_colors,
+    type      = type,
+    log_trans = log_trans,
+    alpha     = alpha,
+    ...
+  )
+
+  res
+}
+
+#' @rdname plot_vdj
+#' @export
+plot_vdj_reads <- function(input, data_cols = c("reads", "umis"), cluster_col = NULL, chain = NULL,
+                           type = "violin", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
+                           chain_col = "chains", sep = ";", ...) {
+
+  res <- plot_vdj(
+    input,
+    data_cols   = data_cols,
+    per_cell    = FALSE,
+    cluster_col = cluster_col,
+    chain       = chain,
+    type        = type,
+    yaxis       = yaxis,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    log_trans   = TRUE,
+    chain_col   = chain_col,
+    sep         = sep,
+    ...
+  )
+
+  res
+}
+
+#' @rdname plot_vdj
+#' @export
+plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NULL, chain = NULL,
+                             type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
+                             chain_col = "chains", sep = ";", ...) {
+
+  res <- plot_vdj(
+    input,
+    data_cols   = data_cols,
+    per_cell    = FALSE,
+    cluster_col = cluster_col,
+    chain       = chain,
+    type        = type,
+    yaxis       = yaxis,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    log_trans   = TRUE,
+    chain_col   = chain_col,
+    sep         = sep,
+    ...
+  )
+
+  res
+}
+
+#' @rdname plot_vdj
+#' @export
+plot_vdj_indels <- function(input, data_cols = c("n_insertion", "n_deletion", "n_mismatch"), cluster_col = NULL, chain = NULL,
+                            type = "violin", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
+                            chain_col = "chains", sep = ";", ...) {
+
+  res <- plot_vdj(
+    input,
+    data_cols   = data_cols,
+    per_cell    = FALSE,
+    cluster_col = cluster_col,
+    chain       = chain,
+    type        = type,
+    yaxis       = yaxis,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    log_trans   = FALSE,
+    chain_col   = chain_col,
+    sep         = sep,
+    ...
+  )
 
   res
 }
