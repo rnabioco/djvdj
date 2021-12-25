@@ -35,71 +35,6 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 }
 
 
-#' Summarize values for chains
-#'
-#' Summarize values present for each column provided to the data_cols argument.
-#' For each cell, the function(s) provided will be applied to each unique
-#' chain.
-#'
-#' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param data_cols meta.data columns to summarize
-#' @param fn Function to use for summarizing data_cols
-#' @param chain_col meta.data column(s) containing labels for each chain
-#' expressed in the cell. These labels are used for grouping the summary
-#' output. Set chain_col to NULL to group solely based on the cell barcodes.
-#' @param include_cols Additional columns to include in the output data.frame
-#' @param sep Separator used for storing per cell V(D)J data
-#' @return data.frame containing summary results
-#' @export
-summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_col = "chains",
-                             include_cols = NULL, sep = ";") {
-
-  # Format input data
-  fetch_cols <- c(".cell_id", data_cols, chain_col, include_cols)
-
-  meta <- .get_meta(input)
-
-  meta <- dplyr::select(meta, all_of(fetch_cols))
-
-  meta <- dplyr::filter(
-    meta,
-    across(all_of(data_cols), ~ !is.na(.x))
-  )
-
-  # Expand meta.data
-  coerce_cols <- purrr::set_names(
-    rep("numeric", length(data_cols)),
-    data_cols
-  )
-
-  res <- .unnest_vdj(
-    meta,
-    sep         = sep,
-    sep_cols    = c(data_cols, chain_col),
-    coerce_cols = coerce_cols,
-    expand      = TRUE
-  )
-
-  # Filter for chain
-  if (!is.null(chain)) {
-    plt_dat <- dplyr::filter(plt_dat, !!sym(chain_col) %in% chain)
-  }
-
-  # Summarize chains
-  grp_cols <- c(".cell_id", chain_col, include_cols)
-  res      <- dplyr::group_by(res, !!!syms(grp_cols))
-
-  res <- dplyr::summarize(
-    res,
-    across(all_of(data_cols), fn),
-    .groups = "drop"
-  )
-
-  res
-}
-
-
 #' Fetch V(D)J data
 #'
 #' Fetch per-chain V(D)J data from object. Within the object meta.data, each
@@ -127,6 +62,10 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
 
   # Format input data
   meta <- .get_meta(input)
+
+  if (is.null(sep)) {
+    return(meta)
+  }
 
   # Identify columns with V(D)J data
   col_list <- .get_vdj_cols(
@@ -258,12 +197,15 @@ summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = 
   }
 
   # Re-nest vdj_cols
+  nest_cols <- purrr::map_lgl(res[, fetch_cols], is.list)
+  nest_cols <- fetch_cols[nest_cols]
+
   res <- dplyr::rowwise(res)
 
   res <- mutate(
     res,
     across(
-      any_of(fetch_cols),
+      all_of(nest_cols),
       ~ paste0(as.character(.x), collapse = sep)
     )
   )
@@ -455,20 +397,20 @@ summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = 
 #' @param clone_col Column containing clonotype IDs to use for identifying
 #' columns with V(D)J data. If both clone_col and cols_in are NULL, all columns
 #' are included.
-#' @param cols_in meta.data columns containing V(D)J data. If NULL (the
-#' default) data are selected by identifying columns that have NAs in the same
-#' rows as clone_col.
+#' @param cols_in Columns containing V(D)J data. If NULL data are selected by
+#' identifying columns that have NAs in the same rows as clone_col.
 #' @param sep Separator used for storing per cell V(D)J data. This is used to
 #' identify columns containing per-chain data that can be unnested.
+#' @param cell_col Column containing cell IDs
 #' @return List with two vectors, one containing columns with V(D)J data and
 #' the other containing columns where separator has been detected.
 #' @noRd
-.get_vdj_cols <- function(df_in, clone_col, cols_in, sep) {
+.get_vdj_cols <- function(df_in, clone_col, cols_in, sep, cell_col = ".cell_id") {
 
   # If clone_col and cols_in are both NULL, use all columns
   if (is.null(clone_col) && is.null(cols_in)) {
     cols_in <- colnames(df_in)
-    cols_in <- cols_in[cols_in != ".cell_id"]
+    cols_in <- cols_in[cols_in != cell_col]
   }
 
   # If cols_in is NULL, identify columns with V(D)J data based on NAs in
