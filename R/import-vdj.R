@@ -33,7 +33,7 @@
 import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, filter_contigs = TRUE,
                        filter_paired = FALSE, define_clonotypes = NULL, sep = ";") {
 
-  # VDJ columns
+  # V(D)J columns to include
   cdr3_cols  <- c("cdr3", "cdr3_nt")
   count_cols <- c("reads", "umis")
   indel_cols <- c("n_insertion", "n_deletion", "n_mismatch")
@@ -101,12 +101,8 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   # Select V(D)J columns to keep
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
-  # Check if sep is already in sep_cols
-  sep <- gsub("[[:space:]]", "", sep)
-
-  if (any(grepl(sep, contigs[, sep_cols]))) {
-    stop("The string '", sep, "' is already present in the input data, select a different value for 'sep'.")
-  }
+  # Check if sep is already present in sep_cols
+  sep <- .check_sep(contigs, sep_cols = sep_cols, sep = sep)
 
   # Sum contig reads and UMIs for chains
   # some chains are supported by multiple contigs
@@ -370,7 +366,8 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   }
 
   .extract_pat <- function(string, pat) {
-    res <- map(string, ~ {
+
+    res <- purrr::map_dbl(string, ~ {
       strg  <- .x
       mtch  <- gregexpr(pat, strg, perl = TRUE)[[1]]
       strts <- as.integer(mtch)
@@ -428,6 +425,35 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   }
 
   path
+}
+
+#' Check for separator in data.frame
+#'
+#' @param df_in data.frame
+#' @param sep_cols Names of columns to check for sep
+#' @param sep Separator to use for storing V(D)J data
+#' @return Separator with white space stripped
+#' @noRd
+.check_sep <- function(df_in, sep_cols, sep) {
+  if (is.null(sep_cols)) {
+    sep_cols <- colnames(df_in)
+  }
+
+  if (is.null(sep)) {
+    return(sep)
+  }
+
+  if (!is.character(sep)) {
+    stop("'sep' must be a character.")
+  }
+
+  sep <- gsub("[[:space:]]", "", sep)
+
+  if (any(grepl(sep, df_in[, sep_cols]))) {
+    stop("The string '", sep, "' is already present in the input data, select a different value for 'sep'.")
+  }
+
+  sep
 }
 
 #' Determine whether TCR or BCR data were provided

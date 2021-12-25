@@ -10,10 +10,10 @@
 #' @param filter_cells Should cells be removed from the object? If FALSE
 #' (default) V(D)J data will be removed from the meta.data but no cells will be
 #' removed from the object.
-#' @param vdj_cols meta.data columns containing VDJ data to use for filtering.
+#' @param vdj_cols meta.data columns containing V(D)J data to use for filtering.
+#' If set to NULL (recommended) columns are automatically selected by
+#' identifying columns that have NAs in the same rows as clonotype_col.
 #' @param sep Separator used for storing per cell V(D)J data
-#' If set to NULL (recommended) columns are automatically selected based on the
-#' given separator.
 #' @return Object with filtered meta.data
 #' @export
 filter_vdj <- function(input, filt, clonotype_col = "clonotype_id", filter_cells = FALSE,
@@ -27,7 +27,7 @@ filter_vdj <- function(input, filt, clonotype_col = "clonotype_id", filter_cells
   meta <- .get_meta(input)
   vdj  <- meta
 
-  # Identify columns with VDJ data
+  # Identify columns with V(D)J data
   col_list <- .get_vdj_cols(
     df_in     = vdj,
     clone_col = clonotype_col,
@@ -42,14 +42,14 @@ filter_vdj <- function(input, filt, clonotype_col = "clonotype_id", filter_cells
     warning("The separator '", sep, "' is not present in the data")
   }
 
-  # Create list-cols for VDJ columns that contain sep
+  # Create list-cols for V(D)J columns that contain sep
   if (!purrr::is_empty(sep_cols)) {
     sep_cols <- set_names(
       x  = sep_cols,
       nm = paste0(".", sep_cols)
     )
 
-    vdj <- .split_vdj(
+    vdj <- .unnest_vdj(
       df_in    = vdj,
       sep      = sep,
       sep_cols = sep_cols
@@ -62,7 +62,7 @@ filter_vdj <- function(input, filt, clonotype_col = "clonotype_id", filter_cells
   vdj <- dplyr::mutate(vdj, .KEEP = {{filt}})
   vdj <- dplyr::ungroup(vdj)
 
-  # Remove VDJ data from meta.data (without filtering cells)
+  # Remove V(D)J data from meta.data (without filtering cells)
   if (!filter_cells) {
     vdj <- dplyr::mutate(
       vdj,
@@ -73,7 +73,7 @@ filter_vdj <- function(input, filt, clonotype_col = "clonotype_id", filter_cells
     )
 
     # Filter cells from object
-    # when clonotype_col != NULL only filter cells with VDJ data
+    # when clonotype_col != NULL only filter cells with V(D)J data
   } else {
     if (!is.null(clonotype_col)) {
       vdj <- dplyr::mutate(

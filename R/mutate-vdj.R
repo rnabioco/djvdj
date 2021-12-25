@@ -6,11 +6,11 @@
 #' columns
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
 #' is used to determine which cells have V(D)J data.
-#' @param vdj_cols meta.data columns containing VDJ data to use for filtering.
-#' If set to NULL (recommended) columns are automatically selected by
-#' identifying columns that have NAs in the same rows as clonotype_col.
-#' @param return_df Return results as a data.frame. If set to FALSE, results
-#' will be added to the input object.
+#' @param vdj_cols meta.data columns containing V(D)J data to use for filtering.
+#' If NULL (recommended) data are automatically selected by identifying columns
+#' that have NAs in the same rows as clonotype_col.
+#' @param return_df Return results as a data.frame. If FALSE, results will be
+#' added to the input object.
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return Object with mutated meta.data
 #' @export
@@ -21,7 +21,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
   meta <- .get_meta(input)
   vdj  <- meta
 
-  # Identify columns with VDJ data
+  # Identify columns with V(D)J data
   col_list <- .get_vdj_cols(
     df_in     = vdj,
     clone_col = clonotype_col,
@@ -32,17 +32,21 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
   vdj_cols <- col_list$vdj
   sep_cols <- col_list$sep
 
-  # Create list-cols for VDJ columns that contain sep
+  if (purrr::is_empty(sep_cols)) {
+    warning("The separator '", sep, "' is not present in the data")
+  }
+
+  # Create list-cols for V(D)J columns that contain sep
   if (!purrr::is_empty(sep_cols)) {
     sep_cols <- set_names(
       x  = sep_cols,
       nm = paste0(".", sep_cols)
     )
 
-    vdj <- .split_vdj(
+    vdj <- .unnest_vdj(
       df_in    = vdj,
-      sep_cols = sep_cols,
-      sep      = sep
+      sep      = sep,
+      sep_cols = sep_cols
     )
 
     vdj <- dplyr::rowwise(vdj)

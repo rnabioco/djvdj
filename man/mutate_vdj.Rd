@@ -24,11 +24,11 @@ columns}
 is used to determine which cells have V(D)J data.}
 
 \item{vdj_cols}{meta.data columns containing V(D)J data to use for filtering.
-If set to NULL (recommended) V(D)J is automatically selected by
-identifying columns that have NAs in the same rows as clonotype_col.}
+If NULL (recommended) data are automatically selected by identifying columns
+that have NAs in the same rows as clonotype_col.}
 
-\item{return_df}{Return results as a data.frame. If set to FALSE, results
-will be added to the input object.}
+\item{return_df}{Return results as a data.frame. If FALSE, results will be
+added to the input object.}
 
 \item{sep}{Separator used for storing per cell V(D)J data}
 }
