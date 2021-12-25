@@ -46,7 +46,8 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
     vdj <- .unnest_vdj(
       df_in    = vdj,
       sep      = sep,
-      sep_cols = sep_cols
+      sep_cols = sep_cols,
+      unnest   = FALSE
     )
 
     vdj <- dplyr::rowwise(vdj)
