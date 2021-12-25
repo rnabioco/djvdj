@@ -1174,11 +1174,10 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @name plot_vdj
 NULL
 
-
 #' @rdname plot_vdj
 #' @param per_cell Should values be plotted per cell, i.e. each data point
 #' would represent one cell. If TRUE, values will be summarized for each cell
-#' using the function provided to summary_fn.
+#' using summary_fn. If FALSE, values will be plotted per chain.
 #' @param summary_fn Function to use for summarizing values for each cell, e.g.
 #' specifying stats::median will plot the median value per cell
 #' @param alpha Color transparency

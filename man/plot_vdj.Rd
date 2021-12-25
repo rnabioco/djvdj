@@ -76,7 +76,7 @@ plot}
 
 \item{per_cell}{Should values be plotted per cell, i.e. each data point
 would represent one cell. If TRUE, values will be summarized for each cell
-using the function provided to summary_fn.}
+using summary_fn. If FALSE, values will be plotted per chain.}
 
 \item{summary_fn}{Function to use for summarizing values for each cell, e.g.
 specifying stats::median will plot the median value per cell}

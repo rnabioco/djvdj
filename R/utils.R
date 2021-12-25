@@ -367,7 +367,7 @@ summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = 
 
   # Get types to use for coercing columns
   # use first 1000 rows containing V(D)J data
-  typs <- dplyr::select(res, all_of(sep_cols))
+  typs <- dplyr::select(res, all_of(unname(sep_cols)))
   typs <- dplyr::rowwise(typs)
   typs <- dplyr::filter(typs, if_all(all_of(sep_cols), ~ any(!is.na(.x))))
 
@@ -384,7 +384,7 @@ summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = 
 
   # Unnest data.frame
   if (unnest) {
-    res <- tidyr::unnest(res, all_of(sep_cols))
+    res <- tidyr::unnest(res, all_of(unname(sep_cols)))
   }
 
   res
