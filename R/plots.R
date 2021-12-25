@@ -160,10 +160,8 @@ plot_vdj_umap.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", s
                                   plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
                                   chain_col = "chains", sep = ";", ...) {
 
-  plt_dat <- .get_meta(input)
-
   plt_dat <- summarize_vdj(
-    plt_dat,
+    input,
     vdj_cols  = data_col,
     fn        = summary_fn,
     chain     = chain,
