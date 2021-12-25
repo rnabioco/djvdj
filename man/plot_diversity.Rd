@@ -22,8 +22,9 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
 
-\item{method}{Method to use for calculating diversity. Can also pass a named
-list to use multiple methods.}
+\item{method}{Function to use for calculating diversity. A named list of
+functions can be passed to plot multiple diversity metrics,
+e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating clonotype abundance}
