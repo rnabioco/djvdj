@@ -100,16 +100,19 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
 
 #' Summarize V(D)J data for each cell
 #'
-#' Summarize values present for each column provided to the vdj_cols argument.
-#' The provided function will be applied to all values present for the cell.
+#' Summarize values for each cell using a function or purrr-style lambda. This
+#' is useful since some V(D)J metrics include data for each chain. Per-chain
+#' data will be summarized, which is helpful for plotting these metrics per
+#' cell.
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param vdj_cols meta.data columns containing V(D)J data to summarize for
+#' @param vdj_cols meta.data column(s) containing V(D)J data to summarize for
 #' each cell
-#' @param fn Function to apply to each of the selected columns, possible values
-#' are: a function, e.g. mean; a purrr-style lambda, e.g. ~ mean(.x, na.rm =
-#' TRUE). If NULL, unmodified meta.data is returned.
+#' @param fn Function to apply to each selected column, possible values can be
+#' either a function, e.g. mean, or a purrr-style lambda, e.g. ~ mean(.x,
+#' na.rm = TRUE). If NULL, the default for numeric values is mean and the
+#' default for other types is ~ paste0(.x, collapse = sep).
 #' @param chain Chain to use for summarizing V(D)J data
 #' @param chain_col meta.data column(s) containing chains for each cell
 #' @param col_names A glue specification that describes how to name the output
@@ -119,17 +122,8 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame containing V(D)J data summarized for each cell
 #' @export
-summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = "chains",
+summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = "chains",
                           sep = ";", col_names = "{.col}", return_df = FALSE) {
-
-  # Return unmodified when fn NULL
-  if (is.null(fn)) {
-    if (return_df) {
-      input <- .get_meta(input)
-    }
-
-    return(input)
-  }
 
   # Fetch V(D)J data
   fetch_cols <- vdj_cols
@@ -145,6 +139,18 @@ summarize_vdj <- function(input, vdj_cols, fn = mean, chain = NULL, chain_col = 
     sep           = sep,
     unnest        = FALSE
   )
+
+  # Set default fn
+  if (is.null(fn)) {
+    is_num <- map_lgl(res[, vdj_cols], ~ all(map_lgl(.x, is.numeric)))
+
+    if (all(is_num)) {
+      fn <- mean
+
+    } else {
+      fn <- ~ paste0(.x, collapse = sep)
+    }
+  }
 
   # Filter chains
   if (!is.null(chain)) {

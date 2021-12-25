@@ -106,13 +106,11 @@ plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, dat
   # want input data to include meta.data and any features from FetchData
   plt_vars <- c(x, y, feature)
 
-  suppressWarnings({
-    plt_dat <- Seurat::FetchData(
-      input,
-      vars = unique(plt_vars),
-      slot = as.character(data_slot)
-    )
-  })
+  plt_dat <- Seurat::FetchData(
+    input,
+    vars = unique(plt_vars),
+    slot = data_slot
+  )
 
   # Format input data
   # keep rownames since default method will create rowname column
@@ -147,14 +145,18 @@ plot_vdj_umap <- function(input, ...) {
 #' @rdname plot_features
 #' @param data_col meta.data column containing V(D)J data to use for coloring
 #' cells
-#' @param summary_fn Function to use for summarizing values for each cell, e.g.
-#' specifying stats::median will plot the median value per cell
+#' @param summary_fn Function to use for summarizing values for each cell, this
+#' can be either a function, e.g. mean, or a purrr-style lambda,
+#' e.g. ~ mean(.x, na.rm = TRUE). If NULL, the default for numeric values is
+#' mean and the default for other types is ~ paste0(.x, collapse = sep). This
+#' is necessary since some V(D)J metrics will have multiple values for each
+#' cell.
 #' @param chain Chain(s) to use for plotting, set to NULL to include all chains
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional arguments to pass to ggplot geom
 #' @export
-plot_vdj_umap.default <- function(input, x = "UMAP_1", y = "UMAP_2", data_col, summary_fn = mean, chain = NULL,
+plot_vdj_umap.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", summary_fn = NULL, chain = NULL,
                                   plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
                                   chain_col = "chains", sep = ";", ...) {
 
@@ -188,21 +190,20 @@ plot_vdj_umap.default <- function(input, x = "UMAP_1", y = "UMAP_2", data_col, s
 #' @param data_slot Slot in the Seurat object to pull data
 #' @importFrom Seurat FetchData
 #' @export
-plot_vdj_umap.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", data_col, data_slot = "data", summary_fn = mean,
+plot_vdj_umap.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", data_slot = "data", summary_fn = NULL,
                                  chain = NULL, plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
                                  chain_col = "chains", sep = ";", ...) {
 
   # Fetch variables and add to meta.data
   # want input data to include meta.data and any features from FetchData
-  plt_vars <- c(x, y, feature)
+  # SHOULD WARNINGS BE SUPPRESSED??
+  plt_vars <- c(x, y, data_col)
 
-  suppressWarnings({
-    plt_dat <- Seurat::FetchData(
-      input,
-      vars = unique(plt_vars),
-      slot = as.character(data_slot)
-    )
-  })
+  plt_dat <- Seurat::FetchData(
+    input,
+    vars = unique(plt_vars),
+    slot = data_slot
+  )
 
   # Format input data
   # keep rownames since default method will create rowname column
@@ -215,7 +216,7 @@ plot_vdj_umap.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", data_col, da
     y          = y,
     data_col   = data_col,
     summary_fn = summary_fn,
-    chain      = chain_col,
+    chain      = chain,
     plot_lvls  = plot_lvls,
     min_q      = min_q,
     max_q      = max_q,
@@ -293,7 +294,7 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, clus
 
 #' @rdname plot_vdj
 #' @noRd
-.plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
+.plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
                       type = "boxplot", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, alpha = 0.5,
                       log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
 

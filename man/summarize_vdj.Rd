@@ -7,7 +7,7 @@
 summarize_vdj(
   input,
   vdj_cols,
-  fn = mean,
+  fn = NULL,
   chain = NULL,
   chain_col = "chains",
   sep = ";",
@@ -19,12 +19,13 @@ summarize_vdj(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{vdj_cols}{meta.data columns containing V(D)J data to summarize for
+\item{vdj_cols}{meta.data column(s) containing V(D)J data to summarize for
 each cell}
 
-\item{fn}{Function to apply to each of the selected columns, possible values
-are: a function, e.g. mean; a purrr-style lambda, e.g. ~ mean(.x, na.rm =
-TRUE). If NULL, unmodified meta.data is returned.}
+\item{fn}{Function to apply to each selected column, possible values can be
+either a function, e.g. mean, or a purrr-style lambda, e.g. ~ mean(.x,
+na.rm = TRUE). If NULL, the default for numeric values is mean and the
+default for other types is ~ paste0(.x, collapse = sep).}
 
 \item{chain}{Chain to use for summarizing V(D)J data}
 
@@ -42,6 +43,8 @@ added to the input object.}
 data.frame containing V(D)J data summarized for each cell
 }
 \description{
-Summarize values present for each column provided to the vdj_cols argument.
-The provided function will be applied to all values present for the cell.
+Summarize values for each cell using a function or purrr-style lambda. This
+is useful since some V(D)J metrics include data for each chain. Per-chain
+data will be summarized, which is helpful for plotting these metrics per
+cell.
 }

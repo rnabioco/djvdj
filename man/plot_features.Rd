@@ -42,10 +42,10 @@ plot_vdj_umap(input, ...)
 
 \method{plot_vdj_umap}{default}(
   input,
+  data_col,
   x = "UMAP_1",
   y = "UMAP_2",
-  data_col,
-  summary_fn = mean,
+  summary_fn = NULL,
   chain = NULL,
   plot_lvls = NULL,
   min_q = NULL,
@@ -58,11 +58,11 @@ plot_vdj_umap(input, ...)
 
 \method{plot_vdj_umap}{Seurat}(
   input,
+  data_col,
   x = "UMAP_1",
   y = "UMAP_2",
-  data_col,
   data_slot = "data",
-  summary_fn = mean,
+  summary_fn = NULL,
   chain = NULL,
   plot_lvls = NULL,
   min_q = NULL,
@@ -100,8 +100,12 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 \item{data_col}{meta.data column containing V(D)J data to use for coloring
 cells}
 
-\item{summary_fn}{Function to use for summarizing values for each cell, e.g.
-specifying stats::median will plot the median value per cell}
+\item{summary_fn}{Function to use for summarizing values for each cell, this
+can be either a function, e.g. mean, or a purrr-style lambda,
+e.g. ~ mean(.x, na.rm = TRUE). If NULL, the default for numeric values is
+mean and the default for other types is ~ paste0(.x, collapse = sep). This
+is necessary since some V(D)J metrics will have multiple values for each
+cell.}
 
 \item{chain}{Chain(s) to use for plotting, set to NULL to include all chains}
 
