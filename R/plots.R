@@ -20,7 +20,7 @@ plot_features <- function(input, ...) {
 #' @return ggplot object
 #' @export
 #' @name plot_features
-plot_features.default <- function(input, x = "UMAP_1", y = "UMAP_2", feature, plot_colors = NULL,
+plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2", plot_colors = NULL,
                                   plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90", ...) {
 
   # Check arguments
@@ -98,7 +98,7 @@ plot_features.default <- function(input, x = "UMAP_1", y = "UMAP_2", feature, pl
 #' @param data_slot Slot in the Seurat object to pull data
 #' @importFrom Seurat FetchData
 #' @export
-plot_features.Seurat <- function(input, x = "UMAP_1", y = "UMAP_2", feature, data_slot = "data",
+plot_features.Seurat <- function(input, feature, x = "UMAP_1", y = "UMAP_2", data_slot = "data",
                                  plot_colors = NULL, plot_lvls = NULL, min_q = NULL, max_q = NULL,
                                  na_color = "grey90", ...) {
 

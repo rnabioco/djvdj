@@ -13,9 +13,9 @@ plot_features(input, ...)
 
 \method{plot_features}{default}(
   input,
+  feature,
   x = "UMAP_1",
   y = "UMAP_2",
-  feature,
   plot_colors = NULL,
   plot_lvls = NULL,
   min_q = NULL,
@@ -26,9 +26,9 @@ plot_features(input, ...)
 
 \method{plot_features}{Seurat}(
   input,
+  feature,
   x = "UMAP_1",
   y = "UMAP_2",
-  feature,
   data_slot = "data",
   plot_colors = NULL,
   plot_lvls = NULL,
@@ -79,11 +79,11 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{...}{Additional arguments to pass to ggplot geom}
 
+\item{feature}{Variable to use for coloring points}
+
 \item{x}{Variable to plot on x-axis}
 
 \item{y}{Variable to plot on y-axis}
-
-\item{feature}{Variable to use for coloring points}
 
 \item{plot_colors}{Vector of colors to use for plot}
 
