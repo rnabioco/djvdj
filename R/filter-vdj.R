@@ -73,8 +73,8 @@ filter_vdj <- function(input, filt, clonotype_col = "clonotype_id", filter_cells
       )
     )
 
-    # Filter cells from object
-    # when clonotype_col != NULL only filter cells with V(D)J data
+  # Filter cells from object
+  # when clonotype_col != NULL only filter cells with V(D)J data
   } else {
     if (!is.null(clonotype_col)) {
       vdj <- dplyr::mutate(

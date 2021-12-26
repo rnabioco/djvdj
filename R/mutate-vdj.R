@@ -32,7 +32,8 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
   vdj_cols <- col_list$vdj
   sep_cols <- col_list$sep
 
-  if (purrr::is_empty(sep_cols)) {
+  # Allow sep to be NULL so user can skip the .unnest_vdj
+  if (purrr::is_empty(sep_cols) && !is.null(sep)) {
     warning("The separator '", sep, "' is not present in the data")
   }
 
