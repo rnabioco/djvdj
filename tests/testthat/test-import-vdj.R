@@ -155,8 +155,8 @@ test_that("import_vdj column prefix", {
 test_that("import_vdj filtered contigs", {
   res <- tiny_so %>%
     import_vdj(
-      vdj_dir        = ctigs,
-      filter_contigs = TRUE
+      vdj_dir       = ctigs,
+      filter_chains = TRUE
     )
 
   expect_false(any(grepl("FALSE", res$productive)))
@@ -170,7 +170,8 @@ test_that("import_vdj unfiltered contigs", {
   res <- tiny_so %>%
     import_vdj(
       vdj_dir        = ctigs[1],
-      filter_contigs = FALSE
+      include_indels = FALSE,
+      filter_chains  = FALSE
     )
 
   expect_true(any(grepl("FALSE", res$productive)))
@@ -281,11 +282,25 @@ test_that("import_vdj missing clonotype_id", {
     res <- tiny_so %>%
       import_vdj(
         vdj_dir        = tcr_ctigs,
-        filter_contigs = FALSE
+        filter_chains  = FALSE,
+        include_indels = FALSE
       )
   }
 
   expect_warning(fn(), "contigs do not have an assigned clonotype_id, these contigs will be removed")
+})
+
+# Check missing indel data
+test_that("import_vdj missing indels", {
+  fn <- function() {
+    res <- tiny_so %>%
+      import_vdj(
+        vdj_dir        = tcr_ctigs,
+        filter_chains  = FALSE
+      )
+  }
+
+  expect_warning(fn(), "Some chains are missing indel data")
 })
 
 # Check bad separator
@@ -298,7 +313,7 @@ test_that("import_vdj bad sep", {
       )
   }
 
-  expect_error(fn(), "is already present in the input data, select a different value for 'sep'.", fixed = TRUE)
+  expect_error(fn(), "is already present in the input data", fixed = TRUE)
 })
 
 # Check duplicated cell barcode prefixes
@@ -365,7 +380,10 @@ test_that("import_vdj cell prefix NAs", {
 test_that("import_vdj BCR and TCR", {
   fn <- function() {
     res <- tiny_so %>%
-      import_vdj(vdj_dir = c(tcr_ctigs, ctigs))
+      import_vdj(
+        vdj_dir        = c(tcr_ctigs, ctigs),
+        include_indels = FALSE
+      )
   }
 
   expect_error(fn(), "Multiple data types detected")

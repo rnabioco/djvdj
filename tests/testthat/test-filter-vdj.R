@@ -9,7 +9,7 @@ test_that("filter_vdj Seurat out no filt", {
 
   new_na <- colnames(res)[is.na(res$clonotype_id)]
   old_na <- colnames(vdj_so)[is.na(vdj_so$clonotype_id)]
-  expect_identical(old_na, new_na)                                             # cells w/o VDJ data
+  expect_identical(old_na, new_na)                                           # cells w/o VDJ data
 })
 
 # Check data.frame return without filtering
@@ -24,7 +24,7 @@ test_that("filter_vdj df out no filt", {
 
   new_na <- rownames(res)[is.na(res$clonotype_id)]
   old_na <- colnames(vdj_so)[is.na(vdj_so$clonotype_id)]
-  expect_identical(old_na, new_na)                                             # cells w/o VDJ data
+  expect_identical(old_na, new_na)                                           # cells w/o VDJ data
 })
 
 # Check Seurat return for all cells
@@ -39,7 +39,7 @@ test_that("filter_vdj Seurat return VDJ cells", {
   old_na <- colnames(vdj_so)[!is.na(vdj_so$clonotype_id)]
 
   expect_s4_class(res, "Seurat")
-  expect_identical(colnames(res), old_na)                                      # cells w/ VDJ
+  expect_identical(colnames(res), old_na)                                    # cells w/ VDJ
 })
 
 # Check Seurat return for only VDJ cells

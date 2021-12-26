@@ -93,31 +93,25 @@ test_all_args(
   chk     = expect_error
 )
 
-# Check all plot_reads arguments
+# Check all plot_vdj arguments
 arg_lst <- list(
-  input       = list(vdj_so, vdj_sce),
-  data_cols   = list("reads", "umis", c("reads", "umis")),
-  chain_col   = list(NULL, "chains"),
+  input       = list(vdj_so, vdj_sce, df_1),
+  data_cols   = list("umis", c("reads", "n_deletion")),
   cluster_col = list(NULL, "seurat_clusters"),
-  type        = c("violin", "histogram", "density"),
+  chain       = list(NULL, "IGH", c("IGH", "IGK")),
+  type        = c("histogram", "density", "violin", "boxplot"),
+  yaxis       = c("frequency", "percent"),
   plot_colors = list(NULL, test_cols),
-  plot_lvls   = list(NULL, test_lvls)
+  plot_lvls   = list(NULL, test_lvls),
+  log_trans   = c(TRUE, FALSE)
 )
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_reads,
-  desc    = "plot_reads args",
+  .fn     = plot_vdj,
+  desc    = "plot_vdj args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
-
-# Check plot_reads bad type
-test_that("plot_reads bad type", {
-  expect_error(
-    vdj_so %>%
-      plot_reads(type = "BAD")
-  )
-})
 
 # Check all plot_abundance arguments for line plot
 arg_lst <- list(
@@ -136,7 +130,7 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_abundance,
+  .fn     = tot_abundance,
   desc    = "plot_abundance line args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
@@ -394,25 +388,6 @@ test_that("plot_usage bad gene_cols", {
       plot_usage(gene_cols = c("v_gene", "d_gene", "j_gene"))
   )
 })
-
-# Check all plot_cdr3_length arguments
-arg_lst <- list(
-  input       = list(vdj_so, vdj_sce, df_1),
-  length_col  = c("cdr3_length", "cdr3_nt_length"),
-  cluster_col = list(NULL, "seurat_clusters"),
-  chain       = list(NULL, "IGH", c("IGH", "IGK")),
-  type        = c("histogram", "density", "violin"),
-  yaxis       = c("frequency", "percent"),
-  plot_colors = list(NULL, test_cols),
-  plot_lvls   = list(NULL, test_lvls)
-)
-
-test_all_args(
-  arg_lst = arg_lst,
-  .fn     = plot_cdr3_length,
-  desc    = "plot_cdr3_length args",
-  chk     = expr(expect_s3_class(.res, "ggplot"))
-)
 
 # Check .set_lvls levels
 arg_lst <- list(df_in = list(df_1, df_2))

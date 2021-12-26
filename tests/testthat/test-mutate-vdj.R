@@ -79,19 +79,19 @@ test_that("mutate_vdj df in", {
   expect_identical(select(res, -NEW), vdj_so@meta.data)
 })
 
-# test_that("Default separator", {
-#   res <- vdj_so %>%
-#     mutate_vdj(
-#       NEW = str_c(chains, collapse = "_"),
-#       sep = ";"
-#     )
-#
-#   old_nms <- str_replace_all(vdj_so$chains, ";", "_")
-#
-#   expect_s4_class(res, "Seurat")                       # class
-#   expect_identical(colnames(res), colnames(vdj_so))  # cells in object
-#   expect_identical(unname(res$NEW), old_nms)           # new column
-# })
+test_that("Default separator", {
+  res <- vdj_so %>%
+    mutate_vdj(
+      NEW = str_c(chains, collapse = "_"),
+      sep = ";"
+    )
+
+  old_nms <- str_replace_all(vdj_so$chains, ";", "_")
+
+  expect_s4_class(res, "Seurat")                     # class
+  expect_identical(colnames(res), colnames(vdj_so))  # cells in object
+  expect_identical(unname(res$NEW), old_nms)         # new column
+})
 
 # Check NULL separator
 test_that("mutate_vdj NULL sep", {
@@ -104,7 +104,7 @@ test_that("mutate_vdj NULL sep", {
   old_nms <- paste0(vdj_so$chains, vdj_so$nCount_RNA, sep = "_")
 
   expect_s4_class(res, "Seurat")                       # class
-  expect_identical(colnames(res), colnames(vdj_so))  # cells in object
+  expect_identical(colnames(res), colnames(vdj_so))    # cells in object
   expect_identical(unname(res$NEW), old_nms)           # new column
 })
 
