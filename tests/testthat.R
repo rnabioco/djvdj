@@ -2,6 +2,8 @@ library(testthat)
 library(dplyr)
 library(tidyr)
 library(purrr)
+library(tibble)
+library(stringr)
 library(djvdj)
 library(SingleCellExperiment)
 

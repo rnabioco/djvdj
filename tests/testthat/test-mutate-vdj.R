@@ -82,11 +82,11 @@ test_that("mutate_vdj df in", {
 test_that("Default separator", {
   res <- vdj_so %>%
     mutate_vdj(
-      NEW = paste0(chains, collapse = "_"),
+      NEW = str_c(chains, collapse = "_"),
       sep = ";"
     )
 
-  old_nms <- str_replace_all(vdj_so$chains, ";", "_")
+  old_nms <- unname(gsub(";", "_", vdj_so$chains))
 
   expect_s4_class(res, "Seurat")                     # class
   expect_identical(colnames(res), colnames(vdj_so))  # cells in object
