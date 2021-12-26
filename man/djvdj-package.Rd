@@ -6,7 +6,8 @@
 \alias{djvdj-package}
 \title{djvdj: A collection of single-cell V(D)J tools}
 \description{
-djvdj provides a range of tools to analyze single-cell V(D)J data.
+djvdj provides a range of tools to analyze single-cell V(D)J
+    data.
 }
 \seealso{
 Useful links:

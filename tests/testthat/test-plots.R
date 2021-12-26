@@ -81,17 +81,20 @@ test_that("plot_features error same x y", {
 })
 
 # Check plot_features feature not found
-arg_lst <- list(
-  input   = list(vdj_so, vdj_sce, df_1),
-  feature = "BAD_FEATURE"
-)
+test_that("plot_fetures bad feature", {
+  fn <- function(obj) {
+    plot_features(obj, feature = "BAD_FEATURE")
+  }
 
-test_all_args(
-  arg_lst = arg_lst,
-  .fn     = plot_features,
-  desc    = "plot_features no feat found",
-  chk     = expect_error
-)
+  expect_error(
+    expect_warning(fn(vdj_so), "requested variables were not found"),
+    "not found in object"
+  )
+
+  expect_error(fn(vdj_sce), "not found in object")
+  expect_error(fn(df_1), "not found in object")
+  expect_error(fn(df_2), "not found in object")
+})
 
 # Check all plot_vdj arguments
 arg_lst <- list(
@@ -130,7 +133,7 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = tot_abundance,
+  .fn     = plot_abundance,
   desc    = "plot_abundance line args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
@@ -324,10 +327,11 @@ test_all_args(
 )
 
 # Check plot_usage plot_genes
-test_genes <- c(
-  "IGHV1-26", "IGHV1-72", "IGHV1-64",
-  "IGHV3-6",  "IGHV1-82", "IGHV1-53"
-)
+test_genes <- vdj_so %>%
+  fetch_vdj() %>%
+  pull(v_gene) %>%
+  na.omit() %>%
+  head(10)
 
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),

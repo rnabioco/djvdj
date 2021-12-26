@@ -33,6 +33,7 @@
 #' set TRUE since indel data is only available for productive chains.
 #' @param sep Separator to use for storing per cell V(D)J data
 #' @return Single cell object or data.frame with added V(D)J data
+#' @importFrom stats complete.cases
 #' @export
 import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, filter_chains = TRUE,
                        filter_paired = FALSE, define_clonotypes = NULL, include_indels = TRUE, sep = ";") {
@@ -43,7 +44,6 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   gene_cols  <- c("v_gene", "d_gene", "j_gene", "c_gene")
   indel_cols <- c("n_insertion", "n_deletion", "n_mismatch")
   qc_cols    <- c("productive", "full_length")
-
 
   sep_cols <- c(
     gene_cols, "chains",
@@ -79,7 +79,10 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
       # Check for NAs after merging with contigs
       # do not include indels if any chains are missing data
-      missing_indels <- purrr::map_lgl(indel_ctigs, ~ any(!complete.cases(.x[, indel_cols])))
+      missing_indels <- purrr::map_lgl(
+        indel_ctigs,
+        ~ any(!stats::complete.cases(.x[, indel_cols]))
+      )
 
       if (any(missing_indels)) {
         warning("Some chains are missing indel data, check input files. Indel results will not be included in the object.")
@@ -137,7 +140,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   }
 
   # Check for NAs in data, additional NAs would indicate malformed input.
-  if (!all(complete.cases(contigs))) {
+  if (!all(stats::complete.cases(contigs))) {
     stop("Malformed input data, NAs are present, check input files.")
   }
 
