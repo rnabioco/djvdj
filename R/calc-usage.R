@@ -34,23 +34,14 @@ calc_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 
   # Filter chains
   if (!is.null(chain)) {
-    if (is.null(chain_col)) {
-      stop("Must specify chain_col")
-    }
-
-    res <- dplyr::mutate(res, across(all_of(gene_cols), ~ {
-      g_col <- .x
-
-      purrr::map2(g_col, !!sym(chain_col), ~ {
-        .x <- dplyr::if_else(
-          any(.y %in% chain),
-          list(.x[.y %in% chain]),
-          list("None")
-        )
-
-        unlist(.x)
-      })
-    }))
+    res <- .filter_chains(
+      res,
+      vdj_cols  = gene_cols,
+      chain     = chain,
+      chain_col = chain_col,
+      col_names = "{.col}",
+      empty_val = "None"
+    )
 
     res <- dplyr::select(res, -all_of(chain_col))
   }

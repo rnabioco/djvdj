@@ -154,34 +154,16 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
 
   # Filter chains
   if (!is.null(chain)) {
-
-    # Function to filter chains
-    .map_fn <- function(x, chns) {
-      r <- x[chns %in% chain]
-
-      if (is_empty(r)) {
-        r <- as.numeric(NA)
-      }
-
-      list(r)
-    }
-
-    # Prefix for temporary columns
     prfx <- "FILT_"
 
-    # Filter chains
-    res  <- dplyr::rowwise(res)
-
-    res <- dplyr::mutate(
+    res <- .filter_chains(
       res,
-      across(
-        all_of(vdj_cols),
-        ~ .map_fn(.x, !!sym(chain_col)),
-        .names = paste0(prfx, "{.col}")
-      )
+      vdj_cols  = vdj_cols,
+      chain     = chain,
+      chain_col = chain_col,
+      col_names = paste0(prfx, "{.col}"),
+      empty_val = NA
     )
-
-    res <- dplyr::ungroup(res)
 
     # Add prefix to vdj_cols so temporary columns are used
     vdj_cols <- paste0(prfx, vdj_cols)
@@ -233,6 +215,74 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
   }
 
   res <- .add_meta(input, meta = res)
+
+  res
+}
+
+
+#' Filter V(D)J data based on chain
+#'
+#' @param df_in data.frame
+#' @param vdj_cols meta.data column(s) containing V(D)J data to filter based on
+#' chain
+#' @param chain Chain to use for filtering V(D)J data
+#' @param chain_col meta.data column(s) containing chains for each cell
+#' @param col_names A glue specification that describes how to name the output
+#' columns, this can use {.col} to stand for the selected column name
+#' @param empty_val Value to use when no chains match chain
+#' @return filtered data.frame
+#' @noRd
+.filter_chains <- function(df_in, vdj_cols, chain, chain_col = "chains", col_names = "{.col}",
+                           empty_val = NA) {
+
+  if (is.null(chain)) {
+    return(df_in)
+  }
+
+  # If not all vdj_cols are list-cols, filter data.frame normally
+  is_lst <- purrr::map_lgl(df_in[, vdj_cols], is.list)
+
+  if (!all(is_lst)) {
+    res <- dplyr::filter(
+      df_in,
+      !!sym(chain_col) %in% chain
+    )
+
+    return(res)
+  }
+
+  # Function to check/filter chains
+  .map_fn <- function(x, chns) {
+
+    if (length(x) != length(chns)) {
+      stop(
+        "Values in ", chain_col,  " are not the same length as vdj_cols, ",
+        "are you using the correct chain_col?"
+      )
+    }
+
+    r <- x[chns %in% chain]
+
+    if (is_empty(r)) {
+      r <- empty_val
+    }
+
+    list(r)
+  }
+
+  # Filter chains
+  res <- dplyr::rowwise(df_in)
+
+  res <- dplyr::mutate(
+    res,
+    across(
+      all_of(vdj_cols),
+      ~ .map_fn(.x, !!sym(chain_col)),
+      .names = col_names
+    )
+  )
+
+  res <- dplyr::ungroup(res)
 
   res
 }
@@ -386,7 +436,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
   typs <- dplyr::rowwise(typs)
   typs <- dplyr::filter(typs, if_all(all_of(sep_cols), ~ any(!is.na(.x))))
 
-  typs <- head(typs, 1000)
+  typs <- utils::head(typs, 1000)
   typs <- tidyr::unnest(typs, everything())
   typs <- purrr::map(typs, readr::guess_parser)
 
