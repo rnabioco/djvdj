@@ -58,7 +58,7 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
 
   combs <- utils::combn(clsts, 2, simplify = FALSE)
 
-  res <- map_dfr(combs, ~ {
+  res <- purrr::map_dfr(combs, ~ {
     x <- pull(vdj, .x[1])
     y <- pull(vdj, .x[2])
 
@@ -84,7 +84,7 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
   }
 
   # Calculate self similarity
-  res_s <- map_dfr(clsts, ~ {
+  res_s <- purrr::map_dfr(clsts, ~ {
     d <- pull(vdj, .x)
 
     tibble::tibble(

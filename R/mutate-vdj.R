@@ -95,13 +95,13 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #' @export
 mutate_meta <- function(input, .fun, ...) {
 
-  if (!is_function(.fun) && !is_formula(.fun)) {
+  if (!purrr::is_function(.fun) && !is_formula(.fun)) {
     stop(".fun must be either a function or a formula")
   }
 
   meta <- .get_meta(input)
 
-  if (is_formula(.fun)) {
+  if (purrr::is_formula(.fun)) {
     .fun <- as_mapper(.fun, ...)
   }
 

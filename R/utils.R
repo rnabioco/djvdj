@@ -6,7 +6,8 @@ NULL
 
 #' purrr imports
 #'
-#' @importFrom purrr map imap imap_dfr map_lgl map_chr map_dbl map_int iwalk pwalk reduce keep is_empty
+#' @importFrom purrr map imap map_dfr imap_dfr map_lgl map_chr map_dbl map_int iwalk pwalk
+#' @importFrom purrr reduce keep is_empty is_function is_formula as_mapper
 #' @noRd
 NULL
 
@@ -161,7 +162,10 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
 
   # Set default fn
   if (is.null(fn)) {
-    is_num <- map_lgl(res[, vdj_cols], ~ all(map_lgl(.x, is.numeric)))
+    is_num <- purrr::map_lgl(
+      res[, vdj_cols],
+      ~ all(purrr::map_lgl(.x, is.numeric))
+    )
 
     if (all(is_num)) {
       fn <- mean

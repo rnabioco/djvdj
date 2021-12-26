@@ -636,7 +636,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
         attr(regexpr(iso_pat, !!sym(iso_col)), "match.length", exact = TRUE)
       )
     ),
-    isotype = map_chr(.data$isotype, ~ {
+    isotype = purrr::map_chr(.data$isotype, ~ {
       isos <- unique(.x)
       isos <- tidyr::replace_na(isos, "")
       isos <- isos[isos != ""]

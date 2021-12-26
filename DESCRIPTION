@@ -28,9 +28,10 @@ Imports:
     stats,
     tibble,
     tidyr,
-    Rsamtools
-Suggests: 
+    Rsamtools,
     abdiv,
+    SingleCellExperiment
+Suggests: 
     covr,
     knitr,
     roxygen2,
