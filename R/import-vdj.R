@@ -13,37 +13,42 @@
 #' loading data from multiple runs into a single object. If set to NULL, cell
 #' barcode prefixes will be automatically generated in a similar way as the
 #' Read10X function found in the Seurat package.
-#' @param filter_contigs Only include chains with at least one productive and
-#' full length contig. It is highly recommended that filter_contigs is set to
-#' TRUE when using the define_clonotypes argument.
+#' @param filter_chains Only include chains with at least one productive and
+#' full length contig.
 #' @param filter_paired Only include clonotypes with paired chains. For TCR
 #' data each clonotype must have at least one TRA and TRB chain, for BCR data
 #' each clonotype must have at least one IGH chain and at least one IGK or IGL
 #' chain.
 #' @param define_clonotypes Define clonotype IDs based on V(D)J data. This is
 #' useful if the V(D)J datasets being loaded do not have consistent clonotype
-#' IDs, e.g., clonotype1 is not the same across samples.
+#' IDs, i.e., clonotype1 is not the same across samples.
 #' 'cdr3aa' will use the CDR3 amino acid sequence, 'cdr3nt' will use the CDR3
 #' nucleotide sequence, and 'cdr3_gene' will use the combination of the CDR3
-#' nucleotide sequence and the V(D)J genes. Set to NULL (default) to use the
+#' nucleotide sequence and the V(D)J genes. When defining clonotypes, only
+#' productive full length chains will be used. Set to NULL (default) to use the
 #' clonotype IDs already present in the input data.
+#' @param include_indels Include the number of insertions/deletions for each
+#' chain. This requires the concat_ref.bam file from Cell Ranger to be present
+#' in vdj_dir. If include_indels is TRUE, filter_chains is also automatically
+#' set TRUE since indel data is only available for productive chains.
 #' @param sep Separator to use for storing per cell V(D)J data
 #' @return Single cell object or data.frame with added V(D)J data
 #' @export
-import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, filter_contigs = TRUE,
-                       filter_paired = FALSE, define_clonotypes = NULL, sep = ";") {
+import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, filter_chains = TRUE,
+                       filter_paired = FALSE, define_clonotypes = NULL, include_indels = TRUE, sep = ";") {
 
   # V(D)J columns to include
   cdr3_cols  <- c("cdr3", "cdr3_nt")
   count_cols <- c("reads", "umis")
+  gene_cols  <- c("v_gene", "d_gene", "j_gene", "c_gene")
   indel_cols <- c("n_insertion", "n_deletion", "n_mismatch")
+  qc_cols    <- c("productive", "full_length")
+
 
   sep_cols <- c(
-    "v_gene",     "d_gene",
-    "j_gene",     "c_gene",
-    "chains",     cdr3_cols,
-    count_cols,   indel_cols,
-    "productive", "full_length"
+    gene_cols, "chains",
+    cdr3_cols, count_cols,
+    qc_cols
   )
 
   vdj_cols <- c(
@@ -56,6 +61,48 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   # Load V(D)J data and add cell prefixes
   contigs <- .load_vdj_data(vdj_dir)
+
+  # Add indel info for each contig
+  # if indel data is included, always filter for productive contigs since most
+  # non-productive contigs are missing indel data
+  if (include_indels) {
+    indels <- .load_vdj_indels(vdj_dir)
+
+    if (!is.null(indels)) {
+      indel_ctigs <- purrr::map(contigs, dplyr::filter, !!!syms(qc_cols))
+
+      indel_ctigs <- purrr::map2(
+        indel_ctigs, indels,
+        dplyr::left_join,
+        by = "contig_id"
+      )
+
+      # Check for NAs after merging with contigs
+      # do not include indels if any chains are missing data
+      missing_indels <- purrr::map_lgl(indel_ctigs, ~ any(!complete.cases(.x[, indel_cols])))
+
+      if (any(missing_indels)) {
+        warning("Some chains are missing indel data, check input files. Indel results will not be included in the object.")
+
+      } else {
+        contigs  <- indel_ctigs
+        sep_cols <- c(sep_cols, indel_cols)
+        vdj_cols <- c(vdj_cols, indel_cols)
+
+        # Set filter_chains FALSE since indel_ctigs has already been filtered
+        filter_chains <- FALSE
+      }
+    }
+  }
+
+  # Filter for productive contigs
+  if (filter_chains) {
+    contigs <- purrr::map(
+      contigs,
+      dplyr::filter,
+      .data$productive, .data$full_length
+    )
+  }
 
   # Classify input data as TCR or BCR
   vdj_class <- purrr::map_chr(contigs, .classify_vdj)
@@ -72,20 +119,11 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     )
   }
 
-  # Add indel info for each contig
-  # indel info is only available for productive contigs
-  indels  <- .load_vdj_indels(vdj_dir)
-  contigs <- purrr::map2(contigs, indels, left_join, by = "contig_id")
-
   # Check cell barcode overlap
+  # use map to check each sample separately
   # give warning for low overlap
   # bind contig data.frames
   contigs <- purrr::imap_dfr(contigs, ~ .check_overlap(input, .x, .y))
-
-  # Filter for productive contigs
-  if (filter_contigs) {
-    contigs <- dplyr::filter(contigs, .data$productive, .data$full_length)
-  }
 
   # Remove contigs that do not have an assigned clonotype_id
   n_remove <- contigs$clonotype_id
@@ -96,6 +134,11 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     warning(n_remove, " contigs do not have an assigned clonotype_id, these contigs will be removed.")
 
     contigs <- dplyr::filter(contigs, !is.na(.data$clonotype_id))
+  }
+
+  # Check for NAs in data, additional NAs would indicate malformed input.
+  if (!all(complete.cases(contigs))) {
+    stop("Malformed input data, NAs are present, check input files.")
   }
 
   # Select V(D)J columns to keep
@@ -123,11 +166,12 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   }
 
   # Calculate CDR3 length
+  # report length 0 if there is no reported CDR3 sequence
   contigs <- dplyr::mutate(
     contigs,
     across(
       all_of(cdr3_cols),
-      ~ ifelse(.x == "None", NA, nchar(.x)),
+      ~ ifelse(.x == "None", 0, nchar(.x)),
       .names = "{.col}_length"
     )
   )
@@ -177,7 +221,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   # Check for duplicated cell barcodes
   if (any(duplicated(meta$barcode))) {
-    stop("Malformed inport data, multiple clonotype_ids are associated with the same cell barcode.")
+    stop("Malformed input data, multiple clonotype_ids are associated with the same cell barcode.")
   }
 
   # Allow user to redefine clonotypes
@@ -187,7 +231,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     clone_cols <- list(
       cdr3aa    = "cdr3",
       cdr3nt    = "cdr3_nt",
-      cdr3_gene = c("cdr3_nt", "v_gene", "d_gene", "j_gene")
+      cdr3_gene = c("cdr3_nt", gene_cols[1:3])
     )
 
     if (!define_clonotypes %in% names(clone_cols)) {
@@ -196,7 +240,11 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
     clone_cols <- clone_cols[[define_clonotypes]]
 
-    res <- define_clonotypes(res, vdj_cols = clone_cols)
+    res <- define_clonotypes(
+      res,
+      vdj_cols      = clone_cols,
+      filter_chains = qc_cols
+    )
   }
 
   # Filter to only include cells with valid clonotype_id
@@ -305,13 +353,14 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   # Add cell prefixes and replace 'None' in productive with FALSE
   res <- purrr::imap(res, ~ {
     .x <- dplyr::rowwise(.x)
+
     .x <- dplyr::mutate(
       .x,
       barcode = paste0(.y, .data$barcode),
       dplyr::across(c(full_length, productive), ~ {
         ifelse(
           is.character(.x),
-          as.logical(gsub("None", "False", .x)),
+          as.logical(gsub("None", "FALSE", .x)),
           .x
         )
       })
@@ -386,7 +435,13 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   }
 
   # Check for file and return path
-  res <- purrr::map_chr(vdj_dir, .get_vdj_path, file = bam_file)
+  # if bam is missing for any sample, return NULL
+  # do not want extra NAs in the V(D)J data columns
+  res <- purrr::map_chr(vdj_dir, .get_vdj_path, file = bam_file, warn = TRUE)
+
+  if (any(is.na(res))) {
+    return(NULL)
+  }
 
   # Load data
   res <- purrr::map(res, Rsamtools::scanBam)
@@ -415,7 +470,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   )
 
   if (is.na(path)) {
-    fun  <- stop
+    fun <- stop
 
     if (warn) {
       fun <- warning
@@ -609,14 +664,14 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' @param vdj_cols meta.data columns containing V(D)J data to use for defining
 #' clonotypes
 #' @param clonotype_col Name of column to use for storing clonotype IDs
-#' @param filter_contigs To only use productive and full length chains when
-#' defining clonotypes, specify column names. If set to NULL chains are not
-#' filtered.
+#' @param filter_chains Columns to use for identifying productive full length
+#' chains when defining clonotypes. If NULL, all chains are used for defining
+#' clonotypes.
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return Single cell object or data.frame with added clonotype IDs
 #' @export
 define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
-                              filter_contigs = c("productive", "full_length"), sep = ";") {
+                              filter_chains = c("productive", "full_length"), sep = ";") {
 
   # Get meta.data
   meta <- .get_meta(input)
@@ -625,20 +680,23 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
     stop("Not all vdj_cols (", paste0(vdj_cols, collapse = ", "), ") are present in meta.data.")
   }
 
-  # Only use values in vdj_cols that are TRUE for all filter_contigs columns
-  # first identify contigs TRUE for all filter_contigs columns
+  # Only use values in vdj_cols that are TRUE for all filter_chains columns
+  # first identify contigs TRUE for all filter_chains columns
   # subset each vdj_cols column based on .clone_idx
-  if (!is.null(filter_contigs)) {
+  if (!is.null(filter_chains)) {
     meta <- mutate_vdj(
       input,
-      .clone_idx = list(purrr::reduce(list(!!!syms(filter_contigs)), ~ .x & .y)),
+      .clone_idx = list(purrr::reduce(list(!!!syms(filter_chains)), ~ .x & .y)),
+
       dplyr::across(
         dplyr::all_of(vdj_cols),
         ~ paste0(.x[.data$.clone_idx], collapse = ""),
         .names = ".clone_{.col}"
       ),
+
       clonotype_col = NULL,
-      vdj_cols      = c(vdj_cols, "productive", "full_length")
+
+      vdj_cols = c(vdj_cols, filter_chains)
     )
 
     vdj_cols <- paste0(".clone_", vdj_cols)

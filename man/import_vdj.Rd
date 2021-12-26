@@ -9,9 +9,10 @@ import_vdj(
   vdj_dir,
   prefix = "",
   cell_prefix = NULL,
-  filter_contigs = TRUE,
+  filter_chains = TRUE,
   filter_paired = FALSE,
   define_clonotypes = NULL,
+  include_indels = TRUE,
   sep = ";"
 )
 }
@@ -33,9 +34,8 @@ loading data from multiple runs into a single object. If set to NULL, cell
 barcode prefixes will be automatically generated in a similar way as the
 Read10X function found in the Seurat package.}
 
-\item{filter_contigs}{Only include chains with at least one productive and
-full length contig. It is highly recommended that filter_contigs is set to
-TRUE when using the define_clonotypes argument.}
+\item{filter_chains}{Only include chains with at least one productive and
+full length contig.}
 
 \item{filter_paired}{Only include clonotypes with paired chains. For TCR
 data each clonotype must have at least one TRA and TRB chain, for BCR data
@@ -44,11 +44,17 @@ chain.}
 
 \item{define_clonotypes}{Define clonotype IDs based on V(D)J data. This is
 useful if the V(D)J datasets being loaded do not have consistent clonotype
-IDs, e.g., clonotype1 is not the same across samples.
+IDs, i.e., clonotype1 is not the same across samples.
 'cdr3aa' will use the CDR3 amino acid sequence, 'cdr3nt' will use the CDR3
 nucleotide sequence, and 'cdr3_gene' will use the combination of the CDR3
-nucleotide sequence and the V(D)J genes. Set to NULL (default) to use the
+nucleotide sequence and the V(D)J genes. When defining clonotypes, only
+productive full length chains will be used. Set to NULL (default) to use the
 clonotype IDs already present in the input data.}
+
+\item{include_indels}{Include the number of insertions/deletions for each
+chain. This requires the concat_ref.bam file from Cell Ranger to be present
+in vdj_dir. If include_indels is TRUE, filter_chains is also automatically
+set TRUE since indel data is only available for productive chains.}
 
 \item{sep}{Separator to use for storing per cell V(D)J data}
 }
