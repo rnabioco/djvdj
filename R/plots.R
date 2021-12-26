@@ -323,7 +323,7 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, clus
     plt_dat <- fetch_vdj(
       input,
       vdj_cols      = fetch_cols,
-      clonotype_col = clonotype_col,
+      clonotype_col = NULL,
       unnest        = TRUE
     )
 
