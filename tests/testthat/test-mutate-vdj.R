@@ -82,7 +82,7 @@ test_that("mutate_vdj df in", {
 test_that("Default separator", {
   res <- vdj_so %>%
     mutate_vdj(
-      NEW = str_c(chains, collapse = "_"),
+      NEW = paste0(chains, collapse = "_"),
       sep = ";"
     )
 

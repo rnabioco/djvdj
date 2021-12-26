@@ -1,3 +1,14 @@
+#' ggplot2 imports
+#'
+#' @importFrom ggplot2 ggplot aes geom_point geom_line geom_histogram geom_density geom_tile geom_boxplot geom_violin geom_col
+#' @importFrom ggplot2 scale_x_discrete scale_y_continuous scale_x_log10 scale_y_log10 position_dodge
+#' @importFrom ggplot2 scale_color_manual scale_fill_manual scale_color_gradientn scale_fill_gradientn
+#' @importFrom ggplot2 stat_summary facet_wrap guides guide_legend labs
+#' @importFrom ggplot2 theme element_blank element_text element_line
+#' @noRd
+NULL
+
+
 #' Create 2D feature plot
 #'
 #' @export
@@ -473,6 +484,7 @@ plot_vdj_indels <- function(input, data_cols = c("n_insertion", "n_deletion", "n
 #' specification to facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
+#' @importFrom ggrepel geom_text_repel
 #' @export
 plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id", type = "bar",
                            yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, label_col = clonotype_col,
@@ -575,7 +587,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 
   # Create bar graph
   if (type == "bar") {
-    plt_labs <- set_names(top_clones$.lab, top_clones$.x)
+    plt_labs <- purrr::set_names(top_clones$.lab, top_clones$.x)
 
     top_clones <- dplyr::arrange(top_clones, desc(!!sym(dat_col)))
 
@@ -899,7 +911,7 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
     if (identical(absent, top_genes)) {
       stop("None of the provided genes were found")
 
-    } else if (!is_empty(absent)) {
+    } else if (!purrr::is_empty(absent)) {
       absent <- paste0(absent, collapse = ", ")
 
       warning("Some genes not found: ", absent)
@@ -1044,7 +1056,7 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
   )
 
   if (!is.null(names(res))) {
-    res <- imap(res, ~ .x + ggplot2::ggtitle(.y))
+    res <- imap(res, ~ .x + ggplot2::labs(title = .y))
   }
 
   if (length(res) == 1) {

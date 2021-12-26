@@ -5,8 +5,5 @@
 # roxygen namespace tags. Modify with care!
 ## usethis namespace: start
 #' @import dplyr
-#' @import purrr
-#' @import Seurat
-#' @import tibble
 ## usethis namespace: end
 NULL

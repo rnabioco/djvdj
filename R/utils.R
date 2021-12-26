@@ -1,3 +1,22 @@
+#' tibble imports
+#'
+#' @importFrom tibble tibble as_tibble column_to_rownames rownames_to_column
+#' @noRd
+NULL
+
+#' purrr imports
+#'
+#' @importFrom purrr map imap imap_dfr map_lgl map_chr map_dbl map_int iwalk pwalk reduce keep is_empty
+#' @noRd
+NULL
+
+#' stats imports
+#'
+#' @importFrom stats median complete.cases as.formula
+#' @noRd
+NULL
+
+
 #' Helper to test all combinations of provided arguments
 #'
 #' @param arg_lst Named list of arguments to test
@@ -18,7 +37,7 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
   n <- 1
 
-  pwalk(arg_lst, ~ {
+  purrr::pwalk(arg_lst, ~ {
     test_that(paste(desc, n), {
 
       if (is.call(chk)) {
@@ -263,7 +282,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
 
     r <- x[chns %in% chain]
 
-    if (is_empty(r)) {
+    if (purrr::is_empty(r)) {
       r <- empty_val
     }
 
@@ -294,6 +313,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
 #' @param meta meta.data to add to object
 #' @param row_col Column containing meta.data rownames
 #' @return Object with added meta.data
+#' @importFrom S4Vectors DataFrame
 #' @noRd
 .add_meta <- function(input, meta, row_col) {
 
@@ -417,6 +437,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
 #' @param unnest Should columns be unnested after splitting into vectors
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame with V(D)J data
+#' @importFrom readr guess_parser
 #' @noRd
 .unnest_vdj <- function(df_in, sep_cols, unnest = TRUE, sep = ";") {
 

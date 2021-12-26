@@ -33,7 +33,6 @@
 #' set TRUE since indel data is only available for productive chains.
 #' @param sep Separator to use for storing per cell V(D)J data
 #' @return Single cell object or data.frame with added V(D)J data
-#' @importFrom stats complete.cases
 #' @export
 import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, filter_chains = TRUE,
                        filter_paired = FALSE, define_clonotypes = NULL, include_indels = TRUE, sep = ";") {
@@ -339,6 +338,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' @param contig_file cellranger vdj output file containing data for each
 #' contig annotation
 #' @return List containing one data.frame for each path provided to vdj_dir
+#' @importFrom readr read_csv cols
 #' @noRd
 .load_vdj_data <- function(vdj_dir, contig_file = "filtered_contig_annotations.csv") {
 

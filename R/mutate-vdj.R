@@ -39,7 +39,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 
   # Create list-cols for V(D)J columns that contain sep
   if (!purrr::is_empty(sep_cols)) {
-    sep_cols <- set_names(
+    sep_cols <- purrr::set_names(
       x  = sep_cols,
       nm = paste0(".", sep_cols)
     )

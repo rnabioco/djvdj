@@ -17,18 +17,14 @@ BugReports: https://github.com/rnabioco/djvdj/issues
 Depends: 
     R (>= 4.0.0)
 Imports: 
-    broom,
     dplyr,
     ggplot2,
     ggrepel,
-    methods,
     purrr,
     readr,
     rlang (>= 0.1.2),
     S4Vectors,
-    scales,
     Seurat (>= 4.0.0),
-    SingleCellExperiment,
     stats,
     tibble,
     tidyr,
