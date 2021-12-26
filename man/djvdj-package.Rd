@@ -6,8 +6,7 @@
 \alias{djvdj-package}
 \title{djvdj: A collection of single-cell V(D)J tools}
 \description{
-djvdj provides a range of tools to analyze single-cell V(D)J
-    data.
+djvdj provides a range of tools to analyze single-cell V(D)J data.
 }
 \seealso{
 Useful links:
@@ -26,6 +25,7 @@ Other contributors:
   \item Jay Hesselberth \email{jay.hesselberth@gmail.com} [contributor]
   \item Rui Fu \email{raysinensis@gmail.com} [contributor]
   \item Kent Riemondy \email{kent.riemondy@ucdenver.edu} [contributor]
+  \item RNA Bioscience Initiative [funder]
 }
 
 }
