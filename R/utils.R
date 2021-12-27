@@ -6,7 +6,7 @@ NULL
 
 #' purrr imports
 #'
-#' @importFrom purrr map imap map_dfr imap_dfr map_lgl map_chr map_dbl map_int iwalk pwalk
+#' @importFrom purrr map imap map_dfr imap_dfr map_lgl map_chr map2_int map_dbl map_int iwalk pwalk
 #' @importFrom purrr reduce keep is_empty is_function is_formula as_mapper
 #' @noRd
 NULL
@@ -131,8 +131,8 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
 #' each cell
 #' @param fn Function to apply to each selected column, possible values can be
 #' either a function, e.g. mean, or a purrr-style lambda, e.g. ~ mean(.x,
-#' na.rm = TRUE). If NULL, the default for numeric values is mean and the
-#' default for other types is ~ paste0(.x, collapse = sep).
+#' na.rm = TRUE). If NULL, the mean will be calculated for numeric values,
+#' other data types will be combined into a string.
 #' @param chain Chain to use for summarizing V(D)J data
 #' @param chain_col meta.data column(s) containing chains for each cell
 #' @param col_names A glue specification that describes how to name the output
@@ -171,7 +171,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
       fn <- mean
 
     } else {
-      fn <- ~ paste0(.x, collapse = sep)
+      fn <- ~ ifelse(all(is.na(.x)), NA, paste0(.x, collapse = sep))
     }
   }
 
@@ -217,20 +217,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
   }
 
   # Re-nest vdj_cols
-  nest_cols <- purrr::map_lgl(res[, fetch_cols], is.list)
-  nest_cols <- fetch_cols[nest_cols]
-
-  res <- dplyr::rowwise(res)
-
-  res <- mutate(
-    res,
-    across(
-      all_of(nest_cols),
-      ~ paste0(as.character(.x), collapse = sep)
-    )
-  )
-
-  res <- dplyr::ungroup(res)
+  res <- .nest_vdj(res, sep_cols = fetch_cols, sep = sep)
 
   # Add results back to object
   if (return_df) {
@@ -355,6 +342,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
 #' @param input Object containing single cell data
 #' @param row_col New column to store meta.data rownames
 #' @return tibble containing meta.data pulled from object
+#' @importFrom SingleCellExperiment colData
 #' @noRd
 .get_meta <- function(input, row_col) {
 
@@ -376,7 +364,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
 
 .get_meta.SingleCellExperiment <- function(input, row_col = ".cell_id") {
 
-  .to_tibble(input@colData, row_col)
+  .to_tibble(SingleCellExperiment::colData(input), row_col)
 
 }
 
@@ -434,7 +422,42 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
 }
 
 
-#' Split V(D)J meta.data columns into vectors
+#' Collapse meta.data list-cols into strings
+#'
+#' @param df_in data.frame to modify
+#' @param sep_cols list-cols to collapse into strings, if NULL all list-cols
+#' in the data.frame will be collapsed
+#' @param sep Separator to use for collapsing list-cols
+#' @return data.frame
+#' @noRd
+.nest_vdj <- function(df_in, sep_cols = NULL, sep = ";") {
+
+  if (is.null(sep_cols)) {
+    sep_cols <- colnames(df_in)
+  }
+
+  nest_cols <- purrr::map_lgl(df_in[, sep_cols], is.list)
+  nest_cols <- sep_cols[nest_cols]
+
+  res <- dplyr::rowwise(df_in)
+
+  # paste0 will convert NA to "NA", to avoid this first check for NA before
+  # collapsing
+  res <- dplyr::mutate(
+    res,
+    across(
+      all_of(nest_cols),
+      ~ ifelse(all(is.na(.x)), NA, paste0(as.character(.x), collapse = sep))
+    )
+  )
+
+  res <- dplyr::ungroup(res)
+
+  res
+}
+
+
+#' Split meta.data columns into list-cols
 #'
 #' @param df_in data.frame to modify
 #' @param sep_cols Columns to split based on sep
