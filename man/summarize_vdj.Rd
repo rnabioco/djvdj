@@ -24,8 +24,8 @@ each cell}
 
 \item{fn}{Function to apply to each selected column, possible values can be
 either a function, e.g. mean, or a purrr-style lambda, e.g. ~ mean(.x,
-na.rm = TRUE). If NULL, the default for numeric values is mean and the
-default for other types is ~ paste0(.x, collapse = sep).}
+na.rm = TRUE). If NULL, the mean will be calculated for numeric values,
+other data types will be combined into a string.}
 
 \item{chain}{Chain to use for summarizing V(D)J data}
 

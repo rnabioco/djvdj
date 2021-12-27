@@ -1,18 +1,19 @@
 #' Filter V(D)J data
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, the cell barcodes should be stored as row names.
+#' data.frame is provided, cell barcodes should be stored as row names.
 #' @param filt Condition to use for filtering meta.data
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
-#' is used to determine which cells have V(D)J data. If clonotype_col is set to
-#' NULL, filtering is performed regardless of whether V(D)J data is present for
-#' the cell
-#' @param filter_cells Should cells be removed from the object? If FALSE
-#' (default) V(D)J data will be removed from the meta.data but no cells will be
-#' removed from the object.
-#' @param vdj_cols meta.data columns containing V(D)J data to use for filtering.
-#' If set to NULL (recommended) columns are automatically selected by
-#' identifying columns that have NAs in the same rows as clonotype_col.
+#' is used to determine which cells have V(D)J data. If clonotype_col is NULL,
+#' filtering is performed regardless of whether V(D)J data is present for the
+#' cell.
+#' @param filter_cells Remove cells from the object that do not satisfy the
+#' filtering conditions. If FALSE (default) V(D)J data for the cell will be
+#' removed from the meta.data but no cells will be completely removed from the
+#' object.
+#' @param vdj_cols meta.data columns containing V(D)J data to use for
+#' filtering. If NULL, data are automatically selected by identifying columns
+#' that have NAs in the same rows as clonotype_col.
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return Object with filtered meta.data
 #' @export

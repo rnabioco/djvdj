@@ -15,22 +15,23 @@ filter_vdj(
 }
 \arguments{
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
-data.frame is provided, the cell barcodes should be stored as row names.}
+data.frame is provided, cell barcodes should be stored as row names.}
 
 \item{filt}{Condition to use for filtering meta.data}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs. This column
-is used to determine which cells have V(D)J data. If clonotype_col is set to
-NULL, filtering is performed regardless of whether V(D)J data is present for
-the cell}
+is used to determine which cells have V(D)J data. If clonotype_col is NULL,
+filtering is performed regardless of whether V(D)J data is present for the
+cell.}
 
-\item{filter_cells}{Should cells be removed from the object? If FALSE
-(default) V(D)J data will be removed from the meta.data but no cells will be
-removed from the object.}
+\item{filter_cells}{Remove cells from the object that do not satisfy the
+filtering conditions. If FALSE (default) V(D)J data for the cell will be
+removed from the meta.data but no cells will be completely removed from the
+object.}
 
-\item{vdj_cols}{meta.data columns containing V(D)J data to use for filtering.
-If set to NULL (recommended) columns are automatically selected by
-identifying columns that have NAs in the same rows as clonotype_col.}
+\item{vdj_cols}{meta.data columns containing V(D)J data to use for
+filtering. If NULL, data are automatically selected by identifying columns
+that have NAs in the same rows as clonotype_col.}
 
 \item{sep}{Separator used for storing per cell V(D)J data}
 }

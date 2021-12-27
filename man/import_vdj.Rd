@@ -23,16 +23,20 @@ containing V(D)J results will be returned}
 \item{vdj_dir}{Directory containing the output from cellranger vdj. A vector
 or named vector can be given to load data from several runs. If a named
 vector is given, the cell barcodes will be prefixed with the provided names.
-This mimics the behavior of the Read10X function found in the Seurat
-package. Cell barcode prefixes can also be provided using the cell_prefix
-argument.}
+This mimics the behavior of the Seurat::Read10X. Cell barcode prefixes can
+also be provided using the cell_prefix argument.}
 
 \item{prefix}{Prefix to add to new columns}
 
 \item{cell_prefix}{Prefix to add to cell barcodes, this is helpful when
 loading data from multiple runs into a single object. If set to NULL, cell
-barcode prefixes will be automatically generated in a similar way as the
-Read10X function found in the Seurat package.}
+barcode prefixes are automatically generated in a similar manner as
+Seurat::Read10X.
+
+For the V(D)J data to be successfully added to the object, the cell prefixes
+must match the prefixes that are already present in the object. If the cell
+prefixes are incorrect, import_vdj will be unable to assign the V(D)J data
+to the correct cells.}
 
 \item{filter_chains}{Only include chains with at least one productive and
 full length contig.}
@@ -44,12 +48,17 @@ chain.}
 
 \item{define_clonotypes}{Define clonotype IDs based on V(D)J data. This is
 useful if the V(D)J datasets being loaded do not have consistent clonotype
-IDs, i.e., clonotype1 is not the same across samples.
-'cdr3aa' will use the CDR3 amino acid sequence, 'cdr3nt' will use the CDR3
-nucleotide sequence, and 'cdr3_gene' will use the combination of the CDR3
-nucleotide sequence and the V(D)J genes. When defining clonotypes, only
-productive full length chains will be used. Set to NULL (default) to use the
-clonotype IDs already present in the input data.}
+IDs, i.e., clonotype1 is not the same across samples. Possible values are:
+\itemize{
+\item cdr3aa, define clonotypes based on the CDR3 amino acid sequence
+\item cdr3nt, define clonotypes based on the CDR3 nucleotide sequence
+\item cdr3_gene, define clonotypes based on the combination of the CDR3
+nucleotide sequence and the V(D)J genes.
+}
+
+When defining clonotypes, only productive full length chains will be used.
+Set to NULL (default) to use the clonotype IDs already present in the input
+data.}
 
 \item{include_indels}{Include the number of insertions/deletions for each
 chain. This requires the concat_ref.bam file from Cell Ranger to be present
@@ -63,4 +72,99 @@ Single cell object or data.frame with added V(D)J data
 }
 \description{
 Import V(D)J data
+}
+\examples{
+# Loading a single dataset
+vdj_dir <- system.file("extdata/bcr_1", package = "djvdj")
+
+tiny_so \%>\%
+  import_vdj(vdj_dir)
+
+# Loading multiple datasets
+vdj_dir <- c(
+  system.file("extdata/bcr_1", package = "djvdj"),
+  system.file("extdata/bcr_2", package = "djvdj")
+)
+
+tiny_so \%>\%
+  import_vdj(vdj_dir)
+
+# Specifying cell prefixes
+# if cell prefixes are not specified when loading multiple datasets,
+# prefixes will be automatically generated in a similar manner as
+# Seurat::Read10X
+tiny_so \%>\%
+  import_vdj(
+    vdj_dir     = vdj_dir,
+    cell_prefix = c("1_", "2_")
+  )
+
+# Specifying cell prefixes using vector names
+# if a named vector is passed, the names will be used as the cell prefixes
+vdj_dir <- c(
+  "1_" = system.file("extdata/bcr_1", package = "djvdj"),
+  "2_" = system.file("extdata/bcr_2", package = "djvdj")
+)
+
+tiny_so \%>\%
+  import_vdj(vdj_dir)
+
+# Only include V(D)J data for productive full length chains
+tiny_so \%>\%
+  import_vdj(
+    vdj_dir       = vdj_dir,
+    filter_chains = TRUE
+  )
+
+# Only include V(D)J data for cells with paired chains
+tiny_so \%>\%
+  import_vdj(
+    vdj_dir       = vdj_dir,
+    filter_paired = TRUE
+  )
+
+# Defining clonotypes
+# this is useful if the original clonotype IDs are not consistent across
+# datasets, i.e. clonotype1 is not the same for all samples
+tiny_so \%>\%
+  import_vdj(
+    vdj_dir           = vdj_dir,
+    define_clonotypes = "cdr3_gene"
+  )
+
+# Include the number of indels for each chain
+# by default, this information will be included if the file concat_ref.bam
+# is present, omit indel information by setting include_indels to FALSE
+tiny_so \%>\%
+  import_vdj(
+    vdj_dir        = vdj_dir,
+    include_indels = TRUE
+  )
+
+# Loading both BCR and TCR data
+# load each dataset separately and assign unique column names using the
+# prefix argument
+bcr_dir <- system.file("extdata/bcr_1", package = "djvdj")
+tcr_dir <- system.file("extdata/tcr_1", package = "djvdj")
+
+tiny_so \%>\%
+  import_vdj(
+    vdj_dir     = bcr_dir,
+    prefix      = "bcr_",
+    cell_prefix = "1_"
+  ) \%>\%
+  import_vdj(
+    vdj_dir     = tcr_dir,
+    prefix      = "tcr_",
+    cell_prefix = "2_"
+  )
+
+# Using import_vdj outside of Seurat
+# SingleCellExperiment objects are also compatible, or if an input object is
+# ommitted, a data.frame containing the V(D)J data will be returned
+tiny_sce \%>\%
+  import_vdj(vdj_dir)
+
+import_vdj(vdj_dir = vdj_dir)
+
 }
