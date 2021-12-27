@@ -290,8 +290,13 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   if (is.null(names(res))) {
 
     # If no cell prefixes are provided, auto generate
+    # do not add prefix if there is only
     if (is.null(cell_prefix)) {
-      cell_prefix <- paste0(seq_along(res), "_")
+      cell_prefix <- ""
+
+      if (length(res) > 1) {
+        cell_prefix <- paste0(seq_along(res), "_")
+      }
     }
 
     # Check there is a cell prefix provided for each path
@@ -425,7 +430,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
       strts <- as.integer(mtch)
       lens  <- attr(mtch, "match.length", exact = TRUE)
 
-      n <- map2_int(strts, lens, ~ as.integer(substr(strg, .x, .x + .y - 1)))
+      n <- purrr::map2_int(strts, lens, ~ as.integer(substr(strg, .x, .x + .y - 1)))
 
       # Multiple indel sites will result in vector with length > 1
       # sum bp from all sites and replace NAs with 0
