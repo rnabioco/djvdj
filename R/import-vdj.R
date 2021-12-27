@@ -64,11 +64,11 @@
 #' # if cell prefixes are not specified when loading multiple datasets,
 #' # prefixes will be automatically generated in a similar manner as
 #' # Seurat::Read10X
-#' tiny_so %>%
-#'   import_vdj(
-#'     vdj_dir     = vdj_dir,
-#'     cell_prefix = c("1_", "2_")
-#'   )
+#' import_vdj(
+#'   tiny_so,
+#'   vdj_dir = vdj_dir,
+#'   cell_prefix = c("1_", "2_")
+#' )
 #'
 #' # Specifying cell prefixes using vector names
 #' # if a named vector is passed, the names will be used as the cell prefixes
@@ -77,40 +77,39 @@
 #'   "2_" = system.file("extdata/bcr_2", package = "djvdj")
 #' )
 #'
-#' tiny_so %>%
-#'   import_vdj(vdj_dir)
+#' import_vdj(tiny_so, vdj_dir)
 #'
 #' # Only include V(D)J data for productive full length chains
-#' tiny_so %>%
-#'   import_vdj(
-#'     vdj_dir       = vdj_dir,
-#'     filter_chains = TRUE
-#'   )
+#' import_vdj(
+#'   tiny_so,
+#'   vdj_dir = vdj_dir,
+#'   filter_chains = TRUE
+#' )
 #'
 #' # Only include V(D)J data for cells with paired chains
-#' tiny_so %>%
-#'   import_vdj(
-#'     vdj_dir       = vdj_dir,
-#'     filter_paired = TRUE
-#'   )
+#' import_vdj(
+#'   tiny_so,
+#'   vdj_dir = vdj_dir,
+#'   filter_paired = TRUE
+#' )
 #'
 #' # Defining clonotypes
 #' # this is useful if the original clonotype IDs are not consistent across
 #' # datasets, i.e. clonotype1 is not the same for all samples
-#' tiny_so %>%
-#'   import_vdj(
-#'     vdj_dir           = vdj_dir,
-#'     define_clonotypes = "cdr3_gene"
-#'   )
+#' import_vdj(
+#'   tiny_so,
+#'   vdj_dir = vdj_dir,
+#'   define_clonotypes = "cdr3_gene"
+#' )
 #'
 #' # Include the number of indels for each chain
 #' # by default, this information will be included if the file concat_ref.bam
 #' # is present, omit indel information by setting include_indels to FALSE
-#' tiny_so %>%
-#'   import_vdj(
-#'     vdj_dir        = vdj_dir,
-#'     include_indels = TRUE
-#'   )
+#' import_vdj(
+#'   tiny_so,
+#'   vdj_dir = vdj_dir,
+#'   include_indels = TRUE
+#' )
 #'
 #' # Loading both BCR and TCR data
 #' # load each dataset separately and assign unique column names using the
@@ -118,23 +117,24 @@
 #' bcr_dir <- system.file("extdata/bcr_1", package = "djvdj")
 #' tcr_dir <- system.file("extdata/tcr_1", package = "djvdj")
 #'
-#' tiny_so %>%
-#'   import_vdj(
-#'     vdj_dir     = bcr_dir,
-#'     prefix      = "bcr_",
-#'     cell_prefix = "1_"
-#'   ) %>%
-#'   import_vdj(
-#'     vdj_dir     = tcr_dir,
-#'     prefix      = "tcr_",
-#'     cell_prefix = "2_"
-#'   )
+#' new_so <- import_vdj(
+#'   tiny_so,
+#'   vdj_dir     = bcr_dir,
+#'   prefix      = "bcr_",
+#'   cell_prefix = "1_"
+#' )
+#'
+#' new_so <- import_vdj(
+#'   new_so,
+#'   vdj_dir     = tcr_dir,
+#'   prefix      = "tcr_",
+#'   cell_prefix = "2_"
+#' )
 #'
 #' # Using import_vdj outside of Seurat
 #' # SingleCellExperiment objects are also compatible, or if an input object is
 #' # ommitted, a data.frame containing the V(D)J data will be returned
-#' tiny_sce %>%
-#'   import_vdj(vdj_dir)
+#' import_vdj(tiny_sce, vdj_dir)
 #'
 #' import_vdj(vdj_dir = vdj_dir)
 #'
