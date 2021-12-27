@@ -15,17 +15,17 @@ mutate_vdj(
 }
 \arguments{
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
-data.frame is provided, the cell barcodes should be stored as row names.}
+data.frame is provided, cell barcodes should be stored as row names.}
 
 \item{...}{Name-value pairs to use for creating or modifying meta.data
 columns}
 
-\item{clonotype_col}{meta.data column containing clonotype IDs. This column
-is used to determine which cells have V(D)J data.}
+\item{clonotype_col}{meta.data column containing clonotype IDs. This is used
+to identify columns containing V(D)J data.}
 
-\item{vdj_cols}{meta.data columns containing V(D)J data to use for filtering.
-If NULL (recommended) data are automatically selected by identifying columns
-that have NAs in the same rows as clonotype_col.}
+\item{vdj_cols}{meta.data columns containing V(D)J data to modify. If NULL,
+data are automatically selected by identifying columns that have NAs in the
+same rows as clonotype_col.}
 
 \item{return_df}{Return results as a data.frame. If FALSE, results will be
 added to the input object.}

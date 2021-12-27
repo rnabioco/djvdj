@@ -4,13 +4,13 @@
 \alias{mutate_meta}
 \title{Mutate object meta.data}
 \usage{
-mutate_meta(input, .fun, ...)
+mutate_meta(input, fn, ...)
 }
 \arguments{
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{.fun}{Function or formula to use for modifying the meta.data. If a
+\item{fn}{Function or formula to use for modifying the meta.data. If a
 formula is provided, use .x to refer to the meta.data table.}
 
 \item{...}{Arguments to pass to the provided function}
