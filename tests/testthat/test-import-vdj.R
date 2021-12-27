@@ -31,18 +31,20 @@ df_2 <- tiny_so@meta.data %>%
 # Check arguments for different path inputs with Seurat
 arg_lst <- list(
   single = list(
-    input         = list(tiny_so),
-    vdj_dir       = list(ctigs_2[1], ctigs_3[1], c("1" = paste0(ctigs[1], "/outs"))),
-    cell_prefix   = list(NULL, "1"),
-    filter_paired = c(TRUE, FALSE),
-    prefix        = c("", "PREFIX")
+    input          = list(tiny_so),
+    vdj_dir        = list(ctigs_2[1], ctigs_3[1], c("1" = paste0(ctigs[1], "/outs"))),
+    cell_prefix    = list(NULL, "1"),
+    filter_paired  = c(TRUE, FALSE),
+    prefix         = c("", "PREFIX"),
+    include_indels = FALSE
   ),
   multi = list(
-    input         = list(tiny_so),
-    vdj_dir       = list(ctigs, ctigs_2, ctigs_3, paste0(ctigs, "/outs")),
-    cell_prefix   = list(NULL, c("1_", "2_"), c("1", "2")),
-    filter_paired = c(TRUE, FALSE),
-    prefix        = c("", "PREFIX")
+    input          = list(tiny_so),
+    vdj_dir        = list(ctigs, ctigs_2, ctigs_3, paste0(ctigs, "/outs")),
+    cell_prefix    = list(NULL, c("1_", "2_"), c("1", "2")),
+    filter_paired  = c(TRUE, FALSE),
+    prefix         = c("", "PREFIX"),
+    include_indels = FALSE
   )
 )
 
@@ -62,6 +64,36 @@ arg_lst %>%
       chk     = expr(expect_identical(colnames(.res), colnames(tiny_so)))
     )
   })
+
+# Check include_indels
+test_that("import_vdj include_indels", {
+  res <- tiny_so %>%
+    import_vdj(
+      vdj_dir = ctigs,
+      prefix  = "PREFIX_"
+    )
+
+  dat <- res@meta.data
+  dat <- dat[, !grepl("PREFIX_", colnames(dat))]
+
+  expect_identical(dat, tiny_so@meta.data)
+  expect_s4_class(res, "Seurat")
+  expect_identical(colnames(res), colnames(tiny_so))
+
+  res <- tiny_so %>%
+    import_vdj(
+      vdj_dir     = ctigs[1],
+      cell_prefix = "1",
+      prefix      = "PREFIX_"
+    )
+
+  dat <- res@meta.data
+  dat <- dat[, !grepl("PREFIX_", colnames(dat))]
+
+  expect_identical(dat, tiny_so@meta.data)
+  expect_s4_class(res, "Seurat")
+  expect_identical(colnames(res), colnames(tiny_so))
+})
 
 # Check arguments for SCE input
 test_that("import_vdj SingleCellExperiment", {
