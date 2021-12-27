@@ -23,16 +23,16 @@ vdj_cols <- c(
   "n_mismatch"
 )
 
-df_1 <- vdj_so@meta.data
+df_1 <- tiny_so@meta.data
 
-df_2 <- vdj_so@meta.data %>%
+df_2 <- tiny_so@meta.data %>%
   as_tibble(rownames = ".cell_id")
 
 # Check arguments for different path inputs with Seurat
 arg_lst <- list(
   single = list(
     input         = list(tiny_so),
-    vdj_dir       = list(ctigs[1], ctigs_2[1], ctigs_3[1], paste0(ctigs[1], "/outs")),
+    vdj_dir       = list(ctigs_2[1], ctigs_3[1], c("1" = paste0(ctigs[1], "/outs"))),
     cell_prefix   = list(NULL, "1"),
     filter_paired = c(TRUE, FALSE),
     prefix        = c("", "PREFIX")
@@ -63,68 +63,49 @@ arg_lst %>%
     )
   })
 
- # Check arguments for different path inputs with SCE
-purrr::pluck(arg_lst, 1, 1) <- list(tiny_sce)
-purrr::pluck(arg_lst, 2, 1) <- list(tiny_sce)
-
-arg_lst %>%
-  iwalk(~ {
-    test_all_args(
-      arg_lst = .x,
-      .fn     = import_vdj,
-      desc    = paste("import_vdj", .y, "path class"),
-      chk     = expr(expect_s4_class(.res, "SingleCellExperiment"))
+# Check arguments for SCE input
+test_that("import_vdj SingleCellExperiment", {
+  res <- tiny_sce %>%
+    import_vdj(
+      vdj_dir = ctigs,
+      prefix  = "PREFIX_"
     )
 
-    test_all_args(
-      arg_lst = .x,
-      .fn     = import_vdj,
-      desc    = paste("import_vdj", .y, "path cells"),
-      chk     = expr(expect_identical(colnames(.res), colnames(tiny_sce)))
-    )
-  })
+  dat <- res@colData
+  dat <- dat[, !grepl("PREFIX_", colnames(dat))]
 
-# Check arguments for different path inputs with data.frame
-purrr::pluck(arg_lst, 1, 1) <- list(df_1)
-purrr::pluck(arg_lst, 2, 1) <- list(df_1)
+  expect_identical(dat, tiny_sce@colData)
+  expect_s4_class(res, "SingleCellExperiment")
+  expect_identical(colnames(res), colnames(tiny_sce))
+})
 
-arg_lst %>%
-  iwalk(~ {
-    test_all_args(
-      arg_lst = .x,
-      .fn     = import_vdj,
-      desc    = paste("import_vdj", .y, "path class"),
-      chk     = expr(expect_s3_class(.res, "data.frame"))
+# Check arguments for data.frame input
+test_that("import_vdj data.frame", {
+  res <- df_1 %>%
+    import_vdj(
+      vdj_dir = ctigs,
+      prefix  = "PREFIX_"
     )
 
-    test_all_args(
-      arg_lst = .x,
-      .fn     = import_vdj,
-      desc    = paste("import_vdj", .y, "path cells"),
-      chk     = expr(expect_identical(rownames(.res), rownames(vdj_so@meta.data)))
-    )
-  })
+  dat <- res[, !grepl("PREFIX_", colnames(res))]
 
-# Check arguments for different path inputs with tibble
-purrr::pluck(arg_lst, 1, 1) <- list(df_2)
-purrr::pluck(arg_lst, 2, 1) <- list(df_2)
+  expect_identical(dat, df_1)
+  expect_s3_class(res, "data.frame")
+  expect_identical(rownames(res), rownames(df_1))
 
-arg_lst %>%
-  iwalk(~ {
-    test_all_args(
-      arg_lst = .x,
-      .fn     = import_vdj,
-      desc    = paste("import_vdj", .y, "path class"),
-      chk     = expr(expect_s3_class(.res, "data.frame"))
+  res <- df_2 %>%
+    import_vdj(
+      vdj_dir = ctigs,
+      prefix  = "PREFIX_"
     )
 
-    test_all_args(
-      arg_lst = .x,
-      .fn     = import_vdj,
-      desc    = paste("import_vdj", .y, "path cells"),
-      chk     = expr(expect_identical(rownames(.res), rownames(vdj_so@meta.data)))
-    )
-  })
+  dat <- res[, !grepl("PREFIX_", colnames(res))]
+
+  expect_identical(dat, df_1)
+  expect_identical(c(".cell_id", colnames(dat)), colnames(df_2))
+  expect_s3_class(res, "data.frame")
+  expect_identical(rownames(res), df_2$.cell_id)
+})
 
 # Check bad path
 test_that("import_vdj bad path", {
@@ -170,6 +151,7 @@ test_that("import_vdj unfiltered contigs", {
   res <- tiny_so %>%
     import_vdj(
       vdj_dir        = ctigs[1],
+      cell_prefix    = "1",
       include_indels = FALSE,
       filter_chains  = FALSE
     )
@@ -270,7 +252,7 @@ test_that("import_vdj low overlap", {
 
   fn <- function() {
     res <- tiny_so %>%
-      import_vdj(vdj_dir = bad_ctigs)
+      import_vdj(vdj_dir = dat)
   }
 
   expect_warning(fn(), "Only.+cell barcodes overlap")
@@ -282,6 +264,7 @@ test_that("import_vdj missing clonotype_id", {
     res <- tiny_so %>%
       import_vdj(
         vdj_dir        = tcr_ctigs,
+        cell_prefix    = "1_",
         filter_chains  = FALSE,
         include_indels = FALSE
       )
@@ -296,6 +279,7 @@ test_that("import_vdj missing indels", {
     res <- tiny_so %>%
       import_vdj(
         vdj_dir        = tcr_ctigs,
+        cell_prefix    = "1",
         filter_chains  = FALSE
       )
   }

@@ -48,8 +48,7 @@
 #' # Loading a single dataset
 #' vdj_dir <- system.file("extdata/bcr_1", package = "djvdj")
 #'
-#' tiny_so %>%
-#'   import_vdj(vdj_dir)
+#' import_vdj(tiny_so, vdj_dir)
 #'
 #' # Loading multiple datasets
 #' vdj_dir <- c(
@@ -57,8 +56,7 @@
 #'   system.file("extdata/bcr_2", package = "djvdj")
 #' )
 #'
-#' tiny_so %>%
-#'   import_vdj(vdj_dir)
+#' import_vdj(tiny_so, vdj_dir)
 #'
 #' # Specifying cell prefixes
 #' # if cell prefixes are not specified when loading multiple datasets,
@@ -128,7 +126,7 @@
 #'   new_so,
 #'   vdj_dir     = tcr_dir,
 #'   prefix      = "tcr_",
-#'   cell_prefix = "2_"
+#'   cell_prefix = "1_"
 #' )
 #'
 #' # Using import_vdj outside of Seurat
@@ -824,12 +822,12 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
   }
 
   # Add new clonotype IDs
-  meta <- meta %>%
-    mutate(
-      .new_clone            = paste(!!!syms(vdj_cols), sep = ""),
-      .new_id               = rank(.data$.new_clone, ties.method = "min"),
-      !!sym(clonotype_col) := ifelse(.data$.new_clone == "", "None", paste0("clonotype", .data$.new_id))
-    )
+  meta <- mutate(
+    meta,
+    .new_clone            = paste(!!!syms(vdj_cols), sep = ""),
+    .new_id               = rank(.data$.new_clone, ties.method = "min"),
+    !!sym(clonotype_col) := ifelse(.data$.new_clone == "", "None", paste0("clonotype", .data$.new_id))
+  )
 
   # Remove temporary columns
   meta <- dplyr::select(
