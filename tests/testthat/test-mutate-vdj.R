@@ -26,7 +26,7 @@ test_that("mutate_meta column overwrite", {
 })
 
 # Check mutate_meta bad function
-test_that("mutate_meta bad .fun", {
+test_that("mutate_meta bad fn", {
   expect_error(
     tiny_so %>%
       mutate_meta("BAD_FUN")

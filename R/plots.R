@@ -1046,7 +1046,7 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
   })
 
   # Create heatmaps
-  res <- map(
+  res <- purrr::map(
     res,
     .create_heatmap,
     x     = gene_cols[1],
@@ -1058,7 +1058,7 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
   )
 
   if (!is.null(names(res))) {
-    res <- imap(res, ~ .x + ggplot2::labs(title = .y))
+    res <- purrr::imap(res, ~ .x + ggplot2::labs(title = .y))
   }
 
   if (length(res) == 1) {
