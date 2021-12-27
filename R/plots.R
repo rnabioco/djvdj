@@ -682,6 +682,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #' functions is passed to method
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
+#' @importFrom abdiv simpson
 #' @export
 plot_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson, clonotype_col = "clonotype_id",
                            plot_colors = NULL, plot_lvls = NULL, facet_rows = 1, ...) {
@@ -789,6 +790,7 @@ plot_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson, c
 #' @param plot_colors Character vector containing colors for plotting
 #' @param ... Additional arguments to pass to ggplot
 #' @return ggplot object
+#' @importFrom abdiv jaccard
 #' @export
 plot_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonotype_col = "clonotype_id",
                             plot_colors = NULL, ...) {

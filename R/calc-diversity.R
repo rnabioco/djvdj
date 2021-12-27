@@ -14,6 +14,7 @@
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.
 #' @return Single cell object or data.frame with diversity metrics
+#' @importFrom abdiv simpson
 #' @export
 calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
                            clonotype_col = "clonotype_id", prefix = "", return_df = FALSE) {

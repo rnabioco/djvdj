@@ -11,6 +11,7 @@
 #' @param return_mat Return a matrix with similarity values. If set to
 #' FALSE, results will be added to the input object.
 #' @return Single cell object or data.frame with similarity values
+#' @importFrom abdiv jaccard
 #' @export
 calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonotype_col = "clonotype_id",
                             prefix = NULL, return_mat = FALSE) {
