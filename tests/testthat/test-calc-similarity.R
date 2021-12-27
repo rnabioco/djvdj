@@ -63,7 +63,7 @@ get_sim_res <- function(method) {
     )
 }
 
-walk(abdiv::beta_diversities, ~ {
+purrr::walk(abdiv::beta_diversities, ~ {
   fn <- paste0("abdiv::", .x)
 
   test_res <- get_sim_res(eval(parse(text = fn)))

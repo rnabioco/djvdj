@@ -77,7 +77,7 @@ test_that("div calc df out", {
     arrange(seurat_clusters) %>%
     distinct(seurat_clusters, !!!syms(names(mets))) %>%
     filter(across(all_of(names(mets)), ~ !is.na(.x))) %>%
-    remove_rownames()
+    tibble::remove_rownames()
 
   expect_s3_class(res, "data.frame")
   expect_identical(res, test_div)
@@ -113,7 +113,7 @@ test_that("calc_diversity df in", {
     arrange(seurat_clusters) %>%
     distinct(seurat_clusters, !!!syms(names(mets))) %>%
     filter(across(all_of(names(mets)), ~ !is.na(.x))) %>%
-    remove_rownames()
+    tibble::remove_rownames()
 
   expect_s3_class(res, "data.frame")
   expect_identical(res, test_div)

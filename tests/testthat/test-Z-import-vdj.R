@@ -64,8 +64,8 @@ arg_lst %>%
   })
 
  # Check arguments for different path inputs with SCE
-pluck(arg_lst, 1, 1) <- list(tiny_sce)
-pluck(arg_lst, 2, 1) <- list(tiny_sce)
+purrr::pluck(arg_lst, 1, 1) <- list(tiny_sce)
+purrr::pluck(arg_lst, 2, 1) <- list(tiny_sce)
 
 arg_lst %>%
   iwalk(~ {
@@ -85,8 +85,8 @@ arg_lst %>%
   })
 
 # Check arguments for different path inputs with data.frame
-pluck(arg_lst, 1, 1) <- list(df_1)
-pluck(arg_lst, 2, 1) <- list(df_1)
+purrr::pluck(arg_lst, 1, 1) <- list(df_1)
+purrr::pluck(arg_lst, 2, 1) <- list(df_1)
 
 arg_lst %>%
   iwalk(~ {
@@ -106,8 +106,8 @@ arg_lst %>%
   })
 
 # Check arguments for different path inputs with tibble
-pluck(arg_lst, 1, 1) <- list(df_2)
-pluck(arg_lst, 2, 1) <- list(df_2)
+purrr::pluck(arg_lst, 1, 1) <- list(df_2)
+purrr::pluck(arg_lst, 2, 1) <- list(df_2)
 
 arg_lst %>%
   iwalk(~ {
@@ -320,7 +320,7 @@ test_that("import_vdj bad sep", {
 test_that("import_vdj duplicate cell prefix", {
   prfxs    <- rep("1", 2)
   ctigs_in <- c(ctigs[1], ctigs[1])
-  dat      <- set_names(ctigs_in, prfxs)
+  dat      <- purrr::set_names(ctigs_in, prfxs)
 
   fn <- function() {
     res <- tiny_so %>%
@@ -356,7 +356,7 @@ test_that("import_vdj cell prefix length", {
 # Check cell barcode prefix NAs
 test_that("import_vdj cell prefix NAs", {
   prfxs <- c(NA, "2")
-  dat   <- set_names(ctigs, prfxs)
+  dat   <- purrr::set_names(ctigs, prfxs)
 
   fn <- function() {
     res <- tiny_so %>%
