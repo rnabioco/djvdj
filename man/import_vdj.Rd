@@ -74,11 +74,6 @@ Single cell object or data.frame with added V(D)J data
 Import V(D)J data
 }
 \examples{
-# Loading a single dataset
-vdj_dir <- system.file("extdata/bcr_1", package = "djvdj")
-
-import_vdj(tiny_so, vdj_dir)
-
 # Loading multiple datasets
 vdj_dir <- c(
   system.file("extdata/bcr_1", package = "djvdj"),
@@ -160,7 +155,7 @@ new_so <- import_vdj(
 
 # Using import_vdj outside of Seurat
 # SingleCellExperiment objects are also compatible, or if an input object is
-# ommitted, a data.frame containing the V(D)J data will be returned
+# omitted, a data.frame containing the V(D)J data will be returned
 import_vdj(tiny_sce, vdj_dir)
 
 import_vdj(vdj_dir = vdj_dir)

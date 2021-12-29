@@ -2,7 +2,7 @@
 % Please edit documentation in R/mutate-vdj.R
 \name{mutate_meta}
 \alias{mutate_meta}
-\title{Mutate object meta.data}
+\title{Modify object meta.data}
 \usage{
 mutate_meta(input, fn, ...)
 }
@@ -19,5 +19,5 @@ formula is provided, use .x to refer to the meta.data table.}
 Object with mutated meta.data
 }
 \description{
-Mutate object meta.data
+Modify object meta.data
 }

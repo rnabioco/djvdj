@@ -2,7 +2,7 @@
 % Please edit documentation in R/mutate-vdj.R
 \name{mutate_vdj}
 \alias{mutate_vdj}
-\title{Mutate V(D)J data}
+\title{Modify V(D)J data in object}
 \usage{
 mutate_vdj(
   input,
@@ -36,5 +36,5 @@ added to the input object.}
 Object with mutated meta.data
 }
 \description{
-Mutate V(D)J data
+Modify V(D)J data in object
 }
