@@ -30,7 +30,8 @@ Imports:
     tidyr,
     Rsamtools,
     abdiv,
-    SingleCellExperiment
+    SingleCellExperiment,
+    glue
 Suggests: 
     magrittr,
     covr,
