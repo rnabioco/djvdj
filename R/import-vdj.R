@@ -271,7 +271,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     contigs,
     across(
       all_of(cdr3_cols),
-      ~ ifelse(identical(.x, "None"), 0, nchar(.x)),
+      ~ ifelse(.x == "None", 0, nchar(.x)),
       .names = "{.col}_length"
     )
   )
@@ -458,27 +458,31 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   # Add cell prefixes and replace 'None' in productive with FALSE
   res <- purrr::imap(res, ~ {
-    .x <- dplyr::rowwise(.x)
+    d <- dplyr::filter(.x, is_cell)
+    d <- dplyr::rowwise(d)
 
-    .x <- dplyr::mutate(
-      .x,
+    d <- dplyr::mutate(
+      d,
       barcode = paste0(.y, .data$barcode),
+
       dplyr::across(c(full_length, productive), ~ {
         ifelse(
-          is.character(.x),
+          !is.logical(.x),
           as.logical(gsub("None", "FALSE", .x)),
           .x
         )
       })
     )
 
-    .x <- dplyr::ungroup(.x)
+    d <- dplyr::ungroup(d)
 
-    dplyr::rename(
-      .x,
+    d <- dplyr::rename(
+      d,
       chains       = .data$chain,
       clonotype_id = .data$raw_clonotype_id
     )
+
+    d
   })
 
   res
@@ -817,13 +821,13 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
   }
 
   # Add new clonotype IDs
-  meta <- mutate(
+  meta <- dplyr::mutate(
     meta,
-    .new_clone            = paste(!!!syms(vdj_cols), sep = ""),
-    .new_id               = rank(.data$.new_clone, ties.method = "min"),
+    .new_clone = paste(!!!syms(vdj_cols), sep = ""),
+    .new_id    = rank(.data$.new_clone, ties.method = "min"),
 
     !!sym(clonotype_col) := ifelse(
-      identical(.data$.new_clone, ""),
+      .data$.new_clone == "",
       "None",
       paste0("clonotype", .data$.new_id)
     )

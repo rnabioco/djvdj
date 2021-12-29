@@ -196,8 +196,6 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
 #' @noRd
 .add_meta <- function(input, meta, row_col) {
 
-  .check_list_cols(meta)
-
   UseMethod(".add_meta", input)
 }
 
@@ -208,6 +206,8 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
 
 .add_meta.Seurat <- function(input, meta, row_col = ".cell_id") {
 
+  .check_list_cols(meta)
+
   meta <- tibble::column_to_rownames(meta, row_col)
 
   input@meta.data <- meta
@@ -216,6 +216,8 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
 }
 
 .add_meta.SingleCellExperiment <- function(input, meta, row_col = ".cell_id") {
+
+  .check_list_cols(meta)
 
   meta <- tibble::column_to_rownames(meta, row_col)
 
@@ -235,12 +237,9 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
 .get_meta <- function(input, row_col) {
 
   UseMethod(".get_meta", input)
-
 }
 
 .get_meta.default <- function(input, row_col = ".cell_id") {
-
-  .check_list_cols(input)
 
   .to_tibble(input, row_col)
 }
@@ -315,9 +314,11 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
   # Join meta.data
   # remove columns already present in input object to prevent duplicates
   # this mimics behavior of Seurat::AddMetaData
-  meta     <- .get_meta(meta, row_col = ".cell_id")
-  rm_cols  <- colnames(meta)
-  rm_cols  <- rm_cols[!rm_cols %in% by]
+  meta <- .get_meta(meta, row_col = by)
+
+  rm_cols <- colnames(meta)
+  rm_cols <- rm_cols[!rm_cols %in% by]
+
   obj_meta <- .get_meta(input)
   obj_meta <- dplyr::select(obj_meta, !any_of(rm_cols))
 
@@ -345,15 +346,15 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
   nest_cols <- purrr::map_lgl(df_in[, sep_cols], is.list)
   nest_cols <- sep_cols[nest_cols]
 
-  res <- dplyr::rowwise(df_in)
-
   # paste0 will convert NA to "NA", to avoid this first check for NA before
   # collapsing
+  res <- dplyr::rowwise(df_in)
+
   res <- dplyr::mutate(
     res,
     across(
       all_of(nest_cols),
-      ~ ifelse(all(is.na(.x)), NA, paste0(as.character(.x), collapse = sep))
+      ~ ifelse(identical(.x, NA), NA, paste0(.x, collapse = sep))
     )
   )
 
@@ -402,7 +403,7 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
   # Coerce columns to correct types
   # this is a major performance bottleneck
   # as.double(x) is much faster than as(x, "double")
-  # slow way::
+  # slower way::
   #   purrr::iwalk(typs, ~ {
   #     typ  <-  .x
   #     clmn <-  sym(.y)
@@ -466,7 +467,7 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
 
     cols_in <- purrr::keep(
       cols_in,
-      ~ identical(.x, pull(cols_in, clone_col))
+      ~ identical(.x, dplyr::pull(cols_in, clone_col))
     )
 
     cols_in <- colnames(cols_in)
