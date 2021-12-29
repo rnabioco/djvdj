@@ -11,13 +11,11 @@ dat_dir <- "~/Projects/Smith_AVIDseq"
 mat_path <- c(
   str_c(dat_dir, "/results/JH179_GEX-JH181_ADT_JH181_HTO/outs/filtered_feature_bc_matrix"),
   str_c(dat_dir, "/results/JH179_GEX-JH181_ADT_JH181_HTO/outs/filtered_feature_bc_matrix")
-  # str_c(dat_dir, "/2020-07-17/JH191_GEX/outs/filtered_feature_bc_matrix")
 )
 
 bcr_path <- c(
   str_c(dat_dir, "/results/JH180_BCR/outs"),
   str_c(dat_dir, "/results/JH180_BCR/outs")
-  # str_c(dat_dir, "/2020-07-17/BCR/outs")
 )
 
 tcr_path <- str_c(dat_dir, "/results/JH180_TCR/outs")
@@ -32,17 +30,31 @@ tiny_so <- mat$`Gene Expression` %>%
     orig.ident = ifelse(str_detect(.cell_id, "^2_"), "avid_2", "avid_1")
   )
 
-# Subset object
-# keep cell order the same
+# Identify cells for tiny objects
+# want to include some cells with non-productive chains
+bcr_contigs <- bcr_path %>%
+  map(str_c, "/filtered_contig_annotations.csv") %>%
+  map(read_csv)
+
+bad_chain_cells <- bcr_contigs[[1]] %>%
+  filter(!productive) %>%
+  head(10) %>%
+  pull(barcode) %>%
+  unique() %>%
+  str_c("1_", .)
+
 all_cells <- colnames(tiny_so)
 
 set.seed(100)
 
 tiny_cells <- all_cells %>%
-  sample(200)
+  sample(200) %>%
+  c(bad_chain_cells)
 
 tiny_cells <- all_cells[all_cells %in% tiny_cells]
 
+# Subset object
+# keep cell order the same
 tiny_so <- tiny_so %>%
   subset(
     features = sample(rownames(tiny_so), 200),
@@ -79,22 +91,17 @@ tiny_so <- tiny_so %>%
   AddMetaData(FetchData(., c("UMAP_1", "UMAP_2")))
 
 # Format and write BCR contig data
-# add some NAs to raw_clonotype_id for testing
-contigs <- bcr_path %>%
-  map(str_c, "/filtered_contig_annotations.csv") %>%
-  map(read_csv)
-
-contigs <- contigs %>%
+bcr_contigs <- bcr_contigs %>%
   imap(~ filter(.x, str_c(.y, "_", barcode) %in% tiny_cells))
 
-names(contigs) <- str_c("bcr_", 1:2) %>%
+names(bcr_contigs) <- str_c("bcr_", 1:2) %>%
   str_c("inst/extdata/", ., "/outs/filtered_contig_annotations.csv")
 
-clones <- contigs %>%
+clones <- bcr_contigs %>%
   map(~ unique(.x$raw_clonotype_id)) %>%
   purrr::reduce(c)
 
-contigs %>%
+bcr_contigs %>%
   iwalk(write_csv)
 
 # Format and write BCR bams
@@ -124,9 +131,9 @@ names(bcr_bam) %>%
 # this is to test low overlap warning
 bad_path <- "inst/extdata/bad_bcr_1/outs/"
 
-bad_contigs <- contigs[[1]] %>%
+bad_contigs <- bcr_contigs[[1]] %>%
   head(1) %>%
-  bind_rows(contigs[[2]])
+  bind_rows(bcr_contigs[[2]])
 
 bad_contigs <- set_names(
   list(bad_contigs),
@@ -149,6 +156,7 @@ names(bad_bam) %>%
   file.remove()
 
 # Format and write TCR contig data
+# add some NAs to raw_clonotype_id for testing
 tcr_contigs <- tcr_path %>%
   str_c("/filtered_contig_annotations.csv") %>%
   read_csv()
