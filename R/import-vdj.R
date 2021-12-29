@@ -45,11 +45,6 @@
 #' @return Single cell object or data.frame with added V(D)J data
 #'
 #' @examples
-#' # Loading a single dataset
-#' vdj_dir <- system.file("extdata/bcr_1", package = "djvdj")
-#'
-#' import_vdj(tiny_so, vdj_dir)
-#'
 #' # Loading multiple datasets
 #' vdj_dir <- c(
 #'   system.file("extdata/bcr_1", package = "djvdj"),
@@ -131,7 +126,7 @@
 #'
 #' # Using import_vdj outside of Seurat
 #' # SingleCellExperiment objects are also compatible, or if an input object is
-#' # ommitted, a data.frame containing the V(D)J data will be returned
+#' # omitted, a data.frame containing the V(D)J data will be returned
 #' import_vdj(tiny_sce, vdj_dir)
 #'
 #' import_vdj(vdj_dir = vdj_dir)
@@ -250,7 +245,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
   # Check if sep is already present in sep_cols
-  sep <- .check_sep(contigs, sep_cols = sep_cols, sep = sep)
+  sep <- .check_sep(contigs, sep_cols, sep)
 
   # Sum contig reads and UMIs for chains
   # some chains are supported by multiple contigs
@@ -276,7 +271,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     contigs,
     across(
       all_of(cdr3_cols),
-      ~ ifelse(.x == "None", 0, nchar(.x)),
+      ~ ifelse(identical(.x, "None"), 0, nchar(.x)),
       .names = "{.col}_length"
     )
   )
@@ -356,7 +351,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   # cells with missing clonotype have a clonotype_id of 'None'
   res <- dplyr::filter(res, .data$clonotype_id != "None")
 
-  if (nrow(res) == 0) {
+  if (identical(nrow(res), 0L)) {
     warning("No valid clonotypes present, check input data.")
   }
 
@@ -630,8 +625,8 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' @return Character string indicating whether TCR or BCR data were provided
 #' @noRd
 .classify_vdj <- function(df_in, chain_col = "chains") {
-  .count_chain_class <- function(chains) {
-    dat <- df_in[[chain_col]]
+  .count_chain_class <- function(chains, .df = df_in, .clmn = chain_col) {
+    dat <- .df[[.clmn]]
     res <- dat %in% chains
     res <- length(dat[res])
 
@@ -658,7 +653,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   res <- n_chains / sum(n_chains)
   res <- names(res[res > 0.5])
 
-  if (length(res) == 0) {
+  if (purrr::is_empty(res)) {
     res <- "Multi"
 
     warning("Equal number of BCR (", n_chains[["BCR"]], ") and TCR (", n_chains[["TCR"]], ") chains detected, unable to determine data type.")
@@ -692,7 +687,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     nm <- paste0(nm, " ")
   }
 
-  if (n_overlap == 0) {
+  if (identical(n_overlap, 0L)) {
     stop(nm, "cell barcodes do not match those in the object, are you using the correct cell barcode prefixes?")
   }
 
@@ -749,14 +744,14 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
       isos <- tidyr::replace_na(isos, "")
       isos <- isos[isos != ""]
 
-      if (length(isos) == 0) {
+      if (identical(length(isos), 0L)) {
         isos <- ""
       }
 
       isos <- dplyr::case_when(
-        length(isos) > 1 ~ "Multi",
-        isos == ""       ~ "None",
-        TRUE             ~ isos
+        length(isos) > 1    ~ "Multi",
+        identical(isos, "") ~ "None",
+        TRUE                ~ isos
       )
 
       unique(isos)
@@ -826,7 +821,12 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
     meta,
     .new_clone            = paste(!!!syms(vdj_cols), sep = ""),
     .new_id               = rank(.data$.new_clone, ties.method = "min"),
-    !!sym(clonotype_col) := ifelse(.data$.new_clone == "", "None", paste0("clonotype", .data$.new_id))
+
+    !!sym(clonotype_col) := ifelse(
+      identical(.data$.new_clone, ""),
+      "None",
+      paste0("clonotype", .data$.new_id)
+    )
   )
 
   # Remove temporary columns
