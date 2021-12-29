@@ -1,4 +1,4 @@
-#' Mutate V(D)J data
+#' Modify V(D)J data in object
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, cell barcodes should be stored as row names.
@@ -66,7 +66,155 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 }
 
 
-#' Mutate object meta.data
+#' Summarize V(D)J data for each cell
+#'
+#' Summarize values for each cell using a function or purrr-style lambda. This
+#' is useful since some V(D)J metrics include data for each chain. Per-chain
+#' data will be summarized, which is helpful for plotting these metrics per
+#' cell.
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param vdj_cols meta.data column(s) containing V(D)J data to summarize for
+#' each cell
+#' @param fn Function to apply to each selected column, possible values can be
+#' either a function, e.g. mean, or a purrr-style lambda, e.g. ~ mean(.x,
+#' na.rm = TRUE). If NULL, the mean will be calculated for numeric values,
+#' non-numeric columns will be combined into a single string.
+#' @param ... Additional arguments to pass to fn
+#' @param chain Chain to use for summarizing V(D)J data
+#' @param chain_col meta.data column(s) containing chains for each cell
+#' @param col_names A glue specification that describes how to name the output
+#' columns, this can use {.col} to stand for the selected column name
+#' @param return_df Return results as a data.frame. If FALSE, results will be
+#' added to the input object.
+#' @param sep Separator used for storing per cell V(D)J data
+#' @return data.frame containing V(D)J data summarized for each cell
+#' @importFrom glue glue
+#' @export
+summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_col = "chains",
+                          sep = ";", col_names = "{.col}", return_df = FALSE) {
+
+  # Names of new columns
+  new_cols <- gsub("\\{.col\\}", "{vdj_cols}", col_names)
+  new_cols <- glue::glue(new_cols)
+
+  # Fetch V(D)J data
+  # * this is a key performance bottleneck as the length of vdj_cols increases
+  fetch_cols <- vdj_cols
+
+  if (!is.null(chain)) {
+    fetch_cols <- c(vdj_cols, chain_col)
+  }
+
+  res <- fetch_vdj(
+    input,
+    clonotype_col = NULL,
+    vdj_cols      = fetch_cols,
+    sep           = sep,
+    unnest        = FALSE
+  )
+
+  # Set default fn
+  # * default is mean if all vdj_col are numeric
+  # * if !is.null(chain), collapse vdj_cols into string
+  # * if is.null(chain), return input unchanged
+  if (is.null(fn)) {
+    is_num <- purrr::map_lgl(
+      res[, vdj_cols],
+      ~ all(purrr::map_lgl(.x, is.numeric))
+    )
+
+    is_num <- all(is_num)
+
+    fn <- mean
+
+    if (!is_num) {
+      if (is.null(chain)) {
+        return(input)
+      }
+
+      fn <- ~ ifelse(identical(.x, NA), NA, paste0(.x, collapse = sep))
+    }
+  }
+
+  # Filter chains
+  if (!is.null(chain)) {
+    prfx <- "FILT_"
+
+    res <- .filter_chains(
+      res,
+      vdj_cols  = vdj_cols,
+      chain     = chain,
+      chain_col = chain_col,
+      col_names = paste0(prfx, "{.col}"),
+      empty_val = NA
+    )
+
+    # Add prefix to vdj_cols so temporary columns are used
+    vdj_cols <- paste0(prfx, vdj_cols)
+
+    # Set col_names so prefix is removed from columns
+    col_names <- gsub(
+      "\\{.col\\}",
+      paste0('{sub(\\"^', prfx, '\\", "", .col)}'),
+      col_names
+    )
+  }
+
+  # Summarize columns with user fn
+  # * normally if the per-row result from user fn is greater than length 1,
+  #   mutate will throw an error unless result is wrapped in list
+  # * want per-row reults > length 1 to return list-col
+  # * want results == 1 to return vector
+  # * not clear how to do this with across, instead do:
+  #     1) use walk to iterate through vdj_cols
+  #     2) use map to apply fn to each row in column
+  #     3) within map check length of result and set (<<-) variable if length > 1
+  fn <- purrr::as_mapper(fn, ...)
+
+  purrr::walk2(vdj_cols, new_cols, ~ {
+    LENGTH_ONE <- TRUE
+
+    x <- res[[.x]]
+
+    x <- purrr::map(x, ~ {
+      r <- fn(.x)
+
+      if (length(r) > 1) {
+        LENGTH_ONE <<- FALSE
+      }
+
+      r
+    })
+
+    if (LENGTH_ONE) {
+      x <- unlist(x)
+    }
+
+    res <<- dplyr::mutate(res, !!sym(.y) := x)
+  })
+
+  # If chain provided remove temporary columns
+  if (!is.null(chain)) {
+    res <- dplyr::select(res, -all_of(vdj_cols))
+  }
+
+  # Re-nest vdj_cols
+  res <- .nest_vdj(res, sep_cols = NULL, sep = sep)
+
+  # Add results back to object
+  if (return_df) {
+    input <- res
+  }
+
+  res <- .add_meta(input, meta = res)
+
+  res
+}
+
+
+#' Modify object meta.data
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
@@ -93,5 +241,41 @@ mutate_meta <- function(input, fn, ...) {
 
   res
 }
+
+
+### TESTING ###
+# clmns <- c(
+#   "v_gene", "d_gene", "chains",
+#   "umis", "reads", "cdr3_length",
+#   "cdr3_nt_length", "productive",
+#   "full_length"
+# )
+#
+# test_vdj <- import_vdj(vdj_dir = "data/avid/bcr/outs/")
+#
+# test_vdj <- bind_rows(test_vdj, test_vdj, test_vdj)
+# test_vdj <- bind_rows(test_vdj, test_vdj, test_vdj)
+# test_vdj <- bind_rows(test_vdj, test_vdj, test_vdj)
+#
+# tictoc::tic()
+# x <- fetch_vdj(test_vdj, clmns)
+# tictoc::toc()
+#
+# tictoc::tic()
+# y <- summarize_vdj(test_vdj, clmns)
+# tictoc::toc()
+#
+# tictoc::tic()
+# x <- fetch_vdj(test_vdj, clonotype_col = NULL)
+# tictoc::toc()
+#
+# tictoc::tic()
+# y <- fetch_vdj(test_vdj, clonotype_col = "clonotype_id")
+# tictoc::toc()
+#
+# identical(x, y)
+
+
+
 
 

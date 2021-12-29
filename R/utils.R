@@ -90,7 +90,7 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
   # Identify columns with V(D)J data
   col_list <- .get_vdj_cols(
     df_in     = meta,
-    clone_col = NULL,
+    clone_col = clonotype_col,
     cols_in   = vdj_cols,
     sep       = sep
   )
@@ -113,118 +113,6 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
     sep      = sep,
     unnest   = unnest
   )
-
-  res
-}
-
-
-#' Summarize V(D)J data for each cell
-#'
-#' Summarize values for each cell using a function or purrr-style lambda. This
-#' is useful since some V(D)J metrics include data for each chain. Per-chain
-#' data will be summarized, which is helpful for plotting these metrics per
-#' cell.
-#'
-#' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param vdj_cols meta.data column(s) containing V(D)J data to summarize for
-#' each cell
-#' @param fn Function to apply to each selected column, possible values can be
-#' either a function, e.g. mean, or a purrr-style lambda, e.g. ~ mean(.x,
-#' na.rm = TRUE). If NULL, the mean will be calculated for numeric values,
-#' other data types will be combined into a string.
-#' @param chain Chain to use for summarizing V(D)J data
-#' @param chain_col meta.data column(s) containing chains for each cell
-#' @param col_names A glue specification that describes how to name the output
-#' columns, this can use {.col} to stand for the selected column name
-#' @param return_df Return results as a data.frame. If FALSE, results will be
-#' added to the input object.
-#' @param sep Separator used for storing per cell V(D)J data
-#' @return data.frame containing V(D)J data summarized for each cell
-#' @export
-summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = "chains",
-                          sep = ";", col_names = "{.col}", return_df = FALSE) {
-
-  # Fetch V(D)J data
-  fetch_cols <- vdj_cols
-
-  if (!is.null(chain)) {
-    fetch_cols <- c(vdj_cols, chain_col)
-  }
-
-  res <- fetch_vdj(
-    input,
-    clonotype_col = NULL,
-    vdj_cols      = fetch_cols,
-    sep           = sep,
-    unnest        = FALSE
-  )
-
-  # Set default fn
-  if (is.null(fn)) {
-    is_num <- purrr::map_lgl(
-      res[, vdj_cols],
-      ~ all(purrr::map_lgl(.x, is.numeric))
-    )
-
-    if (all(is_num)) {
-      fn <- mean
-
-    } else {
-      fn <- ~ ifelse(all(is.na(.x)), NA, paste0(.x, collapse = sep))
-    }
-  }
-
-  # Filter chains
-  if (!is.null(chain)) {
-    prfx <- "FILT_"
-
-    res <- .filter_chains(
-      res,
-      vdj_cols  = vdj_cols,
-      chain     = chain,
-      chain_col = chain_col,
-      col_names = paste0(prfx, "{.col}"),
-      empty_val = NA
-    )
-
-    # Add prefix to vdj_cols so temporary columns are used
-    vdj_cols <- paste0(prfx, vdj_cols)
-
-    # Set col_names so prefix is removed from columns
-    col_names <- gsub(
-      "\\{.col\\}",
-      paste0('{sub(\\"^', prfx, '\\", "", .col)}'),
-      col_names
-    )
-  }
-
-  # Summarize columns
-  res <- dplyr::rowwise(res)
-
-  res <- dplyr::mutate(
-    res,
-    across(
-      all_of(vdj_cols),
-      .fns   = fn,
-      .names = col_names
-    )
-  )
-
-  # If chain provided remove temporary columns
-  if (!is.null(chain)) {
-    res <- dplyr::select(res, -all_of(vdj_cols))
-  }
-
-  # Re-nest vdj_cols
-  res <- .nest_vdj(res, sep_cols = fetch_cols, sep = sep)
-
-  # Add results back to object
-  if (return_df) {
-    input <- res
-  }
-
-  res <- .add_meta(input, meta = res)
 
   res
 }
@@ -308,14 +196,14 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
 #' @noRd
 .add_meta <- function(input, meta, row_col) {
 
-  UseMethod(".add_meta", input)
+  .check_list_cols(meta)
 
+  UseMethod(".add_meta", input)
 }
 
 .add_meta.default <- function(input, meta, row_col = ".cell_id") {
 
   tibble::column_to_rownames(meta, row_col)
-
 }
 
 .add_meta.Seurat <- function(input, meta, row_col = ".cell_id") {
@@ -352,20 +240,22 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
 
 .get_meta.default <- function(input, row_col = ".cell_id") {
 
-  .to_tibble(input, row_col)
+  .check_list_cols(input)
 
+  .to_tibble(input, row_col)
 }
 
 .get_meta.Seurat <- function(input, row_col = ".cell_id") {
 
-  .to_tibble(input@meta.data, row_col)
-
+  .get_meta(input@meta.data, row_col)
 }
 
 .get_meta.SingleCellExperiment <- function(input, row_col = ".cell_id") {
 
-  .to_tibble(SingleCellExperiment::colData(input), row_col)
+  dat <- SingleCellExperiment::colData(input)
+  dat <- as.data.frame(dat)
 
+  .get_meta(dat, row_col)
 }
 
 
@@ -390,6 +280,22 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
   }
 
   res
+}
+
+
+#' Check for list-cols in data.frame
+#'
+#' @param df_in data.frame
+#' @noRd
+.check_list_cols <- function(df_in) {
+
+  stopifnot(is.data.frame(df_in))
+
+  is_lst <- purrr::map_lgl(df_in, is.list)
+
+  if (any(is_lst)) {
+    stop("Check input data.frame, columns cannot be list-cols.")
+  }
 }
 
 
@@ -470,12 +376,15 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
 
   # Add new set of columns based on sep_cols names
   # this is useful if want to leave original columns unmodified
-  res <- dplyr::mutate(df_in, !!!syms(sep_cols))
+  if (!is.null(names(sep_cols))) {
+    df_in <- dplyr::mutate(df_in, !!!syms(sep_cols))
+  }
 
   # Split columns into vectors
-  res <- dplyr::mutate(res, across(
+  # ~ strsplit(as.character(.x), sep)
+  res <- dplyr::mutate(df_in, across(
     all_of(unname(sep_cols)),
-    ~ strsplit(as.character(.x), sep)
+    ~ strsplit(.x, sep)
   ))
 
   # Get types to use for coercing columns
@@ -488,12 +397,33 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
   typs <- tidyr::unnest(typs, everything())
   typs <- purrr::map(typs, readr::guess_parser)
 
+  typs <- purrr::map(typs, ~ paste0("as.", .x))
+
   # Coerce columns to correct types
+  # this is a major performance bottleneck
+  # as.double(x) is much faster than as(x, "double")
+  # slow way::
+  #   purrr::iwalk(typs, ~ {
+  #     typ  <-  .x
+  #     clmn <-  sym(.y)
+  #     res  <-  dplyr::rowwise(res)
+  #     res  <-  dplyr::mutate(res, !!clmn := list(as(!!clmn, typ)))
+  #     res  <<- dplyr::ungroup(res)
+  # })
+
+  res <- dplyr::rowwise(res)
+
   purrr::iwalk(typs, ~ {
-    res <-  dplyr::rowwise(res)
-    res <-  dplyr::mutate(res, !!sym(.y) := list(as(!!sym(.y), .x)))
-    res <<- dplyr::ungroup(res)
+    fn   <- .x
+    clmn <- sym(.y)
+
+    res <<- dplyr::mutate(
+      res,
+      !!clmn := list(do.call(fn, list(x = !!clmn)))
+    )
   })
+
+  res <- dplyr::ungroup(res)
 
   # Unnest data.frame
   if (unnest) {
@@ -543,15 +473,22 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, chain = NULL, chain_col = 
   }
 
   # Identify columns to unnest based on sep
+  # check first 1000 non-NA rows of every column
+  # detect is faster for columns containing sep but slower when column does not
+  # contain sep
+  # ~ !is.null(detect(x, ~ grepl(sep, .x)))
   sep_cols <- NULL
 
   if (!is.null(sep)) {
     sep_cols <- dplyr::select(df_in, all_of(cols_in))
 
-    sep_cols <- purrr::keep(
-      sep_cols,
-      ~ any(purrr::map_lgl(na.omit(.x), grepl, pattern = sep))
-    )
+    sep_cols <- df_in
+
+    sep_cols <- purrr::keep(sep_cols, ~ {
+      x <- head(na.omit(.x), 1000)
+
+      any(purrr::map_lgl(x, grepl, pattern = sep))
+    })
 
     sep_cols <- colnames(sep_cols)
   }
