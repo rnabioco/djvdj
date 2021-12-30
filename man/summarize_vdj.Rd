@@ -37,7 +37,8 @@ non-numeric columns will be combined into a single string.}
 \item{sep}{Separator used for storing per cell V(D)J data}
 
 \item{col_names}{A glue specification that describes how to name the output
-columns, this can use {.col} to stand for the selected column name}
+columns, use {.col} to stand for the selected column name. If col_names is
+NULL, the original column names will be used.}
 
 \item{return_df}{Return results as a data.frame. If FALSE, results will be
 added to the input object.}
@@ -46,8 +47,71 @@ added to the input object.}
 data.frame containing V(D)J data summarized for each cell
 }
 \description{
-Summarize values for each cell using a function or purrr-style lambda. This
-is useful since some V(D)J metrics include data for each chain. Per-chain
-data will be summarized, which is helpful for plotting these metrics per
-cell.
+Summarize per-chain values for each cell using a function or purrr-style
+lambda. This is useful for plotting or filtering cells based on the V(D)J
+meta.data.
+}
+\examples{
+# Summarizing numeric columns
+# by default the mean will be calculated for numeric columns
+summarize_vdj(
+  vdj_so,
+  vdj_cols = c("n_deletion", "n_insertion")
+)
+
+# Specifying a different summary function
+summarize_vdj(
+  vdj_so,
+  vdj_cols = c("n_deletion", "n_insertion"),
+  fn = stats::median
+)
+
+# Summarizing values for a specific chain
+summarize_vdj(
+  vdj_so,
+  vdj_cols = c("n_deletion", "n_insertion"),
+  chain = "IGK"
+)
+
+# Specifying new names for summarized columns
+# use {.col} to refer to the original column name
+summarize_vdj(
+  vdj_so,
+  vdj_cols = c("n_deletion", "n_insertion"),
+  fn = stats::median,
+  col_names = "median_{.col}"
+)
+
+# Return a data.frame instead of adding the results to the input object
+summarize_vdj(
+  vdj_so,
+  vdj_cols = c("n_deletion", "n_insertion"),
+  return_df = TRUE
+)
+
+# Using a lambda function to summarize values
+# use '.x' to refer to values in the column
+# this creates a new column showing the unique chains for the cell
+summarize_vdj(
+  vdj_so,
+  vdj_cols = "chains",
+  fn = ~ paste0(unique(.x), collapse = "_"),
+  col_names = "unique_chains"
+)
+
+# Creating an index column to use for filtering/plotting
+# this creates a column indicating which cells have no insertions
+# we can then filter the V(D)J data based on this new column
+new_so <- summarize_vdj(
+  vdj_so,
+  vdj_cols = "n_insertion",
+  fn = ~ all(.x == 0),
+  col_names = "no_insertions"
+)
+
+filter_vdj(
+  new_so,
+  filt = no_insertions
+)
+
 }

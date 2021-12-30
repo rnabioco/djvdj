@@ -1,9 +1,21 @@
 #' Modify V(D)J data in object
 #'
+#' Modify per-chain V(D)J data for each cell. This function offers greater
+#' flexibility than summarize_vdj, but is less user-friendly.
+#'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, cell barcodes should be stored as row names.
-#' @param ... Name-value pairs to use for creating or modifying meta.data
-#' columns
+#' @param ... Name-value pairs to use for creating or modifying per-chain V(D)J
+#' meta.data, e.g. mean_umis = mean(umis).
+#'
+#' To allow modification of per-chain V(D)J data, the data for each cell is
+#' converted into a vector, e.g. 'IGH;IGK' is equivalent to c('IGH', 'IGK').
+#' This allows any R vector operations to be performed on the per-chain values.
+#' Any operations that produce a result greater than length 1 need to be
+#' returned as a list(), e.g. new_col = umis + 1 will return a new value for
+#' each chain, to prevent an error this must be written as
+#' new_col = list(umis + 1).
+#'
 #' @param clonotype_col meta.data column containing clonotype IDs. This is used
 #' to identify columns containing V(D)J data.
 #' @param vdj_cols meta.data columns containing V(D)J data to modify. If NULL,
@@ -13,6 +25,41 @@
 #' added to the input object.
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return Object with mutated meta.data
+#'
+#' @examples
+#' # Calculate mean reads and UMIs per cell
+#' mutate_vdj(
+#'   vdj_sce,
+#'   mean_umis  = mean(umis),
+#'   mean_reads = mean(reads)
+#' )
+#'
+#' # Calculate the total number of insertions + deletions for each chain
+#' # we have to wrap our expression in list() since a value is returned for
+#' # each chain
+#' mutate_vdj(
+#'   vdj_sce,
+#'   indels = list(n_insertion + n_deletion)
+#' )
+#'
+#' # Create a new column showing the unique chains for each cell
+#' mutate_vdj(
+#'   vdj_sce,
+#'   unique_chains = paste0(unique(chains), collapse = "_")
+#' )
+#'
+#' # Determine which cells have both an IGK and IGL chain
+#' mutate_vdj(
+#'   vdj_sce,
+#'   both_light = all(c("IGK", "IGL") %in% chains)
+#' )
+#'
+#' # Determine which cells have multiple light chains
+#' mutate_vdj(
+#'   vdj_so,
+#'   multi_light = sum(chains %in% c("IGK", "IGL")) > 1
+#' )
+#'
 #' @export
 mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NULL,
                        return_df = FALSE, sep = ";") {
@@ -54,7 +101,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
   vdj <- dplyr::ungroup(vdj)
 
   # Re-nest list-cols
-  res <- .nest_vdj(vdj, sep_cols = sep_cols, sep = sep)
+  res <- .nest_vdj(vdj, sep_cols = NULL, sep = sep)
 
   if (return_df) {
     input <- res
@@ -68,10 +115,9 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 
 #' Summarize V(D)J data for each cell
 #'
-#' Summarize values for each cell using a function or purrr-style lambda. This
-#' is useful since some V(D)J metrics include data for each chain. Per-chain
-#' data will be summarized, which is helpful for plotting these metrics per
-#' cell.
+#' Summarize per-chain values for each cell using a function or purrr-style
+#' lambda. This is useful for plotting or filtering cells based on the V(D)J
+#' meta.data.
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
@@ -85,12 +131,77 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #' @param chain Chain to use for summarizing V(D)J data
 #' @param chain_col meta.data column(s) containing chains for each cell
 #' @param col_names A glue specification that describes how to name the output
-#' columns, this can use {.col} to stand for the selected column name
+#' columns, use {.col} to stand for the selected column name. If col_names is
+#' NULL, the original column names will be used.
 #' @param return_df Return results as a data.frame. If FALSE, results will be
 #' added to the input object.
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame containing V(D)J data summarized for each cell
 #' @importFrom glue glue
+#'
+#' @examples
+#' # Summarizing numeric columns
+#' # by default the mean will be calculated for numeric columns
+#' summarize_vdj(
+#'   vdj_so,
+#'   vdj_cols = c("n_deletion", "n_insertion")
+#' )
+#'
+#' # Specifying a different summary function
+#' summarize_vdj(
+#'   vdj_so,
+#'   vdj_cols = c("n_deletion", "n_insertion"),
+#'   fn = stats::median
+#' )
+#'
+#' # Summarizing values for a specific chain
+#' summarize_vdj(
+#'   vdj_so,
+#'   vdj_cols = c("n_deletion", "n_insertion"),
+#'   chain = "IGK"
+#' )
+#'
+#' # Specifying new names for summarized columns
+#' # use {.col} to refer to the original column name
+#' summarize_vdj(
+#'   vdj_so,
+#'   vdj_cols = c("n_deletion", "n_insertion"),
+#'   fn = stats::median,
+#'   col_names = "median_{.col}"
+#' )
+#'
+#' # Return a data.frame instead of adding the results to the input object
+#' summarize_vdj(
+#'   vdj_so,
+#'   vdj_cols = c("n_deletion", "n_insertion"),
+#'   return_df = TRUE
+#' )
+#'
+#' # Using a lambda function to summarize values
+#' # use '.x' to refer to values in the column
+#' # this creates a new column showing the unique chains for the cell
+#' summarize_vdj(
+#'   vdj_so,
+#'   vdj_cols = "chains",
+#'   fn = ~ paste0(unique(.x), collapse = "_"),
+#'   col_names = "unique_chains"
+#' )
+#'
+#' # Creating an index column to use for filtering/plotting
+#' # this creates a column indicating which cells have no insertions
+#' # we can then filter the V(D)J data based on this new column
+#' new_so <- summarize_vdj(
+#'   vdj_so,
+#'   vdj_cols = "n_insertion",
+#'   fn = ~ all(.x == 0),
+#'   col_names = "no_insertions"
+#' )
+#'
+#' filter_vdj(
+#'   new_so,
+#'   filt = no_insertions
+#' )
+#'
 #' @export
 summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_col = "chains",
                           sep = ";", col_names = "{.col}", return_df = FALSE) {
@@ -227,6 +338,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
 #' formula is provided, use .x to refer to the meta.data table.
 #' @param ... Arguments to pass to the provided function
 #' @return Object with mutated meta.data
+#'
 #' @export
 mutate_meta <- function(input, fn, ...) {
 

@@ -146,7 +146,7 @@ new_so <- import_vdj(
   cell_prefix = "1_"
 )
 
-new_so <- import_vdj(
+import_vdj(
   new_so,
   vdj_dir     = tcr_dir,
   prefix      = "tcr_",

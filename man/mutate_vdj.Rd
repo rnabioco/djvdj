@@ -17,8 +17,16 @@ mutate_vdj(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, cell barcodes should be stored as row names.}
 
-\item{...}{Name-value pairs to use for creating or modifying meta.data
-columns}
+\item{...}{Name-value pairs to use for creating or modifying per-chain V(D)J
+meta.data, e.g. mean_umis = mean(umis).
+
+To allow modification of per-chain V(D)J data, the data for each cell is
+converted into a vector, e.g. 'IGH;IGK' is equivalent to c('IGH', 'IGK').
+This allows any R vector operations to be performed on the per-chain values.
+Any operations that produce a result greater than length 1 need to be
+returned as a list(), e.g. new_col = umis + 1 will return a new value for
+each chain, to prevent an error this must be written as
+new_col = list(umis + 1).}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs. This is used
 to identify columns containing V(D)J data.}
@@ -36,5 +44,41 @@ added to the input object.}
 Object with mutated meta.data
 }
 \description{
-Modify V(D)J data in object
+Modify per-chain V(D)J data for each cell. This function offers greater
+flexibility than summarize_vdj, but is less user-friendly.
+}
+\examples{
+# Calculate mean reads and UMIs per cell
+mutate_vdj(
+  vdj_sce,
+  mean_umis  = mean(umis),
+  mean_reads = mean(reads)
+)
+
+# Calculate the total number of insertions + deletions for each chain
+# we have to wrap our expression in list() since a value is returned for
+# each chain
+mutate_vdj(
+  vdj_sce,
+  indels = list(n_insertion + n_deletion)
+)
+
+# Create a new column showing the unique chains for each cell
+mutate_vdj(
+  vdj_sce,
+  unique_chains = paste0(unique(chains), collapse = "_")
+)
+
+# Determine which cells have both an IGK and IGL chain
+mutate_vdj(
+  vdj_sce,
+  both_light = all(c("IGK", "IGL") \%in\% chains)
+)
+
+# Determine which cells have multiple light chains
+mutate_vdj(
+  vdj_so,
+  multi_light = sum(chains \%in\% c("IGK", "IGL")) > 1
+)
+
 }
