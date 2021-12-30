@@ -16,7 +16,12 @@ calc_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
                        chain_col = "chains", sep = ";") {
 
   # Format input data
-  sep_cols <- c(gene_cols, chain_col)
+  sep_cols <- gene_cols
+
+  if (!is.null(chain)) {
+    sep_cols <- c(sep_cols, chain_col)
+  }
+
   vdj_cols <- c(".cell_id", cluster_col, sep_cols)
 
   meta <- .get_meta(input)
@@ -58,7 +63,7 @@ calc_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 
   res <- dplyr::summarize(
     res,
-    n_cells = n_distinct(meta$.cell_id),
+    n_cells = dplyr::n_distinct(meta$.cell_id),
     freq    = dplyr::n_distinct(.data$.cell_id),
     .groups = "drop"
   )
@@ -83,7 +88,7 @@ calc_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
       values_to = "freq"
     )
 
-    res <- dplyr::mutate(  # why doesn't .before work here??
+    res <- dplyr::mutate(
       res,
       n_cells = as.numeric(clst_counts[!!sym(cluster_col)])
     )

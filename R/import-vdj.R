@@ -182,12 +182,22 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
       )
 
       if (any(missing_indels)) {
-        warning("Some chains are missing indel data, check input files. Indel results will not be included in the object.")
+        warning(
+          "Some chains are missing indel data, check input files. ",
+          "Indel results will not be included in the object."
+        )
 
       } else {
         contigs  <- indel_ctigs
         sep_cols <- c(sep_cols, indel_cols)
         vdj_cols <- c(vdj_cols, indel_cols)
+
+        if (!filter_chains) {
+          warning(
+            "When include_indels is TRUE, filter_chains is also automatically ",
+            "set TRUE since indel data is only available for productive chains."
+          )
+        }
 
         # Set filter_chains FALSE since indel_ctigs has already been filtered
         filter_chains <- FALSE

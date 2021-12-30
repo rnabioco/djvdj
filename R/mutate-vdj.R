@@ -134,7 +134,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
         return(input)
       }
 
-      fn <- ~ ifelse(identical(.x, NA), NA, paste0(.x, collapse = sep))
+      fn <- ~ paste0(.x, collapse = sep)
     }
   }
 
@@ -165,8 +165,9 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
   # Summarize columns with user fn
   # * normally if the per-row result from user fn is greater than length 1,
   #   mutate will throw an error unless result is wrapped in list
-  # * want per-row reults > length 1 to return list-col
+  # * want per-row results > length 1 to return list-col
   # * want results == 1 to return vector
+  # * skip row if is.na
   # * not clear how to do this with across, instead do:
   #     1) use walk to iterate through vdj_cols
   #     2) use map to apply fn to each row in column
@@ -179,6 +180,10 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
     x <- res[[.x]]
 
     x <- purrr::map(x, ~ {
+      if (all(is.na(.x))) {
+        return(NA)
+      }
+
       r <- fn(.x)
 
       if (length(r) > 1) {
@@ -241,41 +246,4 @@ mutate_meta <- function(input, fn, ...) {
 
   res
 }
-
-
-### TESTING ###
-# clmns <- c(
-#   "v_gene", "d_gene", "chains",
-#   "umis", "reads", "cdr3_length",
-#   "cdr3_nt_length", "productive",
-#   "full_length"
-# )
-#
-# test_vdj <- import_vdj(vdj_dir = "data/avid/bcr/outs/")
-#
-# test_vdj <- bind_rows(test_vdj, test_vdj, test_vdj)
-# test_vdj <- bind_rows(test_vdj, test_vdj, test_vdj)
-# test_vdj <- bind_rows(test_vdj, test_vdj, test_vdj)
-#
-# tictoc::tic()
-# x <- fetch_vdj(test_vdj, clmns)
-# tictoc::toc()
-#
-# tictoc::tic()
-# y <- summarize_vdj(test_vdj, clmns)
-# tictoc::toc()
-#
-# tictoc::tic()
-# x <- fetch_vdj(test_vdj, clonotype_col = NULL)
-# tictoc::toc()
-#
-# tictoc::tic()
-# y <- fetch_vdj(test_vdj, clonotype_col = "clonotype_id")
-# tictoc::toc()
-#
-# identical(x, y)
-
-
-
-
 
