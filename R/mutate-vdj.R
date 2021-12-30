@@ -250,27 +250,38 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
   }
 
   # Filter chains
+  # check that all vdj_cols contain per-chain data
   if (!is.null(chain)) {
-    prfx <- "FILT_"
+    is_lst <- purrr::map_lgl(res[, vdj_cols], is.list)
 
-    res <- .filter_chains(
-      res,
-      vdj_cols  = vdj_cols,
-      chain     = chain,
-      chain_col = chain_col,
-      col_names = paste0(prfx, "{.col}"),
-      empty_val = NA
-    )
+    if (all(is_lst)) {
+      prfx <- "FILT_"
 
-    # Add prefix to vdj_cols so temporary columns are used
-    vdj_cols <- paste0(prfx, vdj_cols)
+      res <- .filter_chains(
+        res,
+        vdj_cols  = vdj_cols,
+        chain     = chain,
+        chain_col = chain_col,
+        col_names = paste0(prfx, "{.col}"),
+        empty_val = NA
+      )
 
-    # Set col_names so prefix is removed from columns
-    col_names <- gsub(
-      "\\{.col\\}",
-      paste0('{sub(\\"^', prfx, '\\", "", .col)}'),
-      col_names
-    )
+      # Add prefix to vdj_cols so temporary columns are used
+      vdj_cols <- paste0(prfx, vdj_cols)
+
+      # Set col_names so prefix is removed from columns
+      col_names <- gsub(
+        "\\{.col\\}",
+        paste0('{sub(\\"^', prfx, '\\", "", .col)}'),
+        col_names
+      )
+
+    } else {
+      warning(
+        "V(D)J data can only be filtered based on chain if all vdj_cols ",
+        "contain per-chain data."
+      )
+    }
   }
 
   # Summarize columns with user fn
@@ -296,6 +307,10 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
       }
 
       r <- fn(.x)
+
+      if (purrr::is_empty(r)) {
+        return(NA)
+      }
 
       if (length(r) > 1) {
         LENGTH_ONE <<- FALSE
