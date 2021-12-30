@@ -15,7 +15,6 @@ NULL
 plot_features <- function(input, ...) {
 
   UseMethod("plot_features", input)
-
 }
 
 #' @param input Single cell object or data.frame containing V(D)J data. If a
@@ -150,18 +149,15 @@ plot_features.Seurat <- function(input, feature, x = "UMAP_1", y = "UMAP_2", dat
 plot_vdj_umap <- function(input, ...) {
 
   UseMethod("plot_vdj_umap", input)
-
 }
 
 #' @rdname plot_features
 #' @param data_col meta.data column containing V(D)J data to use for coloring
 #' cells
-#' @param summary_fn Function to use for summarizing values for each cell, this
-#' can be either a function, e.g. mean, or a purrr-style lambda,
-#' e.g. ~ mean(.x, na.rm = TRUE). If NULL, the default for numeric values is
-#' mean and the default for other types is ~ paste0(.x, collapse = sep). This
-#' is necessary since some V(D)J metrics will have multiple values for each
-#' cell.
+#' @param summary_fn Function to use for summarizing values for each cell, possible
+#' values can be either a function, e.g. mean, or a purrr-style lambda,
+#' e.g. ~ mean(.x, na.rm = TRUE). If NULL, the mean will be calculated for
+#' numeric values, non-numeric columns will be combined into a single string.
 #' @param chain Chain(s) to use for plotting, set to NULL to include all chains
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used for storing per cell V(D)J data

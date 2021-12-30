@@ -341,7 +341,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
     clone_cols <- list(
       cdr3aa    = "cdr3",
       cdr3nt    = "cdr3_nt",
-      cdr3_gene = c("cdr3_nt", gene_cols[1:3])
+      cdr3_gene = c("cdr3_nt", gene_cols[gene_cols != "c_gene"])
     )
 
     if (!define_clonotypes %in% names(clone_cols)) {
