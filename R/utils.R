@@ -33,6 +33,8 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
   arg_lst <- expand.grid(arg_lst, stringsAsFactors = FALSE)
 
   if (dryrun) {
+    arg_lst <- tibble::as_tibble(arg_lst)
+
     return(arg_lst)
   }
 
@@ -149,16 +151,19 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells
     return(df_in)
   }
 
-  # If not all vdj_cols are list-cols, filter data.frame normally
-  is_lst <- purrr::map_lgl(df_in[, vdj_cols], is.list)
+  # If all vdj_cols are not list-cols, filter data.frame normally
+  is_lst <- purrr::map_lgl(df_in[, c(chain_col, vdj_cols)], is.list)
 
-  if (!all(is_lst)) {
+  if (all(!is_lst)) {
     res <- dplyr::filter(
       df_in,
       !!sym(chain_col) %in% chain
     )
 
     return(res)
+
+  } else if (!all(is_lst)) {
+    stop("chain_col and vdj_cols cannot be a mix of normal columns and list-cols.")
   }
 
   # Function to check/filter chains
