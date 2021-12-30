@@ -35,7 +35,7 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2", pl
                                   plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90", ...) {
 
   # Check arguments
-  if (x == y) {
+  if (identical(x, y)) {
     stop("'x' and 'y' must be different")
   }
 
@@ -499,7 +499,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
     stop("type must be either 'bar' or 'line'.")
   }
 
-  if (type == "bar" && n_clonotypes <= 0) {
+  if (identical(type, "bar") && n_clonotypes <= 0) {
     stop("If type is set to 'bar', n_clonotypes must be >0.")
   }
 
@@ -514,7 +514,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 
   dat_col <- ".clone_pct"
 
-  if (yaxis == "frequency") {
+  if (identical(yaxis, "frequency")) {
     dat_col <- ".clone_freq"
   }
 
@@ -586,7 +586,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   top_clones <- dplyr::ungroup(top_clones)
 
   # Create bar graph
-  if (type == "bar") {
+  if (identical(type, "bar")) {
     plt_labs <- purrr::set_names(top_clones$.lab, top_clones$.x)
 
     top_clones <- dplyr::arrange(top_clones, desc(!!sym(dat_col)))
@@ -884,7 +884,7 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
   # Set y-axis
   usage_col <- "pct"
 
-  if (yaxis == "frequency") {
+  if (identical(yaxis, "frequency")) {
     usage_col <- "freq"
   }
 
@@ -970,7 +970,7 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
 
   # Create heatmap or bar graph for single gene
   if (length(gene_cols) == 1) {
-    if (type == "bar") {
+    if (identical(type, "bar")) {
       plt_dat <- dplyr::filter(plt_dat, !!sym(usage_col) > 0)
 
       res <- .create_bars(
@@ -1347,7 +1347,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
   }
 
   # Return violins
-  if (type == "violin") {
+  if (identical(type, "violin")) {
     res <- res +
       ggplot2::geom_violin(...) +
       ggplot2::stat_summary(geom = "point", fun = stats::median, color = "black")
@@ -1398,7 +1398,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
   plt_aes <- ggplot2::aes()
 
   # Only plot percent for histogram
-  if (yaxis == "percent" && type == "histogram") {
+  if (identical(yaxis, "percent") && identical(type, "histogram")) {
     plt_aes <- ggplot2::aes(y = .data$..count.. / sum(.data$..count..) * 100)
   }
 
@@ -1430,7 +1430,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
   }
 
   # Return density plot
-  if (type == "density") {
+  if (identical(type, "density")) {
     res <- res +
       ggplot2::geom_density(...)
 

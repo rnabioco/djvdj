@@ -361,7 +361,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   # cells with missing clonotype have a clonotype_id of 'None'
   res <- dplyr::filter(res, .data$clonotype_id != "None")
 
-  if (identical(nrow(res), 0L)) {
+  if (nrow(res) == 0) {
     warning("No valid clonotypes present, check input data.")
   }
 
@@ -758,7 +758,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
       isos <- tidyr::replace_na(isos, "")
       isos <- isos[isos != ""]
 
-      if (identical(length(isos), 0L)) {
+      if (length(isos) == 0) {
         isos <- ""
       }
 
