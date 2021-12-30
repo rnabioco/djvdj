@@ -65,6 +65,35 @@ arg_lst %>%
     )
   })
 
+# Check CDR3 length calculation
+test_that("import_vdj CDR3 lengths", {
+  res <- tiny_so@meta.data %>%
+    import_vdj(ctigs)
+
+  dat    <- fetch_vdj(res)
+  lens_1 <- as.double(nchar(dat$cdr3))
+  lens_2 <- as.double(nchar(dat$cdr3_nt))
+
+  expect_true(length(unique(dat$cdr3_length)) > 1)
+  expect_true(length(unique(dat$cdr3_nt_length)) > 1)
+  expect_identical(lens_1, dat$cdr3_length)
+  expect_identical(lens_2, dat$cdr3_nt_length)
+})
+
+# Check number of chains represented in each column
+test_that("import_vdj number of chains represented by each column", {
+  res <- tiny_so@meta.data %>%
+    import_vdj(ctigs)
+
+  dat <- res %>%
+    select(all_of(vdj_cols)) %>%
+    select(-clonotype_id) %>%
+    mutate(across(everything(), ~ lengths(gregexpr(";", .x))))
+
+  dat %>%
+    purrr::reduce(expect_identical)
+})
+
 # Check include_indels
 test_that("import_vdj include_indels", {
   res <- tiny_so %>%
@@ -165,21 +194,15 @@ test_that("import_vdj column prefix", {
 })
 
 # Check filtered contigs
-test_that("import_vdj filtered contigs", {
+test_that("import_vdj filter_chains", {
   res <- tiny_so %>%
-    import_vdj(
-      vdj_dir       = ctigs,
-      filter_chains = TRUE
-    )
+    import_vdj(ctigs)
 
   expect_false(any(grepl("FALSE", res$productive)))
   expect_false(any(grepl("FALSE", res$full_length)))
   expect_s4_class(res, "Seurat")
   expect_identical(colnames(res), colnames(tiny_so))
-})
 
-# Check unfiltered contigs
-test_that("import_vdj unfiltered contigs", {
   res <- tiny_so %>%
     import_vdj(
       vdj_dir        = ctigs[1],
@@ -192,23 +215,31 @@ test_that("import_vdj unfiltered contigs", {
   expect_true(any(grepl("FALSE", res$full_length)))
   expect_s4_class(res, "Seurat")
   expect_identical(colnames(res), colnames(tiny_so))
+
+  fn <- function() {
+    tiny_so %>%
+      import_vdj(
+        vdj_dir       = ctigs,
+        filter_chains = FALSE
+      )
+  }
+
+  expect_warning(fn(), "When include_indels is TRUE, filter_chains is also automatically set TRUE")
 })
 
-# Check only paired chains
-test_that("import_vdj only paired chains", {
+# Check filter_paired
+test_that("import_vdj filter_paired", {
   res <- tiny_so %>%
     import_vdj(
       vdj_dir       = ctigs,
       filter_paired = TRUE
     )
 
+  expect_true(all(res$n_chains > 1, na.rm = TRUE))
   expect_true(all(res$paired, na.rm = TRUE))
   expect_s4_class(res, "Seurat")
   expect_identical(colnames(res), colnames(tiny_so))
-})
 
-# Check include unpaired chains
-test_that("import_vdj include unpaired chains", {
   res <- tiny_so %>%
     import_vdj(
       vdj_dir       = ctigs,

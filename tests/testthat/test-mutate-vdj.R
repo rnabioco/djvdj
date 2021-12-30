@@ -119,10 +119,6 @@ test_that("mutate_vdj bad command", {
   )
 })
 
-
-
-
-
 # Check Seurat output
 test_that("summarize_vdj Seurat out", {
   res <- vdj_so %>%
@@ -218,7 +214,10 @@ test_that("summarize_vdj calcs", {
 
   y <- strsplit(vdj_so$chains, ";")
 
-  z <- purrr::map2_dbl(x, y, ~ ifelse(all(is.na(.x)), NA, mean(.x[.y == "IGK"]))) %>%
+  z <- purrr::map2_dbl(
+    x, y,
+    ~ ifelse(all(is.na(.x)), NA, mean(.x[.y == "IGK"]))
+  ) %>%
     unname()
 
   expect_equal(z, res$NEW_umis)
