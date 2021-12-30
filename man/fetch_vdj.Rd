@@ -8,6 +8,7 @@ fetch_vdj(
   input,
   vdj_cols = NULL,
   clonotype_col = NULL,
+  filter_cells = FALSE,
   unnest = TRUE,
   sep = ";"
 )
@@ -23,6 +24,9 @@ same rows as clonotype_col.}
 \item{clonotype_col}{meta.data column containing clonotype IDs. This column
 is used to determine which cells have V(D)J data. If both clonotype_col and
 vdj_cols are NULL, all columns are included.}
+
+\item{filter_cells}{Remove cells that do not have V(D)J data, clonotype_col
+must be provided to determine which cells to filter.}
 
 \item{unnest}{If FALSE, a nested data.frame is returned where each row
 represents a cell and V(D)J data is stored as list-cols. If TRUE columns are

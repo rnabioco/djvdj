@@ -71,6 +71,8 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
 #' is used to determine which cells have V(D)J data. If both clonotype_col and
 #' vdj_cols are NULL, all columns are included.
+#' @param filter_cells Remove cells that do not have V(D)J data, clonotype_col
+#' must be provided to determine which cells to filter.
 #' @param unnest If FALSE, a nested data.frame is returned where each row
 #' represents a cell and V(D)J data is stored as list-cols. If TRUE columns are
 #' unnested so each row represents a chain
@@ -78,7 +80,8 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 #' identify columns containing per-chain data that can be unnested.
 #' @return data.frame containing V(D)J data
 #' @export
-fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRUE, sep = ";") {
+fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells = FALSE,
+                      unnest = TRUE, sep = ";") {
 
   # Format input data
   meta <- .get_meta(input)
@@ -104,6 +107,15 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
     )
 
     return(meta)
+  }
+
+  # Filter cells
+  if (filter_cells) {
+    if (is.null(clonotype_col)) {
+      stop("clonotype_col must be provided to determine which cells to filter.")
+    }
+
+    meta <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
   }
 
   # Unnest V(D)J data
@@ -354,7 +366,7 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, unnest = TRU
     res,
     across(
       all_of(nest_cols),
-      ~ ifelse(identical(.x, NA), NA, paste0(.x, collapse = sep))
+      ~ ifelse(all(is.na(.x)), NA, paste0(.x, collapse = sep))
     )
   )
 
