@@ -225,12 +225,47 @@ test_that("summarize_vdj calcs", {
 })
 
 # Check bad command
-test_that("summarize_vdj bad command", {
-  expect_error(
-    res <- vdj_so %>%
+test_that("summarize_vdj return length > 1", {
+  res_1 <- vdj_so %>%
+    summarize_vdj(
+      vdj_cols = "umis",
+      fn = ~ .x[.x > 30]
+    )
+
+  res_2 <- vdj_so %>%
+    summarize_vdj(
+      vdj_cols = "umis",
+      fn = ~ ifelse(length(.x[.x > 30]) > 0, paste0(.x[.x > 30], collapse = ";"), NA)
+    )
+
+  expect_identical(res_1, res_2)
+
+  res_1 <- vdj_so %>%
+    summarize_vdj(
+      vdj_cols = "chains",
+      fn = ~ .x[.x == "IGH"]
+    )
+
+  res_2 <- vdj_so %>%
+    summarize_vdj(
+      vdj_cols = "chains",
+      fn = ~ ifelse(length(.x[.x == "IGH"]) > 0, paste0(.x[.x == "IGH"], collapse = ";"), NA)
+    )
+
+  expect_identical(res_1, res_2)
+})
+
+# Check bad column chain filtering
+test_that("summarize_vdj bad column chain filtering", {
+  expect_warning(
+    vdj_so %>%
       summarize_vdj(
-        vdj_cols = "umis",
-        fn = ~ .x[chains == "IGK"]
-      )
+        vdj_cols = "nCount_RNA",
+        chain = "IGK"
+      ),
+    "can only be filtered based on chain if"
   )
 })
+
+
+

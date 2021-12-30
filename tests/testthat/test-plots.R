@@ -76,7 +76,8 @@ test_that("plot_features error same x y", {
         y         = "UMAP_1",
         feature   = "nCount_RNA",
         plot_lvls = test_lvls
-      )
+      ),
+    "'x' and 'y' must be different"
   )
 })
 
@@ -95,6 +96,24 @@ test_that("plot_fetures bad feature", {
   expect_error(fn(df_1), "not found in object")
   expect_error(fn(df_2), "not found in object")
 })
+
+# Check all plot_vdj_umap arguments
+arg_lst <- list(
+  input       = list(vdj_so, vdj_sce, df_1),
+  data_col    = c("umis", "chains"),
+  chain       = list(NULL, "IGH", c("IGH", "IGK")),
+  plot_lvls   = list(NULL, test_lvls),
+  plot_colors = list(NULL, test_cols),
+  min_q       = list(NULL, 0.05),
+  max_q       = list(NULL, 0.95)
+)
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_vdj_umap,
+  desc    = "plot_vdj_umap args",
+  chk     = expr(expect_s3_class(.res, "ggplot"))
+)
 
 # Check all plot_vdj arguments
 arg_lst <- list(
