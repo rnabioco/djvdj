@@ -140,7 +140,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #' @importFrom glue glue
 #'
 #' @examples
-#' # Summarizing numeric columns
+#' # Summarize numeric columns
 #' # by default the mean will be calculated for numeric columns
 #' summarize_vdj(
 #'   vdj_so,
@@ -154,7 +154,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #'   fn = stats::median
 #' )
 #'
-#' # Summarizing values for a specific chain
+#' # Summarize values for a specific chain
 #' summarize_vdj(
 #'   vdj_so,
 #'   vdj_cols = c("n_deletion", "n_insertion"),
@@ -252,9 +252,11 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
   # Filter chains
   # check that all vdj_cols contain per-chain data
   if (!is.null(chain)) {
-    is_lst <- purrr::map_lgl(res[, vdj_cols], is.list)
+    is_lst      <- purrr::map_lgl(res[, vdj_cols], is.list)
+    not_lst     <- names(is_lst[!is_lst])
+    filt_chains <- purrr::is_empty(not_lst)
 
-    if (all(is_lst)) {
+    if (filt_chains) {
       prfx <- "FILT_"
 
       res <- .filter_chains(
@@ -277,9 +279,11 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
       )
 
     } else {
+      not_lst <- paste0(not_lst, collapse = ", ")
+
       warning(
-        "V(D)J data can only be filtered based on chain if all vdj_cols ",
-        "contain per-chain data."
+        not_lst, " does not contain per-chain V(D)J data, can only filter ",
+        "based on chain if all vdj_cols contain per-chain data."
       )
     }
   }
@@ -327,7 +331,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
   })
 
   # If chain provided remove temporary columns
-  if (!is.null(chain)) {
+  if (!is.null(chain) && filt_chains) {
     res <- dplyr::select(res, -all_of(vdj_cols))
   }
 

@@ -258,13 +258,15 @@ test_that("summarize_vdj return length > 1", {
 # Check bad column chain filtering
 test_that("summarize_vdj bad column chain filtering", {
   expect_warning(
-    vdj_so %>%
+    res <- vdj_so %>%
       summarize_vdj(
         vdj_cols = "nCount_RNA",
         chain = "IGK"
       ),
-    "can only be filtered based on chain if"
+    "does not contain per-chain V\\(D\\)J data"
   )
+
+  expect_identical(res, vdj_so)
 })
 
 

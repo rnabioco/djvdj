@@ -11,6 +11,11 @@ NULL
 
 #' Create 2D feature plot
 #'
+#' Create a scatter plot with cells colored based on the provided feature.
+#' This can be used to create dimensional reduction plots
+#' (e.g. UMAP, tSNE, PCA) or to compare different cell attributes
+#' (e.g. CD4 vs CD8 expression).
+#'
 #' @export
 plot_features <- function(input, ...) {
 
@@ -21,13 +26,30 @@ plot_features <- function(input, ...) {
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
-#' @param plot_colors Vector of colors to use for plot
+#' @param plot_colors Vector of colors to use for plotting
 #' @param plot_lvls Levels to use for ordering feature
 #' @param min_q Minimum quantile cutoff for color scale.
 #' @param max_q Maximum quantile cutoff for color scale.
 #' @param na_color Color to use for missing values
-#' @param ... Additional arguments to pass to geom_point()
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
 #' @return ggplot object
+#'
+#' @examples
+#' # Create UMAP with cells colored based on sample name
+#' plot_features(
+#'   tiny_so,
+#'   feature = "orig.ident"
+#' )
+#'
+#' # Compare UMI counts for each cell with number of genes detected
+#' plot_features(
+#'   tiny_sce,
+#'   feature = "orig.ident",
+#'   x = "nFeature_RNA",
+#'   y = "nCount_RNA"
+#' )
+#'
 #' @export
 #' @name plot_features
 plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2", plot_colors = NULL,
@@ -152,16 +174,37 @@ plot_vdj_umap <- function(input, ...) {
 }
 
 #' @rdname plot_features
+#' @description plot_vdj_umap() allows per-chain V(D)J data to be summarized
+#' and plotted for each cell.
 #' @param data_col meta.data column containing V(D)J data to use for coloring
 #' cells
 #' @param summary_fn Function to use for summarizing values for each cell, possible
 #' values can be either a function, e.g. mean, or a purrr-style lambda,
 #' e.g. ~ mean(.x, na.rm = TRUE). If NULL, the mean will be calculated for
 #' numeric values, non-numeric columns will be combined into a single string.
-#' @param chain Chain(s) to use for plotting, set to NULL to include all chains
+#' @param chain Chain(s) to use for filtering data before plotting. If NULL
+#' data will not be filtered based on chain.
 #' @param chain_col meta.data column containing chains for each cell
-#' @param sep Separator used for storing per cell V(D)J data
-#' @param ... Additional arguments to pass to ggplot geom
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
+#'
+#' @examples
+#' # Plot average CDR3 length for each cell for light chains
+#' plot_vdj_umap(
+#'   vdj_so,
+#'   data_col = "cdr3_length",
+#'   summary_fn = mean,
+#'   chain = c("IGK", "IGL")
+#' )
+#'
+#' # Plot median number of insertions for each cell
+#' plot_vdj_umap(
+#'   vdj_so,
+#'   data_col = "n_insertion",
+#'   summary_fn = stats::median
+#' )
+#'
 #' @export
 plot_vdj_umap.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", summary_fn = NULL, chain = NULL,
                                   plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
@@ -237,23 +280,31 @@ plot_vdj_umap.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", da
 
 #' Plot continuous V(D)J data
 #'
+#' Compare V(D)J data for cell clusters
+#'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, cell barcodes should be stored as row names.
 #' @param data_cols meta.data column(s) containing continuous V(D)J data to
 #' plot
 #' @param cluster_col meta.data column containing cluster IDs to use for
-#' grouping cells when plotting CDR3 lengths
-#' @param chain Chain(s) to use for plotting, set to NULL to include all chains
+#' grouping cells for plotting
+#' @param chain Chain(s) to use for filtering data before plotting. If NULL
+#' data will not be filtered based on chain.
 #' @param type Type of plot to create, can be 'histogram', 'density',
 #' 'boxplot', or 'violin'
-#' @param yaxis Units to use for y-axis when plotting histogram. Use
-#' 'frequency' to show the raw number of values or 'percent' to show
-#' the percentage of total values.
-#' @param plot_colors Character vector containing colors for plotting
-#' @param plot_lvls Character vector containing levels for ordering
+#' @param yaxis Units to use for y-axis when type is set to 'histogram'. Use
+#' 'frequency' to show number of values or 'percent' to show the percentage of
+#' total values.
+#' @param plot_colors Character vector specifying colors to use for cell
+#' clusters specified by cluster_col. When cluster_col is NULL, plot colors can
+#' be directly modified with the ggplot2 parameters color and fill,
+#' e.g. fill = "red", color = "black"
+#' @param plot_lvls Character vector containing order to use for plotting cell
+#' clusters specified by cluster_col
 #' @param chain_col meta.data column containing chains for each cell
-#' @param sep Separator used for storing per cell V(D)J data
-#' @param ... Additional arguments to pass to ggplot geom
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
 #' @return ggplot object
 #' @name plot_vdj
 NULL
@@ -478,7 +529,8 @@ plot_vdj_indels <- function(input, data_cols = c("n_insertion", "n_deletion", "n
 #' to 'bar'
 #' @param facet_scales If type is 'bar', this argument passes a scales
 #' specification to facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'
-#' @param ... Additional arguments to pass to ggplot
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
 #' @return ggplot object
 #' @importFrom ggrepel geom_text_repel
 #' @export
@@ -676,7 +728,8 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param facet_rows The number of facet rows, use this argument if a list of
 #' functions is passed to method
-#' @param ... Additional arguments to pass to ggplot
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
 #' @return ggplot object
 #' @importFrom abdiv simpson
 #' @export
@@ -784,7 +837,8 @@ plot_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson, c
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating overlap
 #' @param plot_colors Character vector containing colors for plotting
-#' @param ... Additional arguments to pass to ggplot
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
 #' @return ggplot object
 #' @importFrom abdiv jaccard
 #' @export
@@ -856,8 +910,9 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
 #' @param plot_lvls Levels to use for ordering clusters
 #' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param chain_col meta.data column containing chains for each cell
-#' @param sep Separator used for storing per cell V(D)J data
-#' @param ... Additional arguments to pass to ggplot
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
 #' @return ggplot object
 #' @export
 plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type = "bar",
@@ -1176,7 +1231,8 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @param ttl Legend title
 #' @param ang Angle of x-axis text
 #' @param hjst Horizontal justification for x-axis text
-#' @param ... Additional arguments to pass to ggplot
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
 #' @return ggplot object
 #' @noRd
 .create_heatmap <- function(df_in, x, y, .fill, clrs = NULL, na_color = "white",
@@ -1229,7 +1285,8 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @param y_ttl Title for y-axis
 #' @param ang Angle of x-axis text
 #' @param hjst Horizontal justification for x-axis text
-#' @param ... Additional arguments to pass to ggplot
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
 #' @return ggplot object
 #' @noRd
 .create_bars <- function(df_in, x, y, .fill, clrs = NULL, y_ttl = y, ang = 45,
@@ -1294,7 +1351,8 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @param clrs Vector of colors for plotting
 #' @param type Type of plot to create, either 'boxplot' or 'violin'
 #' @param log_trans If TRUE, log10 transform the y-axis
-#' @param ... Additional arguments to pass to ggplot
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
 #' @return ggplot object
 #' @noRd
 .create_boxes <- function(df_in, x = NULL, y, .color = NULL, .fill = NULL, clrs = NULL,
@@ -1371,7 +1429,8 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' 'frequency' to show the raw number of values or 'percent' to show
 #' the percentage of total values.
 #' @param log_trans If TRUE, log10 transform the x-axis
-#' @param ... Additional arguments to pass to ggplot
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
 #' @return ggplot object
 #' @noRd
 .create_hist <- function(df_in, x, .color = NULL, .fill = NULL, clrs = NULL, type = "histogram",
