@@ -52,7 +52,7 @@ lambda. This is useful for plotting or filtering cells based on the V(D)J
 meta.data.
 }
 \examples{
-# Summarizing numeric columns
+# Summarize numeric columns
 # by default the mean will be calculated for numeric columns
 summarize_vdj(
   vdj_so,
@@ -66,7 +66,7 @@ summarize_vdj(
   fn = stats::median
 )
 
-# Summarizing values for a specific chain
+# Summarize values for a specific chain
 summarize_vdj(
   vdj_so,
   vdj_cols = c("n_deletion", "n_insertion"),

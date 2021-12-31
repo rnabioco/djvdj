@@ -82,20 +82,25 @@ using summary_fn. If FALSE, values will be plotted per chain.}
 specifying stats::median will plot the median value per cell}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
-grouping cells when plotting CDR3 lengths}
+grouping cells for plotting}
 
-\item{chain}{Chain(s) to use for plotting, set to NULL to include all chains}
+\item{chain}{Chain(s) to use for filtering data before plotting. If NULL
+data will not be filtered based on chain.}
 
 \item{type}{Type of plot to create, can be 'histogram', 'density',
 'boxplot', or 'violin'}
 
-\item{yaxis}{Units to use for y-axis when plotting histogram. Use
-'frequency' to show the raw number of values or 'percent' to show
-the percentage of total values.}
+\item{yaxis}{Units to use for y-axis when type is set to 'histogram'. Use
+'frequency' to show number of values or 'percent' to show the percentage of
+total values.}
 
-\item{plot_colors}{Character vector containing colors for plotting}
+\item{plot_colors}{Character vector specifying colors to use for cell
+clusters specified by cluster_col. When cluster_col is NULL, plot colors can
+be directly modified with the ggplot2 parameters color and fill,
+e.g. fill = "red", color = "black"}
 
-\item{plot_lvls}{Character vector containing levels for ordering}
+\item{plot_lvls}{Character vector containing order to use for plotting cell
+clusters specified by cluster_col}
 
 \item{alpha}{Color transparency}
 
@@ -103,13 +108,14 @@ the percentage of total values.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
-\item{sep}{Separator used for storing per cell V(D)J data}
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
-\item{...}{Additional arguments to pass to ggplot geom}
+\item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
+linetype, etc.}
 }
 \value{
 ggplot object
 }
 \description{
-Plot continuous V(D)J data
+Compare V(D)J data for cell clusters
 }

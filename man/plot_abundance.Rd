@@ -57,7 +57,8 @@ to 'bar'}
 \item{facet_scales}{If type is 'bar', this argument passes a scales
 specification to facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'}
 
-\item{...}{Additional arguments to pass to ggplot}
+\item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
+linetype, etc.}
 }
 \value{
 ggplot object

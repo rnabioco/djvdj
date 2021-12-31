@@ -27,7 +27,8 @@ calculating overlap}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
-\item{...}{Additional arguments to pass to ggplot}
+\item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
+linetype, etc.}
 }
 \value{
 ggplot object

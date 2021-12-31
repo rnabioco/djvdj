@@ -77,7 +77,8 @@ plot_vdj_umap(input, ...)
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{...}{Additional arguments to pass to ggplot geom}
+\item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
+linetype, etc.}
 
 \item{feature}{Variable to use for coloring points}
 
@@ -85,7 +86,7 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{y}{Variable to plot on y-axis}
 
-\item{plot_colors}{Vector of colors to use for plot}
+\item{plot_colors}{Vector of colors to use for plotting}
 
 \item{plot_lvls}{Levels to use for ordering feature}
 
@@ -100,22 +101,58 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 \item{data_col}{meta.data column containing V(D)J data to use for coloring
 cells}
 
-\item{summary_fn}{Function to use for summarizing values for each cell, this
-can be either a function, e.g. mean, or a purrr-style lambda,
-e.g. ~ mean(.x, na.rm = TRUE). If NULL, the default for numeric values is
-mean and the default for other types is ~ paste0(.x, collapse = sep). This
-is necessary since some V(D)J metrics will have multiple values for each
-cell.}
+\item{summary_fn}{Function to use for summarizing values for each cell, possible
+values can be either a function, e.g. mean, or a purrr-style lambda,
+e.g. ~ mean(.x, na.rm = TRUE). If NULL, the mean will be calculated for
+numeric values, non-numeric columns will be combined into a single string.}
 
-\item{chain}{Chain(s) to use for plotting, set to NULL to include all chains}
+\item{chain}{Chain(s) to use for filtering data before plotting. If NULL
+data will not be filtered based on chain.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
-\item{sep}{Separator used for storing per cell V(D)J data}
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 }
 \value{
 ggplot object
 }
 \description{
-Create 2D feature plot
+Create a scatter plot with cells colored based on the provided feature.
+This can be used to create dimensional reduction plots
+(e.g. UMAP, tSNE, PCA) or to compare different cell attributes
+(e.g. CD4 vs CD8 expression).
+
+plot_vdj_umap() allows per-chain V(D)J data to be summarized
+and plotted for each cell.
+}
+\examples{
+# Create UMAP with cells colored based on sample name
+plot_features(
+  tiny_so,
+  feature = "orig.ident"
+)
+
+# Compare UMI counts for each cell with number of genes detected
+plot_features(
+  tiny_sce,
+  feature = "orig.ident",
+  x = "nFeature_RNA",
+  y = "nCount_RNA"
+)
+
+# Plot average CDR3 length for each cell for light chains
+plot_vdj_umap(
+  vdj_so,
+  data_col = "cdr3_length",
+  summary_fn = mean,
+  chain = c("IGK", "IGL")
+)
+
+# Plot median number of insertions for each cell
+plot_vdj_umap(
+  vdj_so,
+  data_col = "n_insertion",
+  summary_fn = stats::median
+)
+
 }

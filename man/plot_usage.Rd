@@ -49,9 +49,10 @@ provided, top genes will be identified for each cluster.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
-\item{sep}{Separator used for storing per cell V(D)J data}
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
-\item{...}{Additional arguments to pass to ggplot}
+\item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
+linetype, etc.}
 }
 \value{
 ggplot object

@@ -36,7 +36,8 @@ calculating clonotype abundance}
 \item{facet_rows}{The number of facet rows, use this argument if a list of
 functions is passed to method}
 
-\item{...}{Additional arguments to pass to ggplot}
+\item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
+linetype, etc.}
 }
 \value{
 ggplot object
