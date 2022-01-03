@@ -98,3 +98,212 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 
   res
 }
+
+
+#' Plot clonotype abundance
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' grouping cells when calculating clonotype abundance
+#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' calculating clonotype abundance
+#' @param type Type of plot to create, can be 'bar' or 'line'
+#' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_lvls Character vector containing levels for ordering
+#' @param label_col meta.data column to use for labeling clonotypes. This is
+#' useful if clonotype_col contains names that are too long to include on the
+#' plot.
+#' @param n_clonotypes Number of clonotypes to plot. If type is set to 'line',
+#' this will specify the number of clonotypes to label.
+#' @param color_col meta.data column to use for coloring bars
+#' @param label_aes Named list providing additional label aesthetics (color,
+#' size, etc.)
+#' @param facet_rows The number of facet rows. Use this argument if type is set
+#' to 'bar'
+#' @param facet_scales If type is 'bar', this argument passes a scales
+#' specification to facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
+#' @return ggplot object
+#' @importFrom ggrepel geom_text_repel
+#' @export
+plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id", type = "bar",
+                           yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, label_col = clonotype_col,
+                           n_clonotypes = 10, color_col = cluster_col, label_aes = list(), facet_rows = 1,
+                           facet_scales = "free_x", ...) {
+
+  if (!yaxis %in% c("frequency", "percent")) {
+    stop("yaxis must be either 'frequency' or 'percent'.")
+  }
+
+  if (!type %in% c("bar", "line")) {
+    stop("type must be either 'bar' or 'line'.")
+  }
+
+  if (identical(type, "bar") && n_clonotypes <= 0) {
+    stop("If type is set to 'bar', n_clonotypes must be >0.")
+  }
+
+  # Calculate clonotype abundance
+  plt_dat <- calc_abundance(
+    input         = input,
+    cluster_col   = cluster_col,
+    clonotype_col = clonotype_col,
+    prefix        = ".",
+    return_df     = TRUE
+  )
+
+  dat_col <- ".clone_pct"
+
+  if (identical(yaxis, "frequency")) {
+    dat_col <- ".clone_freq"
+  }
+
+  plt_dat <- tibble::as_tibble(plt_dat, rownames = ".cell_id")
+  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
+
+  abund_cols <- c(
+    cluster_col, clonotype_col,
+    label_col,   dat_col,
+    color_col
+  )
+
+  plt_dat <- dplyr::distinct(plt_dat, !!!syms(abund_cols))
+
+  # Collapse values in label_col so there is a single label for each value in
+  # clonotype_col
+  if (label_col != clonotype_col) {
+    plt_dat <- dplyr::group_by(plt_dat, !!!syms(c(clonotype_col, cluster_col)))
+
+    plt_dat <- dplyr::mutate(
+      plt_dat,
+      !!sym(label_col) := paste0(!!sym(label_col), collapse = ";")
+    )
+
+    plt_dat <- dplyr::distinct(plt_dat)
+    plt_dat <- dplyr::ungroup(plt_dat)
+  }
+
+  # Add and format label column for plotting
+  len <- 25
+
+  plt_dat <- dplyr::rowwise(plt_dat)
+
+  plt_dat <- dplyr::mutate(
+    plt_dat,
+    .x   = !!sym(clonotype_col),
+    .len = length(unlist(strsplit(!!sym(label_col), ""))),
+    .lab = strtrim(!!sym(label_col), len),
+    .lab = paste0(.data$.lab, ifelse(.data$.len > len, "...", ""))
+  )
+
+  plt_dat <- dplyr::ungroup(plt_dat)
+
+  # Rank by abundance
+  if (!is.null(cluster_col)) {
+    plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+    plt_dat <- dplyr::group_by(plt_dat, !!sym(cluster_col))
+
+    plt_dat <- dplyr::mutate(
+      plt_dat,
+      .x = paste0(!!sym(cluster_col), "_", .data$.x)
+    )
+  }
+
+  plt_dat <- dplyr::mutate(
+    plt_dat,
+    rank = dplyr::row_number(dplyr::desc(!!sym(dat_col)))
+  )
+
+  # Identify top clonotypes
+  top_clones <- dplyr::slice_min(
+    plt_dat,
+    order_by  = rank,
+    n         = n_clonotypes,
+    with_ties = FALSE
+  )
+
+  plt_dat    <- dplyr::ungroup(plt_dat)
+  top_clones <- dplyr::ungroup(top_clones)
+
+  # Create bar graph
+  if (identical(type, "bar")) {
+    plt_labs <- purrr::set_names(top_clones$.lab, top_clones$.x)
+
+    top_clones <- dplyr::arrange(top_clones, desc(!!sym(dat_col)))
+
+    lvls <- rev(unique(top_clones$.x))
+
+    top_clones <- .set_lvls(
+      df_in = top_clones,
+      clmn  = ".x",
+      lvls  = lvls
+    )
+
+    res <- .create_bars(
+      df_in = top_clones,
+      x     = ".x",
+      y     = dat_col,
+      y_ttl = yaxis,
+      .fill = color_col,
+      clrs  = plot_colors,
+      ang   = 45,
+      hjst  = 1,
+      ...
+    )
+
+    res <- res +
+      ggplot2::scale_x_discrete(labels = plt_labs)
+
+    if (!is.null(cluster_col)){
+      res <- res +
+        ggplot2::facet_wrap(
+          stats::as.formula(paste0("~ ", cluster_col)),
+          nrow   = facet_rows,
+          scales = facet_scales
+        )
+    }
+
+    return(res)
+  }
+
+  # Plot abundance vs rank
+  res <- ggplot2::ggplot(plt_dat, ggplot2::aes(rank, !!sym(dat_col))) +
+    ggplot2::labs(y = yaxis) +
+    djvdj_theme()
+
+  if (is.null(color_col)) {
+    res <- res +
+      ggplot2::geom_line(...)
+
+  } else {
+    res <- res +
+      ggplot2::geom_line(ggplot2::aes(color = !!sym(color_col)), ...)
+  }
+
+  if (!is.null(plot_colors)) {
+    res <- res +
+      ggplot2::scale_color_manual(values = plot_colors)
+  }
+
+  # Add labels
+  if (n_clonotypes > 0) {
+    res <- res +
+      ggrepel::geom_text_repel(
+        ggplot2::aes(label = .data$.lab),
+        data          = top_clones,
+        nudge_x       = 500,
+        direction     = "y",
+        segment.size  = 0.2,
+        segment.alpha = 0.2,
+        size          = 3
+      )
+
+    res <- .add_aes(res, label_aes, 2)
+  }
+
+  res
+}
+

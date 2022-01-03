@@ -127,3 +127,68 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
 
   res
 }
+
+
+#' Plot repertoire overlap
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' calculating overlap
+#' @param method Method to use for calculating similarity between clusters
+#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' calculating overlap
+#' @param plot_colors Character vector containing colors for plotting
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
+#' @return ggplot object
+#' @importFrom abdiv jaccard
+#' @export
+plot_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonotype_col = "clonotype_id",
+                            plot_colors = NULL, ...) {
+
+  # Calculate similarity
+  plt_dat <- calc_similarity(
+    input         = input,
+    cluster_col   = cluster_col,
+    method        = method,
+    clonotype_col = clonotype_col,
+    prefix        = "",
+    return_mat    = TRUE
+  )
+
+  sim_col <- as.character(substitute(method))
+  sim_col <- dplyr::last(sim_col)
+
+  var_lvls <- unique(c(rownames(plt_dat), colnames(plt_dat)))
+  var_lvls <- sort(var_lvls)
+
+  plt_dat <- tibble::as_tibble(plt_dat, rownames = "Var1")
+
+  plt_dat <- tidyr::pivot_longer(
+    plt_dat,
+    cols      = -.data$Var1,
+    names_to  = "Var2",
+    values_to = sim_col
+  )
+
+  # Set Var levels
+  plt_dat <- dplyr::mutate(
+    plt_dat,
+    Var1 = factor(.data$Var1, levels = rev(var_lvls)),
+    Var2 = factor(.data$Var2, levels = var_lvls)
+  )
+
+  # Create heatmap
+  res <- .create_heatmap(
+    plt_dat,
+    x     = "Var1",
+    y     = "Var2",
+    .fill = sim_col,
+    clrs  = plot_colors,
+    ...
+  )
+
+  res
+}
+

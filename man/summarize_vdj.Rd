@@ -37,14 +37,14 @@ non-numeric columns will be combined into a single string.}
 \item{sep}{Separator used for storing per cell V(D)J data}
 
 \item{col_names}{A glue specification that describes how to name the output
-columns, use {.col} to stand for the selected column name. If col_names is
+columns, use \{.col\} to refer to the original column name. If col_names is
 NULL, the original column names will be used.}
 
 \item{return_df}{Return results as a data.frame. If FALSE, results will be
 added to the input object.}
 }
 \value{
-data.frame containing V(D)J data summarized for each cell
+Object containing V(D)J data summarized for each cell
 }
 \description{
 Summarize per-chain values for each cell using a function or purrr-style
@@ -60,6 +60,8 @@ summarize_vdj(
 )
 
 # Specifying a different summary function
+# this calculates the median number of insertions and deletions for each
+# cell
 summarize_vdj(
   vdj_so,
   vdj_cols = c("n_deletion", "n_insertion"),
@@ -91,7 +93,7 @@ summarize_vdj(
 
 # Using a lambda function to summarize values
 # use '.x' to refer to values in the column
-# this creates a new column showing the unique chains for the cell
+# this creates a new column showing the unique chains for each cell
 summarize_vdj(
   vdj_so,
   vdj_cols = "chains",

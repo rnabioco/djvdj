@@ -41,7 +41,7 @@ added to the input object.}
 \item{sep}{Separator used for storing per cell V(D)J data}
 }
 \value{
-Object with mutated meta.data
+Object with modified meta.data
 }
 \description{
 Modify per-chain V(D)J data for each cell. This function offers greater

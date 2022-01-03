@@ -24,7 +24,7 @@
 #' @param return_df Return results as a data.frame. If FALSE, results will be
 #' added to the input object.
 #' @param sep Separator used for storing per cell V(D)J data
-#' @return Object with mutated meta.data
+#' @return Object with modified meta.data
 #'
 #' @examples
 #' # Calculate mean reads and UMIs per cell
@@ -131,12 +131,12 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #' @param chain Chain to use for summarizing V(D)J data
 #' @param chain_col meta.data column(s) containing chains for each cell
 #' @param col_names A glue specification that describes how to name the output
-#' columns, use {.col} to stand for the selected column name. If col_names is
+#' columns, use \{.col\} to refer to the original column name. If col_names is
 #' NULL, the original column names will be used.
 #' @param return_df Return results as a data.frame. If FALSE, results will be
 #' added to the input object.
 #' @param sep Separator used for storing per cell V(D)J data
-#' @return data.frame containing V(D)J data summarized for each cell
+#' @return Object containing V(D)J data summarized for each cell
 #' @importFrom glue glue
 #'
 #' @examples
@@ -148,6 +148,8 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #' )
 #'
 #' # Specifying a different summary function
+#' # this calculates the median number of insertions and deletions for each
+#' # cell
 #' summarize_vdj(
 #'   vdj_so,
 #'   vdj_cols = c("n_deletion", "n_insertion"),
@@ -179,7 +181,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #'
 #' # Using a lambda function to summarize values
 #' # use '.x' to refer to values in the column
-#' # this creates a new column showing the unique chains for the cell
+#' # this creates a new column showing the unique chains for each cell
 #' summarize_vdj(
 #'   vdj_so,
 #'   vdj_cols = "chains",
@@ -374,6 +376,81 @@ mutate_meta <- function(input, fn, ...) {
   res <- fn(meta, ...)
 
   res <- .add_meta(input, meta = res)
+
+  res
+}
+
+
+#' Fetch V(D)J data
+#'
+#' Fetch per-chain V(D)J data from object. Within the object meta.data, each
+#' row represents a single cell and can include information for multiple
+#' chains. This function returns an unnested data.frame where each row
+#' represents a single chain. This is useful for plotting per-chain metrics
+#' such as CDR3 length or the number of insertions/deletions.
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param vdj_cols meta.data columns containing V(D)J data to unnest. If NULL
+#' data is automatically selected by identifying columns that have NAs in the
+#' same rows as clonotype_col.
+#' @param clonotype_col meta.data column containing clonotype IDs. This column
+#' is used to determine which cells have V(D)J data. If both clonotype_col and
+#' vdj_cols are NULL, all columns are included.
+#' @param filter_cells Remove cells that do not have V(D)J data, clonotype_col
+#' must be provided to determine which cells to filter.
+#' @param unnest If FALSE, a nested data.frame is returned where each row
+#' represents a cell and V(D)J data is stored as list-cols. If TRUE columns are
+#' unnested so each row represents a chain
+#' @param sep Separator used for storing per cell V(D)J data. This is used to
+#' identify columns containing per-chain data that can be unnested.
+#' @return data.frame containing V(D)J data
+#' @export
+fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells = FALSE,
+                      unnest = TRUE, sep = ";") {
+
+  # Format input data
+  meta <- .get_meta(input)
+
+  if (is.null(sep)) {
+    return(meta)
+  }
+
+  # Identify columns with V(D)J data
+  col_list <- .get_vdj_cols(
+    df_in     = meta,
+    clone_col = clonotype_col,
+    cols_in   = vdj_cols,
+    sep       = sep
+  )
+
+  sep_cols <- col_list$sep
+
+  if (purrr::is_empty(sep_cols)) {
+    warning(
+      "The separator '", sep, "' was not identified in any columns specified ",
+      "by vdj_cols, the unmodified meta.data will be returned"
+    )
+
+    return(meta)
+  }
+
+  # Filter cells
+  if (filter_cells) {
+    if (is.null(clonotype_col)) {
+      stop("clonotype_col must be provided to determine which cells to filter.")
+    }
+
+    meta <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
+  }
+
+  # Unnest V(D)J data
+  res <- .unnest_vdj(
+    meta,
+    sep_cols = sep_cols,
+    sep      = sep,
+    unnest   = unnest
+  )
 
   res
 }

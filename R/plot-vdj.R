@@ -1,0 +1,487 @@
+#' Create 2D feature plot
+#'
+#' Create a scatter plot with cells colored based on the provided feature.
+#' This can be used to create dimensional reduction plots
+#' (e.g. UMAP, tSNE, PCA) or to compare different cell attributes
+#' (e.g. CD4 vs CD8 expression).
+#'
+#' @export
+plot_features <- function(input, ...) {
+
+  UseMethod("plot_features", input)
+}
+
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param x Variable to plot on x-axis
+#' @param y Variable to plot on y-axis
+#' @param plot_colors Vector of colors to use for plotting
+#' @param plot_lvls Levels to use for ordering feature
+#' @param min_q Minimum quantile cutoff for color scale.
+#' @param max_q Maximum quantile cutoff for color scale.
+#' @param na_color Color to use for missing values
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
+#' @return ggplot object
+#'
+#' @examples
+#' # Create UMAP with cells colored based on sample name
+#' plot_features(
+#'   tiny_so,
+#'   feature = "orig.ident"
+#' )
+#'
+#' # Compare UMI counts for each cell with number of genes detected
+#' plot_features(
+#'   tiny_sce,
+#'   feature = "orig.ident",
+#'   x = "nFeature_RNA",
+#'   y = "nCount_RNA"
+#' )
+#'
+#' @export
+#' @name plot_features
+plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2", plot_colors = NULL,
+                                  plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90", ...) {
+
+  # Check arguments
+  if (identical(x, y)) {
+    stop("'x' and 'y' must be different")
+  }
+
+  plt_dat <- .get_meta(input)
+
+  plt_vars  <- c(x, y, feature)
+  miss_vars <- plt_vars[!plt_vars %in% colnames(plt_dat)]
+
+  if (length(miss_vars) > 0) {
+    stop(paste(miss_vars, collapse = ", "), " not found in object")
+  }
+
+  # Adjust values based on min_q and max_q
+  if ((!is.null(min_q) || !is.null(max_q)) && is.numeric(plt_dat[[feature]])) {
+    plt_dat <- .set_lims(
+      plt_dat,
+      ft = feature,
+      mn = min_q,
+      mx = max_q
+    )
+  }
+
+  # Set feature and facet order
+  plt_dat <- .set_lvls(plt_dat, feature, plot_lvls)
+
+  # Create scatter plot
+  # To add outline for each cluster create separate layers
+  res <- arrange(plt_dat, !!sym(feature))
+
+  res <- ggplot2::ggplot(
+    res,
+    ggplot2::aes(!!sym(x), !!sym(y), color = !!sym(feature))
+  ) +
+    ggplot2::geom_point(...)
+
+  # Set feature colors
+  if (!is.null(plot_colors)) {
+    if (is.numeric(plt_dat[[feature]])) {
+      res <- res +
+        ggplot2::scale_color_gradientn(
+          colors   = plot_colors,
+          na.value = na_color
+        )
+
+    } else {
+      res <- res +
+        ggplot2::scale_color_manual(
+          values   = plot_colors,
+          na.value = na_color
+        )
+    }
+
+  }
+
+  # Set theme
+  res <- res +
+    djvdj_theme()
+
+  if (!is.numeric(plt_dat[[feature]])) {
+    res <- res +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(size = 3))
+      )
+  }
+
+  res
+}
+
+#' @rdname plot_features
+#' @param feature Variable to use for coloring points
+#' @param data_slot Slot in the Seurat object to pull data
+#' @importFrom Seurat FetchData
+#' @export
+plot_features.Seurat <- function(input, feature, x = "UMAP_1", y = "UMAP_2", data_slot = "data",
+                                 plot_colors = NULL, plot_lvls = NULL, min_q = NULL, max_q = NULL,
+                                 na_color = "grey90", ...) {
+
+  # Fetch variables and add to meta.data
+  # want input data to include meta.data and any features from FetchData
+  plt_vars <- c(x, y, feature)
+
+  plt_dat <- Seurat::FetchData(
+    input,
+    vars = unique(plt_vars),
+    slot = data_slot
+  )
+
+  # Format input data
+  # keep rownames since default method will create rowname column
+  plt_dat <- .merge_meta(input, plt_dat)
+  plt_dat <- .get_meta(plt_dat)
+
+  res <- plot_features(
+    input       = plt_dat,
+    x           = x,
+    y           = y,
+    feature     = feature,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    min_q       = min_q,
+    max_q       = max_q,
+    na_color    = na_color,
+    ...
+  )
+
+  res
+}
+
+
+#' @rdname plot_features
+#' @export
+plot_vdj_umap <- function(input, ...) {
+
+  UseMethod("plot_vdj_umap", input)
+}
+
+#' @rdname plot_features
+#' @description plot_vdj_umap() allows per-chain V(D)J data to be summarized
+#' and plotted for each cell.
+#' @param data_col meta.data column containing V(D)J data to use for coloring
+#' cells
+#' @param summary_fn Function to use for summarizing values for each cell, possible
+#' values can be either a function, e.g. mean, or a purrr-style lambda,
+#' e.g. ~ mean(.x, na.rm = TRUE). If NULL, the mean will be calculated for
+#' numeric values, non-numeric columns will be combined into a single string.
+#' @param chain Chain(s) to use for filtering data before plotting. If NULL
+#' data will not be filtered based on chain.
+#' @param chain_col meta.data column containing chains for each cell
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
+#'
+#' @examples
+#' # Plot average CDR3 length for each cell for light chains
+#' plot_vdj_umap(
+#'   vdj_so,
+#'   data_col = "cdr3_length",
+#'   summary_fn = mean,
+#'   chain = c("IGK", "IGL")
+#' )
+#'
+#' # Plot median number of insertions for each cell
+#' plot_vdj_umap(
+#'   vdj_so,
+#'   data_col = "n_insertion",
+#'   summary_fn = stats::median
+#' )
+#'
+#' @export
+plot_vdj_umap.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", summary_fn = NULL, chain = NULL,
+                                  plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
+                                  chain_col = "chains", sep = ";", ...) {
+
+  plt_dat <- summarize_vdj(
+    input,
+    vdj_cols  = data_col,
+    fn        = summary_fn,
+    chain     = chain,
+    chain_col = chain_col,
+    sep       = sep,
+    return_df = TRUE
+  )
+
+  res <- plot_features(
+    plt_dat,
+    x        = x,
+    y        = y,
+    feature  = data_col,
+    min_q    = min_q,
+    max_q    = max_q,
+    na_color = na_color,
+    ...
+  )
+
+  res
+}
+
+#' @rdname plot_features
+#' @param data_slot Slot in the Seurat object to pull data
+#' @importFrom Seurat FetchData
+#' @export
+plot_vdj_umap.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", data_slot = "data", summary_fn = NULL,
+                                 chain = NULL, plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
+                                 chain_col = "chains", sep = ";", ...) {
+
+  # Fetch variables and add to meta.data
+  # want input data to include meta.data and any features from FetchData
+  # SHOULD WARNINGS BE SUPPRESSED??
+  plt_vars <- c(x, y, data_col)
+
+  plt_dat <- Seurat::FetchData(
+    input,
+    vars = unique(plt_vars),
+    slot = data_slot
+  )
+
+  # Format input data
+  # keep rownames since default method will create rowname column
+  plt_dat <- .merge_meta(input, plt_dat)
+  plt_dat <- .get_meta(plt_dat)
+
+  res <- plot_vdj_umap(
+    plt_dat,
+    x          = x,
+    y          = y,
+    data_col   = data_col,
+    summary_fn = summary_fn,
+    chain      = chain,
+    plot_lvls  = plot_lvls,
+    min_q      = min_q,
+    max_q      = max_q,
+    na_color   = na_color,
+    chain_col  = chain_col,
+    sep        = sep,
+    ...
+  )
+
+  res
+}
+
+
+#' Plot continuous V(D)J data
+#'
+#' Compare V(D)J data for cell clusters
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, cell barcodes should be stored as row names.
+#' @param data_cols meta.data column(s) containing continuous V(D)J data to
+#' plot
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' grouping cells for plotting
+#' @param chain Chain(s) to use for filtering data before plotting. If NULL
+#' data will not be filtered based on chain.
+#' @param type Type of plot to create, can be 'histogram', 'density',
+#' 'boxplot', or 'violin'
+#' @param yaxis Units to use for y-axis when type is set to 'histogram'. Use
+#' 'frequency' to show number of values or 'percent' to show the percentage of
+#' total values.
+#' @param plot_colors Character vector specifying colors to use for cell
+#' clusters specified by cluster_col. When cluster_col is NULL, plot colors can
+#' be directly modified with the ggplot2 parameters color and fill,
+#' e.g. fill = "red", color = "black"
+#' @param plot_lvls Character vector containing order to use for plotting cell
+#' clusters specified by cluster_col
+#' @param chain_col meta.data column containing chains for each cell
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
+#' @return ggplot object
+#' @name plot_vdj
+NULL
+
+#' @rdname plot_vdj
+#' @param per_cell Should values be plotted per cell, i.e. each data point
+#' would represent one cell. If TRUE, values will be summarized for each cell
+#' using summary_fn. If FALSE, values will be plotted per chain.
+#' @param summary_fn Function to use for summarizing values for each cell, e.g.
+#' specifying stats::median will plot the median value per cell
+#' @param alpha Color transparency
+#' @param log_trans If TRUE, axis will be log10 transformed
+#' @export
+plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
+                     type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, alpha = 0.5,
+                     log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
+
+  # Format input data
+  if (per_cell) {
+    plt_dat <- summarize_vdj(
+      input,
+      vdj_cols  = data_cols,
+      fn        = summary_fn,
+      chain     = chain,
+      chain_col = chain_col,
+      sep       = sep,
+      return_df = TRUE
+    )
+
+  } else {
+    fetch_cols <- data_cols
+
+    if (!is.null(chain)) {
+      fetch_cols <- c(chain_col, fetch_cols)
+    }
+
+    plt_dat <- fetch_vdj(
+      input,
+      vdj_cols      = fetch_cols,
+      clonotype_col = NULL,
+      unnest        = TRUE
+    )
+
+    if (!is.null(chain)) {
+      plt_dat <- dplyr::filter(plt_dat, !!sym(chain_col) %in% chain)
+    }
+  }
+
+  plt_dat <- dplyr::filter(plt_dat, if_all(all_of(data_cols), ~ !is.na(.x)))
+
+  # Create plots
+  fn <- function(clmn) {
+    .plot_vdj(
+      plt_dat,
+      data_col    = clmn,
+      cluster_col = cluster_col,
+      type        = type,
+      yaxis       = yaxis,
+      plot_colors = plot_colors,
+      plot_lvls   = plot_lvls,
+      log_trans   = log_trans,
+      ...
+    )
+  }
+
+  res <- purrr::map(data_cols, fn)
+
+  # Combine plots
+  res <- purrr::reduce(res, `+`)
+
+  res
+}
+
+#' @rdname plot_vdj
+#' @param df_in input data.frame
+#' @noRd
+.plot_vdj <- function(df_in, data_col, cluster_col = NULL, type = "boxplot", yaxis = "frequency",
+                      plot_colors = NULL, plot_lvls = NULL, alpha = 0.5, log_trans = FALSE, ...) {
+
+  # Order clusters based on plot_lvls
+  df_in <- .set_lvls(df_in, cluster_col, plot_lvls)
+
+  # Create violin plot
+  if (type %in% c("histogram", "density")) {
+    res <- .create_hist(
+      df_in,
+      x         = data_col,
+      .color    = cluster_col,
+      .fill     = cluster_col,
+      clrs      = plot_colors,
+      type      = type,
+      yaxis     = yaxis,
+      log_trans = log_trans,
+      alpha     = alpha,
+      ...
+    )
+
+    return(res)
+  }
+
+  res <- .create_boxes(
+    df_in,
+    x         = cluster_col,
+    y         = data_col,
+    .color    = cluster_col,
+    .fill     = cluster_col,
+    clrs      = plot_colors,
+    type      = type,
+    log_trans = log_trans,
+    alpha     = alpha,
+    ...
+  )
+
+  res
+}
+
+#' @rdname plot_vdj
+#' @export
+plot_vdj_reads <- function(input, data_cols = c("reads", "umis"), cluster_col = NULL, chain = NULL,
+                           type = "violin", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
+                           log_trans = TRUE, chain_col = "chains", sep = ";", ...) {
+
+  res <- plot_vdj(
+    input,
+    data_cols   = data_cols,
+    per_cell    = FALSE,
+    cluster_col = cluster_col,
+    chain       = chain,
+    type        = type,
+    yaxis       = yaxis,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    log_trans   = log_trans,
+    chain_col   = chain_col,
+    sep         = sep,
+    ...
+  )
+
+  res
+}
+
+#' @rdname plot_vdj
+#' @export
+plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NULL, chain = NULL,
+                             type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
+                             log_trans = TRUE, chain_col = "chains", sep = ";", ...) {
+
+  res <- plot_vdj(
+    input,
+    data_cols   = data_cols,
+    per_cell    = FALSE,
+    cluster_col = cluster_col,
+    chain       = chain,
+    type        = type,
+    yaxis       = yaxis,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    log_trans   = log_trans,
+    chain_col   = chain_col,
+    sep         = sep,
+    ...
+  )
+
+  res
+}
+
+#' @rdname plot_vdj
+#' @export
+plot_vdj_indels <- function(input, data_cols = c("n_insertion", "n_deletion", "n_mismatch"), cluster_col = NULL,
+                            chain = NULL, type = "violin", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
+                            log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
+
+  res <- plot_vdj(
+    input,
+    data_cols   = data_cols,
+    per_cell    = FALSE,
+    cluster_col = cluster_col,
+    chain       = chain,
+    type        = type,
+    yaxis       = yaxis,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    log_trans   = log_trans,
+    chain_col   = chain_col,
+    sep         = sep,
+    ...
+  )
+
+  res
+}
+
