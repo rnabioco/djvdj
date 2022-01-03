@@ -149,6 +149,18 @@ test_all_args(
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
+# Check plot_vdj_*
+fns <- list(plot_vdj_reads, plot_cdr3_length, plot_vdj_indels)
+
+test_that("plot_vdj_reads", {
+
+  purrr::walk(fns, ~ {
+    expect_s3_class(.x(vdj_so), "ggplot")
+    expect_s3_class(.x(vdj_sce), "ggplot")
+    expect_s3_class(.x(df_1), "ggplot")
+  })
+})
+
 # Check plot_vdj_reads
 test_that("plot_vdj_reads", {
   expect_s3_class(plot_vdj_reads(vdj_so), "ggplot")

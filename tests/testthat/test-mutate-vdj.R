@@ -269,5 +269,91 @@ test_that("summarize_vdj bad column chain filtering", {
   expect_identical(res, vdj_so)
 })
 
+# Check .filter_chains
+test_that(".filter_chains", {
+  dat <- vdj_so %>%
+    fetch_vdj(unnest = FALSE)
+
+  res <- dat %>%
+    .filter_chains(
+      vdj_cols = c("umis", "reads"),
+      chain = NULL
+    )
+
+  expect_identical(res, dat)
+
+  expect_error(
+    res <- dat %>%
+      .filter_chains(
+        vdj_cols = c("umis", "nCount_RNA"),
+        chain = "IGK"
+      ),
+    "cannot be a mix of normal columns and list-cols"
+  )
+
+  dat <- vdj_so %>%
+    fetch_vdj(unnest = TRUE)
+
+  res <- dat %>%
+    .filter_chains(
+      vdj_cols = c("umis", "reads"),
+      chain = "IGK"
+    )
+
+  expect_identical(res, filter(dat, chains %in% "IGK"))
+
+  res <- dat %>%
+    .filter_chains(
+      vdj_cols = "chains",
+      chain    = "IGK"
+    )
+
+  new_chains <- res$chains %>%
+    reduce(c) %>%
+    unique() %>%
+    na.omit() %>%
+    as.character()
+
+  expect_identical(new_chains, "IGK")
+
+  res <- dat %>%
+    .filter_chains(
+      vdj_cols = "chains",
+      chain    = c("IGH", "IGL")
+    )
+
+  new_chains <- res$chains %>%
+    reduce(c) %>%
+    unique() %>%
+    na.omit() %>%
+    as.character() %>%
+    sort()
+
+  expect_identical(new_chains, c("IGH", "IGL"))
+})
+
+# Check .check_list_cols
+test_that(".check_list_cols", {
+  res <- vdj_so %>%
+    fetch_vdj(unnest = FALSE)
+
+  expect_error(
+    .check_list_cols(res),
+    "columns cannot be list-cols"
+  )
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
