@@ -433,7 +433,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   if (!is.null(sep)) {
     sep_regex <- paste0(sep, "$")
 
-    nms <- names(res) != "" & !grepl(sep_regex, names(res))
+    nms <- names(res) != "" & !grepl(sep_regex, names(res), fixed = TRUE)
 
     names(res)[nms] <- paste0(names(res)[nms], sep)
   }
@@ -624,7 +624,9 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   sep <- gsub("[[:space:]]", "", sep)
 
-  if (any(grepl(sep, df_in[, sep_cols]))) {
+  has_sep <- grepl(sep, df_in[, sep_cols, drop = FALSE], fixed = TRUE)
+
+  if (any(has_sep)) {
     stop("The string '", sep, "' is already present in the input data, select a different value for 'sep'.")
   }
 
