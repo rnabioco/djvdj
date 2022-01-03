@@ -322,48 +322,11 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, clus
                      type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, alpha = 0.5,
                      log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
 
-  fn <- function(clmn) {
-    .plot_vdj(
-      input,
-      data_col    = clmn,
-      per_cell    = per_cell,
-      cluster_col = cluster_col,
-      chain       = chain,
-      type        = type,
-      yaxis       = yaxis,
-      plot_colors = plot_colors,
-      plot_lvls   = plot_lvls,
-      log_trans   = log_trans,
-      chain_col   = chain_col,
-      sep         = sep,
-      ...
-    )
-  }
-
-  res <- purrr::map(data_cols, fn)
-
-  # Combine plots
-  res <- purrr::reduce(res, `+`)
-
-  res
-}
-
-#' @rdname plot_vdj
-#' @noRd
-.plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
-                      type = "boxplot", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, alpha = 0.5,
-                      log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
-
-  # Check inputs
-  if (length(data_col) != 1) {
-    stop("Must specify only one value for data_col")
-  }
-
   # Format input data
   if (per_cell) {
     plt_dat <- summarize_vdj(
       input,
-      vdj_cols  = data_col,
+      vdj_cols  = data_cols,
       fn        = summary_fn,
       chain     = chain,
       chain_col = chain_col,
@@ -372,7 +335,7 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, clus
     )
 
   } else {
-    fetch_cols <- data_col
+    fetch_cols <- data_cols
 
     if (!is.null(chain)) {
       fetch_cols <- c(chain_col, fetch_cols)
@@ -390,15 +353,43 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, clus
     }
   }
 
-  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
+  plt_dat <- dplyr::filter(plt_dat, if_all(all_of(data_cols), ~ !is.na(.x)))
+
+  fn <- function(clmn) {
+    .plot_vdj(
+      plt_dat,
+      data_col    = clmn,
+      cluster_col = cluster_col,
+      type        = type,
+      yaxis       = yaxis,
+      plot_colors = plot_colors,
+      plot_lvls   = plot_lvls,
+      log_trans   = log_trans,
+      ...
+    )
+  }
+
+  res <- purrr::map(data_cols, fn)
+
+  # Combine plots
+  res <- purrr::reduce(res, `+`)
+
+  res
+}
+
+#' @rdname plot_vdj
+#' @param df_in input data.frame
+#' @noRd
+.plot_vdj <- function(df_in, data_col, cluster_col = NULL, type = "boxplot", yaxis = "frequency",
+                      plot_colors = NULL, plot_lvls = NULL, alpha = 0.5, log_trans = FALSE, ...) {
 
   # Order clusters based on plot_lvls
-  plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+  df_in <- .set_lvls(df_in, cluster_col, plot_lvls)
 
   # Create violin plot
   if (type %in% c("histogram", "density")) {
     res <- .create_hist(
-      plt_dat,
+      df_in,
       x         = data_col,
       .color    = cluster_col,
       .fill     = cluster_col,
@@ -414,7 +405,7 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, clus
   }
 
   res <- .create_boxes(
-    plt_dat,
+    df_in,
     x         = cluster_col,
     y         = data_col,
     .color    = cluster_col,
@@ -1131,15 +1122,22 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
 #' @export
 djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "black",
                         ln_col = "grey85") {
+
   res <- ggplot2::theme(
     strip.background  = ggplot2::element_blank(),
     strip.text        = ggplot2::element_text(size = ttl_size),
+
+    panel.border      = ggplot2::element_rect(fill = NA, color = ln_col, size = ln_size),
+
     panel.background  = ggplot2::element_blank(),
     legend.background = ggplot2::element_blank(),
     legend.title      = ggplot2::element_text(size = ttl_size),
     legend.key        = ggplot2::element_blank(),
     legend.text       = ggplot2::element_text(size = txt_size, color = txt_col),
-    axis.line         = ggplot2::element_line(size = ln_size,  color = ln_col),
+
+    axis.line         = ggplot2::element_blank(),
+    # axis.line         = ggplot2::element_line(size = ln_size,  color = ln_col),
+
     axis.ticks        = ggplot2::element_line(size = ln_size,  color = ln_col),
     axis.text         = ggplot2::element_text(size = txt_size, color = txt_col),
     axis.title        = ggplot2::element_text(size = ttl_size, color = txt_col)
