@@ -500,15 +500,17 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells
   if (!is.null(sep)) {
     sep_cols <- dplyr::select(df_in, all_of(cols_in))
 
-    sep_cols <- df_in
-
     sep_cols <- purrr::keep(sep_cols, ~ {
       x <- head(na.omit(.x), 1000)
 
-      any(purrr::map_lgl(x, grepl, pattern = sep))
+      any(purrr::map_lgl(x, grepl, pattern = sep, fixed = TRUE))
     })
 
     sep_cols <- colnames(sep_cols)
+
+    if (purrr::is_empty(sep_cols)) {
+      sep_cols <- NULL
+    }
   }
 
   # Return list of vectors
