@@ -7,7 +7,6 @@ ctigs <- c(
 ctigs_2 <- ctigs_3 <- ctigs
 
 names(ctigs_2) <- c("1_", "2_")
-names(ctigs_3) <- c("1", "2")
 
 tcr_ctigs <- system.file("extdata/tcr_1", package = "djvdj")
 bad_ctigs <- system.file("extdata/bad_bcr_1", package = "djvdj")
@@ -32,18 +31,16 @@ df_2 <- tiny_so@meta.data %>%
 arg_lst <- list(
   single = list(
     input          = list(tiny_so),
-    vdj_dir        = list(ctigs_2[1], ctigs_3[1], c("1" = paste0(ctigs[1], "/outs"))),
-    cell_prefix    = list(NULL, "1"),
+    vdj_dir        = list(ctigs_2[1], c("1_" = paste0(ctigs[1], "/outs"))),
+    cell_prefix    = list(NULL, "1_"),
     filter_paired  = c(TRUE, FALSE),
-    prefix         = c("", "PREFIX"),
     include_indels = FALSE
   ),
   multi = list(
     input          = list(tiny_so),
-    vdj_dir        = list(ctigs, ctigs_2, ctigs_3, paste0(ctigs, "/outs")),
-    cell_prefix    = list(NULL, c("1_", "2_"), c("1", "2")),
+    vdj_dir        = list(ctigs, ctigs_2, paste0(ctigs, "/outs")),
+    cell_prefix    = list(NULL, c("1_", "2_")),
     filter_paired  = c(TRUE, FALSE),
-    prefix         = c("", "PREFIX"),
     include_indels = FALSE
   )
 )
@@ -112,7 +109,7 @@ test_that("import_vdj include_indels", {
   res <- tiny_so %>%
     import_vdj(
       vdj_dir     = ctigs[1],
-      cell_prefix = "1",
+      cell_prefix = "1_",
       prefix      = "PREFIX_"
     )
 
@@ -206,7 +203,7 @@ test_that("import_vdj filter_chains", {
   res <- tiny_so %>%
     import_vdj(
       vdj_dir        = ctigs[1],
-      cell_prefix    = "1",
+      cell_prefix    = "1_",
       include_indels = FALSE,
       filter_chains  = FALSE
     )
@@ -311,7 +308,7 @@ test_that("import_vdj bad prefixes", {
 
 # Check low overlap warning
 test_that("import_vdj low overlap", {
-  dat <- c("1" = bad_ctigs)
+  dat <- c("1_" = bad_ctigs)
 
   fn <- function() {
     res <- tiny_so %>%
@@ -342,7 +339,7 @@ test_that("import_vdj missing indels", {
     res <- tiny_so %>%
       import_vdj(
         vdj_dir        = tcr_ctigs,
-        cell_prefix    = "1",
+        cell_prefix    = "1_",
         filter_chains  = FALSE
       )
   }
@@ -365,7 +362,7 @@ test_that("import_vdj bad sep", {
 
 # Check duplicated cell barcode prefixes
 test_that("import_vdj duplicate cell prefix", {
-  prfxs    <- rep("1", 2)
+  prfxs    <- rep("1_", 2)
   ctigs_in <- c(ctigs[1], ctigs[1])
   dat      <- purrr::set_names(ctigs_in, prfxs)
 
@@ -402,7 +399,7 @@ test_that("import_vdj cell prefix length", {
 
 # Check cell barcode prefix NAs
 test_that("import_vdj cell prefix NAs", {
-  prfxs <- c(NA, "2")
+  prfxs <- c(NA, "2_")
   dat   <- purrr::set_names(ctigs, prfxs)
 
   fn <- function() {
@@ -435,4 +432,38 @@ test_that("import_vdj BCR and TCR", {
 
   expect_error(fn(), "Multiple data types detected")
 })
+
+# Check .classify_vdj
+test_that(".classify_vdj", {
+  dat <- vdj_so %>%
+    fetch_vdj(vdj_cols = "chains")
+
+  expect_error(
+    dat %>%
+      mutate(chains = str_c("A", chains)) %>%
+      .classify_vdj(),
+    "None of the expected chains.+were found"
+  )
+
+  expect_error(
+    dat %>%
+      mutate(chains = str_c(chains, "A")) %>%
+      .classify_vdj(),
+    "None of the expected chains.+were found"
+  )
+
+  expect_warning(
+    dat %>%
+      filter(chains %in% c("IGH", "IGK")) %>%
+      group_by(chains) %>%
+      slice(1:10) %>%
+      ungroup() %>%
+      mutate(chains = str_replace(chains, "IGH", "TRA")) %>%
+      .classify_vdj(),
+    "Equal number of BCR.+and TCR.+chains detected"
+  )
+})
+
+
+
 

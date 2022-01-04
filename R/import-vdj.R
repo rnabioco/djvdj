@@ -390,7 +390,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' NULL to not add a separator
 #' @return Paths provided to vdj_dir with cell prefixes added as names
 #' @noRd
-.format_cell_prefixes <- function(vdj_dir, cell_prefix, sep = "_") {
+.format_cell_prefixes <- function(vdj_dir, cell_prefix, sep = NULL) {
 
   res <- vdj_dir
 
@@ -433,7 +433,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   if (!is.null(sep)) {
     sep_regex <- paste0(sep, "$")
 
-    nms <- names(res) != "" & !grepl(sep_regex, names(res), fixed = TRUE)
+    nms <- names(res) != "" & !grepl(sep_regex, names(res))
 
     names(res)[nms] <- paste0(names(res)[nms], sep)
   }
