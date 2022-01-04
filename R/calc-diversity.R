@@ -3,8 +3,8 @@
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param cluster_col meta.data column containing cluster IDs to use for
-#' calculating diversity. If cluster_col is omitted, diversity index will be
-#' calculated for all clonotypes.
+#' grouping cells when calculating diversity. If cluster_col is omitted,
+#' diversity index will be calculated using all cells.
 #' @param method Method to use for calculating diversity. A named list can also
 #' be passed to use multiple methods. The names should specify names for the
 #' output columns.
@@ -15,6 +15,44 @@
 #' will be added to the input object.
 #' @return Single cell object or data.frame with diversity metrics
 #' @importFrom abdiv simpson
+#'
+#' @examples
+#' # Calculate diversity using all cells
+#' calc_diversity(
+#'   vdj_so,
+#'   method = abdiv::simpson
+#' )
+#'
+#' # Group cells based on meta.data column before calculating diversity
+#' calc_diversity(
+#'   vdj_so,
+#'   cluster_col = "orig.ident"
+#' )
+#'
+#' # Add a prefix to the new columns
+#' # this is useful if multiple diversity calculations are stored in the
+#' # meta.data
+#' calc_diversity(
+#'   vdj_so,
+#'   prefix = "bcr_"
+#' )
+#'
+#' # Return a data.frame instead of adding the results to the input object
+#' calc_diversity(
+#'   vdj_so,
+#'   return_df = TRUE
+#' )
+#'
+#' # Using calc_diversity outside of Seurat
+#' # SingleCellExperiment objects or data.frames containing V(D)J data are also
+#' # compatible. If a data.frame is provided, cell barcodes should be stored as
+#' # row names.
+#' calc_diversity(vdj_sce)
+#'
+#' df <- vdj_so@meta.data
+#'
+#' calc_diversity(df)
+#'
 #' @export
 calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
                            clonotype_col = "clonotype_id", prefix = "", return_df = FALSE) {

@@ -16,7 +16,8 @@ calc_abundance(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{cluster_col}{meta.data column containing cluster IDs to use for}
+\item{cluster_col}{meta.data column containing cluster IDs to use for
+grouping cells when calculating clonotype abundance}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating clonotype abundance}
@@ -31,4 +32,42 @@ Single cell object or data.frame with clonotype abundance metrics
 }
 \description{
 Calculate clonotype abundance
+}
+\examples{
+# Calculate clonotype abundance using all cells
+calc_abundance(
+  vdj_so,
+  clonotype_col = "clonotype_id"
+)
+
+# Group cells based on meta.data column before calculating abundance
+calc_abundance(
+  vdj_so,
+  cluster_col = "orig.ident"
+)
+
+# Add a prefix to the new columns
+# this is useful if multiple abundance calculations are stored in the
+# meta.data
+calc_abundance(
+  vdj_so,
+  prefix = "bcr_"
+)
+
+# Return a data.frame instead of adding the results to the input object
+calc_abundance(
+  vdj_so,
+  return_df = TRUE
+)
+
+# Using calc_abundance outside of Seurat
+# SingleCellExperiment objects or data.frames containing V(D)J data are also
+# compatible. If a data.frame is provided, cell barcodes should be stored as
+# row names.
+calc_abundance(vdj_sce)
+
+df <- vdj_so@meta.data
+
+calc_abundance(df)
+
 }
