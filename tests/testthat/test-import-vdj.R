@@ -440,14 +440,14 @@ test_that(".classify_vdj", {
 
   expect_error(
     dat %>%
-      mutate(chains = str_c("A", chains)) %>%
+      mutate(chains = paste0("A", chains)) %>%
       .classify_vdj(),
     "None of the expected chains.+were found"
   )
 
   expect_error(
     dat %>%
-      mutate(chains = str_c(chains, "A")) %>%
+      mutate(chains = paste0(chains, "A")) %>%
       .classify_vdj(),
     "None of the expected chains.+were found"
   )
@@ -458,7 +458,7 @@ test_that(".classify_vdj", {
       group_by(chains) %>%
       slice(1:10) %>%
       ungroup() %>%
-      mutate(chains = str_replace(chains, "IGH", "TRA")) %>%
+      mutate(chains = gsub("IGH", "TRA", chains)) %>%
       .classify_vdj(),
     "Equal number of BCR.+and TCR.+chains detected"
   )
