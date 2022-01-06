@@ -45,7 +45,7 @@
 #' # Create a new column showing the unique chains for each cell
 #' mutate_vdj(
 #'   vdj_sce,
-#'   unique_chains = paste0(unique(chains), collapse = "_")
+#'   unique_chains = stringr::str_c(unique(chains), collapse = "_")
 #' )
 #'
 #' # Determine which cells have both an IGK and IGL chain

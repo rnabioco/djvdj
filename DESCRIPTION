@@ -37,7 +37,8 @@ Suggests:
     covr,
     knitr,
     roxygen2,
-    testthat
+    testthat,
+    stringr
 VignetteBuilder: 
     knitr
 Remotes:
