@@ -8,14 +8,40 @@
 #' filtering is performed regardless of whether V(D)J data is present for the
 #' cell.
 #' @param filter_cells Remove cells from the object that do not satisfy the
-#' filtering conditions. If FALSE (default) V(D)J data for the cell will be
-#' removed from the meta.data but no cells will be completely removed from the
-#' object.
+#' filtering conditions. If FALSE, V(D)J data for the cell will be removed from
+#' the meta.data but no cells will be removed from the object.
 #' @param vdj_cols meta.data columns containing V(D)J data to use for
-#' filtering. If NULL, data are automatically selected by identifying columns
-#' that have NAs in the same rows as clonotype_col.
+#' filtering. If NULL, V(D)J data are automatically selected by identifying
+#' columns that have NAs in the same rows as clonotype_col.
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return Object with filtered meta.data
+#'
+#' @examples
+#' # Only keep V(D)J data for cells with all productive and full length chains
+#' filter_vdj(
+#'   vdj_so,
+#'   all(productive) && all(full_length)
+#' )
+#'
+#' # Only keep V(D)J data for cells with at least two IGK chains
+#' filter_vdj(
+#'   vdj_sce,
+#'   length(chains[chains == "IGK"]) > 2
+#' )
+#'
+#' # Only keep V(D)J data for cells with at least one heavy and one light chain
+#' filter_vdj(
+#'   vdj_so,
+#'   "IGH" %in% chains && any(c("IGK", "IGL") %in% chains)
+#' )
+#'
+#' # Remove cells from the object that do not meet filtering criteria
+#' filter_vdj(
+#'   vdj_so,
+#'   "IGH" %in% chains && any(c("IGK", "IGL") %in% chains),
+#'   filter_cells = TRUE
+#' )
+#'
 #' @export
 filter_vdj <- function(input, filt, clonotype_col = "clonotype_id", filter_cells = FALSE,
                        vdj_cols = NULL, sep = ";") {
@@ -124,16 +150,19 @@ filter_vdj <- function(input, filt, clonotype_col = "clonotype_id", filter_cells
 #' @return Subsetted object
 #' @noRd
 .subset_cells <- function(input, cells) {
+
   UseMethod(".subset_cells", input)
 }
 
 .subset_cells.default <- function(input, cells) {
+
   res <- input[, cells]
 
   res
 }
 
 .subset_cells.data.frame <- function(input, cells) {
+
   res <- input[rownames(input) %in% cells, ]
 
   res
