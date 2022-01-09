@@ -20,9 +20,9 @@ data.frame is provided, cell barcodes should be stored as row names.}
 \item{...}{Name-value pairs to use for creating or modifying per-chain V(D)J
 meta.data, e.g. mean_umis = mean(umis).
 
-To allow modification of per-chain V(D)J data, the data for each cell is
+To allow for modification of per-chain V(D)J data, the data for each cell is
 converted into a vector, e.g. 'IGH;IGK' is equivalent to c('IGH', 'IGK').
-This allows any R vector operations to be performed on the per-chain values.
+This allows R vector operations to be performed on the per-chain values.
 Any operations that produce a result greater than length 1 need to be
 returned as a list(), e.g. new_col = umis + 1 will return a new value for
 each chain, to prevent an error this must be written as
@@ -66,7 +66,7 @@ mutate_vdj(
 # Create a new column showing the unique chains for each cell
 mutate_vdj(
   vdj_sce,
-  unique_chains = paste0(unique(chains), collapse = "_")
+  unique_chains = stringr::str_c(unique(chains), collapse = "_")
 )
 
 # Determine which cells have both an IGK and IGL chain

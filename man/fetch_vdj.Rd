@@ -17,20 +17,20 @@ fetch_vdj(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{vdj_cols}{meta.data columns containing V(D)J data to unnest. If NULL
-data is automatically selected by identifying columns that have NAs in the
-same rows as clonotype_col.}
+\item{vdj_cols}{meta.data columns containing per-chain V(D)J data to unnest.
+If NULL, V(D)J data are automatically selected by identifying columns that
+have NAs in the same rows as clonotype_col.}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs. This column
-is used to determine which cells have V(D)J data. If both clonotype_col and
-vdj_cols are NULL, all columns are included.}
+is used to determine which columns have V(D)J data. If both clonotype_col
+and vdj_cols are NULL, all columns are included.}
 
 \item{filter_cells}{Remove cells that do not have V(D)J data, clonotype_col
 must be provided to determine which cells to filter.}
 
 \item{unnest}{If FALSE, a nested data.frame is returned where each row
-represents a cell and V(D)J data is stored as list-cols. If TRUE columns are
-unnested so each row represents a chain}
+represents a cell and V(D)J data is stored as list-cols. If TRUE, columns
+are unnested so each row represents a single chain.}
 
 \item{sep}{Separator used for storing per cell V(D)J data. This is used to
 identify columns containing per-chain data that can be unnested.}
@@ -44,4 +44,24 @@ row represents a single cell and can include information for multiple
 chains. This function returns an unnested data.frame where each row
 represents a single chain. This is useful for plotting per-chain metrics
 such as CDR3 length or the number of insertions/deletions.
+}
+\examples{
+# Fetch per-chain V(D)J data
+fetch_vdj(vdj_so)
+
+# To increase performance, specify which columns to return per-chain data,
+# per-cell data will be returned for all other columns
+fetch_vdj(
+  vdj_sce,
+  vdj_cols = c("chains", "n_insertion")
+)
+
+# Only include cells that have V(D)J data
+# clonotype_col must be specified to identify cells with V(D)J data
+fetch_vdj(
+  vdj_so,
+  filter_cells = TRUE,
+  clonotype_col = "clonotype_id"
+)
+
 }

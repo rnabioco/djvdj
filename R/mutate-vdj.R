@@ -8,9 +8,9 @@
 #' @param ... Name-value pairs to use for creating or modifying per-chain V(D)J
 #' meta.data, e.g. mean_umis = mean(umis).
 #'
-#' To allow modification of per-chain V(D)J data, the data for each cell is
+#' To allow for modification of per-chain V(D)J data, the data for each cell is
 #' converted into a vector, e.g. 'IGH;IGK' is equivalent to c('IGH', 'IGK').
-#' This allows any R vector operations to be performed on the per-chain values.
+#' This allows R vector operations to be performed on the per-chain values.
 #' Any operations that produce a result greater than length 1 need to be
 #' returned as a list(), e.g. new_col = umis + 1 will return a new value for
 #' each chain, to prevent an error this must be written as
@@ -270,7 +270,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
         empty_val = NA
       )
 
-      # Add prefix to vdj_cols so temporary columns are used
+      # Add prefix to vdj_cols so temporary columns are usedvdj %>% hea
       vdj_cols <- paste0(prfx, vdj_cols)
 
       # Set col_names so prefix is removed from columns
@@ -391,20 +391,40 @@ mutate_meta <- function(input, fn, ...) {
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param vdj_cols meta.data columns containing V(D)J data to unnest. If NULL
-#' data is automatically selected by identifying columns that have NAs in the
-#' same rows as clonotype_col.
+#' @param vdj_cols meta.data columns containing per-chain V(D)J data to unnest.
+#' If NULL, V(D)J data are automatically selected by identifying columns that
+#' have NAs in the same rows as clonotype_col.
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
-#' is used to determine which cells have V(D)J data. If both clonotype_col and
-#' vdj_cols are NULL, all columns are included.
+#' is used to determine which columns have V(D)J data. If both clonotype_col
+#' and vdj_cols are NULL, all columns are included.
 #' @param filter_cells Remove cells that do not have V(D)J data, clonotype_col
 #' must be provided to determine which cells to filter.
 #' @param unnest If FALSE, a nested data.frame is returned where each row
-#' represents a cell and V(D)J data is stored as list-cols. If TRUE columns are
-#' unnested so each row represents a chain
+#' represents a cell and V(D)J data is stored as list-cols. If TRUE, columns
+#' are unnested so each row represents a single chain.
 #' @param sep Separator used for storing per cell V(D)J data. This is used to
 #' identify columns containing per-chain data that can be unnested.
 #' @return data.frame containing V(D)J data
+#'
+#' @examples
+#' # Fetch per-chain V(D)J data
+#' fetch_vdj(vdj_so)
+#'
+#' # To increase performance, specify which columns to return per-chain data,
+#' # per-cell data will be returned for all other columns
+#' fetch_vdj(
+#'   vdj_sce,
+#'   vdj_cols = c("chains", "n_insertion")
+#' )
+#'
+#' # Only include cells that have V(D)J data
+#' # clonotype_col must be specified to identify cells with V(D)J data
+#' fetch_vdj(
+#'   vdj_so,
+#'   filter_cells = TRUE,
+#'   clonotype_col = "clonotype_id"
+#' )
+#'
 #' @export
 fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells = FALSE,
                       unnest = TRUE, sep = ";") {
