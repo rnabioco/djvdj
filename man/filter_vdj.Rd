@@ -7,9 +7,8 @@
 filter_vdj(
   input,
   filt,
-  clonotype_col = "clonotype_id",
-  filter_cells = FALSE,
   vdj_cols = NULL,
+  clonotype_col = "clonotype_id",
   sep = ";"
 )
 }
@@ -17,21 +16,19 @@ filter_vdj(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, cell barcodes should be stored as row names.}
 
-\item{filt}{Condition to use for filtering meta.data}
-
-\item{clonotype_col}{meta.data column containing clonotype IDs. This column
-is used to determine which cells have V(D)J data. If clonotype_col is NULL,
-filtering is performed regardless of whether V(D)J data is present for the
-cell.}
-
-\item{filter_cells}{Remove cells from the object that do not satisfy the
-filtering conditions. If FALSE (default) V(D)J data for the cell will be
-removed from the meta.data but no cells will be completely removed from the
-object.}
+\item{filt}{Condition to use for filtering V(D)J data. To allow for
+filtering of per-chain V(D)J data, the data for each cell is converted into
+a vector, e.g. 'IGH;IGK' is equivalent to c('IGH', 'IGK'). This allows R
+vector operations to be performed on the per-chain values. The filtering
+condition must return TRUE/FALSE for each chain or a single TRUE/FALSE for
+each cell.}
 
 \item{vdj_cols}{meta.data columns containing V(D)J data to use for
-filtering. If NULL, data are automatically selected by identifying columns
-that have NAs in the same rows as clonotype_col.}
+filtering. If NULL, V(D)J data are automatically selected by identifying
+columns that have NAs in the same rows as clonotype_col.}
+
+\item{clonotype_col}{meta.data column containing clonotype IDs. This column
+is used to determine which columns contain V(D)J data.}
 
 \item{sep}{Separator used for storing per cell V(D)J data}
 }
@@ -39,5 +36,32 @@ that have NAs in the same rows as clonotype_col.}
 Object with filtered meta.data
 }
 \description{
-Filter V(D)J data
+Remove V(D)J data for chains/cells that do not satisfy the provided
+condition
+}
+\examples{
+# Only include V(D)J data for productive chains
+filter_vdj(vdj_so, productive)
+
+# Only include V(D)J data for cells with paired chains
+filter_vdj(vdj_sce, paired)
+
+# Only include V(D)J data for cells with at least one heavy and one light chain
+filter_vdj(
+  vdj_so,
+  "IGH" \%in\% chains && any(c("IGK", "IGL") \%in\% chains)
+)
+
+# Only include V(D)J data for cells that have an IGH, IGK, and IGL chain
+filter_vdj(
+  vdj_sce,
+  all(c("IGH", "IGK", "IGL") \%in\% chains)
+)
+
+# Remove chains that only have 1 UMI for support
+filter_vdj(vdj_sce, umis > 1)
+
+# Only include V(D)J data for heavy chains
+filter_vdj(vdj_so, chains == "IGH")
+
 }
