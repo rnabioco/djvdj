@@ -97,7 +97,7 @@ test_that("plot_fetures bad feature", {
   expect_error(fn(df_2), "not found in object")
 })
 
-# Check all plot_vdj_umap arguments
+# Check all plot_vdj_feature arguments
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce, df_1),
   data_col    = c("umis", "chains"),
@@ -110,17 +110,17 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_vdj_umap,
-  desc    = "plot_vdj_umap args",
+  .fn     = plot_vdj_feature,
+  desc    = "plot_vdj_feature args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# plot_vdj_umap bad chain filtering
-test_that("plot_vdj_umap bad chain filtering", {
+# plot_vdj_feature bad chain filtering
+test_that("plot_vdj_feature bad chain filtering", {
 
   expect_warning(
     vdj_so %>%
-      plot_vdj_umap(
+      plot_vdj_feature(
         data_col = "nCount_RNA",
         chain = "IGK"
       ),

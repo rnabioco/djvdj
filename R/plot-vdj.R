@@ -157,13 +157,13 @@ plot_features.Seurat <- function(input, feature, x = "UMAP_1", y = "UMAP_2", dat
 
 #' @rdname plot_features
 #' @export
-plot_vdj_umap <- function(input, ...) {
+plot_vdj_feature <- function(input, ...) {
 
-  UseMethod("plot_vdj_umap", input)
+  UseMethod("plot_vdj_feature", input)
 }
 
 #' @rdname plot_features
-#' @description plot_vdj_umap() allows per-chain V(D)J data to be summarized
+#' @description plot_vdj_feature() allows per-chain V(D)J data to be summarized
 #' and plotted for each cell.
 #' @param data_col meta.data column containing V(D)J data to use for coloring
 #' cells
@@ -180,7 +180,7 @@ plot_vdj_umap <- function(input, ...) {
 #'
 #' @examples
 #' # Plot average CDR3 length for each cell for light chains
-#' plot_vdj_umap(
+#' plot_vdj_feature(
 #'   vdj_so,
 #'   data_col = "cdr3_length",
 #'   summary_fn = mean,
@@ -188,16 +188,16 @@ plot_vdj_umap <- function(input, ...) {
 #' )
 #'
 #' # Plot median number of insertions for each cell
-#' plot_vdj_umap(
+#' plot_vdj_feature(
 #'   vdj_so,
 #'   data_col = "n_insertion",
 #'   summary_fn = stats::median
 #' )
 #'
 #' @export
-plot_vdj_umap.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", summary_fn = NULL, chain = NULL,
-                                  plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
-                                  chain_col = "chains", sep = ";", ...) {
+plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", summary_fn = NULL, chain = NULL,
+                                     plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
+                                     chain_col = "chains", sep = ";", ...) {
 
   plt_dat <- summarize_vdj(
     input,
@@ -227,9 +227,9 @@ plot_vdj_umap.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", s
 #' @param data_slot Slot in the Seurat object to pull data
 #' @importFrom Seurat FetchData
 #' @export
-plot_vdj_umap.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", data_slot = "data", summary_fn = NULL,
-                                 chain = NULL, plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
-                                 chain_col = "chains", sep = ";", ...) {
+plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", data_slot = "data", summary_fn = NULL,
+                                    chain = NULL, plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
+                                    chain_col = "chains", sep = ";", ...) {
 
   # Fetch variables and add to meta.data
   # want input data to include meta.data and any features from FetchData
@@ -247,7 +247,7 @@ plot_vdj_umap.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", da
   plt_dat <- .merge_meta(input, plt_dat)
   plt_dat <- .get_meta(plt_dat)
 
-  res <- plot_vdj_umap(
+  res <- plot_vdj_feature(
     plt_dat,
     x          = x,
     y          = y,
@@ -306,6 +306,93 @@ NULL
 #' specifying stats::median will plot the median value per cell
 #' @param alpha Color transparency
 #' @param log_trans If TRUE, axis will be log10 transformed
+#'
+#' @examples
+#' # Plot the number of indels for each chain
+#' plot_vdj(
+#'   vdj_so,
+#'   data_cols = c("n_insertion", "n_deletion")
+#' )
+#'
+#' # Create boxplots
+#' plot_vdj(
+#'   vdj_so,
+#'   data_cols = c("n_insertion", "n_deletion"),
+#'   type = "boxplot"
+#' )
+#'
+#' # Pass additional arguments to ggplot2
+#' plot_vdj(
+#'   vdj_sce,
+#'   data_cols = "reads",
+#'   color = "red",
+#'   bins = 25
+#' )
+#'
+#' # Pass additional arguments to ggplot2
+#' plot_vdj(
+#'   vdj_sce,
+#'   data_cols = "umis",
+#'   color = "red",
+#'   bins = 25
+#' )
+#'
+#' # Compare cell clusters
+#' plot_vdj(
+#'   vdj_sce,
+#'   data_cols = "cdr3_length",
+#'   cluster_col = "orig.ident",
+#'   type = "violin"
+#' )
+#'
+#' # log10 transform the axis
+#' plot_vdj(
+#'   vdj_so,
+#'   data_cols = "reads",
+#'   cluster_col = "orig.ident",
+#'   log_trans = TRUE
+#' )
+#'
+#' # Express y-axis units as percent of total values
+#' plot_vdj(
+#'   vdj_so,
+#'   data_cols = "n_deletion",
+#'   cluster_col = "orig.ident",
+#'   yaxis = "percent"
+#' )
+#'
+#' # Only plot values for heavy chains
+#' plot_vdj(
+#'   vdj_so,
+#'   data_cols = "umis",
+#'   chain = "IGH"
+#' )
+#'
+#' # Plot the median number of deletions for each cell
+#' plot_vdj(
+#'   vdj_sce,
+#'   data_cols = "n_deletion",
+#'   per_cell = TRUE,
+#'   summary_fn = stats::median
+#' )
+#'
+#' # Set colors for cell clusters
+#' plot_vdj(
+#'   vdj_so,
+#'   data_cols = "cdr3_length",
+#'   cluster_col = "orig.ident",
+#'   plot_colors = c(avid_1 = "red", avid_2 = "purple")
+#' )
+#'
+#' # Set order cell clusters are plotted
+#' plot_vdj(
+#'   vdj_so,
+#'   data_cols = "cdr3_length",
+#'   cluster_col = "orig.ident",
+#'   plot_lvls = c("avid_2", "avid_1"),
+#'   type = "boxplot"
+#' )
+#'
 #' @export
 plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
                      type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, alpha = 0.5,

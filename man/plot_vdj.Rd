@@ -122,3 +122,90 @@ ggplot object
 \description{
 Compare V(D)J data for cell clusters
 }
+\examples{
+# Plot the number of indels for each chain
+plot_vdj(
+  vdj_so,
+  data_cols = c("n_insertion", "n_deletion")
+)
+
+# Create boxplots
+plot_vdj(
+  vdj_so,
+  data_cols = c("n_insertion", "n_deletion"),
+  type = "boxplot"
+)
+
+# Pass additional arguments to ggplot2
+plot_vdj(
+  vdj_sce,
+  data_cols = "reads",
+  color = "red",
+  bins = 25
+)
+
+# Pass additional arguments to ggplot2
+plot_vdj(
+  vdj_sce,
+  data_cols = "umis",
+  color = "red",
+  bins = 25
+)
+
+# Compare cell clusters
+plot_vdj(
+  vdj_sce,
+  data_cols = "cdr3_length",
+  cluster_col = "orig.ident",
+  type = "violin"
+)
+
+# log10 transform the axis
+plot_vdj(
+  vdj_so,
+  data_cols = "reads",
+  cluster_col = "orig.ident",
+  log_trans = TRUE
+)
+
+# Express y-axis units as percent of total values
+plot_vdj(
+  vdj_so,
+  data_cols = "n_deletion",
+  cluster_col = "orig.ident",
+  yaxis = "percent"
+)
+
+# Only plot values for heavy chains
+plot_vdj(
+  vdj_so,
+  data_cols = "umis",
+  chain = "IGH"
+)
+
+# Plot the median number of deletions for each cell
+plot_vdj(
+  vdj_sce,
+  data_cols = "n_deletion",
+  per_cell = TRUE,
+  summary_fn = stats::median
+)
+
+# Set colors for cell clusters
+plot_vdj(
+  vdj_so,
+  data_cols = "cdr3_length",
+  cluster_col = "orig.ident",
+  plot_colors = c(avid_1 = "red", avid_2 = "purple")
+)
+
+# Set order cell clusters are plotted
+plot_vdj(
+  vdj_so,
+  data_cols = "cdr3_length",
+  cluster_col = "orig.ident",
+  plot_lvls = c("avid_2", "avid_1"),
+  type = "boxplot"
+)
+
+}

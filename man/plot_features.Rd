@@ -4,9 +4,9 @@
 \alias{plot_features}
 \alias{plot_features.default}
 \alias{plot_features.Seurat}
-\alias{plot_vdj_umap}
-\alias{plot_vdj_umap.default}
-\alias{plot_vdj_umap.Seurat}
+\alias{plot_vdj_feature}
+\alias{plot_vdj_feature.default}
+\alias{plot_vdj_feature.Seurat}
 \title{Create 2D feature plot}
 \usage{
 plot_features(input, ...)
@@ -38,9 +38,9 @@ plot_features(input, ...)
   ...
 )
 
-plot_vdj_umap(input, ...)
+plot_vdj_feature(input, ...)
 
-\method{plot_vdj_umap}{default}(
+\method{plot_vdj_feature}{default}(
   input,
   data_col,
   x = "UMAP_1",
@@ -56,7 +56,7 @@ plot_vdj_umap(input, ...)
   ...
 )
 
-\method{plot_vdj_umap}{Seurat}(
+\method{plot_vdj_feature}{Seurat}(
   input,
   data_col,
   x = "UMAP_1",
@@ -122,7 +122,7 @@ This can be used to create dimensional reduction plots
 (e.g. UMAP, tSNE, PCA) or to compare different cell attributes
 (e.g. CD4 vs CD8 expression).
 
-plot_vdj_umap() allows per-chain V(D)J data to be summarized
+plot_vdj_feature() allows per-chain V(D)J data to be summarized
 and plotted for each cell.
 }
 \examples{
@@ -141,7 +141,7 @@ plot_features(
 )
 
 # Plot average CDR3 length for each cell for light chains
-plot_vdj_umap(
+plot_vdj_feature(
   vdj_so,
   data_col = "cdr3_length",
   summary_fn = mean,
@@ -149,7 +149,7 @@ plot_vdj_umap(
 )
 
 # Plot median number of insertions for each cell
-plot_vdj_umap(
+plot_vdj_feature(
   vdj_so,
   data_col = "n_insertion",
   summary_fn = stats::median
