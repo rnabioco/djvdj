@@ -26,7 +26,8 @@ plot_abundance(
 data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
-grouping cells when calculating clonotype abundance}
+grouping cells when calculating clonotype abundance. Clonotypes will be
+plotted separately for each cluster.}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating clonotype abundance}
@@ -46,16 +47,18 @@ plot.}
 \item{n_clonotypes}{Number of clonotypes to plot. If type is set to 'line',
 this will specify the number of clonotypes to label.}
 
-\item{color_col}{meta.data column to use for coloring bars}
+\item{color_col}{meta.data column to use for coloring clonotypes.}
 
-\item{label_aes}{Named list providing additional label aesthetics (color,
-size, etc.)}
+\item{label_aes}{Named list providing additional aesthetics (color, size,
+etc.) for clonotype labels when creating line graph}
 
-\item{facet_rows}{The number of facet rows. Use this argument if type is set
-to 'bar'}
+\item{facet_rows}{The number of facet rows, use this when separate bar
+graphs are created for each cell cluster}
 
-\item{facet_scales}{If type is 'bar', this argument passes a scales
-specification to facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'}
+\item{facet_scales}{This passes a scales specification to
+ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
+will cause plot facets to share the same scales. Use this when separate bar
+graphs are created for each cell cluster.}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
@@ -65,4 +68,64 @@ ggplot object
 }
 \description{
 Plot clonotype abundance
+}
+\examples{
+# Plot clonotype abundance using all cells
+plot_abundance(
+  vdj_so,
+  clonotype_col = "clonotype_id"
+)
+
+# Plot clonotype abundance separately for each cell cluster
+plot_abundance(
+  vdj_so,
+  cluster_col = "orig.ident"
+)
+
+# Create line graph
+plot_abundance(
+  vdj_so,
+  cluster_col = "orig.ident",
+  type = "line"
+)
+
+# Plot the frequency of each clonotype instead of percentage
+plot_abundance(
+  vdj_so,
+  cluster_col = "orig.ident",
+  yaxis = "frequency"
+)
+
+# Specify colors to use for each cell cluster
+plot_abundance(
+  vdj_so,
+  cluster_col = "orig.ident",
+  plot_colors = c(avid_1 = "blue", avid_2 = "red")
+)
+
+# Specify order to use for plotting cell clusters
+plot_abundance(
+  vdj_so,
+  cluster_col = "orig.ident",
+  plot_lvls = c("avid_2", "avid_1")
+)
+
+# Specify meta.data column containing labels to use for each clonotype
+plot_abundance(
+  vdj_so,
+  label_col = "cdr3"
+)
+
+# Specify the number of top clonotypes to plot
+plot_abundance(
+  vdj_so,
+  n_clonotypes = 5
+)
+
+# Color bars based on meta.data column
+plot_abundance(
+  vdj_so,
+  color_col = "orig.ident"
+)
+
 }

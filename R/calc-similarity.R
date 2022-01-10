@@ -184,6 +184,36 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
 #' linetype, etc.
 #' @return ggplot object
 #' @importFrom abdiv jaccard
+#'
+#' @examples
+#' # Plot repertoire overlap
+#' plot_similarity(
+#'   vdj_so,
+#'   cluster_col = "orig.ident"
+#' )
+#'
+#' # Specify method to use for calculating repertoire overlap
+#' plot_similarity(
+#'   vdj_so,
+#'   cluster_col = "orig.ident",
+#'   method = abdiv::jaccard
+#' )
+#'
+#' # Specify colors to use for heatmap
+#' plot_similarity(
+#'   vdj_so,
+#'   cluster_col = "orig.ident",
+#'   plot_color = c("white", "red")
+#' )
+#'
+#' # Pass additional aesthetic parameters to ggplot2
+#' plot_similarity(
+#'   vdj_so,
+#'   cluster_col = "orig.ident",
+#'   color = "black",
+#'   size = 2
+#' )
+#'
 #' @export
 plot_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonotype_col = "clonotype_id",
                             plot_colors = NULL, ...) {

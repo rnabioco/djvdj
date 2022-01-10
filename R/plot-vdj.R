@@ -167,16 +167,19 @@ plot_vdj_feature <- function(input, ...) {
 #' and plotted for each cell.
 #' @param data_col meta.data column containing V(D)J data to use for coloring
 #' cells
-#' @param summary_fn Function to use for summarizing values for each cell, possible
-#' values can be either a function, e.g. mean, or a purrr-style lambda,
-#' e.g. ~ mean(.x, na.rm = TRUE). If NULL, the mean will be calculated for
-#' numeric values, non-numeric columns will be combined into a single string.
+#' @param summary_fn Function to use for summarizing values for each cell,
+#' possible values can be either a function, e.g. mean, or a purrr-style
+#' lambda, e.g. ~ mean(.x, na.rm = TRUE) where ".x" refers to the column. If
+#' NULL, the mean will be calculated for numeric values, non-numeric columns
+#' will be combined into a single string.
 #' @param chain Chain(s) to use for filtering data before plotting. If NULL
 #' data will not be filtered based on chain.
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
+#' @seealso [summarize_vdj()] for more examples on how per-chain data can be
+#' summarized for each cell
 #'
 #' @examples
 #' # Plot average CDR3 length for each cell for light chains
@@ -189,9 +192,19 @@ plot_vdj_feature <- function(input, ...) {
 #'
 #' # Plot median number of insertions for each cell
 #' plot_vdj_feature(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col = "n_insertion",
 #'   summary_fn = stats::median
+#' )
+#'
+#' # Using a lambda function to summarize values
+#' # use ".x" to refer to values in the column
+#' # this calculates the mean number of deletions for each cell and
+#' # log10-transforms the result
+#' plot_vdj_feature(
+#'   vdj_so,
+#'   data_col = "n_deletion",
+#'   summary_fn = ~ log10(mean(.x) + 1)
 #' )
 #'
 #' @export
@@ -301,11 +314,17 @@ NULL
 #' @rdname plot_vdj
 #' @param per_cell Should values be plotted per cell, i.e. each data point
 #' would represent one cell. If TRUE, values will be summarized for each cell
-#' using summary_fn. If FALSE, values will be plotted per chain.
+#' using summary_fn. If FALSE, values will be plotted for each chain.
 #' @param summary_fn Function to use for summarizing values for each cell, e.g.
 #' specifying stats::median will plot the median value per cell
+#' @param summary_fn Function to use for summarizing values when per_cell is
+#' TRUE, possible values can be either a function, e.g. mean, or a purrr-style
+#' lambda, e.g. ~ mean(.x, na.rm = TRUE) where ".x" refers to the column. If
+#' NULL, the mean will be calculated.
 #' @param alpha Color transparency
 #' @param log_trans If TRUE, axis will be log10 transformed
+#' @seealso [summarize_vdj()] for more examples on how per-chain data can be
+#' summarized for each cell
 #'
 #' @examples
 #' # Plot the number of indels for each chain
@@ -325,14 +344,6 @@ NULL
 #' plot_vdj(
 #'   vdj_sce,
 #'   data_cols = "reads",
-#'   color = "red",
-#'   bins = 25
-#' )
-#'
-#' # Pass additional arguments to ggplot2
-#' plot_vdj(
-#'   vdj_sce,
-#'   data_cols = "umis",
 #'   color = "red",
 #'   bins = 25
 #' )
@@ -384,7 +395,7 @@ NULL
 #'   plot_colors = c(avid_1 = "red", avid_2 = "purple")
 #' )
 #'
-#' # Set order cell clusters are plotted
+#' # Set order to use for plotting cell clusters
 #' plot_vdj(
 #'   vdj_so,
 #'   data_cols = "cdr3_length",

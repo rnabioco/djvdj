@@ -144,7 +144,8 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param cluster_col meta.data column containing cluster IDs to use for
-#' grouping cells when calculating clonotype abundance
+#' grouping cells when calculating clonotype abundance. Clonotypes will be
+#' plotted separately for each cluster.
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating clonotype abundance
 #' @param type Type of plot to create, can be 'bar' or 'line'
@@ -156,17 +157,79 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #' plot.
 #' @param n_clonotypes Number of clonotypes to plot. If type is set to 'line',
 #' this will specify the number of clonotypes to label.
-#' @param color_col meta.data column to use for coloring bars
-#' @param label_aes Named list providing additional label aesthetics (color,
-#' size, etc.)
-#' @param facet_rows The number of facet rows. Use this argument if type is set
-#' to 'bar'
-#' @param facet_scales If type is 'bar', this argument passes a scales
-#' specification to facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'
+#' @param color_col meta.data column to use for coloring clonotypes.
+#' @param label_aes Named list providing additional aesthetics (color, size,
+#' etc.) for clonotype labels when creating line graph
+#' @param facet_rows The number of facet rows, use this when separate bar
+#' graphs are created for each cell cluster
+#' @param facet_scales This passes a scales specification to
+#' ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
+#' will cause plot facets to share the same scales. Use this when separate bar
+#' graphs are created for each cell cluster.
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
 #' @importFrom ggrepel geom_text_repel
+#'
+#' @examples
+#' # Plot clonotype abundance using all cells
+#' plot_abundance(
+#'   vdj_so,
+#'   clonotype_col = "clonotype_id"
+#' )
+#'
+#' # Plot clonotype abundance separately for each cell cluster
+#' plot_abundance(
+#'   vdj_so,
+#'   cluster_col = "orig.ident"
+#' )
+#'
+#' # Create line graph
+#' plot_abundance(
+#'   vdj_so,
+#'   cluster_col = "orig.ident",
+#'   type = "line"
+#' )
+#'
+#' # Plot the frequency of each clonotype instead of percentage
+#' plot_abundance(
+#'   vdj_so,
+#'   cluster_col = "orig.ident",
+#'   yaxis = "frequency"
+#' )
+#'
+#' # Specify colors to use for each cell cluster
+#' plot_abundance(
+#'   vdj_so,
+#'   cluster_col = "orig.ident",
+#'   plot_colors = c(avid_1 = "blue", avid_2 = "red")
+#' )
+#'
+#' # Specify order to use for plotting cell clusters
+#' plot_abundance(
+#'   vdj_so,
+#'   cluster_col = "orig.ident",
+#'   plot_lvls = c("avid_2", "avid_1")
+#' )
+#'
+#' # Specify meta.data column containing labels to use for each clonotype
+#' plot_abundance(
+#'   vdj_so,
+#'   label_col = "cdr3"
+#' )
+#'
+#' # Specify the number of top clonotypes to plot
+#' plot_abundance(
+#'   vdj_so,
+#'   n_clonotypes = 5
+#' )
+#'
+#' # Color bars based on meta.data column
+#' plot_abundance(
+#'   vdj_so,
+#'   color_col = "orig.ident"
+#' )
+#'
 #' @export
 plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id", type = "bar",
                            yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, label_col = clonotype_col,

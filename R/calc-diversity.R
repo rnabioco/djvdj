@@ -153,6 +153,51 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #' linetype, etc.
 #' @return ggplot object
 #' @importFrom abdiv simpson
+#'
+#' @examples
+#' # Plot diversity using all cells
+#' plot_diversity(vdj_so)
+#'
+#' # Specify method to use for calculating repertoire diversity
+#' plot_diversity(
+#'   vdj_so,
+#'   method = abdiv::shannon
+#' )
+#'
+#' # Plot diversity separately for each cell cluster
+#' plot_diversity(
+#'   vdj_so,
+#'   cluster_col = "orig.ident"
+#' )
+#'
+#' # Plot multiple diversity metrics
+#' plot_diversity(
+#'   vdj_so,
+#'   cluster_col = "orig.ident",
+#'   method = list(simpson = abdiv::simpson, shannon = abdiv::shannon)
+#' )
+#'
+#' # Specify colors to use for each cell cluster
+#' plot_diversity(
+#'   vdj_so,
+#'   cluster_col = "orig.ident",
+#'   plot_colors = c(avid_2 = "green", avid_1 = "purple")
+#' )
+#'
+#' # Specify order to use for plotting cell clusters
+#' plot_diversity(
+#'   vdj_so,
+#'   cluster_col = "orig.ident",
+#'   plot_lvls = c("avid_2", "avid_1")
+#' )
+#'
+#' # Specify how to organize facets when plotting multiple metrics
+#' plot_diversity(
+#'   vdj_so,
+#'   method = list(simpson = abdiv::simpson, shannon = abdiv::shannon)
+#'   facet_rows = 2
+#' )
+#'
 #' @export
 plot_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson, clonotype_col = "clonotype_id",
                            plot_colors = NULL, plot_lvls = NULL, facet_rows = 1, ...) {

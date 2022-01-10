@@ -36,3 +36,33 @@ ggplot object
 \description{
 Plot repertoire overlap
 }
+\examples{
+# Plot repertoire overlap
+plot_similarity(
+  vdj_so,
+  cluster_col = "orig.ident"
+)
+
+# Specify method to use for calculating repertoire overlap
+plot_similarity(
+  vdj_so,
+  cluster_col = "orig.ident",
+  method = abdiv::jaccard
+)
+
+# Specify colors to use for heatmap
+plot_similarity(
+  vdj_so,
+  cluster_col = "orig.ident",
+  plot_color = c("white", "red")
+)
+
+# Pass additional aesthetic parameters to ggplot2
+plot_similarity(
+  vdj_so,
+  cluster_col = "orig.ident",
+  color = "black",
+  size = 2
+)
+
+}

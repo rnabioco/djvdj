@@ -101,10 +101,11 @@ linetype, etc.}
 \item{data_col}{meta.data column containing V(D)J data to use for coloring
 cells}
 
-\item{summary_fn}{Function to use for summarizing values for each cell, possible
-values can be either a function, e.g. mean, or a purrr-style lambda,
-e.g. ~ mean(.x, na.rm = TRUE). If NULL, the mean will be calculated for
-numeric values, non-numeric columns will be combined into a single string.}
+\item{summary_fn}{Function to use for summarizing values for each cell,
+possible values can be either a function, e.g. mean, or a purrr-style
+lambda, e.g. ~ mean(.x, na.rm = TRUE) where ".x" refers to the column. If
+NULL, the mean will be calculated for numeric values, non-numeric columns
+will be combined into a single string.}
 
 \item{chain}{Chain(s) to use for filtering data before plotting. If NULL
 data will not be filtered based on chain.}
@@ -150,9 +151,23 @@ plot_vdj_feature(
 
 # Plot median number of insertions for each cell
 plot_vdj_feature(
-  vdj_so,
+  vdj_sce,
   data_col = "n_insertion",
   summary_fn = stats::median
 )
 
+# Using a lambda function to summarize values
+# use ".x" to refer to values in the column
+# this calculates the mean number of deletions for each cell and
+# log10-transforms the result
+plot_vdj_feature(
+  vdj_so,
+  data_col = "n_deletion",
+  summary_fn = ~ log10(mean(.x) + 1)
+)
+
+}
+\seealso{
+\code{\link[=summarize_vdj]{summarize_vdj()}} for more examples on how per-chain data can be
+summarized for each cell
 }

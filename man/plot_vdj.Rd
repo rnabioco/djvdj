@@ -79,10 +79,12 @@ plot}
 
 \item{per_cell}{Should values be plotted per cell, i.e. each data point
 would represent one cell. If TRUE, values will be summarized for each cell
-using summary_fn. If FALSE, values will be plotted per chain.}
+using summary_fn. If FALSE, values will be plotted for each chain.}
 
-\item{summary_fn}{Function to use for summarizing values for each cell, e.g.
-specifying stats::median will plot the median value per cell}
+\item{summary_fn}{Function to use for summarizing values when per_cell is
+TRUE, possible values can be either a function, e.g. mean, or a purrr-style
+lambda, e.g. ~ mean(.x, na.rm = TRUE) where ".x" refers to the column. If
+NULL, the mean will be calculated.}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells for plotting}
@@ -144,14 +146,6 @@ plot_vdj(
   bins = 25
 )
 
-# Pass additional arguments to ggplot2
-plot_vdj(
-  vdj_sce,
-  data_cols = "umis",
-  color = "red",
-  bins = 25
-)
-
 # Compare cell clusters
 plot_vdj(
   vdj_sce,
@@ -199,7 +193,7 @@ plot_vdj(
   plot_colors = c(avid_1 = "red", avid_2 = "purple")
 )
 
-# Set order cell clusters are plotted
+# Set order to use for plotting cell clusters
 plot_vdj(
   vdj_so,
   data_cols = "cdr3_length",
@@ -208,4 +202,8 @@ plot_vdj(
   type = "boxplot"
 )
 
+}
+\seealso{
+\code{\link[=summarize_vdj]{summarize_vdj()}} for more examples on how per-chain data can be
+summarized for each cell
 }

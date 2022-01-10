@@ -3,8 +3,9 @@ library(dplyr)
 library(tidyr)
 library(purrr)
 library(tibble)
-library(djvdj)
+library(stringr)
 library(SingleCellExperiment)
+library(djvdj)
 
 test_check("djvdj")
 
