@@ -1,9 +1,10 @@
-#' Calculate gene usage
+#' Calculate V(D)J gene segment usage
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
-#' @param gene_cols meta.data column containing genes identified for each
-#' clonotype
+#' @param gene_cols meta.data column containing V(D)J genes identified for each
+#' clonotype. If multiple columns are provided, paired usage of genes will be
+#' calculated.
 #' @param cluster_col meta.data column containing cell clusters to use when
 #' calculating gene usage
 #' @param chain Chain to use for calculating gene usage. Set to NULL to include
@@ -11,9 +12,47 @@
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame containing gene usage summary
+#'
+#' @examples
+#' # Calculate V(D)J segment usage for all cells
+#' calc_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = "v_gene"
+#' )
+#'
+#' # Calculate gene usage separately for cell clusters
+#' calc_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = "v_gene",
+#'   cluster_col = "orig.ident"
+#' )
+#'
+#' # Calculate gene usage for a specific chain
+#' calc_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = "v_gene",
+#'   chain = c("IGH", "IGK")
+#' )
+#'
+#' # Calculate paired usage of V(D)J segments
+#' calc_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = c("v_gene", "j_gene"),
+#' )
+#'
+#' # Using calc_vdj_usage outside of Seurat
+#' # SingleCellExperiment objects or data.frames containing V(D)J data are also
+#' # compatible. If a data.frame is provided, cell barcodes should be stored as
+#' # row names.
+#' calc_vdj_usage(vdj_sce, gene_cols = "v_gene")
+#'
+#' df <- vdj_so@meta.data
+#'
+#' calc_vdj_usage(df, gene_cols = "v_gene")
+#'
 #' @export
-calc_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
-                       chain_col = "chains", sep = ";") {
+calc_vdj_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
+                           chain_col = "chains", sep = ";") {
 
   # Format input data
   sep_cols <- gene_cols
@@ -112,10 +151,12 @@ calc_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' calculating gene usage
 #' @param chain Chain to use for calculating gene usage, set to NULL to include
 #' all chains
-#' @param type Type of plot to create, can be either 'heatmap' or 'bar', a
-#' bar plot can only be created when a single gene_col is provided
-#' @param plot_colors Character vector containing colors for plotting
-#' @param plot_genes Character vector containing genes to plot
+#' @param type Type of plot to create, can be either 'heatmap' or 'bar'. If
+#' multiple columns are provided to gene_cols, a heatmap is generated.
+#' @param plot_colors Character vector containing colors to use for plot. If a
+#' bar graph is created this will specify how to color cell clusters. For a
+#' heatmap, these colors will be used to generate the color gradient.
+#' @param vdj_genes V(D)J genes to plot, if NULL the top genes will be shown
 #' @param n_genes Number of top genes to plot based on usage. If cluster_col is
 #' provided, top genes will be identified for each cluster.
 #' @param plot_lvls Levels to use for ordering clusters
@@ -125,10 +166,99 @@ calc_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
+#'
+#' @examples
+#' # Plot V(D)J segment usage for all cells
+#' plot_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = "v_gene"
+#' )
+#'
+#' # Plot gene usage separately for cell clusters
+#' plot_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = "v_gene",
+#'   cluster_col = "orig.ident"
+#' )
+#'
+#' # Plot gene usage for a specific chain
+#' plot_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = "v_gene",
+#'   chain = c("IGH", "IGK")
+#' )
+#'
+#' # Plot gene usage for a specific chain
+#' plot_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = "v_gene",
+#'   chain = c("IGH", "IGK")
+#' )
+#'
+#' # Create a heatmap
+#' plot_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = "v_gene",
+#'   type = "heatmap"
+#' )
+#'
+#' # Plot paired usage of V(D)J segments
+#' plot_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = c("v_gene", "j_gene"),
+#' )
+#'
+#' # Specify colors to use for each cell cluster
+#' plot_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = "v_gene",
+#'   cluster_col = "orig.ident",
+#'   plot_colors = c(avid_2 = "blue", avid_1 = "green")
+#' )
+#'
+#' # Specify order to use for plotting cell clusters
+#' plot_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = "v_gene",
+#'   cluster_col = "orig.ident",
+#'   plot_lvls = c("avid_2", "avid_1")
+#' )
+#'
+#' # Specify certain V(D)J genes to include in plot
+#' plot_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = "v_gene",
+#'   vdj_genes = c("IGKV5-43", "IGLV1", "IGHV1-64", "IGHV1-11")
+#' )
+#'
+#' # Specify the number of top V(D)J genes to include in plot
+#' plot_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = "v_gene",
+#'   n_genes = 10
+#' )
+#'
+#' # Plot the frequency of each V(D)J segment instead of percent
+#' plot_vdj_usage(
+#'   vdj_so,
+#'   gene_cols = "v_gene",
+#'   yaxis = "frequency"
+#' )
+#'
+#' # Using plot_vdj_usage outside of Seurat
+#' # SingleCellExperiment objects or data.frames containing V(D)J data are also
+#' # compatible. If a data.frame is provided, cell barcodes should be stored as
+#' # row names.
+#' plot_vdj_usage(vdj_sce, gene_cols = "v_gene")
+#'
+#' df <- vdj_so@meta.data
+#'
+#' plot_vdj_usage(df, gene_cols = "v_gene")
+#'
 #' @export
-plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type = "bar",
-                       plot_colors = NULL, plot_genes = NULL, n_genes = 50, plot_lvls = NULL,
-                       yaxis = "percent", chain_col = "chains", sep = ";", ...) {
+plot_vdj_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type = "bar",
+                           plot_colors = NULL, vdj_genes = NULL, n_genes = 50, plot_lvls = NULL,
+                           yaxis = "percent", chain_col = "chains", sep = ";", ...) {
 
   # Check inputs
   if (!type %in% c("heatmap", "bar")) {
@@ -151,7 +281,7 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
   }
 
   # Calculate gene usage
-  plt_dat <- calc_usage(
+  plt_dat <- calc_vdj_usage(
     input       = input,
     gene_cols   = gene_cols,
     cluster_col = cluster_col,
@@ -165,8 +295,8 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
     ~ .x != "None"
   ))
 
-  # If plot_genes provided check plt_dat
-  top_genes <- unique(plot_genes)
+  # If vdj_genes provided check plt_dat
+  top_genes <- unique(vdj_genes)
 
   if (!is.null(top_genes)) {
     absent <- unlist(plt_dat[, gene_cols], use.names = FALSE)
@@ -181,7 +311,7 @@ plot_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type 
       warning("Some genes not found: ", absent)
     }
 
-    # If plot_genes not provided, identify top n_genes for each cluster based on
+    # If vdj_genes not provided, identify top n_genes for each cluster based on
     # usage
   } else {
     top_genes <- plt_dat
