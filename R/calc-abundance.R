@@ -212,29 +212,16 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #'   plot_lvls = c("avid_2", "avid_1")
 #' )
 #'
-#' # Specify meta.data column containing labels to use for each clonotype
-#' plot_abundance(
-#'   vdj_so,
-#'   label_col = "cdr3"
-#' )
-#'
 #' # Specify the number of top clonotypes to plot
 #' plot_abundance(
 #'   vdj_so,
 #'   n_clonotypes = 5
 #' )
 #'
-#' # Color bars based on meta.data column
-#' plot_abundance(
-#'   vdj_so,
-#'   color_col = "orig.ident"
-#' )
-#'
 #' @export
 plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id", type = "bar",
-                           yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, label_col = clonotype_col,
-                           n_clonotypes = 10, color_col = cluster_col, label_aes = list(), facet_rows = 1,
-                           facet_scales = "free_x", ...) {
+                           yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, n_clonotypes = 10,
+                           label_aes = list(), facet_rows = 1, facet_scales = "free_x", ...) {
 
   if (!yaxis %in% c("frequency", "percent")) {
     stop("yaxis must be either 'frequency' or 'percent'.")
@@ -266,27 +253,9 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   plt_dat <- tibble::as_tibble(plt_dat, rownames = ".cell_id")
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
 
-  abund_cols <- c(
-    cluster_col, clonotype_col,
-    label_col,   dat_col,
-    color_col
-  )
+  abund_cols <- c(cluster_col, clonotype_col, dat_col)
 
   plt_dat <- dplyr::distinct(plt_dat, !!!syms(abund_cols))
-
-  # Collapse values in label_col so there is a single label for each value in
-  # clonotype_col
-  if (label_col != clonotype_col) {
-    plt_dat <- dplyr::group_by(plt_dat, !!!syms(c(clonotype_col, cluster_col)))
-
-    plt_dat <- dplyr::mutate(
-      plt_dat,
-      !!sym(label_col) := paste0(!!sym(label_col), collapse = ";")
-    )
-
-    plt_dat <- dplyr::distinct(plt_dat)
-    plt_dat <- dplyr::ungroup(plt_dat)
-  }
 
   # Add and format label column for plotting
   len <- 25
@@ -296,8 +265,8 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   plt_dat <- dplyr::mutate(
     plt_dat,
     .x   = !!sym(clonotype_col),
-    .len = length(unlist(strsplit(!!sym(label_col), ""))),
-    .lab = strtrim(!!sym(label_col), len),
+    .len = nchar(.x),
+    .lab = strtrim(.x, len),
     .lab = paste0(.data$.lab, ifelse(.data$.len > len, "...", ""))
   )
 
@@ -349,7 +318,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
       x     = ".x",
       y     = dat_col,
       y_ttl = yaxis,
-      .fill = color_col,
+      .fill = cluster_col,
       clrs  = plot_colors,
       ang   = 45,
       hjst  = 1,
@@ -359,7 +328,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
     res <- res +
       ggplot2::scale_x_discrete(labels = plt_labs)
 
-    if (!is.null(cluster_col)){
+    if (!is.null(cluster_col)) {
       res <- res +
         ggplot2::facet_wrap(
           stats::as.formula(paste0("~ ", cluster_col)),
@@ -372,18 +341,21 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   }
 
   # Plot abundance vs rank
-  res <- ggplot2::ggplot(plt_dat, ggplot2::aes(rank, !!sym(dat_col))) +
+  plt_aes <- ggplot2::aes(
+    x = rank,
+    y = !!sym(dat_col)
+  )
+
+  clr_aes <- plt_aes
+
+  if (!is.null(cluster_col)) {
+    clr_aes$colour <- sym(cluster_col)
+  }
+
+  res <- ggplot2::ggplot(plt_dat, plt_aes) +
+    ggplot2::geom_line(clr_aes, ...) +
     ggplot2::labs(y = yaxis) +
     djvdj_theme()
-
-  if (is.null(color_col)) {
-    res <- res +
-      ggplot2::geom_line(...)
-
-  } else {
-    res <- res +
-      ggplot2::geom_line(ggplot2::aes(color = !!sym(color_col)), ...)
-  }
 
   if (!is.null(plot_colors)) {
     res <- res +

@@ -174,8 +174,6 @@ arg_lst <- list(
   clonotype_col = "cdr3_nt",
   cluster_col   = list(NULL, "seurat_clusters"),
   type          = "line",
-  label_col     = c("cdr3", "orig.ident"),
-  color_col     = list(NULL, "seurat_clusters"),
   yaxis         = c("percent", "frequency"),
   plot_colors   = list(NULL, test_cols),
   plot_lvls     = list(NULL, test_lvls),
@@ -205,7 +203,6 @@ test_all_args(
 arg_lst <- list(
   input         = list(vdj_so, vdj_sce),
   clonotype_col = "cdr3_nt",
-  label_col     = "cdr3",
   yaxis         = "percent",
   type          = c("bar", "line")
 )
@@ -257,18 +254,6 @@ test_that("plot_abundance bad n_clonotypes", {
         type          = "bar",
         clonotype_col = "cdr3_nt",
         n_clonotypes  = 0
-      )
-  )
-})
-
-# Check plot_abundance bad label_col
-test_that("plot_abundance bad label_col", {
-  expect_error(
-    vdj_so %>%
-      plot_abundance(
-        type          = "bar",
-        clonotype_col = "cdr3_nt",
-        label_col     = NULL
       )
   )
 })
@@ -350,7 +335,7 @@ test_that("plot_similarity bad cluster col", {
   )
 })
 
-# Check all plot_usage arguments return ggplot
+# Check all plot_vdj_usage arguments return ggplot
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
   gene_cols   = list("v_gene", "j_gene", c("v_gene", "j_gene")),
@@ -363,22 +348,22 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_usage,
-  desc    = "plot_usage args",
+  .fn     = plot_vdj_usage,
+  desc    = "plot_vdj_usage args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check all plot_usage arguments return ggplot list
+# Check all plot_vdj_usage arguments return ggplot list
 arg_lst$cluster_col <- "seurat_clusters"
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_usage,
-  desc    = "plot_usage args",
+  .fn     = plot_vdj_usage,
+  desc    = "plot_vdj_usage args",
   chk     = expr(expect_type(.res, "list"))
 )
 
-# Check plot_usage plot_genes
+# Check plot_vdj_usage plot_genes
 test_genes <- vdj_so %>%
   fetch_vdj() %>%
   pull(v_gene) %>%
@@ -388,7 +373,7 @@ test_genes <- vdj_so %>%
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
   gene_cols   = list("v_gene", c("v_gene", "j_gene")),
-  plot_genes  = list(test_genes),
+  vdj_genes   = list(test_genes),
   type        = c("heatmap", "bar"),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls),
@@ -397,51 +382,51 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_usage,
-  desc    = "plot_usage args",
+  .fn     = plot_vdj_usage,
+  desc    = "plot_vdj_usage args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check plot_usage bad plot_genes
-test_that("plot_usage bad plot_genes", {
+# Check plot_vdj_usage bad plot_genes
+test_that("plot_vdj_usage bad plot_genes", {
   expect_error(
-    plot_usage(vdj_so, gene_cols = "v_gene", plot_genes = "BAD"),
+    plot_vdj_usage(vdj_so, gene_cols = "v_gene", vdj_genes = "BAD"),
     "None of the provided genes were found"
   )
 
   expect_warning(
-    plot_usage(vdj_so, gene_cols = "v_gene", plot_genes = c(test_genes, "BAD")),
+    plot_vdj_usage(vdj_so, gene_cols = "v_gene", vdj_genes = c(test_genes, "BAD")),
     "Some genes not found: "
   )
 })
 
-# Check plot_usage bad type
-test_that("plot_usage bad type", {
+# Check plot_vdj_usage bad type
+test_that("plot_vdj_usage bad type", {
   expect_error(
     vdj_so %>%
-      plot_usage(
+      plot_vdj_usage(
         gene_cols = "v_gene",
         type      = "BAD"
       )
   )
 })
 
-# Check plot_usage bad yaxis
-test_that("plot_usage bad type", {
+# Check plot_vdj_usage bad yaxis
+test_that("plot_vdj_usage bad type", {
   expect_error(
     vdj_so %>%
-      plot_usage(
+      plot_vdj_usage(
         gene_cols = "v_gene",
         yaxis     = "BAD"
       )
   )
 })
 
-# Check plot_usage bad gene_cols
-test_that("plot_usage bad gene_cols", {
+# Check plot_vdj_usage bad gene_cols
+test_that("plot_vdj_usage bad gene_cols", {
   expect_error(
     vdj_so %>%
-      plot_usage(gene_cols = c("v_gene", "d_gene", "j_gene"))
+      plot_vdj_usage(gene_cols = c("v_gene", "d_gene", "j_gene"))
   )
 })
 

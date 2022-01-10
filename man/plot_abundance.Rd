@@ -12,9 +12,7 @@ plot_abundance(
   yaxis = "percent",
   plot_colors = NULL,
   plot_lvls = NULL,
-  label_col = clonotype_col,
   n_clonotypes = 10,
-  color_col = cluster_col,
   label_aes = list(),
   facet_rows = 1,
   facet_scales = "free_x",
@@ -40,14 +38,8 @@ calculating clonotype abundance}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{label_col}{meta.data column to use for labeling clonotypes. This is
-useful if clonotype_col contains names that are too long to include on the
-plot.}
-
 \item{n_clonotypes}{Number of clonotypes to plot. If type is set to 'line',
 this will specify the number of clonotypes to label.}
-
-\item{color_col}{meta.data column to use for coloring clonotypes.}
 
 \item{label_aes}{Named list providing additional aesthetics (color, size,
 etc.) for clonotype labels when creating line graph}
@@ -62,6 +54,12 @@ graphs are created for each cell cluster.}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
+
+\item{label_col}{meta.data column to use for labeling clonotypes. This is
+useful if clonotype_col contains names that are too long to include on the
+plot.}
+
+\item{color_col}{meta.data column to use for coloring clonotypes.}
 }
 \value{
 ggplot object
@@ -110,22 +108,10 @@ plot_abundance(
   plot_lvls = c("avid_2", "avid_1")
 )
 
-# Specify meta.data column containing labels to use for each clonotype
-plot_abundance(
-  vdj_so,
-  label_col = "cdr3"
-)
-
 # Specify the number of top clonotypes to plot
 plot_abundance(
   vdj_so,
   n_clonotypes = 5
-)
-
-# Color bars based on meta.data column
-plot_abundance(
-  vdj_so,
-  color_col = "orig.ident"
 )
 
 }
