@@ -28,21 +28,27 @@ test_that("mutate_meta column overwrite", {
 # Check mutate_meta bad function
 test_that("mutate_meta bad fn", {
   expect_error(
-    tiny_so %>%
-      mutate_meta("BAD_FUN")
+    mutate_meta(tiny_so, "BAD_FUN"),
+    "fn must be either a function or a formula"
   )
 
   expect_error(
-    tiny_so %>%
-      mutate_meta(0)
+    mutate_meta(tiny_so, 0),
+    "fn must be either a function or a formula"
   )
 
   expect_error(
-    tiny_so %>%
-      mutate_meta(as.factor("BAD_FUN"))
+    mutate_meta(tiny_sce, as.factor("BAD_FUN")),
+    "fn must be either a function or a formula"
+  )
+
+  # Do not allow user to remove cells from meta.data
+  expect_error(
+    vdj_so %>%
+      mutate_meta(dplyr::filter, nCount_RNA == 1),
+    "meta.data must contain the same cells"
   )
 })
-
 # Check Seurat output
 test_that("mutate_vdj Seurat out", {
   res <- vdj_so %>%
@@ -52,6 +58,11 @@ test_that("mutate_vdj Seurat out", {
   expect_identical(colnames(res), colnames(vdj_so))  # cells in object
 
   expect_identical(select(res@meta.data, -NEW), vdj_so@meta.data)
+
+  res <- vdj_so %>%
+    mutate_vdj(NEW = stringr::str_c(chains, collapse = ";"))
+
+  expect_identical(vdj_so$chains, res$NEW)
 })
 
 # Check data.frame output
@@ -117,6 +128,46 @@ test_that("mutate_vdj bad command", {
         sep = ";"
       )
   )
+})
+
+# Check mutate_vdj calculations
+test_that("mutate_vdj calcs", {
+  res <- vdj_so@meta.data %>%
+    mutate_vdj(NEW_umis = mean(umis))
+
+  x <- vdj_so$umis %>%
+    strsplit(";") %>%
+    purrr::map_dbl(~ mean(as.numeric(.x))) %>%
+    unname()
+
+  expect_identical(x, res$NEW_umis)
+
+  res <- vdj_so@meta.data %>%
+    mutate_vdj(
+      NEW1 = ifelse(all(is.na(v_gene)), NA, paste0(v_gene, collapse = "_")),
+      NEW2 = stringr::str_c(v_gene, collapse = "_")
+    )
+
+  x <- vdj_so$v_gene %>%
+    strsplit(";") %>%
+    purrr::map_chr(~ ifelse(all(is.na(.x)), NA, paste0(.x, collapse = "_"))) %>%
+    unname()
+
+  expect_identical(x, res$NEW1)
+  expect_identical(x, res$NEW2)
+
+  # Chcek that function and formula inputs return same result
+  x <- vdj_so %>%
+    mutate_meta(
+      mutate,
+      NEW = nCount_RNA + nFeature_RNA
+    )
+
+  y <- vdj_so %>%
+    mutate_meta(~ mutate(.x, NEW = nCount_RNA + nFeature_RNA))
+
+  expect_identical(x, y)
+  expect_identical(x$NEW, x$nCount_RNA + x$nFeature_RNA)
 })
 
 # Check Seurat output
@@ -269,91 +320,22 @@ test_that("summarize_vdj bad column chain filtering", {
   expect_identical(res, vdj_so)
 })
 
-# Check .filter_chains
-test_that(".filter_chains", {
-  dat <- vdj_so %>%
-    fetch_vdj(unnest = FALSE)
-
-  res <- dat %>%
-    .filter_chains(
-      vdj_cols = c("umis", "reads"),
-      chain = NULL
-    )
-
-  expect_identical(res, dat)
-
-  expect_error(
-    res <- dat %>%
-      .filter_chains(
-        vdj_cols = c("umis", "nCount_RNA"),
-        chain = "IGK"
-      ),
-    "cannot be a mix of normal columns and list-cols"
-  )
-
-  dat <- vdj_so %>%
-    fetch_vdj(unnest = TRUE)
-
-  res <- dat %>%
-    .filter_chains(
-      vdj_cols = c("umis", "reads"),
-      chain = "IGK"
-    )
-
-  expect_identical(res, filter(dat, chains %in% "IGK"))
-
-  res <- dat %>%
-    .filter_chains(
-      vdj_cols = "chains",
-      chain    = "IGK"
-    )
-
-  new_chains <- res$chains %>%
-    reduce(c) %>%
-    unique() %>%
-    na.omit() %>%
-    as.character()
-
-  expect_identical(new_chains, "IGK")
-
-  res <- dat %>%
-    .filter_chains(
-      vdj_cols = "chains",
-      chain    = c("IGH", "IGL")
-    )
-
-  new_chains <- res$chains %>%
-    reduce(c) %>%
-    unique() %>%
-    na.omit() %>%
-    as.character() %>%
-    sort()
-
-  expect_identical(new_chains, c("IGH", "IGL"))
-})
-
-# Check .check_list_cols
-test_that(".check_list_cols", {
+# Check .prepare_meta
+test_that(".prepare_meta", {
   res <- vdj_so %>%
     fetch_vdj(unnest = FALSE)
 
   expect_error(
-    .check_list_cols(res),
-    "columns cannot be list-cols"
+    .prepare_meta(vdj_so, res, ".cell_id"),
+    "meta.data cannot include list-cols"
+  )
+
+  res <- vdj_so@meta.data %>%
+    filter(orig.ident == "avid_1")
+
+  expect_error(
+    .prepare_meta(vdj_so, res, ".cell_id"),
+    "meta.data must contain the same cells"
   )
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

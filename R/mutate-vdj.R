@@ -1,7 +1,102 @@
+#' Fetch V(D)J data
+#'
+#' Fetch per-chain V(D)J data from object. Within the object meta.data, each
+#' row represents a single cell and can include information for multiple
+#' chains. This function returns an unnested data.frame where each row
+#' represents a single chain. This is useful for plotting per-chain metrics
+#' such as CDR3 length or the number of insertions/deletions.
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param vdj_cols meta.data columns containing per-chain V(D)J data to unnest.
+#' If NULL, V(D)J data are automatically selected by identifying columns that
+#' have NAs in the same rows as clonotype_col.
+#' @param clonotype_col meta.data column containing clonotype IDs. This column
+#' is used to determine which columns have V(D)J data. If both clonotype_col
+#' and vdj_cols are NULL, all columns are included.
+#' @param filter_cells Remove cells that do not have V(D)J data, clonotype_col
+#' must be provided to determine which cells to filter.
+#' @param unnest If FALSE, a nested data.frame is returned where each row
+#' represents a cell and V(D)J data is stored as list-cols. If TRUE, columns
+#' are unnested so each row represents a single chain.
+#' @param sep Separator used for storing per cell V(D)J data. This is used to
+#' identify columns containing per-chain data that can be unnested.
+#' @return data.frame containing V(D)J data
+#'
+#' @examples
+#' # Fetch per-chain V(D)J data
+#' fetch_vdj(vdj_so)
+#'
+#' # To increase performance, specify which columns to return per-chain data,
+#' # per-cell data will be returned for all other columns
+#' fetch_vdj(
+#'   vdj_sce,
+#'   vdj_cols = c("chains", "n_insertion")
+#' )
+#'
+#' # Only include cells that have V(D)J data
+#' # clonotype_col must be specified to identify cells with V(D)J data
+#' fetch_vdj(
+#'   vdj_so,
+#'   filter_cells = TRUE,
+#'   clonotype_col = "clonotype_id"
+#' )
+#'
+#' @export
+fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells = FALSE,
+                      unnest = TRUE, sep = ";") {
+
+  # Format input data
+  meta <- .get_meta(input)
+
+  if (is.null(sep)) {
+    return(meta)
+  }
+
+  # Identify columns with V(D)J data
+  col_list <- .get_vdj_cols(
+    df_in     = meta,
+    clone_col = clonotype_col,
+    cols_in   = vdj_cols,
+    sep       = sep
+  )
+
+  sep_cols <- col_list$sep
+
+  if (purrr::is_empty(sep_cols)) {
+    warning(
+      "The separator '", sep, "' was not identified in any columns specified ",
+      "by vdj_cols, the unmodified meta.data will be returned"
+    )
+
+    return(meta)
+  }
+
+  # Filter cells
+  if (filter_cells) {
+    if (is.null(clonotype_col)) {
+      stop("clonotype_col must be provided to determine which cells to filter.")
+    }
+
+    meta <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
+  }
+
+  # Unnest V(D)J data
+  res <- .unnest_vdj(
+    meta,
+    sep_cols = sep_cols,
+    sep      = sep,
+    unnest   = unnest
+  )
+
+  res
+}
+
+
 #' Modify V(D)J data in object
 #'
 #' Modify per-chain V(D)J data for each cell. This function offers greater
-#' flexibility than summarize_vdj, but is less user-friendly.
+#' flexibility than [summarize_vdj()], but is less user-friendly.
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, cell barcodes should be stored as row names.
@@ -191,7 +286,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #'
 #' # Creating an index column to use for filtering/plotting
 #' # this creates a column indicating which cells have no insertions
-#' # we can then filter the V(D)J data based on this new column
+#' # the V(D)J data can be filtered based on this new column
 #' new_so <- summarize_vdj(
 #'   vdj_so,
 #'   vdj_cols = "n_insertion",
@@ -296,41 +391,46 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
   # * want per-row results > length 1 to return list-col
   # * want results == 1 to return vector
   # * skip row if is.na
+  # * use for loops instead of map to avoid '<<-' operator
   # * not clear how to do this with across, instead do:
-  #     1) use walk to iterate through vdj_cols
-  #     2) use map to apply fn to each row in column
-  #     3) within map check length of result and set (<<-) variable if length > 1
+  #     1) iterate through vdj_cols
+  #     2) apply fn to each row in column
+  #     3) check length of fn result and set variable if length > 1
   fn <- purrr::as_mapper(fn, ...)
 
-  purrr::walk2(vdj_cols, new_cols, ~ {
-    LENGTH_ONE <- TRUE
+  for (i in seq_along(vdj_cols)) {
+    clmn       <- vdj_cols[i]
+    new_clmn   <- new_cols[i]
+    length_one <- TRUE
 
-    x <- res[[.x]]
+    x <- res[[clmn]]
 
-    x <- purrr::map(x, ~ {
-      if (all(is.na(.x))) {
-        return(NA)
+    for (j in seq_along(x)) {
+      val <- x[[j]]
+
+      if (all(is.na(val))) {
+        r <- NA
+
+      } else {
+        r <- fn(val)
+
+        if (purrr::is_empty(r)) {
+          r <- NA
+
+        } else if (length(r) > 1) {
+          length_one <- FALSE
+        }
       }
 
-      r <- fn(.x)
+      x[[j]] <- r
+    }
 
-      if (purrr::is_empty(r)) {
-        return(NA)
-      }
-
-      if (length(r) > 1) {
-        LENGTH_ONE <<- FALSE
-      }
-
-      r
-    })
-
-    if (LENGTH_ONE) {
+    if (length_one) {
       x <- unlist(x)
     }
 
-    res <<- dplyr::mutate(res, !!sym(.y) := x)
-  })
+    res[[new_clmn]] <- x
+  }
 
   # If chain provided remove temporary columns
   if (!is.null(chain) && filt_chains) {
@@ -355,15 +455,62 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param fn Function or formula to use for modifying the meta.data. If a
-#' formula is provided, use .x to refer to the meta.data table.
-#' @param ... Arguments to pass to the provided function
+#'
+#' @param fn Function to use for modifying object meta.data. This can be either
+#' a function, e.g. mean, or a purrr-style lambda, e.g. ~ mean(.x,
+#' na.rm = TRUE) where ".x" refers to the meta.data table.
+#' @param ... Additional arguments to pass to the provided function
 #' @return Object with mutated meta.data
+#'
+#' @examples
+#' # Sum two meta.data columns
+#' # all additional arguments provided to mutate_meta() are passed directly to
+#' # the function (in this case, dplyr::mutate())
+#' mutate_meta(
+#'   tiny_so,
+#'   dplyr::mutate,
+#'   NEW = nCount_RNA + nFeature_RNA
+#' )
+#'
+#' # Pass a purrr-style lambda
+#' # this produces the same result as the previous example
+#' mutate_meta(
+#'   tiny_so,
+#'   ~ dplyr::mutate(.x, NEW = nCount_RNA + nFeature_RNA)
+#' )
+#'
+#' # Modify multiple meta.data columns
+#' mutate_meta(
+#'   tiny_so,
+#'   dplyr::mutate,
+#'   NEW_1 = nCount_RNA + nFeature_RNA,
+#'   NEW_2 = stringr::str_c(orig.ident, seurat_clusters)
+#' )
+#'
+#' # Remove meta.data columns
+#' # any function can be passed to mutate_meta(), in this example
+#' # dplyr::select() is used to remove columns
+#' mutate_meta(
+#'   tiny_sce,
+#'   dplyr::select,
+#'   -UMAP_1
+#' )
+#'
+#' # Perform grouped operations using dplyr
+#' # multi-line commands can be passed using brackets, just refer to the
+#' # meta.data with ".x"
+#' # this calculates the mean number of features for each group in the
+#' # orig.ident meta.data column
+#' mutate_meta(tiny_so, ~ {
+#'   res <- dplyr::group_by(.x, orig.ident)
+#'   res <- dplyr::mutate(res, mean_genes = mean(nFeature_RNA))
+#'   res
+#' })
 #'
 #' @export
 mutate_meta <- function(input, fn, ...) {
 
-  if (!purrr::is_function(fn) && !is_formula(fn)) {
+  if (!purrr::is_function(fn) && !purrr::is_formula(fn)) {
     stop("fn must be either a function or a formula")
   }
 
@@ -376,101 +523,6 @@ mutate_meta <- function(input, fn, ...) {
   res <- fn(meta, ...)
 
   res <- .add_meta(input, meta = res)
-
-  res
-}
-
-
-#' Fetch V(D)J data
-#'
-#' Fetch per-chain V(D)J data from object. Within the object meta.data, each
-#' row represents a single cell and can include information for multiple
-#' chains. This function returns an unnested data.frame where each row
-#' represents a single chain. This is useful for plotting per-chain metrics
-#' such as CDR3 length or the number of insertions/deletions.
-#'
-#' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param vdj_cols meta.data columns containing per-chain V(D)J data to unnest.
-#' If NULL, V(D)J data are automatically selected by identifying columns that
-#' have NAs in the same rows as clonotype_col.
-#' @param clonotype_col meta.data column containing clonotype IDs. This column
-#' is used to determine which columns have V(D)J data. If both clonotype_col
-#' and vdj_cols are NULL, all columns are included.
-#' @param filter_cells Remove cells that do not have V(D)J data, clonotype_col
-#' must be provided to determine which cells to filter.
-#' @param unnest If FALSE, a nested data.frame is returned where each row
-#' represents a cell and V(D)J data is stored as list-cols. If TRUE, columns
-#' are unnested so each row represents a single chain.
-#' @param sep Separator used for storing per cell V(D)J data. This is used to
-#' identify columns containing per-chain data that can be unnested.
-#' @return data.frame containing V(D)J data
-#'
-#' @examples
-#' # Fetch per-chain V(D)J data
-#' fetch_vdj(vdj_so)
-#'
-#' # To increase performance, specify which columns to return per-chain data,
-#' # per-cell data will be returned for all other columns
-#' fetch_vdj(
-#'   vdj_sce,
-#'   vdj_cols = c("chains", "n_insertion")
-#' )
-#'
-#' # Only include cells that have V(D)J data
-#' # clonotype_col must be specified to identify cells with V(D)J data
-#' fetch_vdj(
-#'   vdj_so,
-#'   filter_cells = TRUE,
-#'   clonotype_col = "clonotype_id"
-#' )
-#'
-#' @export
-fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells = FALSE,
-                      unnest = TRUE, sep = ";") {
-
-  # Format input data
-  meta <- .get_meta(input)
-
-  if (is.null(sep)) {
-    return(meta)
-  }
-
-  # Identify columns with V(D)J data
-  col_list <- .get_vdj_cols(
-    df_in     = meta,
-    clone_col = clonotype_col,
-    cols_in   = vdj_cols,
-    sep       = sep
-  )
-
-  sep_cols <- col_list$sep
-
-  if (purrr::is_empty(sep_cols)) {
-    warning(
-      "The separator '", sep, "' was not identified in any columns specified ",
-      "by vdj_cols, the unmodified meta.data will be returned"
-    )
-
-    return(meta)
-  }
-
-  # Filter cells
-  if (filter_cells) {
-    if (is.null(clonotype_col)) {
-      stop("clonotype_col must be provided to determine which cells to filter.")
-    }
-
-    meta <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
-  }
-
-  # Unnest V(D)J data
-  res <- .unnest_vdj(
-    meta,
-    sep_cols = sep_cols,
-    sep      = sep,
-    unnest   = unnest
-  )
 
   res
 }

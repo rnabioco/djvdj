@@ -103,7 +103,7 @@ summarize_vdj(
 
 # Creating an index column to use for filtering/plotting
 # this creates a column indicating which cells have no insertions
-# we can then filter the V(D)J data based on this new column
+# the V(D)J data can be filtered based on this new column
 new_so <- summarize_vdj(
   vdj_so,
   vdj_cols = "n_insertion",

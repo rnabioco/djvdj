@@ -132,7 +132,12 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 #'
 #' @param input Object containing single cell data
 #' @param meta meta.data to add to object
-#' @param row_col Column containing meta.data rownames
+#' @param row_col Column containing rownames to use for meta.data
+#' @name .add_meta
+#' @noRd
+NULL
+
+#' @rdname .add_meta
 #' @return Object with added meta.data
 #' @importFrom S4Vectors DataFrame
 #' @noRd
@@ -142,15 +147,15 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 }
 
 .add_meta.default <- function(input, meta, row_col = ".cell_id") {
+  if (!is.data.frame(meta)) {
+    stop("meta.data must be a data.frame.")
+  }
 
   tibble::column_to_rownames(meta, row_col)
 }
 
 .add_meta.Seurat <- function(input, meta, row_col = ".cell_id") {
-
-  .check_list_cols(meta)
-
-  meta <- tibble::column_to_rownames(meta, row_col)
+  meta <- .prepare_meta(input, meta, row_col)
 
   input@meta.data <- meta
 
@@ -158,14 +163,41 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 }
 
 .add_meta.SingleCellExperiment <- function(input, meta, row_col = ".cell_id") {
-
-  .check_list_cols(meta)
-
-  meta <- tibble::column_to_rownames(meta, row_col)
+  meta <- .prepare_meta(input, meta, row_col)
 
   input@colData <- S4Vectors::DataFrame(meta)
 
   input
+}
+
+#' Prepare meta.data to add to object
+#'
+#' Use this when adding meta.data to a single-cell object. Do not need to
+#' perform all of these checks when input object is a data.frame or tibble.
+#'
+#' @rdname .add_meta
+#' @noRd
+.prepare_meta <- function(input, meta, row_col) {
+  if (!is.data.frame(meta)) {
+    stop("meta.data must be a data.frame.")
+  }
+
+  is_lst <- purrr::map_lgl(meta, is.list)
+
+  if (any(is_lst)) {
+    stop("meta.data cannot include list-cols.")
+  }
+
+  if (!identical(colnames(input), meta[[row_col]])) {
+    stop(
+      "To add meta.data to an object, the meta.data must contain the same ",
+      "cells as the target object."
+    )
+  }
+
+  meta <- tibble::column_to_rownames(meta, row_col)
+
+  meta
 }
 
 
@@ -192,13 +224,11 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 }
 
 .get_meta.SingleCellExperiment <- function(input, row_col = ".cell_id") {
-
   dat <- SingleCellExperiment::colData(input)
   dat <- as.data.frame(dat)
 
   .get_meta(dat, row_col)
 }
-
 
 #' Convert to tibble
 #'
@@ -221,22 +251,6 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
   }
 
   res
-}
-
-
-#' Check for list-cols in data.frame
-#'
-#' @param df_in data.frame
-#' @noRd
-.check_list_cols <- function(df_in) {
-
-  stopifnot(is.data.frame(df_in))
-
-  is_lst <- purrr::map_lgl(df_in, is.list)
-
-  if (any(is_lst)) {
-    stop("Check input data.frame, columns cannot be list-cols.")
-  }
 }
 
 
@@ -287,6 +301,10 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
   nest_cols <- purrr::map_lgl(df_in[, sep_cols], is.list)
   nest_cols <- sep_cols[nest_cols]
+
+  if (purrr::is_empty(nest_cols)) {
+    return(df_in)
+  }
 
   # paste0 will convert NA to "NA", to avoid this first check for NA before
   # collapsing

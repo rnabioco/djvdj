@@ -45,7 +45,7 @@ Object with modified meta.data
 }
 \description{
 Modify per-chain V(D)J data for each cell. This function offers greater
-flexibility than summarize_vdj, but is less user-friendly.
+flexibility than \code{\link[=summarize_vdj]{summarize_vdj()}}, but is less user-friendly.
 }
 \examples{
 # Calculate mean reads and UMIs per cell

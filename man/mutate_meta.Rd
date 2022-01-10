@@ -10,14 +10,61 @@ mutate_meta(input, fn, ...)
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{fn}{Function or formula to use for modifying the meta.data. If a
-formula is provided, use .x to refer to the meta.data table.}
+\item{fn}{Function to use for modifying object meta.data. This can be either
+a function, e.g. mean, or a purrr-style lambda, e.g. ~ mean(.x,
+na.rm = TRUE) where ".x" refers to the meta.data table.}
 
-\item{...}{Arguments to pass to the provided function}
+\item{...}{Additional arguments to pass to the provided function}
 }
 \value{
 Object with mutated meta.data
 }
 \description{
 Modify object meta.data
+}
+\examples{
+# Sum two meta.data columns
+# all additional arguments provided to mutate_meta() are passed directly to
+# the function (in this case, dplyr::mutate())
+mutate_meta(
+  tiny_so,
+  dplyr::mutate,
+  NEW = nCount_RNA + nFeature_RNA
+)
+
+# Pass a purrr-style lambda
+# this produces the same result as the previous example
+mutate_meta(
+  tiny_so,
+  ~ dplyr::mutate(.x, NEW = nCount_RNA + nFeature_RNA)
+)
+
+# Modify multiple meta.data columns
+mutate_meta(
+  tiny_so,
+  dplyr::mutate,
+  NEW_1 = nCount_RNA + nFeature_RNA,
+  NEW_2 = stringr::str_c(orig.ident, seurat_clusters)
+)
+
+# Remove meta.data columns
+# any function can be passed to mutate_meta(), in this example
+# dplyr::select() is used to remove columns
+mutate_meta(
+  tiny_sce,
+  dplyr::select,
+  -UMAP_1
+)
+
+# Perform grouped operations using dplyr
+# multi-line commands can be passed using brackets, just refer to the
+# meta.data with ".x"
+# this calculates the mean number of features for each group in the
+# orig.ident meta.data column
+mutate_meta(tiny_so, ~ {
+  res <- dplyr::group_by(.x, orig.ident)
+  res <- dplyr::mutate(res, mean_genes = mean(nFeature_RNA))
+  res
+})
+
 }
