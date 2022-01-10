@@ -85,7 +85,7 @@ plot_diversity(
 # Specify how to organize facets when plotting multiple metrics
 plot_diversity(
   vdj_so,
-  method = list(simpson = abdiv::simpson, shannon = abdiv::shannon)
+  method = list(simpson = abdiv::simpson, shannon = abdiv::shannon),
   facet_rows = 2
 )
 

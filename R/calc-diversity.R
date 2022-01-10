@@ -194,7 +194,7 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #' # Specify how to organize facets when plotting multiple metrics
 #' plot_diversity(
 #'   vdj_so,
-#'   method = list(simpson = abdiv::simpson, shannon = abdiv::shannon)
+#'   method = list(simpson = abdiv::simpson, shannon = abdiv::shannon),
 #'   facet_rows = 2
 #' )
 #'

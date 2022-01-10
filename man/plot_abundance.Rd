@@ -54,12 +54,6 @@ graphs are created for each cell cluster.}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
-
-\item{label_col}{meta.data column to use for labeling clonotypes. This is
-useful if clonotype_col contains names that are too long to include on the
-plot.}
-
-\item{color_col}{meta.data column to use for coloring clonotypes.}
 }
 \value{
 ggplot object

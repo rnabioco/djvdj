@@ -152,12 +152,8 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
-#' @param label_col meta.data column to use for labeling clonotypes. This is
-#' useful if clonotype_col contains names that are too long to include on the
-#' plot.
 #' @param n_clonotypes Number of clonotypes to plot. If type is set to 'line',
 #' this will specify the number of clonotypes to label.
-#' @param color_col meta.data column to use for coloring clonotypes.
 #' @param label_aes Named list providing additional aesthetics (color, size,
 #' etc.) for clonotype labels when creating line graph
 #' @param facet_rows The number of facet rows, use this when separate bar
@@ -265,8 +261,8 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   plt_dat <- dplyr::mutate(
     plt_dat,
     .x   = !!sym(clonotype_col),
-    .len = nchar(.x),
-    .lab = strtrim(.x, len),
+    .len = nchar(.data$.x),
+    .lab = strtrim(.data$.x, len),
     .lab = paste0(.data$.lab, ifelse(.data$.len > len, "...", ""))
   )
 
