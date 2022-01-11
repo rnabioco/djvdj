@@ -16,21 +16,17 @@ reference:
 - title: Import and manipulate
   contents:
   - import_vdj
+  - fetch_vdj
   - filter_vdj
+  - summarize_vdj
   - starts_with("mutate_")
 
 - title: Calculate
   contents:
+  - define_clonotypes
   - starts_with("calc_")
-  - summarize_chains
 
 - title: Plotting
   contents:
-  - plot_abundance
-  - plot_diversity
-  - plot_reads
-  - plot_similarity
-  - plot_usage
-  - plot_features
-  - plot_cell_count
+  - starts_with("plot_")
   - djvdj_theme
