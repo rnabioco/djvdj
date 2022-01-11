@@ -27,11 +27,11 @@ devtools::install_github("rnabioco/djvdj")
 
 With djvdj you can import V(D)J sequencing results from [Cell
 Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header)
-and add these data to your current
-[Seurat](https://satijalab.org/seurat/) object using `import_vdj()`.
-Additional functions are provided to filter (`filter_vdj()`) and
-manipulate (`mutate_vdj()`) the Seurat object based on a range of V(D)J
-metrics including chains, clonotypes, and CDR3 sequences.
+and add these data to a [Seurat](https://satijalab.org/seurat/) or
+SingleCellExperiment object using `import_vdj()`. Additional functions
+are provided to filter (`filter_vdj()`) and modify (`mutate_vdj()`,
+`summarize_vdj()`) the Seurat object based on V(D)J metrics including
+chains, clonotypes, and CDR3 sequences.
 
 ``` r
 # Import VDJ data
@@ -39,10 +39,10 @@ metrics including chains, clonotypes, and CDR3 sequences.
 # If prefixes were added to the cell barcodes when the object was generated,
 # include these as the vector names
 paths <- c(
-  KI_DN3_GE = "data/tcr/KI_DN3_TCR",
-  KI_DN4_GE = "data/tcr/KI_DN4_TCR",
-  WT_DN3_GE = "data/tcr/WT_DN3_TCR",
-  WT_DN4_GE = "data/tcr/WT_DN4_TCR"
+  KI_DN3_GE_ = "data/tcr/KI_DN3_TCR",
+  KI_DN4_GE_ = "data/tcr/KI_DN4_TCR",
+  WT_DN3_GE_ = "data/tcr/WT_DN3_TCR",
+  WT_DN4_GE_ = "data/tcr/WT_DN4_TCR"
 )
 
 so_tcr <- import_vdj(
@@ -62,8 +62,7 @@ per-sample basis to allow for comparison across conditions.
 `calc_similarity()` will measure repertoire overlap between clusters or
 samples to allow for direct comparisons between cells of interest.
 Additional functions are also available to calculate clonotype
-abundances (`calc_abundance()`) and relative gene usage
-(`calc_usage()`).
+abundances (`calc_abundance()`) and V(D)J gene usage (`calc_usage()`).
 
 ``` r
 so_tcr <- calc_diversity(
@@ -80,7 +79,7 @@ function to summarize the results.
 
 ``` r
 # Compare the usage of different V and J genes
-ggs <- plot_usage(
+ggs <- plot_vdj_usage(
   input       = so_tcr,                       # Seurat object
   gene_cols   = c("v_gene", "j_gene"),        # Column(s) containing V(D)J genes to plot
   cluster_col = "orig.ident",                 # Column containing cell clusters to compare
