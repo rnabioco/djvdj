@@ -30,3 +30,8 @@ reference:
   contents:
   - starts_with("plot_")
   - djvdj_theme
+
+- title: Data
+  contents:
+  - ends_with("_so")
+  - ends_with("_sce")
