@@ -3,14 +3,14 @@
 \docType{data}
 \name{tiny_sce}
 \alias{tiny_sce}
-\title{SingleCellExperiment object for tests}
+\title{A tiny SingleCellExperiment object}
 \format{
-A SingleCellExperiment object with 200 features, 200 cells, and 1 assay
+A SingleCellExperiment object with 200 features, 204 cells, and 1 assay
 }
 \usage{
 tiny_sce
 }
 \description{
-A tiny SingleCellExperiment object for tests
+A tiny SingleCellExperiment object
 }
 \keyword{datasets}

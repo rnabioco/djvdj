@@ -3,14 +3,14 @@
 \docType{data}
 \name{vdj_so}
 \alias{vdj_so}
-\title{Seurat object with V(D)J data for tests}
+\title{A tiny Seurat object with V(D)J data}
 \format{
-A Seurat object with 200 features, 200 cells, and 1 assay
+A Seurat object with 200 features, 204 cells, and 1 assay
 }
 \usage{
 vdj_so
 }
 \description{
-A tiny Seurat object with V(D)J data for tests
+A tiny Seurat object with V(D)J data
 }
 \keyword{datasets}

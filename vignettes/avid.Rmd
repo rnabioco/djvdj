@@ -26,8 +26,16 @@ knitr::opts_chunk$set(
 For this vignette we are using AVID-seq data. This is a method developed by the Hesselberth lab which involves staining cells with DNA-tagged antigen. The DNA tag is similar to the tags present on CITE-seq antibodies and can be detected using the 10x Genomics 5’ immune profiling kit. For this experiment we mixed splenocytes from BL6 and MD4 mice and stained with a HEL-DNA conjugate. MD4 B cells are monoclonal and specifically bind HEL.
 
 ```{r "rna_umap", fig.width = 12.5, fig.height = 3, echo = FALSE}
+# Packages
+library(here)
+library(djvdj)
+library(dplyr)
+library(cowplot)
+library(ggplot2)
+
 load(here("data/avid/so_avid.rda"))
 
+# Theme colors
 vdj_colors <- c(
   "#E69F00", "#56B4E9",
   "#009E73", "#F0E442",
@@ -126,7 +134,6 @@ If the Seurat object contains data for multiple runs, a vector containing paths 
 library(djvdj)
 library(Seurat)
 library(here)
-library(stringr)
 library(tibble)
 library(purrr)
 library(dplyr)
@@ -173,12 +180,17 @@ so_avid <- calc_abundance(
 For each 'calc' function provided by djvdj, there is a matching 'plot' function that will generate a summary plot. The `plot_abundance()` function will plot clonotypes ranked by abundance. As expected we see that most MD4 B cells share the same clonotype.
 
 ```{r "abund_plots", fig.width = 8, fig.height = 3.5}
+clrs <- c(
+  BL6 = "#E69F00",
+  MD4 = "#56B4E9"
+)
+
 plot_abundance(
   input        = so_avid,
   cluster_col  = "mouse",                   # Column containing cell clusters to compare
   n_clonotypes = 10,                        # Number of top clonotypes to plot
   type         = "bar",                     # Type of plot, 'bar' or 'line'
-  plot_colors  = m_cols
+  plot_colors  = clrs
 )
 ```
 
@@ -220,7 +232,7 @@ plot_diversity(
   input       = so_avid,
   cluster_col = "mouse",                    # Column containing cell clusters to compare
   method      = fns,                        # abdiv method to use
-  plot_colors = vdj_colors
+  plot_colors = c("#E69F00", "#56B4E9")
 )
 ```
 

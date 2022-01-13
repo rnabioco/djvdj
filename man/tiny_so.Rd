@@ -3,14 +3,14 @@
 \docType{data}
 \name{tiny_so}
 \alias{tiny_so}
-\title{Seurat object for tests}
+\title{A tiny Seurat object}
 \format{
-A Seurat object with 200 features, 200 cells, and 1 assay
+A Seurat object with 200 features, 204 cells, and 1 assay
 }
 \usage{
 tiny_so
 }
 \description{
-A tiny Seurat object for tests
+A tiny Seurat object
 }
 \keyword{datasets}

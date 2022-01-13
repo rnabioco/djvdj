@@ -38,7 +38,9 @@ Suggests:
     knitr,
     roxygen2,
     testthat,
-    stringr
+    stringr,
+    here,
+    cowplot
 VignetteBuilder: 
     knitr
 Remotes:

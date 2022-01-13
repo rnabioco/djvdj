@@ -3,14 +3,14 @@
 \docType{data}
 \name{vdj_sce}
 \alias{vdj_sce}
-\title{SingleCellExperiment object with V(D)J data for tests}
+\title{A tiny SingleCellExperiment object with V(D)J data}
 \format{
-A SingleCellExperiment object with 200 features, 200 cells, and 1 assay
+A SingleCellExperiment object with 200 features, 204 cells, and 1 assay
 }
 \usage{
 vdj_sce
 }
 \description{
-A tiny SingleCellExperiment object with V(D)J data for tests
+A tiny SingleCellExperiment object with V(D)J data
 }
 \keyword{datasets}
