@@ -1,5 +1,5 @@
 
-# **djvdj** <img src="man/figures/djvdj-logo-dark-3.png" align="right" height="155">
+# **djvdj** <img src="man/figures/logo.png" align="right" alt="" width="120" />
 
 <!-- badges: start -->
 
@@ -25,12 +25,12 @@ devtools::install_github("rnabioco/djvdj")
 
 ### **Import**
 
-With djvdj you can add V(D)J sequencing results from [Cell
+With djvdj you can import V(D)J sequencing results from [Cell
 Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header)
-to a [Seurat](https://satijalab.org/seurat/) or
-[SingleCellExperiment](https://www.bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html) object using `import_vdj()`. Additional functions
-are provided to filter and modify (`filter_vdj()`, `mutate_vdj()`,
-`summarize_vdj()`) the object based on V(D)J metrics including
+and add these data to a [Seurat](https://satijalab.org/seurat/) or
+SingleCellExperiment object using `import_vdj()`. Additional functions
+are provided to filter (`filter_vdj()`) and modify (`mutate_vdj()`,
+`summarize_vdj()`) the Seurat object based on V(D)J metrics including
 chains, clonotypes, and CDR3 sequences.
 
 ``` r
@@ -62,7 +62,7 @@ per-sample basis to allow for comparison across conditions.
 `calc_similarity()` will measure repertoire overlap between clusters or
 samples to allow for direct comparisons between cells of interest.
 Additional functions are also available to calculate clonotype
-abundances and V(D)J gene usage (`calc_abundance()`, `calc_vdj_usage()`).
+abundances (`calc_abundance()`) and V(D)J gene usage (`calc_usage()`).
 
 ``` r
 so_tcr <- calc_diversity(

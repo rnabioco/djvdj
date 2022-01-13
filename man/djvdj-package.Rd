@@ -6,6 +6,8 @@
 \alias{djvdj-package}
 \title{djvdj: A collection of single-cell V(D)J tools}
 \description{
+\if{html}{\figure{logo.png}{options: align='right' alt='logo' width='120'}}
+
 djvdj provides a range of tools to analyze single-cell V(D)J
     data.
 }
