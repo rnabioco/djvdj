@@ -1,3 +1,23 @@
+#' tibble imports
+#'
+#' @importFrom tibble tibble as_tibble column_to_rownames rownames_to_column
+#' @noRd
+NULL
+
+#' purrr imports
+#'
+#' @importFrom purrr map imap map_dfr imap_dfr map_lgl map_chr map2_int map_dbl map_int iwalk pwalk
+#' @importFrom purrr reduce keep is_empty is_function is_formula as_mapper
+#' @noRd
+NULL
+
+#' stats imports
+#'
+#' @importFrom stats median complete.cases as.formula
+#' @noRd
+NULL
+
+
 #' Helper to test all combinations of provided arguments
 #'
 #' @param arg_lst Named list of arguments to test
@@ -7,17 +27,20 @@
 #' @param dryrun Do not run tests, just return table of arguments that will be
 #' tested
 #' @return Output from test_that
+#' @noRd
 test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
   arg_lst <- expand.grid(arg_lst, stringsAsFactors = FALSE)
 
   if (dryrun) {
+    arg_lst <- tibble::as_tibble(arg_lst)
+
     return(arg_lst)
   }
 
   n <- 1
 
-  pwalk(arg_lst, ~ {
+  purrr::pwalk(arg_lst, ~ {
     test_that(paste(desc, n), {
 
       if (is.call(chk)) {
@@ -34,60 +57,72 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 }
 
 
-#' Summarize values for chains
+#' Filter V(D)J data based on chain
 #'
-#' Summarize values present for each column provided to the data_cols argument.
-#' For each cell, the function(s) provided will be applied to each unique
-#' chain.
-#'
-#' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param data_cols meta.data columns to summarize
-#' @param fn Function to use for summarizing data_cols
-#' @param chain_col meta.data column(s) containing labels for each chain
-#' expressed in the cell. These labels are used for grouping the summary
-#' output. Set chain_col to NULL to group solely based on the cell barcodes.
-#' @param include_cols Additional columns to include in the output data.frame
-#' @param sep Separator used for storing per cell V(D)J data
-#' @return data.frame containing summary results
-#' @export
-summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_col = "chains",
-                             include_cols = NULL, sep = ";") {
+#' @param df_in data.frame
+#' @param vdj_cols meta.data column(s) containing V(D)J data to filter based on
+#' chain
+#' @param chain Chain to use for filtering V(D)J data
+#' @param chain_col meta.data column(s) containing chains for each cell
+#' @param col_names A glue specification that describes how to name the output
+#' columns, this can use {.col} to stand for the selected column name
+#' @param empty_val Value to use when no chains match chain
+#' @return filtered data.frame
+#' @noRd
+.filter_chains <- function(df_in, vdj_cols, chain, chain_col = "chains", col_names = "{.col}",
+                           empty_val = NA) {
 
-  # Format input data
-  fetch_cols <- c(".cell_id", data_cols, chain_col, include_cols)
+  if (is.null(chain)) {
+    return(df_in)
+  }
 
-  meta <- .get_meta(input)
-  meta <- dplyr::select(meta, all_of(fetch_cols))
+  # If all vdj_cols are not list-cols, filter data.frame normally
+  is_lst <- purrr::map_lgl(df_in[, c(chain_col, vdj_cols)], is.list)
 
-  meta <- dplyr::filter(
-    meta,
-    across(all_of(data_cols), ~ !is.na(.x))
-  )
+  if (all(!is_lst)) {
+    res <- dplyr::filter(
+      df_in,
+      !!sym(chain_col) %in% chain
+    )
 
-  # Expand meta.data
-  coerce_cols <- purrr::set_names(
-    rep("numeric", length(data_cols)),
-    data_cols
-  )
+    return(res)
 
-  res <- .split_vdj(
-    meta,
-    sep         = sep,
-    sep_cols    = c(data_cols, chain_col),
-    coerce_cols = coerce_cols,
-    expand      = TRUE
-  )
+  } else if (!all(is_lst)) {
+    stop("chain_col and vdj_cols cannot be a mix of normal columns and list-cols.")
+  }
 
-  # Summarize chains
-  grp_cols <- c(".cell_id", chain_col, include_cols)
-  res      <- dplyr::group_by(res, !!!syms(grp_cols))
+  # Function to check/filter chains
+  .map_fn <- function(x, chns) {
 
-  res <- dplyr::summarize(
+    if (length(x) != length(chns)) {
+      stop(
+        "Values in ", chain_col,  " are not the same length as vdj_cols, ",
+        "are you using the correct chain_col?"
+      )
+    }
+
+    r <- x[chns %in% chain]
+
+    if (purrr::is_empty(r)) {
+      r <- empty_val
+    }
+
+    list(r)
+  }
+
+  # Filter chains
+  res <- dplyr::rowwise(df_in)
+
+  res <- dplyr::mutate(
     res,
-    across(all_of(data_cols), fn),
-    .groups = "drop"
+    across(
+      all_of(vdj_cols),
+      ~ .map_fn(.x, !!sym(chain_col)),
+      .names = col_names
+    )
   )
+
+  res <- dplyr::ungroup(res)
 
   res
 }
@@ -95,77 +130,105 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 
 #' Add meta.data to single cell object
 #'
+#' @param input Object containing single cell data
+#' @param meta meta.data to add to object
+#' @param row_col Column containing rownames to use for meta.data
+#' @name .add_meta
+#' @noRd
+NULL
+
+#' @rdname .add_meta
+#' @return Object with added meta.data
+#' @importFrom S4Vectors DataFrame
+#' @noRd
 .add_meta <- function(input, meta, row_col) {
 
   UseMethod(".add_meta", input)
-
 }
 
-#' @rdname dot-add_meta
-#' @param input Object containing single cell data
-#' @param meta meta.data to add to object
-#' @param row_col Column containing meta.data rownames
-#' @return Object with added meta.data
 .add_meta.default <- function(input, meta, row_col = ".cell_id") {
+  if (!is.data.frame(meta)) {
+    stop("meta.data must be a data.frame.")
+  }
 
   tibble::column_to_rownames(meta, row_col)
-
 }
 
-#' @rdname dot-add_meta
 .add_meta.Seurat <- function(input, meta, row_col = ".cell_id") {
-
-  meta <- tibble::column_to_rownames(meta, row_col)
+  meta <- .prepare_meta(input, meta, row_col)
 
   input@meta.data <- meta
 
   input
 }
 
-#' @rdname dot-add_meta
-#' @importFrom S4Vectors DataFrame
 .add_meta.SingleCellExperiment <- function(input, meta, row_col = ".cell_id") {
-
-  meta <- tibble::column_to_rownames(meta, row_col)
+  meta <- .prepare_meta(input, meta, row_col)
 
   input@colData <- S4Vectors::DataFrame(meta)
 
   input
 }
 
+#' Prepare meta.data to add to object
+#'
+#' Use this when adding meta.data to a single-cell object. Do not need to
+#' perform all of these checks when input object is a data.frame or tibble.
+#'
+#' @rdname .add_meta
+#' @noRd
+.prepare_meta <- function(input, meta, row_col) {
+  if (!is.data.frame(meta)) {
+    stop("meta.data must be a data.frame.")
+  }
+
+  is_lst <- purrr::map_lgl(meta, is.list)
+
+  if (any(is_lst)) {
+    stop("meta.data cannot include list-cols.")
+  }
+
+  if (!identical(colnames(input), meta[[row_col]])) {
+    stop(
+      "To add meta.data to an object, the meta.data must contain the same ",
+      "cells as the target object."
+    )
+  }
+
+  meta <- tibble::column_to_rownames(meta, row_col)
+
+  meta
+}
+
 
 #' Pull meta.data from single cell object
 #'
-.get_meta <- function(input, row_col) {
-
-  UseMethod(".get_meta", input)
-
-}
-
-#' @rdname dot-get_meta
 #' @param input Object containing single cell data
 #' @param row_col New column to store meta.data rownames
 #' @return tibble containing meta.data pulled from object
+#' @importFrom SingleCellExperiment colData
+#' @noRd
+.get_meta <- function(input, row_col) {
+
+  UseMethod(".get_meta", input)
+}
+
 .get_meta.default <- function(input, row_col = ".cell_id") {
 
   .to_tibble(input, row_col)
-
 }
 
-#' @rdname dot-get_meta
 .get_meta.Seurat <- function(input, row_col = ".cell_id") {
 
-  .to_tibble(input@meta.data, row_col)
-
+  .get_meta(input@meta.data, row_col)
 }
 
-#' @rdname dot-get_meta
 .get_meta.SingleCellExperiment <- function(input, row_col = ".cell_id") {
+  dat <- SingleCellExperiment::colData(input)
+  dat <- as.data.frame(dat)
 
-  .to_tibble(input@colData, row_col)
-
+  .get_meta(dat, row_col)
 }
-
 
 #' Convert to tibble
 #'
@@ -178,6 +241,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' @param input Object to coerce to tibble
 #' @param row_col Name of new column to store rownames
 #' @return tibble with rownames added to new column
+#' @noRd
 .to_tibble <- function(input, row_col) {
 
   res <- tibble::as_tibble(input, rownames = NA)
@@ -196,6 +260,7 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #' @param meta meta.data to merge with object
 #' @param by Columns to use for merging
 #' @return Object with added meta.data
+#' @noRd
 .merge_meta <- function(input, meta, by = ".cell_id") {
 
   if (is.null(input)) {
@@ -205,9 +270,11 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
   # Join meta.data
   # remove columns already present in input object to prevent duplicates
   # this mimics behavior of Seurat::AddMetaData
-  meta     <- .get_meta(meta, row_col = ".cell_id")
-  rm_cols  <- colnames(meta)
-  rm_cols  <- rm_cols[!rm_cols %in% by]
+  meta <- .get_meta(meta, row_col = by)
+
+  rm_cols <- colnames(meta)
+  rm_cols <- rm_cols[!rm_cols %in% by]
+
   obj_meta <- .get_meta(input)
   obj_meta <- dplyr::select(obj_meta, !any_of(rm_cols))
 
@@ -218,47 +285,109 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 }
 
 
-#' Split V(D)J meta.data columns into vectors
+#' Collapse meta.data list-cols into strings
 #'
 #' @param df_in data.frame to modify
-#' @param sep Separator used for storing per cell V(D)J data
-#' @param sep_cols Columns to split based on sep
-#' @param expand Should columns be unnested after splitting into vectors
-#' @param coerce_cols Named vector specifying columns that should be coerced to
-#' a new type. The vector names should be the name of each column,
-#' e.g., c(umis = "numeric")
+#' @param sep_cols list-cols to collapse into strings, if NULL all list-cols
+#' in the data.frame will be collapsed
+#' @param sep Separator to use for collapsing list-cols
 #' @return data.frame
-.split_vdj <- function(df_in, sep = ";", sep_cols, expand = FALSE,
-                       coerce_cols = c(
-                         umis        = "numeric", reads          = "numeric",
-                         cdr3_length = "numeric", cdr3_nt_length = "numeric",
-                         productive  = "logical", full_length    = "logical"
-                       )) {
+#' @noRd
+.nest_vdj <- function(df_in, sep_cols = NULL, sep = ";") {
+
+  if (is.null(sep_cols)) {
+    sep_cols <- colnames(df_in)
+  }
+
+  nest_cols <- purrr::map_lgl(df_in[, sep_cols], is.list)
+  nest_cols <- sep_cols[nest_cols]
+
+  if (purrr::is_empty(nest_cols)) {
+    return(df_in)
+  }
+
+  # paste0 will convert NA to "NA", to avoid this first check for NA before
+  # collapsing
+  res <- dplyr::rowwise(df_in)
+
+  res <- dplyr::mutate(
+    res,
+    across(
+      all_of(nest_cols),
+      ~ ifelse(all(is.na(.x)), NA, paste0(.x, collapse = sep))
+    )
+  )
+
+  res <- dplyr::ungroup(res)
+
+  res
+}
+
+
+#' Split meta.data columns into list-cols
+#'
+#' @param df_in data.frame to modify
+#' @param sep_cols Columns to split based on sep
+#' @param unnest Should columns be unnested after splitting into vectors
+#' @param sep Separator used for storing per cell V(D)J data
+#' @return data.frame with V(D)J data
+#' @importFrom readr guess_parser
+#' @noRd
+.unnest_vdj <- function(df_in, sep_cols, unnest = TRUE, sep = ";") {
 
   # Add new set of columns based on sep_cols names
   # this is useful if want to leave original columns unmodified
-  res <- dplyr::mutate(df_in, !!!syms(sep_cols))
-
-  # Split columns into vectors
-  res <- dplyr::mutate(res, across(
-    all_of(unname(sep_cols)),
-    ~ strsplit(as.character(.x), sep)
-  ))
-
-  # Coerce columns to correct types
-  if (!is.null(coerce_cols)) {
-    coerce_cols <- coerce_cols[names(coerce_cols) %in% sep_cols]
-
-    purrr::iwalk(coerce_cols, ~ {
-      Class <- .x
-      clmn <- sym(.y)
-
-      res <<- dplyr::mutate(res, !!clmn := map(!!clmn, .convert_char, Class))
-    })
+  if (!is.null(names(sep_cols))) {
+    df_in <- dplyr::mutate(df_in, !!!syms(sep_cols))
   }
 
-  # Unnest columns
-  if (expand) {
+  # Split columns into vectors
+  # ~ strsplit(as.character(.x), sep)
+  res <- dplyr::mutate(df_in, across(
+    all_of(unname(sep_cols)),
+    ~ strsplit(.x, sep)
+  ))
+
+  # Get types to use for coercing columns
+  # use first 1000 rows containing V(D)J data
+  typs <- dplyr::select(res, all_of(unname(sep_cols)))
+  typs <- dplyr::rowwise(typs)
+  typs <- dplyr::filter(typs, if_all(all_of(sep_cols), ~ any(!is.na(.x))))
+
+  typs <- utils::head(typs, 1000)
+  typs <- tidyr::unnest(typs, everything())
+  typs <- purrr::map(typs, readr::guess_parser)
+
+  typs <- purrr::map(typs, ~ paste0("as.", .x))
+
+  # Coerce columns to correct types
+  # this is a major performance bottleneck
+  # as.double(x) is much faster than as(x, "double")
+  # slower way::
+  #   purrr::iwalk(typs, ~ {
+  #     typ  <-  .x
+  #     clmn <-  sym(.y)
+  #     res  <-  dplyr::rowwise(res)
+  #     res  <-  dplyr::mutate(res, !!clmn := list(as(!!clmn, typ)))
+  #     res  <<- dplyr::ungroup(res)
+  # })
+
+  res <- dplyr::rowwise(res)
+
+  purrr::iwalk(typs, ~ {
+    fn   <- .x
+    clmn <- sym(.y)
+
+    res <<- dplyr::mutate(
+      res,
+      !!clmn := list(do.call(fn, list(x = !!clmn)))
+    )
+  })
+
+  res <- dplyr::ungroup(res)
+
+  # Unnest data.frame
+  if (unnest) {
     res <- tidyr::unnest(res, all_of(unname(sep_cols)))
   }
 
@@ -270,23 +399,25 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 #'
 #' @param df_in data.frame
 #' @param clone_col Column containing clonotype IDs to use for identifying
-#' columns with V(D)J data. If both clone_col and cols_in are set to NULL all
-#' columns are used.
-#' @param cols_in meta.data columns containing V(D)J data to use for filtering.
-#' If set to NULL (the default) columns are automatically selected by
+#' columns with V(D)J data. If both clone_col and cols_in are NULL, all columns
+#' are included.
+#' @param cols_in Columns containing V(D)J data. If NULL data are selected by
 #' identifying columns that have NAs in the same rows as clone_col.
-#' @param sep Separator used for storing per cell V(D)J data
+#' @param sep Separator used for storing per cell V(D)J data. This is used to
+#' identify columns containing per-chain data that can be unnested.
+#' @param cell_col Column containing cell IDs
 #' @return List with two vectors, one containing columns with V(D)J data and
 #' the other containing columns where separator has been detected.
-.get_vdj_cols <- function(df_in, clone_col, cols_in, sep) {
+#' @noRd
+.get_vdj_cols <- function(df_in, clone_col, cols_in, sep, cell_col = ".cell_id") {
 
   # If clone_col and cols_in are both NULL, use all columns
   if (is.null(clone_col) && is.null(cols_in)) {
     cols_in <- colnames(df_in)
-    cols_in <- cols_in[cols_in != ".cell_id"]
+    cols_in <- cols_in[cols_in != cell_col]
   }
 
-  # If cols_in is NULL, identify columns with VDJ data based on NAs in
+  # If cols_in is NULL, identify columns with V(D)J data based on NAs in
   # clone_col
   if (is.null(cols_in)) {
     cols_in <- dplyr::mutate(
@@ -296,24 +427,33 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 
     cols_in <- purrr::keep(
       cols_in,
-      ~ identical(.x, pull(cols_in, clone_col))
+      ~ identical(.x, dplyr::pull(cols_in, clone_col))
     )
 
     cols_in <- colnames(cols_in)
   }
 
-  # Identify columns to split based on sep
+  # Identify columns to unnest based on sep
+  # check first 1000 non-NA rows of every column
+  # detect is faster for columns containing sep but slower when column does not
+  # contain sep
+  # ~ !is.null(detect(x, ~ grepl(sep, .x)))
   sep_cols <- NULL
 
   if (!is.null(sep)) {
     sep_cols <- dplyr::select(df_in, all_of(cols_in))
 
-    sep_cols <- purrr::keep(
-      sep_cols,
-      ~ any(purrr::map_lgl(na.omit(.x), grepl, pattern = sep))
-    )
+    sep_cols <- purrr::keep(sep_cols, ~ {
+      x <- head(na.omit(.x), 1000)
+
+      any(purrr::map_lgl(x, grepl, pattern = sep, fixed = TRUE))
+    })
 
     sep_cols <- colnames(sep_cols)
+
+    if (purrr::is_empty(sep_cols)) {
+      sep_cols <- NULL
+    }
   }
 
   # Return list of vectors
@@ -324,22 +464,3 @@ summarize_chains <- function(input, data_cols = c("umis", "reads"), fn, chain_co
 
   res
 }
-
-
-#' Attempt to coerce a character vector to a given class
-#'
-#' @param x Character vector to coerce
-#' @param Class Name of the class to which x should be coerced
-#' @return Coerced vector
-#' @importFrom methods as
-.convert_char <- function(x, Class) {
-
-  if (!is.character(x)) {
-    return(x)
-  }
-
-  fn <- function() as(x, Class)
-
-  suppressWarnings(ifelse(!is.na(fn()) | is.na(x), fn(), x))
-}
-

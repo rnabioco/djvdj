@@ -17,28 +17,28 @@ BugReports: https://github.com/rnabioco/djvdj/issues
 Depends: 
     R (>= 4.0.0)
 Imports: 
-    abdiv,
-    broom,
     dplyr,
     ggplot2,
     ggrepel,
-    magrittr,
-    methods,
     purrr,
     readr,
     rlang (>= 0.1.2),
     S4Vectors,
-    scales,
     Seurat (>= 4.0.0),
-    SingleCellExperiment,
     stats,
     tibble,
-    tidyr
+    tidyr,
+    Rsamtools,
+    abdiv,
+    SingleCellExperiment,
+    glue
 Suggests: 
+    magrittr,
     covr,
     knitr,
     roxygen2,
-    testthat
+    testthat,
+    stringr
 VignetteBuilder: 
     knitr
 Remotes:

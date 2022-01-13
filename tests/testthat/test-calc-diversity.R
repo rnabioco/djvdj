@@ -11,20 +11,68 @@ mets <- abdiv::alpha_diversities %>%
 names(mets) <- abdiv::alpha_diversities
 
 arg_lst <- list(
-  input         = list(vdj_so, vdj_sce, df_1, df_2),
+  input         = list(vdj_so),
   clonotype_col = "cdr3",
   cluster_col   = list(NULL, "seurat_clusters"),
-  method        = append(append(abdiv::shannon, mets), list(mets)),
-  prefix        = c("", "X"),
-  return_df     = c(TRUE, FALSE)
+  method        = list(mets, abdiv::simpson),
+  return_df     = FALSE
 )
 
 test_all_args(
   arg_lst = arg_lst,
   .fn     = calc_diversity,
-  desc    = "calc_diversity args",
-  chk     = expect_silent
+  desc    = "calc_diversity Seurat args",
+  chk     = expr(expect_s4_class(.res, "Seurat"))
 )
+
+arg_lst$input <- list(vdj_sce)
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = calc_diversity,
+  desc    = "calc_diversity SCE args",
+  chk     = expr(expect_s4_class(.res, "SingleCellExperiment"))
+)
+
+arg_lst$input <- list(df_1)
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = calc_diversity,
+  desc    = "calc_diversity data.frame args",
+  chk     = expr(expect_true(is.data.frame(.res)))
+)
+
+arg_lst$input <- list(vdj_so, vdj_sce, df_1, df_2)
+arg_lst$return_df <- TRUE
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = calc_diversity,
+  desc    = "calc_diversity return_df",
+  chk     = expr(expect_true(is.data.frame(.res)))
+)
+
+# Check diversity column prefix
+test_that("calc_diversity prefix", {
+  res <- vdj_so %>%
+    calc_diversity(
+      clonotype_col = "cdr3",
+      cluster_col   = "seurat_clusters",
+      return_df     = FALSE,
+      method        = mets,
+      prefix        = "X_"
+    )
+
+  nms <- paste0("X_", names(mets))
+
+  expect_true(all(nms %in% names(res@meta.data)))
+
+  res <- res %>%
+    mutate_meta(select, -starts_with("X_"))
+
+  expect_identical(res, vdj_so)
+})
 
 # Check diversity calculation
 mets <- list(
@@ -77,7 +125,7 @@ test_that("div calc df out", {
     arrange(seurat_clusters) %>%
     distinct(seurat_clusters, !!!syms(names(mets))) %>%
     filter(across(all_of(names(mets)), ~ !is.na(.x))) %>%
-    remove_rownames()
+    tibble::remove_rownames()
 
   expect_s3_class(res, "data.frame")
   expect_identical(res, test_div)
@@ -113,7 +161,7 @@ test_that("calc_diversity df in", {
     arrange(seurat_clusters) %>%
     distinct(seurat_clusters, !!!syms(names(mets))) %>%
     filter(across(all_of(names(mets)), ~ !is.na(.x))) %>%
-    remove_rownames()
+    tibble::remove_rownames()
 
   expect_s3_class(res, "data.frame")
   expect_identical(res, test_div)

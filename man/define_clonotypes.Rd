@@ -8,7 +8,7 @@ define_clonotypes(
   input,
   vdj_cols,
   clonotype_col = "clonotype_id",
-  filter_contigs = c("productive", "full_length"),
+  filter_chains = c("productive", "full_length"),
   sep = ";"
 )
 }
@@ -21,9 +21,9 @@ clonotypes}
 
 \item{clonotype_col}{Name of column to use for storing clonotype IDs}
 
-\item{filter_contigs}{To only use productive and full length chains when
-defining clonotypes, specify column names. If set to NULL chains are not
-filtered.}
+\item{filter_chains}{Columns to use for identifying productive full length
+chains when defining clonotypes. If NULL, all chains are used for defining
+clonotypes.}
 
 \item{sep}{Separator used for storing per cell V(D)J data}
 }

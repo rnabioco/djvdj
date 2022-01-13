@@ -49,13 +49,3 @@ test_that("calc_abundance df in", {
 
   expect_s3_class(res, "data.frame")
 })
-
-# Check empty clonotype_col
-test_that("calc_abundance NULL clonotype_col", {
-  .fn<- function() {
-    vdj_so %>%
-      calc_abundance(return_df = FALSE)
-  }
-
-  expect_error(fn())
-})

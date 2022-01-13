@@ -18,8 +18,8 @@ calc_diversity(
 data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
-calculating diversity. If cluster_col is omitted, diversity index will be
-calculated for all clonotypes.}
+grouping cells when calculating diversity. If cluster_col is omitted,
+diversity index will be calculated using all cells.}
 
 \item{method}{Method to use for calculating diversity. A named list can also
 be passed to use multiple methods. The names should specify names for the
@@ -38,4 +38,42 @@ Single cell object or data.frame with diversity metrics
 }
 \description{
 Calculate repertoire diversity
+}
+\examples{
+# Calculate diversity using all cells
+calc_diversity(
+  vdj_so,
+  method = abdiv::simpson
+)
+
+# Group cells based on meta.data column before calculating diversity
+calc_diversity(
+  vdj_so,
+  cluster_col = "orig.ident"
+)
+
+# Add a prefix to the new columns
+# this is useful if multiple diversity calculations are stored in the
+# meta.data
+calc_diversity(
+  vdj_so,
+  prefix = "bcr_"
+)
+
+# Return a data.frame instead of adding the results to the input object
+calc_diversity(
+  vdj_so,
+  return_df = TRUE
+)
+
+# Using calc_diversity outside of Seurat
+# SingleCellExperiment objects or data.frames containing V(D)J data are also
+# compatible. If a data.frame is provided, cell barcodes should be stored as
+# row names.
+calc_diversity(vdj_sce)
+
+df <- vdj_so@meta.data
+
+calc_diversity(df)
+
 }

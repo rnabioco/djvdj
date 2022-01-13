@@ -2,7 +2,7 @@
 % Please edit documentation in R/mutate-vdj.R
 \name{mutate_vdj}
 \alias{mutate_vdj}
-\title{Mutate V(D)J data}
+\title{Modify V(D)J data in object}
 \usage{
 mutate_vdj(
   input,
@@ -15,26 +15,70 @@ mutate_vdj(
 }
 \arguments{
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
-data.frame is provided, the cell barcodes should be stored as row names.}
+data.frame is provided, cell barcodes should be stored as row names.}
 
-\item{...}{Name-value pairs to use for creating or modifying meta.data
-columns}
+\item{...}{Name-value pairs to use for creating or modifying per-chain V(D)J
+meta.data, e.g. mean_umis = mean(umis).
 
-\item{clonotype_col}{meta.data column containing clonotype IDs. This column
-is used to determine which cells have V(D)J data.}
+To allow for modification of per-chain V(D)J data, the data for each cell is
+converted into a vector, e.g. 'IGH;IGK' is equivalent to c('IGH', 'IGK').
+This allows R vector operations to be performed on the per-chain values.
+Any operations that produce a result greater than length 1 need to be
+returned as a list(), e.g. new_col = umis + 1 will return a new value for
+each chain, to prevent an error this must be written as
+new_col = list(umis + 1).}
 
-\item{vdj_cols}{meta.data columns containing VDJ data to use for filtering.
-If set to NULL (recommended) columns are automatically selected by
-identifying columns that have NAs in the same rows as clonotype_col.}
+\item{clonotype_col}{meta.data column containing clonotype IDs. This is used
+to identify columns containing V(D)J data.}
 
-\item{return_df}{Return results as a data.frame. If set to FALSE, results
-will be added to the input object.}
+\item{vdj_cols}{meta.data columns containing V(D)J data to modify. If NULL,
+data are automatically selected by identifying columns that have NAs in the
+same rows as clonotype_col.}
+
+\item{return_df}{Return results as a data.frame. If FALSE, results will be
+added to the input object.}
 
 \item{sep}{Separator used for storing per cell V(D)J data}
 }
 \value{
-Object with mutated meta.data
+Object with modified meta.data
 }
 \description{
-Mutate V(D)J data
+Modify per-chain V(D)J data for each cell. This function offers greater
+flexibility than \code{\link[=summarize_vdj]{summarize_vdj()}}, but is less user-friendly.
+}
+\examples{
+# Calculate mean reads and UMIs per cell
+mutate_vdj(
+  vdj_sce,
+  mean_umis  = mean(umis),
+  mean_reads = mean(reads)
+)
+
+# Calculate the total number of insertions + deletions for each chain
+# we have to wrap our expression in list() since a value is returned for
+# each chain
+mutate_vdj(
+  vdj_sce,
+  indels = list(n_insertion + n_deletion)
+)
+
+# Create a new column showing the unique chains for each cell
+mutate_vdj(
+  vdj_sce,
+  unique_chains = stringr::str_c(unique(chains), collapse = "_")
+)
+
+# Determine which cells have both an IGK and IGL chain
+mutate_vdj(
+  vdj_sce,
+  both_light = all(c("IGK", "IGL") \%in\% chains)
+)
+
+# Determine which cells have multiple light chains
+mutate_vdj(
+  vdj_so,
+  multi_light = sum(chains \%in\% c("IGK", "IGL")) > 1
+)
+
 }

@@ -18,7 +18,7 @@ calc_similarity(
 cell barcodes should be stored as row names.}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
-calculating overlap}
+calculating repertoire overlap}
 
 \item{method}{Method to use for calculating similarity between clusters}
 
@@ -35,4 +35,45 @@ Single cell object or data.frame with similarity values
 }
 \description{
 Calculate repertoire overlap
+}
+\examples{
+# Calculate repertoire overlap
+calc_similarity(
+  vdj_so,
+  cluster_col = "orig.ident",
+  method = abdiv::jaccard
+)
+
+# Add a prefix to the new columns
+# this is useful if multiple repertoire similarity calculations are stored
+# in the meta.data
+calc_similarity(
+  vdj_so,
+  cluster_col = "orig.ident",
+  prefix = "bcr_"
+)
+
+# Return a matrix instead of adding the results to the input object
+calc_similarity(
+  vdj_so,
+  cluster_col = "orig.ident",
+  return_mat = TRUE
+)
+
+# Using calc_similarity outside of Seurat
+# SingleCellExperiment objects or data.frames containing V(D)J data are also
+# compatible. If a data.frame is provided, cell barcodes should be stored as
+# row names.
+calc_similarity(
+  vdj_sce,
+  cluster_col = "orig.ident"
+)
+
+df <- vdj_so@meta.data
+
+calc_similarity(
+  df,
+  cluster_col = "orig.ident"
+)
+
 }

@@ -76,57 +76,104 @@ test_that("plot_features error same x y", {
         y         = "UMAP_1",
         feature   = "nCount_RNA",
         plot_lvls = test_lvls
-      )
+      ),
+    "'x' and 'y' must be different"
   )
 })
 
 # Check plot_features feature not found
-arg_lst <- list(
-  input   = list(vdj_so, vdj_sce, df_1),
-  feature = "BAD_FEATURE"
-)
+test_that("plot_fetures bad feature", {
+  fn <- function(obj) {
+    plot_features(obj, feature = "BAD_FEATURE")
+  }
 
-test_all_args(
-  arg_lst = arg_lst,
-  .fn     = plot_features,
-  desc    = "plot_features no feat found",
-  chk     = expect_error
-)
+  expect_error(
+    expect_warning(fn(vdj_so), "requested variables were not found"),
+    "not found in object"
+  )
 
-# Check all plot_reads arguments
+  expect_error(fn(vdj_sce), "not found in object")
+  expect_error(fn(df_1), "not found in object")
+  expect_error(fn(df_2), "not found in object")
+})
+
+# Check all plot_vdj_feature arguments
 arg_lst <- list(
-  input       = list(vdj_so),
-  data_cols   = list("reads", "umis", c("reads", "umis")),
-  chain_col   = list(NULL, "chains"),
-  cluster_col = list(NULL, "seurat_clusters"),
-  type        = c("violin", "histogram", "density"),
+  input       = list(vdj_so, vdj_sce, df_1),
+  data_col    = c("umis", "chains"),
+  chain       = list(NULL, "IGH", c("IGH", "IGK")),
+  plot_lvls   = list(NULL, test_lvls),
   plot_colors = list(NULL, test_cols),
-  plot_lvls   = list(NULL, test_lvls)
+  min_q       = list(NULL, 0.05),
+  max_q       = list(NULL, 0.95)
 )
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_reads,
-  desc    = "plot_reads args",
+  .fn     = plot_vdj_feature,
+  desc    = "plot_vdj_feature args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check plot_reads bad type
-test_that("plot_reads bad type", {
-  expect_error(
+# plot_vdj_feature bad chain filtering
+test_that("plot_vdj_feature bad chain filtering", {
+
+  expect_warning(
     vdj_so %>%
-      plot_reads(type = "BAD")
+      plot_vdj_feature(
+        data_col = "nCount_RNA",
+        chain = "IGK"
+      ),
+    "does not contain per-chain V\\(D\\)J data"
   )
+})
+
+# Check all plot_vdj arguments
+arg_lst <- list(
+  input       = list(vdj_so, vdj_sce, df_1),
+  data_cols   = list("umis", c("reads", "n_deletion")),
+  per_cell    = c(FALSE, TRUE),
+  cluster_col = list(NULL, "seurat_clusters"),
+  chain       = list(NULL, "IGH", c("IGH", "IGK")),
+  type        = c("histogram", "density", "violin", "boxplot"),
+  yaxis       = c("frequency", "percent"),
+  plot_colors = list(NULL, test_cols),
+  plot_lvls   = list(NULL, test_lvls),
+  log_trans   = c(TRUE, FALSE)
+)
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_vdj,
+  desc    = "plot_vdj args",
+  chk     = expr(expect_s3_class(.res, "ggplot"))
+)
+
+# Check plot_vdj_*
+fns <- list(plot_vdj_reads, plot_cdr3_length, plot_vdj_indels)
+
+test_that("plot_vdj_reads", {
+
+  purrr::walk(fns, ~ {
+    expect_s3_class(.x(vdj_so), "ggplot")
+    expect_s3_class(.x(vdj_sce), "ggplot")
+    expect_s3_class(.x(df_1), "ggplot")
+  })
+})
+
+# Check plot_vdj_reads
+test_that("plot_vdj_reads", {
+  expect_s3_class(plot_vdj_reads(vdj_so), "ggplot")
+  expect_s3_class(plot_vdj_reads(vdj_sce), "ggplot")
+  expect_s3_class(plot_vdj_reads(df_1), "ggplot")
 })
 
 # Check all plot_abundance arguments for line plot
 arg_lst <- list(
-  input         = list(vdj_so),
+  input         = list(vdj_so, vdj_sce),
   clonotype_col = "cdr3_nt",
   cluster_col   = list(NULL, "seurat_clusters"),
   type          = "line",
-  label_col     = c("cdr3", "orig.ident"),
-  color_col     = list(NULL, "seurat_clusters"),
   yaxis         = c("percent", "frequency"),
   plot_colors   = list(NULL, test_cols),
   plot_lvls     = list(NULL, test_lvls),
@@ -154,9 +201,8 @@ test_all_args(
 
 # Check plot_abundance axis labels
 arg_lst <- list(
-  input         = list(vdj_so),
+  input         = list(vdj_so, vdj_sce),
   clonotype_col = "cdr3_nt",
-  label_col     = "cdr3",
   yaxis         = "percent",
   type          = c("bar", "line")
 )
@@ -212,18 +258,6 @@ test_that("plot_abundance bad n_clonotypes", {
   )
 })
 
-# Check plot_abundance bad label_col
-test_that("plot_abundance bad label_col", {
-  expect_error(
-    vdj_so %>%
-      plot_abundance(
-        type          = "bar",
-        clonotype_col = "cdr3_nt",
-        label_col     = NULL
-      )
-  )
-})
-
 # Check all plot_diversity arguments
 mets <- abdiv::alpha_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
@@ -231,7 +265,7 @@ mets <- abdiv::alpha_diversities %>%
 names(mets) <- abdiv::alpha_diversities
 
 arg_lst <- list(
-  input         = list(vdj_so),
+  input         = list(vdj_so, vdj_sce),
   clonotype_col = "cdr3_nt",
   cluster_col   = list(NULL, "seurat_clusters"),
   method        = append(mets, list(mets)),
@@ -265,7 +299,7 @@ mets <- abdiv::beta_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 arg_lst <- list(
-  input         = list(vdj_so),
+  input         = list(vdj_so, vdj_sce),
   clonotype_col = "cdr3_nt",
   cluster_col   = "seurat_clusters",
   method        = mets,
@@ -301,9 +335,9 @@ test_that("plot_similarity bad cluster col", {
   )
 })
 
-# Check all plot_usage arguments return ggplot
+# Check all plot_vdj_usage arguments return ggplot
 arg_lst <- list(
-  input       = list(vdj_so),
+  input       = list(vdj_so, vdj_sce),
   gene_cols   = list("v_gene", "j_gene", c("v_gene", "j_gene")),
   chain       = list(NULL, "IGH", "IGL", "IGK"),
   type        = c("heatmap", "bar"),
@@ -314,31 +348,32 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_usage,
-  desc    = "plot_usage args",
+  .fn     = plot_vdj_usage,
+  desc    = "plot_vdj_usage args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check all plot_usage arguments return ggplot list
+# Check all plot_vdj_usage arguments return ggplot list
 arg_lst$cluster_col <- "seurat_clusters"
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_usage,
-  desc    = "plot_usage args",
+  .fn     = plot_vdj_usage,
+  desc    = "plot_vdj_usage args",
   chk     = expr(expect_type(.res, "list"))
 )
 
-# Check plot_usage plot_genes
-test_genes <- c(
-  "IGHV1-26", "IGHV1-72", "IGHV1-64",
-  "IGHV3-6",  "IGHV1-82", "IGHV1-53"
-)
+# Check plot_vdj_usage plot_genes
+test_genes <- vdj_so %>%
+  fetch_vdj() %>%
+  pull(v_gene) %>%
+  na.omit() %>%
+  head(10)
 
 arg_lst <- list(
-  input       = list(vdj_so),
+  input       = list(vdj_so, vdj_sce),
   gene_cols   = list("v_gene", c("v_gene", "j_gene")),
-  plot_genes  = list(test_genes),
+  vdj_genes   = list(test_genes),
   type        = c("heatmap", "bar"),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls),
@@ -347,51 +382,51 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_usage,
-  desc    = "plot_usage args",
+  .fn     = plot_vdj_usage,
+  desc    = "plot_vdj_usage args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check plot_usage bad plot_genes
-test_that("plot_usage bad plot_genes", {
+# Check plot_vdj_usage bad plot_genes
+test_that("plot_vdj_usage bad plot_genes", {
   expect_error(
-    plot_usage(vdj_so, gene_cols = "v_gene", plot_genes = "BAD"),
+    plot_vdj_usage(vdj_so, gene_cols = "v_gene", vdj_genes = "BAD"),
     "None of the provided genes were found"
   )
 
   expect_warning(
-    plot_usage(vdj_so, gene_cols = "v_gene", plot_genes = c(test_genes, "BAD")),
+    plot_vdj_usage(vdj_so, gene_cols = "v_gene", vdj_genes = c(test_genes, "BAD")),
     "Some genes not found: "
   )
 })
 
-# Check plot_usage bad type
-test_that("plot_usage bad type", {
+# Check plot_vdj_usage bad type
+test_that("plot_vdj_usage bad type", {
   expect_error(
     vdj_so %>%
-      plot_usage(
+      plot_vdj_usage(
         gene_cols = "v_gene",
         type      = "BAD"
       )
   )
 })
 
-# Check plot_usage bad yaxis
-test_that("plot_usage bad type", {
+# Check plot_vdj_usage bad yaxis
+test_that("plot_vdj_usage bad type", {
   expect_error(
     vdj_so %>%
-      plot_usage(
+      plot_vdj_usage(
         gene_cols = "v_gene",
         yaxis     = "BAD"
       )
   )
 })
 
-# Check plot_usage bad gene_cols
-test_that("plot_usage bad gene_cols", {
+# Check plot_vdj_usage bad gene_cols
+test_that("plot_vdj_usage bad gene_cols", {
   expect_error(
     vdj_so %>%
-      plot_usage(gene_cols = c("v_gene", "d_gene", "j_gene"))
+      plot_vdj_usage(gene_cols = c("v_gene", "d_gene", "j_gene"))
   )
 })
 
@@ -425,3 +460,4 @@ test_all_args(
   desc    = ".set_lvls bad lvls",
   chk     = expect_error
 )
+
