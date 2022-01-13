@@ -8,8 +8,12 @@ authors:
     href: https://medschool.cuanschutz.edu/rbi
 
 template:
+  bootstrap: 5
   params:
     bootswatch: cosmo
+
+navbar:
+  bg: dark
 
 reference:
 
