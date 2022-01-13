@@ -473,15 +473,15 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
     d <- dplyr::mutate(
       d,
-      barcode = paste0(.y, .data$barcode),
-
-      dplyr::across(c(full_length, productive), ~ {
+      dplyr::across(.cols = c(full_length, productive), ~ {
         ifelse(
           !is.logical(.x),
           as.logical(gsub("None", "FALSE", .x)),
           .x
         )
-      })
+      }),
+
+      barcode = paste0(.y, .data$barcode)
     )
 
     d <- dplyr::ungroup(d)
