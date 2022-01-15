@@ -22,12 +22,12 @@
 #'
 #' # Calculate gene usage separately for cell clusters
 #' calc_vdj_usage(
-#'   vdj_so,
+#'   vdj_sce,
 #'   gene_cols = "v_gene",
 #'   cluster_col = "orig.ident"
 #' )
 #'
-#' # Calculate gene usage for a specific chain
+#' # Calculate gene usage for a specific chain(s)
 #' calc_vdj_usage(
 #'   vdj_so,
 #'   gene_cols = "v_gene",
@@ -36,19 +36,9 @@
 #'
 #' # Calculate paired usage of V(D)J segments
 #' calc_vdj_usage(
-#'   vdj_so,
+#'   vdj_sce,
 #'   gene_cols = c("v_gene", "j_gene"),
 #' )
-#'
-#' # Using calc_vdj_usage outside of Seurat
-#' # SingleCellExperiment objects or data.frames containing V(D)J data are also
-#' # compatible. If a data.frame is provided, cell barcodes should be stored as
-#' # row names.
-#' calc_vdj_usage(vdj_sce, gene_cols = "v_gene")
-#'
-#' df <- vdj_so@meta.data
-#'
-#' calc_vdj_usage(df, gene_cols = "v_gene")
 #'
 #' @export
 calc_vdj_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
@@ -176,7 +166,7 @@ calc_vdj_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #'
 #' # Plot gene usage separately for cell clusters
 #' plot_vdj_usage(
-#'   vdj_so,
+#'   vdj_sce,
 #'   gene_cols = "v_gene",
 #'   cluster_col = "orig.ident"
 #' )
@@ -190,7 +180,7 @@ calc_vdj_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #'
 #' # Plot gene usage for a specific chain
 #' plot_vdj_usage(
-#'   vdj_so,
+#'   vdj_sce,
 #'   gene_cols = "v_gene",
 #'   chain = c("IGH", "IGK")
 #' )
@@ -204,7 +194,7 @@ calc_vdj_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #'
 #' # Plot paired usage of V(D)J segments
 #' plot_vdj_usage(
-#'   vdj_so,
+#'   vdj_sce,
 #'   gene_cols = c("v_gene", "j_gene"),
 #' )
 #'
@@ -218,7 +208,7 @@ calc_vdj_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #'
 #' # Specify order to use for plotting cell clusters
 #' plot_vdj_usage(
-#'   vdj_so,
+#'   vdj_sce,
 #'   gene_cols = "v_gene",
 #'   cluster_col = "orig.ident",
 #'   plot_lvls = c("avid_2", "avid_1")
@@ -233,7 +223,7 @@ calc_vdj_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #'
 #' # Specify the number of top V(D)J genes to include in plot
 #' plot_vdj_usage(
-#'   vdj_so,
+#'   vdj_sce,
 #'   gene_cols = "v_gene",
 #'   n_genes = 10
 #' )
@@ -244,16 +234,6 @@ calc_vdj_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #'   gene_cols = "v_gene",
 #'   yaxis = "frequency"
 #' )
-#'
-#' # Using plot_vdj_usage outside of Seurat
-#' # SingleCellExperiment objects or data.frames containing V(D)J data are also
-#' # compatible. If a data.frame is provided, cell barcodes should be stored as
-#' # row names.
-#' plot_vdj_usage(vdj_sce, gene_cols = "v_gene")
-#'
-#' df <- vdj_so@meta.data
-#'
-#' plot_vdj_usage(df, gene_cols = "v_gene")
 #'
 #' @export
 plot_vdj_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type = "bar",

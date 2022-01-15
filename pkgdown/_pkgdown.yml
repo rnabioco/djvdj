@@ -23,16 +23,26 @@ reference:
   - fetch_vdj
   - filter_vdj
   - summarize_vdj
-  - starts_with("mutate_")
+  - mutate_vdj
+  - mutate_meta
 
 - title: Calculate
   contents:
-  - define_clonotypes
   - starts_with("calc_")
+  - define_clonotypes
 
 - title: Plotting
   contents:
-  - starts_with("plot_")
+  - plot_abundance
+  - plot_diversity
+  - plot_similarity
+  - plot_vdj_usage
+  - plot_features
+  - plot_vdj_feature
+  - plot_vdj
+  - plot_vdj_reads
+  - plot_cdr3_length
+  - plot_vdj_indels
   - djvdj_theme
 
 - title: Data

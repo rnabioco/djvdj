@@ -1,4 +1,4 @@
-#' Filter V(D)J data
+#' Filter V(D)J data in object
 #'
 #' Remove V(D)J data for chains/cells that do not satisfy the provided
 #' condition
@@ -21,28 +21,40 @@
 #'
 #' @examples
 #' # Only include V(D)J data for productive chains
-#' filter_vdj(vdj_so, productive)
+#' res <- filter_vdj(vdj_so, productive)
+#'
+#' head(res@meta.data, 1)
 #'
 #' # Only include V(D)J data for cells with paired chains
-#' filter_vdj(vdj_sce, paired)
+#' res <- filter_vdj(vdj_sce, paired)
+#'
+#' head(res@colData, 3)
 #'
 #' # Only include V(D)J data for cells with at least one heavy and one light chain
-#' filter_vdj(
+#' res <- filter_vdj(
 #'   vdj_so,
 #'   "IGH" %in% chains && any(c("IGK", "IGL") %in% chains)
 #' )
 #'
+#' head(res@meta.data, 3)
+#'
 #' # Only include V(D)J data for cells that have an IGH, IGK, and IGL chain
-#' filter_vdj(
+#' res <- filter_vdj(
 #'   vdj_sce,
 #'   all(c("IGH", "IGK", "IGL") %in% chains)
 #' )
 #'
-#' # Remove chains that only have 1 UMI for support
-#' filter_vdj(vdj_sce, umis > 1)
+#' head(res@colData, 1)
 #'
 #' # Only include V(D)J data for heavy chains
-#' filter_vdj(vdj_so, chains == "IGH")
+#' res <- filter_vdj(vdj_so, chains == "IGH")
+#'
+#' head(res@meta.data, 3)
+#'
+#' # Remove chains that only have 1 UMI for support
+#' res <- filter_vdj(vdj_sce, umis > 1)
+#'
+#' head(res@colData, 1)
 #'
 #' @export
 filter_vdj <- function(input, filt, vdj_cols = NULL, clonotype_col = "clonotype_id",

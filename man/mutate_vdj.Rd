@@ -49,36 +49,46 @@ flexibility than \code{\link[=summarize_vdj]{summarize_vdj()}}, but is less user
 }
 \examples{
 # Calculate mean reads and UMIs per cell
-mutate_vdj(
-  vdj_sce,
+res <- mutate_vdj(
+  vdj_so,
   mean_umis  = mean(umis),
   mean_reads = mean(reads)
 )
 
+head(res@meta.data, 3)
+
 # Calculate the total number of insertions + deletions for each chain
 # we have to wrap our expression in list() since a value is returned for
 # each chain
-mutate_vdj(
+res <- mutate_vdj(
   vdj_sce,
   indels = list(n_insertion + n_deletion)
 )
 
+head(res@colData, 3)
+
 # Create a new column showing the unique chains for each cell
-mutate_vdj(
-  vdj_sce,
+res <- mutate_vdj(
+  vdj_so,
   unique_chains = stringr::str_c(unique(chains), collapse = "_")
 )
 
+head(res@meta.data, 3)
+
 # Determine which cells have both an IGK and IGL chain
-mutate_vdj(
+res <- mutate_vdj(
   vdj_sce,
   both_light = all(c("IGK", "IGL") \%in\% chains)
 )
 
+head(res@colData, 1)
+
 # Determine which cells have multiple light chains
-mutate_vdj(
+res <- mutate_vdj(
   vdj_so,
   multi_light = sum(chains \%in\% c("IGK", "IGL")) > 1
 )
+
+head(res@meta.data, 3)
 
 }

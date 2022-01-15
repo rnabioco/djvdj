@@ -21,8 +21,9 @@ clonotypes}
 
 \item{clonotype_col}{Name of column to use for storing clonotype IDs}
 
-\item{filter_chains}{Columns to use for identifying productive full length
-chains when defining clonotypes. If NULL, all chains are used for defining
+\item{filter_chains}{Column(s) to use for filtering chains prior to defining
+clonotypes (e.g. productive, full_length). The column(s) must contain TRUE
+or FALSE for each chain. If NULL, all chains are used when defining
 clonotypes.}
 
 \item{sep}{Separator used for storing per cell V(D)J data}
@@ -31,5 +32,43 @@ clonotypes.}
 Single cell object or data.frame with added clonotype IDs
 }
 \description{
-Define clonotypes based on V(D)J data
+This will assign new clonotype IDs based on the combination of values
+present in the provided columns
+}
+\examples{
+# Define clonotypes using the CDR3 nucleotide sequence
+res <- define_clonotypes(
+  vdj_so,
+  vdj_cols = "cdr3_nt"
+)
+
+head(res@meta.data, 1)
+
+# Define clonotypes based on the combination of the CDR3 nucleotide sequence
+# and the V and J genes
+res <- define_clonotypes(
+  vdj_sce,
+  vdj_cols = c("cdr3_nt", "v_gene", "j_gene")
+)
+
+head(res@colData, 1)
+
+# Modify the name of the column used to store clonotype IDs
+res <- define_clonotypes(
+  vdj_so,
+  vdj_cols = "cdr3_nt",
+  clonotype_col = "NEW_clonotype_id"
+)
+
+head(res@meta.data, 1)
+
+# When defining clonotypes only use chains that are productive
+res <- define_clonotypes(
+  vdj_sce,
+  vdj_cols = "cdr3_nt",
+  filter_chains = "productive"
+)
+
+head(res@colData, 1)
+
 }

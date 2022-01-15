@@ -46,12 +46,12 @@ calc_vdj_usage(
 
 # Calculate gene usage separately for cell clusters
 calc_vdj_usage(
-  vdj_so,
+  vdj_sce,
   gene_cols = "v_gene",
   cluster_col = "orig.ident"
 )
 
-# Calculate gene usage for a specific chain
+# Calculate gene usage for a specific chain(s)
 calc_vdj_usage(
   vdj_so,
   gene_cols = "v_gene",
@@ -60,18 +60,8 @@ calc_vdj_usage(
 
 # Calculate paired usage of V(D)J segments
 calc_vdj_usage(
-  vdj_so,
+  vdj_sce,
   gene_cols = c("v_gene", "j_gene"),
 )
-
-# Using calc_vdj_usage outside of Seurat
-# SingleCellExperiment objects or data.frames containing V(D)J data are also
-# compatible. If a data.frame is provided, cell barcodes should be stored as
-# row names.
-calc_vdj_usage(vdj_sce, gene_cols = "v_gene")
-
-df <- vdj_so@meta.data
-
-calc_vdj_usage(df, gene_cols = "v_gene")
 
 }

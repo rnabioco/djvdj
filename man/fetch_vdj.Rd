@@ -2,7 +2,7 @@
 % Please edit documentation in R/mutate-vdj.R
 \name{fetch_vdj}
 \alias{fetch_vdj}
-\title{Fetch V(D)J data}
+\title{Fetch V(D)J data from object}
 \usage{
 fetch_vdj(
   input,

@@ -38,42 +38,30 @@ Calculate repertoire overlap
 }
 \examples{
 # Calculate repertoire overlap
-calc_similarity(
+res <- calc_similarity(
   vdj_so,
+  clonotype_col = "clonotype_id",
   cluster_col = "orig.ident",
   method = abdiv::jaccard
 )
 
+head(res@meta.data, 1)
+
 # Add a prefix to the new columns
-# this is useful if multiple repertoire similarity calculations are stored
-# in the meta.data
-calc_similarity(
-  vdj_so,
+# this is useful if multiple calculations are stored in the meta.data
+res <- calc_similarity(
+  vdj_sce,
   cluster_col = "orig.ident",
   prefix = "bcr_"
 )
+
+head(res@colData, 1)
 
 # Return a matrix instead of adding the results to the input object
 calc_similarity(
   vdj_so,
   cluster_col = "orig.ident",
   return_mat = TRUE
-)
-
-# Using calc_similarity outside of Seurat
-# SingleCellExperiment objects or data.frames containing V(D)J data are also
-# compatible. If a data.frame is provided, cell barcodes should be stored as
-# row names.
-calc_similarity(
-  vdj_sce,
-  cluster_col = "orig.ident"
-)
-
-df <- vdj_so@meta.data
-
-calc_similarity(
-  df,
-  cluster_col = "orig.ident"
 )
 
 }

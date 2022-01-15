@@ -51,7 +51,7 @@ plot_diversity(vdj_so)
 
 # Specify method to use for calculating repertoire diversity
 plot_diversity(
-  vdj_so,
+  vdj_sce,
   method = abdiv::shannon
 )
 
@@ -63,7 +63,7 @@ plot_diversity(
 
 # Plot multiple diversity metrics
 plot_diversity(
-  vdj_so,
+  vdj_sce,
   cluster_col = "orig.ident",
   method = list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 )
@@ -77,7 +77,7 @@ plot_diversity(
 
 # Specify order to use for plotting cell clusters
 plot_diversity(
-  vdj_so,
+  vdj_sce,
   cluster_col = "orig.ident",
   plot_lvls = c("avid_2", "avid_1")
 )

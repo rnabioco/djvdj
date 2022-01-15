@@ -2,7 +2,7 @@
 % Please edit documentation in R/filter-vdj.R
 \name{filter_vdj}
 \alias{filter_vdj}
-\title{Filter V(D)J data}
+\title{Filter V(D)J data in object}
 \usage{
 filter_vdj(
   input,
@@ -41,27 +41,39 @@ condition
 }
 \examples{
 # Only include V(D)J data for productive chains
-filter_vdj(vdj_so, productive)
+res <- filter_vdj(vdj_so, productive)
+
+head(res@meta.data, 1)
 
 # Only include V(D)J data for cells with paired chains
-filter_vdj(vdj_sce, paired)
+res <- filter_vdj(vdj_sce, paired)
+
+head(res@colData, 3)
 
 # Only include V(D)J data for cells with at least one heavy and one light chain
-filter_vdj(
+res <- filter_vdj(
   vdj_so,
   "IGH" \%in\% chains && any(c("IGK", "IGL") \%in\% chains)
 )
 
+head(res@meta.data, 3)
+
 # Only include V(D)J data for cells that have an IGH, IGK, and IGL chain
-filter_vdj(
+res <- filter_vdj(
   vdj_sce,
   all(c("IGH", "IGK", "IGL") \%in\% chains)
 )
 
-# Remove chains that only have 1 UMI for support
-filter_vdj(vdj_sce, umis > 1)
+head(res@colData, 1)
 
 # Only include V(D)J data for heavy chains
-filter_vdj(vdj_so, chains == "IGH")
+res <- filter_vdj(vdj_so, chains == "IGH")
+
+head(res@meta.data, 3)
+
+# Remove chains that only have 1 UMI for support
+res <- filter_vdj(vdj_sce, umis > 1)
+
+head(res@colData, 1)
 
 }
