@@ -60,7 +60,7 @@
 #'   return_df = TRUE
 #' )
 #'
-#' head(res)
+#' head(res, 1)
 #'
 #' @export
 calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,

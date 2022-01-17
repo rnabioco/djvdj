@@ -83,6 +83,6 @@ res <- calc_diversity(
   return_df = TRUE
 )
 
-head(res)
+head(res, 1)
 
 }
