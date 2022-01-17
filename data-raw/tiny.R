@@ -7,6 +7,7 @@ library(Rsamtools)
 
 # Parameters
 dat_dir <- "~/Projects/Smith_AVIDseq"
+out_dir <- "inst/extdata/"
 
 mat_path <- c(
   str_c(dat_dir, "/results/JH179_GEX-JH181_ADT_JH181_HTO/outs/filtered_feature_bc_matrix"),
@@ -14,11 +15,17 @@ mat_path <- c(
 )
 
 bcr_path <- c(
-  str_c(dat_dir, "/results/JH180_BCR/outs"),
-  str_c(dat_dir, "/results/JH180_BCR/outs")
+  str_c(dat_dir, "/results/JH180_BCR/outs/"),
+  str_c(dat_dir, "/results/JH180_BCR/outs/")
 )
 
-tcr_path <- str_c(dat_dir, "/results/JH180_TCR/outs")
+tcr_path <- str_c(dat_dir, "/results/JH180_TCR/outs/")
+
+
+
+
+
+### PROCESS GEX ----
 
 # Create Suerat object
 mat <- Read10X(mat_path)
@@ -33,7 +40,7 @@ tiny_so <- mat$`Gene Expression` %>%
 # Identify cells for tiny objects
 # want to include some cells with non-productive chains
 bcr_contigs <- bcr_path %>%
-  map(str_c, "/filtered_contig_annotations.csv") %>%
+  map(str_c, "filtered_contig_annotations.csv") %>%
   map(read_csv)
 
 bad_chain_cells <- bcr_contigs[[1]] %>%
@@ -55,6 +62,8 @@ tiny_cells <- all_cells[all_cells %in% tiny_cells]
 
 # Subset object
 # keep cell order the same
+set.seed(100)
+
 tiny_so <- tiny_so %>%
   subset(
     features = sample(rownames(tiny_so), 200),
@@ -63,10 +72,6 @@ tiny_so <- tiny_so %>%
 
 # Normalize object
 tiny_so <- tiny_so %>%
-  PercentageFeatureSet(
-    pattern  = "^mt-",
-    col.name = "Percent_mito"
-  ) %>%
   NormalizeData() %>%
   FindVariableFeatures() %>%
   ScaleData()
@@ -90,12 +95,18 @@ tiny_so <- tiny_so %>%
 tiny_so <- tiny_so %>%
   AddMetaData(FetchData(., c("UMAP_1", "UMAP_2")))
 
+
+
+
+
+### FORMAT BCR DATA ----
+
 # Format and write BCR contig data
 bcr_contigs <- bcr_contigs %>%
   imap(~ filter(.x, str_c(.y, "_", barcode) %in% tiny_cells))
 
 names(bcr_contigs) <- str_c("bcr_", 1:2) %>%
-  str_c("inst/extdata/", ., "/outs/filtered_contig_annotations.csv")
+  str_c(out_dir, ., "/outs/filtered_contig_annotations.csv")
 
 clones <- bcr_contigs %>%
   map(~ unique(.x$raw_clonotype_id)) %>%
@@ -109,7 +120,7 @@ bcr_bam <- bcr_path %>%
   str_c("/concat_ref.bam")
 
 names(bcr_bam) <- str_c("bcr_", 1:2) %>%
-  str_c("inst/extdata/", ., "/outs/concat_ref.bam")
+  str_c(out_dir, ., "/outs/concat_ref.bam")
 
 filt_fn <- function(x) {
   clns <- x$rname %>%
@@ -127,13 +138,23 @@ names(bcr_bam) %>%
   str_c(".bai") %>%
   file.remove()
 
-# Format low overlap BCR contig data
-# this is to test low overlap warning
-bad_path <- "inst/extdata/bad_bcr_1/outs/"
+
+
+
+
+### FORMAT BAD DATA ----
+
+# Format bad BCR contig data
+# this is to test:
+# * low overlap warning
+# * missing clonotype_id
+# * non-overlapping indel data
+bad_path <- str_c(out_dir, "bad_bcr_1/outs/")
 
 bad_contigs <- bcr_contigs[[1]] %>%
   head(1) %>%
-  bind_rows(bcr_contigs[[2]])
+  bind_rows(bcr_contigs[[2]]) %>%
+  mutate(raw_clonotype_id = ifelse(rownames(.) == 1, NA, raw_clonotype_id))
 
 bad_contigs <- set_names(
   list(bad_contigs),
@@ -143,8 +164,9 @@ bad_contigs <- set_names(
 bad_contigs %>%
   iwalk(write_csv)
 
+# Use TCR concat_ref.bam
 bad_bam <- set_names(
-  bcr_bam[[1]],
+  str_c(tcr_path, "concat_ref.bam"),
   str_c(bad_path, "concat_ref.bam")
 )
 
@@ -155,24 +177,31 @@ names(bad_bam) %>%
   str_c(".bai") %>%
   file.remove()
 
+
+
+
+
+### FORMAT TCR DATA ----
+
 # Format and write TCR contig data
 # add some NAs to raw_clonotype_id for testing
 tcr_contigs <- tcr_path %>%
-  str_c("/filtered_contig_annotations.csv") %>%
+  str_c("filtered_contig_annotations.csv") %>%
   read_csv()
 
 tcr_contigs <- tcr_contigs %>%
-  filter(str_c("1_", barcode) %in% tiny_cells) %>%
-  mutate(raw_clonotype_id = ifelse(rownames(.) == 1, NA, raw_clonotype_id))
+  filter(str_c("1_", barcode) %in% tiny_cells)
 
 tcr_contigs %>%
-  write_csv("inst/extdata/tcr_1/outs/filtered_contig_annotations.csv")
+  write_csv(str_c(out_dir, "tcr_1/outs/filtered_contig_annotations.csv"))
 
 # Format and write TCR bam
-tcr_bam <- tcr_path %>%
-  str_c("/concat_ref.bam")
+clones <- unique(tcr_contigs$raw_clonotype_id)
 
-names(tcr_bam) <- str_c("inst/extdata/tcr_1/outs/concat_ref.bam")
+tcr_bam <- set_names(
+  str_c(tcr_path, "concat_ref.bam"),
+  str_c(out_dir, "tcr_1/outs/concat_ref.bam")
+)
 
 tcr_bam %>%
   imap(filterBam, filter = filt_rules)
@@ -180,6 +209,12 @@ tcr_bam %>%
 names(tcr_bam) %>%
   str_c(".bai") %>%
   file.remove()
+
+
+
+
+
+### SAVE OBJECTS ----
 
 # Add V(D)J data to Seurat object
 vdj_so <- tiny_so %>%
