@@ -3,15 +3,15 @@
 #' @param input Object containing single cell data, if set to NULL a data.frame
 #' containing V(D)J results will be returned
 #' @param vdj_dir Directory containing the output from cellranger vdj. A vector
-#' or named vector can be given to load data from several runs. If a named
+#' or named vector can be given to load data from multiple runs. If a named
 #' vector is given, the cell barcodes will be prefixed with the provided names.
-#' This mimics the behavior of the Seurat::Read10X. Cell barcode prefixes can
+#' This mimics the behavior of Seurat::Read10X(). Cell barcode prefixes can
 #' also be provided using the cell_prefix argument.
 #' @param prefix Prefix to add to new columns
 #' @param cell_prefix Prefix to add to cell barcodes, this is helpful when
-#' loading data from multiple runs into a single object. If set to NULL, cell
-#' barcode prefixes are automatically generated in a similar manner as
-#' Seurat::Read10X.
+#' loading data from multiple runs into a single object. If NULL, cell barcode
+#' prefixes are automatically generated in a similar manner as
+#' Seurat::Read10X().
 #'
 #' For the V(D)J data to be successfully added to the object, the cell prefixes
 #' must match the prefixes that are already present in the object. If the cell
@@ -38,9 +38,10 @@
 #' data.
 #'
 #' @param include_indels Include the number of insertions/deletions for each
-#' chain. This requires the concat_ref.bam file from Cell Ranger to be present
-#' in vdj_dir. If include_indels is TRUE, filter_chains is also automatically
-#' set TRUE since indel data is only available for productive chains.
+#' chain. This requires the concat_ref.bam file from cellranger vdj to be
+#' present the directory provided to vdj_dir. If include_indels is TRUE,
+#' filter_chains is also automatically set TRUE since indel data is only
+#' available for productive chains.
 #' @param sep Separator to use for storing per cell V(D)J data
 #' @return Single cell object or data.frame with added V(D)J data
 #'
@@ -417,8 +418,8 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   # If vdj_dir is not named, check cell_prefix
   if (is.null(names(res))) {
 
-    # If no cell prefixes are provided, auto generate
-    # do not add prefix if there is only
+    # If no prefixes, auto-generate, do not add prefix if only one sample
+    # Read10X() will add the prefix, "1_", "2_", "3_", etc. for each sample
     if (is.null(cell_prefix)) {
       cell_prefix <- ""
 
