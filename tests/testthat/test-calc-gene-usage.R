@@ -4,7 +4,7 @@ df_1 <- vdj_so@meta.data
 df_2 <- vdj_so@meta.data %>%
   as_tibble(rownames = ".cell_id")
 
-# Check all calc_vdj_usage arguments
+# Check all calc_gene_usage arguments
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce, df_1, df_2),
   gene_cols   = list("v_gene", "d_gene", "j_gene", "c_gene", c("v_gene", "j_gene")),
@@ -15,16 +15,16 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = calc_vdj_usage,
+  .fn     = calc_gene_usage,
   desc    = "calc_usage args",
   chk     = expr(expect_s3_class(.res, "tbl"))
 )
 
-# Check calc_vdj_usage calculations
-.check_vdj_usage <- function(input, genes, chain = NULL) {
+# Check calc_gene_usage calculations
+.check_gene_usage <- function(input, genes, chain = NULL) {
 
-  # calc_vdj_usage results
-  res <- calc_vdj_usage(
+  # calc_gene_usage results
+  res <- calc_gene_usage(
     input,
     gene_cols = genes,
     chain = chain
@@ -98,7 +98,7 @@ test_all_args(
   expect_identical((x / n_cells) * 100, pct)
 }
 
-test_that("calc_vdj_usage check calcs", {
+test_that("calc_gene_usage check calcs", {
 
   vdj_genes <- c(
     "v_gene", "d_gene",
@@ -113,28 +113,28 @@ test_that("calc_vdj_usage check calcs", {
 
   purrr::walk(ins, ~ {
     vdj_genes %>%
-      purrr::walk(.check_vdj_usage, input = .x)
+      purrr::walk(.check_gene_usage, input = .x)
   })
 
   purrr::walk(ins, ~ {
     vdj_genes %>%
-      purrr::walk(.check_vdj_usage, input = .x, chain = "IGH")
+      purrr::walk(.check_gene_usage, input = .x, chain = "IGH")
   })
 
   purrr::walk(ins, ~ {
     vdj_genes %>%
-      purrr::walk(.check_vdj_usage, input = .x, chain = c("IGH", "IGK"))
+      purrr::walk(.check_gene_usage, input = .x, chain = c("IGH", "IGK"))
   })
 })
 
 # Bad vdj gene
-test_that("calc_vdj_usage bad gene", {
+test_that("calc_gene_usage bad gene", {
 
   ins <- list(vdj_so, vdj_sce, vdj_so@meta.data)
 
   purrr::walk(ins, ~ {
     expect_error(
-      calc_vdj_usage(.x, "BAD"),
+      calc_gene_usage(.x, "BAD"),
       "Column .+ doesn't exist"
     )
   })

@@ -278,12 +278,12 @@ plot_similarity(
 
 ## Gene Usage
 
-The V(D)J data imported from Cell Ranger also includes the V(D)J identified for each chain. The function `calc_vdj_usage()` will calculate the fraction of cells expressing each V(D)J gene and produce a table summarizing the results. The `chain` argument can be used to specify the chain(s) to use for calculating gene usage, by default results for all chains will be included.
+The V(D)J data imported from Cell Ranger also includes the V(D)J identified for each chain. The function `calc_gene_usage()` will calculate the fraction of cells expressing each V(D)J gene and produce a table summarizing the results. The `chain` argument can be used to specify the chain(s) to use for calculating gene usage, by default results for all chains will be included.
 
 In this example we are summarizing the usage of different V segments for the IGH chain
 
 ```{r}
-calc_vdj_usage(
+calc_gene_usage(
   input       = so_avid,
   gene_cols   = "v_gene",                   # Column containing genes
   cluster_col = "mouse",                    # Column containing cell clusters to compare
@@ -294,10 +294,10 @@ calc_vdj_usage(
 
 <br>
 
-The function `plot_vdj_usage()` can be used visualize gene usage across clusters. Using the `yaxis` argument, the percentage of cells (percent) or total number of cells (frequency) expressing each gene can be shown. The number of top genes (most frequent) to plot can also be specified with `n_genes`.
+The function `plot_gene_usage()` can be used visualize gene usage across clusters. Using the `yaxis` argument, the percentage of cells (percent) or total number of cells (frequency) expressing each gene can be shown. The number of top genes (most frequent) to plot can also be specified with `n_genes`.
 
 ```{r "gene_usage_1", fig.width = 11, fig.height = 3.5}
-plot_vdj_usage(
+plot_gene_usage(
   input       = so_avid,
   gene_cols   = "v_gene",                   # Column(s) containing genes
   type        = "bar",                      # Type of plot, 'heatmap' or 'bar'
@@ -312,7 +312,7 @@ plot_vdj_usage(
 By passing multiple columns to `gene_cols`, the frequency of V-J gene pairings can also be summarized. In this example we are only looking at IGK chains.
 
 ```{r, eval = F}
-calc_vdj_usage(
+calc_gene_usage(
   input       = so_avid,
   gene_cols   = c("v_gene", "j_gene"),      # Column(s) containing genes
   cluster_col = "mouse",                    # Column containing cell clusters to compare
@@ -322,10 +322,10 @@ calc_vdj_usage(
 
 <br>
 
-When multiple gene columns are passed to `plot_vdj_usage()`, a list of plots will be returned, one for each cluster in the `cluster_col` column.
+When multiple gene columns are passed to `plot_gene_usage()`, a list of plots will be returned, one for each cluster in the `cluster_col` column.
 
 ```{r "gene_usage_2", fig.width = 12, fig.height = 2.5}
-ggs <- plot_vdj_usage(
+ggs <- plot_gene_usage(
   input       = so_avid,
   gene_cols   = c("v_gene", "j_gene"),      # Column(s) containing genes
   cluster_col = "mouse",                    # Column containing cell clusters to compare
