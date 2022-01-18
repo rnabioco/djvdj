@@ -51,7 +51,7 @@ calc_vdj_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
     sep_cols <- c(sep_cols, chain_col)
   }
 
-  vdj_cols <- c(".cell_id", cluster_col, sep_cols)
+  vdj_cols <- c(CELL_COL, cluster_col, sep_cols)
 
   meta <- .get_meta(input)
   meta <- dplyr::select(meta, all_of(vdj_cols))
@@ -92,8 +92,8 @@ calc_vdj_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 
   res <- dplyr::summarize(
     res,
-    n_cells = dplyr::n_distinct(meta$.cell_id),
-    freq    = dplyr::n_distinct(.data$.cell_id),
+    n_cells = dplyr::n_distinct(meta[[CELL_COL]]),
+    freq    = dplyr::n_distinct(!!sym(CELL_COL)),
     .groups = "drop"
   )
 

@@ -93,7 +93,7 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 
   vdj <- dplyr::summarize(
     vdj,
-    .n      = dplyr::n_distinct(.data$.cell_id),
+    .n      = dplyr::n_distinct(!!sym(CELL_COL)),
     .groups = "drop"
   )
 

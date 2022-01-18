@@ -58,7 +58,7 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
 
   vdj <- dplyr::select(
     vdj,
-    all_of(c(".cell_id", clonotype_col, cluster_col))
+    all_of(c(CELL_COL, clonotype_col, cluster_col))
   )
 
   vdj <- dplyr::group_by(
@@ -68,7 +68,7 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
 
   vdj <- dplyr::summarize(
     vdj,
-    n       = dplyr::n_distinct(.data$.cell_id),
+    n       = dplyr::n_distinct(!!sym(CELL_COL)),
     .groups = "drop"
   )
 

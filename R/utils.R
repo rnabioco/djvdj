@@ -18,6 +18,16 @@ NULL
 NULL
 
 
+#' Global variables
+#'
+#' - SEP is the separator to use for storing per-chain V(D)J data
+#' - CELL_COL is the column name to use for storing cell barcodes
+#'
+#' @noRd
+SEP <- ";"
+CELL_COL <- ".cell_id"
+
+
 #' Helper to test all combinations of provided arguments
 #'
 #' @param arg_lst Named list of arguments to test
@@ -146,7 +156,7 @@ NULL
   UseMethod(".add_meta", input)
 }
 
-.add_meta.default <- function(input, meta, row_col = ".cell_id") {
+.add_meta.default <- function(input, meta, row_col = CELL_COL) {
   if (!is.data.frame(meta)) {
     stop("meta.data must be a data.frame.")
   }
@@ -154,7 +164,7 @@ NULL
   tibble::column_to_rownames(meta, row_col)
 }
 
-.add_meta.Seurat <- function(input, meta, row_col = ".cell_id") {
+.add_meta.Seurat <- function(input, meta, row_col = CELL_COL) {
   meta <- .prepare_meta(input, meta, row_col)
 
   input@meta.data <- meta
@@ -162,7 +172,7 @@ NULL
   input
 }
 
-.add_meta.SingleCellExperiment <- function(input, meta, row_col = ".cell_id") {
+.add_meta.SingleCellExperiment <- function(input, meta, row_col = CELL_COL) {
   meta <- .prepare_meta(input, meta, row_col)
 
   input@colData <- S4Vectors::DataFrame(meta)
@@ -213,17 +223,17 @@ NULL
   UseMethod(".get_meta", input)
 }
 
-.get_meta.default <- function(input, row_col = ".cell_id") {
+.get_meta.default <- function(input, row_col = CELL_COL) {
 
   .to_tibble(input, row_col)
 }
 
-.get_meta.Seurat <- function(input, row_col = ".cell_id") {
+.get_meta.Seurat <- function(input, row_col = CELL_COL) {
 
   .get_meta(input@meta.data, row_col)
 }
 
-.get_meta.SingleCellExperiment <- function(input, row_col = ".cell_id") {
+.get_meta.SingleCellExperiment <- function(input, row_col = CELL_COL) {
   dat <- SingleCellExperiment::colData(input)
   dat <- as.data.frame(dat)
 
@@ -261,7 +271,7 @@ NULL
 #' @param by Columns to use for merging
 #' @return Object with added meta.data
 #' @noRd
-.merge_meta <- function(input, meta, by = ".cell_id") {
+.merge_meta <- function(input, meta, by = CELL_COL) {
 
   if (is.null(input)) {
     return(meta)
@@ -358,31 +368,33 @@ NULL
   typs <- tidyr::unnest(typs, everything())
   typs <- purrr::map(typs, readr::guess_parser)
 
-  typs <- purrr::map(typs, ~ paste0("as.", .x))
+  typs <- purrr::map_chr(typs, ~ paste0("as.", .x))
 
   # Coerce columns to correct types
   # this is a major performance bottleneck
   # as.double(x) is much faster than as(x, "double")
   # slower way::
-  #   purrr::iwalk(typs, ~ {
-  #     typ  <-  .x
-  #     clmn <-  sym(.y)
-  #     res  <-  dplyr::rowwise(res)
-  #     res  <-  dplyr::mutate(res, !!clmn := list(as(!!clmn, typ)))
-  #     res  <<- dplyr::ungroup(res)
-  # })
+  #   res  <- dplyr::rowwise(res)
+  #   for (i in seq_along(typs)) {
+  #     typ  <- typs[i]
+  #     fn   <- unlist(typ, use.names = FALSE)
+  #     clmn <- sym(names(typ))
+  #     res  <- dplyr::mutate(res, !!clmn := list(as(!!clmn, typ)))
+  #   }
+  #   res  <- dplyr::ungroup(res)
 
   res <- dplyr::rowwise(res)
 
-  purrr::iwalk(typs, ~ {
-    fn   <- .x
-    clmn <- sym(.y)
+  for (i in seq_along(typs)) {
+    typ  <- typs[i]
+    fn   <- unname(typ)
+    clmn <- sym(names(typ))
 
-    res <<- dplyr::mutate(
+    res <- dplyr::mutate(
       res,
       !!clmn := list(do.call(fn, list(x = !!clmn)))
     )
-  })
+  }
 
   res <- dplyr::ungroup(res)
 
@@ -409,7 +421,7 @@ NULL
 #' @return List with two vectors, one containing columns with V(D)J data and
 #' the other containing columns where separator has been detected.
 #' @noRd
-.get_vdj_cols <- function(df_in, clone_col, cols_in, sep, cell_col = ".cell_id") {
+.get_vdj_cols <- function(df_in, clone_col, cols_in, sep, cell_col = CELL_COL) {
 
   # If clone_col and cols_in are both NULL, use all columns
   if (is.null(clone_col) && is.null(cols_in)) {
@@ -464,3 +476,4 @@ NULL
 
   res
 }
+

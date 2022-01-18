@@ -56,13 +56,13 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 
   vdj <- dplyr::select(
     vdj,
-    .data$.cell_id, all_of(c(cluster_col, clonotype_col))
+    !!sym(CELL_COL), all_of(c(cluster_col, clonotype_col))
   )
 
   # Calculate clonotype abundance
   vdj <- .calc_abund(
     df_in     = vdj,
-    cell_col  = ".cell_id",
+    cell_col  = CELL_COL,
     clone_col = clonotype_col,
     clust_col = cluster_col
   )
@@ -78,10 +78,10 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
     paste0(prefix, "clone_", new_cols)
   )
 
-  vdj <- select(vdj, .data$.cell_id, !!!syms(new_cols))
+  vdj <- select(vdj, !!sym(CELL_COL), !!!syms(new_cols))
 
   # Format results
-  res <- dplyr::left_join(meta, vdj, by = ".cell_id")
+  res <- dplyr::left_join(meta, vdj, by = CELL_COL)
 
   if (return_df) {
     input <- meta
@@ -244,7 +244,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
     dat_col <- ".clone_freq"
   }
 
-  plt_dat <- tibble::as_tibble(plt_dat, rownames = ".cell_id")
+  plt_dat <- tibble::as_tibble(plt_dat, rownames = CELL_COL)
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
 
   abund_cols <- c(cluster_col, clonotype_col, dat_col)

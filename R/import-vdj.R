@@ -714,7 +714,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   }
 
   obj_meta  <- .get_meta(input)
-  obj_cells <- obj_meta$.cell_id
+  obj_cells <- obj_meta[[CELL_COL]]
   met_cells <- unique(meta$barcode)
 
   n_overlap   <- length(obj_cells[obj_cells %in% met_cells])
