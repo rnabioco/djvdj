@@ -17,7 +17,7 @@
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div id="navbar" class="collapse navbar-collapse ms-2">
+    <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item">
   <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
@@ -77,17 +77,17 @@
 containing V(D)J results will be returned</p></dd>
 <dt>vdj_dir</dt>
 <dd><p>Directory containing the output from cellranger vdj. A vector
-or named vector can be given to load data from several runs. If a named
+or named vector can be given to load data from multiple runs. If a named
 vector is given, the cell barcodes will be prefixed with the provided names.
-This mimics the behavior of the Seurat::Read10X. Cell barcode prefixes can
+This mimics the behavior of Seurat::Read10X(). Cell barcode prefixes can
 also be provided using the cell_prefix argument.</p></dd>
 <dt>prefix</dt>
 <dd><p>Prefix to add to new columns</p></dd>
 <dt>cell_prefix</dt>
 <dd><p>Prefix to add to cell barcodes, this is helpful when
-loading data from multiple runs into a single object. If set to NULL, cell
-barcode prefixes are automatically generated in a similar manner as
-Seurat::Read10X.</p>
+loading data from multiple runs into a single object. If NULL, cell barcode
+prefixes are automatically generated in a similar manner as
+Seurat::Read10X().</p>
 <p>For the V(D)J data to be successfully added to the object, the cell prefixes
 must match the prefixes that are already present in the object. If the cell
 prefixes are incorrect, import_vdj will be unable to assign the V(D)J data
@@ -112,9 +112,10 @@ Set to NULL (default) to use the clonotype IDs already present in the input
 data.</p></dd>
 <dt>include_indels</dt>
 <dd><p>Include the number of insertions/deletions for each
-chain. This requires the concat_ref.bam file from Cell Ranger to be present
-in vdj_dir. If include_indels is TRUE, filter_chains is also automatically
-set TRUE since indel data is only available for productive chains.</p></dd>
+chain. This requires the concat_ref.bam file from cellranger vdj to be
+present the directory provided to vdj_dir. If include_indels is TRUE,
+filter_chains is also automatically set TRUE since indel data is only
+available for productive chains.</p></dd>
 <dt>sep</dt>
 <dd><p>Separator to use for storing per cell V(D)J data</p></dd>
 </dl></div>
@@ -131,25 +132,45 @@ set TRUE since indel data is only available for productive chains.</p></dd>
 <span class="r-in">  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/bcr_2"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">)</span></span>
 <span class="r-in"></span>
-<span class="r-in"><span class="fu">import_vdj</span><span class="op">(</span><span class="va">tiny_so</span>, <span class="va">vdj_dir</span><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 204 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 67 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
+<span class="r-in"><span class="va">vdj_so</span> <span class="op">&lt;-</span> <span class="fu">import_vdj</span><span class="op">(</span><span class="va">tiny_so</span>, <span class="va">vdj_dir</span><span class="op">)</span></span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">vdj_so</span><span class="op">@</span><span class="va">meta.data</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1     avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters   UMAP_1     UMAP_2 clonotype_id   v_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1 2.561658 -0.6746224   clonotype1 IGKV5-43</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      d_gene j_gene c_gene chains isotype        cdr3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1   None  IGKJ2   IGKC    IGK    None CQQSNSWPYTF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                cdr3_nt reads umis productive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1 TGTCAACAGAGTAACAGCTGGCCGTACACGTTC  1054   70       TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      full_length paired n_insertion n_deletion n_mismatch</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1        TRUE  FALSE           0          4          2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      cdr3_length cdr3_nt_length n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1          11             33        1</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># Specifying cell prefixes</span></span>
 <span class="r-in"><span class="co"># if cell prefixes are not specified when loading multiple datasets,</span></span>
 <span class="r-in"><span class="co"># prefixes will be automatically generated in a similar manner as</span></span>
 <span class="r-in"><span class="co"># Seurat::Read10X</span></span>
-<span class="r-in"><span class="fu">import_vdj</span><span class="op">(</span></span>
+<span class="r-in"><span class="va">vdj_so</span> <span class="op">&lt;-</span> <span class="fu">import_vdj</span><span class="op">(</span></span>
 <span class="r-in">  <span class="va">tiny_so</span>,</span>
 <span class="r-in">  vdj_dir <span class="op">=</span> <span class="va">vdj_dir</span>,</span>
 <span class="r-in">  cell_prefix <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1_"</span>, <span class="st">"2_"</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 204 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 67 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">vdj_so</span><span class="op">@</span><span class="va">meta.data</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1     avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters   UMAP_1     UMAP_2 clonotype_id   v_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1 2.561658 -0.6746224   clonotype1 IGKV5-43</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      d_gene j_gene c_gene chains isotype        cdr3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1   None  IGKJ2   IGKC    IGK    None CQQSNSWPYTF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                cdr3_nt reads umis productive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1 TGTCAACAGAGTAACAGCTGGCCGTACACGTTC  1054   70       TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      full_length paired n_insertion n_deletion n_mismatch</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1        TRUE  FALSE           0          4          2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      cdr3_length cdr3_nt_length n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1          11             33        1</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># Specifying cell prefixes using vector names</span></span>
 <span class="r-in"><span class="co"># if a named vector is passed, the names will be used as the cell prefixes</span></span>
@@ -158,59 +179,105 @@ set TRUE since indel data is only available for productive chains.</p></dd>
 <span class="r-in">  <span class="st">"2_"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/bcr_2"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">)</span></span>
 <span class="r-in"></span>
-<span class="r-in"><span class="fu">import_vdj</span><span class="op">(</span><span class="va">tiny_so</span>, <span class="va">vdj_dir</span><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 204 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 67 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
+<span class="r-in"><span class="va">vdj_so</span> <span class="op">&lt;-</span> <span class="fu">import_vdj</span><span class="op">(</span><span class="va">tiny_so</span>, <span class="va">vdj_dir</span><span class="op">)</span></span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">vdj_so</span><span class="op">@</span><span class="va">meta.data</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1     avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters   UMAP_1     UMAP_2 clonotype_id   v_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1 2.561658 -0.6746224   clonotype1 IGKV5-43</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      d_gene j_gene c_gene chains isotype        cdr3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1   None  IGKJ2   IGKC    IGK    None CQQSNSWPYTF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                cdr3_nt reads umis productive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1 TGTCAACAGAGTAACAGCTGGCCGTACACGTTC  1054   70       TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      full_length paired n_insertion n_deletion n_mismatch</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1        TRUE  FALSE           0          4          2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      cdr3_length cdr3_nt_length n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1          11             33        1</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># Only include V(D)J data for productive full length chains</span></span>
-<span class="r-in"><span class="fu">import_vdj</span><span class="op">(</span></span>
+<span class="r-in"><span class="va">vdj_so</span> <span class="op">&lt;-</span> <span class="fu">import_vdj</span><span class="op">(</span></span>
 <span class="r-in">  <span class="va">tiny_so</span>,</span>
 <span class="r-in">  vdj_dir <span class="op">=</span> <span class="va">vdj_dir</span>,</span>
 <span class="r-in">  filter_chains <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 204 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 67 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">vdj_so</span><span class="op">@</span><span class="va">meta.data</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1     avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters   UMAP_1     UMAP_2 clonotype_id   v_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1 2.561658 -0.6746224   clonotype1 IGKV5-43</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      d_gene j_gene c_gene chains isotype        cdr3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1   None  IGKJ2   IGKC    IGK    None CQQSNSWPYTF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                cdr3_nt reads umis productive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1 TGTCAACAGAGTAACAGCTGGCCGTACACGTTC  1054   70       TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      full_length paired n_insertion n_deletion n_mismatch</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1        TRUE  FALSE           0          4          2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      cdr3_length cdr3_nt_length n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1          11             33        1</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># Only include V(D)J data for cells with paired chains</span></span>
-<span class="r-in"><span class="fu">import_vdj</span><span class="op">(</span></span>
+<span class="r-in"><span class="va">vdj_so</span> <span class="op">&lt;-</span> <span class="fu">import_vdj</span><span class="op">(</span></span>
 <span class="r-in">  <span class="va">tiny_so</span>,</span>
 <span class="r-in">  vdj_dir <span class="op">=</span> <span class="va">vdj_dir</span>,</span>
 <span class="r-in">  filter_paired <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 204 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 67 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">vdj_so</span><span class="op">@</span><span class="va">meta.data</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1     avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters   UMAP_1     UMAP_2 clonotype_id v_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1 2.561658 -0.6746224         &lt;NA&gt;   &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      d_gene j_gene c_gene chains isotype cdr3 cdr3_nt reads</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt; &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      umis productive full_length paired n_insertion n_deletion</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1 &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;     NA        &lt;NA&gt;       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      n_mismatch cdr3_length cdr3_nt_length n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1       &lt;NA&gt;        &lt;NA&gt;           &lt;NA&gt;       NA</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># Defining clonotypes</span></span>
 <span class="r-in"><span class="co"># this is useful if the original clonotype IDs are not consistent across</span></span>
 <span class="r-in"><span class="co"># datasets, i.e. clonotype1 is not the same for all samples</span></span>
-<span class="r-in"><span class="fu">import_vdj</span><span class="op">(</span></span>
+<span class="r-in"><span class="va">vdj_so</span> <span class="op">&lt;-</span> <span class="fu">import_vdj</span><span class="op">(</span></span>
 <span class="r-in">  <span class="va">tiny_so</span>,</span>
 <span class="r-in">  vdj_dir <span class="op">=</span> <span class="va">vdj_dir</span>,</span>
 <span class="r-in">  define_clonotypes <span class="op">=</span> <span class="st">"cdr3_gene"</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 204 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 67 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
 <span class="r-in"></span>
-<span class="r-in"><span class="co"># Include the number of indels for each chain</span></span>
-<span class="r-in"><span class="co"># by default, this information will be included if the file concat_ref.bam</span></span>
-<span class="r-in"><span class="co"># is present, omit indel information by setting include_indels to FALSE</span></span>
-<span class="r-in"><span class="fu">import_vdj</span><span class="op">(</span></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">vdj_so</span><span class="op">@</span><span class="va">meta.data</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1     avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters   UMAP_1     UMAP_2 clonotype_id   v_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1 2.561658 -0.6746224  clonotype16 IGKV5-43</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      d_gene j_gene c_gene chains isotype        cdr3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1   None  IGKJ2   IGKC    IGK    None CQQSNSWPYTF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                cdr3_nt reads umis productive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1 TGTCAACAGAGTAACAGCTGGCCGTACACGTTC  1054   70       TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      full_length paired n_insertion n_deletion n_mismatch</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1        TRUE  FALSE           0          4          2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      cdr3_length cdr3_nt_length n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1          11             33        1</span>
+<span class="r-in"></span>
+<span class="r-in"><span class="co"># Omit indel information for each chain</span></span>
+<span class="r-in"><span class="co"># this information will be included if the file concat_ref.bam is present</span></span>
+<span class="r-in"><span class="co"># to speed up data import, omit indel information</span></span>
+<span class="r-in"><span class="va">vdj_so</span> <span class="op">&lt;-</span> <span class="fu">import_vdj</span><span class="op">(</span></span>
 <span class="r-in">  <span class="va">tiny_so</span>,</span>
 <span class="r-in">  vdj_dir <span class="op">=</span> <span class="va">vdj_dir</span>,</span>
-<span class="r-in">  include_indels <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span class="r-in">  include_indels <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 204 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 67 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">vdj_so</span><span class="op">@</span><span class="va">meta.data</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1     avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters   UMAP_1     UMAP_2 clonotype_id   v_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1 2.561658 -0.6746224   clonotype1 IGKV5-43</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      d_gene j_gene c_gene chains isotype        cdr3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1   None  IGKJ2   IGKC    IGK    None CQQSNSWPYTF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                cdr3_nt reads umis productive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1 TGTCAACAGAGTAACAGCTGGCCGTACACGTTC  1054   70       TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      full_length paired cdr3_length cdr3_nt_length n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1        TRUE  FALSE          11             33        1</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># Loading both BCR and TCR data</span></span>
 <span class="r-in"><span class="co"># load each dataset separately and assign unique column names using the</span></span>
@@ -218,764 +285,96 @@ set TRUE since indel data is only available for productive chains.</p></dd>
 <span class="r-in"><span class="va">bcr_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/bcr_1"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span>
 <span class="r-in"><span class="va">tcr_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/tcr_1"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span>
 <span class="r-in"></span>
-<span class="r-in"><span class="va">new_so</span> <span class="op">&lt;-</span> <span class="fu">import_vdj</span><span class="op">(</span></span>
+<span class="r-in"><span class="va">vdj_so</span> <span class="op">&lt;-</span> <span class="fu">import_vdj</span><span class="op">(</span></span>
 <span class="r-in">  <span class="va">tiny_so</span>,</span>
 <span class="r-in">  vdj_dir     <span class="op">=</span> <span class="va">bcr_dir</span>,</span>
 <span class="r-in">  prefix      <span class="op">=</span> <span class="st">"bcr_"</span>,</span>
 <span class="r-in">  cell_prefix <span class="op">=</span> <span class="st">"1_"</span></span>
 <span class="r-in"><span class="op">)</span></span>
 <span class="r-in"></span>
-<span class="r-in"><span class="fu">import_vdj</span><span class="op">(</span></span>
-<span class="r-in">  <span class="va">new_so</span>,</span>
+<span class="r-in"><span class="va">vdj_so</span> <span class="op">&lt;-</span> <span class="fu">import_vdj</span><span class="op">(</span></span>
+<span class="r-in">  <span class="va">vdj_so</span>,</span>
 <span class="r-in">  vdj_dir     <span class="op">=</span> <span class="va">tcr_dir</span>,</span>
 <span class="r-in">  prefix      <span class="op">=</span> <span class="st">"tcr_"</span>,</span>
 <span class="r-in">  cell_prefix <span class="op">=</span> <span class="st">"1_"</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Some chains are missing indel data, check input files. Indel results will not be included in the object.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>1 contigs do not have an assigned clonotype_id, these contigs will be removed.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 204 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 67 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">vdj_so</span><span class="op">@</span><span class="va">meta.data</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1     avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters   UMAP_1     UMAP_2 bcr_clonotype_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1 2.561658 -0.6746224       clonotype1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      bcr_v_gene bcr_d_gene bcr_j_gene bcr_c_gene bcr_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1   IGKV5-43       None      IGKJ2       IGKC        IGK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      bcr_isotype    bcr_cdr3                       bcr_cdr3_nt</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1        None CQQSNSWPYTF TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      bcr_reads bcr_umis bcr_productive bcr_full_length</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1      1054       70           TRUE            TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      bcr_paired bcr_n_insertion bcr_n_deletion bcr_n_mismatch</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1      FALSE               0              4              2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      bcr_cdr3_length bcr_cdr3_nt_length bcr_n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1              11                 33            1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      tcr_clonotype_id       tcr_v_gene tcr_d_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1     clonotype116 TRAV12D-2;TRBV20  None;None</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                          tcr_j_gene tcr_c_gene tcr_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1 TRAJ40;TRBJ2-5  TRAC;None    TRA;TRB</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                          tcr_cdr3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1 CALSDRWDSGNYKYVF;CGAGAGDTQYF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                             tcr_cdr3_nt</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1 TGTGCTTTGAGTGATCGATGGGACTCAGGAAACTACAAATACGTCTTT;TGTGGTGCTGGGGCGGGGGACACCCAGTACTTT</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      tcr_reads tcr_umis tcr_productive tcr_full_length</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1   244;856      3;6      TRUE;TRUE       TRUE;TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      tcr_paired tcr_n_insertion tcr_n_deletion tcr_n_mismatch</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1       TRUE             4;0            0;2            5;6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      tcr_cdr3_length tcr_cdr3_nt_length tcr_n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1           16;11              48;33            2</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># Using import_vdj outside of Seurat</span></span>
 <span class="r-in"><span class="co"># SingleCellExperiment objects are also compatible, or if an input object is</span></span>
 <span class="r-in"><span class="co"># omitted, a data.frame containing the V(D)J data will be returned</span></span>
-<span class="r-in"><span class="fu">import_vdj</span><span class="op">(</span><span class="va">tiny_sce</span>, <span class="va">vdj_dir</span><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> class: SingleCellExperiment </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> dim: 200 204 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> metadata(0):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> assays(1): counts</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> rownames(200): Gins2 Klf11 ... Gm29265 Pkd1l1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> rowData names(0):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> colnames(204): 1_AAACCTGAGTAGGTGC-1 1_AAACCTGAGTCAAGCG-1 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2_TTTACTGGTTGGTTTG-1 2_TTTGTCATCACCCGAG-1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(28): orig.ident nCount_RNA ... cdr3_nt_length n_chains</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> reducedDimNames(0):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mainExpName: NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> altExpNames(0):</span>
+<span class="r-in"><span class="va">vdj_sce</span> <span class="op">&lt;-</span> <span class="fu">import_vdj</span><span class="op">(</span><span class="va">tiny_sce</span>, <span class="va">vdj_dir</span><span class="op">)</span></span>
 <span class="r-in"></span>
-<span class="r-in"><span class="fu">import_vdj</span><span class="op">(</span>vdj_dir <span class="op">=</span> <span class="va">vdj_dir</span><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                       clonotype_id                               v_gene</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1 clonotype2350           IGHV5-17;IGKV5-43;IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACCTTTATCAGTCAGT-1  clonotype817           IGHV1-64;IGKV4-58;IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCAGACACGTGAGA-1 clonotype1569       IGHV14-4;IGKV14-111;IGKV17-127</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTCCTAGCATCTATGG-1 clonotype2189                   IGHV1-18;IGKV2-109</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACCGCGAGTAATCCC-1  clonotype590        IGHV1-74;IGKV1-135;IGKV17-121</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGCCGCCAGATGAGC-1  clonotype668                   IGHV1-82;IGKV10-96</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTTACAAACAACA-1 clonotype2497                    IGHV1-22;IGKV6-32</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCAGTTTACG-1  clonotype537             IGHV1-9;IGKV5-43;IGKV3-2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGCACATTTCT-1 clonotype1599          IGHV1-26;IGKV4-50;IGKV1-117</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGGGATAGTACGACG-1 clonotype1707                      IGHV3-6;IGKV3-4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGGTTAACACACTGCG-1 clonotype1994 IGHV6-6;IGHV1-81;IGKV5-39;IGKV14-100</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTTGCGAGTCTCGGC-1 clonotype2364          IGHV1-82;IGKV10-96;IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCTCCTAGAAC-1 clonotype2434                   IGHV6-3;IGKV4-57-1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCCTCAGTAACGTTC-1 clonotype3117              IGHV1-53;IGKV5-43;IGLV3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TACTTGTGTCCAGTAT-1 clonotype3369         IGHV1-55;IGKV5-43;IGKV14-111</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGGACGCAGGCCATAG-1 clonotype3776                    IGHV13-2;IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGATCTGAGCGCCTTG-1 clonotype1007         IGHV1-62-2;IGKV5-43;IGKV3-12</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGAGGATTCGG-1 clonotype2075           IGHV9-1;IGKV2-137;IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGCACGGATAG-1 clonotype2078                     IGHV8-8;IGKV6-15</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GAGCAGATCATGCATG-1 clonotype2534                    IGHV7-3;IGKV1-135</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACTCTTGTGAGGGTT-1  clonotype630 IGHV5-16;IGHV1-47;IGKV5-43;IGKV12-46</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGGCTCACCGGAAA-1 clonotype2474 IGHV1-82;IGHV1-52;IGKV10-96;IGKV6-15</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTCAAGCG-1  clonotype536                  IGKV6-15;IGKV14-126</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCATAGGATA-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACGAGGACACATCCAA-1  clonotype822                           IGKV4-57-1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGAATAGTCAGTTCGA-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGCTCCTCAAGTAGTA-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTGGGATCAGCTTAG-1 clonotype1146                   IGKV5-43;IGKV12-44</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTTGGTTCTTGTATC-1  clonotype101                            IGKV1-110</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATCCACCAGCGACGTA-1   clonotype38                             IGKV6-17</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATGAGGGAGGGTGTGT-1   clonotype97                            IGKV10-96</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATTATCCGTTAAAGTG-1   clonotype22                            IGKV1-110</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGGTTTCGCTC-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGTGGACATAGACTC-1    clonotype1                    IGKV5-43;IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCTCAGTCAGGGCATA-1   clonotype10                            IGKV1-117</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGTTAGAGTCTAGCGC-1 clonotype2065                     IGKV4-57;IGKV3-4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAACTTCACATAACC-1  clonotype346                              IGKV3-1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGCCTAGTTTAGGA-1   clonotype58                             IGKV4-68</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGTGACATGGAATA-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCCACAAGCCC-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACAGAGGTCAGAGGT-1   clonotype61                             IGKV6-23</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTAACGTTCAGTAC-1  clonotype502                            IGKV13-85</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTACATCCAGTATG-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GCAGCCAAGTACACCT-1  clonotype252                             IGKV3-10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GGTGCGTAGCCACGTC-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCTTCGCATCTATGG-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTGCATAAGGTCATCT-1 clonotype3167                   IGKV5-43;IGKV10-94</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCAGGTAGTGCGCTTG-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCGTACCCAAGTCTAC-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTCATAAGTTCGCGC-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTGGAACAGACGCTC-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGACAACCACAGGTTT-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGAGAGGAGATAGGAG-1   clonotype52                            IGKV2-137</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCCAAAAGCGTTGCC-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCGGGTCATACCATG-1  clonotype200                            IGKV10-94</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCTGCTAGGCCATAG-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTAACTCTCTCCGGTT-1   clonotype30                            IGKV19-93</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTTGTCACATACGCTA-1   clonotype93                            IGKV1-117</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAACGGGAGCTAGTGG-1    clonotype1                    IGKV5-43;IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGAGCAGAAGCCCA-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGCAGGTGGTACAG-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGAGGAGTTAGAACA-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGGGTCAGCTTATCG-1  clonotype289                    IGKV5-43;IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGCAGCCTCCTGCCAT-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGTCTTTAGAGCTGCA-1  clonotype174                    IGKV5-43;IGKV6-17</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ATCTGCCAGACCTAGG-1    clonotype1                    IGKV5-43;IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CACACCTTCTATCCTA-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CAGGTGCGTAACGACG-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CATCAGAGTGGTCTCG-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CCAGCGAGTTACGGAG-1  clonotype204                             IGKV8-21</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGAGCTCAGAGCCAA-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGCTAGTCCCTTGTG-1    clonotype1                    IGKV5-43;IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTAGGCAGAAGGTTT-1    clonotype7                              IGKV3-4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CTCGAGGCATCGACGC-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTGCTCCAATGGT-1 clonotype2489                    IGHV1-66;IGKV4-79</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACTAACAGATGCCTT-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCATGTATCTTTACGT-1 clonotype2695                 IGKV10-94;IGKV14-111</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCTTGAACAATCAGAA-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGATGTTAGCTGCAAG-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGGTTGCCACGTTGGC-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GTCGGGTGTATTAGCC-1    clonotype6                            IGKV9-120</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAAGAGATCCGTTGCT-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TACTTACTCATGTCTT-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAGTGGTAGAAGGGTA-1   clonotype37                                IGLV2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TCAACGATCTGGTTCC-1 clonotype3446                      IGKV19-93;IGLV1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TGTGGTATCCGTTGTC-1    clonotype1                    IGKV5-43;IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTCTCAAGTGGGTCAA-1  clonotype403                   IGKV2-137;IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTGCGTCTCCTGCTTG-1    clonotype1                             IGKV5-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                      d_gene                  j_gene</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1         None;None;None       IGHJ4;IGKJ2;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACCTTTATCAGTCAGT-1         None;None;None       IGHJ4;IGKJ4;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCAGACACGTGAGA-1         None;None;None       IGHJ4;IGKJ2;IGKJ4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTCCTAGCATCTATGG-1              None;None             IGHJ4;IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACCGCGAGTAATCCC-1         None;None;None       IGHJ3;IGKJ1;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGCCGCCAGATGAGC-1              None;None             IGHJ4;IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTTACAAACAACA-1              None;None             IGHJ3;IGKJ5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCAGTTTACG-1         None;None;None       IGHJ4;IGKJ2;IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGCACATTTCT-1         None;None;None       IGHJ4;IGKJ1;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGGGATAGTACGACG-1              None;None             IGHJ2;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGGTTAACACACTGCG-1 None;IGHD1-1;None;None IGHJ3;IGHJ2;IGKJ5;IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTTGCGAGTCTCGGC-1         None;None;None       IGHJ2;IGKJ1;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCTCCTAGAAC-1              None;None             IGHJ2;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCCTCAGTAACGTTC-1         None;None;None       IGHJ3;IGKJ2;IGLJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TACTTGTGTCCAGTAT-1         None;None;None       IGHJ3;IGKJ2;IGKJ5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGGACGCAGGCCATAG-1              None;None             IGHJ4;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGATCTGAGCGCCTTG-1         None;None;None       IGHJ1;IGKJ2;IGKJ4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGAGGATTCGG-1         None;None;None       IGHJ3;IGKJ2;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGCACGGATAG-1              None;None             IGHJ2;IGKJ4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GAGCAGATCATGCATG-1              None;None             IGHJ2;IGKJ5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACTCTTGTGAGGGTT-1    None;None;None;None IGHJ4;IGHJ3;IGKJ2;IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGGCTCACCGGAAA-1 None;IGHD1-1;None;None IGHJ4;IGHJ2;IGKJ2;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTCAAGCG-1              None;None             IGKJ2;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCATAGGATA-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACGAGGACACATCCAA-1                   None                   IGKJ5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGAATAGTCAGTTCGA-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGCTCCTCAAGTAGTA-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTGGGATCAGCTTAG-1              None;None             IGKJ2;IGKJ4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTTGGTTCTTGTATC-1                   None                   IGKJ4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATCCACCAGCGACGTA-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATGAGGGAGGGTGTGT-1                   None                   IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATTATCCGTTAAAGTG-1                   None                   IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGGTTTCGCTC-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGTGGACATAGACTC-1              None;None             IGKJ2;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCTCAGTCAGGGCATA-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGTTAGAGTCTAGCGC-1              None;None             IGKJ5;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAACTTCACATAACC-1                   None                   IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGCCTAGTTTAGGA-1                   None                   IGKJ4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGTGACATGGAATA-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCCACAAGCCC-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACAGAGGTCAGAGGT-1                   None                   IGKJ4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTAACGTTCAGTAC-1                   None                   IGKJ5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTACATCCAGTATG-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GCAGCCAAGTACACCT-1                   None                   IGKJ5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GGTGCGTAGCCACGTC-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCTTCGCATCTATGG-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTGCATAAGGTCATCT-1              None;None             IGKJ2;IGKJ4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCAGGTAGTGCGCTTG-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCGTACCCAAGTCTAC-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTCATAAGTTCGCGC-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTGGAACAGACGCTC-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGACAACCACAGGTTT-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGAGAGGAGATAGGAG-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCCAAAAGCGTTGCC-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCGGGTCATACCATG-1                   None                   IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCTGCTAGGCCATAG-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTAACTCTCTCCGGTT-1                   None                   IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTTGTCACATACGCTA-1                   None                   IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAACGGGAGCTAGTGG-1              None;None             IGKJ2;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGAGCAGAAGCCCA-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGCAGGTGGTACAG-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGAGGAGTTAGAACA-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGGGTCAGCTTATCG-1              None;None             IGKJ2;IGKJ5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGCAGCCTCCTGCCAT-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGTCTTTAGAGCTGCA-1              None;None             IGKJ2;IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ATCTGCCAGACCTAGG-1              None;None             IGKJ2;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CACACCTTCTATCCTA-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CAGGTGCGTAACGACG-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CATCAGAGTGGTCTCG-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CCAGCGAGTTACGGAG-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGAGCTCAGAGCCAA-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGCTAGTCCCTTGTG-1              None;None             IGKJ2;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTAGGCAGAAGGTTT-1                   None                   IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CTCGAGGCATCGACGC-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTGCTCCAATGGT-1              None;None             IGHJ2;IGKJ4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACTAACAGATGCCTT-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCATGTATCTTTACGT-1              None;None             IGKJ1;IGKJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCTTGAACAATCAGAA-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGATGTTAGCTGCAAG-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGGTTGCCACGTTGGC-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GTCGGGTGTATTAGCC-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAAGAGATCCGTTGCT-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TACTTACTCATGTCTT-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAGTGGTAGAAGGGTA-1                   None                   IGLJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TCAACGATCTGGTTCC-1              None;None             IGKJ5;IGLJ1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TGTGGTATCCGTTGTC-1              None;None             IGKJ2;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTCTCAAGTGGGTCAA-1              None;None             IGKJ2;IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTGCGTCTCCTGCTTG-1                   None                   IGKJ2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                   c_gene          chains isotype</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1      IGHA;IGKC;IGKC     IGH;IGK;IGK    IGHA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACCTTTATCAGTCAGT-1      IGHD;IGKC;IGKC     IGH;IGK;IGK    IGHD</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCAGACACGTGAGA-1      IGHD;IGKC;IGKC     IGH;IGK;IGK    IGHD</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTCCTAGCATCTATGG-1           IGHD;IGKC         IGH;IGK    IGHD</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACCGCGAGTAATCCC-1      IGHD;IGKC;IGKC     IGH;IGK;IGK    IGHD</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGCCGCCAGATGAGC-1           IGHD;IGKC         IGH;IGK    IGHD</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTTACAAACAACA-1           IGHD;IGKC         IGH;IGK    IGHD</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCAGTTTACG-1      IGHM;IGKC;IGKC     IGH;IGK;IGK    IGHM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGCACATTTCT-1      IGHM;IGKC;IGKC     IGH;IGK;IGK    IGHM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGGGATAGTACGACG-1           IGHM;IGKC         IGH;IGK    IGHM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGGTTAACACACTGCG-1 IGHM;None;IGKC;IGKC IGH;IGH;IGK;IGK    IGHM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTTGCGAGTCTCGGC-1      IGHM;IGKC;IGKC     IGH;IGK;IGK    IGHM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCTCCTAGAAC-1           IGHM;IGKC         IGH;IGK    IGHM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCCTCAGTAACGTTC-1     IGHM;IGKC;IGLC2     IGH;IGK;IGL    IGHM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TACTTGTGTCCAGTAT-1      IGHM;IGKC;IGKC     IGH;IGK;IGK    IGHM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGGACGCAGGCCATAG-1           IGHM;IGKC         IGH;IGK    IGHM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGATCTGAGCGCCTTG-1      IGHM;IGKC;IGKC     IGH;IGK;IGK    IGHM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGAGGATTCGG-1      IGHM;IGKC;IGKC     IGH;IGK;IGK    IGHM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGCACGGATAG-1           IGHM;IGKC         IGH;IGK    IGHM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GAGCAGATCATGCATG-1           IGHM;IGKC         IGH;IGK    IGHM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACTCTTGTGAGGGTT-1 IGHD;IGHM;IGKC;IGKC IGH;IGH;IGK;IGK   Multi</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGGCTCACCGGAAA-1 IGHM;IGHD;IGKC;IGKC IGH;IGH;IGK;IGK   Multi</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTCAAGCG-1           IGKC;IGKC         IGK;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCATAGGATA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACGAGGACACATCCAA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGAATAGTCAGTTCGA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGCTCCTCAAGTAGTA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTGGGATCAGCTTAG-1           IGKC;IGKC         IGK;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTTGGTTCTTGTATC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATCCACCAGCGACGTA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATGAGGGAGGGTGTGT-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATTATCCGTTAAAGTG-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGGTTTCGCTC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGTGGACATAGACTC-1           IGKC;IGKC         IGK;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCTCAGTCAGGGCATA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGTTAGAGTCTAGCGC-1           IGKC;IGKC         IGK;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAACTTCACATAACC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGCCTAGTTTAGGA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGTGACATGGAATA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCCACAAGCCC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACAGAGGTCAGAGGT-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTAACGTTCAGTAC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTACATCCAGTATG-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GCAGCCAAGTACACCT-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GGTGCGTAGCCACGTC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCTTCGCATCTATGG-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTGCATAAGGTCATCT-1           IGKC;IGKC         IGK;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCAGGTAGTGCGCTTG-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCGTACCCAAGTCTAC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTCATAAGTTCGCGC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTGGAACAGACGCTC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGACAACCACAGGTTT-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGAGAGGAGATAGGAG-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCCAAAAGCGTTGCC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCGGGTCATACCATG-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCTGCTAGGCCATAG-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTAACTCTCTCCGGTT-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTTGTCACATACGCTA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAACGGGAGCTAGTGG-1           IGKC;IGKC         IGK;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGAGCAGAAGCCCA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGCAGGTGGTACAG-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGAGGAGTTAGAACA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGGGTCAGCTTATCG-1           IGKC;IGKC         IGK;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGCAGCCTCCTGCCAT-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGTCTTTAGAGCTGCA-1           IGKC;IGKC         IGK;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ATCTGCCAGACCTAGG-1           IGKC;IGKC         IGK;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CACACCTTCTATCCTA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CAGGTGCGTAACGACG-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CATCAGAGTGGTCTCG-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CCAGCGAGTTACGGAG-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGAGCTCAGAGCCAA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGCTAGTCCCTTGTG-1           IGKC;IGKC         IGK;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTAGGCAGAAGGTTT-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CTCGAGGCATCGACGC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTGCTCCAATGGT-1           None;IGKC         IGH;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACTAACAGATGCCTT-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCATGTATCTTTACGT-1           IGKC;IGKC         IGK;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCTTGAACAATCAGAA-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGATGTTAGCTGCAAG-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGGTTGCCACGTTGGC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GTCGGGTGTATTAGCC-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAAGAGATCCGTTGCT-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TACTTACTCATGTCTT-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAGTGGTAGAAGGGTA-1               IGLC2             IGL    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TCAACGATCTGGTTCC-1          IGKC;IGLC1         IGK;IGL    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TGTGGTATCCGTTGTC-1           IGKC;IGKC         IGK;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTCTCAAGTGGGTCAA-1           IGKC;IGKC         IGK;IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTGCGTCTCCTGCTTG-1                IGKC             IGK    None</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                      cdr3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1          CARPYYYTTIYVDYAMAYW;CQQSNSWPYTF;CQQSNCWPFTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACCTTTATCAGTCAGT-1               CARWRTTDYAMDYW;CQQWSGYPFTF;CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCAGACACGTGAGA-1                CTISFPTYAMDYW;CLQYDEFPYTF;CLQSDNMPFTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTCCTAGCATCTATGG-1                          CARRKNYSPYYAMDYW;CAQNLELWTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACCGCGAGTAATCCC-1                 CAIFDDYPFAYW;CWQGTHFPRTF;CLQSDNLPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGCCGCCAGATGAGC-1                          CASGGFTTGGAMDYW;CQQGNTLPWTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTTACAAACAACA-1                             CARSGAQCFAYW;CQQDYSSPLTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCAGTTTACG-1                 CATLWYDAMDYW;CQQSNSWPYTF;CQQSKEVPRTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGCACATTTCT-1               CARSRGPYYARDYW;CQQFTSSPWTF;CFQGSHVPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGGGATAGTACGACG-1                          CARAPIYYGNFFDYW;CQQSNEDPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGGTTAACACACTGCG-1  CTGGTTEGGFAYW;CAIITTVVAKGYW;CQNGHSFPPTF;CVQYAQFPRTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTTGCGAGTCTCGGC-1                CAFNWDENYFDYW;CQQGNTLPPTF;CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCTCCTAGAAC-1                             CTGDGTGYFDYW;CQQYSGYPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCCTCAGTAACGTTC-1               CARGSYYPHW;CQQSNSWPYTF;CGVGDTIKEQFVYVF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TACTTGTGTCCAGTAT-1                CARYYSHAWFAYW;CQQSNSWPYTF;CLQYDEFPLTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGGACGCAGGCCATAG-1                        CSRSDMGNYCYYAMDYW;CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGATCTGAGCGCCTTG-1           CARHEVPYGNPYWYFDVW;CQQSNSWPYTF;CQHSRELPFTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGAGGATTCGG-1                CVGLDYDEWFAYW;CMQHLEYPYTF;CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGCACGGATAG-1                             CARISQTSPDYW;CQQYNSYPFTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GAGCAGATCATGCATG-1                           CARWRDYSGNFDYW;CWQGTHFPLTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACTCTTGTGAGGGTT-1 CARVTYDYGAMDYW;CARADGHGGFAYW;CQQSNSWPYTF;CQHFWGTPRTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGGCTCACCGGAAA-1 CARRRADGHTWEDYW;CAITTVVATDYW;CQQGNTLPYTF;CQQYNSYPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTCAAGCG-1                              CQQYNSYPYTF;CLQHGESPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCATAGGATA-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACGAGGACACATCCAA-1                                         CQQYSGYPLITF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGAATAGTCAGTTCGA-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGCTCCTCAAGTAGTA-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTGGGATCAGCTTAG-1                              CQQSNSWPYTF;CQHHYGTPFTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTTGGTTCTTGTATC-1                                          CSQSTHVPFTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATCCACCAGCGACGTA-1                                          CQQHYSTPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATGAGGGAGGGTGTGT-1                                          CQQGNTLPPTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATTATCCGTTAAAGTG-1                                          CSQSTHVPWTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGGTTTCGCTC-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGTGGACATAGACTC-1                              CQQSNSWPYTF;CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCTCAGTCAGGGCATA-1                                          CFQGSHVPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGTTAGAGTCTAGCGC-1                              CQQRSSYPLTF;CQQSNEDPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAACTTCACATAACC-1                                          CQQSRKVPWTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGCCTAGTTTAGGA-1                                          CQQWSSNPFTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGTGACATGGAATA-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCCACAAGCCC-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACAGAGGTCAGAGGT-1                                          CQQYSSYPFTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTAACGTTCAGTAC-1                                          CQQYWSTPPTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTACATCCAGTATG-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GCAGCCAAGTACACCT-1                                          CQQNNEDPLTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GGTGCGTAGCCACGTC-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCTTCGCATCTATGG-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTGCATAAGGTCATCT-1                              CQQSNSWPYTF;CQQYSKLPFTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCAGGTAGTGCGCTTG-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCGTACCCAAGTCTAC-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTCATAAGTTCGCGC-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTGGAACAGACGCTC-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGACAACCACAGGTTT-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGAGAGGAGATAGGAG-1                                          CMQHLEYPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCCAAAAGCGTTGCC-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCGGGTCATACCATG-1                                          CQQYSKLPRTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCTGCTAGGCCATAG-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTAACTCTCTCCGGTT-1                                           CLQYDNLWTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTTGTCACATACGCTA-1                                          CFQGSHVPRTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAACGGGAGCTAGTGG-1                              CQQSNSWPYTF;CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGAGCAGAAGCCCA-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGCAGGTGGTACAG-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGAGGAGTTAGAACA-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGGGTCAGCTTATCG-1                              CQQSNSWPYTF;CQQSNSWPLTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGCAGCCTCCTGCCAT-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGTCTTTAGAGCTGCA-1                              CQQSNSWPYTF;CQQHYSTPWTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ATCTGCCAGACCTAGG-1                              CQQSNSWPYTF;CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CACACCTTCTATCCTA-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CAGGTGCGTAACGACG-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CATCAGAGTGGTCTCG-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CCAGCGAGTTACGGAG-1                                           CKQSYNLYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGAGCTCAGAGCCAA-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGCTAGTCCCTTGTG-1                              CQQSNSWPYTF;CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTAGGCAGAAGGTTT-1                                          CQQSNEDPWTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CTCGAGGCATCGACGC-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTGCTCCAATGGT-1                               CARDYGRDYW;CHQWSSYPFTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACTAACAGATGCCTT-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCATGTATCTTTACGT-1                              CQQYSKLPWTF;CLQYDEFPPTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCTTGAACAATCAGAA-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGATGTTAGCTGCAAG-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGGTTGCCACGTTGGC-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GTCGGGTGTATTAGCC-1                                          CLQYASSPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAAGAGATCCGTTGCT-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TACTTACTCATGTCTT-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAGTGGTAGAAGGGTA-1                                          CALWYSTHYVF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TCAACGATCTGGTTCC-1                              CLQYDNLLLTF;CALWYSNHWVF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TGTGGTATCCGTTGTC-1                              CQQSNSWPYTF;CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTCTCAAGTGGGTCAA-1                              CMQHLEYPYTF;CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTGCGTCTCCTGCTTG-1                                          CQQSNSWPYTF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                                                                                     cdr3_nt</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1                          TGTGCAAGGCCTTATTACTACACTACTATCTACGTTGACTACGCTATGGCCTACTGG;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAACAGAGTAACTGCTGGCCGTTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACCTTTATCAGTCAGT-1                                         TGTGCAAGATGGAGGACTACGGACTATGCTATGGACTACTGG;TGCCAGCAGTGGAGTGGTTACCCATTCACGTTC;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCAGACACGTGAGA-1                                            TGTACTATCTCCTTCCCAACCTATGCTATGGACTACTGG;TGTCTACAGTATGATGAGTTTCCGTACACGTTC;TGTTTGCAAAGTGATAACATGCCATTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTCCTAGCATCTATGG-1                                                                        TGTGCAAGACGGAAGAACTATAGTCCCTACTATGCTATGGACTACTGG;TGTGCTCAAAATCTAGAACTGTGGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACCGCGAGTAATCCC-1                                               TGTGCAATATTCGATGATTACCCTTTTGCTTACTGG;TGCTGGCAAGGTACACATTTTCCTCGGACGTTC;TGTTTGCAAAGTGATAACTTGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGCCGCCAGATGAGC-1                                                                        TGTGCAAGCGGGGGGTTTACTACGGGAGGGGCTATGGACTACTGG;TGCCAACAGGGTAATACGCTTCCGTGGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTTACAAACAACA-1                                                                                 TGTGCAAGATCGGGGGCTCAGTGCTTTGCTTACTGG;TGTCAGCAGGATTATAGCTCTCCGCTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCAGTTTACG-1                                               TGTGCAACTCTATGGTACGATGCTATGGACTACTGG;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAGCAAAGTAAGGAGGTTCCTCGGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGCACATTTCT-1                                         TGTGCAAGATCGAGGGGTCCTTACTATGCTAGGGACTACTGG;TGCCAGCAGTTTACTAGTTCCCCGTGGACGTTC;TGCTTTCAAGGTTCACATGTTCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGGGATAGTACGACG-1                                                                        TGTGCAAGAGCCCCGATCTACTATGGTAACTTCTTTGACTACTGG;TGTCAGCAAAGTAATGAGGATCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGGTTAACACACTGCG-1    TGTACCGGGGGTACCACGGAGGGGGGGTTTGCTTACTGG;TGTGCAATTATTACTACGGTAGTAGCTAAAGGCTACTGG;TGTCAAAATGGTCACAGCTTTCCTCCCACGTTC;TGTGTACAGTATGCTCAGTTTCCTCGGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTTGCGAGTCTCGGC-1                                            TGTGCGTTTAACTGGGACGAAAACTACTTTGACTACTGG;TGCCAACAGGGTAATACGCTTCCTCCGACGTTC;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCTCCTAGAAC-1                                                                                 TGCACAGGCGATGGGACGGGGTACTTTGACTACTGG;TGCCAGCAGTACAGTGGTTACCCATACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCCTCAGTAACGTTC-1                                         TGTGCAAGAGGCTCTTATTACCCCCACTGG;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTGGTGTGGGTGATACAATTAAGGAACAATTTGTGTATGTTTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TACTTGTGTCCAGTAT-1                                            TGTGCAAGATACTATTCCCATGCCTGGTTTGCTTACTGG;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCTACAGTATGATGAGTTTCCGCTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGGACGCAGGCCATAG-1                                                                  TGTAGTAGATCGGATATGGGTAACTACTGTTACTATGCTATGGACTACTGG;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGATCTGAGCGCCTTG-1                             TGTGCAAGACACGAAGTACCCTATGGTAATCCTTACTGGTACTTCGATGTCTGG;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAGCACAGTAGGGAGCTTCCATTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGAGGATTCGG-1                                            TGTGTAGGATTGGATTACGACGAATGGTTTGCTTACTGG;TGTATGCAACATCTAGAATATCCGTACACGTTC;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGCACGGATAG-1                                                                                 TGTGCTCGAATCTCACAGACGTCCCCTGACTACTGG;TGTCAGCAATATAACAGCTATCCATTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GAGCAGATCATGCATG-1                                                                           TGTGCAAGATGGAGGGACTATAGTGGGAACTTTGACTACTGG;TGCTGGCAAGGTACACATTTTCCGCTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACTCTTGTGAGGGTT-1 TGTGCAAGAGTCACTTATGATTACGGTGCTATGGACTACTGG;TGTGCAAGGGCGGATGGTCACGGGGGGTTTGCTTACTGG;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAACATTTTTGGGGTACTCCTCGGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGGCTCACCGGAAA-1 TGTGCAAGAAGAAGAGCCGATGGACATACGTGGGAGGACTACTGG;TGTGCAATTACTACGGTAGTAGCTACGGACTACTGG;TGCCAACAGGGTAATACGCTTCCGTACACGTTC;TGTCAGCAATATAACAGCTATCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTCAAGCG-1                                                                                    TGTCAGCAATATAACAGCTATCCGTACACGTTC;TGTCTACAGCATGGTGAGAGCCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCATAGGATA-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACGAGGACACATCCAA-1                                                                                                                   TGCCAGCAGTACAGTGGTTACCCACTCATCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGAATAGTCAGTTCGA-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGCTCCTCAAGTAGTA-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTGGGATCAGCTTAG-1                                                                                    TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAACATCATTATGGTACTCCATTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTTGGTTCTTGTATC-1                                                                                                                      TGCTCTCAAAGTACACATGTTCCATTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATCCACCAGCGACGTA-1                                                                                                                      TGTCAGCAACATTATAGTACTCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATGAGGGAGGGTGTGT-1                                                                                                                      TGCCAACAGGGTAATACGCTTCCTCCGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATTATCCGTTAAAGTG-1                                                                                                                      TGCTCTCAAAGTACACATGTTCCGTGGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGGTTTCGCTC-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGTGGACATAGACTC-1                                                                                    TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCTCAGTCAGGGCATA-1                                                                                                                      TGCTTTCAAGGTTCACATGTTCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGTTAGAGTCTAGCGC-1                                                                                    TGCCAGCAAAGGAGTAGTTACCCGCTCACGTTC;TGTCAGCAAAGTAATGAGGATCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAACTTCACATAACC-1                                                                                                                      TGTCAGCAAAGTAGGAAGGTTCCTTGGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGCCTAGTTTAGGA-1                                                                                                                      TGCCAGCAGTGGAGTAGTAACCCATTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGTGACATGGAATA-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCCACAAGCCC-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACAGAGGTCAGAGGT-1                                                                                                                      TGTCAGCAATATAGCAGCTATCCATTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTAACGTTCAGTAC-1                                                                                                                      TGTCAACAGTATTGGAGTACTCCTCCCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTACATCCAGTATG-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GCAGCCAAGTACACCT-1                                                                                                                      TGTCAGCAAAATAATGAGGATCCGCTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GGTGCGTAGCCACGTC-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCTTCGCATCTATGG-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTGCATAAGGTCATCT-1                                                                                    TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAGCAGTATAGTAAGCTTCCATTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCAGGTAGTGCGCTTG-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCGTACCCAAGTCTAC-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTCATAAGTTCGCGC-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTGGAACAGACGCTC-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGACAACCACAGGTTT-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGAGAGGAGATAGGAG-1                                                                                                                      TGTATGCAACATCTAGAATATCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCCAAAAGCGTTGCC-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCGGGTCATACCATG-1                                                                                                                      TGTCAGCAGTATAGTAAGCTTCCTCGGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCTGCTAGGCCATAG-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTAACTCTCTCCGGTT-1                                                                                                                         TGTCTACAGTATGATAATCTGTGGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTTGTCACATACGCTA-1                                                                                                                      TGCTTTCAAGGTTCACATGTTCCTCGGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAACGGGAGCTAGTGG-1                                                                                    TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGAGCAGAAGCCCA-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGCAGGTGGTACAG-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGAGGAGTTAGAACA-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGGGTCAGCTTATCG-1                                                                                    TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAACAGAGTAACAGCTGGCCTCTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGCAGCCTCCTGCCAT-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGTCTTTAGAGCTGCA-1                                                                                    TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAGCAACATTATAGTACTCCGTGGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ATCTGCCAGACCTAGG-1                                                                                    TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CACACCTTCTATCCTA-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CAGGTGCGTAACGACG-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CATCAGAGTGGTCTCG-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CCAGCGAGTTACGGAG-1                                                                                                                         TGCAAGCAATCTTATAATCTGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGAGCTCAGAGCCAA-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGCTAGTCCCTTGTG-1                                                                                    TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTAGGCAGAAGGTTT-1                                                                                                                      TGTCAGCAAAGTAATGAGGATCCGTGGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CTCGAGGCATCGACGC-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTGCTCCAATGGT-1                                                                                       TGTGCAAGAGACTACGGTAGGGACTACTGG;TGCCATCAGTGGAGTAGTTACCCATTCACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACTAACAGATGCCTT-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCATGTATCTTTACGT-1                                                                                    TGTCAGCAGTATAGTAAGCTTCCGTGGACGTTC;TGTCTACAGTATGATGAGTTTCCTCCGACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCTTGAACAATCAGAA-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGATGTTAGCTGCAAG-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGGTTGCCACGTTGGC-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GTCGGGTGTATTAGCC-1                                                                                                                      TGTCTACAATATGCTAGTTCTCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAAGAGATCCGTTGCT-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TACTTACTCATGTCTT-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAGTGGTAGAAGGGTA-1                                                                                                                      TGTGCTCTATGGTACAGCACCCATTATGTTTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TCAACGATCTGGTTCC-1                                                                                    TGTCTACAGTATGATAATCTTCTGCTCACGTTC;TGTGCTCTATGGTACAGCAACCACTGGGTGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TGTGGTATCCGTTGTC-1                                                                                    TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTCTCAAGTGGGTCAA-1                                                                                    TGTATGCAACATCTAGAATATCCTTACACGTTC;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTGCGTCTCCTGCTTG-1                                                                                                                      TGTCAACAGAGTAACAGCTGGCCGTACACGTTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                 reads          umis          productive</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1 14930;18030;4334 1112;1408;351      TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACCTTTATCAGTCAGT-1       80;198;246       6;11;10      TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCAGACACGTGAGA-1       56;110;322       3;10;20      TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTCCTAGCATCTATGG-1           80;264          5;15           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACCGCGAGTAATCCC-1       54;292;362       2;15;19      TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGCCGCCAGATGAGC-1           32;208          1;12           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTTACAAACAACA-1           48;370          3;17           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCAGTTTACG-1      144;460;156       7;28;10      TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGCACATTTCT-1       34;116;258       2;10;20      TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGGGATAGTACGACG-1           32;338          2;22           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGGTTAACACACTGCG-1    100;68;74;446      7;4;5;35 TRUE;TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTTGCGAGTCTCGGC-1       60;226;302       4;15;20      TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCTCCTAGAAC-1          112;406          9;25           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCCTCAGTAACGTTC-1       68;164;512       4;12;20      TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TACTTGTGTCCAGTAT-1       52;130;638        4;8;38      TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGGACGCAGGCCATAG-1          100;314          6;19           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGATCTGAGCGCCTTG-1       82;496;318       6;28;17      TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGAGGATTCGG-1       64;282;442       6;21;28      TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGCACGGATAG-1           40;334          2;18           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GAGCAGATCATGCATG-1           40;174          2;13           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACTCTTGTGAGGGTT-1   28;54;1386;560     1;4;87;50 TRUE;TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGGCTCACCGGAAA-1   74;106;368;696     8;3;25;40 TRUE;TRUE;TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1             1054            70                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTCAAGCG-1          570;234         31;17           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCATAGGATA-1              892            55                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACGAGGACACATCCAA-1              132             8                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGAATAGTCAGTTCGA-1             1768            94                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGCTCCTCAAGTAGTA-1              416            27                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTGGGATCAGCTTAG-1          538;338         34;17           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTTGGTTCTTGTATC-1              338            15                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATCCACCAGCGACGTA-1              206            15                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATGAGGGAGGGTGTGT-1              186             9                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATTATCCGTTAAAGTG-1              376            18                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGGTTTCGCTC-1             1182            87                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGTGGACATAGACTC-1         2062;688        144;43           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCTCAGTCAGGGCATA-1              566            40                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGTTAGAGTCTAGCGC-1          148;352          7;26           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAACTTCACATAACC-1              666            35                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGCCTAGTTTAGGA-1              192            12                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGTGACATGGAATA-1              244            18                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCCACAAGCCC-1              704            42                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACAGAGGTCAGAGGT-1              390            22                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTAACGTTCAGTAC-1              222            12                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTACATCCAGTATG-1             1712            98                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GCAGCCAAGTACACCT-1              338            35                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GGTGCGTAGCCACGTC-1              148            12                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCTTCGCATCTATGG-1              480            26                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTGCATAAGGTCATCT-1          856;164         53;10           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCAGGTAGTGCGCTTG-1              206            15                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCGTACCCAAGTCTAC-1             1266            90                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTCATAAGTTCGCGC-1              828            57                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTGGAACAGACGCTC-1             1072            71                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGACAACCACAGGTTT-1              470            34                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGAGAGGAGATAGGAG-1              130             8                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCCAAAAGCGTTGCC-1              294            19                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCGGGTCATACCATG-1              182            10                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCTGCTAGGCCATAG-1              316            22                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTAACTCTCTCCGGTT-1              230            14                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTTGTCACATACGCTA-1              482            25                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAACGGGAGCTAGTGG-1          460;120          35;7           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGAGCAGAAGCCCA-1              720            54                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGCAGGTGGTACAG-1              692            40                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGAGGAGTTAGAACA-1              364            24                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGGGTCAGCTTATCG-1           96;154          5;11           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGCAGCCTCCTGCCAT-1              544            27                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGTCTTTAGAGCTGCA-1          556;452         35;32           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ATCTGCCAGACCTAGG-1          176;152          11;9           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CACACCTTCTATCCTA-1              880            51                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CAGGTGCGTAACGACG-1              572            38                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CATCAGAGTGGTCTCG-1             1126            75                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CCAGCGAGTTACGGAG-1              218            12                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGAGCTCAGAGCCAA-1             1164            63                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGCTAGTCCCTTGTG-1          838;140         63;10           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTAGGCAGAAGGTTT-1              514            29                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CTCGAGGCATCGACGC-1              586            37                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTGCTCCAATGGT-1            22;96           3;7           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACTAACAGATGCCTT-1             1324            83                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCATGTATCTTTACGT-1           132;72           7;4           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCTTGAACAATCAGAA-1              162             6                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGATGTTAGCTGCAAG-1              844            48                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGGTTGCCACGTTGGC-1              454            23                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GTCGGGTGTATTAGCC-1              524            35                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAAGAGATCCGTTGCT-1              468            28                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TACTTACTCATGTCTT-1              276            10                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAGTGGTAGAAGGGTA-1              716            27                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TCAACGATCTGGTTCC-1          226;562         12;23           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TGTGGTATCCGTTGTC-1         1200;238         80;14           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTCTCAAGTGGGTCAA-1          174;216         16;12           TRUE;TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTGCGTCTCCTGCTTG-1             1550           115                TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                              full_length paired n_insertion n_deletion</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1      TRUE;TRUE;TRUE   TRUE      25;0;0      0;4;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACCTTTATCAGTCAGT-1      TRUE;TRUE;TRUE   TRUE      10;0;0      0;5;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCAGACACGTGAGA-1      TRUE;TRUE;TRUE   TRUE       9;0;0      2;4;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTCCTAGCATCTATGG-1           TRUE;TRUE   TRUE        16;0        0;6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACCGCGAGTAATCCC-1      TRUE;TRUE;TRUE   TRUE      12;0;0      2;3;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGCCGCCAGATGAGC-1           TRUE;TRUE   TRUE        13;0        0;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTTACAAACAACA-1           TRUE;TRUE   TRUE        10;0        0;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCAGTTTACG-1      TRUE;TRUE;TRUE   TRUE       4;0;0      0;4;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGCACATTTCT-1      TRUE;TRUE;TRUE   TRUE      10;0;0      0;5;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGGGATAGTACGACG-1           TRUE;TRUE   TRUE        17;0        0;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGGTTAACACACTGCG-1 TRUE;TRUE;TRUE;TRUE   TRUE    13;0;0;0   0;10;3;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTTGCGAGTCTCGGC-1      TRUE;TRUE;TRUE   TRUE      13;0;0      0;3;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCTCCTAGAAC-1           TRUE;TRUE   TRUE        11;0        0;6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCCTCAGTAACGTTC-1      TRUE;TRUE;TRUE   TRUE       9;0;0      5;4;6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TACTTGTGTCCAGTAT-1      TRUE;TRUE;TRUE   TRUE      13;0;0      0;4;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGGACGCAGGCCATAG-1           TRUE;TRUE   TRUE        17;0        0;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGATCTGAGCGCCTTG-1      TRUE;TRUE;TRUE   TRUE      15;0;0      0;4;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGAGGATTCGG-1      TRUE;TRUE;TRUE   TRUE      13;0;0      0;4;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGCACGGATAG-1           TRUE;TRUE   TRUE         6;0        0;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GAGCAGATCATGCATG-1           TRUE;TRUE   TRUE        12;0        0;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACTCTTGTGAGGGTT-1 TRUE;TRUE;TRUE;TRUE   TRUE    8;13;0;0    0;0;4;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGGCTCACCGGAAA-1 TRUE;TRUE;TRUE;TRUE   TRUE    13;0;0;0   0;13;4;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTCAAGCG-1           TRUE;TRUE  FALSE         0;0        4;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCATAGGATA-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACGAGGACACATCCAA-1                TRUE  FALSE           0          2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGAATAGTCAGTTCGA-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGCTCCTCAAGTAGTA-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTGGGATCAGCTTAG-1           TRUE;TRUE  FALSE         0;0        4;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTTGGTTCTTGTATC-1                TRUE  FALSE           0          3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATCCACCAGCGACGTA-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATGAGGGAGGGTGTGT-1                TRUE  FALSE           0          3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATTATCCGTTAAAGTG-1                TRUE  FALSE           0          3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGGTTTCGCTC-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGTGGACATAGACTC-1           TRUE;TRUE  FALSE         0;0        4;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCTCAGTCAGGGCATA-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGTTAGAGTCTAGCGC-1           TRUE;TRUE  FALSE         0;0        5;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAACTTCACATAACC-1                TRUE  FALSE           0          3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGCCTAGTTTAGGA-1                TRUE  FALSE           0          5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGTGACATGGAATA-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCCACAAGCCC-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACAGAGGTCAGAGGT-1                TRUE  FALSE           0          3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTAACGTTCAGTAC-1                TRUE  FALSE           0          3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTACATCCAGTATG-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GCAGCCAAGTACACCT-1                TRUE  FALSE           0          3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GGTGCGTAGCCACGTC-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCTTCGCATCTATGG-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTGCATAAGGTCATCT-1           TRUE;TRUE  FALSE         0;0        4;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCAGGTAGTGCGCTTG-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCGTACCCAAGTCTAC-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTCATAAGTTCGCGC-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTGGAACAGACGCTC-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGACAACCACAGGTTT-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGAGAGGAGATAGGAG-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCCAAAAGCGTTGCC-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCGGGTCATACCATG-1                TRUE  FALSE           0          3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCTGCTAGGCCATAG-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTAACTCTCTCCGGTT-1                TRUE  FALSE           0          6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTTGTCACATACGCTA-1                TRUE  FALSE           0          3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAACGGGAGCTAGTGG-1           TRUE;TRUE  FALSE         0;0        4;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGAGCAGAAGCCCA-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGCAGGTGGTACAG-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGAGGAGTTAGAACA-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGGGTCAGCTTATCG-1           TRUE;TRUE  FALSE         0;0        4;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGCAGCCTCCTGCCAT-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGTCTTTAGAGCTGCA-1           TRUE;TRUE  FALSE         0;0        4;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ATCTGCCAGACCTAGG-1           TRUE;TRUE  FALSE         0;0        4;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CACACCTTCTATCCTA-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CAGGTGCGTAACGACG-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CATCAGAGTGGTCTCG-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CCAGCGAGTTACGGAG-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGAGCTCAGAGCCAA-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGCTAGTCCCTTGTG-1           TRUE;TRUE  FALSE         0;0        4;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTAGGCAGAAGGTTT-1                TRUE  FALSE           0          3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CTCGAGGCATCGACGC-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTGCTCCAATGGT-1           TRUE;TRUE   TRUE         4;0        0;5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACTAACAGATGCCTT-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCATGTATCTTTACGT-1           TRUE;TRUE  FALSE         0;0        3;3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCTTGAACAATCAGAA-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGATGTTAGCTGCAAG-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGGTTGCCACGTTGGC-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GTCGGGTGTATTAGCC-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAAGAGATCCGTTGCT-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TACTTACTCATGTCTT-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAGTGGTAGAAGGGTA-1                TRUE  FALSE           0          5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TCAACGATCTGGTTCC-1           TRUE;TRUE  FALSE         0;0        3;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TGTGGTATCCGTTGTC-1           TRUE;TRUE  FALSE         0;0        4;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTCTCAAGTGGGTCAA-1           TRUE;TRUE  FALSE         0;0        4;4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTGCGTCTCCTGCTTG-1                TRUE  FALSE           0          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      n_mismatch cdr3_length cdr3_nt_length n_chains</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1     14;2;6    19;11;11       57;33;33        3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACCTTTATCAGTCAGT-1      2;0;2    14;11;11       42;33;33        3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCAGACACGTGAGA-1      1;0;0    13;11;11       39;33;33        3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTCCTAGCATCTATGG-1        0;0       16;10          48;30        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACCGCGAGTAATCCC-1      1;0;0    12;11;11       36;33;33        3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGCCGCCAGATGAGC-1        3;0       15;11          45;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTTACAAACAACA-1        2;0       12;11          36;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCAGTTTACG-1      4;2;0    12;11;11       36;33;33        3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGCACATTTCT-1      2;0;0    14;11;11       42;33;33        3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGGGATAGTACGACG-1        1;0       15;11          45;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGGTTAACACACTGCG-1    3;2;0;0 13;13;11;11    39;39;33;33        4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTTGCGAGTCTCGGC-1      2;0;2    13;11;11       39;33;33        3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCTCCTAGAAC-1        0;0       12;11          36;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCCTCAGTAACGTTC-1      1;2;0    10;11;15       30;33;45        3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TACTTGTGTCCAGTAT-1      0;2;0    13;11;11       39;33;33        3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGGACGCAGGCCATAG-1        2;2       17;11          51;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGATCTGAGCGCCTTG-1      0;2;0    18;11;11       54;33;33        3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGAGGATTCGG-1      4;0;2    13;11;11       39;33;33        3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTTGGGCACGGATAG-1        3;0       12;11          36;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GAGCAGATCATGCATG-1        2;0       14;11          42;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AACTCTTGTGAGGGTT-1    4;2;2;0 14;13;11;11    42;39;33;33        4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGGCTCACCGGAAA-1    5;1;0;0 15;12;11;11    45;36;33;33        4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTCAAGCG-1        0;0       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGCATAGGATA-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACGAGGACACATCCAA-1          0          12             36        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGAATAGTCAGTTCGA-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGCTCCTCAAGTAGTA-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTGGGATCAGCTTAG-1        3;0       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AGTTGGTTCTTGTATC-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATCCACCAGCGACGTA-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATGAGGGAGGGTGTGT-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ATTATCCGTTAAAGTG-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CATCGGGGTTTCGCTC-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCGTGGACATAGACTC-1        2;3       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CCTCAGTCAGGGCATA-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CGTTAGAGTCTAGCGC-1        0;0       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAACTTCACATAACC-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGCCTAGTTTAGGA-1         15          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTAGTGACATGGAATA-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACACGCCACAAGCCC-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACAGAGGTCAGAGGT-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTAACGTTCAGTAC-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GACTACATCCAGTATG-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GCAGCCAAGTACACCT-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GGTGCGTAGCCACGTC-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTCTTCGCATCTATGG-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_GTGCATAAGGTCATCT-1        2;0       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCAGGTAGTGCGCTTG-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCGTACCCAAGTCTAC-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTCATAAGTTCGCGC-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TCTGGAACAGACGCTC-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGACAACCACAGGTTT-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGAGAGGAGATAGGAG-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCCAAAAGCGTTGCC-1          3          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCGGGTCATACCATG-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TGCTGCTAGGCCATAG-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTAACTCTCTCCGGTT-1          0          10             30        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_TTTGTCACATACGCTA-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAACGGGAGCTAGTGG-1        2;3       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGAGCAGAAGCCCA-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AAGGCAGGTGGTACAG-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGAGGAGTTAGAACA-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ACGGGTCAGCTTATCG-1        0;0       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGCAGCCTCCTGCCAT-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_AGTCTTTAGAGCTGCA-1        2;0       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_ATCTGCCAGACCTAGG-1        2;4       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CACACCTTCTATCCTA-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CAGGTGCGTAACGACG-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CATCAGAGTGGTCTCG-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CCAGCGAGTTACGGAG-1          0          10             30        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGAGCTCAGAGCCAA-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGGCTAGTCCCTTGTG-1        2;3       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CGTAGGCAGAAGGTTT-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_CTCGAGGCATCGACGC-1          3          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACGTGCTCCAATGGT-1        2;0       10;11          30;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GACTAACAGATGCCTT-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCATGTATCTTTACGT-1        0;3       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GCTTGAACAATCAGAA-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGATGTTAGCTGCAAG-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GGGTTGCCACGTTGGC-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_GTCGGGTGTATTAGCC-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAAGAGATCCGTTGCT-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TACTTACTCATGTCTT-1          2          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TAGTGGTAGAAGGGTA-1          0          11             33        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TCAACGATCTGGTTCC-1        0;0       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TGTGGTATCCGTTGTC-1        2;3       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTCTCAAGTGGGTCAA-1        0;2       11;11          33;33        2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2_TTGCGTCTCCTGCTTG-1          2          11             33        1</span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">vdj_sce</span><span class="op">@</span><span class="va">colData</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 1 row and 27 columns</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt;  &lt;numeric&gt;    &lt;integer&gt;        &lt;factor&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1      avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters    UMAP_1    UMAP_2 clonotype_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                             &lt;factor&gt; &lt;numeric&gt; &lt;numeric&gt;  &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1   2.56166 -0.674622   clonotype1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                           v_gene      d_gene      j_gene      c_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1    IGKV5-43        None       IGKJ2        IGKC</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                           chains     isotype        cdr3                cdr3_nt</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt;            &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1         IGK        None CQQSNSWPYTF TGTCAACAGAGTAACAGCTG..</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                            reads        umis  productive full_length    paired</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;logical&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1        1054          70        TRUE        TRUE     FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      n_insertion  n_deletion  n_mismatch cdr3_length</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1           0           4           2          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      cdr3_nt_length  n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                         &lt;character&gt; &lt;integer&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1             33         1</span>
+<span class="r-in"></span>
+<span class="r-in"><span class="va">vdj_df</span> <span class="op">&lt;-</span> <span class="fu">import_vdj</span><span class="op">(</span>vdj_dir <span class="op">=</span> <span class="va">vdj_dir</span><span class="op">)</span></span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">vdj_df</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       clonotype_id                     v_gene         d_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1 clonotype2350 IGHV5-17;IGKV5-43;IGKV5-43 None;None;None</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                 j_gene         c_gene      chains isotype</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1 IGHJ4;IGKJ2;IGKJ2 IGHA;IGKC;IGKC IGH;IGK;IGK    IGHA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                             cdr3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1 CARPYYYTTIYVDYAMAYW;CQQSNSWPYTF;CQQSNCWPFTF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                                                            cdr3_nt</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1 TGTGCAAGGCCTTATTACTACACTACTATCTACGTTGACTACGCTATGGCCTACTGG;TGTCAACAGAGTAACAGCTGGCCGTACACGTTC;TGTCAACAGAGTAACTGCTGGCCGTTCACGTTC</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                 reads          umis     productive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1 14930;18030;4334 1112;1408;351 TRUE;TRUE;TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                         full_length paired n_insertion n_deletion n_mismatch</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1 TRUE;TRUE;TRUE   TRUE      25;0;0      0;4;4     14;2;6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      cdr3_length cdr3_nt_length n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_CTTCTCTTCACCTTAT-1    19;11;11       57;33;33        3</span>
 <span class="r-in"></span>
 </code></pre></div>
     </div>
@@ -988,7 +387,7 @@ set TRUE since indel data is only available for productive chains.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
     </footer></div>

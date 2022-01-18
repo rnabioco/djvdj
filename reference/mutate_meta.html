@@ -17,7 +17,7 @@
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div id="navbar" class="collapse navbar-collapse ms-2">
+    <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item">
   <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
@@ -82,74 +82,82 @@ na.rm = TRUE) where ".x" refers to the meta.data table.</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="co"># Sum two meta.data columns</span></span>
 <span class="r-in"><span class="co"># all additional arguments provided to mutate_meta() are passed directly to</span></span>
 <span class="r-in"><span class="co"># the function (in this case, dplyr::mutate())</span></span>
-<span class="r-in"><span class="fu">mutate_meta</span><span class="op">(</span></span>
+<span class="r-in"><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">mutate_meta</span><span class="op">(</span></span>
 <span class="r-in">  <span class="va">tiny_so</span>,</span>
 <span class="r-in">  <span class="fu">dplyr</span><span class="fu">::</span><span class="va"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span>,</span>
 <span class="r-in">  NEW <span class="op">=</span> <span class="va">nCount_RNA</span> <span class="op">+</span> <span class="va">nFeature_RNA</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 204 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 67 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">@</span><span class="va">meta.data</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1     avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters   UMAP_1     UMAP_2 NEW</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1 2.561658 -0.6746224   2</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># Pass a purrr-style lambda</span></span>
 <span class="r-in"><span class="co"># this produces the same result as the previous example</span></span>
-<span class="r-in"><span class="fu">mutate_meta</span><span class="op">(</span></span>
+<span class="r-in"><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">mutate_meta</span><span class="op">(</span></span>
 <span class="r-in">  <span class="va">tiny_so</span>,</span>
 <span class="r-in">  <span class="op">~</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span><span class="va">.x</span>, NEW <span class="op">=</span> <span class="va">nCount_RNA</span> <span class="op">+</span> <span class="va">nFeature_RNA</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 204 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 67 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">@</span><span class="va">meta.data</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1     avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters   UMAP_1     UMAP_2 NEW</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1 2.561658 -0.6746224   2</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># Modify multiple meta.data columns</span></span>
-<span class="r-in"><span class="fu">mutate_meta</span><span class="op">(</span></span>
-<span class="r-in">  <span class="va">tiny_so</span>,</span>
+<span class="r-in"><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">mutate_meta</span><span class="op">(</span></span>
+<span class="r-in">  <span class="va">tiny_sce</span>,</span>
 <span class="r-in">  <span class="fu">dplyr</span><span class="fu">::</span><span class="va"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span>,</span>
 <span class="r-in">  NEW_1 <span class="op">=</span> <span class="va">nCount_RNA</span> <span class="op">+</span> <span class="va">nFeature_RNA</span>,</span>
 <span class="r-in">  NEW_2 <span class="op">=</span> <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_c.html" class="external-link">str_c</a></span><span class="op">(</span><span class="va">orig.ident</span>, <span class="va">seurat_clusters</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 204 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 67 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">@</span><span class="va">colData</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 1 row and 9 columns</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt;  &lt;numeric&gt;    &lt;integer&gt;        &lt;factor&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1      avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters    UMAP_1    UMAP_2     NEW_1       NEW_2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                             &lt;factor&gt; &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1   2.56166 -0.674622         2     avid_11</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># Remove meta.data columns</span></span>
 <span class="r-in"><span class="co"># any function can be passed to mutate_meta(), in this example</span></span>
 <span class="r-in"><span class="co"># dplyr::select() is used to remove columns</span></span>
-<span class="r-in"><span class="fu">mutate_meta</span><span class="op">(</span></span>
-<span class="r-in">  <span class="va">tiny_sce</span>,</span>
+<span class="r-in"><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">mutate_meta</span><span class="op">(</span></span>
+<span class="r-in">  <span class="va">tiny_so</span>,</span>
 <span class="r-in">  <span class="fu">dplyr</span><span class="fu">::</span><span class="va"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span>,</span>
 <span class="r-in">  <span class="op">-</span><span class="va">UMAP_1</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> class: SingleCellExperiment </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> dim: 200 204 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> metadata(0):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> assays(1): counts</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> rownames(200): Gins2 Klf11 ... Gm29265 Pkd1l1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> rowData names(0):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> colnames(204): 1_AAACCTGAGTAGGTGC-1 1_AAACCTGAGTCAAGCG-1 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2_TTTACTGGTTGGTTTG-1 2_TTTGTCATCACCCGAG-1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(7): orig.ident nCount_RNA ... seurat_clusters UMAP_2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> reducedDimNames(0):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mainExpName: NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> altExpNames(0):</span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">@</span><span class="va">meta.data</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1     avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters     UMAP_2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1 -0.6746224</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># Perform grouped operations using dplyr</span></span>
 <span class="r-in"><span class="co"># multi-line commands can be passed using brackets, just refer to the</span></span>
 <span class="r-in"><span class="co"># meta.data with ".x"</span></span>
 <span class="r-in"><span class="co"># this calculates the mean number of features for each group in the</span></span>
 <span class="r-in"><span class="co"># orig.ident meta.data column</span></span>
-<span class="r-in"><span class="fu">mutate_meta</span><span class="op">(</span><span class="va">tiny_so</span>, <span class="op">~</span> <span class="op">{</span></span>
-<span class="r-in">  <span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">.x</span>, <span class="va">orig.ident</span><span class="op">)</span></span>
-<span class="r-in">  <span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span><span class="va">res</span>, mean_genes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">nFeature_RNA</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in">  <span class="va">res</span></span>
+<span class="r-in"><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">mutate_meta</span><span class="op">(</span><span class="va">tiny_sce</span>, <span class="op">~</span> <span class="op">{</span></span>
+<span class="r-in">  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">.x</span>, <span class="va">orig.ident</span><span class="op">)</span></span>
+<span class="r-in">  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span><span class="va">y</span>, mean_genes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">nFeature_RNA</span><span class="op">)</span><span class="op">)</span></span>
+<span class="r-in">  <span class="va">y</span></span>
 <span class="r-in"><span class="op">}</span><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 204 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 67 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">@</span><span class="va">colData</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 1 row and 8 columns</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt;  &lt;numeric&gt;    &lt;integer&gt;        &lt;factor&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1      avid_1          1            1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters    UMAP_1    UMAP_2 mean_genes</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                             &lt;factor&gt; &lt;numeric&gt; &lt;numeric&gt;  &lt;numeric&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAACCTGAGTAGGTGC-1               1   2.56166 -0.674622       2.32</span>
 <span class="r-in"></span>
 </code></pre></div>
     </div>
@@ -162,7 +170,7 @@ na.rm = TRUE) where ".x" refers to the meta.data table.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
     </footer></div>
