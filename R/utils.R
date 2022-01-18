@@ -20,11 +20,9 @@ NULL
 
 #' Global variables
 #'
-#' - SEP is the separator to use for storing per-chain V(D)J data
 #' - CELL_COL is the column name to use for storing cell barcodes
 #'
 #' @noRd
-SEP <- ";"
 CELL_COL <- ".cell_id"
 
 
