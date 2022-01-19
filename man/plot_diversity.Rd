@@ -83,9 +83,15 @@ plot_diversity(
 )
 
 # Specify how to organize facets when plotting multiple metrics
+
+mets <- list(
+  simpson = abdiv::simpson,
+  shannon = abdiv::shannon
+)
+
 plot_diversity(
   vdj_so,
-  method = list(simpson = abdiv::simpson, shannon = abdiv::shannon),
+  method = mets,
   facet_rows = 2
 )
 
