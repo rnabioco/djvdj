@@ -347,54 +347,43 @@ NULL
   # this is useful if want to leave original columns unmodified
   if (!is.null(names(sep_cols))) {
     df_in <- dplyr::mutate(df_in, !!!syms(sep_cols))
+
+    sep_cols <- unname(sep_cols)
   }
 
-  # Split columns into vectors
-  # ~ strsplit(as.character(.x), sep)
-  res <- dplyr::mutate(df_in, across(
-    all_of(unname(sep_cols)),
+  res <- df_in
+
+  # Get types to use for coercing columns
+  # use first 100 rows containing V(D)J data
+  typs <- dplyr::select(df_in, all_of(sep_cols))
+  typs <- dplyr::filter(typs, if_all(all_of(sep_cols), ~ !is.na(.x)))
+  typs <- utils::head(typs, 100)
+
+  typs <- dplyr::mutate(typs, across(
+    all_of(sep_cols),
     ~ strsplit(.x, sep)
   ))
 
-  # Get types to use for coercing columns
-  # use first 1000 rows containing V(D)J data
-  typs <- dplyr::select(res, all_of(unname(sep_cols)))
-  typs <- dplyr::rowwise(typs)
-  typs <- dplyr::filter(typs, if_all(all_of(sep_cols), ~ any(!is.na(.x))))
-
-  typs <- utils::head(typs, 1000)
   typs <- tidyr::unnest(typs, everything())
   typs <- purrr::map(typs, readr::guess_parser)
-
   typs <- purrr::map_chr(typs, ~ paste0("as.", .x))
 
-  # Coerce columns to correct types
-  # this is a major performance bottleneck
-  # as.double(x) is much faster than as(x, "double")
-  # slower way::
-  #   res  <- dplyr::rowwise(res)
-  #   for (i in seq_along(typs)) {
-  #     typ  <- typs[i]
-  #     fn   <- unlist(typ, use.names = FALSE)
-  #     clmn <- sym(names(typ))
-  #     res  <- dplyr::mutate(res, !!clmn := list(as(!!clmn, typ)))
-  #   }
-  #   res  <- dplyr::ungroup(res)
+  # Split sep_cols and convert types
+  # >2x faster
+  for (clmn in sep_cols) {
+    dat <- df_in[[clmn]]
+    fn  <- typs[[clmn]]
 
-  res <- dplyr::rowwise(res)
+    dat <- map(dat, ~ {
+      .x <- strsplit(.x, sep, fixed = TRUE)
+      .x <- unlist(.x)
+      .x <- do.call(fn, list(x = .x))
 
-  for (i in seq_along(typs)) {
-    typ  <- typs[i]
-    fn   <- unname(typ)
-    clmn <- sym(names(typ))
+      .x
+    })
 
-    res <- dplyr::mutate(
-      res,
-      !!clmn := list(do.call(fn, list(x = !!clmn)))
-    )
+    res <- dplyr::mutate(res, !!sym(clmn) := dat)
   }
-
-  res <- dplyr::ungroup(res)
 
   # Unnest data.frame
   if (unnest) {
@@ -402,6 +391,28 @@ NULL
   }
 
   res
+
+  # Very very slow way
+  # for (i in seq_len(nrow(df_in))) {
+  #   rw <- df_in[i, ]
+  #
+  #   for (cl in sep_cols) {
+  #     x  <- rw[[cl]]
+  #     fn <- typs[[cl]]
+  #
+  #     x <- strsplit(x, sep, fixed = TRUE)
+  #     x <- unlist(x)
+  #     x <- do.call(fn, list(x = x))
+  #
+  #     rw <- dplyr::mutate(rw, !!sym(cl) := list(x))
+  #   }
+  #
+  #   if (unnest) {
+  #     rw <- tidyr::unnest(rw, all_of(sep_cols))
+  #   }
+  #
+  #   res <- dplyr::bind_rows(res, rw)
+  # }
 }
 
 

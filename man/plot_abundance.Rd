@@ -74,13 +74,6 @@ plot_abundance(
   cluster_col = "orig.ident"
 )
 
-# Create line graph
-plot_abundance(
-  vdj_so,
-  cluster_col = "orig.ident",
-  type = "line"
-)
-
 # Plot the frequency of each clonotype instead of percentage
 plot_abundance(
   vdj_sce,
@@ -106,6 +99,15 @@ plot_abundance(
 plot_abundance(
   vdj_so,
   n_clonotypes = 5
+)
+
+#' # Create line graph
+# use n_clonotypes to set the number of clonotypes to label
+plot_abundance(
+  vdj_so,
+  cluster_col = "orig.ident",
+  type = "line",
+  n_clonotypes = 3
 )
 
 }

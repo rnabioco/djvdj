@@ -178,13 +178,6 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #'   cluster_col = "orig.ident"
 #' )
 #'
-#' # Create line graph
-#' plot_abundance(
-#'   vdj_so,
-#'   cluster_col = "orig.ident",
-#'   type = "line"
-#' )
-#'
 #' # Plot the frequency of each clonotype instead of percentage
 #' plot_abundance(
 #'   vdj_sce,
@@ -210,6 +203,15 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #' plot_abundance(
 #'   vdj_so,
 #'   n_clonotypes = 5
+#' )
+#'
+#' #' # Create line graph
+#' # use n_clonotypes to set the number of clonotypes to label
+#' plot_abundance(
+#'   vdj_so,
+#'   cluster_col = "orig.ident",
+#'   type = "line",
+#'   n_clonotypes = 3
 #' )
 #'
 #' @export
