@@ -765,53 +765,44 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' @noRd
 .extract_isotypes <- function(df_in, iso_col = "c_gene", chain_col = "chains") {
 
+  # Pull data for isotypes
   isos <- df_in[[iso_col]]
-  idx  <- df_in[[chain_col]] == "IGH" & df_in[[iso_col]] != "None"
 
-  isos[idx]  <- substr(isos[idx], 1, 4)
+  chains <- df_in[[chain_col]]
+
+  idx <- chains == "IGH" & isos != "None"
+
+  isos[idx] <- substr(isos[idx], 1, 4)
+
   isos[!idx] <- as.character(NA)
 
-  df_in$isotype <- isos
+  # Identify cells with multiple isotypes
+  iso_df <- df_in[, c("barcode", iso_col)]
 
-  res <- dplyr::group_by(df_in, .data$barcode)
+  iso_df[iso_col] <- isos
 
-  res <- dplyr::mutate(
-    res,
-    isotype = dplyr::case_when(
-      n_distinct(isotype, na.rm = TRUE) > 1  ~ "Multi",
-      n_distinct(isotype, na.rm = TRUE) == 0 ~ "None",
-      TRUE ~ paste0(unique(isotype[!is.na(isotype)]), collapse = "")
-    )
+  iso_df <- dplyr::distinct(iso_df, barcode, c_gene)
+  iso_df <- stats::na.omit(iso_df)
+
+  dups <- iso_df$barcode
+  dups <- dups[duplicated(dups)]
+
+  # Add isotypes to meta.data
+  iso_df <- mutate(
+    iso_df,
+    isotype = ifelse(barcode %in% dups, "Multi", !!sym(iso_col))
   )
 
-  # res <- dplyr::mutate(
-  #   res,
-  #   isotype = list(
-  #     substr(
-  #       !!sym(iso_col), 1,
-  #       attr(regexpr(iso_pat, !!sym(iso_col)), "match.length", exact = TRUE)
-  #     )
-  #   ),
-  #   isotype = purrr::map_chr(.data$isotype, ~ {
-  #     isos <- unique(.x)
-  #     isos <- tidyr::replace_na(isos, "")
-  #     isos <- isos[isos != ""]
-  #
-  #     if (length(isos) == 0) {
-  #       isos <- ""
-  #     }
-  #
-  #     isos <- dplyr::case_when(
-  #       length(isos) > 1    ~ "Multi",
-  #       identical(isos, "") ~ "None",
-  #       TRUE                ~ isos
-  #     )
-  #
-  #     unique(isos)
-  #   })
-  # )
+  isos <- purrr::set_names(
+    iso_df$isotype,
+    iso_df$barcode
+  )
 
-  res <- dplyr::ungroup(res)
+  res <- mutate(
+    df_in,
+    isotype = unname(isos[barcode]),
+    isotype = replace_na(isotype, "None")
+  )
 
   res
 }
