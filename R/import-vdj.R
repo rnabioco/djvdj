@@ -759,41 +759,57 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #'
 #' @param df_in data.frame containing V(D)J data formatted so each row
 #' represents a single contig
-#' @param iso_pat Regular expression to use for extracting isotypes from
-#' iso_col
 #' @param iso_col Column containing data to use for extracting isotypes
+#' @param chain_col Column in input data containing chain identity
 #' @return Input data.frame with isotype column added
 #' @noRd
-.extract_isotypes <- function(df_in, iso_pat = "^IGH[ADEGM]", iso_col = "c_gene") {
+.extract_isotypes <- function(df_in, iso_col = "c_gene", chain_col = "chains") {
+
+  isos <- df_in[[iso_col]]
+  idx  <- df_in[[chain_col]] == "IGH" & df_in[[iso_col]] != "None"
+
+  isos[idx]  <- substr(isos[idx], 1, 4)
+  isos[!idx] <- as.character(NA)
+
+  df_in$isotype <- isos
 
   res <- dplyr::group_by(df_in, .data$barcode)
 
   res <- dplyr::mutate(
     res,
-    isotype = list(
-      substr(
-        !!sym(iso_col), 1,
-        attr(regexpr(iso_pat, !!sym(iso_col)), "match.length", exact = TRUE)
-      )
-    ),
-    isotype = purrr::map_chr(.data$isotype, ~ {
-      isos <- unique(.x)
-      isos <- tidyr::replace_na(isos, "")
-      isos <- isos[isos != ""]
-
-      if (length(isos) == 0) {
-        isos <- ""
-      }
-
-      isos <- dplyr::case_when(
-        length(isos) > 1    ~ "Multi",
-        identical(isos, "") ~ "None",
-        TRUE                ~ isos
-      )
-
-      unique(isos)
-    })
+    isotype = dplyr::case_when(
+      n_distinct(isotype, na.rm = TRUE) > 1  ~ "Multi",
+      n_distinct(isotype, na.rm = TRUE) == 0 ~ "None",
+      TRUE ~ paste0(unique(isotype[!is.na(isotype)]), collapse = "")
+    )
   )
+
+  # res <- dplyr::mutate(
+  #   res,
+  #   isotype = list(
+  #     substr(
+  #       !!sym(iso_col), 1,
+  #       attr(regexpr(iso_pat, !!sym(iso_col)), "match.length", exact = TRUE)
+  #     )
+  #   ),
+  #   isotype = purrr::map_chr(.data$isotype, ~ {
+  #     isos <- unique(.x)
+  #     isos <- tidyr::replace_na(isos, "")
+  #     isos <- isos[isos != ""]
+  #
+  #     if (length(isos) == 0) {
+  #       isos <- ""
+  #     }
+  #
+  #     isos <- dplyr::case_when(
+  #       length(isos) > 1    ~ "Multi",
+  #       identical(isos, "") ~ "None",
+  #       TRUE                ~ isos
+  #     )
+  #
+  #     unique(isos)
+  #   })
+  # )
 
   res <- dplyr::ungroup(res)
 
