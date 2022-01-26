@@ -92,7 +92,7 @@ head(vdj_so@meta.data, 1)
 vdj_so <- import_vdj(
   tiny_so,
   vdj_dir = vdj_dir,
-  cell_prefix = c("1_", "2_")
+  cell_prefix = c("1", "2")
 )
 
 head(vdj_so@meta.data, 1)
@@ -100,8 +100,8 @@ head(vdj_so@meta.data, 1)
 # Specifying cell prefixes using vector names
 # if a named vector is passed, the names will be used as the cell prefixes
 vdj_dir <- c(
-  "1_" = system.file("extdata/bcr_1", package = "djvdj"),
-  "2_" = system.file("extdata/bcr_2", package = "djvdj")
+  "1" = system.file("extdata/bcr_1", package = "djvdj"),
+  "2" = system.file("extdata/bcr_2", package = "djvdj")
 )
 
 vdj_so <- import_vdj(tiny_so, vdj_dir)
@@ -158,14 +158,14 @@ vdj_so <- import_vdj(
   tiny_so,
   vdj_dir     = bcr_dir,
   prefix      = "bcr_",
-  cell_prefix = "1_"
+  cell_prefix = "1"
 )
 
 vdj_so <- import_vdj(
   vdj_so,
   vdj_dir     = tcr_dir,
   prefix      = "tcr_",
-  cell_prefix = "1_"
+  cell_prefix = "1"
 )
 
 head(vdj_so@meta.data, 1)

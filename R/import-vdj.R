@@ -63,7 +63,7 @@
 #' vdj_so <- import_vdj(
 #'   tiny_so,
 #'   vdj_dir = vdj_dir,
-#'   cell_prefix = c("1_", "2_")
+#'   cell_prefix = c("1", "2")
 #' )
 #'
 #' head(vdj_so@meta.data, 1)
@@ -71,8 +71,8 @@
 #' # Specifying cell prefixes using vector names
 #' # if a named vector is passed, the names will be used as the cell prefixes
 #' vdj_dir <- c(
-#'   "1_" = system.file("extdata/bcr_1", package = "djvdj"),
-#'   "2_" = system.file("extdata/bcr_2", package = "djvdj")
+#'   "1" = system.file("extdata/bcr_1", package = "djvdj"),
+#'   "2" = system.file("extdata/bcr_2", package = "djvdj")
 #' )
 #'
 #' vdj_so <- import_vdj(tiny_so, vdj_dir)
@@ -129,14 +129,14 @@
 #'   tiny_so,
 #'   vdj_dir     = bcr_dir,
 #'   prefix      = "bcr_",
-#'   cell_prefix = "1_"
+#'   cell_prefix = "1"
 #' )
 #'
 #' vdj_so <- import_vdj(
 #'   vdj_so,
 #'   vdj_dir     = tcr_dir,
 #'   prefix      = "tcr_",
-#'   cell_prefix = "1_"
+#'   cell_prefix = "1"
 #' )
 #'
 #' head(vdj_so@meta.data, 1)
@@ -411,7 +411,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' NULL to not add a separator
 #' @return Paths provided to vdj_dir with cell prefixes added as names
 #' @noRd
-.format_cell_prefixes <- function(vdj_dir, cell_prefix, sep = NULL) {
+.format_cell_prefixes <- function(vdj_dir, cell_prefix, sep = "_") {
 
   res <- vdj_dir
 
@@ -556,14 +556,17 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   }
 
   .extract_pat <- function(string, pat) {
-
     res <- purrr::map_dbl(string, ~ {
       strg  <- .x
       mtch  <- gregexpr(pat, strg, perl = TRUE)[[1]]
       strts <- as.integer(mtch)
       lens  <- attr(mtch, "match.length", exact = TRUE)
 
-      n <- purrr::map2_int(strts, lens, ~ as.integer(substr(strg, .x, .x + .y - 1)))
+      n <- purrr::map2_int(strts, lens, ~ {
+        x <- substr(strg, .x, .x + .y - 1)
+        x <- as.integer(x)
+        x
+      })
 
       # Multiple indel sites will result in vector with length > 1
       # sum bp from all sites and replace NAs with 0
@@ -801,7 +804,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   res <- mutate(
     df_in,
     isotype = unname(isos[barcode]),
-    isotype = replace_na(isotype, "None")
+    isotype = tidyr::replace_na(isotype, "None")
   )
 
   res

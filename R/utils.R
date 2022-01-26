@@ -391,28 +391,6 @@ NULL
   }
 
   res
-
-  # Very very slow way
-  # for (i in seq_len(nrow(df_in))) {
-  #   rw <- df_in[i, ]
-  #
-  #   for (cl in sep_cols) {
-  #     x  <- rw[[cl]]
-  #     fn <- typs[[cl]]
-  #
-  #     x <- strsplit(x, sep, fixed = TRUE)
-  #     x <- unlist(x)
-  #     x <- do.call(fn, list(x = x))
-  #
-  #     rw <- dplyr::mutate(rw, !!sym(cl) := list(x))
-  #   }
-  #
-  #   if (unnest) {
-  #     rw <- tidyr::unnest(rw, all_of(sep_cols))
-  #   }
-  #
-  #   res <- dplyr::bind_rows(res, rw)
-  # }
 }
 
 
