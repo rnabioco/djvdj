@@ -157,10 +157,9 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
                        filter_paired = FALSE, define_clonotypes = NULL, include_indels = TRUE, sep = ";") {
 
   # V(D)J columns to include
-  cdr3_cols  <- c("cdr3", "cdr3_nt")
+  cdr3_cols  <- c("cdr3", "cdr3_nt")  # list aa column first
   count_cols <- c("reads", "umis")
   gene_cols  <- c("v_gene", "d_gene", "j_gene", "c_gene")
-  indel_cols <- c("n_insertion", "n_deletion", "n_mismatch")
   qc_cols    <- c("productive", "full_length")
 
   sep_cols <- c(
@@ -180,15 +179,34 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   # Load V(D)J data and add cell prefixes
   contigs <- .load_vdj_data(vdj_dir)
 
+  # For genes replace NAs
+  contigs <- purrr::map(contigs, ~ {
+    dplyr::mutate(.x, across(all_of(gene_cols), tidyr::replace_na, "None"))
+  })
+
   # Add indel info for each contig
   # if indel data is included, always filter for productive contigs since most
   # non-productive contigs are missing indel data
   if (include_indels) {
-    indels <- .load_vdj_indels(vdj_dir)
+    indels <- .load_indels(vdj_dir)
 
     if (!is.null(indels)) {
+      # Rename length columns
+      # list aa columns first
+      len_cols <- purrr::set_names(
+        c("junction_aa_length", "junction_length"),
+        paste0(cdr3_cols, "_length")
+      )
+
+      indels <- purrr::map(indels, dplyr::rename, !!!syms(len_cols))
+
+      indel_cols <- names(indels[[1]])
+      indel_cols <- indel_cols[indel_cols != "contig_id"]
+
+      # When including indel data, only use productive full length chains
       indel_ctigs <- purrr::map(contigs, dplyr::filter, !!!syms(qc_cols))
 
+      # Join indel data
       indel_ctigs <- purrr::map2(
         indel_ctigs, indels,
         dplyr::left_join,
@@ -228,11 +246,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
   # Filter for productive contigs
   if (filter_chains) {
-    contigs <- purrr::map(
-      contigs,
-      dplyr::filter,
-      .data$productive, .data$full_length
-    )
+    contigs <- purrr::map(contigs, dplyr::filter, !!!syms(qc_cols))
   }
 
   # Classify input data as TCR or BCR
@@ -256,13 +270,28 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   # bind contig data.frames
   contigs <- purrr::imap_dfr(contigs, ~ .check_overlap(input, .x, .y))
 
+  # Calculate CDR3 length if no airr file provided
+  # report length 0 if there is no reported CDR3 sequence
+  if (!include_indels) {
+    contigs <- dplyr::mutate(
+      contigs,
+      across(
+        all_of(cdr3_cols),
+        ~ ifelse(.x == "None", 0, nchar(.x)),
+        .names = "{.col}_length"
+      )
+    )
+
+    sep_cols <- c(sep_cols, paste0(cdr3_cols, "_length"))
+  }
+
   # Remove contigs that do not have an assigned clonotype_id
   n_remove <- contigs$clonotype_id
   n_remove <- n_remove[is.na(n_remove)]
   n_remove <- length(n_remove)
 
   if (n_remove > 0) {
-    warning(n_remove, " contigs do not have an assigned clonotype_id, these contigs will be removed.")
+    warning(n_remove, " contig(s) do not have an assigned clonotype_id, these contigs will be removed.")
 
     contigs <- dplyr::filter(contigs, !is.na(.data$clonotype_id))
   }
@@ -295,19 +324,6 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   if (filter_paired) {
     contigs <- dplyr::filter(contigs, .data$paired)
   }
-
-  # Calculate CDR3 length
-  # report length 0 if there is no reported CDR3 sequence
-  contigs <- dplyr::mutate(
-    contigs,
-    across(
-      all_of(cdr3_cols),
-      ~ ifelse(.x == "None", 0, nchar(.x)),
-      .names = "{.col}_length"
-    )
-  )
-
-  sep_cols <- c(sep_cols, paste0(cdr3_cols, "_length"))
 
   # Order chains and CDR3 sequences
   # when rows are collapsed, the cdr3 sequences must be in the same order for
@@ -476,6 +492,8 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' @noRd
 .load_vdj_data <- function(vdj_dir, contig_file = "filtered_contig_annotations.csv") {
 
+  qc_cols <- c("productive", "full_length")
+
   # Check for file and return path
   res <- purrr::map_chr(vdj_dir, .get_vdj_path, file = contig_file)
 
@@ -494,7 +512,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 
     d <- dplyr::mutate(
       d,
-      dplyr::across(.cols = c(full_length, productive), ~ {
+      dplyr::across(.cols = all_of(qc_cols), ~ {
         ifelse(
           !is.logical(.x),
           as.logical(gsub("None", "FALSE", .x)),
@@ -526,75 +544,118 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
 #' vector is given, the cell barcodes will be prefixed with the provided names.
 #' This mimics the behavior of the Read10X function found in the Seurat
 #' package.
-#' @param bam_file bam file from cellranger vdj containing alignment data comparing
-#' each contig with the germline reference
+#' @param airr_file file following AIRR format from cellranger vdj
 #' @return List containing one data.frame for each path provided to vdj_dir
 #' @importFrom Rsamtools scanBam
 #' @noRd
-.load_vdj_indels <- function(vdj_dir, bam_file = "concat_ref.bam") {
+.load_indels <- function(vdj_dir, airr_file = "airr_rearrangement.tsv") {
 
-  .extract_indels <- function(bam_lst) {
-
-    res <- tibble::tibble(
-      cigar     = bam_lst[[1]]$cigar,
-      contig_id = bam_lst[[1]]$qname
-    )
-
-    res <- dplyr::filter(res, grepl("_contig_[0-9]+$", .data$contig_id))
-
-    # Add indel columns,
-    res <- dplyr::mutate(
-      res,
-      n_insertion = .extract_pat(.data$cigar, "[0-9]+(?=I)"),
-      n_deletion  = .extract_pat(.data$cigar, "[0-9]+(?=D)"),
-      n_mismatch  = .extract_pat(.data$cigar, "[0-9]+(?=X)"),
-    )
-
-    res <- dplyr::select(res, -.data$cigar)
-
-    res
-  }
-
-  .extract_pat <- function(string, pat) {
-    res <- purrr::map_dbl(string, ~ {
-      strg  <- .x
-      mtch  <- gregexpr(pat, strg, perl = TRUE)[[1]]
-      strts <- as.integer(mtch)
-      lens  <- attr(mtch, "match.length", exact = TRUE)
-
-      n <- purrr::map2_int(strts, lens, ~ {
-        x <- substr(strg, .x, .x + .y - 1)
-        x <- as.integer(x)
-        x
-      })
-
-      # Multiple indel sites will result in vector with length > 1
-      # sum bp from all sites and replace NAs with 0
-      n <- tidyr::replace_na(sum(n), 0)
-
-      n
-    })
-
-    res
-  }
+  len_cols <- c("junction_aa_length", "junction_length")
 
   # Check for file and return path
-  # if bam is missing for any sample, return NULL
+  # if airr is missing for any sample, return NULL
   # do not want extra NAs in the V(D)J data columns
-  res <- purrr::map_chr(vdj_dir, .get_vdj_path, file = bam_file, warn = TRUE)
+  res <- purrr::map_chr(vdj_dir, .get_vdj_path, file = airr_file, warn = TRUE)
 
   if (any(is.na(res))) {
     return(NULL)
   }
 
   # Load data
-  res <- purrr::map(res, Rsamtools::scanBam)
+  res <- purrr::map(
+    res,
+    readr::read_tsv,
+    col_types = readr::cols(),
+    progress  = FALSE
+  )
 
-  # Extract indel data
-  res <- purrr::map(res, .extract_indels)
+  # Add indel columns
+  clmns <- c("_insertions", "_deletions", "_mismatches")
+
+  res <- purrr::map(res, ~ {
+    .x <- .extract_indels(.x, "v_cigar", "v_")
+    .x <- .extract_indels(.x, "d_cigar", "d_")
+    .x <- .extract_indels(.x, "j_cigar", "j_")
+
+    .x <- dplyr::select(
+      .x,
+      contig_id = sequence_id,
+      all_of(len_cols),
+      ends_with(clmns)
+    )
+
+    .x
+  })
+
+  # Sum indels
+  clmns <- purrr::set_names(clmns)
+  clmns <- map(clmns, ~ str_c(c("v", "d", "j"), .x))
+
+  res <- purrr::map(res, ~ {
+    .x <- dplyr::rowwise(.x)
+
+    .x <- mutate(
+      .x,
+      all_insertions = sum(!!!syms(clmns$`_insertions`)),
+      all_deletions  = sum(!!!syms(clmns$`_deletions`)),
+      all_mismatches = sum(!!!syms(clmns$`_mismatches`))
+    )
+
+    .x <- dplyr::ungroup(.x)
+
+    .x
+  })
 
   res
 }
+
+.extract_indels <- function(df_in, clmn, prfx) {
+  new_clmns <- c(
+    insertions = "[0-9]+(?=I)",
+    deletions  = "[0-9]+(?=D)",
+    mismatches = "[0-9]+(?=X)"
+  )
+
+  names(new_clmns) <- paste0(prfx, names(new_clmns))
+
+  res <- df_in
+
+  for (i in seq_along(new_clmns)) {
+    new <- names(new_clmns[i])
+    pat <- new_clmns[[i]]
+
+    res <- mutate(
+      res,
+      !!sym(new) := .extract_pat(!!sym(clmn), pat)
+    )
+  }
+
+  res
+}
+
+.extract_pat <- function(string, pat) {
+  res <- purrr::map_dbl(string, ~ {
+    strg  <- .x
+    mtch  <- gregexpr(pat, strg, perl = TRUE)[[1]]
+    strts <- as.integer(mtch)
+    lens  <- attr(mtch, "match.length", exact = TRUE)
+
+    n <- purrr::map2_int(strts, lens, ~ {
+      x <- substr(strg, .x, .x + .y - 1)
+      x <- as.integer(x)
+      x
+    })
+
+    # Multiple indel sites will result in vector with length > 1
+    # sum bp from all sites and replace NAs with 0
+    n <- tidyr::replace_na(sum(n), 0)
+
+    n
+  })
+
+  res
+}
+
 
 #' Check for V(D)J data file in provided directory
 #'
@@ -931,3 +992,71 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
 }
 
 
+
+
+
+
+# .load_vdj_indels <- function(vdj_dir, bam_file = "concat_ref.bam") {
+#
+#   .extract_indels <- function(bam_lst) {
+#
+#     res <- tibble::tibble(
+#       cigar     = bam_lst[[1]]$cigar,
+#       contig_id = bam_lst[[1]]$qname
+#     )
+#
+#     res <- dplyr::filter(res, grepl("_contig_[0-9]+$", .data$contig_id))
+#
+#     # Add indel columns,
+#     res <- dplyr::mutate(
+#       res,
+#       n_insertion = .extract_pat(.data$cigar, "[0-9]+(?=I)"),
+#       n_deletion  = .extract_pat(.data$cigar, "[0-9]+(?=D)"),
+#       n_mismatch  = .extract_pat(.data$cigar, "[0-9]+(?=X)"),
+#     )
+#
+#     res <- dplyr::select(res, -.data$cigar)
+#
+#     res
+#   }
+#
+#   .extract_pat <- function(string, pat) {
+#     res <- purrr::map_dbl(string, ~ {
+#       strg  <- .x
+#       mtch  <- gregexpr(pat, strg, perl = TRUE)[[1]]
+#       strts <- as.integer(mtch)
+#       lens  <- attr(mtch, "match.length", exact = TRUE)
+#
+#       n <- purrr::map2_int(strts, lens, ~ {
+#         x <- substr(strg, .x, .x + .y - 1)
+#         x <- as.integer(x)
+#         x
+#       })
+#
+#       # Multiple indel sites will result in vector with length > 1
+#       # sum bp from all sites and replace NAs with 0
+#       n <- tidyr::replace_na(sum(n), 0)
+#
+#       n
+#     })
+#
+#     res
+#   }
+#
+#   # Check for file and return path
+#   # if bam is missing for any sample, return NULL
+#   # do not want extra NAs in the V(D)J data columns
+#   res <- purrr::map_chr(vdj_dir, .get_vdj_path, file = bam_file, warn = TRUE)
+#
+#   if (any(is.na(res))) {
+#     return(NULL)
+#   }
+#
+#   # Load data
+#   res <- purrr::map(res, Rsamtools::scanBam)
+#
+#   # Extract indel data
+#   res <- purrr::map(res, .extract_indels)
+#
+#   res
+# }
