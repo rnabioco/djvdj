@@ -9,22 +9,35 @@ development:
 
 reference:
 
-- title: Import and manipulate
+- title: Manipulate
   contents:
   - import_vdj
   - fetch_vdj
   - filter_vdj
   - summarize_vdj
-  - starts_with("mutate_")
+  - mutate_vdj
+  - mutate_meta
 
 - title: Calculate
   contents:
+  - calc_abundance
+  - calc_diversity
+  - calc_similarity
+  - calc_gene_usage
   - define_clonotypes
-  - starts_with("calc_")
 
 - title: Plotting
   contents:
-  - starts_with("plot_")
+  - plot_abundance
+  - plot_diversity
+  - plot_similarity
+  - plot_gene_usage
+  - plot_features
+  - plot_vdj_feature
+  - plot_vdj
+  - plot_vdj_reads
+  - plot_cdr3_length
+  - plot_vdj_indels
   - djvdj_theme
 
 - title: Data

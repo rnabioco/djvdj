@@ -18,40 +18,49 @@
 #'
 #' @examples
 #' # Calculate diversity using all cells
-#' calc_diversity(
+#' res <- calc_diversity(
 #'   vdj_so,
 #'   method = abdiv::simpson
 #' )
 #'
+#' head(res@meta.data, 1)
+#'
 #' # Group cells based on meta.data column before calculating diversity
-#' calc_diversity(
-#'   vdj_so,
+#' res <- calc_diversity(
+#'   vdj_sce,
 #'   cluster_col = "orig.ident"
 #' )
+#'
+#' head(res@colData, 1)
 #'
 #' # Add a prefix to the new columns
 #' # this is useful if multiple diversity calculations are stored in the
 #' # meta.data
-#' calc_diversity(
+#' res <- calc_diversity(
 #'   vdj_so,
 #'   prefix = "bcr_"
 #' )
 #'
+#' head(res@meta.data, 1)
+#'
+#' # Calculate multiple metrics
+#' res <- calc_diversity(
+#'   vdj_sce,
+#'   method = list(
+#'     simpson = abdiv::simpson,
+#'     shannon = abdiv::shannon
+#'   )
+#' )
+#'
+#' head(res@colData, 1)
+#'
 #' # Return a data.frame instead of adding the results to the input object
-#' calc_diversity(
+#' res <- calc_diversity(
 #'   vdj_so,
 #'   return_df = TRUE
 #' )
 #'
-#' # Using calc_diversity outside of Seurat
-#' # SingleCellExperiment objects or data.frames containing V(D)J data are also
-#' # compatible. If a data.frame is provided, cell barcodes should be stored as
-#' # row names.
-#' calc_diversity(vdj_sce)
-#'
-#' df <- vdj_so@meta.data
-#'
-#' calc_diversity(df)
+#' head(res, 1)
 #'
 #' @export
 calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
@@ -84,7 +93,7 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 
   vdj <- dplyr::summarize(
     vdj,
-    .n      = dplyr::n_distinct(.data$.cell_id),
+    .n      = dplyr::n_distinct(!!sym(CELL_COL)),
     .groups = "drop"
   )
 
@@ -160,7 +169,7 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #'
 #' # Specify method to use for calculating repertoire diversity
 #' plot_diversity(
-#'   vdj_so,
+#'   vdj_sce,
 #'   method = abdiv::shannon
 #' )
 #'
@@ -172,7 +181,7 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #'
 #' # Plot multiple diversity metrics
 #' plot_diversity(
-#'   vdj_so,
+#'   vdj_sce,
 #'   cluster_col = "orig.ident",
 #'   method = list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 #' )
@@ -186,7 +195,7 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #'
 #' # Specify order to use for plotting cell clusters
 #' plot_diversity(
-#'   vdj_so,
+#'   vdj_sce,
 #'   cluster_col = "orig.ident",
 #'   plot_lvls = c("avid_2", "avid_1")
 #' )

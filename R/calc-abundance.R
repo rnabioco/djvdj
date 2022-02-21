@@ -13,40 +13,38 @@
 #'
 #' @examples
 #' # Calculate clonotype abundance using all cells
-#' calc_abundance(
+#' res <- calc_abundance(
 #'   vdj_so,
 #'   clonotype_col = "clonotype_id"
 #' )
 #'
+#' head(res@meta.data, 1)
+#'
 #' # Group cells based on meta.data column before calculating abundance
-#' calc_abundance(
-#'   vdj_so,
+#' res <- calc_abundance(
+#'   vdj_sce,
 #'   cluster_col = "orig.ident"
 #' )
+#'
+#' head(res@colData, 1)
 #'
 #' # Add a prefix to the new columns
 #' # this is useful if multiple abundance calculations are stored in the
 #' # meta.data
-#' calc_abundance(
+#' res <- calc_abundance(
 #'   vdj_so,
 #'   prefix = "bcr_"
 #' )
 #'
+#' head(res@meta.data, 1)
+#'
 #' # Return a data.frame instead of adding the results to the input object
-#' calc_abundance(
-#'   vdj_so,
+#' res <- calc_abundance(
+#'   vdj_sce,
 #'   return_df = TRUE
 #' )
 #'
-#' # Using calc_abundance outside of Seurat
-#' # SingleCellExperiment objects or data.frames containing V(D)J data are also
-#' # compatible. If a data.frame is provided, cell barcodes should be stored as
-#' # row names.
-#' calc_abundance(vdj_sce)
-#'
-#' df <- vdj_so@meta.data
-#'
-#' calc_abundance(df)
+#' head(res, 1)
 #'
 #' @export
 calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id",
@@ -58,13 +56,13 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 
   vdj <- dplyr::select(
     vdj,
-    .data$.cell_id, all_of(c(cluster_col, clonotype_col))
+    !!sym(CELL_COL), all_of(c(cluster_col, clonotype_col))
   )
 
   # Calculate clonotype abundance
   vdj <- .calc_abund(
     df_in     = vdj,
-    cell_col  = ".cell_id",
+    cell_col  = CELL_COL,
     clone_col = clonotype_col,
     clust_col = cluster_col
   )
@@ -80,10 +78,10 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
     paste0(prefix, "clone_", new_cols)
   )
 
-  vdj <- select(vdj, .data$.cell_id, !!!syms(new_cols))
+  vdj <- select(vdj, !!sym(CELL_COL), !!!syms(new_cols))
 
   # Format results
-  res <- dplyr::left_join(meta, vdj, by = ".cell_id")
+  res <- dplyr::left_join(meta, vdj, by = CELL_COL)
 
   if (return_df) {
     input <- meta
@@ -176,7 +174,7 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #'
 #' # Plot clonotype abundance separately for each cell cluster
 #' plot_abundance(
-#'   vdj_so,
+#'   vdj_sce,
 #'   cluster_col = "orig.ident"
 #' )
 #'
@@ -189,7 +187,7 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #'
 #' # Plot the frequency of each clonotype instead of percentage
 #' plot_abundance(
-#'   vdj_so,
+#'   vdj_sce,
 #'   cluster_col = "orig.ident",
 #'   yaxis = "frequency"
 #' )
@@ -203,7 +201,7 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #'
 #' # Specify order to use for plotting cell clusters
 #' plot_abundance(
-#'   vdj_so,
+#'   vdj_sce,
 #'   cluster_col = "orig.ident",
 #'   plot_lvls = c("avid_2", "avid_1")
 #' )
@@ -246,7 +244,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
     dat_col <- ".clone_freq"
   }
 
-  plt_dat <- tibble::as_tibble(plt_dat, rownames = ".cell_id")
+  plt_dat <- tibble::as_tibble(plt_dat, rownames = CELL_COL)
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
 
   abund_cols <- c(cluster_col, clonotype_col, dat_col)

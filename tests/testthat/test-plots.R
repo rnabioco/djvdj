@@ -335,7 +335,7 @@ test_that("plot_similarity bad cluster col", {
   )
 })
 
-# Check all plot_vdj_usage arguments return ggplot
+# Check all plot_gene_usage arguments return ggplot
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
   gene_cols   = list("v_gene", "j_gene", c("v_gene", "j_gene")),
@@ -348,22 +348,22 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_vdj_usage,
-  desc    = "plot_vdj_usage args",
+  .fn     = plot_gene_usage,
+  desc    = "plot_gene_usage args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check all plot_vdj_usage arguments return ggplot list
+# Check all plot_gene_usage arguments return ggplot list
 arg_lst$cluster_col <- "seurat_clusters"
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_vdj_usage,
-  desc    = "plot_vdj_usage args",
+  .fn     = plot_gene_usage,
+  desc    = "plot_gene_usage args",
   chk     = expr(expect_type(.res, "list"))
 )
 
-# Check plot_vdj_usage plot_genes
+# Check plot_gene_usage plot_genes
 test_genes <- vdj_so %>%
   fetch_vdj() %>%
   pull(v_gene) %>%
@@ -382,51 +382,51 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_vdj_usage,
-  desc    = "plot_vdj_usage args",
+  .fn     = plot_gene_usage,
+  desc    = "plot_gene_usage args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check plot_vdj_usage bad plot_genes
-test_that("plot_vdj_usage bad plot_genes", {
+# Check plot_gene_usage bad plot_genes
+test_that("plot_gene_usage bad plot_genes", {
   expect_error(
-    plot_vdj_usage(vdj_so, gene_cols = "v_gene", vdj_genes = "BAD"),
+    plot_gene_usage(vdj_so, gene_cols = "v_gene", vdj_genes = "BAD"),
     "None of the provided genes were found"
   )
 
   expect_warning(
-    plot_vdj_usage(vdj_so, gene_cols = "v_gene", vdj_genes = c(test_genes, "BAD")),
+    plot_gene_usage(vdj_so, gene_cols = "v_gene", vdj_genes = c(test_genes, "BAD")),
     "Some genes not found: "
   )
 })
 
-# Check plot_vdj_usage bad type
-test_that("plot_vdj_usage bad type", {
+# Check plot_gene_usage bad type
+test_that("plot_gene_usage bad type", {
   expect_error(
     vdj_so %>%
-      plot_vdj_usage(
+      plot_gene_usage(
         gene_cols = "v_gene",
         type      = "BAD"
       )
   )
 })
 
-# Check plot_vdj_usage bad yaxis
-test_that("plot_vdj_usage bad type", {
+# Check plot_gene_usage bad yaxis
+test_that("plot_gene_usage bad type", {
   expect_error(
     vdj_so %>%
-      plot_vdj_usage(
+      plot_gene_usage(
         gene_cols = "v_gene",
         yaxis     = "BAD"
       )
   )
 })
 
-# Check plot_vdj_usage bad gene_cols
-test_that("plot_vdj_usage bad gene_cols", {
+# Check plot_gene_usage bad gene_cols
+test_that("plot_gene_usage bad gene_cols", {
   expect_error(
     vdj_so %>%
-      plot_vdj_usage(gene_cols = c("v_gene", "d_gene", "j_gene"))
+      plot_gene_usage(gene_cols = c("v_gene", "d_gene", "j_gene"))
   )
 })
 

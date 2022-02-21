@@ -312,7 +312,10 @@ test_that("import_vdj low overlap", {
 
   fn <- function() {
     res <- tiny_so %>%
-      import_vdj(vdj_dir = dat)
+      import_vdj(
+        vdj_dir = dat,
+        include_indels = TRUE
+      )
   }
 
   expect_warning(fn(), "Only.+cell barcodes overlap")
@@ -323,27 +326,14 @@ test_that("import_vdj missing clonotype_id", {
   fn <- function() {
     res <- tiny_so %>%
       import_vdj(
-        vdj_dir        = tcr_ctigs,
+        vdj_dir        = bad_ctigs,
         cell_prefix    = "1_",
         filter_chains  = FALSE,
-        include_indels = FALSE
+        include_indels = TRUE
       )
   }
 
   expect_warning(fn(), "contigs do not have an assigned clonotype_id, these contigs will be removed")
-})
-
-# Check missing indel data
-test_that("import_vdj missing indels", {
-  fn <- function() {
-    res <- tiny_so %>%
-      import_vdj(
-        vdj_dir        = tcr_ctigs,
-        cell_prefix    = "1_",
-        filter_chains  = FALSE
-      )
-  }
-
   expect_warning(fn(), "Some chains are missing indel data")
 })
 
@@ -456,7 +446,7 @@ test_that(".classify_vdj", {
     dat %>%
       filter(chains %in% c("IGH", "IGK")) %>%
       group_by(chains) %>%
-      slice(1:10) %>%
+      dplyr::slice(1:10) %>%
       ungroup() %>%
       mutate(chains = gsub("IGH", "TRA", chains)) %>%
       .classify_vdj(),

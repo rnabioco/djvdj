@@ -26,45 +26,55 @@ Modify object meta.data
 # Sum two meta.data columns
 # all additional arguments provided to mutate_meta() are passed directly to
 # the function (in this case, dplyr::mutate())
-mutate_meta(
+res <- mutate_meta(
   tiny_so,
   dplyr::mutate,
   NEW = nCount_RNA + nFeature_RNA
 )
 
+head(res@meta.data, 1)
+
 # Pass a purrr-style lambda
 # this produces the same result as the previous example
-mutate_meta(
+res <- mutate_meta(
   tiny_so,
   ~ dplyr::mutate(.x, NEW = nCount_RNA + nFeature_RNA)
 )
 
+head(res@meta.data, 1)
+
 # Modify multiple meta.data columns
-mutate_meta(
-  tiny_so,
+res <- mutate_meta(
+  tiny_sce,
   dplyr::mutate,
   NEW_1 = nCount_RNA + nFeature_RNA,
   NEW_2 = stringr::str_c(orig.ident, seurat_clusters)
 )
 
+head(res@colData, 1)
+
 # Remove meta.data columns
 # any function can be passed to mutate_meta(), in this example
 # dplyr::select() is used to remove columns
-mutate_meta(
-  tiny_sce,
+res <- mutate_meta(
+  tiny_so,
   dplyr::select,
   -UMAP_1
 )
+
+head(res@meta.data, 1)
 
 # Perform grouped operations using dplyr
 # multi-line commands can be passed using brackets, just refer to the
 # meta.data with ".x"
 # this calculates the mean number of features for each group in the
 # orig.ident meta.data column
-mutate_meta(tiny_so, ~ {
-  res <- dplyr::group_by(.x, orig.ident)
-  res <- dplyr::mutate(res, mean_genes = mean(nFeature_RNA))
-  res
+res <- mutate_meta(tiny_sce, ~ {
+  y <- dplyr::group_by(.x, orig.ident)
+  y <- dplyr::mutate(y, mean_genes = mean(nFeature_RNA))
+  y
 })
+
+head(res@colData, 1)
 
 }

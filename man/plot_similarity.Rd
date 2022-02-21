@@ -45,7 +45,7 @@ plot_similarity(
 
 # Specify method to use for calculating repertoire overlap
 plot_similarity(
-  vdj_so,
+  vdj_sce,
   cluster_col = "orig.ident",
   method = abdiv::jaccard
 )
@@ -59,7 +59,7 @@ plot_similarity(
 
 # Pass additional aesthetic parameters to ggplot2
 plot_similarity(
-  vdj_so,
+  vdj_sce,
   cluster_col = "orig.ident",
   color = "black",
   size = 2

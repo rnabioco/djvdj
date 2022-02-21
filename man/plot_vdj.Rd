@@ -133,14 +133,14 @@ plot_vdj(
 
 # Create boxplots
 plot_vdj(
-  vdj_so,
+  vdj_sce,
   data_cols = c("n_insertion", "n_deletion"),
   type = "boxplot"
 )
 
 # Pass additional arguments to ggplot2
 plot_vdj(
-  vdj_sce,
+  vdj_so,
   data_cols = "reads",
   color = "red",
   bins = 25
@@ -164,7 +164,7 @@ plot_vdj(
 
 # Express y-axis units as percent of total values
 plot_vdj(
-  vdj_so,
+  vdj_sce,
   data_cols = "n_deletion",
   cluster_col = "orig.ident",
   yaxis = "percent"
@@ -195,7 +195,7 @@ plot_vdj(
 
 # Set order to use for plotting cell clusters
 plot_vdj(
-  vdj_so,
+  vdj_sce,
   data_cols = "cdr3_length",
   cluster_col = "orig.ident",
   plot_lvls = c("avid_2", "avid_1"),

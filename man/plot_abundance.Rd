@@ -70,7 +70,7 @@ plot_abundance(
 
 # Plot clonotype abundance separately for each cell cluster
 plot_abundance(
-  vdj_so,
+  vdj_sce,
   cluster_col = "orig.ident"
 )
 
@@ -83,7 +83,7 @@ plot_abundance(
 
 # Plot the frequency of each clonotype instead of percentage
 plot_abundance(
-  vdj_so,
+  vdj_sce,
   cluster_col = "orig.ident",
   yaxis = "frequency"
 )
@@ -97,7 +97,7 @@ plot_abundance(
 
 # Specify order to use for plotting cell clusters
 plot_abundance(
-  vdj_so,
+  vdj_sce,
   cluster_col = "orig.ident",
   plot_lvls = c("avid_2", "avid_1")
 )

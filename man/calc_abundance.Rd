@@ -35,39 +35,37 @@ Calculate clonotype abundance
 }
 \examples{
 # Calculate clonotype abundance using all cells
-calc_abundance(
+res <- calc_abundance(
   vdj_so,
   clonotype_col = "clonotype_id"
 )
 
+head(res@meta.data, 1)
+
 # Group cells based on meta.data column before calculating abundance
-calc_abundance(
-  vdj_so,
+res <- calc_abundance(
+  vdj_sce,
   cluster_col = "orig.ident"
 )
+
+head(res@colData, 1)
 
 # Add a prefix to the new columns
 # this is useful if multiple abundance calculations are stored in the
 # meta.data
-calc_abundance(
+res <- calc_abundance(
   vdj_so,
   prefix = "bcr_"
 )
 
+head(res@meta.data, 1)
+
 # Return a data.frame instead of adding the results to the input object
-calc_abundance(
-  vdj_so,
+res <- calc_abundance(
+  vdj_sce,
   return_df = TRUE
 )
 
-# Using calc_abundance outside of Seurat
-# SingleCellExperiment objects or data.frames containing V(D)J data are also
-# compatible. If a data.frame is provided, cell barcodes should be stored as
-# row names.
-calc_abundance(vdj_sce)
-
-df <- vdj_so@meta.data
-
-calc_abundance(df)
+head(res, 1)
 
 }
