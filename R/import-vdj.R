@@ -161,6 +161,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   count_cols <- c("reads", "umis")
   gene_cols  <- c("v_gene", "d_gene", "j_gene", "c_gene")
   qc_cols    <- c("productive", "full_length")
+  len_cols   <- paste0(cdr3_cols, "_length")
 
   sep_cols <- c(
     gene_cols, "chains",
@@ -195,7 +196,7 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
       # list aa columns first
       len_cols <- purrr::set_names(
         c("junction_aa_length", "junction_length"),
-        paste0(cdr3_cols, "_length")
+        len_cols
       )
 
       indels <- purrr::map(indels, dplyr::rename, !!!syms(len_cols))
@@ -282,7 +283,8 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
       )
     )
 
-    sep_cols <- c(sep_cols, paste0(cdr3_cols, "_length"))
+    sep_cols <- c(sep_cols, len_cols)
+    vdj_cols <- c(vdj_cols, len_cols)
   }
 
   # Remove contigs that do not have an assigned clonotype_id
