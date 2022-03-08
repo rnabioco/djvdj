@@ -163,16 +163,21 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   qc_cols    <- c("productive", "full_length")
   len_cols   <- paste0(cdr3_cols, "_length")
 
+  # Columns containing per-cell info
+  cell_cols <- c("barcode", "clonotype_id", "exact_subclonotype_id")
+
+  # Optional aggr columns
+  aggr_cols <- c("donor", "origin")
+
+  # Columns containing per-chain info that needs to be collapsed for each cell
   sep_cols <- c(
     gene_cols, "chains",
     cdr3_cols, count_cols,
     qc_cols
   )
 
-  vdj_cols <- c(
-    "barcode", "clonotype_id",
-    sep_cols
-  )
+  # vdj_cols should include all columns to include in output
+  vdj_cols <- c(cell_cols, sep_cols)
 
   # Format/check cell prefixes
   vdj_dir <- .format_cell_prefixes(vdj_dir, cell_prefix)
@@ -271,6 +276,12 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   # bind contig data.frames
   contigs <- purrr::imap_dfr(contigs, ~ .check_overlap(input, .x, .y))
 
+  # Include aggr columns if present in data
+  if (all(aggr_cols %in% colnames(contigs))) {
+    cell_cols <- c(cell_cols, aggr_cols)
+    vdj_cols  <- c(vdj_cols, aggr_cols)
+  }
+
   # Calculate CDR3 length if no airr file provided
   # report length 0 if there is no reported CDR3 sequence
   if (!include_indels) {
@@ -323,6 +334,9 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   # Determine which clonotypes are paired
   contigs <- .identify_paired(contigs)
 
+  cell_cols <- c(cell_cols, "paired")
+  vdj_cols  <- c(vdj_cols, "paired")
+
   if (filter_paired) {
     contigs <- dplyr::filter(contigs, .data$paired)
   }
@@ -339,17 +353,15 @@ import_vdj <- function(input = NULL, vdj_dir, prefix = "", cell_prefix = NULL, f
   # Extract isotypes from c_gene for IGH chain (for BCR data only)
   if (vdj_class %in% c("BCR", "Multi")) {
     contigs <- .extract_isotypes(contigs)
-    contigs <- dplyr::group_by(contigs, .data$isotype)
+
+    cell_cols <- c(cell_cols, "isotype")
+    vdj_cols  <- c(vdj_cols, "isotype")
   }
 
   # Collapse chains into a single row for each cell
-  # include isotype, clonotype_id, and paired as groups so they are included in
-  # the summarized results
-  contigs <- dplyr::group_by(
-    contigs,
-    .data$barcode, .data$clonotype_id, .data$paired,
-    .add = TRUE
-  )
+  # include columns containing per-cell info groups so they are included in the
+  # summarized results
+  contigs <- dplyr::group_by(contigs, !!!syms(cell_cols))
 
   meta <- summarize(
     contigs,
