@@ -16,10 +16,11 @@ calc_abundance(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{data_col}{meta.data column containing data to use for calculating
-abundance. To calculate clonotype abundance, provide the column containing
-clonotype IDs, to calculate isotype abundance provide the column containing
-cell isotypes. By default the clonotype_id is used for calculations.}
+\item{data_col}{meta.data column containing cell labels to use for
+calculating abundance. To calculate clonotype abundance, provide the column
+containing clonotype IDs, to calculate isotype abundance provide the column
+containing cell isotypes. By default the clonotype_id is used for
+calculations.}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}

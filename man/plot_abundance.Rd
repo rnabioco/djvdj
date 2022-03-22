@@ -2,20 +2,17 @@
 % Please edit documentation in R/calc-abundance.R
 \name{plot_abundance}
 \alias{plot_abundance}
-\title{Plot clonotype abundance}
+\title{Plot isotype abundance}
 \usage{
 plot_abundance(
   input,
+  data_col = "clonotype_id",
   cluster_col = NULL,
-  clonotype_col = "clonotype_id",
-  type = "bar",
+  group_col = NULL,
   yaxis = "percent",
   plot_colors = NULL,
   plot_lvls = NULL,
-  n_clonotypes = 10,
-  label_aes = list(),
-  facet_rows = 1,
-  facet_scales = "free_x",
+  facet_rows = NULL,
   ...
 )
 }
@@ -23,14 +20,14 @@ plot_abundance(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
+\item{data_col}{meta.data column containing cell labels to use for
+calculating abundance. To calculate clonotype abundance, provide the column
+containing clonotype IDs, to calculate isotype abundance provide the column
+containing cell isotypes. By default clonotype_id is used for calculations.}
+
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance. Clonotypes will be
 plotted separately for each cluster.}
-
-\item{clonotype_col}{meta.data column containing clonotype IDs to use for
-calculating clonotype abundance}
-
-\item{type}{Type of plot to create, can be 'bar' or 'line'}
 
 \item{yaxis}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
@@ -38,19 +35,8 @@ calculating clonotype abundance}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{n_clonotypes}{Number of clonotypes to plot. If type is set to 'line',
-this will specify the number of clonotypes to label.}
-
-\item{label_aes}{Named list providing additional aesthetics (color, size,
-etc.) for clonotype labels when creating line graph}
-
 \item{facet_rows}{The number of facet rows, use this when separate bar
 graphs are created for each cell cluster}
-
-\item{facet_scales}{This passes a scales specification to
-ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
-will cause plot facets to share the same scales. Use this when separate bar
-graphs are created for each cell cluster.}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
@@ -59,55 +45,5 @@ linetype, etc.}
 ggplot object
 }
 \description{
-Plot clonotype abundance
-}
-\examples{
-# Plot clonotype abundance using all cells
-plot_abundance(
-  vdj_so,
-  clonotype_col = "clonotype_id"
-)
-
-# Plot clonotype abundance separately for each cell cluster
-plot_abundance(
-  vdj_sce,
-  cluster_col = "orig.ident"
-)
-
-# Plot the frequency of each clonotype instead of percentage
-plot_abundance(
-  vdj_sce,
-  cluster_col = "orig.ident",
-  yaxis = "frequency"
-)
-
-# Specify colors to use for each cell cluster
-plot_abundance(
-  vdj_so,
-  cluster_col = "orig.ident",
-  plot_colors = c(avid_1 = "blue", avid_2 = "red")
-)
-
-# Specify order to use for plotting cell clusters
-plot_abundance(
-  vdj_sce,
-  cluster_col = "orig.ident",
-  plot_lvls = c("avid_2", "avid_1")
-)
-
-# Specify the number of top clonotypes to plot
-plot_abundance(
-  vdj_so,
-  n_clonotypes = 5
-)
-
-#' # Create line graph
-# use n_clonotypes to set the number of clonotypes to label
-plot_abundance(
-  vdj_so,
-  cluster_col = "orig.ident",
-  type = "line",
-  n_clonotypes = 3
-)
-
+Plot isotype abundance
 }

@@ -110,15 +110,13 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @param y_ttl Title for y-axis
 #' @param ang Angle of x-axis text
 #' @param hjst Horizontal justification for x-axis text
+#' @param bar_pos Position adjustment to pass to geom_col
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_bars <- function(df_in, x, y, .fill, clrs = NULL, y_ttl = y, ang = 45,
-                         hjst = 1, ...) {
-
-  # Bar position to use for plot
-  bar_pos <- ggplot2::position_dodge(preserve = "single")
+.create_bars <- function(df_in, x, y, .fill, clrs = NULL, y_ttl = y, ang = 45, hjst = 1,
+                         bar_pos = ggplot2::position_dodge(preserve = "single"), ...) {
 
   # Reverse bar order
   lvls  <- rev(levels(pull(df_in, x)))

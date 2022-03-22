@@ -153,7 +153,7 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #' functions can be passed to plot multiple diversity metrics,
 #' e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating clonotype abundance
+#' calculating repertoire diversity
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param facet_rows The number of facet rows, use this argument if a list of
