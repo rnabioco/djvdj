@@ -2,12 +2,12 @@
 % Please edit documentation in R/calc-abundance.R
 \name{calc_abundance}
 \alias{calc_abundance}
-\title{Calculate clonotype abundance}
+\title{Calculate abundance of a cell label}
 \usage{
 calc_abundance(
   input,
+  data_col = "clonotype_id",
   cluster_col = NULL,
-  clonotype_col = "clonotype_id",
   prefix = "",
   return_df = FALSE
 )
@@ -16,11 +16,13 @@ calc_abundance(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
+\item{data_col}{meta.data column containing data to use for calculating
+abundance. To calculate clonotype abundance, provide the column containing
+clonotype IDs, to calculate isotype abundance provide the column containing
+cell isotypes. By default the clonotype_id is used for calculations.}
+
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
-
-\item{clonotype_col}{meta.data column containing clonotype IDs to use for
-calculating clonotype abundance}
 
 \item{prefix}{Prefix to add to new columns}
 
@@ -31,13 +33,13 @@ will be added to the input object.}
 Single cell object or data.frame with clonotype abundance metrics
 }
 \description{
-Calculate clonotype abundance
+Count the frequency of the provided cell labels such as clonotypes or isotypes
 }
 \examples{
 # Calculate clonotype abundance using all cells
 res <- calc_abundance(
   vdj_so,
-  clonotype_col = "clonotype_id"
+  data_col = "clonotype_id"
 )
 
 head(res@meta.data, 1)

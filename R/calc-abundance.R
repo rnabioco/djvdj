@@ -1,11 +1,15 @@
-#' Calculate clonotype abundance
+#' Calculate abundance of a cell label
+#'
+#' Count the frequency of the provided cell labels such as clonotypes or isotypes
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing data to use for calculating
+#' abundance. To calculate clonotype abundance, provide the column containing
+#' clonotype IDs, to calculate isotype abundance provide the column containing
+#' cell isotypes. By default the clonotype_id is used for calculations.
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating clonotype abundance
 #' @param prefix Prefix to add to new columns
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.
@@ -15,7 +19,7 @@
 #' # Calculate clonotype abundance using all cells
 #' res <- calc_abundance(
 #'   vdj_so,
-#'   clonotype_col = "clonotype_id"
+#'   data_col = "clonotype_id"
 #' )
 #'
 #' head(res@meta.data, 1)
@@ -47,38 +51,28 @@
 #' head(res, 1)
 #'
 #' @export
-calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id",
-                           prefix = "", return_df = FALSE) {
+calc_abundance <- function(input, data_col = "clonotype_id", cluster_col = NULL, prefix = "",
+                           return_df = FALSE) {
 
   # Format input data
   meta <- .get_meta(input)
-  vdj  <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
+  vdj  <- dplyr::filter(meta, !is.na(!!sym(data_col)))
 
   vdj <- dplyr::select(
     vdj,
-    !!sym(CELL_COL), all_of(c(cluster_col, clonotype_col))
+    !!sym(CELL_COL), all_of(c(data_col, cluster_col))
   )
 
   # Calculate clonotype abundance
   vdj <- .calc_abund(
-    df_in     = vdj,
-    cell_col  = CELL_COL,
-    clone_col = clonotype_col,
-    clust_col = cluster_col
+    df_in      = vdj,
+    cell_col   = CELL_COL,
+    dat_col    = data_col,
+    clust_col  = cluster_col,
+    out_prefix = prefix
   )
 
-  new_cols <- c("freq", "pct")
-
-  if (!is.null(cluster_col)) {
-    new_cols <- c(new_cols, "shared")
-  }
-
-  new_cols <- purrr::set_names(
-    paste0(".", new_cols),
-    paste0(prefix, "clone_", new_cols)
-  )
-
-  vdj <- select(vdj, !!sym(CELL_COL), !!!syms(new_cols))
+  vdj <- dplyr::select(vdj, -all_of(data_col))
 
   # Format results
   res <- dplyr::left_join(meta, vdj, by = CELL_COL)
@@ -92,15 +86,17 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   res
 }
 
-#' Calculate clonotype abundance
+#' Calculate abundance of a cell label
 #'
 #' @param df_in Input data.frame
 #' @param cell_col Column containing cell IDs
-#' @param clone_col Column containing clonotype IDs
-#' @param clust_col Column containing cluster IDs
+#' @param data_col Column containing data for calculating abundance
+#' (e.g. clonotype IDs)
+#' @param clust_col Column containing cluster IDs to use for grouping cells
+#' @param out_prefix Prefix to add to output columns
 #' @return data.frame containing clonotype abundances
 #' @noRd
-.calc_abund <- function(df_in, cell_col, clone_col, clust_col = NULL) {
+.calc_abund <- function(df_in, cell_col, dat_col, clust_col = NULL, out_prefix = "") {
 
   # Count number of cells in each group
   if (!is.null(clust_col)) {
@@ -113,7 +109,7 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   )
 
   # Calculate frequency
-  res <- dplyr::group_by(df_in, !!sym(clone_col), .add = TRUE)
+  res <- dplyr::group_by(df_in, !!sym(dat_col), .add = TRUE)
 
   res <- dplyr::mutate(
     res,
@@ -121,9 +117,9 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
     .pct  = (.data$.freq / .data$.n_cells) * 100
   )
 
-  # Identify shared clonotypes
+  # Identify shared labels
   if (!is.null(clust_col)) {
-    res <- dplyr::group_by(res, !!sym(clone_col))
+    res <- dplyr::group_by(res, !!sym(dat_col))
 
     res <- dplyr::mutate(
       res,
@@ -132,6 +128,24 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   }
 
   res <- dplyr::ungroup(res)
+
+  # Rename output columns
+  new_cols <- c("freq", "pct")
+
+  if (!is.null(clust_col)) {
+    new_cols <- c(new_cols, "shared")
+  }
+
+  new_cols <- purrr::set_names(
+    paste0(".", new_cols),
+    paste0(out_prefix, new_cols)
+  )
+
+  res <- dplyr::select(
+    res,
+    all_of(c(cell_col, dat_col)),
+    !!!syms(new_cols)
+  )
 
   res
 }
