@@ -321,7 +321,6 @@ NULL
 #' TRUE, possible values can be either a function, e.g. mean, or a purrr-style
 #' lambda, e.g. ~ mean(.x, na.rm = TRUE) where ".x" refers to the column. If
 #' NULL, the mean will be calculated.
-#' @param alpha Color transparency
 #' @param log_trans If TRUE, axis will be log10 transformed
 #' @seealso [summarize_vdj()] for more examples on how per-chain data can be
 #' summarized for each cell
@@ -406,7 +405,7 @@ NULL
 #'
 #' @export
 plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
-                     type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, alpha = 0.5,
+                     type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
                      log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
 
   # Format input data
@@ -469,41 +468,41 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, clus
 #' @param df_in input data.frame
 #' @noRd
 .plot_vdj <- function(df_in, data_col, cluster_col = NULL, type = "boxplot", yaxis = "frequency",
-                      plot_colors = NULL, plot_lvls = NULL, alpha = 0.5, log_trans = FALSE, ...) {
+                      plot_colors = NULL, plot_lvls = NULL, log_trans = FALSE, ...) {
 
   # Order clusters based on plot_lvls
   df_in <- .set_lvls(df_in, cluster_col, plot_lvls)
 
-  # Create violin plot
-  if (type %in% c("histogram", "density")) {
-    res <- .create_hist(
-      df_in,
-      x         = data_col,
-      .color    = cluster_col,
-      .fill     = cluster_col,
-      clrs      = plot_colors,
-      type      = type,
-      yaxis     = yaxis,
-      log_trans = log_trans,
-      alpha     = alpha,
-      ...
-    )
-
-    return(res)
-  }
-
-  res <- .create_boxes(
-    df_in,
-    x         = cluster_col,
-    y         = data_col,
+  # Set ggplot arguments
+  gg_args <- list(
+    df_in     = df_in,
+    x         = data_col,
     .color    = cluster_col,
     .fill     = cluster_col,
     clrs      = plot_colors,
     type      = type,
     log_trans = log_trans,
-    alpha     = alpha,
     ...
   )
+
+  # Set default alpha to 0.5
+  gg_args$alpha <- gg_args$alpha %||% 0.5
+
+  # Create histogram
+  if (type %in% c("histogram", "density")) {
+
+    gg_args$yaxis <- yaxis
+
+    res <- purrr::lift_dl(.create_hist)(gg_args)
+
+    return(res)
+  }
+
+  # Create violin plot
+  gg_args$x <- cluster_col
+  gg_args$y <- data_col
+
+  res <- purrr::lift_dl(.create_boxes)(gg_args)
 
   res
 }

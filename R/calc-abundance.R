@@ -246,44 +246,33 @@ plot_clone_abundance <- function(input, cluster_col = NULL, clonotype_col = "clo
     stop("If type is set to 'bar', plot_n must be >0.")
   }
 
-  y_lab <- str_c(data_col, " ", yaxis)
-
   # Calculate clonotype abundance
   plt_dat <- calc_abundance(
     input       = input,
     cluster_col = cluster_col,
-    data_col    = data_col,
+    data_col    = clonotype_col,
     prefix      = ".",
     return_df   = TRUE
   )
 
-  dat_col <- ".pct"
+  abun_col <- ".pct"
 
   if (identical(yaxis, "frequency")) {
-    dat_col <- ".freq"
+    abun_col <- ".freq"
   }
 
   plt_dat <- tibble::as_tibble(plt_dat, rownames = CELL_COL)
-  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
+  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
 
-  abund_cols <- c(cluster_col, data_col, dat_col)
+  keep_cols <- c(cluster_col, clonotype_col, abun_col)
 
-  plt_dat <- dplyr::distinct(plt_dat, !!!syms(abund_cols))
+  plt_dat <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
 
   # Add and format label column for plotting
-  len <- 25
-
-  plt_dat <- dplyr::rowwise(plt_dat)
-
   plt_dat <- dplyr::mutate(
     plt_dat,
-    .x   = !!sym(data_col),
-    .len = nchar(.data$.x),
-    .lab = strtrim(.data$.x, len),
-    .lab = paste0(.data$.lab, ifelse(.data$.len > len, "...", ""))
+    .lab = trim_lab(!!sym(clonotype_col))
   )
-
-  plt_dat <- dplyr::ungroup(plt_dat)
 
   # Rank by abundance
   if (!is.null(cluster_col)) {
@@ -292,13 +281,13 @@ plot_clone_abundance <- function(input, cluster_col = NULL, clonotype_col = "clo
 
     plt_dat <- dplyr::mutate(
       plt_dat,
-      .x = paste0(!!sym(cluster_col), "_", .data$.x)
+      !!sym(clonotype_col) := paste0(!!sym(cluster_col), "_", !!sym(clonotype_col))
     )
   }
 
   plt_dat <- dplyr::mutate(
     plt_dat,
-    rank = dplyr::row_number(dplyr::desc(!!sym(dat_col)))
+    rank = dplyr::row_number(dplyr::desc(!!sym(abun_col)))
   )
 
   # Identify top clonotypes
@@ -314,23 +303,26 @@ plot_clone_abundance <- function(input, cluster_col = NULL, clonotype_col = "clo
 
   # Create bar graph
   if (identical(type, "bar")) {
-    plt_labs <- purrr::set_names(top_clones$.lab, top_clones$.x)
+    plt_labs <- purrr::set_names(
+      top_clones$.lab,
+      top_clones[[clonotype_col]]
+    )
 
-    top_clones <- dplyr::arrange(top_clones, desc(!!sym(dat_col)))
+    top_clones <- dplyr::arrange(top_clones, desc(!!sym(abun_col)))
 
-    lvls <- rev(unique(top_clones$.x))
+    lvls <- rev(unique(top_clones[[clonotype_col]]))
 
     top_clones <- .set_lvls(
       df_in = top_clones,
-      clmn  = ".x",
+      clmn  = clonotype_col,
       lvls  = lvls
     )
 
     res <- .create_bars(
       df_in = top_clones,
-      x     = ".x",
-      y     = dat_col,
-      y_ttl = y_lab,
+      x     = clonotype_col,
+      y     = abun_col,
+      y_ttl = yaxis,
       .fill = cluster_col,
       clrs  = plot_colors,
       ang   = 45,
@@ -338,6 +330,7 @@ plot_clone_abundance <- function(input, cluster_col = NULL, clonotype_col = "clo
       ...
     )
 
+    # Format clonotype labels
     res <- res +
       ggplot2::scale_x_discrete(labels = plt_labs)
 
@@ -354,10 +347,7 @@ plot_clone_abundance <- function(input, cluster_col = NULL, clonotype_col = "clo
   }
 
   # Plot abundance vs rank
-  plt_aes <- ggplot2::aes(
-    x = rank,
-    y = !!sym(dat_col)
-  )
+  plt_aes <- ggplot2::aes(rank, !!sym(abun_col))
 
   clr_aes <- plt_aes
 
@@ -367,7 +357,7 @@ plot_clone_abundance <- function(input, cluster_col = NULL, clonotype_col = "clo
 
   res <- ggplot2::ggplot(plt_dat, plt_aes) +
     ggplot2::geom_line(clr_aes, ...) +
-    ggplot2::labs(y = y_lab) +
+    ggplot2::labs(y = yaxis) +
     djvdj_theme()
 
   if (!is.null(plot_colors)) {
@@ -438,23 +428,23 @@ plot_abundance <- function(input, data_col = "clonotype_id", cluster_col = NULL,
   # Set axis labels
   y_lab <- str_c(data_col, " ", yaxis)
 
-  dat_col <- ".pct"
+  abun_col <- ".pct"
 
   if (identical(yaxis, "frequency")) {
-    dat_col <- ".freq"
+    abun_col <- ".freq"
   }
 
   plt_dat <- tibble::as_tibble(plt_dat, rownames = CELL_COL)
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
-  abund_cols <- c(cluster_col, group_col, data_col, dat_col)
+  keep_cols <- c(cluster_col, group_col, data_col, abun_col)
 
-  plt_dat <- dplyr::distinct(plt_dat, !!!syms(abund_cols))
+  plt_dat <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
 
   # Rank isotypes
   plt_dat <- dplyr::group_by(plt_dat, !!sym(data_col))
 
-  rnk <- dplyr::summarize(plt_dat, mn = mean(!!sym(dat_col)))
+  rnk <- dplyr::summarize(plt_dat, mn = mean(!!sym(abun_col)))
   rnk <- dplyr::arrange(rnk, desc(mn))
   rnk <- pull(rnk, data_col)
 
@@ -468,7 +458,7 @@ plot_abundance <- function(input, data_col = "clonotype_id", cluster_col = NULL,
     res <- .create_boxes(
       plt_dat,
       x      = data_col,
-      y      = dat_col,
+      y      = abun_col,
       .color = group_col,
       .fill  = group_col,
       alpha  = 0.5,
@@ -485,32 +475,34 @@ plot_abundance <- function(input, data_col = "clonotype_id", cluster_col = NULL,
 
   # Create bar graph
   # .create_bars reverses level order
+  x_col <- data_col
+
   if (!is.null(cluster_col)) {
     plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+
+    x_col <- cluster_col
   }
 
   plt_dat <- .set_lvls(plt_dat, data_col, rev(rnk))
 
-  res <- .create_bars(
+  new_args <- list(
     df_in = plt_dat,
-    x     = data_col,
-    y     = dat_col,
+    x     = x_col,
+    y     = abun_col,
     y_ttl = y_lab,
     .fill = data_col,
     clrs  = plot_colors,
     ang   = 45,
     hjst  = 1,
-    bar_pos = "identity",
     ...
   )
 
-  if (!is.null(cluster_col)) {
-    res <- res +
-      ggplot2::facet_wrap(
-        stats::as.formula(paste0("~ ", cluster_col)),
-        nrow = facet_rows
-      )
+  # When cluster_col is provided set default position to dodge
+  if (!is.null(cluster_col) && is.null(new_args$position)) {
+    new_args$position <- position_dodge(preserve = "single")
   }
+
+  res <- purrr::lift_dl(.create_bars)(new_args)
 
   res
 }

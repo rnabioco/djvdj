@@ -18,7 +18,6 @@ plot_vdj(
   yaxis = "frequency",
   plot_colors = NULL,
   plot_lvls = NULL,
-  alpha = 0.5,
   log_trans = FALSE,
   chain_col = "chains",
   sep = ";",
@@ -106,8 +105,6 @@ e.g. fill = "red", color = "black"}
 
 \item{plot_lvls}{Character vector containing order to use for plotting cell
 clusters specified by cluster_col}
-
-\item{alpha}{Color transparency}
 
 \item{log_trans}{If TRUE, axis will be log10 transformed}
 

@@ -713,7 +713,7 @@ To match V(D)J mutation data with",
     res <- dplyr::filter(res, grepl("_contig_[0-9]+$", .data$contig_id))
 
     # Get coordinates for mutations
-    # convert to 0-based
+    # must be 0-based
     mut_key <- c(
       I = "ins",
       D = "del",
@@ -721,11 +721,30 @@ To match V(D)J mutation data with",
     )
 
     mut_coords <- res %>%
-      dplyr::rowwise() %>%
-      dplyr::mutate(indel_info = list(.parse_cigar(cigar))) %>%
-      tidyr::unnest(indel_info) %>%
-      dplyr::select(contig_id, start, end, type) %>%
-      dplyr::mutate(start = .data$start - 1)
+      mutate(
+        len  = str_extract_all(cigar, "[0-9]+(?=[^0-9])"),
+        type = str_extract_all(cigar, "(?<=[0-9])[^0-9]{1}")
+        # num_idx  = gregexpr("[0-9]+(?=[^0-9])", cigar, perl = TRUE),
+        # type_idx = gregexpr("(?<=[0-9])[^0-9]{1}", cigar, perl = TRUE)
+      ) %>%
+      unnest(c(len, type)) %>%
+      group_by(contig_id) %>%
+      mutate(end = cumsum(len)) %>%
+      mutate(
+        start = lag(end),
+        start = replace_na(start, 0)
+      ) %>%
+      ungroup() %>%
+      filter(type %in% names(mut_key)) %>%
+      select(contig_id, start, end, type)
+
+    # A VERY SLOW WAY TO PARSE CIGAR STRING
+    # mut_coords <- res %>%
+    #   dplyr::rowwise() %>%
+    #   dplyr::mutate(indel_info = list(.parse_cigar(cigar))) %>%
+    #   tidyr::unnest(indel_info) %>%
+    #   dplyr::select(contig_id, start, end, type) %>%
+    #   dplyr::mutate(start = .data$start - 1)
 
     # Count total mutations
     all_muts <- mut_coords %>%
@@ -775,7 +794,7 @@ To match V(D)J mutation data with",
 
     # Add total mutations to output
     mut_cols <- c("v", "d", "j", "c", "all")
-    mut_cols <- purrr::map(mut_cols, str_c, "_", mut_key)
+    mut_cols <- purrr::map(mut_cols, paste0, "_", mut_key)
     mut_cols <- purrr::reduce(mut_cols, c)
 
     res <- vdj_muts %>%
@@ -784,38 +803,12 @@ To match V(D)J mutation data with",
       dplyr::mutate(across(-contig_id, replace_na, 0)) %>%
       dplyr::select(contig_id, any_of(mut_cols))
 
-    # Add 0s for missing columns
+    # Add 0s for missing columns and set column order
     missing_cols <- mut_cols[!mut_cols %in% names(res)]
 
     res[, missing_cols] <- 0
 
     res <- res[, c("contig_id", mut_cols)]
-
-    res
-  }
-
-  .parse_cigar <- function(cigar) {
-    res <- tibble::tibble()
-    i   <- 0
-
-    while (cigar != "") {
-      num   <- as.numeric(str_extract(cigar, "^[0-9]+"))
-      cigar <- gsub("^[0-9]+", "", cigar)
-      typ   <- substr(cigar, 1, 1)
-      cigar <- substr(cigar, 2, nchar(cigar))
-
-      if (!identical(typ, "=")) {
-        muts <- tibble::tibble(
-          type  = typ,
-          start = i + 1,
-          end   = i + num
-        )
-
-        res <- dplyr::bind_rows(res, muts)
-      }
-
-      i <- i + num
-    }
 
     res
   }
