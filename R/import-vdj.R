@@ -211,6 +211,16 @@ To match V(D)J mutation data with",
     )
   }
 
+  # When including indel data, only use productive full length chains
+  if (!filter_chains) {
+    filter_chains <- TRUE
+
+    warning(
+      "When include_mutations is TRUE, filter_chains is also automatically ",
+      "set TRUE since indel data is only available for productive chains."
+    )
+  }
+
   # V(D)J columns to include
   cdr3_cols  <- c("cdr3", "cdr3_nt")  # list aa column first
   count_cols <- c("reads", "umis")
@@ -219,7 +229,7 @@ To match V(D)J mutation data with",
   len_cols   <- paste0(cdr3_cols, "_length")
 
   # Columns containing per-cell info
-  cell_cols <- c("barcode", "clonotype_id", "exact_subclonotype_id")
+  cell_cols <- c("barcode", "clonotype_id")
 
   # Optional aggr columns
   aggr_cols <- c("donor", "origin")
@@ -244,7 +254,7 @@ To match V(D)J mutation data with",
     contigs <- .load_vdj_data(vdj_dir)
   }
 
-  # vdj_cols should include all columns needed in output
+  # vdj_cols should have all columns that should be included in output
   vdj_cols <- c(cell_cols, sep_cols)
 
   # For genes replace NAs
@@ -253,6 +263,11 @@ To match V(D)J mutation data with",
   contigs <- purrr::map(contigs, ~ {
     dplyr::mutate(.x, across(all_of(gene_cols), tidyr::replace_na, "None"))
   })
+
+  # Filter for productive full length chains
+  if (filter_chains) {
+    contigs <- purrr::map(contigs, dplyr::filter, !!!syms(qc_cols))
+  }
 
   # Add indel info for each contig
   # if indel data is included, always filter for productive contigs since most
@@ -288,18 +303,15 @@ To match V(D)J mutation data with",
       indel_cols <- names(indels[[1]])
       indel_cols <- indel_cols[indel_cols != "contig_id"]
 
-      # When including indel data, only use productive full length chains
-      indel_ctigs <- purrr::map(contigs, dplyr::filter, !!!syms(qc_cols))
-
       # Join indel data
       indel_ctigs <- purrr::map2(
-        indel_ctigs, indels,
+        contigs, indels,
         dplyr::left_join,
         by = "contig_id"
       )
 
       # Replace NAs with 0
-      # contigs that did not have any indels will not be in indel data
+      # contigs that did not have any mutations will have NAs
       indel_ctigs <- purrr::map(
         indel_ctigs,
         ~ mutate(
@@ -308,25 +320,11 @@ To match V(D)J mutation data with",
         )
       )
 
-      contigs  <- indel_ctigs
-      sep_cols <- c(sep_cols, indel_cols)
-      vdj_cols <- c(vdj_cols, indel_cols)
-
-      if (!filter_chains) {
-        warning(
-          "When include_mutations is TRUE, filter_chains is also automatically ",
-          "set TRUE since indel data is only available for productive chains."
-        )
-      }
-
-      # Set filter_chains FALSE since indel_ctigs has already been filtered
-      filter_chains <- FALSE
+      contigs    <- indel_ctigs
+      count_cols <- c(count_cols, indel_cols)
+      sep_cols   <- c(sep_cols, indel_cols)
+      vdj_cols   <- c(vdj_cols, indel_cols)
     }
-  }
-
-  # Filter for productive contigs
-  if (filter_chains) {
-    contigs <- purrr::map(contigs, dplyr::filter, !!!syms(qc_cols))
   }
 
   # Classify input data as TCR or BCR
@@ -342,6 +340,11 @@ To match V(D)J mutation data with",
       "run import_vdj separately for each and use the 'prefix' argument to ",
       "add distinct column names."
     )
+  }
+
+  if (identical(vdj_class, "BCR")) {
+    cell_cols <- c(cell_cols, "exact_subclonotype_id")
+    vdj_cols  <- c(vdj_cols, "exact_subclonotype_id")
   }
 
   # Check cell barcode overlap
@@ -389,8 +392,10 @@ To match V(D)J mutation data with",
   # Check if sep is already present in sep_cols
   sep <- .check_sep(contigs, sep_cols, sep)
 
-  # Sum contig reads and UMIs for chains
-  # some chains are supported by multiple contigs
+  # Sum contig reads, UMIs, and mutations for chains since some chains are
+  # supported by multiple contigs
+  # In the vloupe browser the UMI count is summed, but the summed read count
+  # and summed mutations do not always match
   grp_cols <- vdj_cols[!vdj_cols %in% count_cols]
   contigs  <- dplyr::group_by(contigs, !!!syms(grp_cols))
 
@@ -468,7 +473,10 @@ To match V(D)J mutation data with",
     )
 
     if (!define_clonotypes %in% names(clone_cols)) {
-      stop("define_clonotypes must be one of ", paste0(names(clone_cols), collapse = ", "), ".")
+      stop(
+        "define_clonotypes must be one of ",
+        paste0(names(clone_cols), collapse = ", "), "."
+      )
     }
 
     clone_cols <- clone_cols[[define_clonotypes]]
@@ -698,131 +706,26 @@ To match V(D)J mutation data with",
 #' each contig with the germline reference
 #' @return List containing one data.frame for each path provided to vdj_dir
 #' @importFrom Rsamtools scanBam
-#' @importFrom valr bed_intersect
 #' @noRd
 .load_muts <- function(vdj_dir, bam_file = "concat_ref.bam",
                        airr_file = "airr_rearrangement.tsv") {
 
-  .extract_muts <- function(bam_lst, airr) {
-
-    res <- tibble::tibble(
-      cigar     = bam_lst[[1]]$cigar,
-      contig_id = bam_lst[[1]]$qname
-    )
-
-    res <- dplyr::filter(res, grepl("_contig_[0-9]+$", .data$contig_id))
-
-    # Get coordinates for mutations
-    # must be 0-based
-    mut_key <- c(
-      I = "ins",
-      D = "del",
-      X = "mis"
-    )
-
-    mut_coords <- res %>%
-      mutate(
-        len  = str_extract_all(cigar, "[0-9]+(?=[^0-9])"),
-        type = str_extract_all(cigar, "(?<=[0-9])[^0-9]{1}")
-        # num_idx  = gregexpr("[0-9]+(?=[^0-9])", cigar, perl = TRUE),
-        # type_idx = gregexpr("(?<=[0-9])[^0-9]{1}", cigar, perl = TRUE)
-      ) %>%
-      unnest(c(len, type)) %>%
-      group_by(contig_id) %>%
-      mutate(end = cumsum(len)) %>%
-      mutate(
-        start = lag(end),
-        start = replace_na(start, 0)
-      ) %>%
-      ungroup() %>%
-      filter(type %in% names(mut_key)) %>%
-      select(contig_id, start, end, type)
-
-    # A VERY SLOW WAY TO PARSE CIGAR STRING
-    # mut_coords <- res %>%
-    #   dplyr::rowwise() %>%
-    #   dplyr::mutate(indel_info = list(.parse_cigar(cigar))) %>%
-    #   tidyr::unnest(indel_info) %>%
-    #   dplyr::select(contig_id, start, end, type) %>%
-    #   dplyr::mutate(start = .data$start - 1)
-
-    # Count total mutations
-    all_muts <- mut_coords %>%
-      dplyr::mutate(
-        type = dplyr::recode(type, !!!mut_key),
-        type = paste0("all_", .data$type),
-        n    = .data$end - .data$start
-      ) %>%
-      dplyr::group_by(contig_id, type) %>%
-      dplyr::summarize(n = sum(n), .groups = "drop")
-
-    # If no airr, return mutation totals
-    if (identical(airr, NA)) {
-      res <- all_muts %>%
-        tidyr::pivot_wider(names_from = type, values_from = n) %>%
-        dplyr::mutate(across(-contig_id, replace_na, 0))
-
-      return(res)
-    }
-
-    # Get V(D)J gene coordinates from AIRR file
-    coord_cols_re <- "^[vdjc]_sequence_(start|end)$"
-
-    vdj_coords <- airr %>%
-      dplyr::select(sequence_id, dplyr::matches(coord_cols_re)) %>%
-      tidyr::pivot_longer(-sequence_id) %>%
-      tidyr::separate(name, into = c("seg", "seq", "pos"), sep = "_") %>%
-      dplyr::select(-seq) %>%
-      dplyr::filter(!is.na(value)) %>%
-      tidyr::pivot_wider(names_from = pos) %>%
-      dplyr::mutate(start = start - 1) %>%
-      dplyr::select(chrom = sequence_id, start, end, seg)
-
-    # Map mutations to V(D)J genes
-    # some annotations overlap each other!
-    # for example: AAACCTGAGAACTGTA-1_contig_1
-    vdj_muts <- mut_coords %>%
-      dplyr::rename(chrom = contig_id) %>%
-      valr::bed_intersect(vdj_coords, suffix = c("", ".y")) %>%
-      dplyr::filter(.overlap > 0) %>%
-
-      dplyr::group_by(chrom, type, seg.y) %>%
-      dplyr::summarize(n = sum(.overlap), .groups = "drop") %>%
-      dplyr::mutate(type = recode(type, !!!mut_key)) %>%
-      tidyr::unite(type, seg.y, type, sep = "_") %>%
-      dplyr::rename(contig_id = chrom)
-
-    # Add total mutations to output
-    mut_cols <- c("v", "d", "j", "c", "all")
-    mut_cols <- purrr::map(mut_cols, paste0, "_", mut_key)
-    mut_cols <- purrr::reduce(mut_cols, c)
-
-    res <- vdj_muts %>%
-      dplyr::bind_rows(all_muts) %>%
-      tidyr::pivot_wider(names_from = type, values_from = n) %>%
-      dplyr::mutate(across(-contig_id, replace_na, 0)) %>%
-      dplyr::select(contig_id, any_of(mut_cols))
-
-    # Add 0s for missing columns and set column order
-    missing_cols <- mut_cols[!mut_cols %in% names(res)]
-
-    res[, missing_cols] <- 0
-
-    res <- res[, c("contig_id", mut_cols)]
-
-    res
-  }
-
-  # Check for file and return path
+  # Check for bam file and return path
   # if bam is missing for any sample, return NULL
   # do not want extra NAs in the V(D)J data columns
-  res <- purrr::map_chr(
+  bam_file <- purrr::map_chr(
     vdj_dir,
     .get_vdj_path,
     file = bam_file,
     warn = TRUE
   )
 
+  if (any(is.na(bam_file))) {
+    return(NULL)
+  }
+
+  # Check for AIRR file and return path
+  # if AIRR is missing for any sample, set to NA
   airr_file <- purrr::map_chr(
     vdj_dir,
     .get_vdj_path,
@@ -830,28 +733,194 @@ To match V(D)J mutation data with",
     warn = TRUE
   )
 
-  if (any(is.na(res))) {
-    return(NULL)
-  }
-
-  # Load bam
-  res <- purrr::map(res, Rsamtools::scanBam)
-
-  # Load airr
   if (any(is.na(airr_file))) {
     airr_file[!is.na(airr_file)] <- NA
-
-  } else {
-    airr_file <- purrr::map(
-      airr_file,
-      readr::read_tsv,
-      col_types = readr::cols(),
-      progress  = FALSE
-    )
   }
 
-  # Extract indel data
-  res <- purrr::map2(res, airr_file, .extract_muts)
+  # Extract mutations from bam file
+  mut_coords <- purrr::map(bam_file, .extract_mut_coords)
+
+  # Extract VDJ coords from AIRR
+  vdj_coords <- purrr::map(airr_file, .extract_vdj_coords)
+
+  # Map mutations to VDJ segments
+  res <- purrr::map2(mut_coords, vdj_coords, .map_muts)
+
+  res
+}
+
+.extract_mut_coords <- function(bam_file) {
+
+  bam_info <- Rsamtools::scanBam(bam_file)[[1]]
+
+  wdths <- as.data.frame(bam_info$seq@ranges)$width
+
+  bam_info <- tibble::tibble(
+    cigar     = bam_info$cigar,
+    contig_id = bam_info$qname,
+    width     = wdths
+  )
+
+  bam_info <- dplyr::filter(
+    bam_info,
+    grepl("_contig_[0-9]+$", .data$contig_id)
+  )
+
+  # Get 0-based coordinates for mutations
+  # set width of deletion coordinates as 0
+  res <- dplyr::mutate(
+    bam_info,
+    n    = .str_extract_all(cigar, "[0-9]+(?=[^0-9])"),
+    type = .str_extract_all(cigar, "(?<=[0-9])[^0-9]{1}")
+  )
+
+  res <- tidyr::unnest(res, c(n, type))
+  res <- dplyr::group_by(res, contig_id)
+
+  res <- dplyr::mutate(
+    res,
+    n     = as.numeric(n),
+    len   = ifelse(type != "D", n, 0),
+    end   = cumsum(len),
+    start = lag(end, default = 0)
+  )
+
+  res <- dplyr::ungroup(res)
+  res <- dplyr::filter(res, type != "=")
+  res <- dplyr::select(res, contig_id, width, start, end, type, n)
+
+  res
+}
+
+.extract_vdj_coords <- function(airr_file) {
+
+  if (is.na(airr_file)) {
+    return(NA)
+  }
+
+  airr <- readr::read_tsv(
+    airr_file,
+    col_types = readr::cols(),
+    progress  = FALSE
+  )
+
+  # Pull V(D)J gene coordinates from AIRR file
+  # tidyr::extract is much faster than tidyr::separate
+  coord_cols_re <- "^([vdjc])(?=_).*(?<=_)(start|end)$"
+
+  res <- dplyr::select(
+    airr,
+    contig_id = sequence_id,
+    dplyr::matches(coord_cols_re, perl = TRUE)
+  )
+
+  if (ncol(res) == 1) {
+    stop("V(D)J coordinates not found, check ", airr_file)
+  }
+
+  res <- tidyr::pivot_longer(res, -contig_id)
+  res <- dplyr::filter(res, !is.na(.data$value))
+  res <- tidyr::extract(res, name, c("seg", "pos"), coord_cols_re)
+  res <- tidyr::pivot_wider(res, names_from = pos)
+  res <- dplyr::mutate(res, start = start - 1)
+  res <- dplyr::select(res, contig_id, start, end, seg)
+
+  res
+}
+
+.map_muts <- function(mut_coords, vdj_coords) {
+
+  mut_key <- c(
+    I = "ins",
+    D = "del",
+    X = "mis"
+  )
+
+  mut_coords <- dplyr::mutate(mut_coords, type = dplyr::recode(type, !!!mut_key))
+
+  # Count total mutations
+  all_muts <- dplyr::mutate(mut_coords, type = paste0("all_", .data$type))
+
+  all_muts <- dplyr::group_by(all_muts, contig_id, width, type)
+  all_muts <- dplyr::summarize(all_muts, n = sum(n), .groups = "drop")
+
+  # If no airr, return mutation totals
+  if (identical(vdj_coords, NA)) {
+    res <- all_muts %>%
+      tidyr::pivot_wider(
+        names_from  = type,
+        values_from = n,
+        values_fill = 0
+      )
+
+    res <- dplyr::mutate(
+      res,
+      across(
+        starts_with("all_"),
+        ~ .x / width,
+        .names = "{.col}_freq"
+      )
+    )
+
+    return(res)
+  }
+
+  # Intersect mutations with VDJ gene coordinates for each contig
+  # some annotations overlap each other! Example: AAACCTGAGAACTGTA-1_contig_1
+  # left_join + mutate is much faster than valr::bed_intersect, probably due
+  # to the extreme number of "chromosomes"
+  vdj_muts <- dplyr::left_join(
+    mut_coords, vdj_coords,
+    by = "contig_id",
+    suffix = c("", ".y")
+  )
+
+  vdj_muts <- dplyr::filter(vdj_muts, start < end.y & end > start.y)
+
+  vdj_muts <- dplyr::mutate(
+    vdj_muts,
+    new_start = ifelse(start >= start.y, start, start.y),
+    new_end   = ifelse(end <= end.y, end, end.y),
+    n         = ifelse(type != "del", new_end - new_start, n)
+  )
+
+  vdj_muts <- dplyr::group_by(vdj_muts, contig_id, width, type, seg)
+  vdj_muts <- dplyr::summarize(vdj_muts, n = sum(n), .groups = "drop")
+  vdj_muts <- tidyr::unite(vdj_muts, type, seg, type, sep = "_")
+
+  # Add total mutations to output and calculate mutation frequency
+  mut_cols <- c("v", "d", "j", "c")
+  mut_cols <- purrr::map(mut_cols, paste0, "_", mut_key)
+  mut_cols <- purrr::reduce(mut_cols, c)
+  all_cols <- paste0("all_", unname(mut_key))
+  all_cols <- c(all_cols, paste0(all_cols, "_freq"))
+  mut_cols <- c(mut_cols, all_cols)
+
+  res <- dplyr::bind_rows(vdj_muts, all_muts)
+
+  res <- tidyr::pivot_wider(
+    res,
+    names_from  = type,
+    values_from = n,
+    values_fill = 0
+  )
+
+  res <- dplyr::mutate(
+    res,
+    across(
+      starts_with("all_"),
+      ~ .x / width,
+      .names = "{.col}_freq"
+    )
+  )
+
+  # Add 0s for missing columns and set column order
+  # these are segments with no mutations for any chain
+  missing_cols <- mut_cols[!mut_cols %in% names(res)]
+
+  res[, missing_cols] <- 0
+
+  res <- res[, c("contig_id", mut_cols)]
 
   res
 }
@@ -925,35 +994,31 @@ To match V(D)J mutation data with",
 #' @return Character string indicating whether TCR or BCR data were provided
 #' @noRd
 .classify_vdj <- function(df_in, chain_col = "chains") {
-  .count_chain_class <- function(chains, .df = df_in, .clmn = chain_col) {
-    dat <- .df[[.clmn]]
-    res <- dat %in% chains
-    res <- length(dat[res])
-
-    res
-  }
-
   chains <- list(
     "TCR" = c("TRA", "TRB", "TRD", "TRG"),
     "BCR" = c("IGH", "IGK", "IGL")
   )
 
-  # Count occurrences of BCR/TCR chains
-  n_chains <- purrr::map_int(chains, .count_chain_class)
+  n_chains <- purrr::imap(chains, ~ purrr::set_names(rep(.y, length(.x)), .x))
+  n_chains <- purrr::flatten(n_chains)
 
-  if (all(n_chains == 0)) {
+  n_chains <- as.character(n_chains[df_in[[chain_col]]])
+  n_chains <- table(n_chains)
+
+  # Error if no chains match
+  if (all(n_chains[names(chains)] == 0)) {
     chains <- unlist(chains, use.names = FALSE)
     chains <- paste0(chains, collapse = ", ")
 
     stop(
-      "None of the expected chains (", chains, ") were found in the '",
-      chain_col, "' column, unable to determine whether TCR or BCR data were ",
+      "None of the expected chains (", chains, ") were found in '",
+      chain_col, "', unable to determine whether TCR or BCR data were ",
       "provided."
     )
   }
 
   # Calculate fraction of BCR/TCR chains
-  # set type if >75% match
+  # set type if >50% match
   res <- n_chains / sum(n_chains)
   res <- names(res[res > 0.5])
 
