@@ -65,6 +65,22 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 }
 
 
+#' Base R version of stringr::str_extract_all
+#'
+#' This is a little slower than stingr::str_extract_all
+#'
+#' @param string Input vector
+#' @param pattern Regular expression
+#' @return A character vector
+#' @noRd
+.str_extract_all <- function(string, pattern) {
+
+  match_pos <- gregexpr(pattern, string, perl = TRUE)
+
+  regmatches(string, match_pos)
+}
+
+
 #' Filter V(D)J data based on chain
 #'
 #' @param df_in data.frame
