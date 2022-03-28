@@ -1,6 +1,8 @@
-#' Calculate abundance of a cell label
+#' Calculate frequency of cell groups present in the object
 #'
-#' Count the frequency of the provided cell labels such as clonotypes or isotypes
+#' Calculate the frequency of each cell label present in the provided meta.data
+#' column. This is useful for comparing the proportion of cells belonging to
+#' different samples, cell types, clonotypes, isotypes, etc.
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
@@ -18,7 +20,7 @@
 #'
 #' @examples
 #' # Calculate clonotype abundance using all cells
-#' res <- calc_abundance(
+#' res <- calc_frequency(
 #'   vdj_so,
 #'   data_col = "clonotype_id"
 #' )
@@ -26,7 +28,7 @@
 #' head(res@meta.data, 1)
 #'
 #' # Group cells based on meta.data column before calculating abundance
-#' res <- calc_abundance(
+#' res <- calc_frequency(
 #'   vdj_sce,
 #'   cluster_col = "orig.ident"
 #' )
@@ -36,7 +38,7 @@
 #' # Add a prefix to the new columns
 #' # this is useful if multiple abundance calculations are stored in the
 #' # meta.data
-#' res <- calc_abundance(
+#' res <- calc_frequency(
 #'   vdj_so,
 #'   prefix = "bcr_"
 #' )
@@ -44,7 +46,7 @@
 #' head(res@meta.data, 1)
 #'
 #' # Return a data.frame instead of adding the results to the input object
-#' res <- calc_abundance(
+#' res <- calc_frequency(
 #'   vdj_sce,
 #'   return_df = TRUE
 #' )
@@ -52,7 +54,7 @@
 #' head(res, 1)
 #'
 #' @export
-calc_abundance <- function(input, data_col = "clonotype_id", cluster_col = NULL, prefix = "",
+calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0(data_col, "_"),
                            return_df = FALSE) {
 
   # Format input data
@@ -61,11 +63,11 @@ calc_abundance <- function(input, data_col = "clonotype_id", cluster_col = NULL,
 
   vdj <- dplyr::select(
     vdj,
-    !!sym(CELL_COL), all_of(c(data_col, cluster_col))
+    all_of(c(CELL_COL, data_col, cluster_col))
   )
 
   # Calculate clonotype abundance
-  vdj <- .calc_abund(
+  vdj <- .calc_freq(
     df_in      = vdj,
     cell_col   = CELL_COL,
     dat_col    = data_col,
@@ -74,6 +76,14 @@ calc_abundance <- function(input, data_col = "clonotype_id", cluster_col = NULL,
   )
 
   vdj <- dplyr::select(vdj, -all_of(data_col))
+
+  freq_clmn <- str_c(prefix, "freq")
+  grp_clmn <- str_c(prefix, "grp")
+
+  vdj <- dplyr::mutate(
+    vdj,
+    !!sym(grp_clmn) := .calc_freq_grp(!!sym(freq_clmn))
+  )
 
   # Format results
   res <- dplyr::left_join(meta, vdj, by = CELL_COL)
@@ -87,7 +97,7 @@ calc_abundance <- function(input, data_col = "clonotype_id", cluster_col = NULL,
   res
 }
 
-#' Calculate abundance of a cell label
+#' Calculate frequency of a cell label
 #'
 #' @param df_in Input data.frame
 #' @param cell_col Column containing cell IDs
@@ -97,7 +107,7 @@ calc_abundance <- function(input, data_col = "clonotype_id", cluster_col = NULL,
 #' @param out_prefix Prefix to add to output columns
 #' @return data.frame containing clonotype abundances
 #' @noRd
-.calc_abund <- function(df_in, cell_col, dat_col, clust_col = NULL, out_prefix = "") {
+.calc_freq <- function(df_in, cell_col, dat_col, clust_col = NULL, out_prefix = "") {
 
   # Count number of cells in each group
   if (!is.null(clust_col)) {
@@ -147,6 +157,46 @@ calc_abundance <- function(input, data_col = "clonotype_id", cluster_col = NULL,
     all_of(c(cell_col, dat_col)),
     !!!syms(new_cols)
   )
+
+  res
+}
+
+#' Divide clonotypes into groups based on frequency
+#'
+#' @param x Numeric vector of clonotype frequencies
+#' @param n_grps Number of groups to return
+#' @return Named vector containing group labels
+#' @noRd
+.calc_freq_grp <- function(x, n_grps = 4) {
+
+  n_grps <- n_grps - 1
+
+  # Set unique clonotypes as their own group
+  uniq_x <- unique(x)
+  uniq_x <- uniq_x[uniq_x > 1]
+  uniq_x <- sort(uniq_x)
+
+  # Divide into groups
+  labs <- tibble(
+    x   = uniq_x,
+    grp = ntile(uniq_x, n_grps)
+  )
+
+  # Format labels
+  labs <- dplyr::group_by(labs, grp)
+  labs <- dplyr::mutate(
+    labs,
+    lab = paste0(unique(range(x)), collapse = "-")
+  )
+
+  labs <- set_names(labs$lab, labs$x)
+  labs <- c("1" = "1", labs)
+
+  res <- unname(labs[as.character(x)])
+
+  lvls <- c(NA, unique(unname(labs)))
+
+  res <- factor(res, levels = lvls, exclude = NULL)
 
   res
 }
@@ -230,9 +280,9 @@ calc_abundance <- function(input, data_col = "clonotype_id", cluster_col = NULL,
 #' )
 #'
 #' @export
-plot_clone_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id", type = "bar",
-                                 yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, plot_n = 10,
-                                 label_aes = list(), facet_rows = 1, facet_scales = "free_x", ...) {
+plot_clonal_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id", type = "bar",
+                                  yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, plot_n = 10,
+                                  label_aes = list(), facet_rows = 1, facet_scales = "free_x", ...) {
 
   if (!yaxis %in% c("frequency", "percent")) {
     stop("yaxis must be either 'frequency' or 'percent'.")
@@ -247,7 +297,7 @@ plot_clone_abundance <- function(input, cluster_col = NULL, clonotype_col = "clo
   }
 
   # Calculate clonotype abundance
-  plt_dat <- calc_abundance(
+  plt_dat <- calc_frequency(
     input       = input,
     cluster_col = cluster_col,
     data_col    = clonotype_col,
@@ -384,7 +434,12 @@ plot_clone_abundance <- function(input, cluster_col = NULL, clonotype_col = "clo
   res
 }
 
-#' Plot isotype abundance
+#' Plot frequency of cell groups/labels present in the object
+#'
+#' Plot the frequency of each cell label present in the provided meta.data
+#' column. This is useful for comparing the proportion of cells belonging to
+#' different samples, cell types, isotypes, etc. To compare clonotype
+#' frequency, use the plot_clonal_abundance() function.
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
@@ -404,7 +459,7 @@ plot_clone_abundance <- function(input, cluster_col = NULL, clonotype_col = "clo
 #' linetype, etc.
 #' @return ggplot object
 #' @export
-plot_abundance <- function(input, data_col = "clonotype_id", cluster_col = NULL, group_col = NULL,
+plot_frequency <- function(input, data_col, cluster_col = NULL, group_col = NULL,
                            yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, facet_rows = NULL,
                            ...) {
 
@@ -417,7 +472,7 @@ plot_abundance <- function(input, data_col = "clonotype_id", cluster_col = NULL,
   }
 
   # Calculate clonotype abundance
-  plt_dat <- calc_abundance(
+  plt_dat <- calc_frequency(
     input       = input,
     cluster_col = cluster_col,
     data_col    = data_col,
