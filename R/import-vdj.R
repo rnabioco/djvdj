@@ -909,7 +909,7 @@ To match V(D)J mutation data with",
     res,
     across(
       starts_with("all_"),
-      ~ .x / width,
+      ~ round(.x / width, 6),
       .names = "{.col}_freq"
     )
   )
