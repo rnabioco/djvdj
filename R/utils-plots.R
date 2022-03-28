@@ -417,24 +417,23 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @noRd
 .set_lvls <- function(df_in, clmn, lvls) {
 
-  if (!is.null(lvls) && !is.null(clmn)) {
-    dat <- pull(df_in, clmn)
-
-    if (!is.character(dat) && !is.factor(dat)) {
-      warning("Plot levels were not modified, levels are only modified for characters and factors")
-
-      return(df_in)
-    }
-
-    if (!all(pull(df_in, clmn) %in% lvls)) {
-      stop("Not all labels in ", clmn, " are included in plot_levels")
-    }
-
-    df_in <- dplyr::mutate(
-      df_in,
-      !!sym(clmn) := factor(!!sym(clmn), levels = unique(lvls))
-    )
+  if (is.null(lvls) || is.null(clmn)) {
+    return(df_in)
   }
+
+  dat <- df_in[[clmn]]
+
+  if (!is.character(dat) && !is.factor(dat)) {
+    warning("Plot levels were not modified, levels are only modified for characters and factors")
+
+    return(df_in)
+  }
+
+  if (any(!unique(dat) %in% lvls)) {
+    stop("Not all labels in ", clmn, " are included in plot_lvls")
+  }
+
+  df_in[clmn] <- factor(df_in[[clmn]], unique(lvls), exclude = NULL)
 
   df_in
 }
