@@ -217,7 +217,7 @@ To match V(D)J mutation data with",
 
     warning(
       "When include_mutations is TRUE, filter_chains is also automatically ",
-      "set TRUE since indel data is only available for productive chains."
+      "set TRUE since mutation data is only available for productive chains."
     )
   }
 
