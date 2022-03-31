@@ -1,11 +1,18 @@
-#' Calculate clonotype abundance
+#' Calculate frequency of cell groups present in the object
+#'
+#' Calculate the frequency of each cell label present in the provided meta.data
+#' column. This is useful for comparing the proportion of cells belonging to
+#' different samples, cell types, clonotypes, isotypes, etc.
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing cell labels to use for
+#' calculating abundance. To calculate clonotype abundance, provide the column
+#' containing clonotype IDs, to calculate isotype abundance provide the column
+#' containing cell isotypes. By default the clonotype_id is used for
+#' calculations.
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating clonotype abundance
 #' @param prefix Prefix to add to new columns
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.
@@ -13,15 +20,15 @@
 #'
 #' @examples
 #' # Calculate clonotype abundance using all cells
-#' res <- calc_abundance(
+#' res <- calc_frequency(
 #'   vdj_so,
-#'   clonotype_col = "clonotype_id"
+#'   data_col = "clonotype_id"
 #' )
 #'
 #' head(res@meta.data, 1)
 #'
 #' # Group cells based on meta.data column before calculating abundance
-#' res <- calc_abundance(
+#' res <- calc_frequency(
 #'   vdj_sce,
 #'   cluster_col = "orig.ident"
 #' )
@@ -31,7 +38,7 @@
 #' # Add a prefix to the new columns
 #' # this is useful if multiple abundance calculations are stored in the
 #' # meta.data
-#' res <- calc_abundance(
+#' res <- calc_frequency(
 #'   vdj_so,
 #'   prefix = "bcr_"
 #' )
@@ -39,7 +46,7 @@
 #' head(res@meta.data, 1)
 #'
 #' # Return a data.frame instead of adding the results to the input object
-#' res <- calc_abundance(
+#' res <- calc_frequency(
 #'   vdj_sce,
 #'   return_df = TRUE
 #' )
@@ -47,38 +54,36 @@
 #' head(res, 1)
 #'
 #' @export
-calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id",
-                           prefix = "", return_df = FALSE) {
+calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0(data_col, "_"),
+                           return_df = FALSE) {
 
   # Format input data
   meta <- .get_meta(input)
-  vdj  <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
+  vdj  <- dplyr::filter(meta, !is.na(!!sym(data_col)))
 
   vdj <- dplyr::select(
     vdj,
-    !!sym(CELL_COL), all_of(c(cluster_col, clonotype_col))
+    all_of(c(CELL_COL, data_col, cluster_col))
   )
 
   # Calculate clonotype abundance
-  vdj <- .calc_abund(
-    df_in     = vdj,
-    cell_col  = CELL_COL,
-    clone_col = clonotype_col,
-    clust_col = cluster_col
+  vdj <- .calc_freq(
+    df_in      = vdj,
+    cell_col   = CELL_COL,
+    dat_col    = data_col,
+    clust_col  = cluster_col,
+    out_prefix = prefix
   )
 
-  new_cols <- c("freq", "pct")
+  vdj <- dplyr::select(vdj, -all_of(data_col))
 
-  if (!is.null(cluster_col)) {
-    new_cols <- c(new_cols, "shared")
-  }
+  freq_clmn <- str_c(prefix, "freq")
+  grp_clmn <- str_c(prefix, "grp")
 
-  new_cols <- purrr::set_names(
-    paste0(".", new_cols),
-    paste0(prefix, "clone_", new_cols)
+  vdj <- dplyr::mutate(
+    vdj,
+    !!sym(grp_clmn) := .calc_freq_grp(!!sym(freq_clmn))
   )
-
-  vdj <- select(vdj, !!sym(CELL_COL), !!!syms(new_cols))
 
   # Format results
   res <- dplyr::left_join(meta, vdj, by = CELL_COL)
@@ -92,15 +97,17 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   res
 }
 
-#' Calculate clonotype abundance
+#' Calculate frequency of a cell label
 #'
 #' @param df_in Input data.frame
 #' @param cell_col Column containing cell IDs
-#' @param clone_col Column containing clonotype IDs
-#' @param clust_col Column containing cluster IDs
+#' @param data_col Column containing data for calculating abundance
+#' (e.g. clonotype IDs)
+#' @param clust_col Column containing cluster IDs to use for grouping cells
+#' @param out_prefix Prefix to add to output columns
 #' @return data.frame containing clonotype abundances
 #' @noRd
-.calc_abund <- function(df_in, cell_col, clone_col, clust_col = NULL) {
+.calc_freq <- function(df_in, cell_col, dat_col, clust_col = NULL, out_prefix = "") {
 
   # Count number of cells in each group
   if (!is.null(clust_col)) {
@@ -113,7 +120,7 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   )
 
   # Calculate frequency
-  res <- dplyr::group_by(df_in, !!sym(clone_col), .add = TRUE)
+  res <- dplyr::group_by(df_in, !!sym(dat_col), .add = TRUE)
 
   res <- dplyr::mutate(
     res,
@@ -121,9 +128,9 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
     .pct  = (.data$.freq / .data$.n_cells) * 100
   )
 
-  # Identify shared clonotypes
+  # Identify shared labels
   if (!is.null(clust_col)) {
-    res <- dplyr::group_by(res, !!sym(clone_col))
+    res <- dplyr::group_by(res, !!sym(dat_col))
 
     res <- dplyr::mutate(
       res,
@@ -132,6 +139,64 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   }
 
   res <- dplyr::ungroup(res)
+
+  # Rename output columns
+  new_cols <- c("freq", "pct")
+
+  if (!is.null(clust_col)) {
+    new_cols <- c(new_cols, "shared")
+  }
+
+  new_cols <- purrr::set_names(
+    paste0(".", new_cols),
+    paste0(out_prefix, new_cols)
+  )
+
+  res <- dplyr::select(
+    res,
+    all_of(c(cell_col, dat_col)),
+    !!!syms(new_cols)
+  )
+
+  res
+}
+
+#' Divide clonotypes into groups based on frequency
+#'
+#' @param x Numeric vector of clonotype frequencies
+#' @param n_grps Number of groups to return
+#' @return Named vector containing group labels
+#' @noRd
+.calc_freq_grp <- function(x, n_grps = 4) {
+
+  n_grps <- n_grps - 1
+
+  # Set unique clonotypes as their own group
+  uniq_x <- unique(x)
+  uniq_x <- uniq_x[uniq_x > 1]
+  uniq_x <- sort(uniq_x)
+
+  # Divide into groups
+  labs <- tibble(
+    x   = uniq_x,
+    grp = ntile(uniq_x, n_grps)
+  )
+
+  # Format labels
+  labs <- dplyr::group_by(labs, grp)
+  labs <- dplyr::mutate(
+    labs,
+    lab = paste0(unique(range(x)), collapse = "-")
+  )
+
+  labs <- set_names(labs$lab, labs$x)
+  labs <- c("1" = "1", labs)
+
+  res <- unname(labs[as.character(x)])
+
+  lvls <- c(NA, unique(unname(labs)))
+
+  res <- factor(res, levels = lvls, exclude = NULL)
 
   res
 }
@@ -150,8 +215,8 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
-#' @param n_clonotypes Number of clonotypes to plot. If type is set to 'line',
-#' this will specify the number of clonotypes to label.
+#' @param plot_n Number of top clonotypes to plot. If type is set to 'line',
+#' this will specify the number of values to label.
 #' @param label_aes Named list providing additional aesthetics (color, size,
 #' etc.) for clonotype labels when creating line graph
 #' @param facet_rows The number of facet rows, use this when separate bar
@@ -169,7 +234,7 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #' # Plot clonotype abundance using all cells
 #' plot_abundance(
 #'   vdj_so,
-#'   clonotype_col = "clonotype_id"
+#'   data_col = "clonotype_id"
 #' )
 #'
 #' # Plot clonotype abundance separately for each cell cluster
@@ -202,22 +267,22 @@ calc_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 #' # Specify the number of top clonotypes to plot
 #' plot_abundance(
 #'   vdj_so,
-#'   n_clonotypes = 5
+#'   plot_n = 5
 #' )
 #'
 #' #' # Create line graph
-#' # use n_clonotypes to set the number of clonotypes to label
+#' # use plot_n to set the number of clonotypes to label
 #' plot_abundance(
 #'   vdj_so,
 #'   cluster_col = "orig.ident",
 #'   type = "line",
-#'   n_clonotypes = 3
+#'   plot_n = 3
 #' )
 #'
 #' @export
-plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id", type = "bar",
-                           yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, n_clonotypes = 10,
-                           label_aes = list(), facet_rows = 1, facet_scales = "free_x", ...) {
+plot_clonal_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id", type = "bar",
+                                  yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, plot_n = 10,
+                                  label_aes = list(), facet_rows = 1, facet_scales = "free_x", ...) {
 
   if (!yaxis %in% c("frequency", "percent")) {
     stop("yaxis must be either 'frequency' or 'percent'.")
@@ -227,46 +292,37 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
     stop("type must be either 'bar' or 'line'.")
   }
 
-  if (identical(type, "bar") && n_clonotypes <= 0) {
-    stop("If type is set to 'bar', n_clonotypes must be >0.")
+  if (identical(type, "bar") && plot_n <= 0) {
+    stop("If type is set to 'bar', plot_n must be >0.")
   }
 
   # Calculate clonotype abundance
-  plt_dat <- calc_abundance(
-    input         = input,
-    cluster_col   = cluster_col,
-    clonotype_col = clonotype_col,
-    prefix        = ".",
-    return_df     = TRUE
+  plt_dat <- calc_frequency(
+    input       = input,
+    cluster_col = cluster_col,
+    data_col    = clonotype_col,
+    prefix      = ".",
+    return_df   = TRUE
   )
 
-  dat_col <- ".clone_pct"
+  abun_col <- ".pct"
 
   if (identical(yaxis, "frequency")) {
-    dat_col <- ".clone_freq"
+    abun_col <- ".freq"
   }
 
   plt_dat <- tibble::as_tibble(plt_dat, rownames = CELL_COL)
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
 
-  abund_cols <- c(cluster_col, clonotype_col, dat_col)
+  keep_cols <- c(cluster_col, clonotype_col, abun_col)
 
-  plt_dat <- dplyr::distinct(plt_dat, !!!syms(abund_cols))
+  plt_dat <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
 
   # Add and format label column for plotting
-  len <- 25
-
-  plt_dat <- dplyr::rowwise(plt_dat)
-
   plt_dat <- dplyr::mutate(
     plt_dat,
-    .x   = !!sym(clonotype_col),
-    .len = nchar(.data$.x),
-    .lab = strtrim(.data$.x, len),
-    .lab = paste0(.data$.lab, ifelse(.data$.len > len, "...", ""))
+    .lab = trim_lab(!!sym(clonotype_col))
   )
-
-  plt_dat <- dplyr::ungroup(plt_dat)
 
   # Rank by abundance
   if (!is.null(cluster_col)) {
@@ -275,20 +331,20 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 
     plt_dat <- dplyr::mutate(
       plt_dat,
-      .x = paste0(!!sym(cluster_col), "_", .data$.x)
+      !!sym(clonotype_col) := paste0(!!sym(cluster_col), "_", !!sym(clonotype_col))
     )
   }
 
   plt_dat <- dplyr::mutate(
     plt_dat,
-    rank = dplyr::row_number(dplyr::desc(!!sym(dat_col)))
+    rank = dplyr::row_number(dplyr::desc(!!sym(abun_col)))
   )
 
   # Identify top clonotypes
   top_clones <- dplyr::slice_min(
     plt_dat,
     order_by  = rank,
-    n         = n_clonotypes,
+    n         = plot_n,
     with_ties = FALSE
   )
 
@@ -297,22 +353,25 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 
   # Create bar graph
   if (identical(type, "bar")) {
-    plt_labs <- purrr::set_names(top_clones$.lab, top_clones$.x)
+    plt_labs <- purrr::set_names(
+      top_clones$.lab,
+      top_clones[[clonotype_col]]
+    )
 
-    top_clones <- dplyr::arrange(top_clones, desc(!!sym(dat_col)))
+    top_clones <- dplyr::arrange(top_clones, desc(!!sym(abun_col)))
 
-    lvls <- rev(unique(top_clones$.x))
+    lvls <- rev(unique(top_clones[[clonotype_col]]))
 
     top_clones <- .set_lvls(
       df_in = top_clones,
-      clmn  = ".x",
+      clmn  = clonotype_col,
       lvls  = lvls
     )
 
     res <- .create_bars(
       df_in = top_clones,
-      x     = ".x",
-      y     = dat_col,
+      x     = clonotype_col,
+      y     = abun_col,
       y_ttl = yaxis,
       .fill = cluster_col,
       clrs  = plot_colors,
@@ -321,6 +380,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
       ...
     )
 
+    # Format clonotype labels
     res <- res +
       ggplot2::scale_x_discrete(labels = plt_labs)
 
@@ -337,10 +397,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   }
 
   # Plot abundance vs rank
-  plt_aes <- ggplot2::aes(
-    x = rank,
-    y = !!sym(dat_col)
-  )
+  plt_aes <- ggplot2::aes(rank, !!sym(abun_col))
 
   clr_aes <- plt_aes
 
@@ -359,7 +416,7 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
   }
 
   # Add labels
-  if (n_clonotypes > 0) {
+  if (plot_n > 0) {
     res <- res +
       ggrepel::geom_text_repel(
         ggplot2::aes(label = .data$.lab),
@@ -373,6 +430,134 @@ plot_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype
 
     res <- .add_aes(res, label_aes, 2)
   }
+
+  res
+}
+
+#' Plot frequency of cell groups/labels present in the object
+#'
+#' Plot the frequency of each cell label present in the provided meta.data
+#' column. This is useful for comparing the proportion of cells belonging to
+#' different samples, cell types, isotypes, etc. To compare clonotype
+#' frequency, use the plot_clonal_abundance() function.
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing cell labels to use for
+#' calculating abundance. To calculate clonotype abundance, provide the column
+#' containing clonotype IDs, to calculate isotype abundance provide the column
+#' containing cell isotypes. By default clonotype_id is used for calculations.
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' grouping cells when calculating clonotype abundance. Clonotypes will be
+#' plotted separately for each cluster.
+#' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_lvls Character vector containing levels for ordering
+#' @param facet_rows The number of facet rows, use this when separate bar
+#' graphs are created for each cell cluster
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
+#' @return ggplot object
+#' @export
+plot_frequency <- function(input, data_col, cluster_col = NULL, group_col = NULL,
+                           yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, facet_rows = NULL,
+                           ...) {
+
+  if (!yaxis %in% c("frequency", "percent")) {
+    stop("yaxis must be either 'frequency' or 'percent'.")
+  }
+
+  if (!is.null(group_col) && is.null(cluster_col)) {
+    stop("cluster_col must be provided when group_col is specified.")
+  }
+
+  # Calculate clonotype abundance
+  plt_dat <- calc_frequency(
+    input       = input,
+    cluster_col = cluster_col,
+    data_col    = data_col,
+    prefix      = ".",
+    return_df   = TRUE
+  )
+
+  # Set axis labels
+  y_lab <- str_c(data_col, " ", yaxis)
+
+  abun_col <- ".pct"
+
+  if (identical(yaxis, "frequency")) {
+    abun_col <- ".freq"
+  }
+
+  plt_dat <- tibble::as_tibble(plt_dat, rownames = CELL_COL)
+  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
+
+  keep_cols <- c(cluster_col, group_col, data_col, abun_col)
+
+  plt_dat <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
+
+  # Rank isotypes
+  plt_dat <- dplyr::group_by(plt_dat, !!sym(data_col))
+
+  rnk <- dplyr::summarize(plt_dat, mn = mean(!!sym(abun_col)))
+  rnk <- dplyr::arrange(rnk, desc(mn))
+  rnk <- pull(rnk, data_col)
+
+  plt_dat <- dplyr::ungroup(plt_dat)
+
+  # Create grouped boxplot
+  if (!is.null(group_col)) {
+    plt_dat <- .set_lvls(plt_dat, group_col, plot_lvls)
+    plt_dat <- .set_lvls(plt_dat, data_col, rnk)
+
+    res <- .create_boxes(
+      plt_dat,
+      x      = data_col,
+      y      = abun_col,
+      .color = group_col,
+      .fill  = group_col,
+      alpha  = 0.5,
+      clrs   = plot_colors,
+      outlier.color = NA,
+      ...
+    ) +
+      geom_jitter(position = position_jitterdodge(jitter.width = 0.05)) +
+      labs(y = y_lab) +
+      theme(legend.position = "right")
+
+    return(res)
+  }
+
+  # Create bar graph
+  # .create_bars reverses level order
+  x_col <- data_col
+
+  if (!is.null(cluster_col)) {
+    plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+
+    x_col <- cluster_col
+  }
+
+  plt_dat <- .set_lvls(plt_dat, data_col, rev(rnk))
+
+  new_args <- list(
+    df_in = plt_dat,
+    x     = x_col,
+    y     = abun_col,
+    y_ttl = y_lab,
+    .fill = data_col,
+    clrs  = plot_colors,
+    ang   = 45,
+    hjst  = 1,
+    ...
+  )
+
+  # When cluster_col is provided set default position to dodge
+  if (!is.null(cluster_col) && is.null(new_args$position)) {
+    new_args$position <- position_dodge(preserve = "single")
+  }
+
+  res <- purrr::lift_dl(.create_bars)(new_args)
 
   res
 }

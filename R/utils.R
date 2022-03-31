@@ -65,6 +65,22 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 }
 
 
+#' Base R version of stringr::str_extract_all
+#'
+#' This is a little slower than stingr::str_extract_all
+#'
+#' @param string Input vector
+#' @param pattern Regular expression
+#' @return A character vector
+#' @noRd
+.str_extract_all <- function(string, pattern) {
+
+  match_pos <- gregexpr(pattern, string, perl = TRUE)
+
+  regmatches(string, match_pos)
+}
+
+
 #' Filter V(D)J data based on chain
 #'
 #' @param df_in data.frame
@@ -343,15 +359,7 @@ NULL
 #' @noRd
 .unnest_vdj <- function(df_in, sep_cols, unnest = TRUE, sep = ";") {
 
-  # Add new set of columns based on sep_cols names
-  # this is useful if want to leave original columns unmodified
-  if (!is.null(names(sep_cols))) {
-    df_in <- dplyr::mutate(df_in, !!!syms(sep_cols))
-
-    sep_cols <- unname(sep_cols)
-  }
-
-  res <- df_in
+  df_in <- as_tibble(df_in)
 
   # Get types to use for coercing columns
   # use first 100 rows containing V(D)J data
@@ -359,40 +367,51 @@ NULL
   typs <- dplyr::filter(typs, if_all(all_of(sep_cols), ~ !is.na(.x)))
   typs <- utils::head(typs, 100)
 
-  typs <- dplyr::mutate(typs, across(
-    all_of(sep_cols),
-    ~ strsplit(.x, sep)
-  ))
+  typs <- tidyr::separate_rows(typs, all_of(sep_cols), sep = sep)
 
-  typs <- tidyr::unnest(typs, everything())
   typs <- purrr::map(typs, readr::guess_parser)
   typs <- purrr::map_chr(typs, ~ paste0("as.", .x))
 
   # Split sep_cols and convert types
-  # >2x faster
-  for (clmn in sep_cols) {
-    dat <- df_in[[clmn]]
-    fn  <- typs[[clmn]]
-
-    dat <- map(dat, ~ {
-      .x <- strsplit(.x, sep, fixed = TRUE)
+  # tidyr::separate_rows with convert = TRUE is slower than determining types
+  # and then converting
+  # strsplit is faster than str_split_n used by separate_rows
+  .str_split_convert <- function(x, pattern, fn) {
+    res <- map(x, ~ {
+      .x <- strsplit(.x, pattern, fixed = TRUE)
       .x <- unlist(.x)
-      .x <- do.call(fn, list(x = .x))
 
-      .x
+      do.call(fn, list(x = .x))
     })
 
-    res <- dplyr::mutate(res, !!sym(clmn) := dat)
+    res
   }
 
-  # Unnest data.frame
-  if (unnest) {
-    res <- tidyr::unnest(res, all_of(unname(sep_cols)))
+  if (!unnest) {
+    res <- dplyr::mutate(
+      df_in,
+      across(
+        all_of(sep_cols),
+        ~ .str_split_convert(.x, sep, typs[[cur_column()]])
+      )
+    )
+
+    return(res)
   }
+
+  res <- purrr::modify_at(df_in, sep_cols, strsplit, split = sep, fixed = TRUE)
+  res <- unchop(res, all_of(sep_cols))
+
+  res <- mutate(
+    res,
+    across(
+      all_of(sep_cols),
+      ~ do.call(typs[[cur_column()]], list(x = .x))
+    )
+  )
 
   res
 }
-
 
 #' Identify columns with V(D)J data
 #'

@@ -27,7 +27,7 @@ functions can be passed to plot multiple diversity metrics,
 e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
-calculating clonotype abundance}
+calculating repertoire diversity}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 

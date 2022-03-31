@@ -31,7 +31,8 @@ Imports:
     Rsamtools,
     abdiv,
     SingleCellExperiment,
-    glue
+    glue,
+    valr
 Suggests: 
     magrittr,
     covr,
