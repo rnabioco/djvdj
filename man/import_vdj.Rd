@@ -8,7 +8,6 @@ import_vdj(
   input = NULL,
   vdj_dir = NULL,
   prefix = "",
-  cell_prefix = NULL,
   filter_chains = TRUE,
   filter_paired = FALSE,
   define_clonotypes = NULL,
@@ -24,20 +23,9 @@ containing V(D)J results will be returned}
 \item{vdj_dir}{Directory containing the output from cellranger vdj. A vector
 or named vector can be given to load data from multiple runs. If a named
 vector is given, the cell barcodes will be prefixed with the provided names.
-This mimics the behavior of Seurat::Read10X(). Cell barcode prefixes can
-also be provided using the cell_prefix argument.}
+This mimics the behavior of Seurat::Read10X().}
 
 \item{prefix}{Prefix to add to new columns}
-
-\item{cell_prefix}{Prefix to add to cell barcodes, this is helpful when
-loading data from multiple runs into a single object. If NULL, cell barcode
-prefixes are automatically generated in a similar manner as
-Seurat::Read10X().
-
-For the V(D)J data to be successfully added to the object, the cell prefixes
-must match the prefixes that are already present in the object. If the cell
-prefixes are incorrect, import_vdj will be unable to assign the V(D)J data
-to the correct cells.}
 
 \item{filter_chains}{Only include chains with at least one productive and
 full length contig.}

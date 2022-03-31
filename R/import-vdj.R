@@ -5,19 +5,8 @@
 #' @param vdj_dir Directory containing the output from cellranger vdj. A vector
 #' or named vector can be given to load data from multiple runs. If a named
 #' vector is given, the cell barcodes will be prefixed with the provided names.
-#' This mimics the behavior of Seurat::Read10X(). Cell barcode prefixes can
-#' also be provided using the cell_prefix argument.
+#' This mimics the behavior of Seurat::Read10X().
 #' @param prefix Prefix to add to new columns
-#' @param cell_prefix Prefix to add to cell barcodes, this is helpful when
-#' loading data from multiple runs into a single object. If NULL, cell barcode
-#' prefixes are automatically generated in a similar manner as
-#' Seurat::Read10X().
-#'
-#' For the V(D)J data to be successfully added to the object, the cell prefixes
-#' must match the prefixes that are already present in the object. If the cell
-#' prefixes are incorrect, import_vdj will be unable to assign the V(D)J data
-#' to the correct cells.
-#'
 #' @param filter_chains Only include chains with at least one productive and
 #' full length contig.
 #' @param filter_paired Only include clonotypes with paired chains. For TCR
@@ -165,7 +154,7 @@
 #' head(vdj_df, 1)
 #'
 #' @export
-import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", cell_prefix = NULL, filter_chains = TRUE,
+import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains = TRUE,
                        filter_paired = FALSE, define_clonotypes = NULL, include_mutations = TRUE,
                        aggr_dir = NULL, sep = ";") {
 
@@ -173,9 +162,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", cell_prefix = 
   load_aggr <- !is.null(aggr_dir)
 
   if (is.null(vdj_dir) && !load_aggr) {
-    stop(
-      "Must provide 'vdj_dir' or 'aggr_dir'"
-    )
+    stop("Must provide 'vdj_dir' or 'aggr_dir'")
   }
 
   # Check that vdj_dir is also provided when loading mutation data for
@@ -188,27 +175,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", cell_prefix = 
     )
 
     include_mutations <- FALSE
-  }
-
-  # Check that cell barcode prefixes are provided when loading mutation data
-  # for cellranger aggr results
-  if (
-    load_aggr &&
-    !is.null(vdj_dir) &&
-    is.null(names(vdj_dir)) &&
-    is.null(cell_prefix)
-  ) {
-    stop(
-      "To differentiate between cells originating from each sample, cell barcode",
-      " prefixes are generated for cellranger aggr results by combining",
-      " the 'donor' and 'origin' fields specified in the cellranger aggr",
-      " configuration file i.e. 'donor_origin_'.
-
-To match V(D)J mutation data with",
-      " cellranger aggr output, barcode prefixes must be provided using the",
-      " vdj_dir or cell_prefix arguments. The prefixes must match the barcode",
-      " prefixes generated for the cellranger aggr results."
-    )
   }
 
   # When including indel data, only use productive full length chains
@@ -241,17 +207,50 @@ To match V(D)J mutation data with",
     qc_cols
   )
 
-  # Format/check cell prefixes
-  vdj_dir <- .format_cell_prefixes(vdj_dir, cell_prefix)
+  # Set cell barcode prefixes
+  prfxs <- NULL
+
+  if (!is.null(input)) {
+    bcs <- .get_meta(input)[[CELL_COL]]
+
+    prfx_df <- .extract_cell_prefix(bcs, strip_bcs = FALSE)
+    prfx_df <- dplyr::distinct(prfx_df, prfx, sfx)
+
+    prfxs <- purrr::set_names(prfx_df$sfx, prfx_df$prfx)
+
+    if (!is.null(names(vdj_dir))) {
+
+      if (!all(names(vdj_dir) %in% names(prfxs))) {
+        stop("Provided cell barcode prefixes do not match those in input object.")
+      }
+
+      prfxs <- prfxs[names(vdj_dir)]
+    }
+
+  } else {
+    if (is.null(prfxs) && !is.null(vdj_dir) && is.null(names(vdj_dir))) {
+
+      # If no prefixes, auto-generate, do not add prefix if only one sample
+      # Read10X() will add the prefix, "1_", "2_", "3_", etc. for each sample
+      prfxs <- ""
+
+      if (length(vdj_dir) > 1) {
+        prfxs <- paste0(seq_along(vdj_dir), "_")
+      }
+
+      prfxs <- purrr::set_names(rep(NA, length(vdj_dir)), prfxs)
+    }
+  }
 
   # Load V(D)J data and add cell prefixes
   if (!is.null(aggr_dir)) {
     cell_cols <- c(cell_cols, aggr_cols)
 
-    contigs <- .load_aggr_data(aggr_dir)
+    contigs <- .load_aggr_data(aggr_dir, cell_prfxs = prfxs)
+    contigs <- list(contigs)
 
   } else {
-    contigs <- .load_vdj_data(vdj_dir)
+    contigs <- .load_vdj_data(vdj_dir, cell_prfxs = prfxs)
   }
 
   # vdj_cols should have all columns that should be included in output
@@ -274,32 +273,23 @@ To match V(D)J mutation data with",
   # non-productive contigs are missing indel data
   if (include_mutations) {
 
-    if (!is.null(aggr_dir)) {
-      aggr_prfxs  <- paste0(sort(names(contigs)), collapse = ", ")
-      indel_prfxs <- paste0(sort(names(vdj_dir)), collapse = ", ")
+    # Fix contig_ids in contigs
+    contigs <- purrr::map(
+      contigs,
+      mutate,
+      contig_sfx = unlist(.str_extract_all(contig_id, "_contig_[0-9]+$")),
+      contig_id  = paste0(barcode, contig_sfx),
+      contig_sfx = NULL
+    )
 
-      if (!identical(aggr_prfxs, indel_prfxs)) {
-        stop(
-          "Cell barcode prefixes generated for the cellranger aggr output (",
-          aggr_prfxs, ") do not match barcode prefixes specified using the",
-          " vdj_dir or cell_prefix arguments (", indel_prfxs, ").
-
-To differentiate between cells originating from each sample, cell barcode",
-          " prefixes are generated for cellranger aggr results by combining",
-          " the 'donor' and 'origin' fields specified in the cellranger aggr",
-          " configuration file i.e. 'donor_origin_'.
-
-To match V(D)J mutation data with",
-          " cellranger aggr output, the barcode prefixes provided to the",
-          " vdj_dir or cell_prefix arguments must match the barcode prefixes",
-          " generated for the cellranger aggr results."
-        )
-      }
-    }
-
-    indels <- .load_muts(vdj_dir)
+    # Load mutation data
+    indels <- .load_muts(vdj_dir, cell_prfxs = prfxs)
 
     if (!is.null(indels)) {
+      if (!is.null(aggr_dir)) {
+        indels <- list(dplyr::bind_rows(indels))
+      }
+
       indel_cols <- names(indels[[1]])
       indel_cols <- indel_cols[indel_cols != "contig_id"]
 
@@ -511,17 +501,12 @@ To match V(D)J mutation data with",
 #' or named vector can be given to load data from several runs. If a named
 #' vector is given, the cell barcodes will be prefixed with the provided names.
 #' This mimics the behavior of the Read10X function found in the Seurat
-#' package. Cell barcode prefixes can also be provided using the cell_prefix
-#' argument.
-#' @param cell_prefix Prefix to add to cell barcodes, this is helpful when
-#' loading data from multiple runs into a single object. If set to NULL, cell
-#' barcode prefixes will be automatically generated in a similar way as the
-#' Read10X function found in the Seurat package.
+#' package.
 #' @param sep Separator to use when appending prefixes to cell barcodes, set to
 #' NULL to not add a separator
 #' @return Paths provided to vdj_dir with cell prefixes added as names
 #' @noRd
-.format_cell_prefixes <- function(vdj_dir, cell_prefix, sep = "_") {
+.format_cell_prefixes <- function(vdj_dir, sep = "_") {
 
   if (is.null(vdj_dir)) {
     return(vdj_dir)
@@ -534,17 +519,10 @@ To match V(D)J mutation data with",
 
     # If no prefixes, auto-generate, do not add prefix if only one sample
     # Read10X() will add the prefix, "1_", "2_", "3_", etc. for each sample
-    if (is.null(cell_prefix)) {
-      cell_prefix <- ""
+    cell_prefix <- ""
 
-      if (length(res) > 1) {
-        cell_prefix <- paste0(seq_along(res), "_")
-      }
-    }
-
-    # Check there is a cell prefix provided for each path
-    if (length(res) != length(cell_prefix)) {
-      stop("cell_prefix must be the same length as vdj_dir (", length(res),").")
+    if (length(res) > 1) {
+      cell_prefix <- paste0(seq_along(res), "_")
     }
 
     names(res) <- cell_prefix
@@ -590,7 +568,7 @@ To match V(D)J mutation data with",
 #' @return List containing one data.frame for each path provided to vdj_dir
 #' @importFrom readr read_csv cols
 #' @noRd
-.load_vdj_data <- function(vdj_dir, contig_file = "filtered_contig_annotations.csv",
+.load_vdj_data <- function(vdj_dir, cell_prfxs, contig_file = "filtered_contig_annotations.csv",
                            chk_none = c("productive", "full_length")) {
 
   # Check for file and return path
@@ -610,8 +588,6 @@ To match V(D)J mutation data with",
 
     d <- .replace_none(d, chk_none)
 
-    d <- dplyr::mutate(d, barcode = paste0(.y, .data$barcode))
-
     d <- dplyr::rename(
       d,
       chains       = .data$chain,
@@ -619,6 +595,11 @@ To match V(D)J mutation data with",
     )
 
     d
+  })
+
+  # Format cell barcode prefixes
+  res <- purrr::imap(res, ~ {
+    .format_cell_prefixes(.x, bc_col = "barcode", new_prfxs = cell_prfxs[.y])
   })
 
   res
@@ -634,7 +615,7 @@ To match V(D)J mutation data with",
 #' @return data.frame
 #' @importFrom readr read_csv cols
 #' @noRd
-.load_aggr_data <- function(aggr_dir, contig_file = "filtered_contig_annotations.csv",
+.load_aggr_data <- function(aggr_dir, cell_prfxs, contig_file = "filtered_contig_annotations.csv",
                             chk_none = c("productive", "full_length")) {
 
   # Check for file and return path
@@ -659,12 +640,82 @@ To match V(D)J mutation data with",
     clonotype_id = .data$raw_clonotype_id
   )
 
-  # Add donor and origin as barcode prefix and split data.frame into list
-  bc_prfx <- paste0(res$donor, "_", res$origin, "_")
+  # Format cell barcode prefixes
+  res <- .format_cell_prefixes(
+    res,
+    bc_col    = "barcode",
+    new_prfxs = cell_prfxs
+  )
 
-  res <- dplyr::mutate(res, barcode = paste0(bc_prfx, .data$barcode))
+  res
+}
 
-  res <- split(res, bc_prfx)
+#' Format cell barcode prefixes
+#'
+#' @param df_in data.frame
+#' @param bc_col Column containing cell barcodes
+#' @param prfxs Named vector containing new cell prefixes
+#' @return data.frame with formatted barcodes
+#' @noRd
+.format_cell_prefixes <- function(df_in, bc_col = "barcode", new_prfxs) {
+
+  # Extract current cell prefixes
+  bcs <- df_in[[bc_col]]
+
+  prfx_df <- .extract_cell_prefix(bcs, strip_bcs = TRUE)
+
+  # Match old and new prefixes
+  new <- dplyr::distinct(prfx_df, prfx, sfx)
+
+  if (nrow(new) != length(new_prfxs)) {
+    stop(
+      "The number of provided cell prefixes does not match the number of ",
+      "unique prefixes present on barcodes."
+    )
+  }
+
+  new$new_prfx <- names(new_prfxs)
+  new$new_sfx  <- unname(new_prfxs)
+
+  prfx_df <- dplyr::left_join(prfx_df, new, by = c("prfx", "sfx"))
+
+  # Format cell barcodes
+  prfx_df <- dplyr::mutate(
+    prfx_df,
+    prfx = ifelse(!is.na(new_prfx), new_prfx, prfx),
+    sfx  = ifelse(!is.na(new_sfx), new_sfx, sfx),
+    bc   = paste0(prfx, bc, sfx)
+  )
+
+  df_in[[bc_col]] <- prfx_df$bc
+
+  df_in
+}
+
+.extract_cell_prefix <- function(bcs, strip_bcs) {
+  p <- .extract_pattern(bcs, "^.+[^[:alnum:]](?=[ATGC]{16})")
+  s <- .extract_pattern(bcs, "(?<=[ATGC]{16})[^[:alnum:]].+$")
+
+  res <- tibble::tibble(
+    bc   = bcs,
+    prfx = p,
+    sfx  = s
+  )
+
+  if (strip_bcs) {
+    res <- dplyr::mutate(
+      res,
+      bc = str_remove(bc, paste0("^", prfx)),
+      bc = str_remove(bc, paste0(sfx, "$")),
+    )
+  }
+
+  res
+}
+
+.extract_pattern <- function(x, pattern) {
+  res <- .str_extract_all(x, pattern)
+  res <- map_chr(res, ~ ifelse(purrr::is_empty(.x), "", .x))
 
   res
 }
@@ -707,7 +758,7 @@ To match V(D)J mutation data with",
 #' @return List containing one data.frame for each path provided to vdj_dir
 #' @importFrom Rsamtools scanBam
 #' @noRd
-.load_muts <- function(vdj_dir, bam_file = "concat_ref.bam",
+.load_muts <- function(vdj_dir, cell_prfxs, bam_file = "concat_ref.bam",
                        airr_file = "airr_rearrangement.tsv") {
 
   # Check for bam file and return path
@@ -745,6 +796,27 @@ To match V(D)J mutation data with",
 
   # Map mutations to VDJ segments
   res <- purrr::map2(mut_coords, vdj_coords, .map_muts)
+
+  # Extract cell barcode from contig_id
+  res <- purrr::map(
+    res,
+    mutate,
+    barcode = unlist(.str_extract_all(contig_id, "^.+(?=_contig_[0-9]+$)"))
+  )
+
+  # Format cell barcode prefixes
+  res <- purrr::imap(res, ~ {
+    .format_cell_prefixes(.x, bc_col = "barcode", new_prfxs = cell_prfxs[.y])
+  })
+
+  res <- purrr::map(
+    res,
+    mutate,
+    contig_sfx = unlist(.str_extract_all(contig_id, "_contig_[0-9]+$")),
+    contig_id  = paste0(barcode, contig_sfx),
+    contig_sfx = NULL,
+    barcode    = NULL
+  )
 
   res
 }
