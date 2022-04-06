@@ -208,49 +208,63 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   )
 
   # Set cell barcode prefixes
-  prfxs <- NULL
-
   if (!is.null(input)) {
     bcs <- .get_meta(input)[[CELL_COL]]
 
     prfx_df <- .extract_cell_prefix(bcs, strip_bcs = FALSE)
     prfx_df <- dplyr::distinct(prfx_df, prfx, sfx)
 
-    prfxs <- purrr::set_names(prfx_df$sfx, prfx_df$prfx)
+    prfxs <- prfx_df$prfx
+    sfxs  <- prfx_df$sfx
 
     if (!is.null(names(vdj_dir))) {
+      obj_prfxs <- paste0(prfxs, collapse = ", ")
+      vdj_prfxs <- paste0(names(vdj_dir), collapse = ", ")
 
-      if (!all(names(vdj_dir) %in% names(prfxs))) {
-        stop("Provided cell barcode prefixes do not match those in input object.")
+      if (any(duplicated(prfxs))) {
+        stop(
+          "To match the provided cell prefixes (", vdj_prfxs, ") with those",
+          " in the object (", obj_prfxs, "), the cell prefixes in the object",
+          " cannot be duplicated."
+        )
       }
 
-      prfxs <- prfxs[names(vdj_dir)]
+      if (!all(names(vdj_dir) %in% prfxs)) {
+        stop(
+          "Provided cell barcode prefixes (", vdj_prfxs, ") do not match ",
+          "those in input object (", obj_prfxs, ")."
+        )
+      }
+
+      sfxs  <- sfxs[match(names(vdj_dir), prfxs)]
+      prfxs <- names(vdj_dir)
     }
 
-  } else {
-    if (is.null(prfxs) && !is.null(vdj_dir) && is.null(names(vdj_dir))) {
+  # If no prefixes, auto-generate, do not add prefix if only one sample
+  # Read10X() will add the prefix, "1_", "2_", "3_", etc. for each sample
+  } else if (!is.null(vdj_dir)) {
+    prfxs <- names(vdj_dir)
 
-      # If no prefixes, auto-generate, do not add prefix if only one sample
-      # Read10X() will add the prefix, "1_", "2_", "3_", etc. for each sample
+    if (is.null(prfxs)) {
       prfxs <- ""
 
       if (length(vdj_dir) > 1) {
         prfxs <- paste0(seq_along(vdj_dir), "_")
       }
-
-      prfxs <- purrr::set_names(rep(NA, length(vdj_dir)), prfxs)
     }
+
+    sfxs <- rep(as.character(NA), length(vdj_dir))
   }
 
   # Load V(D)J data and add cell prefixes
   if (!is.null(aggr_dir)) {
     cell_cols <- c(cell_cols, aggr_cols)
 
-    contigs <- .load_aggr_data(aggr_dir, cell_prfxs = prfxs)
+    contigs <- .load_aggr_data(aggr_dir, prfxs, sfxs)
     contigs <- list(contigs)
 
   } else {
-    contigs <- .load_vdj_data(vdj_dir, cell_prfxs = prfxs)
+    contigs <- .load_vdj_data(vdj_dir, prfxs, sfxs)
   }
 
   # vdj_cols should have all columns that should be included in output
@@ -283,7 +297,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     )
 
     # Load mutation data
-    indels <- .load_muts(vdj_dir, cell_prfxs = prfxs)
+    indels <- .load_muts(vdj_dir, prfxs, sfxs)
 
     if (!is.null(indels)) {
       if (!is.null(aggr_dir)) {
@@ -495,65 +509,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   res
 }
 
-#' Format and add cell prefixes
-#'
-#' @param vdj_dir Directory containing the output from cellranger vdj. A vector
-#' or named vector can be given to load data from several runs. If a named
-#' vector is given, the cell barcodes will be prefixed with the provided names.
-#' This mimics the behavior of the Read10X function found in the Seurat
-#' package.
-#' @param sep Separator to use when appending prefixes to cell barcodes, set to
-#' NULL to not add a separator
-#' @return Paths provided to vdj_dir with cell prefixes added as names
-#' @noRd
-.format_cell_prefixes <- function(vdj_dir, sep = "_") {
-
-  if (is.null(vdj_dir)) {
-    return(vdj_dir)
-  }
-
-  res <- vdj_dir
-
-  # If vdj_dir is not named, check cell_prefix
-  if (is.null(names(res))) {
-
-    # If no prefixes, auto-generate, do not add prefix if only one sample
-    # Read10X() will add the prefix, "1_", "2_", "3_", etc. for each sample
-    cell_prefix <- ""
-
-    if (length(res) > 1) {
-      cell_prefix <- paste0(seq_along(res), "_")
-    }
-
-    names(res) <- cell_prefix
-  }
-
-  # Check for NAs in cell prefixes
-  if (any(is.na(names(res)))) {
-    stop("Cell prefixes cannot include NAs.")
-  }
-
-  # Check for duplicated cell prefixes
-  if (any(duplicated(names(res)))) {
-    dups <- duplicated(names(res))
-    dups <- names(res)[dups]
-    dups <- paste0(dups, collapse = ", ")
-
-    warning("Some cell barcode prefixes are duplicated: ", dups)
-  }
-
-  # Add separator if one is not included in cell prefixes
-  if (!is.null(sep)) {
-    sep_regex <- paste0(sep, "$")
-
-    nms <- names(res) != "" & !grepl(sep_regex, names(res))
-
-    names(res)[nms] <- paste0(names(res)[nms], sep)
-  }
-
-  res
-}
-
 #' Load V(D)J data
 #'
 #' @param vdj_dir Directory containing the output from cellranger vdj. A vector
@@ -568,7 +523,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' @return List containing one data.frame for each path provided to vdj_dir
 #' @importFrom readr read_csv cols
 #' @noRd
-.load_vdj_data <- function(vdj_dir, cell_prfxs, contig_file = "filtered_contig_annotations.csv",
+.load_vdj_data <- function(vdj_dir, cell_prfxs, cell_sfxs, contig_file = "filtered_contig_annotations.csv",
                            chk_none = c("productive", "full_length")) {
 
   # Check for file and return path
@@ -582,7 +537,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     progress  = FALSE
   )
 
-  # Add cell prefixes and replace 'None' in productive with FALSE
+  # Replace 'None' in productive with FALSE
   res <- purrr::imap(res, ~ {
     d <- dplyr::filter(.x, is_cell)
 
@@ -598,9 +553,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   })
 
   # Format cell barcode prefixes
-  res <- purrr::imap(res, ~ {
-    .format_cell_prefixes(.x, bc_col = "barcode", new_prfxs = cell_prfxs[.y])
-  })
+  prfx_args <- list(
+    df_in      = res,
+    cell_prfxs = cell_prfxs,
+    cell_sfxs  = cell_sfxs
+  )
+
+  res <- purrr::pmap(prfx_args, .format_cell_prefixes, bc_col = "barcode")
 
   res
 }
@@ -615,7 +574,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' @return data.frame
 #' @importFrom readr read_csv cols
 #' @noRd
-.load_aggr_data <- function(aggr_dir, cell_prfxs, contig_file = "filtered_contig_annotations.csv",
+.load_aggr_data <- function(aggr_dir, cell_prfxs, cell_sfxs, contig_file = "filtered_contig_annotations.csv",
                             chk_none = c("productive", "full_length")) {
 
   # Check for file and return path
@@ -643,8 +602,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   # Format cell barcode prefixes
   res <- .format_cell_prefixes(
     res,
-    bc_col    = "barcode",
-    new_prfxs = cell_prfxs
+    bc_col     = "barcode",
+    cell_prfxs = cell_prfxs,
+    cell_sfxs  = cell_sfxs
   )
 
   res
@@ -657,7 +617,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' @param prfxs Named vector containing new cell prefixes
 #' @return data.frame with formatted barcodes
 #' @noRd
-.format_cell_prefixes <- function(df_in, bc_col = "barcode", new_prfxs) {
+.format_cell_prefixes <- function(df_in, bc_col = "barcode", cell_prfxs, cell_sfxs) {
 
   # Extract current cell prefixes
   bcs <- df_in[[bc_col]]
@@ -667,23 +627,23 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   # Match old and new prefixes
   new <- dplyr::distinct(prfx_df, prfx, sfx)
 
-  if (nrow(new) != length(new_prfxs)) {
+  if (nrow(new) != length(cell_prfxs)) {
     stop(
       "The number of provided cell prefixes does not match the number of ",
       "unique prefixes present on barcodes."
     )
   }
 
-  new$new_prfx <- names(new_prfxs)
-  new$new_sfx  <- unname(new_prfxs)
+  new$new_prfx <- cell_prfxs
+  new$new_sfx  <- cell_sfxs
 
   prfx_df <- dplyr::left_join(prfx_df, new, by = c("prfx", "sfx"))
 
   # Format cell barcodes
   prfx_df <- dplyr::mutate(
     prfx_df,
-    prfx = ifelse(!is.na(new_prfx), new_prfx, prfx),
-    sfx  = ifelse(!is.na(new_sfx), new_sfx, sfx),
+    prfx = ifelse(is.na(new_prfx), prfx, new_prfx),
+    sfx  = ifelse(is.na(new_sfx), sfx, new_sfx),
     bc   = paste0(prfx, bc, sfx)
   )
 
@@ -758,7 +718,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' @return List containing one data.frame for each path provided to vdj_dir
 #' @importFrom Rsamtools scanBam
 #' @noRd
-.load_muts <- function(vdj_dir, cell_prfxs, bam_file = "concat_ref.bam",
+.load_muts <- function(vdj_dir, cell_prfxs, cell_sfxs, bam_file = "concat_ref.bam",
                        airr_file = "airr_rearrangement.tsv") {
 
   # Check for bam file and return path
@@ -805,9 +765,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   )
 
   # Format cell barcode prefixes
-  res <- purrr::imap(res, ~ {
-    .format_cell_prefixes(.x, bc_col = "barcode", new_prfxs = cell_prfxs[.y])
-  })
+  prfx_args <- list(
+    df_in      = res,
+    cell_prfxs = cell_prfxs,
+    cell_sfxs  = cell_sfxs
+  )
+
+  res <- purrr::pmap(prfx_args, .format_cell_prefixes, bc_col = "barcode")
 
   res <- purrr::map(
     res,
@@ -830,7 +794,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   bam_info <- tibble::tibble(
     cigar     = bam_info$cigar,
     contig_id = bam_info$qname,
-    width     = wdths
+    len       = wdths
   )
 
   bam_info <- dplyr::filter(
@@ -852,14 +816,14 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   res <- dplyr::mutate(
     res,
     n     = as.numeric(n),
-    len   = ifelse(type != "D", n, 0),
-    end   = cumsum(len),
+    idx   = ifelse(type != "D", n, 0),
+    end   = cumsum(idx),
     start = lag(end, default = 0)
   )
 
   res <- dplyr::ungroup(res)
   res <- dplyr::filter(res, type != "=")
-  res <- dplyr::select(res, contig_id, width, start, end, type, n)
+  res <- dplyr::select(res, contig_id, len, start, end, type, n)
 
   res
 }
@@ -894,8 +858,14 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   res <- dplyr::filter(res, !is.na(.data$value))
   res <- tidyr::extract(res, name, c("seg", "pos"), coord_cols_re)
   res <- tidyr::pivot_wider(res, names_from = pos)
-  res <- dplyr::mutate(res, start = start - 1)
-  res <- dplyr::select(res, contig_id, start, end, seg)
+
+  res <- dplyr::mutate(
+    res,
+    start = start - 1,
+    len   = end - start
+  )
+
+  res <- dplyr::select(res, contig_id, len, start, end, seg)
 
   res
 }
@@ -908,12 +878,15 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     X = "mis"
   )
 
-  mut_coords <- dplyr::mutate(mut_coords, type = dplyr::recode(type, !!!mut_key))
+  mut_coords <- dplyr::mutate(
+    mut_coords,
+    type = dplyr::recode(type, !!!mut_key)
+  )
 
   # Count total mutations
   all_muts <- dplyr::mutate(mut_coords, type = paste0("all_", .data$type))
 
-  all_muts <- dplyr::group_by(all_muts, contig_id, width, type)
+  all_muts <- dplyr::group_by(all_muts, contig_id, len, type)
   all_muts <- dplyr::summarize(all_muts, n = sum(n), .groups = "drop")
 
   # If no airr, return mutation totals
@@ -929,7 +902,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
       res,
       across(
         starts_with("all_"),
-        ~ .x / width,
+        ~ .x / len,
         .names = "{.col}_freq"
       )
     )
@@ -943,47 +916,43 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   # to the extreme number of "chromosomes"
   vdj_muts <- dplyr::left_join(
     mut_coords, vdj_coords,
-    by = "contig_id",
-    suffix = c("", ".y")
+    by     = "contig_id",
+    suffix = c("", ".seg")
   )
 
-  vdj_muts <- dplyr::filter(vdj_muts, start < end.y & end > start.y)
+  vdj_muts <- dplyr::filter(vdj_muts, start < end.seg & end > start.seg)
 
   vdj_muts <- dplyr::mutate(
     vdj_muts,
-    new_start = ifelse(start >= start.y, start, start.y),
-    new_end   = ifelse(end <= end.y, end, end.y),
+    len       = len.seg,
+    new_start = ifelse(start >= start.seg, start, start.seg),
+    new_end   = ifelse(end <= end.seg, end, end.seg),
     n         = ifelse(type != "del", new_end - new_start, n)
   )
 
-  vdj_muts <- dplyr::group_by(vdj_muts, contig_id, width, type, seg)
+  vdj_muts <- dplyr::group_by(vdj_muts, contig_id, len, type, seg)
   vdj_muts <- dplyr::summarize(vdj_muts, n = sum(n), .groups = "drop")
   vdj_muts <- tidyr::unite(vdj_muts, type, seg, type, sep = "_")
 
   # Add total mutations to output and calculate mutation frequency
-  mut_cols <- c("v", "d", "j", "c")
-  mut_cols <- purrr::map(mut_cols, paste0, "_", mut_key)
+  mut_cols <- c("v", "d", "j", "c", "all")
+  mut_cols <- purrr::map(mut_cols, paste0, "_", mut_key, "_freq")
   mut_cols <- purrr::reduce(mut_cols, c)
-  all_cols <- paste0("all_", unname(mut_key))
-  all_cols <- c(all_cols, paste0(all_cols, "_freq"))
-  mut_cols <- c(mut_cols, all_cols)
 
   res <- dplyr::bind_rows(vdj_muts, all_muts)
+
+  res <- dplyr::mutate(
+    res,
+    n    = round(n / len, 6),
+    type = paste0(type, "_freq"),
+    len  = NULL
+  )
 
   res <- tidyr::pivot_wider(
     res,
     names_from  = type,
     values_from = n,
     values_fill = 0
-  )
-
-  res <- dplyr::mutate(
-    res,
-    across(
-      starts_with("all_"),
-      ~ round(.x / width, 6),
-      .names = "{.col}_freq"
-    )
   )
 
   # Add 0s for missing columns and set column order
@@ -1132,11 +1101,17 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   }
 
   if (identical(n_overlap, 0L)) {
-    stop(nm, "cell barcodes do not match those in the object, are you using the correct cell barcode prefixes?")
+    stop(
+      nm, "cell barcodes do not match those in the object, ",
+      "are you using the correct cell barcode prefixes?"
+    )
   }
 
   if (pct_overlap < pct_min) {
-    warning("Only ", pct_overlap, "% (", n_overlap, ") of ", nm, "cell barcodes overlap with the provided object")
+    warning(
+      "Only ", pct_overlap, "% (", n_overlap, ") of ", nm,
+      "cell barcodes overlap with the provided object"
+    )
   }
 
   meta
