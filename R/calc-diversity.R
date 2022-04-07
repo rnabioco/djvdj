@@ -375,45 +375,87 @@ plot_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson, c
     return_df     = TRUE
   )
 
-  div_cols <- names(method)
-  div_cols <- paste0(div_cols, "_", c("diversity", "stderr"))
+  div_cols <- paste0(names(method), "_", "diversity")
+  err_cols <- paste0(names(method), "_", "stderr")
+
+  plt_cols <- c(cluster_col, group_col, div_cols, err_cols)
 
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
-  plt_dat <- dplyr::distinct(plt_dat, !!!syms(c(cluster_col, div_cols)))
 
-  plt_dat <- tidyr::pivot_longer(plt_dat, all_of(div_cols))
+  plt_dat <- dplyr::distinct(plt_dat, !!!syms(plt_cols))
 
-  plt_dat <- tidyr::separate(plt_dat, name, into = c("met", "type"))  # THIS CAN NOT DEPEND ON '_' SEPARATOR
+  plt_dat <- tidyr::pivot_longer(plt_dat, all_of(c(div_cols, err_cols)))
+
+  re <- paste0("^(", paste0(names(method), collapse = "|"), ")")
+  re <- paste0(re, ".*(diversity|stderr)$")
+
+  plt_dat <- tidyr::extract(plt_dat, name, into = c("met", "type"), re)
+
+  plt_dat <- tidyr::pivot_wider(plt_dat, names_from = type, values_from = value)
 
   # Format data for plotting
   include_strips <- TRUE
 
-  if (is.null(cluster_col)) {
-    plt_dat <- tibble::tibble(
-      div  = unlist(plt_dat, use.names = FALSE),
-      name = names(plt_dat),
-    )
+  # if (is.null(cluster_col)) {
+  #   plt_dat <- tibble::tibble(
+  #     div  = unlist(plt_dat, use.names = FALSE),
+  #     name = names(plt_dat),
+  #   )
+  #
+  #   include_strips <- FALSE
+  #   cluster_col <- "name"
+  #
+  # } else {
+  #   plt_dat <- tidyr::pivot_longer(
+  #     plt_dat,
+  #     cols      = all_of(names(method)),
+  #     values_to = "div"
+  #   )
+  #
+  #   plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+  # }
 
-    include_strips <- FALSE
-    cluster_col <- "name"
-
-  } else {
-    plt_dat <- tidyr::pivot_longer(
-      plt_dat,
-      cols      = all_of(names(method)),
-      values_to = "div"
-    )
-
-    plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
-  }
+  plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
 
   # Set plot levels
-  plt_dat <- .set_lvls(plt_dat, "name", plt_dat$name)
+  # plt_dat <- .set_lvls(plt_dat, "name", plt_dat$name)
+
+  # Create grouped boxplot
+  if (!is.null(group_col)) {
+    plt_dat <- .set_lvls(plt_dat, group_col, plot_lvls)
+
+    res <- .create_boxes(
+      plt_dat,
+      x      = group_col,
+      y      = "diversity",
+      .color = group_col,
+      .fill  = group_col,
+      alpha  = 0.5,
+      clrs   = plot_colors,
+      outlier.color = NA,
+      ...
+    ) +
+      geom_jitter(position = position_jitterdodge(jitter.width = 0.05)) +
+      theme(legend.position = "right")
+
+    # Create facets
+    if (length(method) > 1) {
+      res <- res +
+        ggplot2::facet_wrap(~ met, nrow = facet_rows, scales = "free") +
+        ggplot2::theme(axis.title.y = ggplot2::element_blank())
+
+    } else {
+      res <- res +
+        ggplot2::labs(y = names(method))
+    }
+
+    return(res)
+  }
 
   # Create bar graphs
   res <- ggplot2::ggplot(
     plt_dat,
-    ggplot2::aes(!!sym(cluster_col), .data$div, fill = !!sym(cluster_col))
+    ggplot2::aes(!!sym(cluster_col), .data$diversity, fill = !!sym(cluster_col))
   ) +
     ggplot2::geom_col(...)
 
