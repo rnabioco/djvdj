@@ -253,7 +253,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
       }
     }
 
-    sfxs <- rep(as.character(NA), length(vdj_dir))
+    # sfxs <- rep(as.character(NA), length(vdj_dir))
+    sfxs <- rep("-1", length(vdj_dir))
   }
 
   # Load V(D)J data and add cell prefixes
@@ -308,6 +309,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
       indel_cols <- indel_cols[indel_cols != "contig_id"]
 
       # Join indel data
+      # NEED TO CHECK BARCODE OVERLAP HERE!!!
       indel_ctigs <- purrr::map2(
         contigs, indels,
         dplyr::left_join,
@@ -1250,9 +1252,20 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
   # Get meta.data
   meta <- .get_meta(input)
 
-  if (!all(vdj_cols %in% colnames(meta))) {
-    stop("Not all vdj_cols (", paste0(vdj_cols, collapse = ", "), ") are present in meta.data.")
+  if (!all(c(vdj_cols, filter_chains) %in% colnames(meta))) {
+    stop(
+      "Not all columns (", paste0(c(vdj_cols, filter_chains), collapse = ", "),
+      ") are present in meta.data."
+    )
   }
+
+  # Remove cells with NAs for any vdj_cols
+  vdj <- dplyr::filter(
+    meta,
+    dplyr::if_all(dplyr::all_of(c(vdj_cols, filter_chains)), ~ !is.na(.x))
+  )
+
+  vdj <- dplyr::select(vdj, .cell_id, all_of(c(vdj_cols, filter_chains)))
 
   # Only use values in vdj_cols that are TRUE for all filter_chains columns
   # first identify contigs TRUE for all filter_chains columns
@@ -1261,9 +1274,10 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
 
     clmns <- syms(filter_chains)
 
-    meta <- mutate_vdj(
-      input,
+    vdj <- tibble::column_to_rownames(vdj, CELL_COL)
 
+    vdj <- mutate_vdj(
+      vdj,
       .clone_idx = list(
         purrr::reduce(list(!!!clmns), ~ .x & .y)
       ),
@@ -1281,12 +1295,12 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
 
     vdj_cols <- paste0(".clone_", vdj_cols)
 
-    meta <- .get_meta(meta)
+    vdj <- .get_meta(vdj)
   }
 
   # Add new clonotype IDs
-  meta <- dplyr::mutate(
-    meta,
+  vdj <- dplyr::mutate(
+    vdj,
     .new_clone = paste(!!!syms(vdj_cols), sep = ""),
     .new_id    = rank(.data$.new_clone, ties.method = "min"),
 
@@ -1297,14 +1311,10 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
     )
   )
 
-  # Remove temporary columns
-  meta <- dplyr::select(
-    meta,
-    -dplyr::matches("^.new_(clone|id)"),
-    -dplyr::starts_with(".clone_")
-  )
+  # Add new clonotype IDs to meta.data
+  vdj  <- dplyr::select(vdj, .cell_id, all_of(clonotype_col))
+  meta <- dplyr::left_join(meta, vdj, by = CELL_COL)
 
-  # Format results
   res <- .add_meta(input, meta)
 
   res
