@@ -348,10 +348,9 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #' )
 #'
 #' @export
-plot_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson, clonotype_col = "clonotype_id",
-                           plot_colors = NULL, plot_lvls = NULL, facet_rows = 1, ...) {
-
-  browser()
+plot_diversity <- function(input, cluster_col = NULL, group_col = NULL, method = abdiv::simpson,
+                           clonotype_col = "clonotype_id", plot_colors = NULL, plot_lvls = NULL,
+                           facet_rows = 1, ...) {
 
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if providing a list of methods.")
@@ -457,7 +456,15 @@ plot_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson, c
     plt_dat,
     ggplot2::aes(!!sym(cluster_col), .data$diversity, fill = !!sym(cluster_col))
   ) +
-    ggplot2::geom_col(...)
+    ggplot2::geom_col(...) +
+
+    ggplot2::geom_linerange(
+      aes(
+        !!sym(cluster_col),
+        ymin = .data$diversity - .data$stderr,
+        ymax = .data$diversity + .data$stderr
+      )
+    )
 
   # Create facets
   if (length(method) > 1) {
