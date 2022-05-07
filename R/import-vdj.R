@@ -178,7 +178,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   }
 
   # When including indel data, only use productive full length chains
-  if (!filter_chains) {
+  if (!filter_chains && include_mutations) {
     filter_chains <- TRUE
 
     warning(
@@ -465,7 +465,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   # Check for duplicated cell barcodes
   if (any(duplicated(meta$barcode))) {
-    stop("Malformed input data, multiple clonotype_ids are associated with the same cell barcode.")
+    stop(
+      "Malformed input data, multiple clonotype_ids ",
+      "are associated with the same cell barcode."
+    )
   }
 
   # Allow user to redefine clonotypes
@@ -487,10 +490,14 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
     clone_cols <- clone_cols[[define_clonotypes]]
 
+    filt_chains <- NULL
+
+    if (filter_chains) filt_chains <- qc_cols
+
     res <- define_clonotypes(
       res,
       vdj_cols      = clone_cols,
-      filter_chains = qc_cols
+      filter_chains = filt_chains
     )
   }
 
@@ -891,7 +898,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   all_muts <- dplyr::group_by(all_muts, contig_id, len, type)
   all_muts <- dplyr::summarize(all_muts, n = sum(n), .groups = "drop")
 
-  # If no airr, return mutation totals
+  # If no vdj_coords, return mutation totals
   if (identical(vdj_coords, NA)) {
     res <- all_muts %>%
       tidyr::pivot_wider(
@@ -929,26 +936,61 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     len       = len.seg,
     new_start = ifelse(start >= start.seg, start, start.seg),
     new_end   = ifelse(end <= end.seg, end, end.seg),
+    new_end   = ifelse(type == mut_key[["D"]], new_end + 1, new_end),
     n         = ifelse(type != "del", new_end - new_start, n)
   )
 
+  # Identify junction indels
+  jxn_muts <- filter(vdj_muts, type %in% unname(mut_key[c("I", "D")]))
+
+  jxn_muts <- mutate(
+    jxn_muts,
+    seg = case_when(
+      seg == "v" & end.seg   == new_end   ~ "vd",
+      seg == "d" & start.seg == new_start ~ "vd",
+      seg == "d" & end.seg   == new_end   ~ "dj",
+      seg == "j" & start.seg == new_start ~ "dj",
+      TRUE ~ as.character(NA)
+    )
+  )
+
+  jxn_muts <- dplyr::filter(jxn_muts, !is.na(seg))
+  jxn_muts <- dplyr::select(jxn_muts, -len)
+
+  vdj_muts <- bind_rows(vdj_muts, jxn_muts)
+
+  # Summarize mutation counts
   vdj_muts <- dplyr::group_by(vdj_muts, contig_id, len, type, seg)
   vdj_muts <- dplyr::summarize(vdj_muts, n = sum(n), .groups = "drop")
   vdj_muts <- tidyr::unite(vdj_muts, type, seg, type, sep = "_")
 
-  # Add total mutations to output and calculate mutation frequency
-  mut_cols <- c("v", "d", "j", "c", "all")
-  mut_cols <- purrr::map(mut_cols, paste0, "_", mut_key, "_freq")
+  # Add total mutations to output
+  freq_cols <- mut_cols <- c("v", "d", "j", "c", "all")
+  jxn_cols  <- c("vd", "dj")
+
+  mut_cols <- purrr::map(mut_cols, paste0, "_", mut_key)
   mut_cols <- purrr::reduce(mut_cols, c)
+
+  jxn_cols <- purrr::map(jxn_cols, paste0, "_", unname(mut_key[c("I", "D")]))
+  jxn_cols <- purrr::reduce(jxn_cols, c)
+  mut_cols <- c(mut_cols, jxn_cols)
+
+  freq_cols <- purrr::map_chr(freq_cols, paste0, "_", mut_key[["X"]])
 
   res <- dplyr::bind_rows(vdj_muts, all_muts)
 
-  res <- dplyr::mutate(
-    res,
+  # Calculate mismatch frequency
+  freq <- dplyr::filter(res, type %in% freq_cols)
+
+  freq <- dplyr::mutate(
+    freq,
     n    = round(n / len, 6),
     type = paste0(type, "_freq"),
     len  = NULL
   )
+
+  res <- dplyr::bind_rows(res, freq)
+  res <- dplyr::select(res, -len)
 
   res <- tidyr::pivot_wider(
     res,
@@ -959,6 +1001,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   # Add 0s for missing columns and set column order
   # these are segments with no mutations for any chain
+  mut_cols <- c(mut_cols, paste0(freq_cols, "_freq"))
+
   missing_cols <- mut_cols[!mut_cols %in% names(res)]
 
   res[, missing_cols] <- 0
@@ -1037,6 +1081,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' @return Character string indicating whether TCR or BCR data were provided
 #' @noRd
 .classify_vdj <- function(df_in, chain_col = "chains") {
+
   chains <- list(
     "TCR" = c("TRA", "TRB", "TRD", "TRG"),
     "BCR" = c("IGH", "IGK", "IGL")
@@ -1045,11 +1090,14 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   n_chains <- purrr::imap(chains, ~ purrr::set_names(rep(.y, length(.x)), .x))
   n_chains <- purrr::flatten(n_chains)
 
-  n_chains <- as.character(n_chains[df_in[[chain_col]]])
-  n_chains <- table(n_chains)
+  # Classify chains
+  # remove values that do not match, such as chains with "None"
+  n_chains <- n_chains[df_in[[chain_col]]]
+  n_chains <- n_chains[!is.na(names(n_chains))]
+  n_chains <- table(as.character(n_chains))
 
   # Error if no chains match
-  if (all(n_chains[names(chains)] == 0)) {
+  if (is_empty(n_chains)) {
     chains <- unlist(chains, use.names = FALSE)
     chains <- paste0(chains, collapse = ", ")
 
@@ -1250,11 +1298,16 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
                               filter_chains = c("productive", "full_length"), sep = ";") {
 
   # Get meta.data
+  # overwrite exising clonotype_col if it has the same name
   meta <- .get_meta(input)
 
-  if (!all(c(vdj_cols, filter_chains) %in% colnames(meta))) {
+  meta <- dplyr::select(meta, -all_of(clonotype_col))
+
+  all_cols <- c(vdj_cols, filter_chains)
+
+  if (!all(all_cols %in% colnames(meta))) {
     stop(
-      "Not all columns (", paste0(c(vdj_cols, filter_chains), collapse = ", "),
+      "Not all columns (", paste0(all_cols, collapse = ", "),
       ") are present in meta.data."
     )
   }
@@ -1262,10 +1315,10 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
   # Remove cells with NAs for any vdj_cols
   vdj <- dplyr::filter(
     meta,
-    dplyr::if_all(dplyr::all_of(c(vdj_cols, filter_chains)), ~ !is.na(.x))
+    dplyr::if_all(dplyr::all_of(all_cols), ~ !is.na(.x))
   )
 
-  vdj <- dplyr::select(vdj, .cell_id, all_of(c(vdj_cols, filter_chains)))
+  vdj <- dplyr::select(vdj, .cell_id, all_of(all_cols))
 
   # Only use values in vdj_cols that are TRUE for all filter_chains columns
   # first identify contigs TRUE for all filter_chains columns
@@ -1278,9 +1331,7 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
 
     vdj <- mutate_vdj(
       vdj,
-      .clone_idx = list(
-        purrr::reduce(list(!!!clmns), ~ .x & .y)
-      ),
+      .clone_idx = list(purrr::reduce(list(!!!clmns), ~ .x & .y)),
 
       dplyr::across(
         dplyr::all_of(vdj_cols),
@@ -1289,8 +1340,7 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
       ),
 
       clonotype_col = NULL,
-
-      vdj_cols = c(vdj_cols, filter_chains)
+      vdj_cols = all_cols
     )
 
     vdj_cols <- paste0(".clone_", vdj_cols)
