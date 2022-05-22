@@ -63,47 +63,47 @@ Plot clonotype abundance
 }
 \examples{
 # Plot clonotype abundance using all cells
-plot_abundance(
+plot_clonal_abundance(
   vdj_so,
   data_col = "clonotype_id"
 )
 
 # Plot clonotype abundance separately for each cell cluster
-plot_abundance(
+plot_clonal_abundance(
   vdj_sce,
   cluster_col = "orig.ident"
 )
 
 # Plot the frequency of each clonotype instead of percentage
-plot_abundance(
+plot_clonal_abundance(
   vdj_sce,
   cluster_col = "orig.ident",
   yaxis = "frequency"
 )
 
 # Specify colors to use for each cell cluster
-plot_abundance(
+plot_clonal_abundance(
   vdj_so,
   cluster_col = "orig.ident",
   plot_colors = c(avid_1 = "blue", avid_2 = "red")
 )
 
 # Specify order to use for plotting cell clusters
-plot_abundance(
+plot_clonal_abundance(
   vdj_sce,
   cluster_col = "orig.ident",
   plot_lvls = c("avid_2", "avid_1")
 )
 
 # Specify the number of top clonotypes to plot
-plot_abundance(
+plot_clonal_abundance(
   vdj_so,
   plot_n = 5
 )
 
 #' # Create line graph
 # use plot_n to set the number of clonotypes to label
-plot_abundance(
+plot_clonal_abundance(
   vdj_so,
   cluster_col = "orig.ident",
   type = "line",

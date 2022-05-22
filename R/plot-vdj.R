@@ -113,10 +113,10 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2", pl
       # Set color names, need to do this so na_color is not overridden if the
       # user provides extra values for plot_colors
       if (is.null(names(plot_colors))) {
-        lvls <- na.omit(plot_lvls)
+        lvls <- stats::na.omit(plot_lvls)
 
         plot_colors <- plot_colors[seq_along(lvls)]
-        plot_colors <- na.omit(plot_colors)
+        plot_colors <- stats::na.omit(plot_colors)
 
         names(plot_colors) <- lvls[seq_along(plot_colors)]
       }

@@ -50,6 +50,7 @@ head(res@meta.data, 1)
 # Group cells based on meta.data column before calculating abundance
 res <- calc_frequency(
   vdj_sce,
+  data_col = "clonotype_id",
   cluster_col = "orig.ident"
 )
 
@@ -60,6 +61,7 @@ head(res@colData, 1)
 # meta.data
 res <- calc_frequency(
   vdj_so,
+  data_col = "clonotype_id",
   prefix = "bcr_"
 )
 
@@ -68,6 +70,7 @@ head(res@meta.data, 1)
 # Return a data.frame instead of adding the results to the input object
 res <- calc_frequency(
   vdj_sce,
+  data_col = "clonotype_id",
   return_df = TRUE
 )
 

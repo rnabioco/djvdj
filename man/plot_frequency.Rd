@@ -29,6 +29,9 @@ containing cell isotypes. By default clonotype_id is used for calculations.}
 grouping cells when calculating clonotype abundance. Clonotypes will be
 plotted separately for each cluster.}
 
+\item{group_col}{meta.data column to use for grouping cluster IDs present in
+cluster_col}
+
 \item{yaxis}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
 \item{plot_colors}{Character vector containing colors for plotting}

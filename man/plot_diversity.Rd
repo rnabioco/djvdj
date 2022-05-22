@@ -7,6 +7,7 @@
 plot_diversity(
   input,
   cluster_col = NULL,
+  group_col = NULL,
   method = abdiv::simpson,
   clonotype_col = "clonotype_id",
   plot_colors = NULL,
@@ -21,6 +22,9 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
+
+\item{group_col}{meta.data column to use for grouping IDs present in
+cluster_col}
 
 \item{method}{Function to use for calculating diversity. A named list of
 functions can be passed to plot multiple diversity metrics,

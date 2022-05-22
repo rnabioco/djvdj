@@ -150,7 +150,7 @@ test_all_args(
 )
 
 # Check plot_vdj_*
-fns <- list(plot_vdj_reads, plot_cdr3_length, plot_vdj_indels)
+fns <- list(plot_vdj_reads, plot_cdr3_length)
 
 test_that("plot_vdj_reads", {
 
@@ -168,7 +168,7 @@ test_that("plot_vdj_reads", {
   expect_s3_class(plot_vdj_reads(df_1), "ggplot")
 })
 
-# Check all plot_abundance arguments for line plot
+# Check all plot_clonal_abundance arguments for line plot
 arg_lst <- list(
   input         = list(vdj_so, vdj_sce),
   clonotype_col = "cdr3_nt",
@@ -178,28 +178,28 @@ arg_lst <- list(
   plot_colors   = list(NULL, test_cols),
   plot_lvls     = list(NULL, test_lvls),
   label_aes     = list(list(), list(size = 2)),
-  n_clonotypes  = c(0, 5)
+  plot_n        = c(0, 5)
 )
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_abundance,
-  desc    = "plot_abundance line args",
+  .fn     = plot_clonal_abundance,
+  desc    = "plot_clonal_abundance line args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check all plot_abundance arguments for bar plot
+# Check all plot_clonal_abundance arguments for bar plot
 arg_lst$type <- "bar"
-arg_lst$n_clonotypes <- 5
+arg_lst$plot_n <- 5
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_abundance,
-  desc    = "plot_abundance bar args",
+  .fn     = plot_clonal_abundance,
+  desc    = "plot_clonal_abundance bar args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check plot_abundance axis labels
+# Check plot_clonal_abundance axis labels
 arg_lst <- list(
   input         = list(vdj_so, vdj_sce),
   clonotype_col = "cdr3_nt",
@@ -209,8 +209,8 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_abundance,
-  desc    = "plot_abundance axis labels",
+  .fn     = plot_clonal_abundance,
+  desc    = "plot_clonal_abundance axis labels",
   chk     = expr(expect_true(.res$label$y == "percent"))
 )
 
@@ -218,16 +218,16 @@ arg_lst$yaxis <- "frequency"
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_abundance,
-  desc    = "plot_abundance axis labels",
+  .fn     = plot_clonal_abundance,
+  desc    = "plot_clonal_abundance axis labels",
   chk     = expr(expect_true(.res$label$y == "frequency"))
 )
 
-# Check plot_abundance bad yaxis
-test_that("plot_abundance bad yaxis", {
+# Check plot_clonal_abundance bad yaxis
+test_that("plot_clonal_abundance bad yaxis", {
   expect_error(
     vdj_so %>%
-      plot_abundance(
+      plot_clonal_abundance(
         type          = "line",
         clonotype_col = "cdr3_nt",
         yaxis         = "BAD"
@@ -235,25 +235,25 @@ test_that("plot_abundance bad yaxis", {
   )
 })
 
-# Check plot_abundance bad type
-test_that("plot_abundance bad type", {
+# Check plot_clonal_abundance bad type
+test_that("plot_clonal_abundance bad type", {
   expect_error(
     vdj_so %>%
-      plot_abundance(
+      plot_clonal_abundance(
         type          = "BAD",
         clonotype_col = "cdr3_nt"
       )
   )
 })
 
-# Check plot_abundance bad n_clonotypes
-test_that("plot_abundance bad n_clonotypes", {
+# Check plot_clonal_abundance bad n_clonotypes
+test_that("plot_clonal_abundance bad n_clonotypes", {
   expect_error(
     vdj_so %>%
-      plot_abundance(
+      plot_clonal_abundance(
         type          = "bar",
         clonotype_col = "cdr3_nt",
-        n_clonotypes  = 0
+        plot_n  = 0
       )
   )
 })

@@ -29,6 +29,8 @@ output columns.}
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating diversity}
 
+\item{n_boots}{Number of bootstrap replicates}
+
 \item{prefix}{Prefix to add to new columns}
 
 \item{return_df}{Return results as a data.frame. If set to FALSE, results

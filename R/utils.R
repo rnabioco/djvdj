@@ -13,7 +13,7 @@ NULL
 
 #' stats imports
 #'
-#' @importFrom stats median complete.cases as.formula
+#' @importFrom stats median complete.cases as.formula na.omit
 #' @noRd
 NULL
 
@@ -400,7 +400,7 @@ NULL
   }
 
   res <- purrr::modify_at(df_in, sep_cols, strsplit, split = sep, fixed = TRUE)
-  res <- unchop(res, all_of(sep_cols))
+  res <- tidyr::unchop(res, all_of(sep_cols))
 
   res <- mutate(
     res,
@@ -462,7 +462,7 @@ NULL
     sep_cols <- dplyr::select(df_in, all_of(cols_in))
 
     sep_cols <- purrr::keep(sep_cols, ~ {
-      x <- head(na.omit(.x), 1000)
+      x <- head(stats::na.omit(.x), 1000)
 
       any(purrr::map_lgl(x, grepl, pattern = sep, fixed = TRUE))
     })

@@ -10,6 +10,7 @@
 #' output columns.
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating diversity
+#' @param n_boots Number of bootstrap replicates
 #' @param prefix Prefix to add to new columns
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.
@@ -73,7 +74,6 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
     stop("Must include names if using a list of methods.")
   }
 
-
   if (length(method) == 1 && is.null(names(method))) {
     nm <- as.character(substitute(method))
     nm <- last(nm)
@@ -96,7 +96,7 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 
   # Get parameters for bootstrapped sampling
   sam     <- vdj
-  sam_rng <- c(50, 5000)
+  sam_rng <- c(20, 5000)
   sam_sz  <- nrow(sam)
 
   if (!is.null(cluster_col)) {
@@ -145,13 +145,13 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
       sam,
       met       = .y,
       diversity = list(.calc_div(!!sym(clonotype_col), met = .x)),
-      stderr    = purrr::map_dbl(diversity, pull, "std.error"),
-      diversity = purrr::map_dbl(diversity, pull, "statistic")
+      stderr    = purrr::map_dbl(.data$diversity, pull, "std.error"),
+      diversity = purrr::map_dbl(.data$diversity, pull, "statistic")
     )
   })
 
-  div <- tidyr::pivot_longer(div, c(diversity, stderr))
-  div <- tidyr::unite(div, name, met, name)
+  div <- tidyr::pivot_longer(div, c(.data$diversity, .data$stderr))
+  div <- tidyr::unite(div, "name", .data$met, .data$name)
   div <- tidyr::pivot_wider(div)
 
   # Format results
@@ -288,6 +288,8 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #' e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating repertoire diversity
+#' @param group_col meta.data column to use for grouping IDs present in
+#' cluster_col
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param facet_rows The number of facet rows, use this argument if a list of
@@ -374,53 +376,38 @@ plot_diversity <- function(input, cluster_col = NULL, group_col = NULL, method =
     return_df     = TRUE
   )
 
+  # Diversity columns
   div_cols <- paste0(names(method), "_", "diversity")
   err_cols <- paste0(names(method), "_", "stderr")
 
   plt_cols <- c(cluster_col, group_col, div_cols, err_cols)
 
+  # Format data for plotting
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
-
   plt_dat <- dplyr::distinct(plt_dat, !!!syms(plt_cols))
-
   plt_dat <- tidyr::pivot_longer(plt_dat, all_of(c(div_cols, err_cols)))
 
-  re <- paste0("^(", paste0(names(method), collapse = "|"), ")")
-  re <- paste0(re, ".*(diversity|stderr)$")
+  re <- "^(.+)_(diversity|stderr)$"
 
-  plt_dat <- tidyr::extract(plt_dat, name, into = c("met", "type"), re)
+  plt_dat <- tidyr::extract(plt_dat, .data$name, into = c("met", "type"), re)
 
-  plt_dat <- tidyr::pivot_wider(plt_dat, names_from = type, values_from = value)
-
-  # Format data for plotting
-  include_strips <- TRUE
-
-  # if (is.null(cluster_col)) {
-  #   plt_dat <- tibble::tibble(
-  #     div  = unlist(plt_dat, use.names = FALSE),
-  #     name = names(plt_dat),
-  #   )
-  #
-  #   include_strips <- FALSE
-  #   cluster_col <- "name"
-  #
-  # } else {
-  #   plt_dat <- tidyr::pivot_longer(
-  #     plt_dat,
-  #     cols      = all_of(names(method)),
-  #     values_to = "div"
-  #   )
-  #
-  #   plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
-  # }
-
-  plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+  plt_dat <- tidyr::pivot_wider(
+    plt_dat,
+    names_from  = .data$type,
+    values_from = .data$value
+  )
 
   # Set plot levels
-  # plt_dat <- .set_lvls(plt_dat, "name", plt_dat$name)
+  plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+
+  include_x_labs <- !is.null(cluster_col)
+
+  if (is.null(cluster_col)) {
+    cluster_col <- "met"
+  }
 
   # Create grouped boxplot
-  if (!is.null(group_col)) {
+  if (!is.null(group_col) && !is.null(cluster_col)) {
     plt_dat <- .set_lvls(plt_dat, group_col, plot_lvls)
 
     res <- .create_boxes(
@@ -434,8 +421,10 @@ plot_diversity <- function(input, cluster_col = NULL, group_col = NULL, method =
       outlier.color = NA,
       ...
     ) +
-      geom_jitter(position = position_jitterdodge(jitter.width = 0.05)) +
-      theme(legend.position = "right")
+      ggplot2::geom_jitter(
+        position = ggplot2::position_jitterdodge(jitter.width = 0.05)
+      ) +
+      ggplot2::theme(legend.position = "right")
 
     # Create facets
     if (length(method) > 1) {
@@ -469,7 +458,7 @@ plot_diversity <- function(input, cluster_col = NULL, group_col = NULL, method =
   # Create facets
   if (length(method) > 1) {
     res <- res +
-      ggplot2::facet_wrap(~ name, nrow = facet_rows, scales = "free") +
+      ggplot2::facet_wrap(~ met, nrow = facet_rows, scales = "free") +
       ggplot2::theme(axis.title.y = ggplot2::element_blank())
 
   } else {
@@ -491,9 +480,12 @@ plot_diversity <- function(input, cluster_col = NULL, group_col = NULL, method =
       axis.title.x    = ggplot2::element_blank()
     )
 
-  if (!include_strips) {
+  if (!include_x_labs) {
     res <- res +
-      ggplot2::theme(strip.text = ggplot2::element_blank())
+      ggplot2::theme(
+        axis.text.x  = ggplot2::element_blank(),
+        axis.ticks.x = ggplot2::element_blank()
+      )
   }
 
   res

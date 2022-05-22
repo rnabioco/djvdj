@@ -30,6 +30,7 @@
 #' # Group cells based on meta.data column before calculating abundance
 #' res <- calc_frequency(
 #'   vdj_sce,
+#'   data_col = "clonotype_id",
 #'   cluster_col = "orig.ident"
 #' )
 #'
@@ -40,6 +41,7 @@
 #' # meta.data
 #' res <- calc_frequency(
 #'   vdj_so,
+#'   data_col = "clonotype_id",
 #'   prefix = "bcr_"
 #' )
 #'
@@ -48,6 +50,7 @@
 #' # Return a data.frame instead of adding the results to the input object
 #' res <- calc_frequency(
 #'   vdj_sce,
+#'   data_col = "clonotype_id",
 #'   return_df = TRUE
 #' )
 #'
@@ -77,8 +80,8 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0(
 
   vdj <- dplyr::select(vdj, -all_of(data_col))
 
-  freq_clmn <- str_c(prefix, "freq")
-  grp_clmn <- str_c(prefix, "grp")
+  freq_clmn <- paste0(prefix, "freq")
+  grp_clmn <- paste0(prefix, "grp")
 
   vdj <- dplyr::mutate(
     vdj,
@@ -183,13 +186,13 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0(
   )
 
   # Format labels
-  labs <- dplyr::group_by(labs, grp)
+  labs <- dplyr::group_by(labs, .data$grp)
   labs <- dplyr::mutate(
     labs,
     lab = paste0(unique(range(x)), collapse = "-")
   )
 
-  labs <- set_names(labs$lab, labs$x)
+  labs <- purrr::set_names(labs$lab, labs$x)
   labs <- c("1" = "1", labs)
 
   res <- unname(labs[as.character(x)])
@@ -232,47 +235,47 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0(
 #'
 #' @examples
 #' # Plot clonotype abundance using all cells
-#' plot_abundance(
+#' plot_clonal_abundance(
 #'   vdj_so,
 #'   data_col = "clonotype_id"
 #' )
 #'
 #' # Plot clonotype abundance separately for each cell cluster
-#' plot_abundance(
+#' plot_clonal_abundance(
 #'   vdj_sce,
 #'   cluster_col = "orig.ident"
 #' )
 #'
 #' # Plot the frequency of each clonotype instead of percentage
-#' plot_abundance(
+#' plot_clonal_abundance(
 #'   vdj_sce,
 #'   cluster_col = "orig.ident",
 #'   yaxis = "frequency"
 #' )
 #'
 #' # Specify colors to use for each cell cluster
-#' plot_abundance(
+#' plot_clonal_abundance(
 #'   vdj_so,
 #'   cluster_col = "orig.ident",
 #'   plot_colors = c(avid_1 = "blue", avid_2 = "red")
 #' )
 #'
 #' # Specify order to use for plotting cell clusters
-#' plot_abundance(
+#' plot_clonal_abundance(
 #'   vdj_sce,
 #'   cluster_col = "orig.ident",
 #'   plot_lvls = c("avid_2", "avid_1")
 #' )
 #'
 #' # Specify the number of top clonotypes to plot
-#' plot_abundance(
+#' plot_clonal_abundance(
 #'   vdj_so,
 #'   plot_n = 5
 #' )
 #'
 #' #' # Create line graph
 #' # use plot_n to set the number of clonotypes to label
-#' plot_abundance(
+#' plot_clonal_abundance(
 #'   vdj_so,
 #'   cluster_col = "orig.ident",
 #'   type = "line",
@@ -450,6 +453,8 @@ plot_clonal_abundance <- function(input, cluster_col = NULL, clonotype_col = "cl
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance. Clonotypes will be
 #' plotted separately for each cluster.
+#' @param group_col meta.data column to use for grouping cluster IDs present in
+#' cluster_col
 #' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
@@ -481,7 +486,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL, group_col = NULL
   )
 
   # Set axis labels
-  y_lab <- str_c(data_col, " ", yaxis)
+  y_lab <- paste0(data_col, " ", yaxis)
 
   abun_col <- ".pct"
 
@@ -500,7 +505,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL, group_col = NULL
   plt_dat <- dplyr::group_by(plt_dat, !!sym(data_col))
 
   rnk <- dplyr::summarize(plt_dat, mn = mean(!!sym(abun_col)))
-  rnk <- dplyr::arrange(rnk, desc(mn))
+  rnk <- dplyr::arrange(rnk, desc(.data$mn))
   rnk <- pull(rnk, data_col)
 
   plt_dat <- dplyr::ungroup(plt_dat)
@@ -521,7 +526,9 @@ plot_frequency <- function(input, data_col, cluster_col = NULL, group_col = NULL
       outlier.color = NA,
       ...
     ) +
-      geom_jitter(position = position_jitterdodge(jitter.width = 0.05)) +
+      ggplot2::geom_jitter(
+        position = ggplot2::position_jitterdodge(jitter.width = 0.05)
+      ) +
       labs(y = y_lab) +
       theme(legend.position = "right")
 
@@ -554,7 +561,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL, group_col = NULL
 
   # When cluster_col is provided set default position to dodge
   if (!is.null(cluster_col) && is.null(new_args$position)) {
-    new_args$position <- position_dodge(preserve = "single")
+    new_args$position <- ggplot2::position_dodge(preserve = "single")
   }
 
   res <- purrr::lift_dl(.create_bars)(new_args)

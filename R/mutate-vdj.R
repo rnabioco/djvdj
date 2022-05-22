@@ -420,6 +420,9 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
   #     1) iterate through vdj_cols
   #     2) apply fn to each row in column
   #     3) check length of fn result and set variable if length > 1
+  #
+  # With this current approach, user cannot refer to other columns in provided
+  # fn, e.g. ~ .x[productive] does not work :(
   fn <- purrr::as_mapper(fn, ...)
 
   for (i in seq_along(vdj_cols)) {

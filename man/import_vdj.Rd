@@ -77,12 +77,6 @@ Import V(D)J data
 }
 \examples{
 # Loading multiple datasets
-vdj_dir <- c(
-  system.file("extdata/bcr_1", package = "djvdj"),
-  system.file("extdata/bcr_2", package = "djvdj")
-)
-
-vdj_so <- import_vdj(tiny_so, vdj_dir)
 
 head(vdj_so@meta.data, 1)
 
@@ -90,96 +84,36 @@ head(vdj_so@meta.data, 1)
 # if cell prefixes are not specified when loading multiple datasets,
 # prefixes will be automatically generated in a similar manner as
 # Seurat::Read10X
-vdj_so <- import_vdj(
-  tiny_so,
-  vdj_dir = vdj_dir,
-  cell_prefix = c("1", "2")
-)
 
 head(vdj_so@meta.data, 1)
 
 # Specifying cell prefixes using vector names
 # if a named vector is passed, the names will be used as the cell prefixes
-vdj_dir <- c(
-  "1" = system.file("extdata/bcr_1", package = "djvdj"),
-  "2" = system.file("extdata/bcr_2", package = "djvdj")
-)
-
-vdj_so <- import_vdj(tiny_so, vdj_dir)
 
 head(vdj_so@meta.data, 1)
 
 # Only include V(D)J data for productive full length chains
-vdj_so <- import_vdj(
-  tiny_so,
-  vdj_dir = vdj_dir,
-  filter_chains = TRUE
-)
 
 head(vdj_so@meta.data, 1)
 
 # Only include V(D)J data for cells with paired chains
-vdj_so <- import_vdj(
-  tiny_so,
-  vdj_dir = vdj_dir,
-  filter_paired = TRUE
-)
 
 head(vdj_so@meta.data, 1)
 
 # Defining clonotypes
 # this is useful if the original clonotype IDs are not consistent across
 # datasets, i.e. clonotype1 is not the same for all samples
-vdj_so <- import_vdj(
-  tiny_so,
-  vdj_dir = vdj_dir,
-  define_clonotypes = "cdr3_gene"
-)
 
 head(vdj_so@meta.data, 1)
 
 # Omit indel information for each chain
 # this information will be included if the file concat_ref.bam is present
 # to speed up data import, omit indel information
-vdj_so <- import_vdj(
-  tiny_so,
-  vdj_dir = vdj_dir,
-  include_mutations = FALSE
-)
-
-head(vdj_so@meta.data, 1)
-
-# Loading both BCR and TCR data
-# load each dataset separately and assign unique column names using the
-# prefix argument
-bcr_dir <- system.file("extdata/bcr_1", package = "djvdj")
-tcr_dir <- system.file("extdata/tcr_1", package = "djvdj")
-
-vdj_so <- import_vdj(
-  tiny_so,
-  vdj_dir     = bcr_dir,
-  prefix      = "bcr_",
-  cell_prefix = "1"
-)
-
-vdj_so <- import_vdj(
-  vdj_so,
-  vdj_dir     = tcr_dir,
-  prefix      = "tcr_",
-  cell_prefix = "1"
-)
 
 head(vdj_so@meta.data, 1)
 
 # Using import_vdj outside of Seurat
 # SingleCellExperiment objects are also compatible, or if an input object is
 # omitted, a data.frame containing the V(D)J data will be returned
-vdj_sce <- import_vdj(tiny_sce, vdj_dir)
-
-head(vdj_sce@colData, 1)
-
-vdj_df <- import_vdj(vdj_dir = vdj_dir)
-
-head(vdj_df, 1)
 
 }

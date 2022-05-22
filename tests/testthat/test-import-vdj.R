@@ -6,7 +6,7 @@ ctigs <- c(
 
 ctigs_2 <- ctigs_3 <- ctigs
 
-names(ctigs_2) <- c("1", "2")
+names(ctigs_2) <- c("1_", "2_")
 
 tcr_ctigs <- system.file("extdata/tcr_1", package = "djvdj")
 bad_ctigs <- system.file("extdata/bad_bcr_1", package = "djvdj")
@@ -17,9 +17,9 @@ vdj_cols <- c(
   "chains",      "clonotype_id",
   "cdr3",        "cdr3_nt",
   "reads",       "umis",
-  "productive",  "full_length",
-  "n_insertion", "n_deletion",
-  "n_mismatch"
+  "productive",  "full_length"
+  # "n_insertion", "n_deletion",
+  # "n_mismatch"
 )
 
 df_1 <- tiny_so@meta.data
@@ -32,16 +32,14 @@ arg_lst <- list(
   single = list(
     input          = list(tiny_so),
     vdj_dir        = list(ctigs_2[1], c("1_" = paste0(ctigs[1], "/outs"))),
-    cell_prefix    = list(NULL, "1"),
     filter_paired  = c(TRUE, FALSE),
-    include_indels = FALSE
+    include_mutations = FALSE
   ),
   multi = list(
     input          = list(tiny_so),
     vdj_dir        = list(ctigs, ctigs_2, paste0(ctigs, "/outs")),
-    cell_prefix    = list(NULL, c("1", "2")),
     filter_paired  = c(TRUE, FALSE),
-    include_indels = FALSE
+    include_mutations = FALSE
   )
 )
 
@@ -65,7 +63,7 @@ arg_lst %>%
 # Check CDR3 length calculation
 test_that("import_vdj CDR3 lengths", {
   res <- tiny_so@meta.data %>%
-    import_vdj(ctigs)
+    import_vdj(ctigs, include_mutations = FALSE)
 
   dat    <- fetch_vdj(res)
   lens_1 <- as.double(nchar(dat$cdr3))
@@ -80,7 +78,7 @@ test_that("import_vdj CDR3 lengths", {
 # Check number of chains represented in each column
 test_that("import_vdj number of chains represented by each column", {
   res <- tiny_so@meta.data %>%
-    import_vdj(ctigs)
+    import_vdj(ctigs, include_mutations = FALSE)
 
   dat <- res %>%
     select(all_of(vdj_cols)) %>%
@@ -91,42 +89,30 @@ test_that("import_vdj number of chains represented by each column", {
     purrr::reduce(expect_identical)
 })
 
-# Check include_indels
-test_that("import_vdj include_indels", {
-  res <- tiny_so %>%
-    import_vdj(
-      vdj_dir = ctigs,
-      prefix  = "PREFIX_"
-    )
-
-  dat <- res@meta.data
-  dat <- dat[, !grepl("PREFIX_", colnames(dat))]
-
-  expect_identical(dat, tiny_so@meta.data)
-  expect_s4_class(res, "Seurat")
-  expect_identical(colnames(res), colnames(tiny_so))
-
-  res <- tiny_so %>%
-    import_vdj(
-      vdj_dir     = ctigs[1],
-      cell_prefix = "1",
-      prefix      = "PREFIX_"
-    )
-
-  dat <- res@meta.data
-  dat <- dat[, !grepl("PREFIX_", colnames(dat))]
-
-  expect_identical(dat, tiny_so@meta.data)
-  expect_s4_class(res, "Seurat")
-  expect_identical(colnames(res), colnames(tiny_so))
-})
+# Check include_mutations
+# test_that("import_vdj include_mutations", {
+#   res <- tiny_so %>%
+#     import_vdj(
+#       vdj_dir = ctigs,
+#       prefix  = "PREFIX_",
+#       include_mutations = TRUE
+#     )
+#
+#   dat <- res@meta.data
+#   dat <- dat[, !grepl("PREFIX_", colnames(dat))]
+#
+#   expect_identical(dat, tiny_so@meta.data)
+#   expect_s4_class(res, "Seurat")
+#   expect_identical(colnames(res), colnames(tiny_so))
+# })
 
 # Check arguments for SCE input
 test_that("import_vdj SingleCellExperiment", {
   res <- tiny_sce %>%
     import_vdj(
       vdj_dir = ctigs,
-      prefix  = "PREFIX_"
+      prefix  = "PREFIX_",
+      include_mutations = FALSE
     )
 
   dat <- res@colData
@@ -142,7 +128,8 @@ test_that("import_vdj data.frame", {
   res <- df_1 %>%
     import_vdj(
       vdj_dir = ctigs,
-      prefix  = "PREFIX_"
+      prefix  = "PREFIX_",
+      include_mutations = FALSE
     )
 
   dat <- res[, !grepl("PREFIX_", colnames(res))]
@@ -154,7 +141,8 @@ test_that("import_vdj data.frame", {
   res <- df_2 %>%
     import_vdj(
       vdj_dir = ctigs,
-      prefix  = "PREFIX_"
+      prefix  = "PREFIX_",
+      include_mutations = FALSE
     )
 
   dat <- res[, !grepl("PREFIX_", colnames(res))]
@@ -183,7 +171,8 @@ test_that("import_vdj column prefix", {
   res <- tiny_so %>%
     import_vdj(
       vdj_dir = ctigs,
-      prefix  = prfx
+      prefix  = prfx,
+      include_mutations = FALSE
     )
 
   expect_false(any(vdj_cols %in% colnames(res@meta.data)))
@@ -193,23 +182,10 @@ test_that("import_vdj column prefix", {
 # Check filtered contigs
 test_that("import_vdj filter_chains", {
   res <- tiny_so %>%
-    import_vdj(ctigs)
+    import_vdj(ctigs, include_mutations = FALSE)
 
   expect_false(any(grepl("FALSE", res$productive)))
   expect_false(any(grepl("FALSE", res$full_length)))
-  expect_s4_class(res, "Seurat")
-  expect_identical(colnames(res), colnames(tiny_so))
-
-  res <- tiny_so %>%
-    import_vdj(
-      vdj_dir        = ctigs[1],
-      cell_prefix    = "1",
-      include_indels = FALSE,
-      filter_chains  = FALSE
-    )
-
-  expect_true(any(grepl("FALSE", res$productive)))
-  expect_true(any(grepl("FALSE", res$full_length)))
   expect_s4_class(res, "Seurat")
   expect_identical(colnames(res), colnames(tiny_so))
 
@@ -221,7 +197,7 @@ test_that("import_vdj filter_chains", {
       )
   }
 
-  expect_warning(fn(), "When include_indels is TRUE, filter_chains is also automatically set TRUE")
+  expect_warning(fn(), "When include_mutations is TRUE, filter_chains is also automatically set TRUE")
 })
 
 # Check filter_paired
@@ -229,7 +205,8 @@ test_that("import_vdj filter_paired", {
   res <- tiny_so %>%
     import_vdj(
       vdj_dir       = ctigs,
-      filter_paired = TRUE
+      filter_paired = TRUE,
+      include_mutations = FALSE
     )
 
   expect_true(all(res$n_chains > 1, na.rm = TRUE))
@@ -240,7 +217,8 @@ test_that("import_vdj filter_paired", {
   res <- tiny_so %>%
     import_vdj(
       vdj_dir       = ctigs,
-      filter_paired = FALSE
+      filter_paired = FALSE,
+      include_mutations = FALSE
     )
 
   expect_true(any(!res$paired, na.rm = TRUE))
@@ -257,7 +235,8 @@ test_that("import_vdj define_clonotypes options", {
       res <- tiny_so %>%
         import_vdj(
           vdj_dir = ctigs,
-          define_clonotypes = .x
+          define_clonotypes = .x,
+          include_mutations = FALSE
         )
 
       expect_identical(n_distinct(res$clonotype_id), n_distinct(res[[.y]]))
@@ -268,7 +247,8 @@ test_that("import_vdj define_clonotypes options", {
   res <- tiny_so %>%
     import_vdj(
       vdj_dir = ctigs,
-      define_clonotypes = "cdr3_gene"
+      define_clonotypes = "cdr3_gene",
+      include_mutations = FALSE
     )
 
   x <- n_distinct(res$clonotype_id)
@@ -282,14 +262,19 @@ test_that("import_vdj define_clonotypes options", {
 # Check define_clonotypes bad define_clonotypes
 test_that("import_vdj bad define_clonotypes", {
   expect_error(
-    tiny_so %>% import_vdj(vdj_dir = ctigs, define_clonotypes = "BAD"),
+    tiny_so %>%
+      import_vdj(
+        vdj_dir = ctigs,
+        define_clonotypes = "BAD",
+        include_mutations = FALSE
+      ),
     "define_clonotypes must be one of"
   )
 })
 
 # Check data.frame output
 test_that("import_vdj df out", {
-  res <- import_vdj(vdj_dir = ctigs)
+  res <- import_vdj(vdj_dir = ctigs, include_mutations = FALSE)
 
   expect_s3_class(res, "data.frame")
 })
@@ -303,39 +288,37 @@ test_that("import_vdj bad prefixes", {
       import_vdj(vdj_dir = dat)
   }
 
-  expect_error(fn(), "barcodes do not match those in the object, are you using the correct cell barcode prefixes?")
+  expect_error(fn(), "do not match those in input object")
 })
 
 # Check low overlap warning
 test_that("import_vdj low overlap", {
-  dat <- c("1" = bad_ctigs)
+  dat <- c("1_" = bad_ctigs)
 
   fn <- function() {
     res <- tiny_so %>%
       import_vdj(
         vdj_dir = dat,
-        include_indels = TRUE
+        include_mutations = FALSE
       )
   }
 
-  expect_warning(fn(), "Only.+cell barcodes overlap")
+  expect_warning(fn(), "Only.+cell barcodes overlap.+")
 })
 
 # Check missing clonotype_id warning
-test_that("import_vdj missing clonotype_id", {
-  fn <- function() {
-    res <- tiny_so %>%
-      import_vdj(
-        vdj_dir        = bad_ctigs,
-        cell_prefix    = "1",
-        filter_chains  = FALSE,
-        include_indels = TRUE
-      )
-  }
-
-  expect_warning(fn(), "contigs do not have an assigned clonotype_id, these contigs will be removed")
-  expect_warning(fn(), "Some chains are missing indel data")
-})
+# test_that("import_vdj missing clonotype_id", {
+#   fn <- function() {
+#     res <- tiny_so %>%
+#       import_vdj(
+#         vdj_dir        = bad_ctigs,
+#         filter_chains  = FALSE,
+#         include_mutations = FALSE
+#       )
+#   }
+#
+#   expect_warning(fn(), "contigs do not have an assigned clonotype_id, these contigs will be removed")
+# })
 
 # Check bad separator
 test_that("import_vdj bad sep", {
@@ -343,80 +326,22 @@ test_that("import_vdj bad sep", {
     res <- tiny_so %>%
       import_vdj(
         vdj_dir = ctigs,
-        sep     = "A"
+        sep     = "A",
+        include_mutations = FALSE
       )
   }
 
   expect_error(fn(), "is already present in the input data", fixed = TRUE)
 })
 
-# Check duplicated cell barcode prefixes
-test_that("import_vdj duplicate cell prefix", {
-  prfxs    <- rep("1", 2)
-  ctigs_in <- c(ctigs[1], ctigs[1])
-  dat      <- purrr::set_names(ctigs_in, prfxs)
-
-  fn <- function() {
-    res <- tiny_so %>%
-      import_vdj(vdj_dir = dat)
-  }
-
-  expect_warning(fn(), "Some cell barcode prefixes are duplicated")
-
-  fn <- function() {
-    res <- tiny_so %>%
-      import_vdj(
-        vdj_dir     = ctigs_in,
-        cell_prefix = prfxs
-      )
-  }
-
-  expect_warning(fn(), "Some cell barcode prefixes are duplicated")
-})
-
-# Check barcode prefix length
-test_that("import_vdj cell prefix length", {
-  fn <- function() {
-    res <- tiny_so %>%
-      import_vdj(
-        vdj_dir     = ctigs,
-        cell_prefix = "A"
-      )
-  }
-
-  expect_error(fn(), "cell_prefix must be the same length as vdj_dir")
-})
-
-# Check cell barcode prefix NAs
-test_that("import_vdj cell prefix NAs", {
-  prfxs <- c(NA, "2")
-  dat   <- purrr::set_names(ctigs, prfxs)
-
-  fn <- function() {
-    res <- tiny_so %>%
-      import_vdj(vdj_dir = dat)
-  }
-
-  expect_error(fn(), "Cell prefixes cannot include NAs.")
-
-  fn <- function() {
-    res <- tiny_so %>%
-      import_vdj(
-        vdj_dir     = ctigs,
-        cell_prefix = prfxs
-      )
-  }
-
-  expect_error(fn(), "Cell prefixes cannot include NAs.")
-})
-
 # Check BCR and TCR
+# SHOULD ALSO CHECK WHEN TOO MANY VDJ DIRS ARE PROVIDED
 test_that("import_vdj BCR and TCR", {
   fn <- function() {
     res <- tiny_so %>%
       import_vdj(
-        vdj_dir        = c(tcr_ctigs, ctigs),
-        include_indels = FALSE
+        vdj_dir        = c(tcr_ctigs, ctigs[1]),
+        include_mutations = FALSE
       )
   }
 
@@ -453,7 +378,4 @@ test_that(".classify_vdj", {
     "Equal number of BCR.+and TCR.+chains detected"
   )
 })
-
-
-
 
