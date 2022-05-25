@@ -429,6 +429,20 @@ NULL
 #' @noRd
 .get_vdj_cols <- function(df_in, clone_col, cols_in, sep, cell_col = CELL_COL) {
 
+  # Check clone_col
+  if (length(clone_col) > 1) {
+    stop("Provide a single value for clonotype column.")
+  }
+
+  if (is.null(cols_in) && !is.null(clone_col) && !clone_col %in% colnames(df_in)) {
+    clone_col <- NULL
+
+    warning(
+      "The provided clonotype column is not present in input data, provide a ",
+      "column containing clonotype IDs to increase performance."
+    )
+  }
+
   # If clone_col and cols_in are both NULL, use all columns
   if (is.null(clone_col) && is.null(cols_in)) {
     cols_in <- colnames(df_in)
