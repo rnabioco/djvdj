@@ -181,4 +181,3 @@ filter_vdj <- function(input, filt, vdj_cols = NULL, clonotype_col = "clonotype_
 
   res
 }
-

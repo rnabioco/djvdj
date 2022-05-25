@@ -418,7 +418,7 @@ NULL
 #' @param df_in data.frame
 #' @param clone_col Column containing clonotype IDs to use for identifying
 #' columns with V(D)J data. If both clone_col and cols_in are NULL, all columns
-#' are included.
+#' are checked. This hurts performance when df_in has a lot of columns.
 #' @param cols_in Columns containing V(D)J data. If NULL data are selected by
 #' identifying columns that have NAs in the same rows as clone_col.
 #' @param sep Separator used for storing per cell V(D)J data. This is used to
