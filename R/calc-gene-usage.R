@@ -42,7 +42,7 @@
 #'
 #' @export
 calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
-                           chain_col = "chains", sep = ";") {
+                            chain_col = "chains", sep = ";") {
 
   # Format input data
   sep_cols <- gene_cols
@@ -56,7 +56,7 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
   meta <- .get_meta(input)
   meta <- dplyr::select(meta, all_of(vdj_cols))
 
-  meta <- dplyr::filter(meta, across(
+  meta <- dplyr::filter(meta, dplyr::if_all(
     all_of(gene_cols),
     ~ !is.na(.x)
   ))
@@ -270,7 +270,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, 
     sep         = sep
   )
 
-  plt_dat <- dplyr::filter(plt_dat, dplyr::across(
+  plt_dat <- dplyr::filter(plt_dat, dplyr::if_all(
     dplyr::all_of(gene_cols),
     ~ .x != "None"
   ))
@@ -316,7 +316,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, 
   # Filter for top genes
   # if two gene_cols are provided, all gene pairs containing at least one gene
   # from the top gene pairs will be included
-  plt_dat <- dplyr::filter(plt_dat, dplyr::across(
+  plt_dat <- dplyr::filter(plt_dat, dplyr::if_all(
     dplyr::all_of(gene_cols),
     ~ .x %in% top_genes
   ))
