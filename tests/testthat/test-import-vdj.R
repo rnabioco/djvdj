@@ -1,15 +1,15 @@
 # Test data
 ctigs <- c(
-  system.file("extdata/bcr_1", package = "djvdj"),
-  system.file("extdata/bcr_2", package = "djvdj")
+  system.file("extdata/bcr_1/outs", package = "djvdj"),
+  system.file("extdata/bcr_2/outs", package = "djvdj")
 )
 
 ctigs_2 <- ctigs_3 <- ctigs
 
-names(ctigs_2) <- c("1_", "2_")
+names(ctigs_2) <- c("1", "2")
 
-tcr_ctigs <- system.file("extdata/tcr_1", package = "djvdj")
-bad_ctigs <- system.file("extdata/bad_bcr_1", package = "djvdj")
+tcr_ctigs <- system.file("extdata/tcr_1/outs", package = "djvdj")
+bad_ctigs <- system.file("extdata/bad_bcr_1/outs", package = "djvdj")
 
 vdj_cols <- c(
   "v_gene",      "d_gene",
@@ -29,15 +29,15 @@ df_2 <- tiny_so@meta.data %>%
 
 # Check arguments for different path inputs with Seurat
 arg_lst <- list(
-  single = list(
-    input          = list(tiny_so),
-    vdj_dir        = list(ctigs_2[1], c("1_" = paste0(ctigs[1], "/outs"))),
-    filter_paired  = c(TRUE, FALSE),
-    include_mutations = FALSE
-  ),
+  # single = list(
+  #   input          = list(tiny_so),
+  #   vdj_dir        = ctigs_2[1],
+  #   filter_paired  = c(TRUE, FALSE),
+  #   include_mutations = FALSE
+  # ),
   multi = list(
     input          = list(tiny_so),
-    vdj_dir        = list(ctigs, ctigs_2, paste0(ctigs, "/outs")),
+    vdj_dir        = list(ctigs, ctigs_2),
     filter_paired  = c(TRUE, FALSE),
     include_mutations = FALSE
   )
@@ -293,7 +293,7 @@ test_that("import_vdj bad prefixes", {
 
 # Check low overlap warning
 test_that("import_vdj low overlap", {
-  dat <- c("1_" = bad_ctigs)
+  dat <- c("1" = bad_ctigs)
 
   fn <- function() {
     res <- tiny_so %>%

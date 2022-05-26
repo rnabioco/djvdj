@@ -72,8 +72,8 @@
 #' # Specifying cell prefixes using vector names
 #' # if a named vector is passed, the names will be used as the cell prefixes
 #' vdj_dir <- c(
-#'   "1_" = system.file("extdata/bcr_1/outs", package = "djvdj"),
-#'   "2_" = system.file("extdata/bcr_2/outs", package = "djvdj")
+#'   "1" = system.file("extdata/bcr_1/outs", package = "djvdj"),
+#'   "2" = system.file("extdata/bcr_2/outs", package = "djvdj")
 #' )
 #'
 #' vdj_so <- import_vdj(tiny_so, vdj_dir, include_mutations = FALSE)
