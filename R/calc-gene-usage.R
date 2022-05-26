@@ -316,7 +316,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, 
   # Filter for top genes
   # if two gene_cols are provided, all gene pairs containing at least one gene
   # from the top gene pairs will be included
-  plt_dat <- dplyr::filter(plt_dat, dplyr::if_all(
+  plt_dat <- dplyr::filter(plt_dat, dplyr::if_any(
     dplyr::all_of(gene_cols),
     ~ .x %in% top_genes
   ))

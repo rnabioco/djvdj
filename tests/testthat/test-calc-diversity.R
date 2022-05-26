@@ -138,7 +138,7 @@ test_that("div calc df out", {
     ) %>%
     arrange(seurat_clusters) %>%
     distinct(seurat_clusters, !!!syms(nms)) %>%
-    filter(across(all_of(nms), ~ !is.na(.x))) %>%
+    filter(if_all(all_of(nms), ~ !is.na(.x))) %>%
     tibble::remove_rownames() %>%
     filter(seurat_clusters %in% sm_clst)
 
@@ -178,7 +178,7 @@ test_that("calc_diversity df in", {
     ) %>%
     arrange(seurat_clusters) %>%
     distinct(seurat_clusters, !!!syms(nms)) %>%
-    filter(across(all_of(nms), ~ !is.na(.x))) %>%
+    filter(if_all(all_of(nms), ~ !is.na(.x))) %>%
     tibble::remove_rownames() %>%
     filter(seurat_clusters %in% sm_clst)
 
