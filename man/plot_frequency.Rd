@@ -25,12 +25,13 @@ calculating abundance. To calculate clonotype abundance, provide the column
 containing clonotype IDs, to calculate isotype abundance provide the column
 containing cell isotypes. By default clonotype_id is used for calculations.}
 
-\item{cluster_col}{meta.data column containing cluster IDs to use for
-grouping cells when calculating clonotype abundance. Clonotypes will be
-plotted separately for each cluster.}
+\item{cluster_col}{meta.data column containing cluster IDs (or patients,
+treatment conditions, etc.) to use when calculating frequency. Calculations will be
+performed separately for each cluster.}
 
 \item{group_col}{meta.data column to use for grouping cluster IDs present in
-cluster_col}
+cluster_col. This is useful when there are multiple replicates or patients
+for each treatment condition.}
 
 \item{yaxis}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 

@@ -141,7 +141,7 @@ library(ggplot2)
 library(cowplot)
 
 # Create vector of paths pointing to cellranger output
-paths <- here("data/avid/bcr")
+paths <- here("data/avid/bcr/outs")
 
 so_avid <- import_vdj(
   input         = so_avid,                  # Seurat object
@@ -168,10 +168,10 @@ so_avid@meta.data %>%
 To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_abundance()` function. These calculations can be performed on a per-cluster or per-sample basis by also providing a meta.data column containing cell labels.
 
 ```{r}
-so_avid <- calc_abundance(
-  input         = so_avid,
-  cluster_col   = "mouse",                  # Column containing cell clusters to compare
-  clonotype_col = "clonotype_id"            # Column containing clonotype IDs to use
+so_avid <- calc_frequency(
+  input       = so_avid,
+  cluster_col = "mouse",                  # Column containing cell clusters to compare
+  data_col    = "clonotype_id"            # Column containing clonotype IDs to use
 )
 ```
 
@@ -185,12 +185,12 @@ clrs <- c(
   MD4 = "#56B4E9"
 )
 
-plot_abundance(
-  input        = so_avid,
-  cluster_col  = "mouse",                   # Column containing cell clusters to compare
-  n_clonotypes = 10,                        # Number of top clonotypes to plot
-  type         = "bar",                     # Type of plot, 'bar' or 'line'
-  plot_colors  = clrs
+plot_clonal_abundance(
+  input       = so_avid,
+  cluster_col = "mouse",                   # Column containing cell clusters to compare
+  n_clones    = 10,                        # Number of top clonotypes to plot
+  type        = "bar",                     # Type of plot, 'bar' or 'line'
+  plot_colors = clrs
 )
 ```
 

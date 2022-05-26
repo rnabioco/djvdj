@@ -178,7 +178,7 @@ arg_lst <- list(
   plot_colors   = list(NULL, test_cols),
   plot_lvls     = list(NULL, test_lvls),
   label_aes     = list(list(), list(size = 2)),
-  plot_n        = c(0, 5)
+  n_clones        = c(0, 5)
 )
 
 test_all_args(
@@ -190,7 +190,7 @@ test_all_args(
 
 # Check all plot_clonal_abundance arguments for bar plot
 arg_lst$type <- "bar"
-arg_lst$plot_n <- 5
+arg_lst$n_clones <- 5
 
 test_all_args(
   arg_lst = arg_lst,
@@ -253,7 +253,7 @@ test_that("plot_clonal_abundance bad n_clonotypes", {
       plot_clonal_abundance(
         type          = "bar",
         clonotype_col = "cdr3_nt",
-        plot_n  = 0
+        n_clones  = 0
       )
   )
 })

@@ -218,7 +218,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0(
 #' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
-#' @param plot_n Number of top clonotypes to plot. If type is set to 'line',
+#' @param n_clones Number of top clonotypes to plot. If type is set to 'line',
 #' this will specify the number of values to label.
 #' @param label_aes Named list providing additional aesthetics (color, size,
 #' etc.) for clonotype labels when creating line graph
@@ -270,21 +270,21 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0(
 #' # Specify the number of top clonotypes to plot
 #' plot_clonal_abundance(
 #'   vdj_so,
-#'   plot_n = 5
+#'   n_clones = 5
 #' )
 #'
 #' #' # Create line graph
-#' # use plot_n to set the number of clonotypes to label
+#' # use n_clones to set the number of clonotypes to label
 #' plot_clonal_abundance(
 #'   vdj_so,
 #'   cluster_col = "orig.ident",
 #'   type = "line",
-#'   plot_n = 3
+#'   n_clones = 3
 #' )
 #'
 #' @export
 plot_clonal_abundance <- function(input, cluster_col = NULL, clonotype_col = "clonotype_id", type = "bar",
-                                  yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, plot_n = 10,
+                                  yaxis = "percent", plot_colors = NULL, plot_lvls = NULL, n_clones = 10,
                                   label_aes = list(), facet_rows = 1, facet_scales = "free_x", ...) {
 
   if (!yaxis %in% c("frequency", "percent")) {
@@ -295,8 +295,8 @@ plot_clonal_abundance <- function(input, cluster_col = NULL, clonotype_col = "cl
     stop("type must be either 'bar' or 'line'.")
   }
 
-  if (identical(type, "bar") && plot_n <= 0) {
-    stop("If type is set to 'bar', plot_n must be >0.")
+  if (identical(type, "bar") && n_clones <= 0) {
+    stop("If type is set to 'bar', n_clones must be >0.")
   }
 
   # Calculate clonotype abundance
@@ -347,7 +347,7 @@ plot_clonal_abundance <- function(input, cluster_col = NULL, clonotype_col = "cl
   top_clones <- dplyr::slice_min(
     plt_dat,
     order_by  = rank,
-    n         = plot_n,
+    n         = n_clones,
     with_ties = FALSE
   )
 
@@ -419,7 +419,7 @@ plot_clonal_abundance <- function(input, cluster_col = NULL, clonotype_col = "cl
   }
 
   # Add labels
-  if (plot_n > 0) {
+  if (n_clones > 0) {
     res <- res +
       ggrepel::geom_text_repel(
         ggplot2::aes(label = .data$.lab),
@@ -450,11 +450,12 @@ plot_clonal_abundance <- function(input, cluster_col = NULL, clonotype_col = "cl
 #' calculating abundance. To calculate clonotype abundance, provide the column
 #' containing clonotype IDs, to calculate isotype abundance provide the column
 #' containing cell isotypes. By default clonotype_id is used for calculations.
-#' @param cluster_col meta.data column containing cluster IDs to use for
-#' grouping cells when calculating clonotype abundance. Clonotypes will be
-#' plotted separately for each cluster.
+#' @param cluster_col meta.data column containing cluster IDs (or patients,
+#' treatment conditions, etc.) to use when calculating frequency. Calculations will be
+#' performed separately for each cluster.
 #' @param group_col meta.data column to use for grouping cluster IDs present in
-#' cluster_col
+#' cluster_col. This is useful when there are multiple replicates or patients
+#' for each treatment condition.
 #' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering

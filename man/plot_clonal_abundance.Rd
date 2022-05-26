@@ -12,7 +12,7 @@ plot_clonal_abundance(
   yaxis = "percent",
   plot_colors = NULL,
   plot_lvls = NULL,
-  plot_n = 10,
+  n_clones = 10,
   label_aes = list(),
   facet_rows = 1,
   facet_scales = "free_x",
@@ -38,7 +38,7 @@ calculating clonotype abundance}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{plot_n}{Number of top clonotypes to plot. If type is set to 'line',
+\item{n_clones}{Number of top clonotypes to plot. If type is set to 'line',
 this will specify the number of values to label.}
 
 \item{label_aes}{Named list providing additional aesthetics (color, size,
@@ -98,16 +98,16 @@ plot_clonal_abundance(
 # Specify the number of top clonotypes to plot
 plot_clonal_abundance(
   vdj_so,
-  plot_n = 5
+  n_clones = 5
 )
 
 #' # Create line graph
-# use plot_n to set the number of clonotypes to label
+# use n_clones to set the number of clonotypes to label
 plot_clonal_abundance(
   vdj_so,
   cluster_col = "orig.ident",
   type = "line",
-  plot_n = 3
+  n_clones = 3
 )
 
 }
