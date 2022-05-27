@@ -10,11 +10,14 @@
 #' output columns.
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating diversity
+#' @param n_boots Number of bootstrap replicates
 #' @param prefix Prefix to add to new columns
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.
 #' @return Single cell object or data.frame with diversity metrics
 #' @importFrom abdiv simpson
+#' @importFrom broom tidy
+#' @importFrom boot boot
 #'
 #' @examples
 #' # Calculate diversity using all cells
@@ -64,7 +67,8 @@
 #'
 #' @export
 calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
-                           clonotype_col = "clonotype_id", prefix = "", return_df = FALSE) {
+                           clonotype_col = "clonotype_id", n_boots = 100, prefix = "",
+                           return_df = FALSE) {
 
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if using a list of methods.")
@@ -78,59 +82,88 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
   }
 
   # Format input data
+  div_cols <- names(method) <- paste0(prefix, names(method))
+  div_cols <- paste0(div_cols, "_", c("diversity", "stderr"))
+
+  vdj_cols <- c(clonotype_col, cluster_col)
+
   meta <- .get_meta(input)
   vdj  <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
 
-  # Count clonotypes
-  vdj_cols <- clonotype_col
-
-  if (!is.null(cluster_col)) {
-    vdj_cols <- c(cluster_col, vdj_cols)
-    vdj   <- dplyr::group_by(vdj, !!sym(cluster_col))
+  if (!is.null(cluster_col) && is.null(meta[[cluster_col]])) {
+    stop(cluster_col, " not found in object, provide a different cluster_col")
   }
 
-  vdj <- dplyr::group_by(vdj, !!sym(clonotype_col), .add = TRUE)
+  # Get parameters for bootstrapped sampling
+  sam     <- vdj
+  sam_rng <- c(20, 5000)
+  sam_sz  <- nrow(sam)
 
-  vdj <- dplyr::summarize(
-    vdj,
-    .n      = dplyr::n_distinct(!!sym(CELL_COL)),
-    .groups = "drop"
-  )
+  if (!is.null(cluster_col)) {
+    sam_sz <- table(sam[[cluster_col]])
+    sam_sz <- sam_sz[sam_sz >= sam_rng[1]]
+
+    if (purrr::is_empty(sam_sz)) {
+      stop(
+        "To calculate diversity metrics using cluster_col, at least one ",
+        "cluster must have at least ", sam_rng[1], " cells. Rerun with ",
+        "cluster_col set to NULL to calculate diversity metrics for the ",
+        "entire population."
+      )
+    }
+
+    clsts  <- names(sam_sz)
+    sam_sz <- min(sam_sz)
+
+    sam <- dplyr::filter(sam, !!sym(cluster_col) %in% clsts)
+  }
+
+  if (sam_sz > sam_rng[2]) {
+    sam_sz <- sam_rng[2]
+  }
+
+  # Downsample clusters to equal size
+  if (!is.null(cluster_col)) {
+    sam <- dplyr::group_by(sam, !!sym(cluster_col))
+  }
+
+  sam <- dplyr::slice_sample(sam, n = sam_sz)
 
   # Calculate diversity
-  if (!is.null(cluster_col)) {
-    vdj <- dplyr::group_by(vdj, !!sym(cluster_col))
+  .calc_div <- function(x, met, n_bts = n_boots) {
+    fn <- function(x, i) {
+      met(table(x[i]))
+    }
+
+    bt <- boot::boot(x, fn, R = n_bts)
+
+    broom::tidy(bt)
   }
 
-  if (length(method) == 1 && is.null(names(method))) {
-    nm <- as.character(substitute(method))
-    nm <- dplyr::last(nm)
-
-    method        <- list(method)
-    names(method) <- nm
-  }
-
-  div_cols      <- paste0(prefix, names(method))
-  names(method) <- div_cols
-
-  vdj <- purrr::imap_dfr(method, ~ {
-    dplyr::mutate(
-      vdj,
-      diversity = .x(.data$.n),
-      met       = .y
+  div <- purrr::imap_dfr(method, ~ {
+    dplyr::summarize(
+      sam,
+      met       = .y,
+      diversity = list(.calc_div(!!sym(clonotype_col), met = .x)),
+      stderr    = purrr::map_dbl(.data$diversity, pull, "std.error"),
+      diversity = purrr::map_dbl(.data$diversity, pull, "statistic")
     )
   })
 
-  vdj <- tidyr::pivot_wider(
-    vdj,
-    names_from  = "met",
-    values_from = "diversity"
-  )
-
-  vdj <- dplyr::ungroup(vdj)
-  vdj <- dplyr::select(vdj, all_of(c(vdj_cols, div_cols)))
+  div <- tidyr::pivot_longer(div, c(.data$diversity, .data$stderr))
+  div <- tidyr::unite(div, "name", .data$met, .data$name)
+  div <- tidyr::pivot_wider(div)
 
   # Format results
+  vdj <- dplyr::distinct(vdj, !!!syms(vdj_cols))
+
+  if (!is.null(cluster_col)) {
+    vdj <- dplyr::left_join(vdj, div, by = cluster_col)
+
+  } else {
+    vdj <- dplyr::bind_cols(vdj, div)
+  }
+
   res <- dplyr::left_join(meta, vdj, by = vdj_cols)
 
   if (return_df) {
@@ -141,6 +174,107 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 
   res
 }
+
+# .calc_div <- function(clone_col, met) {
+#   cnt <- table(clone_col)
+#
+#   met(cnt)
+# }
+#
+# res <- purrr::map_dfr(1:n_boots, ~ {
+#   idx <- .x
+#   sam <- dplyr::slice_sample(vdj, n = sam_sz, replace = TRUE)
+#
+#   method %>%
+#     purrr::imap_dfr(~ {
+#       dplyr::summarize(
+#         sam,
+#         div = .calc_div(!!sym(clonotype_col), .x),
+#         met = .y,
+#         idx = idx
+#       )
+#     })
+# })
+
+# calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
+#                            clonotype_col = "clonotype_id", n_boots = 100, prefix = "",
+#                            return_df = FALSE) {
+#
+#   if (length(method) > 1 && is.null(names(method))) {
+#     stop("Must include names if using a list of methods.")
+#   }
+#
+#   if (length(method) == 1 && is.null(names(method))) {
+#     nm <- as.character(substitute(method))
+#     nm <- last(nm)
+#
+#     method <- purrr::set_names(list(method), nm)
+#   }
+#
+#   # Format input data
+#   meta <- .get_meta(input)
+#   vdj  <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
+#
+#   # Count clonotypes
+#   vdj_cols <- clonotype_col
+#
+#   if (!is.null(cluster_col)) {
+#     vdj_cols <- c(cluster_col, vdj_cols)
+#     vdj   <- dplyr::group_by(vdj, !!sym(cluster_col))
+#   }
+#
+#   vdj <- dplyr::group_by(vdj, !!sym(clonotype_col), .add = TRUE)
+#
+#   vdj <- dplyr::summarize(
+#     vdj,
+#     .n      = dplyr::n_distinct(!!sym(CELL_COL)),
+#     .groups = "drop"
+#   )
+#
+#   # Calculate diversity
+#   if (!is.null(cluster_col)) {
+#     vdj <- dplyr::group_by(vdj, !!sym(cluster_col))
+#   }
+#
+#   if (length(method) == 1 && is.null(names(method))) {
+#     nm <- as.character(substitute(method))
+#     nm <- dplyr::last(nm)
+#
+#     method        <- list(method)
+#     names(method) <- nm
+#   }
+#
+#   div_cols      <- paste0(prefix, names(method))
+#   names(method) <- div_cols
+#
+#   vdj <- purrr::imap_dfr(method, ~ {
+#     dplyr::mutate(
+#       vdj,
+#       diversity = .x(.data$.n),
+#       met       = .y
+#     )
+#   })
+#
+#   vdj <- tidyr::pivot_wider(
+#     vdj,
+#     names_from  = "met",
+#     values_from = "diversity"
+#   )
+#
+#   vdj <- dplyr::ungroup(vdj)
+#   vdj <- dplyr::select(vdj, all_of(c(vdj_cols, div_cols)))
+#
+#   # Format results
+#   res <- dplyr::left_join(meta, vdj, by = vdj_cols)
+#
+#   if (return_df) {
+#     input <- meta
+#   }
+#
+#   res <- .add_meta(input, meta = res)
+#
+#   res
+# }
 
 
 #' Plot repertoire diversity
@@ -153,7 +287,9 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #' functions can be passed to plot multiple diversity metrics,
 #' e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating clonotype abundance
+#' calculating repertoire diversity
+#' @param group_col meta.data column to use for grouping IDs present in
+#' cluster_col
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param facet_rows The number of facet rows, use this argument if a list of
@@ -201,18 +337,25 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #' )
 #'
 #' # Specify how to organize facets when plotting multiple metrics
+#'
+#' mets <- list(
+#'   simpson = abdiv::simpson,
+#'   shannon = abdiv::shannon
+#' )
+#'
 #' plot_diversity(
 #'   vdj_so,
-#'   method = list(simpson = abdiv::simpson, shannon = abdiv::shannon),
+#'   method = mets,
 #'   facet_rows = 2
 #' )
 #'
 #' @export
-plot_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson, clonotype_col = "clonotype_id",
-                           plot_colors = NULL, plot_lvls = NULL, facet_rows = 1, ...) {
+plot_diversity <- function(input, cluster_col = NULL, group_col = NULL, method = abdiv::simpson,
+                           clonotype_col = "clonotype_id", plot_colors = NULL, plot_lvls = NULL,
+                           facet_rows = 1, ...) {
 
   if (length(method) > 1 && is.null(names(method))) {
-    stop("Must include names if using a list of methods.")
+    stop("Must include names if providing a list of methods.")
   }
 
   if (length(method) == 1 && is.null(names(method))) {
@@ -233,45 +376,89 @@ plot_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson, c
     return_df     = TRUE
   )
 
-  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
-  plt_dat <- dplyr::distinct(plt_dat, !!!syms(c(cluster_col, names(method))))
+  # Diversity columns
+  div_cols <- paste0(names(method), "_", "diversity")
+  err_cols <- paste0(names(method), "_", "stderr")
+
+  plt_cols <- c(cluster_col, group_col, div_cols, err_cols)
 
   # Format data for plotting
-  include_strips <- TRUE
+  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
+  plt_dat <- dplyr::distinct(plt_dat, !!!syms(plt_cols))
+  plt_dat <- tidyr::pivot_longer(plt_dat, all_of(c(div_cols, err_cols)))
 
-  if (is.null(cluster_col)) {
-    plt_dat <- tibble::tibble(
-      div  = unlist(plt_dat, use.names = FALSE),
-      name = names(plt_dat),
-    )
+  re <- "^(.+)_(diversity|stderr)$"
 
-    include_strips <- FALSE
-    cluster_col <- "name"
+  plt_dat <- tidyr::extract(plt_dat, .data$name, into = c("met", "type"), re)
 
-  } else {
-    plt_dat <- tidyr::pivot_longer(
-      plt_dat,
-      cols      = all_of(names(method)),
-      values_to = "div"
-    )
-
-    plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
-  }
+  plt_dat <- tidyr::pivot_wider(
+    plt_dat,
+    names_from  = .data$type,
+    values_from = .data$value
+  )
 
   # Set plot levels
-  plt_dat <- .set_lvls(plt_dat, "name", plt_dat$name)
+  plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+
+  include_x_labs <- !is.null(cluster_col)
+
+  if (is.null(cluster_col)) {
+    cluster_col <- "met"
+  }
+
+  # Create grouped boxplot
+  if (!is.null(group_col) && !is.null(cluster_col)) {
+    plt_dat <- .set_lvls(plt_dat, group_col, plot_lvls)
+
+    res <- .create_boxes(
+      plt_dat,
+      x      = group_col,
+      y      = "diversity",
+      .color = group_col,
+      .fill  = group_col,
+      alpha  = 0.5,
+      clrs   = plot_colors,
+      outlier.color = NA,
+      ...
+    ) +
+      ggplot2::geom_jitter(
+        position = ggplot2::position_jitterdodge(jitter.width = 0.05)
+      ) +
+      ggplot2::theme(legend.position = "right")
+
+    # Create facets
+    if (length(method) > 1) {
+      res <- res +
+        ggplot2::facet_wrap(~ met, nrow = facet_rows, scales = "free") +
+        ggplot2::theme(axis.title.y = ggplot2::element_blank())
+
+    } else {
+      res <- res +
+        ggplot2::labs(y = names(method))
+    }
+
+    return(res)
+  }
 
   # Create bar graphs
   res <- ggplot2::ggplot(
     plt_dat,
-    ggplot2::aes(!!sym(cluster_col), .data$div, fill = !!sym(cluster_col))
+    ggplot2::aes(!!sym(cluster_col), .data$diversity, fill = !!sym(cluster_col))
   ) +
-    ggplot2::geom_col(...)
+    ggplot2::geom_col(...) +
+
+    ggplot2::geom_linerange(
+      aes(
+        !!sym(cluster_col),
+        ymin = .data$diversity - .data$stderr,
+        ymax = .data$diversity + .data$stderr
+      )
+    )
 
   # Create facets
   if (length(method) > 1) {
     res <- res +
-      ggplot2::facet_wrap(~ name, nrow = facet_rows, scales = "free") +
+      ggplot2::facet_wrap(~ met, nrow = facet_rows, scales = "free") +
       ggplot2::theme(axis.title.y = ggplot2::element_blank())
 
   } else {
@@ -293,9 +480,12 @@ plot_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson, c
       axis.title.x    = ggplot2::element_blank()
     )
 
-  if (!include_strips) {
+  if (!include_x_labs) {
     res <- res +
-      ggplot2::theme(strip.text = ggplot2::element_blank())
+      ggplot2::theme(
+        axis.text.x  = ggplot2::element_blank(),
+        axis.ticks.x = ggplot2::element_blank()
+      )
   }
 
   res

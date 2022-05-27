@@ -7,6 +7,7 @@
 plot_diversity(
   input,
   cluster_col = NULL,
+  group_col = NULL,
   method = abdiv::simpson,
   clonotype_col = "clonotype_id",
   plot_colors = NULL,
@@ -22,12 +23,15 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
 
+\item{group_col}{meta.data column to use for grouping IDs present in
+cluster_col}
+
 \item{method}{Function to use for calculating diversity. A named list of
 functions can be passed to plot multiple diversity metrics,
 e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
-calculating clonotype abundance}
+calculating repertoire diversity}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
@@ -83,9 +87,15 @@ plot_diversity(
 )
 
 # Specify how to organize facets when plotting multiple metrics
+
+mets <- list(
+  simpson = abdiv::simpson,
+  shannon = abdiv::shannon
+)
+
 plot_diversity(
   vdj_so,
-  method = list(simpson = abdiv::simpson, shannon = abdiv::shannon),
+  method = mets,
   facet_rows = 2
 )
 

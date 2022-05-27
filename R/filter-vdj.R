@@ -10,13 +10,15 @@
 #' a vector, e.g. 'IGH;IGK' is equivalent to c('IGH', 'IGK'). This allows R
 #' vector operations to be performed on the per-chain values. The filtering
 #' condition must return TRUE/FALSE for each chain or a single TRUE/FALSE for
-#' each cell.
+#' each cell. Data can be filtered based on cell barcodes by referring to the
+#' '.cell_id' column.
 #' @param vdj_cols meta.data columns containing V(D)J data to use for
 #' filtering. If NULL, V(D)J data are automatically selected by identifying
 #' columns that have NAs in the same rows as clonotype_col.
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
 #' is used to determine which columns contain V(D)J data.
-#' @param sep Separator used for storing per cell V(D)J data
+#' @param sep Separator used for storing per cell V(D)J data. If NULL, columns
+#' containing V(D)J data will not be converted to vectors for filtering.
 #' @return Object with filtered meta.data
 #'
 #' @examples
@@ -56,6 +58,11 @@
 #'
 #' head(res@colData, 1)
 #'
+#' # Filter based on cell barcode
+#' res <- filter_vdj(vdj_so, .cell_id == "1_AAACCTGAGTAGGTGC-1")
+#'
+#' head(res@meta.data, 3)
+#'
 #' @export
 filter_vdj <- function(input, filt, vdj_cols = NULL, clonotype_col = "clonotype_id",
                        sep = ";") {
@@ -75,7 +82,7 @@ filter_vdj <- function(input, filt, vdj_cols = NULL, clonotype_col = "clonotype_
   vdj_cols <- col_list$vdj
   sep_cols <- col_list$sep
 
-  if (purrr::is_empty(sep_cols)) {
+  if (!is.null(sep) && purrr::is_empty(sep_cols)) {
     warning("The separator '", sep, "' is not present in the data")
   }
 
@@ -174,4 +181,3 @@ filter_vdj <- function(input, filt, vdj_cols = NULL, clonotype_col = "clonotype_
 
   res
 }
-

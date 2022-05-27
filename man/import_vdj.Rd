@@ -6,13 +6,13 @@
 \usage{
 import_vdj(
   input = NULL,
-  vdj_dir,
+  vdj_dir = NULL,
   prefix = "",
-  cell_prefix = NULL,
   filter_chains = TRUE,
   filter_paired = FALSE,
   define_clonotypes = NULL,
-  include_indels = TRUE,
+  include_mutations = TRUE,
+  aggr_dir = NULL,
   sep = ";"
 )
 }
@@ -23,20 +23,9 @@ containing V(D)J results will be returned}
 \item{vdj_dir}{Directory containing the output from cellranger vdj. A vector
 or named vector can be given to load data from multiple runs. If a named
 vector is given, the cell barcodes will be prefixed with the provided names.
-This mimics the behavior of Seurat::Read10X(). Cell barcode prefixes can
-also be provided using the cell_prefix argument.}
+This mimics the behavior of Seurat::Read10X().}
 
 \item{prefix}{Prefix to add to new columns}
-
-\item{cell_prefix}{Prefix to add to cell barcodes, this is helpful when
-loading data from multiple runs into a single object. If NULL, cell barcode
-prefixes are automatically generated in a similar manner as
-Seurat::Read10X().
-
-For the V(D)J data to be successfully added to the object, the cell prefixes
-must match the prefixes that are already present in the object. If the cell
-prefixes are incorrect, import_vdj will be unable to assign the V(D)J data
-to the correct cells.}
 
 \item{filter_chains}{Only include chains with at least one productive and
 full length contig.}
@@ -60,11 +49,23 @@ When defining clonotypes, only productive full length chains will be used.
 Set to NULL (default) to use the clonotype IDs already present in the input
 data.}
 
-\item{include_indels}{Include the number of insertions/deletions for each
-chain. This requires the concat_ref.bam file from cellranger vdj to be
-present the directory provided to vdj_dir. If include_indels is TRUE,
-filter_chains is also automatically set TRUE since indel data is only
-available for productive chains.}
+\item{include_mutations}{Include information about the number of
+insertions/deletions/mismatches for each chain. This requires the
+concat_ref.bam file from cellranger vdj to be present the directory provided
+to vdj_dir. If include_mutations is TRUE, filter_chains is also
+automatically set TRUE since indel data is only available for productive
+chains.}
+
+\item{aggr_dir}{Path to cellranger aggr output. To include mutation
+information for each chain, also provide paths to the original cellranger
+vdj output directories using the vdj_dir argument.
+
+To correctly match cell barcodes to those in the object, gene expression
+data for each sample must be loaded in the same order as the samples were
+specified in the cellranger aggr config file. In addition, if loading
+mutation data, sample paths provided to the vdj_dir argument must also be in
+the same order as the samples were specified in the cellranger aggr config
+file.}
 
 \item{sep}{Separator to use for storing per cell V(D)J data}
 }
@@ -77,11 +78,11 @@ Import V(D)J data
 \examples{
 # Loading multiple datasets
 vdj_dir <- c(
-  system.file("extdata/bcr_1", package = "djvdj"),
-  system.file("extdata/bcr_2", package = "djvdj")
+  system.file("extdata/bcr_1/outs", package = "djvdj"),
+  system.file("extdata/bcr_2/outs", package = "djvdj")
 )
 
-vdj_so <- import_vdj(tiny_so, vdj_dir)
+vdj_so <- import_vdj(tiny_so, vdj_dir, include_mutations = FALSE)
 
 head(vdj_so@meta.data, 1)
 
@@ -92,7 +93,7 @@ head(vdj_so@meta.data, 1)
 vdj_so <- import_vdj(
   tiny_so,
   vdj_dir = vdj_dir,
-  cell_prefix = c("1_", "2_")
+  include_mutations = FALSE
 )
 
 head(vdj_so@meta.data, 1)
@@ -100,11 +101,11 @@ head(vdj_so@meta.data, 1)
 # Specifying cell prefixes using vector names
 # if a named vector is passed, the names will be used as the cell prefixes
 vdj_dir <- c(
-  "1_" = system.file("extdata/bcr_1", package = "djvdj"),
-  "2_" = system.file("extdata/bcr_2", package = "djvdj")
+  "1" = system.file("extdata/bcr_1/outs", package = "djvdj"),
+  "2" = system.file("extdata/bcr_2/outs", package = "djvdj")
 )
 
-vdj_so <- import_vdj(tiny_so, vdj_dir)
+vdj_so <- import_vdj(tiny_so, vdj_dir, include_mutations = FALSE)
 
 head(vdj_so@meta.data, 1)
 
@@ -112,7 +113,8 @@ head(vdj_so@meta.data, 1)
 vdj_so <- import_vdj(
   tiny_so,
   vdj_dir = vdj_dir,
-  filter_chains = TRUE
+  filter_chains = TRUE,
+  include_mutations = FALSE
 )
 
 head(vdj_so@meta.data, 1)
@@ -121,7 +123,8 @@ head(vdj_so@meta.data, 1)
 vdj_so <- import_vdj(
   tiny_so,
   vdj_dir = vdj_dir,
-  filter_paired = TRUE
+  filter_paired = TRUE,
+  include_mutations = FALSE
 )
 
 head(vdj_so@meta.data, 1)
@@ -132,7 +135,8 @@ head(vdj_so@meta.data, 1)
 vdj_so <- import_vdj(
   tiny_so,
   vdj_dir = vdj_dir,
-  define_clonotypes = "cdr3_gene"
+  define_clonotypes = "cdr3_gene",
+  include_mutations = FALSE
 )
 
 head(vdj_so@meta.data, 1)
@@ -143,29 +147,7 @@ head(vdj_so@meta.data, 1)
 vdj_so <- import_vdj(
   tiny_so,
   vdj_dir = vdj_dir,
-  include_indels = FALSE
-)
-
-head(vdj_so@meta.data, 1)
-
-# Loading both BCR and TCR data
-# load each dataset separately and assign unique column names using the
-# prefix argument
-bcr_dir <- system.file("extdata/bcr_1", package = "djvdj")
-tcr_dir <- system.file("extdata/tcr_1", package = "djvdj")
-
-vdj_so <- import_vdj(
-  tiny_so,
-  vdj_dir     = bcr_dir,
-  prefix      = "bcr_",
-  cell_prefix = "1_"
-)
-
-vdj_so <- import_vdj(
-  vdj_so,
-  vdj_dir     = tcr_dir,
-  prefix      = "tcr_",
-  cell_prefix = "1_"
+  include_mutations = FALSE
 )
 
 head(vdj_so@meta.data, 1)
@@ -177,7 +159,7 @@ vdj_sce <- import_vdj(tiny_sce, vdj_dir)
 
 head(vdj_sce@colData, 1)
 
-vdj_df <- import_vdj(vdj_dir = vdj_dir)
+vdj_df <- import_vdj(vdj_dir = vdj_dir, include_mutations = FALSE)
 
 head(vdj_df, 1)
 

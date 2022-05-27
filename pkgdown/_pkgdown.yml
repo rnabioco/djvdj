@@ -20,24 +20,12 @@ reference:
 
 - title: Calculate
   contents:
-  - calc_abundance
-  - calc_diversity
-  - calc_similarity
-  - calc_gene_usage
+  - starts_with("calc_")
   - define_clonotypes
 
 - title: Plotting
   contents:
-  - plot_abundance
-  - plot_diversity
-  - plot_similarity
-  - plot_gene_usage
-  - plot_features
-  - plot_vdj_feature
-  - plot_vdj
-  - plot_vdj_reads
-  - plot_cdr3_length
-  - plot_vdj_indels
+  - starts_with("plot_")
   - djvdj_theme
 
 - title: Data

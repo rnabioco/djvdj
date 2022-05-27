@@ -59,11 +59,8 @@ test_that("filter_vdj per-chain", {
 
 # Check NULL sep
 test_that("filter_vdj NULL sep", {
-  expect_warning(
-    res <- vdj_so %>%
-      filter_vdj(chains == "IGH;IGK", sep = NULL),
-    "The separator.+is not present"
-  )
+  res <- vdj_so %>%
+    filter_vdj(chains == "IGH;IGK", sep = NULL)
 
   check_nas(res@meta.data)
 

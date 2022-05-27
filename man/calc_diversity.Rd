@@ -9,6 +9,7 @@ calc_diversity(
   cluster_col = NULL,
   method = abdiv::simpson,
   clonotype_col = "clonotype_id",
+  n_boots = 100,
   prefix = "",
   return_df = FALSE
 )
@@ -27,6 +28,8 @@ output columns.}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating diversity}
+
+\item{n_boots}{Number of bootstrap replicates}
 
 \item{prefix}{Prefix to add to new columns}
 

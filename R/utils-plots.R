@@ -45,6 +45,24 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 }
 
 
+#' Trim long labels
+#'
+#' @param x Character vector containing labels to trim
+#' @param max_len Maximum number of characters to allow
+#' @param ellipsis Ellipsis to add to indicate label has been trimmed
+#' @noRd
+trim_lab <- function(x, max_len = 25, ellipsis = "...") {
+  len <- nchar(x)
+
+  trim_me <- len > max_len
+
+  x[trim_me] <- strtrim(x[trim_me], max_len)
+  x[trim_me] <- paste0(x[trim_me], ellipsis)
+
+  x
+}
+
+
 #' Create ggplot heatmap
 #'
 #' @param df_in data.frame
@@ -114,46 +132,39 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_bars <- function(df_in, x, y, .fill, clrs = NULL, y_ttl = y, ang = 45,
-                         hjst = 1, ...) {
-
-  # Bar position to use for plot
-  bar_pos <- ggplot2::position_dodge(preserve = "single")
+.create_bars <- function(df_in, x, y, .fill, clrs = NULL, y_ttl = y, ang = 45, hjst = 1, ...) {
 
   # Reverse bar order
   lvls  <- rev(levels(pull(df_in, x)))
   df_in <- .set_lvls(df_in, x, lvls)
 
-  # Color fill by variable
+  # Set aesthetics and geom_col arguments
+  gg_aes <- aes(!!sym(x), !!sym(y))
+
+  gg_args <- list(...)
+
   if (!is.null(.fill)) {
-    res <- ggplot2::ggplot(
-      df_in,
-      ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(.fill))
-    ) +
-    ggplot2::geom_col(..., position = bar_pos)
+    gg_aes$fill <- sym(.fill)
 
-    if (!is.null(clrs)) {
-      res <- res +
-        ggplot2::scale_fill_manual(values = clrs)
-    }
-
-  # Use single fill color
   } else {
-    res <- ggplot2::ggplot(
-      df_in,
-      ggplot2::aes(!!sym(x), !!sym(y))
-    )
-
-    if (!is.null(clrs)) {
-      res <- res +
-        ggplot2::geom_col(..., fill = clrs, position = bar_pos)
-
-    } else {
-      res <- res +
-        ggplot2::geom_col(..., position = bar_pos)
-    }
+    gg_args$fill <- clrs
   }
 
+  if (is.null(gg_args$position)) {
+    gg_args$position <- ggplot2::position_dodge(preserve = "single")
+  }
+
+  # Create bar graph
+  res <- ggplot2::ggplot(df_in, gg_aes) +
+    purrr::lift_dl(geom_col)(gg_args)
+
+  # Set plot colors
+  if (!is.null(.fill) && !is.null(clrs)) {
+    res <- res +
+      ggplot2::scale_fill_manual(values = clrs)
+  }
+
+  # Set theme
   res <- res +
     ggplot2::labs(y = y_ttl) +
     djvdj_theme() +
@@ -406,24 +417,23 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "b
 #' @noRd
 .set_lvls <- function(df_in, clmn, lvls) {
 
-  if (!is.null(lvls) && !is.null(clmn)) {
-    dat <- pull(df_in, clmn)
-
-    if (!is.character(dat) && !is.factor(dat)) {
-      warning("Plot levels were not modified, levels are only modified for characters and factors")
-
-      return(df_in)
-    }
-
-    if (!all(pull(df_in, clmn) %in% lvls)) {
-      stop("Not all labels in ", clmn, " are included in plot_levels")
-    }
-
-    df_in <- dplyr::mutate(
-      df_in,
-      !!sym(clmn) := factor(!!sym(clmn), levels = unique(lvls))
-    )
+  if (is.null(lvls) || is.null(clmn)) {
+    return(df_in)
   }
+
+  dat <- df_in[[clmn]]
+
+  if (!is.character(dat) && !is.factor(dat)) {
+    warning("Plot levels were not modified, levels are only modified for characters and factors")
+
+    return(df_in)
+  }
+
+  if (any(!unique(dat) %in% lvls)) {
+    stop("Not all labels in ", clmn, " are included in plot_lvls")
+  }
+
+  df_in[clmn] <- factor(df_in[[clmn]], unique(lvls), exclude = NULL)
 
   df_in
 }

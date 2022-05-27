@@ -118,7 +118,8 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells
 #' same rows as clonotype_col.
 #' @param return_df Return results as a data.frame. If FALSE, results will be
 #' added to the input object.
-#' @param sep Separator used for storing per cell V(D)J data
+#' @param sep Separator used for storing per cell V(D)J data. If NULL, columns
+#' containing V(D)J data will not be converted to vectors for filtering.
 #' @return Object with modified meta.data
 #'
 #' @examples
@@ -185,7 +186,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
   sep_cols <- col_list$sep
 
   # Allow sep to be NULL so user can skip .unnest_vdj
-  if (purrr::is_empty(sep_cols) && !is.null(sep)) {
+  if (!is.null(sep) && purrr::is_empty(sep_cols)) {
     warning("The separator '", sep, "' is not present in the data")
   }
 
@@ -420,6 +421,9 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
   #     1) iterate through vdj_cols
   #     2) apply fn to each row in column
   #     3) check length of fn result and set variable if length > 1
+  #
+  # With this current approach, user cannot refer to other columns in provided
+  # fn, e.g. ~ .x[productive] does not work :(
   fn <- purrr::as_mapper(fn, ...)
 
   for (i in seq_along(vdj_cols)) {

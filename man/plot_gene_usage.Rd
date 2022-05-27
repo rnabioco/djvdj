@@ -123,7 +123,7 @@ plot_gene_usage(
 plot_gene_usage(
   vdj_so,
   gene_cols = "v_gene",
-  vdj_genes = c("IGKV5-43", "IGLV1", "IGHV1-64", "IGHV1-11")
+  vdj_genes = c("IGKV5-43", "IGLV1", "IGHV1-64")
 )
 
 # Specify the number of top V(D)J genes to include in plot

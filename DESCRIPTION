@@ -31,14 +31,16 @@ Imports:
     Rsamtools,
     abdiv,
     SingleCellExperiment,
-    glue
+    glue,
+    broom,
+    boot,
+    stringr
 Suggests: 
     magrittr,
     covr,
     knitr,
     roxygen2,
     testthat,
-    stringr,
     here,
     cowplot
 VignetteBuilder: 
