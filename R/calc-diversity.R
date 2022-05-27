@@ -366,21 +366,24 @@ plot_diversity <- function(input, cluster_col = NULL, group_col = NULL, method =
     names(method) <- nm
   }
 
-  # Calculate diversity
-  plt_dat <- calc_diversity(
-    input         = input,
-    cluster_col   = cluster_col,
-    method        = method,
-    clonotype_col = clonotype_col,
-    prefix        = "",
-    return_df     = TRUE
-  )
-
   # Diversity columns
   div_cols <- paste0(names(method), "_", "diversity")
   err_cols <- paste0(names(method), "_", "stderr")
 
   plt_cols <- c(cluster_col, group_col, div_cols, err_cols)
+
+  # Calculate diversity
+  plt_dat <- .get_meta(input)
+  plt_dat <- .prepare_meta(input = NULL, plt_dat)
+  plt_dat <- dplyr::select(plt_dat, -any_of(c(div_cols, err_cols)))
+
+  plt_dat <- calc_diversity(
+    input         = plt_dat,
+    cluster_col   = cluster_col,
+    method        = method,
+    clonotype_col = clonotype_col,
+    prefix        = ""
+  )
 
   # Format data for plotting
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
@@ -490,6 +493,4 @@ plot_diversity <- function(input, cluster_col = NULL, group_col = NULL, method =
 
   res
 }
-
-
 

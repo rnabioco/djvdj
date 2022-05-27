@@ -61,6 +61,10 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
     all_of(c(CELL_COL, clonotype_col, cluster_col))
   )
 
+  if (dplyr::n_distinct(vdj[[cluster_col]]) < 2) {
+    stop("cluster_col must contain at least two unique groups.")
+  }
+
   vdj <- dplyr::group_by(
     vdj,
     !!!syms(c(cluster_col, clonotype_col))

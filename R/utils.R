@@ -201,7 +201,7 @@ NULL
 #'
 #' @rdname .add_meta
 #' @noRd
-.prepare_meta <- function(input, meta, row_col) {
+.prepare_meta <- function(input, meta, row_col = CELL_COL) {
   if (!is.data.frame(meta)) {
     stop("meta.data must be a data.frame.")
   }
@@ -212,7 +212,7 @@ NULL
     stop("meta.data cannot include list-cols.")
   }
 
-  if (!identical(colnames(input), meta[[row_col]])) {
+  if (!is.null(input) && !identical(colnames(input), meta[[row_col]])) {
     stop(
       "To add meta.data to an object, the meta.data must contain the same ",
       "cells as the target object."
