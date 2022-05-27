@@ -175,107 +175,6 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
   res
 }
 
-# .calc_div <- function(clone_col, met) {
-#   cnt <- table(clone_col)
-#
-#   met(cnt)
-# }
-#
-# res <- purrr::map_dfr(1:n_boots, ~ {
-#   idx <- .x
-#   sam <- dplyr::slice_sample(vdj, n = sam_sz, replace = TRUE)
-#
-#   method %>%
-#     purrr::imap_dfr(~ {
-#       dplyr::summarize(
-#         sam,
-#         div = .calc_div(!!sym(clonotype_col), .x),
-#         met = .y,
-#         idx = idx
-#       )
-#     })
-# })
-
-# calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
-#                            clonotype_col = "clonotype_id", n_boots = 100, prefix = "",
-#                            return_df = FALSE) {
-#
-#   if (length(method) > 1 && is.null(names(method))) {
-#     stop("Must include names if using a list of methods.")
-#   }
-#
-#   if (length(method) == 1 && is.null(names(method))) {
-#     nm <- as.character(substitute(method))
-#     nm <- last(nm)
-#
-#     method <- purrr::set_names(list(method), nm)
-#   }
-#
-#   # Format input data
-#   meta <- .get_meta(input)
-#   vdj  <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
-#
-#   # Count clonotypes
-#   vdj_cols <- clonotype_col
-#
-#   if (!is.null(cluster_col)) {
-#     vdj_cols <- c(cluster_col, vdj_cols)
-#     vdj   <- dplyr::group_by(vdj, !!sym(cluster_col))
-#   }
-#
-#   vdj <- dplyr::group_by(vdj, !!sym(clonotype_col), .add = TRUE)
-#
-#   vdj <- dplyr::summarize(
-#     vdj,
-#     .n      = dplyr::n_distinct(!!sym(CELL_COL)),
-#     .groups = "drop"
-#   )
-#
-#   # Calculate diversity
-#   if (!is.null(cluster_col)) {
-#     vdj <- dplyr::group_by(vdj, !!sym(cluster_col))
-#   }
-#
-#   if (length(method) == 1 && is.null(names(method))) {
-#     nm <- as.character(substitute(method))
-#     nm <- dplyr::last(nm)
-#
-#     method        <- list(method)
-#     names(method) <- nm
-#   }
-#
-#   div_cols      <- paste0(prefix, names(method))
-#   names(method) <- div_cols
-#
-#   vdj <- purrr::imap_dfr(method, ~ {
-#     dplyr::mutate(
-#       vdj,
-#       diversity = .x(.data$.n),
-#       met       = .y
-#     )
-#   })
-#
-#   vdj <- tidyr::pivot_wider(
-#     vdj,
-#     names_from  = "met",
-#     values_from = "diversity"
-#   )
-#
-#   vdj <- dplyr::ungroup(vdj)
-#   vdj <- dplyr::select(vdj, all_of(c(vdj_cols, div_cols)))
-#
-#   # Format results
-#   res <- dplyr::left_join(meta, vdj, by = vdj_cols)
-#
-#   if (return_df) {
-#     input <- meta
-#   }
-#
-#   res <- .add_meta(input, meta = res)
-#
-#   res
-# }
-
 
 #' Plot repertoire diversity
 #'
@@ -357,6 +256,8 @@ plot_diversity <- function(input, cluster_col = NULL, group_col = NULL, method =
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if providing a list of methods.")
   }
+
+  .chk_group_cols(cluster_col, group_col)
 
   if (length(method) == 1 && is.null(names(method))) {
     nm <- as.character(substitute(method))
