@@ -433,8 +433,9 @@ NULL
 #' )
 #'
 #' @export
-plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
-                     type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
+plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
+                     cluster_col = NULL, chain = NULL, type = "histogram",
+                     yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
                      log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
 
   # Format input data
@@ -499,8 +500,10 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, clus
 #' @rdname plot_vdj
 #' @param df_in input data.frame
 #' @noRd
-.plot_vdj <- function(df_in, data_col, cluster_col = NULL, type = "boxplot", yaxis = "frequency",
-                      plot_colors = NULL, plot_lvls = NULL, log_trans = FALSE, ...) {
+.plot_vdj <- function(df_in, data_col, cluster_col = NULL, group_col = NULL,
+                      type = "boxplot", yaxis = "frequency",
+                      plot_colors = NULL, plot_lvls = NULL,
+                      log_trans = FALSE, ...) {
 
   # Order clusters based on plot_lvls
   df_in <- .set_lvls(df_in, cluster_col, plot_lvls)
@@ -530,7 +533,7 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, clus
     return(res)
   }
 
-  # Create violin plot
+  # Create boxplot plot
   gg_args$x <- cluster_col
   gg_args$y <- data_col
 
