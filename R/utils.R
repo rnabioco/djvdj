@@ -13,7 +13,7 @@ NULL
 
 #' stats imports
 #'
-#' @importFrom stats median complete.cases as.formula
+#' @importFrom stats median complete.cases as.formula na.omit
 #' @noRd
 NULL
 
@@ -62,6 +62,22 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
     n <<- n + 1
   })
+}
+
+
+#' Base R version of stringr::str_extract_all
+#'
+#' This is a little slower than stingr::str_extract_all
+#'
+#' @param string Input vector
+#' @param pattern Regular expression
+#' @return A character vector
+#' @noRd
+.str_extract_all <- function(string, pattern) {
+
+  match_pos <- gregexpr(pattern, string, perl = TRUE)
+
+  regmatches(string, match_pos)
 }
 
 
@@ -343,15 +359,7 @@ NULL
 #' @noRd
 .unnest_vdj <- function(df_in, sep_cols, unnest = TRUE, sep = ";") {
 
-  # Add new set of columns based on sep_cols names
-  # this is useful if want to leave original columns unmodified
-  if (!is.null(names(sep_cols))) {
-    df_in <- dplyr::mutate(df_in, !!!syms(sep_cols))
-
-    sep_cols <- unname(sep_cols)
-  }
-
-  res <- df_in
+  df_in <- as_tibble(df_in)
 
   # Get types to use for coercing columns
   # use first 100 rows containing V(D)J data
@@ -359,69 +367,58 @@ NULL
   typs <- dplyr::filter(typs, if_all(all_of(sep_cols), ~ !is.na(.x)))
   typs <- utils::head(typs, 100)
 
-  typs <- dplyr::mutate(typs, across(
-    all_of(sep_cols),
-    ~ strsplit(.x, sep)
-  ))
+  typs <- tidyr::separate_rows(typs, all_of(sep_cols), sep = sep)
 
-  typs <- tidyr::unnest(typs, everything())
   typs <- purrr::map(typs, readr::guess_parser)
   typs <- purrr::map_chr(typs, ~ paste0("as.", .x))
 
   # Split sep_cols and convert types
-  # >2x faster
-  for (clmn in sep_cols) {
-    dat <- df_in[[clmn]]
-    fn  <- typs[[clmn]]
-
-    dat <- map(dat, ~ {
-      .x <- strsplit(.x, sep, fixed = TRUE)
+  # tidyr::separate_rows with convert = TRUE is slower than determining types
+  # and then converting
+  # strsplit is faster than str_split_n used by separate_rows
+  .str_split_convert <- function(x, pattern, fn) {
+    res <- map(x, ~ {
+      .x <- strsplit(.x, pattern, fixed = TRUE)
       .x <- unlist(.x)
-      .x <- do.call(fn, list(x = .x))
 
-      .x
+      do.call(fn, list(x = .x))
     })
 
-    res <- dplyr::mutate(res, !!sym(clmn) := dat)
+    res
   }
 
-  # Unnest data.frame
-  if (unnest) {
-    res <- tidyr::unnest(res, all_of(unname(sep_cols)))
+  if (!unnest) {
+    res <- dplyr::mutate(
+      df_in,
+      across(
+        all_of(sep_cols),
+        ~ .str_split_convert(.x, sep, typs[[cur_column()]])
+      )
+    )
+
+    return(res)
   }
+
+  res <- purrr::modify_at(df_in, sep_cols, strsplit, split = sep, fixed = TRUE)
+  res <- tidyr::unchop(res, all_of(sep_cols))
+
+  res <- mutate(
+    res,
+    across(
+      all_of(sep_cols),
+      ~ do.call(typs[[cur_column()]], list(x = .x))
+    )
+  )
 
   res
-
-  # Very very slow way
-  # for (i in seq_len(nrow(df_in))) {
-  #   rw <- df_in[i, ]
-  #
-  #   for (cl in sep_cols) {
-  #     x  <- rw[[cl]]
-  #     fn <- typs[[cl]]
-  #
-  #     x <- strsplit(x, sep, fixed = TRUE)
-  #     x <- unlist(x)
-  #     x <- do.call(fn, list(x = x))
-  #
-  #     rw <- dplyr::mutate(rw, !!sym(cl) := list(x))
-  #   }
-  #
-  #   if (unnest) {
-  #     rw <- tidyr::unnest(rw, all_of(sep_cols))
-  #   }
-  #
-  #   res <- dplyr::bind_rows(res, rw)
-  # }
 }
-
 
 #' Identify columns with V(D)J data
 #'
 #' @param df_in data.frame
 #' @param clone_col Column containing clonotype IDs to use for identifying
 #' columns with V(D)J data. If both clone_col and cols_in are NULL, all columns
-#' are included.
+#' are checked. This hurts performance when df_in has a lot of columns.
 #' @param cols_in Columns containing V(D)J data. If NULL data are selected by
 #' identifying columns that have NAs in the same rows as clone_col.
 #' @param sep Separator used for storing per cell V(D)J data. This is used to
@@ -431,6 +428,20 @@ NULL
 #' the other containing columns where separator has been detected.
 #' @noRd
 .get_vdj_cols <- function(df_in, clone_col, cols_in, sep, cell_col = CELL_COL) {
+
+  # Check clone_col
+  if (length(clone_col) > 1) {
+    stop("Provide a single value for clonotype column.")
+  }
+
+  if (is.null(cols_in) && !is.null(clone_col) && !clone_col %in% colnames(df_in)) {
+    clone_col <- NULL
+
+    warning(
+      "The provided clonotype column is not present in input data, provide a ",
+      "column containing clonotype IDs to increase performance."
+    )
+  }
 
   # If clone_col and cols_in are both NULL, use all columns
   if (is.null(clone_col) && is.null(cols_in)) {
@@ -465,7 +476,7 @@ NULL
     sep_cols <- dplyr::select(df_in, all_of(cols_in))
 
     sep_cols <- purrr::keep(sep_cols, ~ {
-      x <- head(na.omit(.x), 1000)
+      x <- head(stats::na.omit(.x), 1000)
 
       any(purrr::map_lgl(x, grepl, pattern = sep, fixed = TRUE))
     })

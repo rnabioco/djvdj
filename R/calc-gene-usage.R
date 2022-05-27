@@ -42,7 +42,7 @@
 #'
 #' @export
 calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
-                           chain_col = "chains", sep = ";") {
+                            chain_col = "chains", sep = ";") {
 
   # Format input data
   sep_cols <- gene_cols
@@ -56,7 +56,7 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
   meta <- .get_meta(input)
   meta <- dplyr::select(meta, all_of(vdj_cols))
 
-  meta <- dplyr::filter(meta, across(
+  meta <- dplyr::filter(meta, dplyr::if_all(
     all_of(gene_cols),
     ~ !is.na(.x)
   ))
@@ -270,7 +270,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, 
     sep         = sep
   )
 
-  plt_dat <- dplyr::filter(plt_dat, dplyr::across(
+  plt_dat <- dplyr::filter(plt_dat, dplyr::if_all(
     dplyr::all_of(gene_cols),
     ~ .x != "None"
   ))
@@ -291,8 +291,15 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, 
       warning("Some genes not found: ", absent)
     }
 
-    # If vdj_genes not provided, identify top n_genes for each cluster based on
-    # usage
+    # if vdj_genes are provided and two gene_cols are provided, gene pairs
+    # containing at least one of the specified genes will be included
+    plt_dat <- dplyr::filter(plt_dat, dplyr::if_any(
+      dplyr::all_of(gene_cols),
+      ~ .x %in% top_genes
+    ))
+
+  # If vdj_genes not provided, identify top n_genes for each cluster based on
+  # usage
   } else {
     top_genes <- plt_dat
 
@@ -311,15 +318,15 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, 
     # Do not use dplyr::pull since user can pass multiple gene_cols
     top_genes <- unlist(top_genes[, gene_cols], use.names = FALSE)
     top_genes <- unique(top_genes)
-  }
 
-  # Filter for top genes
-  # if two gene_cols are provided, all gene pairs containing at least one gene
-  # from the top gene pairs will be included
-  plt_dat <- dplyr::filter(plt_dat, dplyr::across(
-    dplyr::all_of(gene_cols),
-    ~ .x %in% top_genes
-  ))
+    # Filter for top gene pairs
+    # filter after identifying top genes, instead of at the same time, since
+    # want the same top pairs to be plotted for all samples
+    plt_dat <- dplyr::filter(plt_dat, dplyr::if_all(
+      dplyr::all_of(gene_cols),
+      ~ .x %in% top_genes
+    ))
+  }
 
   # Order top genes based on max usage for clusters
   if (length(gene_cols) == 1) {

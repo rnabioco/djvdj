@@ -20,7 +20,7 @@ plot_features(input, ...)
   plot_lvls = NULL,
   min_q = NULL,
   max_q = NULL,
-  na_color = "grey90",
+  na_color = "grey50",
   ...
 )
 
@@ -34,7 +34,7 @@ plot_features(input, ...)
   plot_lvls = NULL,
   min_q = NULL,
   max_q = NULL,
-  na_color = "grey90",
+  na_color = "grey50",
   ...
 )
 
@@ -50,7 +50,7 @@ plot_vdj_feature(input, ...)
   plot_lvls = NULL,
   min_q = NULL,
   max_q = NULL,
-  na_color = "grey90",
+  na_color = "grey50",
   chain_col = "chains",
   sep = ";",
   ...
@@ -67,7 +67,7 @@ plot_vdj_feature(input, ...)
   plot_lvls = NULL,
   min_q = NULL,
   max_q = NULL,
-  na_color = "grey90",
+  na_color = "grey50",
   chain_col = "chains",
   sep = ";",
   ...

@@ -38,7 +38,8 @@ same rows as clonotype_col.}
 \item{return_df}{Return results as a data.frame. If FALSE, results will be
 added to the input object.}
 
-\item{sep}{Separator used for storing per cell V(D)J data}
+\item{sep}{Separator used for storing per cell V(D)J data. If NULL, columns
+containing V(D)J data will not be converted to vectors for filtering.}
 }
 \value{
 Object with modified meta.data

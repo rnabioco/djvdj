@@ -42,7 +42,7 @@ plot_features <- function(input, ...) {
 #' @export
 #' @name plot_features
 plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2", plot_colors = NULL,
-                                  plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90", ...) {
+                                  plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey50", ...) {
 
   # Check arguments
   if (identical(x, y)) {
@@ -59,7 +59,9 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2", pl
   }
 
   # Adjust values based on min_q and max_q
-  if ((!is.null(min_q) || !is.null(max_q)) && is.numeric(plt_dat[[feature]])) {
+  is_num <- is.numeric(plt_dat[[feature]])
+
+  if ((!is.null(min_q) || !is.null(max_q)) && is_num) {
     plt_dat <- .set_lims(
       plt_dat,
       ft = feature,
@@ -68,13 +70,29 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2", pl
     )
   }
 
-  # Set feature and facet order
+  # Convert logical to character
+  if (is.logical(plt_dat[[feature]])) {
+    plt_dat <- purrr::modify_at(plt_dat, feature, as.character)
+  }
+
+  # Set feature levels
+  # Add NA to plot_lvls so missing values are plotted on the bottom
+  if (is.null(plot_lvls) && !is_num) {
+    dat <- plt_dat[[feature]]
+
+    plot_lvls <- levels(dat) %||% sort(unique(dat))
+
+    if (!any(is.na(plot_lvls))) {
+      plot_lvls <- c(NA, plot_lvls)
+    }
+  }
+
   plt_dat <- .set_lvls(plt_dat, feature, plot_lvls)
 
-  # Create scatter plot
-  # To add outline for each cluster create separate layers
+  # Sort data so largest values are plotted on top
   res <- arrange(plt_dat, !!sym(feature))
 
+  # Create scatter plot
   res <- ggplot2::ggplot(
     res,
     ggplot2::aes(!!sym(x), !!sym(y), color = !!sym(feature))
@@ -83,7 +101,8 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2", pl
 
   # Set feature colors
   if (!is.null(plot_colors)) {
-    if (is.numeric(plt_dat[[feature]])) {
+
+    if (is_num) {
       res <- res +
         ggplot2::scale_color_gradientn(
           colors   = plot_colors,
@@ -91,20 +110,30 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2", pl
         )
 
     } else {
+      # Set color names, need to do this so na_color is not overridden if the
+      # user provides extra values for plot_colors
+      if (is.null(names(plot_colors))) {
+        lvls <- stats::na.omit(plot_lvls)
+
+        plot_colors <- plot_colors[seq_along(lvls)]
+        plot_colors <- stats::na.omit(plot_colors)
+
+        names(plot_colors) <- lvls[seq_along(plot_colors)]
+      }
+
       res <- res +
         ggplot2::scale_color_manual(
           values   = plot_colors,
           na.value = na_color
         )
     }
-
   }
 
   # Set theme
   res <- res +
     djvdj_theme()
 
-  if (!is.numeric(plt_dat[[feature]])) {
+  if (!is_num) {
     res <- res +
       ggplot2::guides(
         color = ggplot2::guide_legend(override.aes = list(size = 3))
@@ -121,7 +150,7 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2", pl
 #' @export
 plot_features.Seurat <- function(input, feature, x = "UMAP_1", y = "UMAP_2", data_slot = "data",
                                  plot_colors = NULL, plot_lvls = NULL, min_q = NULL, max_q = NULL,
-                                 na_color = "grey90", ...) {
+                                 na_color = "grey50", ...) {
 
   # Fetch variables and add to meta.data
   # want input data to include meta.data and any features from FetchData
@@ -209,7 +238,7 @@ plot_vdj_feature <- function(input, ...) {
 #'
 #' @export
 plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", summary_fn = NULL, chain = NULL,
-                                     plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
+                                     plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey50",
                                      chain_col = "chains", sep = ";", ...) {
 
   plt_dat <- summarize_vdj(
@@ -241,7 +270,7 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2"
 #' @importFrom Seurat FetchData
 #' @export
 plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", data_slot = "data", summary_fn = NULL,
-                                    chain = NULL, plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey90",
+                                    chain = NULL, plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey50",
                                     chain_col = "chains", sep = ";", ...) {
 
   # Fetch variables and add to meta.data
@@ -321,7 +350,6 @@ NULL
 #' TRUE, possible values can be either a function, e.g. mean, or a purrr-style
 #' lambda, e.g. ~ mean(.x, na.rm = TRUE) where ".x" refers to the column. If
 #' NULL, the mean will be calculated.
-#' @param alpha Color transparency
 #' @param log_trans If TRUE, axis will be log10 transformed
 #' @seealso [summarize_vdj()] for more examples on how per-chain data can be
 #' summarized for each cell
@@ -406,7 +434,7 @@ NULL
 #'
 #' @export
 plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, cluster_col = NULL, chain = NULL,
-                     type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL, alpha = 0.5,
+                     type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
                      log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
 
   # Format input data
@@ -440,7 +468,10 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, clus
     }
   }
 
-  plt_dat <- dplyr::filter(plt_dat, if_all(all_of(data_cols), ~ !is.na(.x)))
+  plt_dat <- dplyr::filter(
+    plt_dat,
+    if_all(all_of(data_cols), ~ !is.na(.x))
+  )
 
   # Create plots
   fn <- function(clmn) {
@@ -469,41 +500,41 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean, clus
 #' @param df_in input data.frame
 #' @noRd
 .plot_vdj <- function(df_in, data_col, cluster_col = NULL, type = "boxplot", yaxis = "frequency",
-                      plot_colors = NULL, plot_lvls = NULL, alpha = 0.5, log_trans = FALSE, ...) {
+                      plot_colors = NULL, plot_lvls = NULL, log_trans = FALSE, ...) {
 
   # Order clusters based on plot_lvls
   df_in <- .set_lvls(df_in, cluster_col, plot_lvls)
 
-  # Create violin plot
-  if (type %in% c("histogram", "density")) {
-    res <- .create_hist(
-      df_in,
-      x         = data_col,
-      .color    = cluster_col,
-      .fill     = cluster_col,
-      clrs      = plot_colors,
-      type      = type,
-      yaxis     = yaxis,
-      log_trans = log_trans,
-      alpha     = alpha,
-      ...
-    )
-
-    return(res)
-  }
-
-  res <- .create_boxes(
-    df_in,
-    x         = cluster_col,
-    y         = data_col,
+  # Set ggplot arguments
+  gg_args <- list(
+    df_in     = df_in,
+    x         = data_col,
     .color    = cluster_col,
     .fill     = cluster_col,
     clrs      = plot_colors,
     type      = type,
     log_trans = log_trans,
-    alpha     = alpha,
     ...
   )
+
+  # Set default alpha to 0.5
+  gg_args$alpha <- gg_args$alpha %||% 0.5
+
+  # Create histogram
+  if (type %in% c("histogram", "density")) {
+
+    gg_args$yaxis <- yaxis
+
+    res <- purrr::lift_dl(.create_hist)(gg_args)
+
+    return(res)
+  }
+
+  # Create violin plot
+  gg_args$x <- cluster_col
+  gg_args$y <- data_col
+
+  res <- purrr::lift_dl(.create_boxes)(gg_args)
 
   res
 }
@@ -560,9 +591,9 @@ plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NUL
 
 #' @rdname plot_vdj
 #' @export
-plot_vdj_indels <- function(input, data_cols = c("n_insertion", "n_deletion", "n_mismatch"), cluster_col = NULL,
-                            chain = NULL, type = "violin", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
-                            log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
+plot_vdj_mutations <- function(input, data_cols = c("all_ins", "all_del", "all_mis"), cluster_col = NULL,
+                               chain = NULL, type = "boxplot", yaxis = "frequency", plot_colors = NULL,
+                               plot_lvls = NULL, log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
 
   res <- plot_vdj(
     input,

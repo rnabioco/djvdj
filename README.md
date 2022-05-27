@@ -40,10 +40,10 @@ sequences.
 # If prefixes were added to the cell barcodes when the object was generated,
 # include these as the vector names
 paths <- c(
-  KI_DN3_GE_ = "data/tcr/KI_DN3_TCR",
-  KI_DN4_GE_ = "data/tcr/KI_DN4_TCR",
-  WT_DN3_GE_ = "data/tcr/WT_DN3_TCR",
-  WT_DN4_GE_ = "data/tcr/WT_DN4_TCR"
+  KI_DN3_GE = "data/tcr/KI_DN3_TCR/outs",
+  KI_DN4_GE = "data/tcr/KI_DN4_TCR/outs",
+  WT_DN3_GE = "data/tcr/WT_DN3_TCR/outs",
+  WT_DN4_GE = "data/tcr/WT_DN4_TCR/outs"
 )
 
 so_tcr <- import_vdj(

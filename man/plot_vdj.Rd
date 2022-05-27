@@ -4,7 +4,7 @@
 \alias{plot_vdj}
 \alias{plot_vdj_reads}
 \alias{plot_cdr3_length}
-\alias{plot_vdj_indels}
+\alias{plot_vdj_mutations}
 \title{Plot continuous V(D)J data}
 \usage{
 plot_vdj(
@@ -18,7 +18,6 @@ plot_vdj(
   yaxis = "frequency",
   plot_colors = NULL,
   plot_lvls = NULL,
-  alpha = 0.5,
   log_trans = FALSE,
   chain_col = "chains",
   sep = ";",
@@ -55,12 +54,12 @@ plot_cdr3_length(
   ...
 )
 
-plot_vdj_indels(
+plot_vdj_mutations(
   input,
-  data_cols = c("n_insertion", "n_deletion", "n_mismatch"),
+  data_cols = c("all_ins", "all_del", "all_mis"),
   cluster_col = NULL,
   chain = NULL,
-  type = "violin",
+  type = "boxplot",
   yaxis = "frequency",
   plot_colors = NULL,
   plot_lvls = NULL,
@@ -106,8 +105,6 @@ e.g. fill = "red", color = "black"}
 
 \item{plot_lvls}{Character vector containing order to use for plotting cell
 clusters specified by cluster_col}
-
-\item{alpha}{Color transparency}
 
 \item{log_trans}{If TRUE, axis will be log10 transformed}
 
