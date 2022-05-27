@@ -8,11 +8,12 @@ plot_gene_usage(
   input,
   gene_cols,
   cluster_col = NULL,
+  group_col = NULL,
   chain = NULL,
   type = "bar",
   plot_colors = NULL,
   vdj_genes = NULL,
-  n_genes = 50,
+  n_genes = 20,
   plot_lvls = NULL,
   yaxis = "percent",
   chain_col = "chains",
@@ -29,6 +30,10 @@ provide a vector with two column names to plot paired usage of genes}
 
 \item{cluster_col}{meta.data column containing cell clusters to use for
 calculating gene usage}
+
+\item{group_col}{meta.data column to use for grouping cluster IDs present in
+cluster_col. This is useful when there are multiple replicates or patients
+for each treatment condition.}
 
 \item{chain}{Chain to use for calculating gene usage, set to NULL to include
 all chains}

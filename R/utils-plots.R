@@ -438,3 +438,16 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   df_in
 }
 
+
+#' Check cluster_col and group_col arguments
+#' @noRd
+.chk_group_cols <- function(cluster_col, group_col) {
+  if (!is.null(group_col) && is.null(cluster_col)) {
+    stop("cluster_col must be provided when group_col is specified.")
+  }
+
+  if (!is.null(group_col) && identical(group_col, cluster_col)) {
+    stop("group_col and cluster_col must specify different columns.")
+  }
+}
+

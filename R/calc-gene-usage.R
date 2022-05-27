@@ -66,6 +66,20 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
     ~ strsplit(as.character(.x), sep)
   ))
 
+  # Combine cluster_col columns for calculations
+  if (!is.null(cluster_col)) {
+    clst_nm <- paste0(cluster_col, collapse = "_")
+
+    res <- tidyr::unite(
+      res,
+      !!sym(clst_nm),
+      !!!syms(cluster_col),
+      remove = FALSE
+    )
+
+    clst_key <- dplyr::select(res, -all_of(gene_cols))
+  }
+
   # Filter chains
   if (!is.null(chain)) {
     res <- .filter_chains(
@@ -87,7 +101,7 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
   res <- dplyr::group_by(res, !!!syms(gene_cols))
 
   if (!is.null(cluster_col)) {
-    res <- dplyr::group_by(res, !!sym(cluster_col), .add = TRUE)
+    res <- dplyr::group_by(res, !!!syms(c(clst_nm, cluster_col)), .add = TRUE)
   }
 
   res <- dplyr::summarize(
@@ -99,13 +113,15 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 
   # Calculate percentage used
   if (!is.null(cluster_col)) {
-    clsts       <- pull(meta, cluster_col)
+    clsts       <- pull(clst_key, clst_nm)
     clst_counts <- table(clsts)
     clsts       <- unique(clsts)
 
+    res <- dplyr::select(res, -all_of(cluster_col), !!sym(clst_nm))
+
     res <- tidyr::pivot_wider(
       res,
-      names_from  = all_of(cluster_col),
+      names_from  = clst_nm,
       values_from = .data$freq,
       values_fill = 0
     )
@@ -113,16 +129,24 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
     res <- tidyr::pivot_longer(
       res,
       cols      = all_of(clsts),
-      names_to  = cluster_col,
+      names_to  = clst_nm,
       values_to = "freq"
     )
 
     res <- dplyr::mutate(
       res,
-      n_cells = as.numeric(clst_counts[!!sym(cluster_col)])
+      n_cells = as.numeric(clst_counts[!!sym(clst_nm)])
     )
 
-    res <- dplyr::relocate(res, .data$n_cells, .before = .data$freq)
+    # Add group columns
+    clst_key <- dplyr::distinct(clst_key, !!!syms(c(clst_nm, cluster_col)))
+
+    res <- dplyr::left_join(res, clst_key, by = clst_nm)
+
+    res <- dplyr::select(
+      res,
+      all_of(c(gene_cols, cluster_col, "n_cells", "freq"))
+    )
   }
 
   res <- dplyr::mutate(res, pct = (.data$freq / .data$n_cells) * 100)
@@ -139,6 +163,9 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' provide a vector with two column names to plot paired usage of genes
 #' @param cluster_col meta.data column containing cell clusters to use for
 #' calculating gene usage
+#' @param group_col meta.data column to use for grouping cluster IDs present in
+#' cluster_col. This is useful when there are multiple replicates or patients
+#' for each treatment condition.
 #' @param chain Chain to use for calculating gene usage, set to NULL to include
 #' all chains
 #' @param type Type of plot to create, can be either 'heatmap' or 'bar'. If
@@ -236,9 +263,11 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' )
 #'
 #' @export
-plot_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, type = "bar",
-                           plot_colors = NULL, vdj_genes = NULL, n_genes = 50, plot_lvls = NULL,
-                           yaxis = "percent", chain_col = "chains", sep = ";", ...) {
+plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
+                            group_col = NULL, chain = NULL, type = "bar",
+                            plot_colors = NULL, vdj_genes = NULL, n_genes = 20,
+                            plot_lvls = NULL, yaxis = "percent",
+                            chain_col = "chains", sep = ";", ...) {
 
   # Check inputs
   if (!type %in% c("heatmap", "bar")) {
@@ -253,18 +282,22 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, 
     stop("yaxis must be either 'percent' or 'frequency'")
   }
 
-  # Set y-axis
-  usage_col <- "pct"
+  .chk_group_cols(cluster_col, group_col)
 
-  if (identical(yaxis, "frequency")) {
-    usage_col <- "freq"
+  if (length(gene_cols) > 1 && !is.null(group_col)) {
+    warning("The group_col argument can only be used when gene_cols is length 1.")
+
+    group_col <- NULL
   }
+
+  # Set y-axis
+  usage_col <- ifelse(identical(yaxis, "frequency"), "freq", "pct")
 
   # Calculate gene usage
   plt_dat <- calc_gene_usage(
     input       = input,
     gene_cols   = gene_cols,
-    cluster_col = cluster_col,
+    cluster_col = c(cluster_col, group_col),
     chain       = chain,
     chain_col   = chain_col,
     sep         = sep
@@ -302,10 +335,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, 
   # usage
   } else {
     top_genes <- plt_dat
-
-    if (!is.null(cluster_col)) {
-      top_genes <- dplyr::group_by(top_genes, !!sym(cluster_col))
-    }
+    top_genes <- dplyr::group_by(top_genes, !!!syms(c(cluster_col, group_col)))
 
     # If two gene_cols are provided this will select the top gene pairs
     top_genes <- dplyr::slice_max(
@@ -328,8 +358,14 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, 
     ))
   }
 
-  # Order top genes based on max usage for clusters
+  # Order clusters based on plot_lvls
+  lvl_col <- ifelse(is.null(group_col), cluster_col, group_col)
+  plt_dat <- .set_lvls(plt_dat, lvl_col, plot_lvls)
+
+  # Create heatmap or bar graph for single gene
   if (length(gene_cols) == 1) {
+
+    # Order top genes based on max usage for clusters
     lvls <- dplyr::group_by(plt_dat, !!!syms(gene_cols))
 
     lvls <- dplyr::summarize(
@@ -341,14 +377,41 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, 
     lvls <- dplyr::arrange(lvls, .data$max_usage)
     lvls <- pull(lvls, gene_cols)
 
+    if (!is.null(group_col)) lvls <- rev(lvls)
+
     plt_dat <- .set_lvls(plt_dat, gene_cols, lvls)
-  }
 
-  # Order clusters based on plot_lvls
-  plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+    # Create grouped boxplot
+    if (!is.null(group_col)) {
+      gg_args <- list(
+        df_in  = plt_dat,
+        x      = gene_cols,
+        y      = usage_col,
+        .color = group_col,
+        .fill  = group_col,
+        clrs   = plot_colors,
+        outlier.color = NA,
+        ...
+      )
 
-  # Create heatmap or bar graph for single gene
-  if (length(gene_cols) == 1) {
+      gg_args$alpha <- gg_args$alpha %||% 0.5
+
+      res <- purrr::lift_dl(.create_boxes)(gg_args)
+
+      res <- res +
+        ggplot2::geom_jitter(
+          position = ggplot2::position_jitterdodge(jitter.width = 0.05)
+        ) +
+        labs(y = yaxis) +
+        theme(
+          legend.position = "right",
+          axis.text.x     = ggplot2::element_text(angle = 45, hjust = 1)
+        )
+
+      return(res)
+    }
+
+    # Create bargraph
     if (identical(type, "bar")) {
       plt_dat <- dplyr::filter(plt_dat, !!sym(usage_col) > 0)
 
@@ -365,6 +428,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL, 
       return(res)
     }
 
+    # Create heatmap
     res <- .create_heatmap(
       plt_dat,
       x     = cluster_col,

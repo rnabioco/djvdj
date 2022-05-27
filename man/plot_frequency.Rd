@@ -26,8 +26,8 @@ containing clonotype IDs, to calculate isotype abundance provide the column
 containing cell isotypes. By default clonotype_id is used for calculations.}
 
 \item{cluster_col}{meta.data column containing cluster IDs (or patients,
-treatment conditions, etc.) to use when calculating frequency. Calculations will be
-performed separately for each cluster.}
+treatment conditions, etc.) to use when calculating frequency. Calculations
+will be performed separately for each cluster.}
 
 \item{group_col}{meta.data column to use for grouping cluster IDs present in
 cluster_col. This is useful when there are multiple replicates or patients
