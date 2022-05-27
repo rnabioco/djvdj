@@ -25,10 +25,10 @@
     <loc>https://rnabioco.github.io/djvdj/news/index.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/calc_abundance.html</loc>
+    <loc>https://rnabioco.github.io/djvdj/reference/calc_diversity.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/calc_diversity.html</loc>
+    <loc>https://rnabioco.github.io/djvdj/reference/calc_frequency.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/calc_gene_usage.html</loc>
@@ -64,13 +64,16 @@
     <loc>https://rnabioco.github.io/djvdj/reference/mutate_vdj.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/plot_abundance.html</loc>
+    <loc>https://rnabioco.github.io/djvdj/reference/plot_clonal_abundance.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/plot_diversity.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/plot_features.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/plot_frequency.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/plot_gene_usage.html</loc>
