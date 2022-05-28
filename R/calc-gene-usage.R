@@ -359,7 +359,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   }
 
   # Order clusters based on plot_lvls
-  lvl_col <- ifelse(is.null(group_col), cluster_col, group_col)
+  lvl_col <- dplyr::if_else(is.null(group_col), cluster_col, group_col)
   plt_dat <- .set_lvls(plt_dat, lvl_col, plot_lvls)
 
   # Create heatmap or bar graph for single gene
