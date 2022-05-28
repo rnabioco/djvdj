@@ -42,8 +42,17 @@
 #' )
 #'
 #' @export
-calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonotype_col = "clonotype_id",
-                            prefix = NULL, return_mat = FALSE) {
+calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
+                            clonotype_col = "clonotype_id", prefix = NULL,
+                            return_mat = FALSE) {
+
+  # Check inputs
+  if (!is.function(method)) {
+    stop(
+      "A function must be provided to the method argument, ",
+      "e.g. method = abdiv::jaccard"
+    )
+  }
 
   # If no prefix provided, use method name
   if (is.null(prefix)) {
@@ -103,20 +112,6 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
     )
   })
 
-  # Return matrix
-  if (return_mat) {
-    res <- tidyr::pivot_wider(
-      res,
-      names_from  = .data$Var1,
-      values_from = .data$sim
-    )
-
-    res <- tibble::column_to_rownames(res, "Var2")
-    res <- as.matrix(res)
-
-    return(res)
-  }
-
   # Calculate self similarity
   res_s <- purrr::map_dfr(clsts, ~ {
     d <- pull(vdj, .x)
@@ -132,7 +127,12 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
   res_i <- dplyr::rename(res, Var1 = .data$Var2, Var2 = .data$Var1)
 
   res <- dplyr::bind_rows(res, res_i, res_s)
-  res <- dplyr::mutate(res, Var1 = paste0(prefix, .data$Var1))
+
+  if (!return_mat) {
+    res <- dplyr::mutate(res, Var1 = paste0(prefix, .data$Var1))
+  }
+
+  res <- dplyr::arrange(res, Var2)
 
   res <- tidyr::pivot_wider(
     res,
@@ -140,7 +140,16 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
     values_from = .data$sim
   )
 
-  # Add results to input
+  res <- dplyr::select(res, .data$Var2, all_of(res$Var2))
+
+  # Return matrix
+  if (return_mat) {
+    res <- tibble::column_to_rownames(res, "Var2")
+
+    return(as.matrix(res))
+  }
+
+    # Add results to input
   j_cols <- purrr::set_names("Var2", cluster_col)
 
   res <- dplyr::left_join(meta, res, by = j_cols)
@@ -152,7 +161,10 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
   if (is.factor(clst_col)) {
     res <- dplyr::mutate(
       res,
-      !!sym(cluster_col) := factor(!!sym(cluster_col), levels = levels(clst_col))
+      !!sym(cluster_col) := factor(
+        !!sym(cluster_col),
+        levels = levels(clst_col)
+      )
     )
   }
 
@@ -172,10 +184,16 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating overlap
 #' @param plot_colors Character vector containing colors for plotting
-#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
-#' linetype, etc.
+#' @param plot_lvls Levels to use for ordering clusters
+#' @param include_upper_triangle If FALSE, upper triangle will not be shown on
+#' plot and rows/columns will not be clustered.
+#' @param include_diagonal If FALSE, diagonal will not be shown on heatmap and
+#' rows/columns will not be clustered.
+#' @param ... Additional arguments to pass to ComplexHeatmap::Heatmap()
 #' @return ggplot object
 #' @importFrom abdiv jaccard
+#' @importFrom ComplexHeatmap Heatmap
+#' @importFrom grid gpar
 #'
 #' @examples
 #' # Plot repertoire overlap
@@ -207,8 +225,10 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
 #' )
 #'
 #' @export
-plot_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonotype_col = "clonotype_id",
-                            plot_colors = NULL, ...) {
+plot_similarity <- function(input, cluster_col, method = abdiv::jaccard,
+                            clonotype_col = "clonotype_id", plot_colors = NULL,
+                            plot_lvls = NULL, include_upper_triangle = TRUE,
+                            include_diagonal = TRUE, ...) {
 
   # Calculate similarity
   plt_dat <- calc_similarity(
@@ -219,38 +239,74 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
     prefix        = "",
     return_mat    = TRUE
   )
-
+  # Similarity column
   sim_col <- as.character(substitute(method))
   sim_col <- dplyr::last(sim_col)
 
-  var_lvls <- unique(c(rownames(plt_dat), colnames(plt_dat)))
-  var_lvls <- sort(var_lvls)
+  # Plot colors and levels
+  plt_args <- list(name = sim_col, ...)
 
-  plt_dat <- tibble::as_tibble(plt_dat, rownames = "Var1")
+  plt_args$col <- plot_colors %||% c("white", "#6A51A3")
 
-  plt_dat <- tidyr::pivot_longer(
-    plt_dat,
-    cols      = -.data$Var1,
-    names_to  = "Var2",
-    values_to = sim_col
-  )
+  if (is.null(plot_lvls)) {
+    plot_lvls <- unique(c(rownames(plt_dat), colnames(plt_dat)))
+    plot_lvls <- sort(plot_lvls)
 
-  # Set Var levels
-  plt_dat <- dplyr::mutate(
-    plt_dat,
-    Var1 = factor(.data$Var1, levels = rev(var_lvls)),
-    Var2 = factor(.data$Var2, levels = var_lvls)
-  )
+  } else {
+    plt_args$cluster_rows    <- FALSE
+    plt_args$cluster_columns <- FALSE
+  }
+
+  plt_dat <- plt_dat[plot_lvls, plot_lvls]
+
+  # Remove upper triangle and/or diagonal
+  if (!include_upper_triangle || !include_diagonal) {
+    lvls_key <- purrr::set_names(plot_lvls)
+
+    lvls_key <- purrr::imap(lvls_key, ~ {
+      idx <- grep(.x, plot_lvls)
+
+      v <- c()
+
+      if (!include_upper_triangle) {
+        v <- plot_lvls[idx:length(plot_lvls)]
+        v <- v[v != .y]
+      }
+
+      if (!include_diagonal) {
+        v <- c(v, .y)
+      }
+
+      v
+    })
+
+    for (i in seq_along(lvls_key)) {
+      plt_dat[names(lvls_key[i]), lvls_key[[i]]] <- NA
+    }
+
+    # Remove rows/columns with all NAs
+    na_idx <- is.na(plt_dat)
+    r_idx  <- rowSums(na_idx) != ncol(plt_dat)
+    c_idx  <- colSums(na_idx) != nrow(plt_dat)
+
+    plt_dat <- plt_dat[r_idx, c_idx]
+
+    # Set plot arguments
+    plt_args$cluster_rows    <- FALSE
+    plt_args$cluster_columns <- FALSE
+    plt_args$row_names_side  <- plt_args$row_names_side %||% "left"
+    plt_args$na_col          <- plt_args$na_col %||% NA
+  }
 
   # Create heatmap
-  res <- .create_heatmap(
-    plt_dat,
-    x     = "Var1",
-    y     = "Var2",
-    .fill = sim_col,
-    clrs  = plot_colors,
-    ...
+  plt_args$matrix <- plt_dat
+
+  plt_args$heatmap_legend_param <- list(
+    title_gp      = grid::gpar(fontface = "plain"),
+    legend_height = ggplot2::unit(80, "pt")
   )
+
+  res <- purrr::lift_dl(ComplexHeatmap::Heatmap)(plt_args)
 
   res
 }

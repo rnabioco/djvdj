@@ -10,6 +10,9 @@ plot_similarity(
   method = abdiv::jaccard,
   clonotype_col = "clonotype_id",
   plot_colors = NULL,
+  plot_lvls = NULL,
+  include_upper_triangle = TRUE,
+  include_diagonal = TRUE,
   ...
 )
 }
@@ -27,8 +30,15 @@ calculating overlap}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
-\item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
-linetype, etc.}
+\item{plot_lvls}{Levels to use for ordering clusters}
+
+\item{include_upper_triangle}{If FALSE, upper triangle will not be shown on
+plot and rows/columns will not be clustered.}
+
+\item{include_diagonal}{If FALSE, diagonal will not be shown on heatmap and
+rows/columns will not be clustered.}
+
+\item{...}{Additional arguments to pass to ComplexHeatmap::Heatmap()}
 }
 \value{
 ggplot object

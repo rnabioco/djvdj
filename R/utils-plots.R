@@ -78,12 +78,10 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_heatmap <- function(df_in, x, y, .fill, clrs = NULL, na_color = "white",
+.create_heatmap <- function(df_in, x, y, .fill, clrs = NULL, na_color = NA,
                             ttl = .fill, ang = 45, hjst = 1, ...) {
 
-  if (is.null(clrs)) {
-    clrs <- "#6A51A3"
-  }
+  clrs <- clrs %||% "#6A51A3"
 
   if (length(clrs) == 1) {
     clrs <- c("grey90", clrs)

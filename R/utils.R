@@ -93,8 +93,8 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 #' @param empty_val Value to use when no chains match chain
 #' @return filtered data.frame
 #' @noRd
-.filter_chains <- function(df_in, vdj_cols, chain, chain_col = "chains", col_names = "{.col}",
-                           empty_val = NA) {
+.filter_chains <- function(df_in, vdj_cols, chain, chain_col = "chains",
+                           col_names = "{.col}", empty_val = NA) {
 
   if (is.null(chain)) {
     return(df_in)
@@ -427,7 +427,8 @@ NULL
 #' @return List with two vectors, one containing columns with V(D)J data and
 #' the other containing columns where separator has been detected.
 #' @noRd
-.get_vdj_cols <- function(df_in, clone_col, cols_in, sep, cell_col = CELL_COL) {
+.get_vdj_cols <- function(df_in, clone_col, cols_in, sep,
+                          cell_col = CELL_COL) {
 
   # Check clone_col
   if (length(clone_col) > 1) {
