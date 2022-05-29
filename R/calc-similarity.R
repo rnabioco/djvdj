@@ -47,15 +47,19 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
                             return_mat = FALSE) {
 
   # Check inputs
-  if (!is.function(method)) {
+  is_mds <- identical(method, "mds")
+
+  if (!is.function(method) && !is_mds) {
     stop(
-      "A function must be provided to the method argument, ",
-      "e.g. method = abdiv::jaccard"
+      "method must be 'mds' or a function to use for comparing ",
+      "sample repertoires, e.g. method = abdiv::jaccard."
     )
   }
 
+  if (is_mds) method <- abdiv::jaccard
+
   # If no prefix provided, use method name
-  if (is.null(prefix)) {
+  if (is.null(prefix) && !is_mds) {
     prefix <- as.character(substitute(method))
     prefix <- dplyr::last(prefix)
     prefix <- paste0(prefix, "_")
@@ -123,14 +127,13 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
     )
   })
 
-  # Add inverse combinations
+  # Combine with inverse combinations
   res_i <- dplyr::rename(res, Var1 = .data$Var2, Var2 = .data$Var1)
 
   res <- dplyr::bind_rows(res, res_i, res_s)
 
-  if (!return_mat) {
-    res <- dplyr::mutate(res, Var1 = paste0(prefix, .data$Var1))
-  }
+  # Format data.frame
+  clmns <- sort(unique(res$Var2))
 
   res <- dplyr::arrange(res, Var2)
 
@@ -140,19 +143,41 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
     values_from = .data$sim
   )
 
-  res <- dplyr::select(res, .data$Var2, all_of(res$Var2))
+  res <- dplyr::select(res, !!sym(cluster_col) := .data$Var2, all_of(clmns))
 
-  # Return matrix
-  if (return_mat) {
-    res <- tibble::column_to_rownames(res, "Var2")
-
-    return(as.matrix(res))
+  if (is_mds || return_mat) {
+    res <- tibble::column_to_rownames(res, cluster_col)
+    res <- as.matrix(res)
   }
 
-    # Add results to input
-  j_cols <- purrr::set_names("Var2", cluster_col)
+  # Calculate MDS
+  if (is_mds) {
+    clmns <- c("MDS_1", "MDS_2")
 
-  res <- dplyr::left_join(meta, res, by = j_cols)
+    mds_fn <- purrr::quietly(MASS::isoMDS)
+
+    res <- mds_fn(as.dist(res))
+    res <- res$result$points
+
+    colnames(res) <- clmns
+
+    res <- tibble::as_tibble(res, rownames = cluster_col)
+
+  # Return matrix if method not mds
+  } else if (return_mat) return(res)
+
+  # Return data.frame if method mds
+  if (return_mat) return(res)
+
+  # Add column prefixes
+  res <- dplyr::rename_with(
+    res,
+    ~ paste0(prefix, .x),
+    all_of(clmns)
+  )
+
+  # Add results to input
+  res <- dplyr::left_join(meta, res, by = cluster_col)
 
   # Format results
   # join will cause factor levels to be lost, add these back
@@ -185,9 +210,9 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
 #' calculating overlap
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters
-#' @param include_upper_triangle If FALSE, upper triangle will not be shown on
-#' plot and rows/columns will not be clustered.
-#' @param include_diagonal If FALSE, diagonal will not be shown on heatmap and
+#' @param include_upper_triangle If FALSE, for heatmap upper triangle will not
+#' be shown and rows/columns will not be clustered.
+#' @param include_diagonal If FALSE, for heatmap diagonal will not be shown and
 #' rows/columns will not be clustered.
 #' @param ... Additional arguments to pass to ComplexHeatmap::Heatmap()
 #' @return ggplot object
@@ -230,6 +255,16 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard,
                             plot_lvls = NULL, include_upper_triangle = TRUE,
                             include_diagonal = TRUE, ...) {
 
+  # Check inputs
+  is_mds <- identical(method, "mds")
+
+  if (!is.function(method) && !is_mds) {
+    stop(
+      "method must be 'mds' or a function to use for comparing ",
+      "sample repertoires, e.g. method = abdiv::jaccard."
+    )
+  }
+
   # Calculate similarity
   plt_dat <- calc_similarity(
     input         = input,
@@ -239,12 +274,29 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard,
     prefix        = "",
     return_mat    = TRUE
   )
+
+  # Create MDS plot
+  if (is_mds) {
+    res <- plot_features(
+      plt_dat,
+      x = "MDS_1",
+      y = "MDS_2",
+      feature     = cluster_col,
+      plot_colors = plot_colors,
+      plot_lvls   = plot_lvls,
+      ...
+    ) +
+      ggrepel::geom_text_repel(ggplot2::aes(label = !!sym(cluster_col)))
+
+    return(res)
+  }
+
   # Similarity column
   sim_col <- as.character(substitute(method))
   sim_col <- dplyr::last(sim_col)
 
   # Plot colors and levels
-  plt_args <- list(name = sim_col, ...)
+  plt_args <- list(...)
 
   plt_args$col <- plot_colors %||% c("white", "#6A51A3")
 
@@ -298,14 +350,25 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard,
     plt_args$na_col          <- plt_args$na_col %||% NA
   }
 
-  # Create heatmap
-  plt_args$matrix <- plt_dat
+  # Set final heatmap parameters
+  # use computed similarities for clustering, so use a distance function that
+  # just converts a matrix to a dist object
+  # can't directly use as.dist as the function since it accepts too many
+  # arguments
+  dist_fn <- function(input) stats::as.dist(input)
 
-  plt_args$heatmap_legend_param <- list(
+  lgd_params <- list(
     title_gp      = grid::gpar(fontface = "plain"),
-    legend_height = ggplot2::unit(80, "pt")
+    legend_height = ggplot2::unit(80, "pt"),
+    title         = sim_col
   )
 
+  plt_args$matrix                      <- plt_dat
+  plt_args$heatmap_legend_param        <- plt_args$heatmap_legend_param %||% lgd_params
+  plt_args$clustering_distance_rows    <- plt_args$clustering_distance_rows %||% dist_fn
+  plt_args$clustering_distance_columns <- plt_args$clustering_distance_columns %||% dist_fn
+
+  # Create heatmap
   res <- purrr::lift_dl(ComplexHeatmap::Heatmap)(plt_args)
 
   res

@@ -32,10 +32,10 @@ calculating overlap}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
 
-\item{include_upper_triangle}{If FALSE, upper triangle will not be shown on
-plot and rows/columns will not be clustered.}
+\item{include_upper_triangle}{If FALSE, for heatmap upper triangle will not
+be shown and rows/columns will not be clustered.}
 
-\item{include_diagonal}{If FALSE, diagonal will not be shown on heatmap and
+\item{include_diagonal}{If FALSE, for heatmap diagonal will not be shown and
 rows/columns will not be clustered.}
 
 \item{...}{Additional arguments to pass to ComplexHeatmap::Heatmap()}
