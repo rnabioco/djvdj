@@ -9,6 +9,8 @@ plot_diversity(
   cluster_col = NULL,
   group_col = NULL,
   method = abdiv::simpson,
+  downsample = FALSE,
+  n_boots = 100,
   clonotype_col = "clonotype_id",
   plot_colors = NULL,
   plot_lvls = NULL,
@@ -29,6 +31,11 @@ cluster_col}
 \item{method}{Function to use for calculating diversity. A named list of
 functions can be passed to plot multiple diversity metrics,
 e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)}
+
+\item{downsample}{Downsample clusters to the same size when calculating
+diversity metrics}
+
+\item{n_boots}{Number of bootstrap replicates}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating repertoire diversity}

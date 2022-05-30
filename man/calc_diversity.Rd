@@ -9,6 +9,7 @@ calc_diversity(
   cluster_col = NULL,
   method = abdiv::simpson,
   clonotype_col = "clonotype_id",
+  downsample = FALSE,
   n_boots = 100,
   prefix = "",
   return_df = FALSE
@@ -29,12 +30,15 @@ output columns.}
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating diversity}
 
+\item{downsample}{Downsample clusters to the same size when calculating
+diversity metrics}
+
 \item{n_boots}{Number of bootstrap replicates}
 
 \item{prefix}{Prefix to add to new columns}
 
-\item{return_df}{Return results as a data.frame. If set to FALSE, results
-will be added to the input object.}
+\item{return_df}{Return results as a data.frame. If FALSE, results will be
+added to the input object.}
 }
 \value{
 Single cell object or data.frame with diversity metrics

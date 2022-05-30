@@ -10,10 +10,12 @@
 #' output columns.
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating diversity
+#' @param downsample Downsample clusters to the same size when calculating
+#' diversity metrics
 #' @param n_boots Number of bootstrap replicates
 #' @param prefix Prefix to add to new columns
-#' @param return_df Return results as a data.frame. If set to FALSE, results
-#' will be added to the input object.
+#' @param return_df Return results as a data.frame. If FALSE, results will be
+#' added to the input object.
 #' @return Single cell object or data.frame with diversity metrics
 #' @importFrom abdiv simpson
 #' @importFrom broom tidy
@@ -67,8 +69,8 @@
 #'
 #' @export
 calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
-                           clonotype_col = "clonotype_id", n_boots = 100, prefix = "",
-                           return_df = FALSE) {
+                           clonotype_col = "clonotype_id", downsample = FALSE,
+                           n_boots = 100, prefix = "", return_df = FALSE) {
 
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if using a list of methods.")
@@ -96,7 +98,7 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 
   # Get parameters for bootstrapped sampling
   sam     <- vdj
-  sam_rng <- c(20, 5000)
+  sam_rng <- c(20, Inf)
   sam_sz  <- nrow(sam)
 
   if (!is.null(cluster_col)) {
@@ -127,7 +129,9 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
     sam <- dplyr::group_by(sam, !!sym(cluster_col))
   }
 
-  sam <- dplyr::slice_sample(sam, n = sam_sz)
+  if (downsample) {
+    sam <- dplyr::slice_sample(sam, n = sam_sz)
+  }
 
   # Calculate diversity
   .calc_div <- function(x, met, n_bts = n_boots) {
@@ -166,9 +170,7 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 
   res <- dplyr::left_join(meta, vdj, by = vdj_cols)
 
-  if (return_df) {
-    input <- meta
-  }
+  if (return_df) input <- meta
 
   res <- .add_meta(input, meta = res)
 
@@ -185,6 +187,9 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #' @param method Function to use for calculating diversity. A named list of
 #' functions can be passed to plot multiple diversity metrics,
 #' e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)
+#' @param downsample Downsample clusters to the same size when calculating
+#' diversity metrics
+#' @param n_boots Number of bootstrap replicates
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating repertoire diversity
 #' @param group_col meta.data column to use for grouping IDs present in
@@ -249,8 +254,10 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #' )
 #'
 #' @export
-plot_diversity <- function(input, cluster_col = NULL, group_col = NULL, method = abdiv::simpson,
-                           clonotype_col = "clonotype_id", plot_colors = NULL, plot_lvls = NULL,
+plot_diversity <- function(input, cluster_col = NULL, group_col = NULL,
+                           method = abdiv::simpson, downsample = FALSE,
+                           n_boots = 100, clonotype_col = "clonotype_id",
+                           plot_colors = NULL, plot_lvls = NULL,
                            facet_rows = 1, ...) {
 
   if (length(method) > 1 && is.null(names(method))) {
@@ -282,6 +289,8 @@ plot_diversity <- function(input, cluster_col = NULL, group_col = NULL, method =
     input         = plt_dat,
     cluster_col   = cluster_col,
     method        = method,
+    downsample    = downsample,
+    n_boots       = n_boots,
     clonotype_col = clonotype_col,
     prefix        = ""
   )
