@@ -39,9 +39,9 @@ chain.}
 useful if the V(D)J datasets being loaded do not have consistent clonotype
 IDs, i.e., clonotype1 is not the same across samples. Possible values are:
 \itemize{
-\item cdr3aa, define clonotypes based on the CDR3 amino acid sequence
-\item cdr3nt, define clonotypes based on the CDR3 nucleotide sequence
-\item cdr3_gene, define clonotypes based on the combination of the CDR3
+\item 'cdr3aa', define clonotypes based on the CDR3 amino acid sequence
+\item 'cdr3nt', define clonotypes based on the CDR3 nucleotide sequence
+\item 'cdr3_gene', define clonotypes based on the combination of the CDR3
 nucleotide sequence and the V(D)J genes.
 }
 
