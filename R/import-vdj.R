@@ -17,9 +17,9 @@
 #' useful if the V(D)J datasets being loaded do not have consistent clonotype
 #' IDs, i.e., clonotype1 is not the same across samples. Possible values are:
 #'
-#' - cdr3aa, define clonotypes based on the CDR3 amino acid sequence
-#' - cdr3nt, define clonotypes based on the CDR3 nucleotide sequence
-#' - cdr3_gene, define clonotypes based on the combination of the CDR3
+#' - 'cdr3aa', define clonotypes based on the CDR3 amino acid sequence
+#' - 'cdr3nt', define clonotypes based on the CDR3 nucleotide sequence
+#' - 'cdr3_gene', define clonotypes based on the combination of the CDR3
 #' nucleotide sequence and the V(D)J genes.
 #'
 #' When defining clonotypes, only productive full length chains will be used.
