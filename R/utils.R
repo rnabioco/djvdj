@@ -13,7 +13,7 @@ NULL
 
 #' stats imports
 #'
-#' @importFrom stats median complete.cases as.formula na.omit
+#' @importFrom stats median complete.cases as.formula as.dist hclust cutree na.omit
 #' @noRd
 NULL
 
@@ -91,14 +91,19 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 #' @param col_names A glue specification that describes how to name the output
 #' columns, this can use {.col} to stand for the selected column name
 #' @param empty_val Value to use when no chains match chain
+#' @param allow_dups Allow cells to have multiple copies of the same chain. If
+#' FALSE, cells must have exactly one copy of each chain specified. If a cell
+#' has multiple copies of the same chain, V(D)J data for the cell is removed.
+#' This filtering is only performed for list-cols.
 #' @return filtered data.frame
 #' @noRd
 .filter_chains <- function(df_in, vdj_cols, chain, chain_col = "chains",
-                           col_names = "{.col}", empty_val = NA) {
+                           col_names = "{.col}", allow_dups = TRUE,
+                           empty_val = NA) {
 
-  if (is.null(chain)) {
-    return(df_in)
-  }
+  if (is.null(chain)) return(df_in)
+
+  chain <- unique(chain)
 
   # If all vdj_cols are not list-cols, filter data.frame normally
   is_lst <- purrr::map_lgl(df_in[, c(chain_col, vdj_cols)], is.list)
@@ -112,7 +117,10 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
     return(res)
 
   } else if (!all(is_lst)) {
-    stop("chain_col and vdj_cols cannot be a mix of normal columns and list-cols.")
+    stop(
+      "chain_col and vdj_cols cannot be a mix ",
+      "of normal columns and list-cols."
+    )
   }
 
   # Function to check/filter chains
@@ -127,9 +135,10 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
     r <- x[chns %in% chain]
 
-    if (purrr::is_empty(r)) {
-      r <- empty_val
-    }
+    dup_chns <- chns[chns %in% chain]
+    dup_chns <- any(duplicated(dup_chns))
+
+    if (purrr::is_empty(r) || (!allow_dups && dup_chns)) r <- empty_val
 
     list(r)
   }

@@ -49,9 +49,7 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells
   # Format input data
   meta <- .get_meta(input)
 
-  if (is.null(sep)) {
-    return(meta)
-  }
+  if (is.null(sep)) return(meta)
 
   # Identify columns with V(D)J data
   col_list <- .get_vdj_cols(

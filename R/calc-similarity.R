@@ -337,10 +337,9 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard,
     }
 
     # Remove rows/columns with all NAs
-    na_idx <- is.na(plt_dat)
-    r_idx  <- rowSums(na_idx) != ncol(plt_dat)
-    c_idx  <- colSums(na_idx) != nrow(plt_dat)
-
+    na_idx  <- is.na(plt_dat)
+    r_idx   <- rowSums(na_idx) != ncol(plt_dat)
+    c_idx   <- colSums(na_idx) != nrow(plt_dat)
     plt_dat <- plt_dat[r_idx, c_idx]
 
     # Set plot arguments
