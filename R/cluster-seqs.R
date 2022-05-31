@@ -91,30 +91,37 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
     ...
   )
 
-  browser()
-
   # Louvain clustering
   if (identical(method, "louvain")) {
     clst_method <- igraph::cluster_louvain
-
-    clst_args$resolution <- resolution
+    rsln_arg    <- "resolution"
 
   # Leiden clustering
   } else if (identical(method, "leiden")) {
     clst_method <- igraph::cluster_leiden
+    rsln_arg    <- "resolution_parameter"
 
-    clst_args$resolution_parameter <- resolution
     clst_args$objective_function   <- clst_args$objective_function %||% "modularity"
   }
 
   # Run clustering
-  clsts <- purrr::lift_dl(clst_method)(clst_args)
-  clsts <- igraph::membership(clsts)
-  res   <- dplyr::mutate(res, cluster = as.character(clsts))
+  resolution <- purrr::set_names(
+    resolution,
+    paste0(prefix, "cluster_", resolution)
+  )
+
+  clsts <- imap_dfc(resolution, ~ {
+    clst_args[rsln_arg] <- .x
+
+    clsts <- purrr::lift_dl(clst_method)(clst_args)
+    clsts <- igraph::membership(clsts)
+
+    tibble(!!sym(.y) := as.character(clsts))
+  })
+
+  res <- dplyr::bind_cols(res, clsts)
 
   # Format results
-  res <- dplyr::rename_with(res, ~ paste0(prefix, .x), -all_of(CELL_COL))
-
   meta <- .get_meta(input)
   res  <- dplyr::left_join(meta, res, by = CELL_COL)
 
