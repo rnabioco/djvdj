@@ -53,6 +53,9 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 
   vdj_cols <- c(CELL_COL, cluster_col, sep_cols)
 
+
+
+  # >>> SHOULD THIS BE REPLACED WITH FETCH_VDJ CALL???
   meta <- .get_meta(input)
   meta <- dplyr::select(meta, all_of(vdj_cols))
 
@@ -65,6 +68,9 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
     all_of(sep_cols),
     ~ strsplit(as.character(.x), sep)
   ))
+  # <<< SHOULD THIS BE REPLACED WITH FETCH_VDJ CALL???
+
+
 
   # Combine cluster_col columns for calculations
   if (!is.null(cluster_col)) {

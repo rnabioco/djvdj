@@ -155,9 +155,8 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
     clmns <- c("MDS_1", "MDS_2")
 
     mds_fn <- purrr::quietly(MASS::isoMDS)
-
-    res <- mds_fn(as.dist(res))
-    res <- res$result$points
+    res    <- mds_fn(as.dist(res))
+    res    <- res$result$points
 
     colnames(res) <- clmns
 
