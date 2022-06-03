@@ -6,9 +6,11 @@
 \usage{
 calc_similarity(
   input,
+  data_col,
   cluster_col,
   method = abdiv::jaccard,
-  clonotype_col = "clonotype_id",
+  chain = NULL,
+  chain_col = "chains",
   prefix = NULL,
   return_mat = FALSE
 )
@@ -16,6 +18,9 @@ calc_similarity(
 \arguments{
 \item{input}{Object containing V(D)J data. If a data.frame is provided, the
 cell barcodes should be stored as row names.}
+
+\item{data_col}{meta.data column containing clonotype IDs to use for
+calculating overlap}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 calculating repertoire overlap}
@@ -28,9 +33,6 @@ calculating repertoire overlap}
 clonotype in the object, such as the beta diversity functions provided by
 the abdiv package
 }}
-
-\item{clonotype_col}{meta.data column containing clonotype IDs to use for
-calculating overlap}
 
 \item{prefix}{Prefix to add to new columns}
 
@@ -47,7 +49,7 @@ Calculate repertoire overlap
 # Calculate repertoire overlap
 res <- calc_similarity(
   vdj_so,
-  clonotype_col = "clonotype_id",
+  data_col = "clonotype_id",
   cluster_col = "orig.ident",
   method = abdiv::jaccard
 )

@@ -6,10 +6,12 @@
 \usage{
 plot_similarity(
   input,
+  data_col,
   cluster_col,
+  group_col = NULL,
   method = abdiv::jaccard,
-  clonotype_col = "clonotype_id",
-  type = "heatmap",
+  chain = NULL,
+  chain_col = "chains",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   include_upper_triangle = TRUE,
@@ -21,8 +23,15 @@ plot_similarity(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
+\item{data_col}{meta.data column containing clonotype IDs to use for
+calculating overlap}
+
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 calculating overlap}
+
+\item{group_col}{meta.data column to use for grouping cluster IDs present in
+cluster_col. This is useful when there are multiple replicates or patients
+for each treatment condition.}
 
 \item{method}{Method to use for comparing clusters, possible values are:
 \itemize{
@@ -35,17 +44,19 @@ clonotype in the object, such as the beta diversity functions provided by
 the abdiv package. This will generate a heatmap.
 }}
 
-\item{clonotype_col}{meta.data column containing clonotype IDs to use for
-calculating overlap}
+\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
+all chains.}
+
+\item{chain_col}{meta.data column containing chains for each cell}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
 
-\item{include_upper_triangle}{If FALSE, for heatmap upper triangle will not
+\item{include_upper_triangle}{If FALSE, upper triangle for heatmap will not
 be shown and rows/columns will not be clustered.}
 
-\item{include_diagonal}{If FALSE, for heatmap diagonal will not be shown and
+\item{include_diagonal}{If FALSE, diagonal for heatmap will not be shown and
 rows/columns will not be clustered.}
 
 \item{...}{Additional arguments to pass to plotting function}

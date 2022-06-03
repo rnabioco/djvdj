@@ -157,6 +157,8 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
   res <- dplyr::ungroup(res)
 
+  if (!allow_dups) res <- tidyr::unnest(res, all_of(vdj_cols))
+
   res
 }
 

@@ -12,7 +12,7 @@
 #' clonotype in the object, such as the beta diversity functions provided by
 #' the abdiv package
 #'
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' @param data_col meta.data column containing clonotype IDs to use for
 #' calculating overlap
 #' @param prefix Prefix to add to new columns
 #' @param return_mat Return a matrix with similarity values. If set to
@@ -24,7 +24,7 @@
 #' # Calculate repertoire overlap
 #' res <- calc_similarity(
 #'   vdj_so,
-#'   clonotype_col = "clonotype_id",
+#'   data_col = "clonotype_id",
 #'   cluster_col = "orig.ident",
 #'   method = abdiv::jaccard
 #' )
@@ -49,8 +49,8 @@
 #' )
 #'
 #' @export
-calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
-                            clonotype_col = "clonotype_id", prefix = NULL,
+calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccard,
+                            chain = NULL, chain_col = "chains", prefix = NULL,
                             return_mat = FALSE) {
 
   # Check inputs
@@ -80,12 +80,34 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
   }
 
   # Format input data
-  meta <- .get_meta(input)
-  vdj  <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
+  # filter chains if provided
+  if (is.null(chain)) {
+    meta <- .get_meta(input)
+    vdj  <- dplyr::filter(meta, !is.na(!!sym(data_col)))
+
+  } else {
+    vdj <- fetch_vdj(
+      input,
+      vdj_cols      = c(data_col, chain_col),
+      clonotype_col = data_col,
+      filter_cells  = TRUE,
+      unnest        = FALSE
+    )
+
+    vdj <- .filter_chains(
+      vdj,
+      vdj_cols   = data_col,
+      chain      = chain,
+      chain_col  = chain_col,
+      col_names  = "{.col}",
+      empty_val  = "None",
+      allow_dups = FALSE
+    )
+  }
 
   vdj <- dplyr::select(
     vdj,
-    all_of(c(CELL_COL, clonotype_col, cluster_col))
+    all_of(c(CELL_COL, data_col, cluster_col))
   )
 
   if (dplyr::n_distinct(vdj[[cluster_col]]) < 2) {
@@ -94,7 +116,7 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
 
   vdj <- dplyr::group_by(
     vdj,
-    !!!syms(c(cluster_col, clonotype_col))
+    !!!syms(c(cluster_col, data_col))
   )
 
   vdj <- dplyr::summarize(
@@ -212,8 +234,13 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing clonotype IDs to use for
+#' calculating overlap
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating overlap
+#' @param group_col meta.data column to use for grouping cluster IDs present in
+#' cluster_col. This is useful when there are multiple replicates or patients
+#' for each treatment condition.
 #' @param method Method to use for comparing clusters, possible values are:
 #'
 #' - 'mds', perform multidimensional scaling, this will generate a scatter plot
@@ -224,13 +251,14 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
 #' clonotype in the object, such as the beta diversity functions provided by
 #' the abdiv package. This will generate a heatmap.
 #'
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating overlap
+#' @param chain Chain to use for calculating gene usage. Set to NULL to include
+#' all chains.
+#' @param chain_col meta.data column containing chains for each cell
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters
-#' @param include_upper_triangle If FALSE, for heatmap upper triangle will not
+#' @param include_upper_triangle If FALSE, upper triangle for heatmap will not
 #' be shown and rows/columns will not be clustered.
-#' @param include_diagonal If FALSE, for heatmap diagonal will not be shown and
+#' @param include_diagonal If FALSE, diagonal for heatmap will not be shown and
 #' rows/columns will not be clustered.
 #' @param ... Additional arguments to pass to plotting function
 #' @importFrom abdiv jaccard
@@ -270,9 +298,10 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
 #' )
 #'
 #' @export
-plot_similarity <- function(input, cluster_col, method = abdiv::jaccard,
-                            clonotype_col = "clonotype_id", type = "heatmap",
-                            plot_colors = NULL, plot_lvls = names(plot_colors),
+plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
+                            method = abdiv::jaccard, chain = NULL,
+                            chain_col = "chains", plot_colors = NULL,
+                            plot_lvls = names(plot_colors),
                             include_upper_triangle = TRUE,
                             include_diagonal = TRUE, ...) {
 
@@ -282,14 +311,20 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard,
 
   if (is_circ) method <- "count"
 
+  browser()
+
+  meta <- .get_meta(input)
+
   # Calculate similarity
   plt_dat <- calc_similarity(
-    input         = input,
-    cluster_col   = cluster_col,
-    method        = method,
-    clonotype_col = clonotype_col,
-    prefix        = "",
-    return_mat    = TRUE
+    input       = input,
+    data_col    = data_col,
+    cluster_col = cluster_col,
+    method      = method,
+    chain       = chain,
+    chain_col   = chain_col,
+    prefix      = "",
+    return_mat  = TRUE
   )
 
   # Create circos plot
@@ -340,6 +375,8 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard,
         panel.fun   = pan_fun
       )
     }
+
+    return(invisible())
   }
 
   # Create MDS plot

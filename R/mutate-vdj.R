@@ -49,6 +49,16 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells
   # Format input data
   meta <- .get_meta(input)
 
+  # Filter cells
+  if (filter_cells) {
+    if (is.null(clonotype_col)) {
+      stop("clonotype_col must be provided to determine which cells to filter.")
+    }
+
+    meta <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
+  }
+
+  # If NULL sep, return meta.data
   if (is.null(sep)) return(meta)
 
   # Identify columns with V(D)J data
@@ -64,19 +74,10 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells
   if (purrr::is_empty(sep_cols)) {
     warning(
       "The separator '", sep, "' was not identified in any columns specified ",
-      "by vdj_cols, the unmodified meta.data will be returned"
+      "by vdj_cols."
     )
 
     return(meta)
-  }
-
-  # Filter cells
-  if (filter_cells) {
-    if (is.null(clonotype_col)) {
-      stop("clonotype_col must be provided to determine which cells to filter.")
-    }
-
-    meta <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
   }
 
   # Unnest V(D)J data
