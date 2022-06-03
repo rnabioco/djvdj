@@ -42,7 +42,7 @@ plot_circos <- function(input, cluster_col, clonotype_col = "clonotype_id",
 
   vdj <- .set_lvls(vdj, cluster_col, clsts)
 
-  vdj   <- dplyr::arrange(
+  vdj <- dplyr::arrange(
     vdj,
     !!sym(cluster_col),
     desc(dplyr::n_distinct(!!sym(clonotype_col))),

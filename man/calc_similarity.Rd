@@ -20,7 +20,14 @@ cell barcodes should be stored as row names.}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 calculating repertoire overlap}
 
-\item{method}{Method to use for calculating similarity between clusters}
+\item{method}{Method to use for comparing clusters, possible values are:
+\itemize{
+\item 'mds', perform multidimensional scaling
+\item 'count', count the number of clonotypes overlapping between each cluster
+\item A function that takes two numeric vectors containing counts for each
+clonotype in the object, such as the beta diversity functions provided by
+the abdiv package
+}}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating overlap}

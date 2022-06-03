@@ -4,7 +4,14 @@
 #' cell barcodes should be stored as row names.
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating repertoire overlap
-#' @param method Method to use for calculating similarity between clusters
+#' @param method Method to use for comparing clusters, possible values are:
+#'
+#' - 'mds', perform multidimensional scaling
+#' - 'count', count the number of clonotypes overlapping between each cluster
+#' - A function that takes two numeric vectors containing counts for each
+#' clonotype in the object, such as the beta diversity functions provided by
+#' the abdiv package
+#'
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating overlap
 #' @param prefix Prefix to add to new columns
@@ -47,9 +54,10 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
                             return_mat = FALSE) {
 
   # Check inputs
-  is_mds <- identical(method, "mds")
+  is_mds    <- identical(method, "mds")
+  is_counts <- identical(method, "count")
 
-  if (!is.function(method) && !is_mds) {
+  if (!is.function(method) && !is_mds && !is_counts) {
     stop(
       "method must be 'mds' or a function to use for comparing ",
       "sample repertoires, e.g. method = abdiv::jaccard."
@@ -57,6 +65,12 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
   }
 
   if (is_mds) method <- abdiv::jaccard
+
+  if (is_counts) {
+    method <- function(x, y) length(x[x > 0 & y > 0])
+
+    if (is.null(prefix)) prefix <- "count_"
+  }
 
   # If no prefix provided, use method name
   if (is.null(prefix) && !is_mds) {
@@ -89,20 +103,16 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
     .groups = "drop"
   )
 
+  clsts <- unique(vdj[[cluster_col]])
+
   vdj <- tidyr::pivot_wider(
     vdj,
     names_from  = all_of(cluster_col),
-    values_from = .data$n
+    values_from = .data$n,
+    values_fill = 0
   )
 
   # Calculate similarity index
-  clsts <- colnames(vdj)
-  clsts <- clsts[clsts != clonotype_col]
-
-  vdj <- dplyr::mutate(vdj, across(
-    all_of(clsts), ~ tidyr::replace_na(.x, 0)
-  ))
-
   combs <- utils::combn(clsts, 2, simplify = FALSE)
 
   res <- purrr::map_dfr(combs, ~ {
@@ -204,7 +214,16 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating overlap
-#' @param method Method to use for calculating similarity between clusters
+#' @param method Method to use for comparing clusters, possible values are:
+#'
+#' - 'mds', perform multidimensional scaling, this will generate a scatter plot
+#' - 'circos', create circos plot implemented with circlize::chordDiagram()
+#' - 'count', count the number of clonotypes overlapping between each cluster,
+#' this will generate a heatmap.
+#' - A function that takes two numeric vectors containing counts for each
+#' clonotype in the object, such as the beta diversity functions provided by
+#' the abdiv package. This will generate a heatmap.
+#'
 #' @param clonotype_col meta.data column containing clonotype IDs to use for
 #' calculating overlap
 #' @param plot_colors Character vector containing colors for plotting
@@ -213,11 +232,13 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
 #' be shown and rows/columns will not be clustered.
 #' @param include_diagonal If FALSE, for heatmap diagonal will not be shown and
 #' rows/columns will not be clustered.
-#' @param ... Additional arguments to pass to ComplexHeatmap::Heatmap()
-#' @return ggplot object
+#' @param ... Additional arguments to pass to plotting function
 #' @importFrom abdiv jaccard
 #' @importFrom ComplexHeatmap Heatmap
+#' @importFrom circlize chordDiagram
 #' @importFrom grid gpar
+#' @seealso [calc_similarity()], [circlize::chordDiagram()], [ComplexHeatmap::Heatmap()],
+#' [ggplot2::geom_point()]
 #'
 #' @examples
 #' # Plot repertoire overlap
@@ -250,19 +271,16 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard,
 #'
 #' @export
 plot_similarity <- function(input, cluster_col, method = abdiv::jaccard,
-                            clonotype_col = "clonotype_id", plot_colors = NULL,
-                            plot_lvls = NULL, include_upper_triangle = TRUE,
+                            clonotype_col = "clonotype_id", type = "heatmap",
+                            plot_colors = NULL, plot_lvls = names(plot_colors),
+                            include_upper_triangle = TRUE,
                             include_diagonal = TRUE, ...) {
 
   # Check inputs
-  is_mds <- identical(method, "mds")
+  is_mds  <- identical(method, "mds")
+  is_circ <- identical(method, "circos")
 
-  if (!is.function(method) && !is_mds) {
-    stop(
-      "method must be 'mds' or a function to use for comparing ",
-      "sample repertoires, e.g. method = abdiv::jaccard."
-    )
-  }
+  if (is_circ) method <- "count"
 
   # Calculate similarity
   plt_dat <- calc_similarity(
@@ -273,6 +291,56 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard,
     prefix        = "",
     return_mat    = TRUE
   )
+
+  # Create circos plot
+  plt_args <- list(...)
+
+  if (is_circ) {
+    if (!is.null(plot_lvls)) {
+      plt_dat <- plt_dat[plot_lvls, plot_lvls]
+    }
+
+    plt_args$x         <- plt_dat
+    plt_args$symmetric <- plt_args$symmetric %||% TRUE
+    plt_args$row.col   <- plt_args$grid.col <- plot_colors
+    plt_args$order     <- plot_lvls
+
+    # Exclude default axis track
+    adj_axis <- is.null(plt_args[["annotationTrack"]])
+    ann_trk  <- c("name", "grid")
+    plt_args[["annotationTrack"]] <- plt_args[["annotationTrack"]] %||% ann_trk
+
+    # Create circos plot
+    # circlize::mm_h must be used within chordDiagram
+    circlize::circos.clear()
+
+    if (is.null(plt_args$annotationTrackHeight)) {
+      circos_fun <- function(...) {
+        circlize::chordDiagram(
+          ...,
+          annotationTrackHeight = circlize::mm_h(c(3, 4))
+        )
+      }
+
+      purrr::lift_dl(circos_fun)(plt_args)
+
+    } else {
+      purrr::lift_dl(circlize::chordDiagram)(plt_args)
+    }
+
+    # Add axis track
+    if (adj_axis) {
+      pan_fun <- function(x, y) {
+        circlize::circos.axis(minor.ticks = 0, labels.cex = 0.5)
+      }
+
+      circlize::circos.track(
+        track.index = 2,
+        bg.border   = NA,
+        panel.fun   = pan_fun
+      )
+    }
+  }
 
   # Create MDS plot
   if (is_mds) {
@@ -295,8 +363,6 @@ plot_similarity <- function(input, cluster_col, method = abdiv::jaccard,
   sim_col <- dplyr::last(sim_col)
 
   # Plot colors and levels
-  plt_args <- list(...)
-
   plt_args$col <- plot_colors %||% c("white", "#6A51A3")
 
   if (is.null(plot_lvls)) {

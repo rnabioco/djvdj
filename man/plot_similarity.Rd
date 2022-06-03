@@ -9,8 +9,9 @@ plot_similarity(
   cluster_col,
   method = abdiv::jaccard,
   clonotype_col = "clonotype_id",
+  type = "heatmap",
   plot_colors = NULL,
-  plot_lvls = NULL,
+  plot_lvls = names(plot_colors),
   include_upper_triangle = TRUE,
   include_diagonal = TRUE,
   ...
@@ -23,7 +24,16 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 calculating overlap}
 
-\item{method}{Method to use for calculating similarity between clusters}
+\item{method}{Method to use for comparing clusters, possible values are:
+\itemize{
+\item 'mds', perform multidimensional scaling, this will generate a scatter plot
+\item 'circos', create circos plot implemented with circlize::chordDiagram()
+\item 'count', count the number of clonotypes overlapping between each cluster,
+this will generate a heatmap.
+\item A function that takes two numeric vectors containing counts for each
+clonotype in the object, such as the beta diversity functions provided by
+the abdiv package. This will generate a heatmap.
+}}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating overlap}
@@ -38,10 +48,7 @@ be shown and rows/columns will not be clustered.}
 \item{include_diagonal}{If FALSE, for heatmap diagonal will not be shown and
 rows/columns will not be clustered.}
 
-\item{...}{Additional arguments to pass to ComplexHeatmap::Heatmap()}
-}
-\value{
-ggplot object
+\item{...}{Additional arguments to pass to plotting function}
 }
 \description{
 Plot repertoire overlap
@@ -75,4 +82,8 @@ plot_similarity(
   size = 2
 )
 
+}
+\seealso{
+\code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}}, \code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap()}},
+\code{\link[ggplot2:geom_point]{ggplot2::geom_point()}}
 }
