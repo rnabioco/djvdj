@@ -311,9 +311,7 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 
   if (is_circ) method <- "count"
 
-  browser()
-
-  meta <- .get_meta(input)
+  .chk_group_cols(cluster_col, group_col)
 
   # Calculate similarity
   plt_dat <- calc_similarity(
@@ -339,6 +337,15 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
     plt_args$symmetric <- plt_args$symmetric %||% TRUE
     plt_args$row.col   <- plt_args$grid.col <- plot_colors
     plt_args$order     <- plot_lvls
+
+    # Plotting groups
+    if (!is.null(group_col)) {
+      meta <- .get_meta(input)
+      grps <- dplyr::distinct(meta, !!!syms(c(cluster_col, group_col)))
+      grps <- purrr::set_names(grps[[group_col]], grps[[cluster_col]])
+
+      plt_args$group <- plt_args$group %||% grps
+    }
 
     # Exclude default axis track
     adj_axis <- is.null(plt_args[["annotationTrack"]])
