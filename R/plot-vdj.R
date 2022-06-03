@@ -321,8 +321,13 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2",
 #' grouping cells for plotting
 #' @param chain Chain(s) to use for filtering data before plotting. If NULL
 #' data will not be filtered based on chain.
-#' @param type Type of plot to create, can be 'histogram', 'density',
-#' 'boxplot', or 'violin'
+#' @param type Type of plot to create, possible values are:
+#'
+#' - 'histogram'
+#' - 'density'
+#' - 'boxplot'
+#' - 'violin'
+#'
 #' @param yaxis Units to use for y-axis when type is set to 'histogram'. Use
 #' 'frequency' to show number of values or 'percent' to show the percentage of
 #' total values.

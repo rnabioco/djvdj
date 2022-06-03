@@ -91,8 +91,13 @@ grouping cells for plotting}
 \item{chain}{Chain(s) to use for filtering data before plotting. If NULL
 data will not be filtered based on chain.}
 
-\item{type}{Type of plot to create, can be 'histogram', 'density',
-'boxplot', or 'violin'}
+\item{type}{Type of plot to create, possible values are:
+\itemize{
+\item 'histogram'
+\item 'density'
+\item 'boxplot'
+\item 'violin'
+}}
 
 \item{yaxis}{Units to use for y-axis when type is set to 'histogram'. Use
 'frequency' to show number of values or 'percent' to show the percentage of
