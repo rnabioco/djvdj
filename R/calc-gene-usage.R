@@ -463,6 +463,8 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
     return(res)
   }
 
+  browser()
+
   # Create plot when two columns are passed to gene_col
   grps <- NULL
 
@@ -487,61 +489,91 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
       values_fill = 0
     )
 
-    res <- tidyr::pivot_longer(
-      res,
-      cols      = -dplyr::all_of(gene_cols[1]),
-      names_to  = gene_cols[2],
-      values_to = usage_col
-    )
+    res <- tibble::column_to_rownames(res, gene_cols[1])
+    res <- as.matrix(res)
 
-    res <- dplyr::arrange(res, dplyr::desc(!!sym(usage_col)))
+    rws   <- rownames(res)
+    rws   <- rws[rowSums(res) > 0]
+    clmns <- colnames(res)
+    clmns <- clmns[colSums(res) > 0]
 
-    v1_lvls <- rev(unique(pull(res, gene_cols[1])))
-    v2_lvls <- rev(unique(pull(res, gene_cols[2])))
+    res <- res[rws, clmns]
 
-    res <- .set_lvls(res, gene_cols[1], v1_lvls)
-    res <- .set_lvls(res, gene_cols[2], v2_lvls)
+    # res <- tidyr::pivot_longer(
+    #   res,
+    #   cols      = -dplyr::all_of(gene_cols[1]),
+    #   names_to  = gene_cols[2],
+    #   values_to = usage_col
+    # )
+    #
+    # res <- dplyr::arrange(res, dplyr::desc(!!sym(usage_col)))
+    #
+    # v1_lvls <- rev(unique(pull(res, gene_cols[1])))
+    # v2_lvls <- rev(unique(pull(res, gene_cols[2])))
+    #
+    # res <- .set_lvls(res, gene_cols[1], v1_lvls)
+    # res <- .set_lvls(res, gene_cols[2], v2_lvls)
 
     res
   })
 
+
+  iwalk(res, ~ {
+    # d <- tidyr::pivot_wider(
+    #   .x,
+    #   names_from  = gene_cols[2],
+    #   values_from = usage_col
+    # )
+    #
+    # d <- tibble::column_to_rownames(d, gene_cols[1])
+
+    if (identical(type, "heatmap")) {
+      .create_heatmap(.x, clrs = plot_colors, ttl = .y)
+
+    } else if (identical(type, "circos")) {
+      .create_circos(.x, clrs = plot_colors)
+    }
+  })
+
+
+
   # Create circos plot
-  if (identical(method, "circos")) {
-    walk(res, ~ {
-      d <- tidyr::pivot_wider(
-        .x,
-        names_from  = gene_cols[2],
-        values_from = usage_col
-      )
-
-      d <- tibble::column_to_rownames(d, gene_cols[1])
-
-      .create_circos(d, clrs = plot_colors, lvls = plot_lvls)
-    })
-
-    return(invisible())
-  }
-
-  # Create heatmaps
-  res <- purrr::map(
-    res,
-    .create_heatmap,
-    x     = gene_cols[1],
-    y     = gene_cols[2],
-    .fill = usage_col,
-    clrs  = plot_colors,
-    ttl   = yaxis,
-    ...
-  )
-
-  if (!is.null(names(res))) {
-    res <- purrr::imap(res, ~ .x + ggplot2::labs(title = .y))
-  }
-
-  if (length(res) == 1) {
-    return(res[[1]])
-  }
-
-  res
+  # if (identical(method, "circos")) {
+  #   walk(res, ~ {
+  #     d <- tidyr::pivot_wider(
+  #       .x,
+  #       names_from  = gene_cols[2],
+  #       values_from = usage_col
+  #     )
+  #
+  #     d <- tibble::column_to_rownames(d, gene_cols[1])
+  #
+  #     .create_circos(d, clrs = plot_colors)
+  #   })
+  #
+  #   return(invisible())
+  # }
+  #
+  # # Create heatmaps
+  # res <- purrr::map(
+  #   res,
+  #   .create_heatmap,
+  #   x     = gene_cols[1],
+  #   y     = gene_cols[2],
+  #   .fill = usage_col,
+  #   clrs  = plot_colors,
+  #   ttl   = yaxis,
+  #   ...
+  # )
+  #
+  # if (!is.null(names(res))) {
+  #   res <- purrr::imap(res, ~ .x + ggplot2::labs(title = .y))
+  # }
+  #
+  # if (length(res) == 1) {
+  #   return(res[[1]])
+  # }
+  #
+  # res
 }
 

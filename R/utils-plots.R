@@ -78,8 +78,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_heatmap <- function(df_in, x, y, .fill, clrs = NULL, na_color = NA,
-                            ttl = .fill, ang = 45, hjst = 1, ...) {
+.create_gg_heatmap <- function(df_in, x, y, .fill, clrs = NULL, na_color = NA,
+                               ttl = .fill, ang = 45, hjst = 1, ...) {
 
   clrs <- clrs %||% "#6A51A3"
 
@@ -113,6 +113,173 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     )
 
   res
+}
+
+#' Create ComplexHeatmap heatmap
+#'
+#' @param mat_in Matrix
+#' @param clrs Vector of colors for plotting
+#' @param lvls Vector specifying level order
+#' @param ttl Legend title
+#' @param up_tri If FALSE, upper triangle for heatmap will not be shown and
+#' rows/columns will not be clustered.
+#' @param diag If FALSE, diagonal for heatmap will not be shown and
+#' rows/columns will not be clustered.
+#' @param ... Aditional arguments to pass to ComplexHeatmap::Heatmap()
+#' @noRd
+.create_heatmap <- function(mat_in, clrs = NULL, lvls = NULL, ttl = NULL,
+                            up_tri = TRUE, diag = TRUE, ...) {
+
+  # Plot colors and levels
+  plt_args <- list(...)
+
+  r_nms <- rownames(mat_in)
+  c_nms <- colnames(mat_in)
+
+  if (is.null(lvls)) {
+    lvls <- unique(c(r_nms, c_nms))
+    lvls <- sort(lvls)
+
+  } else {
+    plt_args$cluster_rows    <- FALSE
+    plt_args$cluster_columns <- FALSE
+  }
+
+  r_lvls <- lvls[lvls %in% r_nms]
+  c_lvls <- lvls[lvls %in% c_nms]
+  mat_in <- mat_in[r_lvls, c_lvls]
+
+  plt_args$col <- clrs %||% c("white", "#6A51A3")
+
+  # Remove upper triangle and/or diagonal
+  if (!up_tri || !diag) {
+    lvls_key <- purrr::set_names(lvls)
+
+    lvls_key <- purrr::imap(lvls_key, ~ {
+      idx <- grep(.x, lvls)
+
+      v <- c()
+
+      if (!up_tri) {
+        v <- lvls[idx:length(lvls)]
+        v <- v[v != .y]
+      }
+
+      if (!diag) v <- c(v, .y)
+
+      v
+    })
+
+    for (i in seq_along(lvls_key)) {
+      mat_in[names(lvls_key[i]), lvls_key[[i]]] <- NA
+    }
+
+    # Remove rows/columns with all NAs
+    na_idx <- is.na(mat_in)
+    r_idx  <- rowSums(na_idx) != ncol(mat_in)
+    c_idx  <- colSums(na_idx) != nrow(mat_in)
+    mat_in <- mat_in[r_idx, c_idx]
+
+    # Set plot arguments
+    plt_args$cluster_rows    <- FALSE
+    plt_args$cluster_columns <- FALSE
+    plt_args$row_names_side  <- plt_args$row_names_side %||% "left"
+    plt_args$na_col          <- plt_args$na_col %||% NA
+  }
+
+  # Set final heatmap parameters
+  # use computed similarities for clustering, so use a distance function that
+  # just converts a matrix to a dist object
+  # can't directly use as.dist as the function since it accepts too many
+  # arguments
+  dist_fn <- function(input) stats::as.dist(input)
+
+  lgd_params <- list(
+    title_gp      = grid::gpar(fontface = "plain"),
+    legend_height = ggplot2::unit(80, "pt"),
+    title         = ttl
+  )
+
+  plt_args$matrix                      <- mat_in
+  plt_args$heatmap_legend_param        <- plt_args$heatmap_legend_param %||% lgd_params
+  plt_args$clustering_distance_rows    <- plt_args$clustering_distance_rows %||% dist_fn
+  plt_args$clustering_distance_columns <- plt_args$clustering_distance_columns %||% dist_fn
+
+  # Create heatmap
+  res <- purrr::lift_dl(ComplexHeatmap::Heatmap)(plt_args)
+
+  res
+}
+
+
+#' Create circos plot
+#'
+#' @param mat_in Matrix
+#' @param clrs Vector of colors for plotting
+#' @param lvls Vector specifying level order
+#' @param grps Named vector specifying group for each column/row
+#' @param ... Additional arguments to pass to circlize::chordDiagram()
+#' @noRd
+.create_circos <- function(mat_in, clrs = NULL, lvls = NULL, grps = NULL,
+                           ...) {
+
+  # Set levels
+  r_nms <- rownames(mat_in)
+  c_nms <- colnames(mat_in)
+
+  if (is.null(lvls)) {
+    lvls <- unique(c(r_nms, c_nms))
+    lvls <- sort(lvls)
+  }
+
+  r_lvls <- lvls[lvls %in% r_nms]
+  c_lvls <- lvls[lvls %in% c_nms]
+  mat_in <- mat_in[r_lvls, c_lvls]
+
+  # Set plot arguments
+  plt_args <- list(...)
+
+  plt_args$x         <- mat_in
+  plt_args$symmetric <- plt_args$symmetric %||% TRUE
+  plt_args$row.col   <- plt_args$grid.col <- clrs
+  plt_args$order     <- lvls
+  plt_args$group     <- plt_args$group %||% grps
+
+  # Exclude default axis track
+  adj_axis <- is.null(plt_args[["annotationTrack"]])
+  ann_trk  <- c("name", "grid")
+  plt_args[["annotationTrack"]] <- plt_args[["annotationTrack"]] %||% ann_trk
+
+  # Create circos plot
+  # circlize::mm_h must be used within chordDiagram
+  circlize::circos.clear()
+
+  if (is.null(plt_args$annotationTrackHeight)) {
+    circos_fun <- function(...) {
+      circlize::chordDiagram(
+        annotationTrackHeight = circlize::mm_h(c(3, 4)),
+        ...
+      )
+    }
+
+    purrr::lift_dl(circos_fun)(plt_args)
+
+  } else {
+    purrr::lift_dl(circlize::chordDiagram)(plt_args)
+  }
+
+  # Add axis track
+  if (adj_axis) {
+    pan_fun <- function(x, y) {
+      circlize::circos.axis(minor.ticks = 0, labels.cex = 0.5)
+    }
+
+    circlize::circos.track(
+      track.index = 2,
+      bg.border   = NA,
+      panel.fun   = pan_fun
+    )
+  }
 }
 
 
@@ -336,66 +503,6 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res
 }
 
-
-#' Create circos plot
-#'
-#' @param mat_in
-#' @param clrs
-#' @param lvls
-#' @param grps
-#'
-#' @noRd
-.create_circos <- function(mat_in, clrs = NULL, lvls = NULL, grps = NULL, ...) {
-
-  if (!is.null(lvls)) {
-    mat_in <- mat_in[lvls, lvls]
-  }
-
-  # Set plot arguments
-  plt_args <- list(...)
-
-  plt_args$x         <- mat_in
-  plt_args$symmetric <- plt_args$symmetric %||% TRUE
-  plt_args$row.col   <- plt_args$grid.col <- clrs
-  plt_args$order     <- lvls
-  plt_args$group     <- plt_args$group %||% grps
-
-  # Exclude default axis track
-  adj_axis <- is.null(plt_args[["annotationTrack"]])
-  ann_trk  <- c("name", "grid")
-  plt_args[["annotationTrack"]] <- plt_args[["annotationTrack"]] %||% ann_trk
-
-  # Create circos plot
-  # circlize::mm_h must be used within chordDiagram
-  circlize::circos.clear()
-
-  if (is.null(plt_args$annotationTrackHeight)) {
-    circos_fun <- function(...) {
-      circlize::chordDiagram(
-        annotationTrackHeight = circlize::mm_h(c(3, 4)),
-        ...
-      )
-    }
-
-    purrr::lift_dl(circos_fun)(plt_args)
-
-  } else {
-    purrr::lift_dl(circlize::chordDiagram)(plt_args)
-  }
-
-  # Add axis track
-  if (adj_axis) {
-    pan_fun <- function(x, y) {
-      circlize::circos.axis(minor.ticks = 0, labels.cex = 0.5)
-    }
-
-    circlize::circos.track(
-      track.index = 2,
-      bg.border   = NA,
-      panel.fun   = pan_fun
-    )
-  }
-}
 
 #' Add list of aes params to ggplot object
 #'

@@ -330,8 +330,6 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
   )
 
   # Create circos plot
-  plt_args <- list(...)
-
   if (is_circ) {
     grps <- NULL
 
@@ -371,81 +369,16 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
   sim_col <- as.character(substitute(method))
   sim_col <- dplyr::last(sim_col)
 
-
-
-
-  # Plot colors and levels
-  plt_args$col <- plot_colors %||% c("white", "#6A51A3")
-
-  if (is.null(plot_lvls)) {
-    plot_lvls <- unique(c(rownames(plt_dat), colnames(plt_dat)))
-    plot_lvls <- sort(plot_lvls)
-
-  } else {
-    plt_args$cluster_rows    <- FALSE
-    plt_args$cluster_columns <- FALSE
-  }
-
-  plt_dat <- plt_dat[plot_lvls, plot_lvls]
-
-  # Remove upper triangle and/or diagonal
-  if (!include_upper_triangle || !include_diagonal) {
-    lvls_key <- purrr::set_names(plot_lvls)
-
-    lvls_key <- purrr::imap(lvls_key, ~ {
-      idx <- grep(.x, plot_lvls)
-
-      v <- c()
-
-      if (!include_upper_triangle) {
-        v <- plot_lvls[idx:length(plot_lvls)]
-        v <- v[v != .y]
-      }
-
-      if (!include_diagonal) {
-        v <- c(v, .y)
-      }
-
-      v
-    })
-
-    for (i in seq_along(lvls_key)) {
-      plt_dat[names(lvls_key[i]), lvls_key[[i]]] <- NA
-    }
-
-    # Remove rows/columns with all NAs
-    na_idx  <- is.na(plt_dat)
-    r_idx   <- rowSums(na_idx) != ncol(plt_dat)
-    c_idx   <- colSums(na_idx) != nrow(plt_dat)
-    plt_dat <- plt_dat[r_idx, c_idx]
-
-    # Set plot arguments
-    plt_args$cluster_rows    <- FALSE
-    plt_args$cluster_columns <- FALSE
-    plt_args$row_names_side  <- plt_args$row_names_side %||% "left"
-    plt_args$na_col          <- plt_args$na_col %||% NA
-  }
-
-  # Set final heatmap parameters
-  # use computed similarities for clustering, so use a distance function that
-  # just converts a matrix to a dist object
-  # can't directly use as.dist as the function since it accepts too many
-  # arguments
-  dist_fn <- function(input) stats::as.dist(input)
-
-  lgd_params <- list(
-    title_gp      = grid::gpar(fontface = "plain"),
-    legend_height = ggplot2::unit(80, "pt"),
-    title         = sim_col
-  )
-
-  plt_args$matrix                      <- plt_dat
-  plt_args$heatmap_legend_param        <- plt_args$heatmap_legend_param %||% lgd_params
-  plt_args$clustering_distance_rows    <- plt_args$clustering_distance_rows %||% dist_fn
-  plt_args$clustering_distance_columns <- plt_args$clustering_distance_columns %||% dist_fn
-
   # Create heatmap
-  res <- purrr::lift_dl(ComplexHeatmap::Heatmap)(plt_args)
+  res <- .create_heatmap(
+    plt_dat,
+    clrs   = plot_colors,
+    lvls   = plot_lvls,
+    ttl    = sim_col,
+    up_tri = include_upper_triangle,
+    diag   = include_diagonal,
+    ...
+  )
 
   res
 }
