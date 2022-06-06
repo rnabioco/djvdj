@@ -9,14 +9,15 @@
 #' - 'mds', perform multidimensional scaling
 #' - 'count', count the number of clonotypes overlapping between each cluster
 #' - A function that takes two numeric vectors containing counts for each
-#' clonotype in the object, such as the beta diversity functions provided by
-#' the abdiv package
+#' unique value in the column provided to the data_col column, e.g.
+#' abdiv::jaccard()
 #'
 #' @param data_col meta.data column containing clonotype IDs to use for
 #' calculating overlap
 #' @param prefix Prefix to add to new columns
 #' @param return_mat Return a matrix with similarity values. If set to
 #' FALSE, results will be added to the input object.
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with similarity values
 #' @importFrom abdiv jaccard
 #'
@@ -51,7 +52,7 @@
 #' @export
 calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccard,
                             chain = NULL, chain_col = "chains", prefix = NULL,
-                            return_mat = FALSE) {
+                            return_mat = FALSE, sep = ";") {
 
   # Check inputs
   is_mds    <- identical(method, "mds")
@@ -100,9 +101,10 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
       chain      = chain,
       chain_col  = chain_col,
       col_names  = "{.col}",
-      empty_val  = "None",
       allow_dups = FALSE
     )
+
+    vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
   }
 
   vdj <- dplyr::select(
@@ -260,6 +262,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' be shown and rows/columns will not be clustered.
 #' @param include_diagonal If FALSE, diagonal for heatmap will not be shown and
 #' rows/columns will not be clustered.
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to plotting function
 #' @importFrom abdiv jaccard
 #' @importFrom ComplexHeatmap Heatmap
@@ -303,7 +306,7 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
                             chain_col = "chains", plot_colors = NULL,
                             plot_lvls = names(plot_colors),
                             include_upper_triangle = TRUE,
-                            include_diagonal = TRUE, ...) {
+                            include_diagonal = TRUE, sep = ";", ...) {
 
   # Check inputs
   is_mds  <- identical(method, "mds")
@@ -322,66 +325,28 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
     chain       = chain,
     chain_col   = chain_col,
     prefix      = "",
-    return_mat  = TRUE
+    return_mat  = TRUE,
+    sep         = sep
   )
 
   # Create circos plot
   plt_args <- list(...)
 
   if (is_circ) {
-    if (!is.null(plot_lvls)) {
-      plt_dat <- plt_dat[plot_lvls, plot_lvls]
-    }
+    grps <- NULL
 
-    plt_args$x         <- plt_dat
-    plt_args$symmetric <- plt_args$symmetric %||% TRUE
-    plt_args$row.col   <- plt_args$grid.col <- plot_colors
-    plt_args$order     <- plot_lvls
-
-    # Plotting groups
     if (!is.null(group_col)) {
       meta <- .get_meta(input)
       grps <- dplyr::distinct(meta, !!!syms(c(cluster_col, group_col)))
       grps <- purrr::set_names(grps[[group_col]], grps[[cluster_col]])
-
-      plt_args$group <- plt_args$group %||% grps
     }
 
-    # Exclude default axis track
-    adj_axis <- is.null(plt_args[["annotationTrack"]])
-    ann_trk  <- c("name", "grid")
-    plt_args[["annotationTrack"]] <- plt_args[["annotationTrack"]] %||% ann_trk
-
-    # Create circos plot
-    # circlize::mm_h must be used within chordDiagram
-    circlize::circos.clear()
-
-    if (is.null(plt_args$annotationTrackHeight)) {
-      circos_fun <- function(...) {
-        circlize::chordDiagram(
-          ...,
-          annotationTrackHeight = circlize::mm_h(c(3, 4))
-        )
-      }
-
-      purrr::lift_dl(circos_fun)(plt_args)
-
-    } else {
-      purrr::lift_dl(circlize::chordDiagram)(plt_args)
-    }
-
-    # Add axis track
-    if (adj_axis) {
-      pan_fun <- function(x, y) {
-        circlize::circos.axis(minor.ticks = 0, labels.cex = 0.5)
-      }
-
-      circlize::circos.track(
-        track.index = 2,
-        bg.border   = NA,
-        panel.fun   = pan_fun
-      )
-    }
+    .create_circos(
+      plt_dat,
+      clrs = plot_colors,
+      lvls = plot_lvls,
+      grps = grps
+    )
 
     return(invisible())
   }
@@ -405,6 +370,9 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
   # Similarity column
   sim_col <- as.character(substitute(method))
   sim_col <- dplyr::last(sim_col)
+
+
+
 
   # Plot colors and levels
   plt_args$col <- plot_colors %||% c("white", "#6A51A3")

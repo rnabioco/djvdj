@@ -130,7 +130,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_bars <- function(df_in, x, y, .fill, clrs = NULL, y_ttl = y, ang = 45, hjst = 1, ...) {
+.create_bars <- function(df_in, x, y, .fill, clrs = NULL, y_ttl = y, ang = 45,
+                         hjst = 1, ...) {
 
   # Reverse bar order
   lvls  <- rev(levels(pull(df_in, x)))
@@ -189,8 +190,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_boxes <- function(df_in, x = NULL, y, .color = NULL, .fill = NULL, clrs = NULL,
-                          type = "boxplot", log_trans = FALSE, ...) {
+.create_boxes <- function(df_in, x = NULL, y, .color = NULL, .fill = NULL,
+                          clrs = NULL, type = "boxplot", log_trans = FALSE,
+                          ...) {
 
   # Check input
   typs <- c("boxplot", "violin")
@@ -334,6 +336,66 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res
 }
 
+
+#' Create circos plot
+#'
+#' @param mat_in
+#' @param clrs
+#' @param lvls
+#' @param grps
+#'
+#' @noRd
+.create_circos <- function(mat_in, clrs = NULL, lvls = NULL, grps = NULL, ...) {
+
+  if (!is.null(lvls)) {
+    mat_in <- mat_in[lvls, lvls]
+  }
+
+  # Set plot arguments
+  plt_args <- list(...)
+
+  plt_args$x         <- mat_in
+  plt_args$symmetric <- plt_args$symmetric %||% TRUE
+  plt_args$row.col   <- plt_args$grid.col <- clrs
+  plt_args$order     <- lvls
+  plt_args$group     <- plt_args$group %||% grps
+
+  # Exclude default axis track
+  adj_axis <- is.null(plt_args[["annotationTrack"]])
+  ann_trk  <- c("name", "grid")
+  plt_args[["annotationTrack"]] <- plt_args[["annotationTrack"]] %||% ann_trk
+
+  # Create circos plot
+  # circlize::mm_h must be used within chordDiagram
+  circlize::circos.clear()
+
+  if (is.null(plt_args$annotationTrackHeight)) {
+    circos_fun <- function(...) {
+      circlize::chordDiagram(
+        annotationTrackHeight = circlize::mm_h(c(3, 4)),
+        ...
+      )
+    }
+
+    purrr::lift_dl(circos_fun)(plt_args)
+
+  } else {
+    purrr::lift_dl(circlize::chordDiagram)(plt_args)
+  }
+
+  # Add axis track
+  if (adj_axis) {
+    pan_fun <- function(x, y) {
+      circlize::circos.axis(minor.ticks = 0, labels.cex = 0.5)
+    }
+
+    circlize::circos.track(
+      track.index = 2,
+      bg.border   = NA,
+      panel.fun   = pan_fun
+    )
+  }
+}
 
 #' Add list of aes params to ggplot object
 #'
