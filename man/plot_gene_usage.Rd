@@ -38,8 +38,15 @@ for each treatment condition.}
 \item{chain}{Chain to use for calculating gene usage, set to NULL to include
 all chains}
 
-\item{type}{Type of plot to create, can be either 'heatmap' or 'bar'. If
-multiple columns are provided to gene_cols, a heatmap is generated.}
+\item{type}{Type of plot to create, possible values are:
+\itemize{
+\item 'bar', bargraphs can only be plotted when a single column is passed to the
+gene_cols argument
+\item 'heatmap'
+\item 'circos', create circos plot implemented with circlize::chordDiagram().
+to create a circos plot, two columns must be passed to the gene_cols
+argument
+}}
 
 \item{plot_colors}{Character vector containing colors to use for plot. If a
 bar graph is created this will specify how to color cell clusters. For a

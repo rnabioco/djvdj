@@ -174,8 +174,16 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' for each treatment condition.
 #' @param chain Chain to use for calculating gene usage, set to NULL to include
 #' all chains
-#' @param type Type of plot to create, can be either 'heatmap' or 'bar'. If
-#' multiple columns are provided to gene_cols, a heatmap is generated.
+#' @param chain_col meta.data column containing chains for each cell
+#' @param type Type of plot to create, possible values are:
+#'
+#' - 'bar', bargraphs can only be plotted when a single column is passed to the
+#' gene_cols argument
+#' - 'heatmap', heatmap implemented with ComplexHeatmap::Heatmap()
+#' - 'circos', circos plot implemented with circlize::chordDiagram().
+#' to create a circos plot, two columns must be passed to the gene_cols
+#' argument
+#'
 #' @param plot_colors Character vector containing colors to use for plot. If a
 #' bar graph is created this will specify how to color cell clusters. For a
 #' heatmap, these colors will be used to generate the color gradient.
@@ -184,7 +192,6 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' provided, top genes will be identified for each cluster.
 #' @param plot_lvls Levels to use for ordering clusters
 #' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
-#' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
@@ -272,12 +279,15 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
                             group_col = NULL, chain = NULL, type = "bar",
                             plot_colors = NULL, vdj_genes = NULL, n_genes = 20,
-                            plot_lvls = NULL, yaxis = "percent",
+                            plot_lvls = names(plot_colors), yaxis = "percent",
                             chain_col = "chains", sep = ";", ...) {
 
   # Check inputs
-  if (!type %in% c("heatmap", "bar")) {
-    stop("type must be either 'heatmap' or 'bar'")
+  ## NEED TO CHECK WHETHER GENE_COLS INPUT IS COMPATIBLE WITH TYPE ##
+  typs <- c("heatmap", "bar", "circos")
+
+  if (!type %in% typs) {
+    stop("type must be one of the following: ", paste(typs, collapse = ", "))
   }
 
   if (length(gene_cols) > 2) {
@@ -291,10 +301,15 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   .chk_group_cols(cluster_col, group_col)
 
   if (length(gene_cols) > 1 && !is.null(group_col)) {
-    warning("The group_col argument can only be used when gene_cols is length 1.")
+    warning(
+      "The group_col argument can only be used when a single column ",
+      "is passed to the gene_cols argument."
+    )
 
     group_col <- NULL
   }
+
+  if (identical(type, "circos")) yaxis <- "frequency"
 
   # Set y-axis
   usage_col <- ifelse(identical(yaxis, "frequency"), "freq", "pct")
@@ -448,7 +463,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
     return(res)
   }
 
-  # Create heatmap for two genes
+  # Create plot when two columns are passed to gene_col
   grps <- NULL
 
   if (!is.null(cluster_col)) {
@@ -468,12 +483,8 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
     res <- tidyr::pivot_wider(
       res,
       names_from  = gene_cols[2],
-      values_from = all_of(usage_col)
-    )
-
-    res <- dplyr::mutate(
-      res,
-      dplyr::across(-dplyr::all_of(gene_cols[1]), ~ tidyr::replace_na(.x, 0))
+      values_from = usage_col,
+      values_fill = 0
     )
 
     res <- tidyr::pivot_longer(
@@ -493,6 +504,23 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
 
     res
   })
+
+  # Create circos plot
+  if (identical(method, "circos")) {
+    walk(res, ~ {
+      d <- tidyr::pivot_wider(
+        .x,
+        names_from  = gene_cols[2],
+        values_from = usage_col
+      )
+
+      d <- tibble::column_to_rownames(d, gene_cols[1])
+
+      .create_circos(d, clrs = plot_colors, lvls = plot_lvls)
+    })
+
+    return(invisible())
+  }
 
   # Create heatmaps
   res <- purrr::map(
