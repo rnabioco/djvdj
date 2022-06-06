@@ -2,20 +2,24 @@
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing clonotype IDs to use for
+#' calculating diversity
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating diversity. If cluster_col is omitted,
 #' diversity index will be calculated using all cells.
 #' @param method Method to use for calculating diversity. A named list can also
 #' be passed to use multiple methods. The names should specify names for the
 #' output columns.
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating diversity
 #' @param downsample Downsample clusters to the same size when calculating
 #' diversity metrics
 #' @param n_boots Number of bootstrap replicates
+#' @param chain Chain to use for calculating gene usage. Set to NULL to include
+#' all chains.
+#' @param chain_col meta.data column containing chains for each cell
 #' @param prefix Prefix to add to new columns
 #' @param return_df Return results as a data.frame. If FALSE, results will be
 #' added to the input object.
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with diversity metrics
 #' @importFrom abdiv simpson
 #' @importFrom broom tidy
@@ -68,9 +72,10 @@
 #' head(res, 1)
 #'
 #' @export
-calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
-                           clonotype_col = "clonotype_id", downsample = FALSE,
-                           n_boots = 100, prefix = "", return_df = FALSE) {
+calc_diversity <- function(input, data_col, cluster_col = NULL,
+                           method = abdiv::simpson, downsample = FALSE,
+                           n_boots = 100, chain = NULL, chain_col = "chains",
+                           prefix = "", return_df = FALSE, sep = ";") {
 
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if using a list of methods.")
@@ -87,10 +92,36 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
   div_cols <- names(method) <- paste0(prefix, names(method))
   div_cols <- paste0(div_cols, "_", c("diversity", "stderr"))
 
-  vdj_cols <- c(clonotype_col, cluster_col)
+  vdj_cols <- c(data_col, cluster_col)
 
-  meta <- .get_meta(input)
-  vdj  <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
+  # filter chains if provided
+  # if all chains removed, NA will be returned
+  if (is.null(chain)) {
+    meta <- .get_meta(input)
+    vdj  <- dplyr::filter(meta, !is.na(!!sym(data_col)))
+
+  } else {
+    vdj <- fetch_vdj(
+      input,
+      vdj_cols      = c(data_col, chain_col),
+      clonotype_col = data_col,
+      filter_cells  = TRUE,
+      unnest        = FALSE,
+      sep           = sep
+    )
+
+    vdj <- .filter_chains(
+      vdj,
+      vdj_cols   = data_col,
+      chain      = chain,
+      chain_col  = chain_col,
+      col_names  = "{.col}",
+      allow_dups = FALSE,
+      sep        = sep
+    )
+
+    vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
+  }
 
   if (!is.null(cluster_col) && is.null(meta[[cluster_col]])) {
     stop(cluster_col, " not found in object, provide a different cluster_col")
@@ -148,7 +179,7 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
     dplyr::summarize(
       sam,
       met       = .y,
-      diversity = list(.calc_div(!!sym(clonotype_col), met = .x)),
+      diversity = list(.calc_div(!!sym(data_col), met = .x)),
       stderr    = purrr::map_dbl(.data$diversity, pull, "std.error"),
       diversity = purrr::map_dbl(.data$diversity, pull, "statistic")
     )
@@ -190,7 +221,7 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #' @param downsample Downsample clusters to the same size when calculating
 #' diversity metrics
 #' @param n_boots Number of bootstrap replicates
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
+#' @param data_col meta.data column containing clonotype IDs to use for
 #' calculating repertoire diversity
 #' @param group_col meta.data column to use for grouping IDs present in
 #' cluster_col
@@ -256,9 +287,9 @@ calc_diversity <- function(input, cluster_col = NULL, method = abdiv::simpson,
 #' @export
 plot_diversity <- function(input, cluster_col = NULL, group_col = NULL,
                            method = abdiv::simpson, downsample = FALSE,
-                           n_boots = 100, clonotype_col = "clonotype_id",
+                           n_boots = 100, data_col = "clonotype_id",
                            plot_colors = NULL, plot_lvls = NULL,
-                           facet_rows = 1, ...) {
+                           facet_rows = 1, sep = ";", ...) {
 
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if providing a list of methods.")
@@ -286,17 +317,20 @@ plot_diversity <- function(input, cluster_col = NULL, group_col = NULL,
   plt_dat <- dplyr::select(plt_dat, -any_of(c(div_cols, err_cols)))
 
   plt_dat <- calc_diversity(
-    input         = plt_dat,
-    cluster_col   = cluster_col,
-    method        = method,
-    downsample    = downsample,
-    n_boots       = n_boots,
-    clonotype_col = clonotype_col,
-    prefix        = ""
+    input       = plt_dat,
+    cluster_col = cluster_col,
+    method      = method,
+    downsample  = downsample,
+    n_boots     = n_boots,
+    data_col    = data_col,
+    chain       = chain,
+    chain_col   = chain_col,
+    prefix      = "",
+    sep         = sep
   )
 
   # Format data for plotting
-  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
+  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
   plt_dat <- dplyr::distinct(plt_dat, !!!syms(plt_cols))
   plt_dat <- tidyr::pivot_longer(plt_dat, all_of(c(div_cols, err_cols)))
 
