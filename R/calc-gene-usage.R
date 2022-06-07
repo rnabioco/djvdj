@@ -284,6 +284,9 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
 
   # Check inputs
   ## NEED TO CHECK WHETHER GENE_COLS INPUT IS COMPATIBLE WITH TYPE ##
+  # heat: 1 or 2
+  # bar: 1
+  # circos: 2
   typs <- c("heatmap", "bar", "circos")
 
   if (!type %in% typs) {
@@ -383,197 +386,222 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   lvl_col <- dplyr::if_else(is.null(group_col), cluster_col, group_col)
   plt_dat <- .set_lvls(plt_dat, lvl_col, plot_lvls)
 
-  # Create heatmap or bar graph for single gene
+  # Plot usage for single gene column
   if (length(gene_cols) == 1) {
-
-    # Order top genes based on max usage for clusters
-    lvls <- dplyr::group_by(plt_dat, !!!syms(gene_cols))
-
-    lvls <- dplyr::summarize(
-      lvls,
-      max_usage = max(!!sym(usage_col)),
-      .groups = "drop"
-    )
-
-    lvls <- dplyr::arrange(lvls, .data$max_usage)
-    lvls <- pull(lvls, gene_cols)
-
-    if (!is.null(group_col)) lvls <- rev(lvls)
-
-    plt_dat <- .set_lvls(plt_dat, gene_cols, lvls)
-
-    # Create grouped boxplot
-    if (!is.null(group_col)) {
-      gg_args <- list(
-        df_in  = plt_dat,
-        x      = gene_cols,
-        y      = usage_col,
-        .color = group_col,
-        .fill  = group_col,
-        clrs   = plot_colors,
-        outlier.color = NA,
-        ...
-      )
-
-      gg_args$alpha <- gg_args$alpha %||% 0.5
-
-      res <- purrr::lift_dl(.create_boxes)(gg_args)
-
-      res <- res +
-        ggplot2::geom_jitter(
-          position = ggplot2::position_jitterdodge(jitter.width = 0.05)
-        ) +
-        labs(y = yaxis) +
-        theme(
-          legend.position = "right",
-          axis.text.x     = ggplot2::element_text(angle = 45, hjust = 1)
-        )
-
-      return(res)
-    }
-
-    # Create bargraph
-    if (identical(type, "bar")) {
-      plt_dat <- dplyr::filter(plt_dat, !!sym(usage_col) > 0)
-
-      res <- .create_bars(
-        plt_dat,
-        x     = gene_cols,
-        y     = usage_col,
-        .fill = cluster_col,
-        clrs  = plot_colors,
-        y_ttl = yaxis,
-        ...
-      )
-
-      return(res)
-    }
-
-    # Create heatmap
-    res <- .create_heatmap(
+    res <- .plot_single_usage(
       plt_dat,
-      x     = cluster_col,
-      y     = gene_cols,
-      .fill = usage_col,
-      clrs  = plot_colors,
-      ttl   = yaxis,
+      gn_col   = gene_cols,
+      dat_col  = usage_col,
+      clst_col = cluster_col,
+      grp_col  = group_col,
+      typ      = type,
+      clrs     = plot_colors,
+      ax_ttl   = yaxis,
       ...
     )
 
     return(res)
   }
 
-  browser()
+  # Plot paired usage for two gene columns
+  res <- .plot_paired_usage(
+    plt_dat,
+    gn_cols  = gene_cols,
+    dat_col  = usage_col,
+    clst_col = cluster_col,
+    typ      = type,
+    clrs     = plot_colors,
+    ax_ttl   = yaxis,
+    ...
+  )
+
+  res
+}
+
+#' Plot usage for single gene columns
+#'
+#' @param df_in data.frame
+#' @param gn_col Column containing genes
+#' @param dat_col Column containing gene usage metric
+#' @param clst_col Column containing clusters
+#' @param grp_col Column with IDs to use for grouping clusters
+#' @param typ Plot type
+#' @param clrs Plot colors
+#' @param ax_ttl Y-axis title
+#' @param order Should genes be ordered based on usage
+#' @param ... Additional parameters to pass to plotting function
+#' @noRd
+.plot_single_usage <- function(df_in, gn_col, dat_col, type, clst_col = NULL,
+                               grp_col = NULL, typ, clrs = NULL, ax_ttl,
+                               order = TRUE, ...) {
+
+  # Order plot levels
+  if (order) {
+    df_in <- .order_lvls(df_in, gn_col, dat_col, max, decreasing = TRUE)
+  }
+
+  # Set common arguments
+  plt_args <- list(clrs = clrs, ...)
+
+  if (identical(typ, "bar") || !is.null(grp_col)) {
+    plt_args$x <- gn_col
+    plt_args$y <- dat_col
+  }
+
+  # Create grouped boxplot
+  if (!is.null(grp_col)) {
+    plt_args$df_in         <- df_in
+    plt_args$.color        <- plt_args$.fill <- grp_col
+    plt_args$outlier.color <- plt_args$outlier.color %||% NA
+    plt_args$alpha         <- plt_args$alpha %||% 0.5
+
+    res <- purrr::lift_dl(.create_boxes)(plt_args)
+
+    res <- res +
+      ggplot2::geom_jitter(
+        position = ggplot2::position_jitterdodge(jitter.width = 0.05)
+      ) +
+      labs(y = ax_ttl) +
+      theme(
+        legend.position = "right",
+        axis.text.x     = ggplot2::element_text(angle = 45, hjust = 1)
+      )
+
+    return(res)
+  }
+
+  # Create bargraph
+  if (identical(typ, "bar")) {
+    df_in <- dplyr::filter(df_in, !!sym(dat_col) > 0)
+
+    plt_args$df_in <- df_in
+    plt_args$.fill <- clst_col
+    plt_args$y_ttl <- ax_ttl
+
+    res <- purrr::lift_dl(.create_bars)(plt_args)
+
+    return(res)
+  }
+
+  # Create heatmap
+  plt_args$df_in <- df_in
+  plt_args$x     <- clst_col
+  plt_args$y     <- gn_col
+  plt_args$.fill <- dat_col
+  plt_args$ttl   <- ax_ttl
+
+  res <- purrr::lift_dl(.create_gg_heatmap)(plt_args)
+
+  res
+}
+
+#' Plot paired usage for two gene columns
+#'
+#' @param df_in data.frame
+#' @param gn_cols Columns containing genes
+#' @param dat_col Column containing gene usage metric
+#' @param clst_col Column containing clusters
+#' @param typ Plot type
+#' @param clrs Plot colors
+#' @param ax_ttl Y-axis title
+#' @param order Should genes be ordered based on usage
+#' @param ... Additional parameters to pass to plotting function
+#' @noRd
+.plot_paired_usage <- function(df_in, gn_cols, dat_col, clst_col = NULL,
+                               typ, clrs = NULL, ax_ttl, order = TRUE, ...) {
 
   # Create plot when two columns are passed to gene_col
+  # group_split will order list based on the sorted column
   grps <- NULL
 
-  if (!is.null(cluster_col)) {
-    plt_dat <- dplyr::group_by(plt_dat, !!sym(cluster_col))
+  if (!is.null(clst_col)) {
+    df_in <- dplyr::group_by(df_in, !!sym(clst_col))
 
-    grps <- pull(plt_dat, cluster_col)
+    grps <- df_in[[clst_col]]
     grps <- sort(unique(grps))
   }
 
-  res <- dplyr::group_split(plt_dat)
+  res <- dplyr::group_split(df_in)
   names(res) <- grps
 
   # Format data for plotting
+  # sort level order
   res <- map(res, ~ {
-    res <- dplyr::select(.x, dplyr::all_of(c(gene_cols, usage_col)))
+    .x <- dplyr::select(.x, dplyr::all_of(c(gn_cols, dat_col)))
+    d  <- tidyr::expand(.x, !!!syms(gn_cols))
+    d  <- dplyr::left_join(d, .x, by = gn_cols)
 
-    res <- tidyr::pivot_wider(
-      res,
-      names_from  = gene_cols[2],
-      values_from = usage_col,
-      values_fill = 0
+    d <- dplyr::mutate(
+      d,
+      !!sym(dat_col) := tidyr::replace_na(!!sym(dat_col), 0)
     )
 
-    res <- tibble::column_to_rownames(res, gene_cols[1])
-    res <- as.matrix(res)
+    if (order) {
+      d <- dplyr::mutate(
+        d,
+        dplyr::across(all_of(gn_cols), ~ {
+          decr <- dplyr::cur_column() == gn_cols[1]
 
-    rws   <- rownames(res)
-    rws   <- rws[rowSums(res) > 0]
-    clmns <- colnames(res)
-    clmns <- clmns[colSums(res) > 0]
-
-    res <- res[rws, clmns]
-
-    # res <- tidyr::pivot_longer(
-    #   res,
-    #   cols      = -dplyr::all_of(gene_cols[1]),
-    #   names_to  = gene_cols[2],
-    #   values_to = usage_col
-    # )
-    #
-    # res <- dplyr::arrange(res, dplyr::desc(!!sym(usage_col)))
-    #
-    # v1_lvls <- rev(unique(pull(res, gene_cols[1])))
-    # v2_lvls <- rev(unique(pull(res, gene_cols[2])))
-    #
-    # res <- .set_lvls(res, gene_cols[1], v1_lvls)
-    # res <- .set_lvls(res, gene_cols[2], v2_lvls)
-
-    res
-  })
-
-
-  iwalk(res, ~ {
-    # d <- tidyr::pivot_wider(
-    #   .x,
-    #   names_from  = gene_cols[2],
-    #   values_from = usage_col
-    # )
-    #
-    # d <- tibble::column_to_rownames(d, gene_cols[1])
-
-    if (identical(type, "heatmap")) {
-      .create_heatmap(.x, clrs = plot_colors, ttl = .y)
-
-    } else if (identical(type, "circos")) {
-      .create_circos(.x, clrs = plot_colors)
+          .order_lvls(.x, freq, max, decreasing = decr)
+        })
+      )
     }
+
+    d
   })
 
-
+  plt_args <- list(clrs = clrs, ...)
 
   # Create circos plot
-  # if (identical(method, "circos")) {
-  #   walk(res, ~ {
-  #     d <- tidyr::pivot_wider(
-  #       .x,
-  #       names_from  = gene_cols[2],
-  #       values_from = usage_col
-  #     )
-  #
-  #     d <- tibble::column_to_rownames(d, gene_cols[1])
-  #
-  #     .create_circos(d, clrs = plot_colors)
-  #   })
-  #
-  #   return(invisible())
-  # }
-  #
-  # # Create heatmaps
-  # res <- purrr::map(
-  #   res,
-  #   .create_heatmap,
-  #   x     = gene_cols[1],
-  #   y     = gene_cols[2],
-  #   .fill = usage_col,
-  #   clrs  = plot_colors,
-  #   ttl   = yaxis,
-  #   ...
-  # )
-  #
-  # if (!is.null(names(res))) {
-  #   res <- purrr::imap(res, ~ .x + ggplot2::labs(title = .y))
-  # }
-  #
-  # if (length(res) == 1) {
-  #   return(res[[1]])
-  # }
-  #
-  # res
+  # use purrr::lift_dl to pass dots into walk
+  if (identical(typ, "circos")) {
+    plt_args$symmetric <- FALSE
+
+    iwalk(res, ~ {
+      d <- tidyr::pivot_wider(
+        .x,
+        names_from  = gn_cols[2],
+        values_from = dat_col
+      )
+
+      d <- tibble::column_to_rownames(d, gn_cols[1])
+      d <- as.matrix(d)
+
+      plt_args$mat_in <- d
+      plt_args$ttl <- .y
+
+      purrr::lift_dl(.create_circos)(plt_args)
+    })
+
+    return(invisible())
+  }
+
+  # Create heatmap
+  res <- purrr::map(
+    res,
+    .create_gg_heatmap,
+    x     = gn_cols[1],
+    y     = gn_cols[2],
+    .fill = dat_col,
+    clrs  = clrs,
+    ttl   = ax_ttl,
+    ...
+  )
+
+  if (!is.null(names(res))) {
+    res <- purrr::imap(res, ~ .x + ggplot2::labs(title = .y))
+  }
+
+  if (length(res) == 1) {
+    return(res[[1]])
+  }
+
+  res
 }
+
+
+
+
+
+
 

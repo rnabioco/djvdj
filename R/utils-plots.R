@@ -221,20 +221,17 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param ... Additional arguments to pass to circlize::chordDiagram()
 #' @noRd
 .create_circos <- function(mat_in, clrs = NULL, lvls = NULL, grps = NULL,
-                           ...) {
+                           ttl = NULL, ...) {
 
   # Set levels
-  r_nms <- rownames(mat_in)
-  c_nms <- colnames(mat_in)
+  if (!is.null(lvls)) {
+    r_nms  <- rownames(mat_in)
+    c_nms  <- colnames(mat_in)
+    r_lvls <- lvls[lvls %in% r_nms]
+    c_lvls <- lvls[lvls %in% c_nms]
 
-  if (is.null(lvls)) {
-    lvls <- unique(c(r_nms, c_nms))
-    lvls <- sort(lvls)
+    mat_in <- mat_in[r_lvls, c_lvls]
   }
-
-  r_lvls <- lvls[lvls %in% r_nms]
-  c_lvls <- lvls[lvls %in% c_nms]
-  mat_in <- mat_in[r_lvls, c_lvls]
 
   # Set plot arguments
   plt_args <- list(...)
@@ -280,6 +277,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
       panel.fun   = pan_fun
     )
   }
+
+  # Add title
+  title(main = ttl, font.main = 1)
 }
 
 
@@ -575,12 +575,37 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 }
 
 
+#' Order column levels by another variable
+#'
+#' @param x Vector to modify
+#' @param by Vector of values to sort by
+#' @param fun Summary function
+#' @param decreasing Should sort be decreasing
+#' @return Factor
+#' @noRd
+.order_lvls <- function(x, by, fun = max, decreasing = TRUE) {
+
+  df <- tibble::tibble(x = as.character(x), by = by)
+
+  l <- dplyr::group_by(df, x)
+  l <- dplyr::summarize(l, by = fun(by), .groups = "drop")
+
+  l <- dplyr::arrange(l, by)
+  l <- l$x
+
+  if (decreasing) l <- rev(l)
+
+  res <- factor(x, l, exclude = NULL)
+
+  res
+}
+
 #' Set column levels
 #'
 #' @param df_in data.frame
 #' @param clmn Column to modify
 #' @param lvls Levels
-#' @return data.frame
+#' @return data.frame with modified clmn levels
 #' @noRd
 .set_lvls <- function(df_in, clmn, lvls) {
 
