@@ -283,36 +283,13 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
                             chain_col = "chains", sep = ";", ...) {
 
   # Check inputs
-  ## NEED TO CHECK WHETHER GENE_COLS INPUT IS COMPATIBLE WITH TYPE ##
-  # heat: 1 or 2
-  # bar: 1
-  # circos: 2
-  typs <- c("heatmap", "bar", "circos")
-
-  if (!type %in% typs) {
-    stop("type must be one of the following: ", paste(typs, collapse = ", "))
-  }
-
-  if (length(gene_cols) > 2) {
-    stop("Cannot specify more than two values for gene_cols")
-  }
-
-  if (!yaxis %in% c("percent", "frequency")) {
-    stop("yaxis must be either 'percent' or 'frequency'")
-  }
-
-  .chk_group_cols(cluster_col, group_col)
-
-  if (length(gene_cols) > 1 && !is.null(group_col)) {
-    warning(
-      "The group_col argument can only be used when a single column ",
-      "is passed to the gene_cols argument."
-    )
-
-    group_col <- NULL
-  }
+  paired <- length(gene_cols) == 2
 
   if (identical(type, "circos")) yaxis <- "frequency"
+
+  .chk_usage_args(type, gene_cols, group_col, yaxis, paired)
+
+  .chk_group_cols(cluster_col, group_col)
 
   # Set y-axis
   usage_col <- ifelse(identical(yaxis, "frequency"), "freq", "pct")
@@ -358,55 +335,23 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   # If vdj_genes not provided, identify top n_genes for each cluster based on
   # usage
   } else {
-    top_genes <- plt_dat
-    top_genes <- dplyr::group_by(top_genes, !!!syms(c(cluster_col, group_col)))
-
-    # If two gene_cols are provided this will select the top gene pairs
-    top_genes <- dplyr::slice_max(
-      top_genes,
-      order_by  = !!sym(usage_col),
-      n         = n_genes,
-      with_ties = FALSE
+    plt_dat <- .filter_top_genes(
+      plt_dat,
+      dat_col  = usage_col,
+      gn_col   = gene_cols,
+      clst_col = cluster_col,
+      n        = n_genes
     )
-
-    # Do not use dplyr::pull since user can pass multiple gene_cols
-    top_genes <- unlist(top_genes[, gene_cols], use.names = FALSE)
-    top_genes <- unique(top_genes)
-
-    # Filter for top gene pairs
-    # filter after identifying top genes, instead of at the same time, since
-    # want the same top pairs to be plotted for all samples
-    plt_dat <- dplyr::filter(plt_dat, dplyr::if_all(
-      dplyr::all_of(gene_cols),
-      ~ .x %in% top_genes
-    ))
   }
 
   # Order clusters based on plot_lvls
   lvl_col <- dplyr::if_else(is.null(group_col), cluster_col, group_col)
   plt_dat <- .set_lvls(plt_dat, lvl_col, plot_lvls)
 
-  # Plot usage for single gene column
-  if (length(gene_cols) == 1) {
-    res <- .plot_single_usage(
-      plt_dat,
-      gn_col   = gene_cols,
-      dat_col  = usage_col,
-      clst_col = cluster_col,
-      grp_col  = group_col,
-      typ      = type,
-      clrs     = plot_colors,
-      ax_ttl   = yaxis,
-      ...
-    )
-
-    return(res)
-  }
-
-  # Plot paired usage for two gene columns
-  res <- .plot_paired_usage(
-    plt_dat,
-    gn_cols  = gene_cols,
+  # Plot gene usage
+  plt_args <- list(
+    df_in    = plt_dat,
+    gn_col   = gene_cols,
     dat_col  = usage_col,
     clst_col = cluster_col,
     typ      = type,
@@ -415,10 +360,19 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
     ...
   )
 
+  usage_fn <- .plot_paired_usage
+
+  if (!paired) {
+    usage_fn         <- .plot_single_usage
+    plt_args$grp_col <- group_col
+  }
+
+  res <- purrr::lift_dl(usage_fn)(plt_args)
+
   res
 }
 
-#' Plot usage for single gene columns
+#' Plot usage for single gene column
 #'
 #' @param df_in data.frame
 #' @param gn_col Column containing genes
@@ -437,7 +391,13 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
 
   # Order plot levels
   if (order) {
-    df_in <- .order_lvls(df_in, gn_col, dat_col, max, decreasing = TRUE)
+    decr  <- !is.null(grp_col)
+    g_col <- sym(gn_col)
+
+    df_in <- dplyr::mutate(
+      df_in,
+      !!g_col := .order_lvls(!!g_col, !!sym(dat_col), max, decreasing = decr)
+    )
   }
 
   # Set common arguments
@@ -472,8 +432,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
 
   # Create bargraph
   if (identical(typ, "bar")) {
-    df_in <- dplyr::filter(df_in, !!sym(dat_col) > 0)
-
+    df_in          <- dplyr::filter(df_in, !!sym(dat_col) > 0)
     plt_args$df_in <- df_in
     plt_args$.fill <- clst_col
     plt_args$y_ttl <- ax_ttl
@@ -498,7 +457,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
 #' Plot paired usage for two gene columns
 #'
 #' @param df_in data.frame
-#' @param gn_cols Columns containing genes
+#' @param gn_col Columns containing genes
 #' @param dat_col Column containing gene usage metric
 #' @param clst_col Column containing clusters
 #' @param typ Plot type
@@ -507,7 +466,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
 #' @param order Should genes be ordered based on usage
 #' @param ... Additional parameters to pass to plotting function
 #' @noRd
-.plot_paired_usage <- function(df_in, gn_cols, dat_col, clst_col = NULL,
+.plot_paired_usage <- function(df_in, gn_col, dat_col, clst_col = NULL,
                                typ, clrs = NULL, ax_ttl, order = TRUE, ...) {
 
   # Create plot when two columns are passed to gene_col
@@ -525,11 +484,11 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   names(res) <- grps
 
   # Format data for plotting
-  # sort level order
+  # sort level order, ascending order for y
   res <- map(res, ~ {
-    .x <- dplyr::select(.x, dplyr::all_of(c(gn_cols, dat_col)))
-    d  <- tidyr::expand(.x, !!!syms(gn_cols))
-    d  <- dplyr::left_join(d, .x, by = gn_cols)
+    .x <- dplyr::select(.x, dplyr::all_of(c(gn_col, dat_col)))
+    d  <- tidyr::expand(.x, !!!syms(gn_col))
+    d  <- dplyr::left_join(d, .x, by = gn_col)
 
     d <- dplyr::mutate(
       d,
@@ -537,68 +496,324 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
     )
 
     if (order) {
-      d <- dplyr::mutate(
-        d,
-        dplyr::across(all_of(gn_cols), ~ {
-          decr <- dplyr::cur_column() == gn_cols[1]
+      d <- dplyr::mutate(d, dplyr::across(all_of(gn_col), ~ {
+        decr <- dplyr::cur_column() == gn_col[1]
 
-          .order_lvls(.x, freq, max, decreasing = decr)
-        })
-      )
+        .order_lvls(.x, !!sym(dat_col), max, decreasing = decr)
+      }))
     }
 
     d
   })
 
   plt_args <- list(clrs = clrs, ...)
+  add_ttl  <- !is.null(names(res))
+
+  # Create heatmap
+  if (identical(typ, "heatmap")) {
+    plt_args$x       <- gn_col[1]
+    plt_args$y       <- gn_col[2]
+    plt_args$.fill   <- dat_col
+    plt_args$lgd_ttl <- ax_ttl
+
+    res <- purrr::imap(res, ~ {
+      plt_args$df_in <- .x
+
+      if (add_ttl) plt_args$plt_ttl <- .y
+
+      purrr::lift_dl(.create_gg_heatmap)(plt_args)
+    })
+
+    if (length(res) == 1) return(res[[1]])
+
+    res
+  }
 
   # Create circos plot
   # use purrr::lift_dl to pass dots into walk
-  if (identical(typ, "circos")) {
-    plt_args$symmetric <- FALSE
+  plt_args$symmetric <- FALSE
 
-    iwalk(res, ~ {
-      d <- tidyr::pivot_wider(
-        .x,
-        names_from  = gn_cols[2],
-        values_from = dat_col
-      )
+  iwalk(res, ~ {
+    d <- tidyr::pivot_wider(
+      .x,
+      names_from  = gn_col[1],
+      values_from = dat_col
+    )
 
-      d <- tibble::column_to_rownames(d, gn_cols[1])
-      d <- as.matrix(d)
+    d <- tibble::column_to_rownames(d, gn_col[2])
+    d <- as.matrix(d)
 
-      plt_args$mat_in <- d
-      plt_args$ttl <- .y
+    plt_args$mat_in <- d
 
-      purrr::lift_dl(.create_circos)(plt_args)
-    })
+    if (add_ttl) plt_args$plt_ttl <- .y
 
-    return(invisible())
-  }
+    purrr::lift_dl(.create_circos)(plt_args)
+  })
 
-  # Create heatmap
-  res <- purrr::map(
-    res,
-    .create_gg_heatmap,
-    x     = gn_cols[1],
-    y     = gn_cols[2],
-    .fill = dat_col,
-    clrs  = clrs,
-    ttl   = ax_ttl,
-    ...
+  return(invisible())
+}
+
+#' Filter genes based on top usage
+#'
+#' @param df_in data.frame
+#' @param dat_col Column containing gene usage metric
+#' @param gn_col Columns containing genes
+#' @param clst_col Column containing clusters
+#' @param n Number of top genes to pull
+#' @noRd
+.filter_top_genes <- function(df_in, dat_col, gn_col, clst_col, n) {
+
+  gn_args <- list(
+    df_in   = df_in,
+    dat_col = dat_col,
+    gn_col  = gn_col,
+    n       = n
   )
 
-  if (!is.null(names(res))) {
-    res <- purrr::imap(res, ~ .x + ggplot2::labs(title = .y))
+  # Filter for single gene column
+  if (length(gn_col) == 1) {
+    top <- purrr::lift_dl(.get_top_genes)(gn_args)
+    res <- dplyr::filter(df_in, !!sym(gn_col) %in% top)
+
+    return(res)
   }
 
-  if (length(res) == 1) {
-    return(res[[1]])
+  # Filter for paired gene columns
+  # will return n top genes for column 1, for column 2 gene to be included
+  # must be a top gene or have the highest usage
+  gn_args$clst_col <- clst_col
+
+  top_genes <- purrr::map(gn_col, ~ {
+    gn_args$gn_col <- .x
+    purrr::lift_dl(.get_top_genes)(gn_args)
+  })
+
+  gn_1  <- sym(gn_col[1])
+  gn_2  <- sym(gn_col[2])
+  top_1 <- top_genes[[1]]
+  top_2 <- top_genes[[2]]
+
+  if (is.null(clst_col)) {
+    res <- dplyr::ungroup(df_in)
+    res <- dplyr::filter(res, !!gn_1 %in% top_1)
+
+  } else {
+    res <- dplyr::group_by(df_in, !!sym(clst_col))
+    res <- dplyr::filter(
+      res,
+      !!gn_1 %in% top_1[[dplyr::cur_group()[[clst_col]]]]
+    )
   }
+
+  res <- dplyr::group_by(res, !!gn_1, .add = TRUE)
+  res <- dplyr::mutate(res, rnk = row_number(desc(!!sym(dat_col))))
+
+  if (is.null(clst_col)) {
+    res <- dplyr::filter(res, !!gn_2 %in% top_2 | rnk == 1)
+
+  } else {
+    res <- dplyr::filter(
+      res,
+      !!gn_2 %in% top_2[[dplyr::cur_group()[[clst_col]]]] | rnk == 1
+    )
+  }
+
+  res <- dplyr::ungroup(res)
 
   res
 }
 
+#' Get top genes based on usage
+#'
+#' @param df_in data.frame
+#' @param dat_col Column containing gene usage metric
+#' @param gn_col Columns containing genes
+#' @param clst_col Column containing clusters
+#' @param n Number of top genes to pull
+#' @noRd
+.get_top_genes <- function(df_in, dat_col, gn_col, clst_col = NULL, n) {
+
+  grps <- c(gn_col, clst_col)
+  res  <- dplyr::group_by(df_in, !!!syms(grps))
+
+  res <- dplyr::summarize(
+    res,
+    !!sym(dat_col) := max(!!sym(dat_col)),
+    .groups = "drop"
+  )
+
+  res <- dplyr::arrange(res, dplyr::desc(!!sym(dat_col)))
+
+  if (!is.null(clst_col)) res <- dplyr::group_by(res, !!sym(clst_col))
+
+  res <- dplyr::slice_max(
+    res,
+    order_by  = !!sym(dat_col),
+    n         = n,
+    with_ties = FALSE
+  )
+
+  res <- dplyr::ungroup(res)
+
+  # Pull gene lists
+  .pull_gns <- function(df_in, clmns) {
+    res <- unlist(df_in[, clmns], use.names = FALSE)
+    res <- unique(res)
+    res
+  }
+
+  if (!is.null(clst_col)) {
+    res <- split(res, res[[clst_col]])
+    res <- purrr::map(res, .pull_gns, gn_col)
+
+  } else res <- .pull_gns(res, gn_col)
+
+  res
+}
+
+#' Check plot_gene_usage arguments
+#'
+#' @param typ type
+#' @param gn_cols gene_cols
+#' @param grp_col group_col
+#' @param axis yaxis
+#' @param paired paired
+#' @noRd
+.chk_usage_args <- function(typ, gn_cols, grp_col, axis, paired) {
+
+  typs <- c("heatmap", "bar", "circos")
+
+  if (!typ %in% typs) {
+    stop("type must be one of the following: ", paste(typs, collapse = ", "))
+  }
+
+  if (paired && !typ %in% c("heatmap", "circos")) {
+    stop(
+      "type must be 'heatmap' or 'circos' when two columns ",
+      "are passed to the gene_cols argument."
+    )
+  }
+
+  if (identical(typ, "circos") && !paired) {
+    stop(
+      "A circos plot can only be generated when two columns ",
+      "are passed to the gene_cols argument."
+    )
+  }
+
+  if (length(gn_cols) > 2) {
+    stop("Cannot specify more than two values for gene_cols")
+  }
+
+  if (!axis %in% c("percent", "frequency")) {
+    stop("yaxis must be either 'percent' or 'frequency'")
+  }
+
+  if (paired && !is.null(grp_col)) {
+    stop(
+      "The group_col argument can only be used when a single column ",
+      "is passed to the gene_cols argument."
+    )
+  }
+}
+
+
+
+
+
+
+### EXTRA TOP GENE FILTERING CODE ###
+#
+# grp_clmns <- gene_cols[1]
+#
+# if (paired) grp_clmns <- c(grp_clmns, cluster_col)
+#
+# top_genes <- dplyr::group_by(plt_dat, !!!syms(grp_clmns))
+#
+# top_genes <- dplyr::summarize(
+#   top_genes,
+#   !!sym(usage_col) := max(!!sym(usage_col)),
+#   .groups = "drop"
+# )
+#
+# top_genes <- dplyr::arrange(top_genes, dplyr::desc(!!sym(usage_col)))
+#
+# if (paired) {
+#   top_genes <- dplyr::group_by(top_genes, !!sym(cluster_col))
+#
+#   top_genes <- dplyr::slice_max(
+#     top_genes,
+#     order_by  = !!sym(usage_col),
+#     n         = n_genes,
+#     with_ties = FALSE
+#   )
+#
+#   top_genes <- dplyr::ungroup(top_genes)
+#
+#   top_genes <- split(top_genes, top_genes[[cluster_col]])
+#   top_genes <- purrr::map(top_genes, dplyr::pull, gene_cols[1])
+#
+#   plt_dat <- dplyr::group_by(plt_dat, !!sym(cluster_col))
+#
+#   plt_dat <- dplyr::filter(
+#     plt_dat,
+#     !!sym(gene_cols[1]) %in% top_genes[[unlist(dplyr::cur_group())]]
+#   )
+#
+#   plt_dat <- dplyr::ungroup(plt_dat)
+#
+# } else {
+#   top_genes <- dplyr::slice_max(
+#     top_genes,
+#     order_by  = !!sym(usage_col),
+#     n         = n_genes,
+#     with_ties = FALSE
+#   )
+#
+#   top_genes <- top_genes[[gene_cols[1]]]
+#
+#   plt_dat <- dplyr::filter(plt_dat, !!sym(gene_cols[1]) %in% top_genes)
+# }
+#
+# # Filter for top gene pairs
+# # filter after identifying top genes, instead of at the same time, since
+# # want the same top pairs to be plotted for all samples
+# gn_args$clst_col <- cluster_col
+#
+# top_genes <- purrr::lift_dl(.get_top_genes)(gn_args)
+#
+# plt_dat <- dplyr::group_by(plt_dat, !!sym(cluster_col))
+#
+# plt_dat <- dplyr::filter(plt_dat, dplyr::if_all(
+#   dplyr::all_of(gene_cols),
+#   ~ .x %in% top_genes[[unlist(dplyr::cur_group())]]
+# ))
+#
+# plt_dat <- dplyr::ungroup(plt_dat)
+#
+# ORIGINAL VERSION
+# top_genes <- plt_dat
+# top_genes <- dplyr::group_by(top_genes, !!!syms(c(cluster_col, group_col)))
+#
+# # If two gene_cols are provided this will select the top gene pairs
+# top_genes <- dplyr::slice_max(
+#   top_genes,
+#   order_by  = !!sym(usage_col),
+#   n         = n_genes,
+#   with_ties = FALSE
+# )
+#
+# # Do not use dplyr::pull since user can pass multiple gene_cols
+# top_genes <- unlist(top_genes[, gene_cols], use.names = FALSE)
+# top_genes <- unique(top_genes)
+#
+# # Filter for top gene pairs
+# # filter after identifying top genes, instead of at the same time, since
+# # want the same top pairs to be plotted for all samples
+# plt_dat <- dplyr::filter(plt_dat, dplyr::if_all(
+#   dplyr::all_of(gene_cols),
+#   ~ .x %in% top_genes
+# ))
 
 
 

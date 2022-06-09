@@ -71,7 +71,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param .fill Variable to use for the fill color
 #' @param clrs Vector of colors for plotting
 #' @param na_color Color to use for missing values
-#' @param ttl Legend title
+#' @param plt_ttl Plot title
+#' @param lgd_ttl Legend title
 #' @param ang Angle of x-axis text
 #' @param hjst Horizontal justification for x-axis text
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
@@ -79,7 +80,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @return ggplot object
 #' @noRd
 .create_gg_heatmap <- function(df_in, x, y, .fill, clrs = NULL, na_color = NA,
-                               ttl = .fill, ang = 45, hjst = 1, ...) {
+                               plt_ttl = NULL, lgd_ttl = .fill, ang = 45,
+                               hjst = 1, ...) {
 
   clrs <- clrs %||% "#6A51A3"
 
@@ -102,7 +104,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   res <- res +
     ggplot2::geom_tile(...) +
-    ggplot2::guides(fill = ggplot2::guide_colorbar(title = ttl)) +
+    ggplot2::guides(fill = ggplot2::guide_colorbar(title = lgd_ttl)) +
     ggplot2::scale_fill_gradientn(colors = clrs, na.value = na_color) +
     djvdj_theme() +
     ggplot2::theme(
@@ -112,6 +114,11 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
       axis.text.x = ggplot2::element_text(angle = ang, hjust = hjst)
     )
 
+  if (!is.null(plt_ttl)) {
+    res <- res +
+      ggplot2::ggtitle(plt_ttl)
+  }
+
   res
 }
 
@@ -119,16 +126,17 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #'
 #' @param mat_in Matrix
 #' @param clrs Vector of colors for plotting
+#' @param na_color Color to use for missing values
 #' @param lvls Vector specifying level order
-#' @param ttl Legend title
+#' @param lgd_ttl Legend title
 #' @param up_tri If FALSE, upper triangle for heatmap will not be shown and
 #' rows/columns will not be clustered.
 #' @param diag If FALSE, diagonal for heatmap will not be shown and
 #' rows/columns will not be clustered.
 #' @param ... Aditional arguments to pass to ComplexHeatmap::Heatmap()
 #' @noRd
-.create_heatmap <- function(mat_in, clrs = NULL, lvls = NULL, ttl = NULL,
-                            up_tri = TRUE, diag = TRUE, ...) {
+.create_heatmap <- function(mat_in, clrs = NULL, na_color = NA, lvls = NULL,
+                            lgd_ttl = NULL, up_tri = TRUE, diag = TRUE, ...) {
 
   # Plot colors and levels
   plt_args <- list(...)
@@ -184,7 +192,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     plt_args$cluster_rows    <- FALSE
     plt_args$cluster_columns <- FALSE
     plt_args$row_names_side  <- plt_args$row_names_side %||% "left"
-    plt_args$na_col          <- plt_args$na_col %||% NA
+    plt_args$na_col          <- plt_args$na_col %||% na_color
   }
 
   # Set final heatmap parameters
@@ -197,7 +205,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   lgd_params <- list(
     title_gp      = grid::gpar(fontface = "plain"),
     legend_height = ggplot2::unit(80, "pt"),
-    title         = ttl
+    title         = lgd_ttl
   )
 
   plt_args$matrix                      <- mat_in
@@ -216,31 +224,43 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #'
 #' @param mat_in Matrix
 #' @param clrs Vector of colors for plotting
+#' @param na_color Color to use for missing values
 #' @param lvls Vector specifying level order
 #' @param grps Named vector specifying group for each column/row
+#' @param plt_ttl Plot title
 #' @param ... Additional arguments to pass to circlize::chordDiagram()
 #' @noRd
-.create_circos <- function(mat_in, clrs = NULL, lvls = NULL, grps = NULL,
-                           ttl = NULL, ...) {
+.create_circos <- function(mat_in, clrs = NULL, na_color = "grey90",
+                           lvls = NULL, grps = NULL, plt_ttl = NULL, ...) {
 
   # Set levels
-  if (!is.null(lvls)) {
-    r_nms  <- rownames(mat_in)
-    c_nms  <- colnames(mat_in)
-    r_lvls <- lvls[lvls %in% r_nms]
-    c_lvls <- lvls[lvls %in% c_nms]
+  all_nms <- union(colnames(mat_in), rownames(mat_in))
 
-    mat_in <- mat_in[r_lvls, c_lvls]
+  if (is.null(lvls)) {
+    lvls <- sort(all_nms)
+
+  } else if (!all(all_nms %in% lvls)) {
+    stop("plot_levels must include all rows and columns in the matrix")
+  }
+
+  # Set plot colors
+  c_clrs <- NULL
+
+  if (!is.null(clrs)) {
+    clr_lst <- .set_circos_cols(mat_in, clrs)
+    clrs    <- clr_lst[[1]]
+    c_clrs  <- clr_lst[[2]]
   }
 
   # Set plot arguments
   plt_args <- list(...)
 
-  plt_args$x         <- mat_in
-  plt_args$symmetric <- plt_args$symmetric %||% TRUE
-  plt_args$row.col   <- plt_args$grid.col <- clrs
-  plt_args$order     <- lvls
-  plt_args$group     <- plt_args$group %||% grps
+  plt_args$x          <- mat_in
+  plt_args$symmetric  <- plt_args$symmetric %||% TRUE
+  plt_args$grid.col   <- clrs
+  plt_args$column.col <- c_clrs
+  plt_args$order      <- lvls
+  plt_args$group      <- plt_args$group %||% grps
 
   # Exclude default axis track
   adj_axis <- is.null(plt_args[["annotationTrack"]])
@@ -279,7 +299,57 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   }
 
   # Add title
-  title(main = ttl, font.main = 1)
+  title(main = plt_ttl, font.main = 1)
+}
+
+#' Set colors for circos plot
+#'
+#' @param mat_in Matrix
+#' @param clrs Colors
+#' @return List containing a vector of sector colors and a vector of link
+#' colors
+#' @noRd
+.set_circos_cols <- function(mat_in, clrs) {
+  c_nms   <- colnames(mat_in)
+  r_nms   <- rownames(mat_in)
+  r_nms   <- r_nms[!r_nms %in% c_nms]
+  all_nms <- union(c_nms, r_nms)
+  n_clrs  <- length(clrs)
+
+  if (is.null(names(clrs))) {
+    if (n_clrs >= length(all_nms)) {
+      clrs        <- clrs[seq_along(all_nms)]
+      names(clrs) <- all_nms
+
+    } else if (n_clrs == length(c_nms)) {
+      c_clrs <- purrr::set_names(clrs, c_nms)
+      r_clrs <- purrr::set_names(rep(na_color, length(r_nms)), r_nms)
+
+      clrs <- c(c_clrs, r_clrs)
+
+    } else if (n_clrs == 1) {
+      c_clrs <- clrs
+
+    } else {
+      stop(
+        "Not enough colors provided (", n_clrs, "), provide exactly one ",
+        "color, one color for each column in the matrix (", length(c_nms),
+        "), or one color for each unique row and column in the matrix (",
+        length(all_nms), ")."
+      )
+    }
+
+  } else {
+    if (!all(all_nms %in% names(clrs))) {
+      stop("A color must be provided for each group being plotted")
+    }
+  }
+
+  c_clrs <- clrs[c_nms]
+
+  res <- list(clrs, c_clrs)
+
+  res
 }
 
 
