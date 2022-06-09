@@ -37,7 +37,8 @@ Imports:
     stringr,
     uwot,
     dbscan,
-    igraph (>= 1.3.0)
+    igraph (>= 1.3.0),
+    scales
 Suggests: 
     magrittr,
     covr,

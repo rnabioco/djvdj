@@ -60,8 +60,8 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 
   if (!is.function(method) && !is_mds && !is_counts) {
     stop(
-      "method must be 'mds' or a function to use for comparing ",
-      "sample repertoires, e.g. method = abdiv::jaccard."
+      "method must be 'mds', 'count', or a function to use for comparing ",
+      "clusters, e.g. method = abdiv::jaccard."
     )
   }
 
@@ -69,8 +69,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 
   if (is_counts) {
     method <- function(x, y) length(x[x > 0 & y > 0])
-
-    if (is.null(prefix)) prefix <- "count_"
+    prefix <- prefix %||% "count_"
   }
 
   # If no prefix provided, use method name
@@ -107,19 +106,13 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
     vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
   }
 
-  vdj <- dplyr::select(
-    vdj,
-    all_of(c(CELL_COL, data_col, cluster_col))
-  )
+  vdj <- dplyr::select(vdj, all_of(c(CELL_COL, data_col, cluster_col)))
 
   if (dplyr::n_distinct(vdj[[cluster_col]]) < 2) {
     stop("cluster_col must contain at least two unique groups.")
   }
 
-  vdj <- dplyr::group_by(
-    vdj,
-    !!!syms(c(cluster_col, data_col))
-  )
+  vdj <- dplyr::group_by(vdj, !!!syms(c(cluster_col, data_col)))
 
   vdj <- dplyr::summarize(
     vdj,
@@ -330,14 +323,19 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
   )
 
   # Create circos plot
+  # if level order not provided, sort columns/rows
   if (is_circ) {
     grps <- NULL
 
     if (!is.null(group_col)) {
       meta <- .get_meta(input)
       grps <- dplyr::distinct(meta, !!!syms(c(cluster_col, group_col)))
+      grps <- dplyr::arrange(grps, !!sym(cluster_col))
       grps <- purrr::set_names(grps[[group_col]], grps[[cluster_col]])
     }
+
+    all_nms   <- union(colnames(plt_dat), rownames(plt_dat))
+    plot_lvls <- plot_lvls %||% sort(all_nms)
 
     .create_circos(
       plt_dat,
@@ -372,11 +370,11 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
   # Create heatmap
   res <- .create_heatmap(
     plt_dat,
-    clrs   = plot_colors,
-    lvls   = plot_lvls,
-    ttl    = sim_col,
-    up_tri = include_upper_triangle,
-    diag   = include_diagonal,
+    clrs    = plot_colors,
+    lvls    = plot_lvls,
+    lgd_ttl = sim_col,
+    up_tri  = include_upper_triangle,
+    diag    = include_diagonal,
     ...
   )
 

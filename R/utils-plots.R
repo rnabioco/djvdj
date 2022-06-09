@@ -229,6 +229,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param grps Named vector specifying group for each column/row
 #' @param plt_ttl Plot title
 #' @param ... Additional arguments to pass to circlize::chordDiagram()
+#' @importFrom scales hue_pal
 #' @noRd
 .create_circos <- function(mat_in, clrs = NULL, na_color = "grey90",
                            lvls = NULL, grps = NULL, plt_ttl = NULL, ...) {
@@ -236,21 +237,24 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   # Set levels
   all_nms <- union(colnames(mat_in), rownames(mat_in))
 
-  if (is.null(lvls)) {
-    lvls <- sort(all_nms)
-
-  } else if (!all(all_nms %in% lvls)) {
+  if (!is.null(lvls) && !all(all_nms %in% lvls)) {
     stop("plot_levels must include all rows and columns in the matrix")
   }
 
-  # Set plot colors
-  c_clrs <- NULL
+  if (!is.null(grps)) {
+    if (!all(all_nms %in% names(grps))) {
+      stop("Groups must be provided for all clusters.")
+    }
 
-  if (!is.null(clrs)) {
-    clr_lst <- .set_circos_cols(mat_in, clrs)
-    clrs    <- clr_lst[[1]]
-    c_clrs  <- clr_lst[[2]]
+    grps <- grps[lvls]
   }
+
+  # Set plot colors
+  # if clrs is NULL, use ggplot2 default palette
+  clrs    <- clrs %||% scales::hue_pal()(length(all_nms))
+  clr_lst <- .set_circos_cols(mat_in, clrs, na_color)
+  clrs    <- clr_lst[[1]]
+  c_clrs  <- clr_lst[[2]]
 
   # Set plot arguments
   plt_args <- list(...)
@@ -274,8 +278,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   if (is.null(plt_args$annotationTrackHeight)) {
     circos_fun <- function(...) {
       circlize::chordDiagram(
-        annotationTrackHeight = circlize::mm_h(c(3, 4)),
-        ...
+        annotationTrackHeight = circlize::mm_h(c(3, 4)), ...
       )
     }
 
@@ -309,7 +312,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @return List containing a vector of sector colors and a vector of link
 #' colors
 #' @noRd
-.set_circos_cols <- function(mat_in, clrs) {
+.set_circos_cols <- function(mat_in, clrs, na_color = "grey90") {
   c_nms   <- colnames(mat_in)
   r_nms   <- rownames(mat_in)
   r_nms   <- r_nms[!r_nms %in% c_nms]
