@@ -12,7 +12,8 @@ calc_similarity(
   chain = NULL,
   chain_col = "chains",
   prefix = NULL,
-  return_mat = FALSE
+  return_mat = FALSE,
+  sep = ";"
 )
 }
 \arguments{
@@ -30,14 +31,16 @@ calculating repertoire overlap}
 \item 'mds', perform multidimensional scaling
 \item 'count', count the number of clonotypes overlapping between each cluster
 \item A function that takes two numeric vectors containing counts for each
-clonotype in the object, such as the beta diversity functions provided by
-the abdiv package
+unique value in the column provided to the data_col column, e.g.
+abdiv::jaccard()
 }}
 
 \item{prefix}{Prefix to add to new columns}
 
 \item{return_mat}{Return a matrix with similarity values. If set to
 FALSE, results will be added to the input object.}
+
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 }
 \value{
 Single cell object or data.frame with similarity values

@@ -16,6 +16,7 @@ plot_similarity(
   plot_lvls = names(plot_colors),
   include_upper_triangle = TRUE,
   include_diagonal = TRUE,
+  sep = ";",
   ...
 )
 }
@@ -58,6 +59,8 @@ be shown and rows/columns will not be clustered.}
 
 \item{include_diagonal}{If FALSE, diagonal for heatmap will not be shown and
 rows/columns will not be clustered.}
+
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{...}{Additional arguments to pass to plotting function}
 }

@@ -11,10 +11,11 @@ plot_diversity(
   method = abdiv::simpson,
   downsample = FALSE,
   n_boots = 100,
-  clonotype_col = "clonotype_id",
+  data_col = "clonotype_id",
   plot_colors = NULL,
   plot_lvls = NULL,
   facet_rows = 1,
+  sep = ";",
   ...
 )
 }
@@ -37,7 +38,7 @@ diversity metrics}
 
 \item{n_boots}{Number of bootstrap replicates}
 
-\item{clonotype_col}{meta.data column containing clonotype IDs to use for
+\item{data_col}{meta.data column containing clonotype IDs to use for
 calculating repertoire diversity}
 
 \item{plot_colors}{Character vector containing colors for plotting}

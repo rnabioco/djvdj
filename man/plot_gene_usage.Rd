@@ -14,7 +14,7 @@ plot_gene_usage(
   plot_colors = NULL,
   vdj_genes = NULL,
   n_genes = 20,
-  plot_lvls = NULL,
+  plot_lvls = names(plot_colors),
   yaxis = "percent",
   chain_col = "chains",
   sep = ";",
@@ -42,8 +42,8 @@ all chains}
 \itemize{
 \item 'bar', bargraphs can only be plotted when a single column is passed to the
 gene_cols argument
-\item 'heatmap'
-\item 'circos', create circos plot implemented with circlize::chordDiagram().
+\item 'heatmap', heatmap implemented with ComplexHeatmap::Heatmap()
+\item 'circos', circos plot implemented with circlize::chordDiagram().
 to create a circos plot, two columns must be passed to the gene_cols
 argument
 }}
