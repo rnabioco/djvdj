@@ -227,8 +227,8 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param chain_col meta.data column containing chains for each cell
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
-#' @param facet_rows The number of facet rows, use this argument if a list of
-#' functions is passed to method
+#' @param facet_rows The number of facet rows for final plot, use this argument
+#' if a list of functions is passed to method
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object

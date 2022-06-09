@@ -2,10 +2,10 @@
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param data_col meta.data column containing CDR3 sequences to use for
-#' calculating Levenshtein distance.
-#' @param chain Chain to use for clustering CDR3 sequences. Cells with more
-#' than one of the provided chain will be excluded from the analysis.
+#' @param data_col meta.data column containing sequences to use for calculating
+#' Levenshtein distance.
+#' @param chain Chain to use for clustering sequences. Cells with more than one
+#' of the provided chain will be excluded from the analysis.
 #' @param method Method to use for clustering, possible values are:
 #'
 #' - 'louvain', multi-level optimization of modality implemented with
@@ -27,7 +27,7 @@
 #' @importFrom igraph graph_from_data_frame cluster_louvain cluster_leiden membership
 #' @export
 cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
-                         k = 10, resolution = 0.5, chain_col = "chains",
+                         resolution = 0.5, k = 10, chain_col = "chains",
                          prefix = paste0(data_col, "_"), return_df = FALSE,
                          sep = ";", ...) {
 
@@ -55,7 +55,7 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
   # Calculate UMAP
   res <- uwot::umap(lev_dist)
 
-  colnames(res) <- c("UMAP_1", "UMAP_2")
+  colnames(res) <- paste0(prefix, c("UMAP_1", "UMAP_2"))
   rownames(res) <- vdj[[CELL_COL]]
 
   res <- tibble::as_tibble(res, rownames = CELL_COL)
@@ -101,7 +101,7 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
     clst_method <- igraph::cluster_leiden
     rsln_arg    <- "resolution_parameter"
 
-    clst_args$objective_function   <- clst_args$objective_function %||% "modularity"
+    clst_args$objective_function <- clst_args$objective_function %||% "modularity"
   }
 
   # Run clustering
@@ -132,11 +132,31 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
   res
 }
 
-
 #' Create sequence logos for clusters
 #'
-#'@importFrom stringr str_trunc
-#'@export
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing sequences to use for plotting.
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' grouping cells.
+#' @param chain Chain to use for clustering CDR3 sequences. Cells with more
+#' than one of the provided chain will be excluded from the analysis.
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_lvls Character vector containing levels for ordering
+#' @param chain_col meta.data column containing chains for each cell.
+#' @param width Integer specifying how many residues to plot, sequences longer
+#' than width will be get trimmed based on the align_end argument, sequences
+#' shorter than width will get removed. If a fraction is provided, the width
+#' cutoff will be set to include the specified fraction of sequences, e.g. a
+#' value of 0.75 would set the cutoff so 75% of sequences are included in the
+#' plot.
+#' @param align_end End to use for aligning sequences, specify '5' or '3' to
+#' align sequences at the 5' or 3' end when plotting.
+#' @param facet_rows The number of facet rows for final plot
+#' @param sep Separator used for storing per cell V(D)J data
+#' @param ... Additional parameters to pass to ggseqlogo::geom_logo()
+#' @importFrom stringr str_trunc
+#' @export
 plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
                             chain, plot_colors = NULL, plot_lvls = NULL,
                             chain_col = "chains", width = 0.75,
@@ -170,7 +190,7 @@ plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
   # Create logos
   res <- ggplot() +
     ggseqlogo::geom_logo(seqs, ...) +
-    facet_wrap(~ seq_group, scales = "free", nrow = facet_rows) +
+    ggplot2::facet_wrap(~ seq_group, scales = "free", nrow = facet_rows) +
     djvdj_theme()
 
   if (!is.null(plot_colors)) {
@@ -232,105 +252,3 @@ plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
   res
 }
 
-
-
-
-
-
-# DBScan clustering
-# dbscan_clsts <- as.dist(vdj_dist) %>%
-#   dbscan::dbscan(eps = 5)
-#
-# dbscan_clsts <- as.dist(vdj_dist) %>%
-#   dbscan::sNNclust(k = 10, eps = 5)
-#
-# u <- u %>%
-#   mutate(dbscan_clsts = as.character(dbscan_clsts$cluster))
-
-# KNN by hand
-# knn_res <- tibble()
-#
-# k <- 10
-#
-# for (i in seq_len(nrow(vdj_dist))) {
-#   nns <- vdj_dist[i, ]
-#   nns <- head(sort(nns), k)
-#   nns <- names(nns)
-#
-#   df <- tibble(
-#     Var1 = rownames(vdj_dist)[i],
-#     Var2 = list(nns)
-#   )
-#
-#   knn_res <- bind_rows(knn_res, df)
-# }
-#
-# knn_res <- unnest(knn_res, Var2)
-#
-# adj_grph <- knn_res %>%
-#   igraph::graph_from_data_frame(directed = FALSE)
-
-# RANN KNN - NOT CORRECT
-# knn_res <- RANN::nn2(vdj_dist, k = 3)
-#
-# adj_df <- knn_res$nn.idx
-#
-# colnames(adj_df) <- as.character(seq_len(ncol(adj_df)))
-#
-# adj_df <- as_tibble(adj_df)
-#
-# adj_grph <- adj_df %>%
-#   pivot_longer(all_of(colnames(.)[-1]), values_to = "Var2") %>%
-#   select(Var1 = `1`, Var2) %>%
-#   igraph::graph_from_data_frame(directed = FALSE)
-
-# ORIGINAL FUNCTION
-# https://github.com/rnabioco/djvdj/blame/e9e201d0f3f54702fe74f51858f82c21124dd3b5/R/utils.R
-# # Extract sequences
-# # Only include cells with VDJ data
-# seqs <- Seurat::FetchData(sobj_in, cdr3_col)
-# seqs <- tibble::rownames_to_column(seqs, "cell_id")
-# seqs <- na.omit(seqs)
-#
-# # Select chains to used for calculating distance
-# if (!is.null(use_chains)) {
-#   re       <- stringr::str_c("(?<=", use_chains, ":)[A-Z]+")
-#   seq_cols <- stringr::str_c("V", seq_along(use_chains))
-#
-#   seqs <- purrr::map2(re, seq_cols, ~ {
-#     n_col <- dplyr::sym(.y)
-#     c_col <- dplyr::sym(cdr3_col)
-#
-#     dplyr::mutate(seqs, !!n_col := stringr::str_extract(!!c_col, .x))
-#   })
-#
-#   seqs <- purrr::reduce(seqs, dplyr::left_join, by = c("cell_id", cdr3_col))
-#   seqs <- na.omit(seqs)
-#   seqs <- dplyr::mutate(seqs, seq_c = stringr::str_c(!!!dplyr::syms(seq_cols)))
-#
-# } else {
-#   seqs <- mutate(
-#     seqs,
-#     seq_c = stringr::str_extract_all(!!dplyr::sym(cdr3_col), "(?<=:)[A-Z]+"),
-#     seq_c = purrr::map(seq_c, purrr::reduce, stringr::str_c)
-#   )
-# }
-#
-# # Create Levenshtein distance matrix
-# seqs     <- purrr::set_names(seqs$seq_c, seqs$cell_id)
-# vdj_dist <- adist(seqs)
-#
-# # Create nearest neighbors graph
-# # Add graph this way or error thrown due to differing number of cells
-# vdj_snn  <- Seurat::FindNeighbors(vdj_dist, distance.matrix = T)
-# snn_name <- stringr::str_c(prefix, "snn")
-#
-# sobj_in@graphs[[snn_name]] <- vdj_snn$snn
-#
-# # Find clusters
-# res <- Seurat::FindClusters(
-#   object     = sobj_in,
-#   resolution = resolution,
-#   graph.name = snn_name,
-#   ...
-# )

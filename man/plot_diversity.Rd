@@ -52,8 +52,8 @@ all chains.}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{facet_rows}{The number of facet rows, use this argument if a list of
-functions is passed to method}
+\item{facet_rows}{The number of facet rows for final plot, use this argument
+if a list of functions is passed to method}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}

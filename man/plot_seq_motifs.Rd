@@ -19,6 +19,40 @@ plot_seq_motifs(
   ...
 )
 }
+\arguments{
+\item{input}{Single cell object or data.frame containing V(D)J data. If a
+data.frame is provided, the cell barcodes should be stored as row names.}
+
+\item{data_col}{meta.data column containing sequences to use for plotting.}
+
+\item{cluster_col}{meta.data column containing cluster IDs to use for
+grouping cells.}
+
+\item{chain}{Chain to use for clustering CDR3 sequences. Cells with more
+than one of the provided chain will be excluded from the analysis.}
+
+\item{plot_colors}{Character vector containing colors for plotting}
+
+\item{plot_lvls}{Character vector containing levels for ordering}
+
+\item{chain_col}{meta.data column containing chains for each cell.}
+
+\item{width}{Integer specifying how many residues to plot, sequences longer
+than width will be get trimmed based on the align_end argument, sequences
+shorter than width will get removed. If a fraction is provided, the width
+cutoff will be set to include the specified fraction of sequences, e.g. a
+value of 0.75 would set the cutoff so 75\% of sequences are included in the
+plot.}
+
+\item{align_end}{End to use for aligning sequences, specify '5' or '3' to
+align sequences at the 5' or 3' end when plotting.}
+
+\item{facet_rows}{The number of facet rows for final plot}
+
+\item{sep}{Separator used for storing per cell V(D)J data}
+
+\item{...}{Additional parameters to pass to ggseqlogo::geom_logo()}
+}
 \description{
 Create sequence logos for clusters
 }
