@@ -367,9 +367,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
     plt_args$grp_col <- group_col
   }
 
-  res <- purrr::lift_dl(usage_fn)(plt_args)
-
-  res
+  purrr::lift_dl(usage_fn)(plt_args)
 }
 
 #' Plot usage for single gene column
@@ -526,7 +524,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
 
     if (length(res) == 1) return(res[[1]])
 
-    res
+    return(res)
   }
 
   # Create circos plot
@@ -549,8 +547,6 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
 
     purrr::lift_dl(.create_circos)(plt_args)
   })
-
-  return(invisible())
 }
 
 #' Filter genes based on top usage

@@ -83,26 +83,15 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
                                plt_ttl = NULL, lgd_ttl = .fill, ang = 45,
                                hjst = 1, ...) {
 
-  clrs <- clrs %||% "#6A51A3"
+  clrs <- clrs %||% "#619CFF"
 
-  if (length(clrs) == 1) {
-    clrs <- c("grey90", clrs)
-  }
+  if (length(clrs) == 1) clrs <- c("white", clrs)
 
-  if (!is.null(x)) {
-    res <- ggplot2::ggplot(
-      df_in,
-      ggplot2::aes(!!sym(x), !!sym(y), fill = !!sym(.fill))
-    )
+  plt_aes <- ggplot2::aes("sample", !!sym(y), fill = !!sym(.fill))
 
-  } else {
-    res <- ggplot2::ggplot(
-      df_in,
-      ggplot2::aes("sample", !!sym(y), fill = !!sym(.fill))
-    )
-  }
+  if (!is.null(x)) plt_aes$x <- sym(x)
 
-  res <- res +
+  res <- ggplot2::ggplot(df_in, plt_aes) +
     ggplot2::geom_tile(...) +
     ggplot2::guides(fill = ggplot2::guide_colorbar(title = lgd_ttl)) +
     ggplot2::scale_fill_gradientn(colors = clrs, na.value = na_color) +
@@ -139,7 +128,11 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
                             lgd_ttl = NULL, up_tri = TRUE, diag = TRUE, ...) {
 
   # Plot colors and levels
-  plt_args <- list(...)
+  clrs <- clrs %||% "#619CFF"
+
+  if (length(clrs) == 1) clrs <- c("white", clrs)
+
+  plt_args <- list(col = clrs, ...)
 
   r_nms <- rownames(mat_in)
   c_nms <- colnames(mat_in)
@@ -156,8 +149,6 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   r_lvls <- lvls[lvls %in% r_nms]
   c_lvls <- lvls[lvls %in% c_nms]
   mat_in <- mat_in[r_lvls, c_lvls]
-
-  plt_args$col <- clrs %||% c("white", "#6A51A3")
 
   # Remove upper triangle and/or diagonal
   if (!up_tri || !diag) {
