@@ -65,6 +65,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
     )
   }
 
+  # Calculate jaccard dissimilarity for MDS
   if (is_mds) method <- abdiv::jaccard
 
   if (is_counts) {
@@ -79,19 +80,18 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
     prefix <- paste0(prefix, "_")
   }
 
-  # Format input data
   # filter chains if provided
-  if (is.null(chain)) {
-    meta <- .get_meta(input)
-    vdj  <- dplyr::filter(meta, !is.na(!!sym(data_col)))
+  # if all chains removed, NA will be returned
+  meta <- vdj <- .get_meta(input)
 
-  } else {
+  if (!is.null(chain)) {
     vdj <- fetch_vdj(
       input,
       vdj_cols      = c(data_col, chain_col),
       clonotype_col = data_col,
       filter_cells  = TRUE,
-      unnest        = FALSE
+      unnest        = FALSE,
+      sep           = sep
     )
 
     vdj <- .filter_chains(
@@ -102,16 +102,25 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
       col_names  = "{.col}",
       allow_dups = FALSE
     )
-
-    vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
   }
 
+  # Check number of clusters after filtering
+  vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
   vdj <- dplyr::select(vdj, all_of(c(CELL_COL, data_col, cluster_col)))
 
-  if (dplyr::n_distinct(vdj[[cluster_col]]) < 2) {
+  n_clsts <- dplyr::n_distinct(vdj[[cluster_col]])
+
+  if (n_clsts < 2) {
     stop("cluster_col must contain at least two unique groups.")
+
+  } else if (n_clsts < 3 && identical(method, "mds")) {
+    stop(
+      "cluster_col must contain at least three unique groups ",
+      "when method is 'mds'."
+    )
   }
 
+  # Count number of occurrences of each value in data_col
   vdj <- dplyr::group_by(vdj, !!!syms(c(cluster_col, data_col)))
 
   vdj <- dplyr::summarize(
@@ -156,13 +165,11 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 
   # Combine with inverse combinations
   res_i <- dplyr::rename(res, Var1 = .data$Var2, Var2 = .data$Var1)
-
-  res <- dplyr::bind_rows(res, res_i, res_s)
+  res   <- dplyr::bind_rows(res, res_i, res_s)
 
   # Format data.frame
   clmns <- sort(unique(res$Var2))
-
-  res <- dplyr::arrange(res, Var2)
+  res   <- dplyr::arrange(res, Var2)
 
   res <- tidyr::pivot_wider(
     res,
@@ -251,9 +258,9 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' @param chain_col meta.data column containing chains for each cell
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters
-#' @param include_upper_triangle If FALSE, upper triangle for heatmap will not
+#' @param remove_upper_triangle If TRUE, upper triangle for heatmap will not
 #' be shown and rows/columns will not be clustered.
-#' @param include_diagonal If FALSE, diagonal for heatmap will not be shown and
+#' @param remove_diagonal If TRUE, diagonal for heatmap will not be shown and
 #' rows/columns will not be clustered.
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to plotting function
@@ -298,8 +305,8 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
                             method = abdiv::jaccard, chain = NULL,
                             chain_col = "chains", plot_colors = NULL,
                             plot_lvls = names(plot_colors),
-                            include_upper_triangle = TRUE,
-                            include_diagonal = TRUE, sep = ";", ...) {
+                            remove_upper_triangle = FALSE,
+                            remove_diagonal = FALSE, sep = ";", ...) {
 
   # Check inputs
   is_mds  <- identical(method, "mds")
@@ -370,11 +377,11 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
   # Create heatmap
   res <- .create_heatmap(
     plt_dat,
-    clrs    = plot_colors,
-    lvls    = plot_lvls,
-    lgd_ttl = sim_col,
-    up_tri  = include_upper_triangle,
-    diag    = include_diagonal,
+    clrs     = plot_colors,
+    lvls     = plot_lvls,
+    lgd_ttl  = sim_col,
+    rm_upper = remove_upper_triangle,
+    rm_diag  = remove_diagonal,
     ...
   )
 

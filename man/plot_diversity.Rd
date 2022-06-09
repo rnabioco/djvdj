@@ -6,12 +6,14 @@
 \usage{
 plot_diversity(
   input,
+  data_col = "clonotype_id",
   cluster_col = NULL,
   group_col = NULL,
   method = abdiv::simpson,
   downsample = FALSE,
   n_boots = 100,
-  data_col = "clonotype_id",
+  chain = NULL,
+  chain_col = "chains",
   plot_colors = NULL,
   plot_lvls = NULL,
   facet_rows = 1,
@@ -22,6 +24,9 @@ plot_diversity(
 \arguments{
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
+
+\item{data_col}{meta.data column containing clonotype IDs to use for
+calculating repertoire diversity}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
@@ -38,8 +43,10 @@ diversity metrics}
 
 \item{n_boots}{Number of bootstrap replicates}
 
-\item{data_col}{meta.data column containing clonotype IDs to use for
-calculating repertoire diversity}
+\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
+all chains.}
+
+\item{chain_col}{meta.data column containing chains for each cell}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 

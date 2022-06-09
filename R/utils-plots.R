@@ -79,9 +79,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_gg_heatmap <- function(df_in, x, y, .fill, clrs = NULL, na_color = NA,
-                               plt_ttl = NULL, lgd_ttl = .fill, ang = 45,
-                               hjst = 1, ...) {
+.create_gg_heatmap <- function(df_in, x = NULL, y, .fill, clrs = NULL,
+                               na_color = NA, plt_ttl = NULL, lgd_ttl = .fill,
+                               ang = 45, hjst = 1, ...) {
 
   clrs <- clrs %||% "#619CFF"
 
@@ -118,27 +118,24 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param na_color Color to use for missing values
 #' @param lvls Vector specifying level order
 #' @param lgd_ttl Legend title
-#' @param up_tri If FALSE, upper triangle for heatmap will not be shown and
+#' @param rm_upper If TRUE, upper triangle for heatmap will not be shown and
 #' rows/columns will not be clustered.
-#' @param diag If FALSE, diagonal for heatmap will not be shown and
+#' @param rm_diag If TRUE, diagonal for heatmap will not be shown and
 #' rows/columns will not be clustered.
 #' @param ... Aditional arguments to pass to ComplexHeatmap::Heatmap()
 #' @noRd
 .create_heatmap <- function(mat_in, clrs = NULL, na_color = NA, lvls = NULL,
-                            lgd_ttl = NULL, up_tri = TRUE, diag = TRUE, ...) {
+                            lgd_ttl = NULL, rm_upper = FALSE, rm_diag = FALSE,
+                            ...) {
 
-  # Plot colors and levels
-  clrs <- clrs %||% "#619CFF"
-
-  if (length(clrs) == 1) clrs <- c("white", clrs)
-
-  plt_args <- list(col = clrs, ...)
+  # Set plot levels
+  plt_args <- list(...)
 
   r_nms <- rownames(mat_in)
   c_nms <- colnames(mat_in)
 
   if (is.null(lvls)) {
-    lvls <- unique(c(r_nms, c_nms))
+    lvls <- union(r_nms, c_nms)
     lvls <- sort(lvls)
 
   } else {
@@ -151,40 +148,34 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   mat_in <- mat_in[r_lvls, c_lvls]
 
   # Remove upper triangle and/or diagonal
-  if (!up_tri || !diag) {
-    lvls_key <- purrr::set_names(lvls)
+  if (rm_upper || rm_diag) {
+    mat_rm <- .remove_upper_triangle(mat_in, rm_upper, rm_diag)
+    n_vals <- .get_unique_values(mat_rm)
 
-    lvls_key <- purrr::imap(lvls_key, ~ {
-      idx <- grep(.x, lvls)
+    if (n_vals == 1) {
+      warning(
+        "Cannot remove upper triangle and/or diagonal since there ",
+        "will only be one unique value remaining."
+      )
+    } else {
+      mat_in <- mat_rm
 
-      v <- c()
-
-      if (!up_tri) {
-        v <- lvls[idx:length(lvls)]
-        v <- v[v != .y]
-      }
-
-      if (!diag) v <- c(v, .y)
-
-      v
-    })
-
-    for (i in seq_along(lvls_key)) {
-      mat_in[names(lvls_key[i]), lvls_key[[i]]] <- NA
+      plt_args$cluster_rows    <- FALSE
+      plt_args$cluster_columns <- FALSE
+      plt_args$row_names_side  <- plt_args$row_names_side %||% "left"
+      plt_args$na_col          <- plt_args$na_col %||% na_color
     }
-
-    # Remove rows/columns with all NAs
-    na_idx <- is.na(mat_in)
-    r_idx  <- rowSums(na_idx) != ncol(mat_in)
-    c_idx  <- colSums(na_idx) != nrow(mat_in)
-    mat_in <- mat_in[r_idx, c_idx]
-
-    # Set plot arguments
-    plt_args$cluster_rows    <- FALSE
-    plt_args$cluster_columns <- FALSE
-    plt_args$row_names_side  <- plt_args$row_names_side %||% "left"
-    plt_args$na_col          <- plt_args$na_col %||% na_color
   }
+
+  # Set plot colors
+  # if all values in matrix are the same, only pass one color, otherwise error
+  clrs   <- clrs %||% "#619CFF"
+  n_vals <- .get_unique_values(mat_in)
+
+  if (n_vals == 1)            clrs <- dplyr::last(clrs)
+  else if (length(clrs) == 1) clrs <- c("white", clrs)
+
+  plt_args$col <- plt_args$col %||% clrs
 
   # Set final heatmap parameters
   # use computed similarities for clustering, so use a distance function that
@@ -210,6 +201,66 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res
 }
 
+#' Remove upper triangle and/or diagonal from matrix
+#'
+#' @param mat_in Matrix
+#' @param rm_upper If TRUE, upper triangle will be removed from matrix
+#' @param rm_diag If TRUE, diagonal will be removed from matrix
+#' @noRd
+.remove_upper_triangle <- function(mat_in, rm_upper, rm_diag) {
+
+  # Check inputs
+  if (!rm_upper && !rm_diag) return(mat_in)
+
+  if (!isSymmetric(mat_in)) {
+    stop(
+      "Matrix must be symmetrical to remove upper triangle and/or diagonal."
+    )
+  }
+
+  # Identify values to remove
+  nms     <- colnames(mat_in)
+  nms_key <- purrr::set_names(nms)
+
+  nms_key <- purrr::imap(nms_key, ~ {
+    idx <- grep(.x, nms)
+
+    v <- c()
+
+    if (rm_upper) {
+      v <- nms[idx:length(nms)]
+      v <- v[v != .y]
+    }
+
+    if (rm_diag) v <- c(v, .y)
+
+    v
+  })
+
+  for (i in seq_along(nms_key)) {
+    mat_in[names(nms_key[i]), nms_key[[i]]] <- NA
+  }
+
+  # Remove rows/columns with all NAs
+  na_idx <- is.na(mat_in)
+  r_idx  <- rowSums(na_idx) != ncol(mat_in)
+  c_idx  <- colSums(na_idx) != nrow(mat_in)
+  res    <- mat_in[r_idx, c_idx]
+
+  res
+}
+
+#' Count number of unique values in matrix
+#'
+#' @param mat_in Matrix
+#' @noRd
+.get_unique_values <- function(mat_in) {
+  vals <- as.numeric(mat_in)
+  vals <- vals[is.finite(vals)]
+
+  n_distinct(vals, na.rm = TRUE)
+}
+
 
 #' Create circos plot
 #'
@@ -224,6 +275,20 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @noRd
 .create_circos <- function(mat_in, clrs = NULL, na_color = "grey90",
                            lvls = NULL, grps = NULL, plt_ttl = NULL, ...) {
+
+  # Check matrix, must have at least one link
+  vals <- as.numeric(mat_in)
+
+  if (isSymmetric(mat_in)) {
+    vals <- .remove_upper_triangle(mat_in, rm_upper = TRUE, rm_diag = TRUE)
+  }
+
+  if (!any(vals > 0, na.rm = TRUE)) {
+    stop(
+      "To create a circos plot there must be at least one overlap ",
+      "between the clusters."
+    )
+  }
 
   # Set levels
   all_nms <- union(colnames(mat_in), rownames(mat_in))
@@ -361,7 +426,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_bars <- function(df_in, x, y, .fill, clrs = NULL, y_ttl = y, ang = 45,
+.create_bars <- function(df_in, x, y, .fill = NULL, clrs = NULL, y_ttl = y, ang = 45,
                          hjst = 1, ...) {
 
   # Reverse bar order
@@ -371,22 +436,22 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   # Set aesthetics and geom_col arguments
   gg_aes <- aes(!!sym(x), !!sym(y))
 
-  gg_args <- list(...)
+  plt_args <- list(...)
 
   if (!is.null(.fill)) {
     gg_aes$fill <- sym(.fill)
 
   } else {
-    gg_args$fill <- clrs
+    plt_args$fill <- clrs
   }
 
-  if (is.null(gg_args$position)) {
-    gg_args$position <- ggplot2::position_dodge(preserve = "single")
+  if (is.null(plt_args$position)) {
+    plt_args$position <- ggplot2::position_dodge(preserve = "single")
   }
 
   # Create bar graph
   res <- ggplot2::ggplot(df_in, gg_aes) +
-    purrr::lift_dl(geom_col)(gg_args)
+    purrr::lift_dl(geom_col)(plt_args)
 
   # Set plot colors
   if (!is.null(.fill) && !is.null(clrs)) {

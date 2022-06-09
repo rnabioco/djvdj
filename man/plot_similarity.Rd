@@ -14,8 +14,8 @@ plot_similarity(
   chain_col = "chains",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
-  include_upper_triangle = TRUE,
-  include_diagonal = TRUE,
+  remove_upper_triangle = FALSE,
+  remove_diagonal = FALSE,
   sep = ";",
   ...
 )
@@ -54,10 +54,10 @@ all chains.}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
 
-\item{include_upper_triangle}{If FALSE, upper triangle for heatmap will not
+\item{remove_upper_triangle}{If TRUE, upper triangle for heatmap will not
 be shown and rows/columns will not be clustered.}
 
-\item{include_diagonal}{If FALSE, diagonal for heatmap will not be shown and
+\item{remove_diagonal}{If TRUE, diagonal for heatmap will not be shown and
 rows/columns will not be clustered.}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
