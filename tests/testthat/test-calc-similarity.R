@@ -14,11 +14,11 @@ mets <- abdiv::beta_diversities %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 arg_lst <- list(
-  input         = list(vdj_so, vdj_sce, df_1, df_2),
-  clonotype_col = "cdr3",
-  cluster_col   = "seurat_clusters",
-  method        = mets,
-  return_mat    = c(TRUE, FALSE)
+  input       = list(vdj_so, vdj_sce, df_1, df_2),
+  data_col    = "cdr3",
+  cluster_col = "seurat_clusters",
+  method      = mets,
+  return_mat  = c(TRUE, FALSE)
 )
 
 test_all_args(
@@ -70,11 +70,11 @@ purrr::walk(abdiv::beta_diversities, ~ {
 
   res <- vdj_so %>%
     calc_similarity(
-      clonotype_col = "cdr3",
-      cluster_col   = "seurat_clusters",
-      method        = eval(parse(text = fn)),
-      return_mat    = FALSE,
-      prefix        = "x"
+      data_col    = "cdr3",
+      cluster_col = "seurat_clusters",
+      method      = eval(parse(text = fn)),
+      return_mat  = FALSE,
+      prefix      = "x"
     )
 
   res <- res@meta.data %>%
@@ -93,11 +93,11 @@ purrr::walk(abdiv::beta_diversities, ~ {
 test_that("calc_similarity Seurat out", {
   res <- vdj_so %>%
     calc_similarity(
-      clonotype_col = "cdr3",
-      cluster_col   = "seurat_clusters",
-      method        = abdiv::binomial_deviance,
-      return_mat    = FALSE,
-      prefix        = "x"
+      data_col    = "cdr3",
+      cluster_col = "seurat_clusters",
+      method      = abdiv::binomial_deviance,
+      return_mat  = FALSE,
+      prefix      = "x"
     )
 
   expect_s4_class(res, "Seurat")
@@ -112,11 +112,11 @@ test_that("calc_similarity Seurat out", {
 test_that("calc_similarity Seurat out", {
   res <- vdj_sce %>%
     calc_similarity(
-      clonotype_col = "cdr3",
-      cluster_col   = "seurat_clusters",
-      method        = abdiv::binomial_deviance,
-      return_mat    = FALSE,
-      prefix        = "x"
+      data_col    = "cdr3",
+      cluster_col = "seurat_clusters",
+      method      = abdiv::binomial_deviance,
+      return_mat  = FALSE,
+      prefix      = "x"
     )
 
   expect_s4_class(res, "SingleCellExperiment")
@@ -133,11 +133,11 @@ test_that("calc_similarity Seurat out", {
 test_that("calc_similarity df out", {
   res <- vdj_so@meta.data %>%
     calc_similarity(
-      clonotype_col = "cdr3",
-      cluster_col   = "seurat_clusters",
-      method        = abdiv::binomial_deviance,
-      return_mat    = FALSE,
-      prefix        = "x"
+      data_col    = "cdr3",
+      cluster_col = "seurat_clusters",
+      method      = abdiv::binomial_deviance,
+      return_mat  = FALSE,
+      prefix      = "x"
     )
 
   expect_s3_class(res, "data.frame")
@@ -152,11 +152,11 @@ test_that("calc_similarity df out", {
 test_that("calc_similarity mat out", {
   res <- vdj_so %>%
     calc_similarity(
-      clonotype_col = "cdr3",
-      cluster_col   = "seurat_clusters",
-      method        = abdiv::binomial_deviance,
-      return_mat    = TRUE,
-      prefix        = "x"
+      data_col    = "cdr3",
+      cluster_col = "seurat_clusters",
+      method      = abdiv::binomial_deviance,
+      return_mat  = TRUE,
+      prefix      = "x"
     )
 
   expect_type(res, "double")

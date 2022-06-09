@@ -265,12 +265,13 @@ mets <- abdiv::alpha_diversities %>%
 names(mets) <- abdiv::alpha_diversities
 
 arg_lst <- list(
-  input         = list(vdj_so, vdj_sce),
-  clonotype_col = "cdr3_nt",
-  cluster_col   = list(NULL, "seurat_clusters"),
-  method        = append(mets, list(mets)),
-  plot_colors   = list(NULL, test_cols),
-  plot_lvls     = list(NULL, test_lvls)
+  input       = list(vdj_so, vdj_sce),
+  data_col    = "cdr3_nt",
+  cluster_col = list(NULL, "seurat_clusters"),
+  method      = append(mets, list(mets)),
+  chain       = list(NULL, "IGH"),
+  plot_colors = list(NULL, test_cols),
+  plot_lvls   = list(NULL, test_lvls)
 )
 
 test_all_args(
@@ -295,22 +296,43 @@ test_that("plot_diversity bad names", {
 })
 
 # Check all plot_similarity arguments
-mets <- abdiv::beta_diversities %>%
+# exclude methods that produce -Inf
+exclude <- c(
+  "morisita", "kullback_leibler_divergence",
+  "kulczynski_first", "jaccard_turnover"
+)
+
+mets <- abdiv::beta_diversities
+mets <- mets[!mets %in% exclude]
+
+mets <- set_names(mets) %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 arg_lst <- list(
-  input         = list(vdj_so, vdj_sce),
-  clonotype_col = "cdr3_nt",
-  cluster_col   = "seurat_clusters",
-  method        = mets,
-  plot_colors   = list(NULL, test_cols)
+  input       = list(vdj_so, vdj_sce),
+  data_col    = "cdr3_nt",
+  cluster_col = "seurat_clusters",
+  chain       = list(NULL, "IGH"),
+  method      = c(mets, "count"),
+  plot_colors = list(NULL, test_cols, "blue")
 )
 
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_similarity,
   desc    = "plot_similarity args",
-  chk     = expr(expect_s3_class(.res, "ggplot"))
+  chk     = expect_silent
+)
+
+# Check plot_similarity circos plot
+arg_lst$chain <- NULL
+arg_lst$method <- "circos"
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_similarity,
+  desc    = "plot_similarity circos args",
+  chk     = expect_silent
 )
 
 # Check plot_similarity bad clonotype_col
@@ -318,8 +340,8 @@ test_that("plot_similarity bad clonotype col", {
   expect_error(
     vdj_so %>%
       plot_similarity(
-        clonotype_col = NULL,
-        cluster_col   = "orig.ident"
+        data_col    = "BAD",
+        cluster_col = "orig.ident"
       )
   )
 })
@@ -329,17 +351,18 @@ test_that("plot_similarity bad cluster col", {
   expect_error(
     vdj_so %>%
       plot_similarity(
-        cluster_col   = NULL,
-        clonotype_col = "cdr3_nt"
+        cluster_col = NULL,
+        data_col    = "cdr3_nt"
       )
   )
 })
 
-# Check all plot_gene_usage arguments return ggplot
+# Check all plot_gene_usage arguments for one gene
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
-  gene_cols   = list("v_gene", "j_gene", c("v_gene", "j_gene")),
+  gene_cols   = list("v_gene", "j_gene"),
   chain       = list(NULL, "IGH", "IGL", "IGK"),
+  cluster_col = list(NULL, "seurat_clusters"),
   type        = c("heatmap", "bar"),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls),
@@ -349,21 +372,30 @@ arg_lst <- list(
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_gene_usage,
-  desc    = "plot_gene_usage args",
+  desc    = "plot_gene_usage single gene args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check all plot_gene_usage arguments return ggplot list
-arg_lst$cluster_col <- "seurat_clusters"
+# Check all plot_gene_usage arguments for two genes
+arg_lst <- list(
+  input       = list(vdj_so, vdj_sce),
+  gene_cols   = list(c("v_gene", "j_gene")),
+  chain       = list(NULL, "IGH"),
+  cluster_col = list(NULL, "seurat_clusters"),
+  type        = c("heatmap", "circos"),
+  plot_colors = list(NULL, rep(test_cols, 3)),
+  plot_lvls   = list(NULL, test_lvls),
+  yaxis       = c("percent", "frequency")
+)
 
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_gene_usage,
-  desc    = "plot_gene_usage args",
-  chk     = expr(expect_type(.res, "list"))
+  desc    = "plot_gene_usage paired gene args",
+  chk     = expect_silent
 )
 
-# Check plot_gene_usage plot_genes
+# Check plot_gene_usage vdj_genes single column
 test_genes <- vdj_so %>%
   fetch_vdj() %>%
   pull(v_gene) %>%
@@ -372,7 +404,7 @@ test_genes <- vdj_so %>%
 
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
-  gene_cols   = list("v_gene", c("v_gene", "j_gene")),
+  gene_cols   = "v_gene",
   vdj_genes   = list(test_genes),
   type        = c("heatmap", "bar"),
   plot_colors = list(NULL, test_cols),
@@ -385,6 +417,18 @@ test_all_args(
   .fn     = plot_gene_usage,
   desc    = "plot_gene_usage args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
+)
+
+# Check plot_gene_usage vdj_genes single column
+arg_lst$type      <- c("heatmap", "circos")
+arg_lst$gene_cols <- list(c("v_gene", "j_gene"))
+arg_lst$plot_lvls <- NULL
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_gene_usage,
+  desc    = "plot_gene_usage args",
+  chk     = expect_silent
 )
 
 # Check plot_gene_usage bad plot_genes
