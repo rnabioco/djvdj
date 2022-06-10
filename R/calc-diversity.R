@@ -96,11 +96,9 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 
   # filter chains if provided
   # if all chains removed, NA will be returned
-  if (is.null(chain)) {
-    meta <- .get_meta(input)
-    vdj  <- dplyr::filter(meta, !is.na(!!sym(data_col)))
+  meta <- vdj <- .get_meta(input)
 
-  } else {
+  if (!is.null(chain)) {
     vdj <- fetch_vdj(
       input,
       vdj_cols      = c(data_col, chain_col),
@@ -116,12 +114,11 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
       chain      = chain,
       chain_col  = chain_col,
       col_names  = "{.col}",
-      allow_dups = FALSE,
-      sep        = sep
+      allow_dups = FALSE
     )
-
-    vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
   }
+
+  vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
 
   if (!is.null(cluster_col) && is.null(meta[[cluster_col]])) {
     stop(cluster_col, " not found in object, provide a different cluster_col")
@@ -129,7 +126,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 
   # Get parameters for bootstrapped sampling
   sam     <- vdj
-  sam_rng <- c(20, Inf)
+  sam_rng <- c(10, Inf)
   sam_sz  <- nrow(sam)
 
   if (!is.null(cluster_col)) {
@@ -213,22 +210,25 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing clonotype IDs to use for
+#' calculating repertoire diversity
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
+#' @param group_col meta.data column to use for grouping IDs present in
+#' cluster_col
 #' @param method Function to use for calculating diversity. A named list of
 #' functions can be passed to plot multiple diversity metrics,
 #' e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 #' @param downsample Downsample clusters to the same size when calculating
 #' diversity metrics
 #' @param n_boots Number of bootstrap replicates
-#' @param data_col meta.data column containing clonotype IDs to use for
-#' calculating repertoire diversity
-#' @param group_col meta.data column to use for grouping IDs present in
-#' cluster_col
+#' @param chain Chain to use for calculating gene usage. Set to NULL to include
+#' all chains.
+#' @param chain_col meta.data column containing chains for each cell
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
-#' @param facet_rows The number of facet rows, use this argument if a list of
-#' functions is passed to method
+#' @param facet_rows The number of facet rows for final plot, use this argument
+#' if a list of functions is passed to method
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
@@ -285,9 +285,10 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' )
 #'
 #' @export
-plot_diversity <- function(input, cluster_col = NULL, group_col = NULL,
+plot_diversity <- function(input, data_col = "clonotype_id",
+                           cluster_col = NULL, group_col = NULL,
                            method = abdiv::simpson, downsample = FALSE,
-                           n_boots = 100, data_col = "clonotype_id",
+                           n_boots = 100, chain = NULL, chain_col = "chains",
                            plot_colors = NULL, plot_lvls = NULL,
                            facet_rows = 1, sep = ";", ...) {
 

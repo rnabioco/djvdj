@@ -9,8 +9,8 @@ cluster_seqs(
   data_col = "cdr3",
   chain,
   method = "louvain",
-  k = 10,
   resolution = 0.5,
+  k = 10,
   chain_col = "chains",
   prefix = paste0(data_col, "_"),
   return_df = FALSE,
@@ -22,11 +22,11 @@ cluster_seqs(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{data_col}{meta.data column containing CDR3 sequences to use for
-calculating Levenshtein distance.}
+\item{data_col}{meta.data column containing sequences to use for calculating
+Levenshtein distance.}
 
-\item{chain}{Chain to use for clustering CDR3 sequences. Cells with more
-than one of the provided chain will be excluded from the analysis.}
+\item{chain}{Chain to use for clustering sequences. Cells with more than one
+of the provided chain will be excluded from the analysis.}
 
 \item{method}{Method to use for clustering, possible values are:
 \itemize{
@@ -36,9 +36,9 @@ igraph::cluster_louvain()
 igraph::cluster_leiden()
 }}
 
-\item{k}{Number of neighbors for k-nearest neighbors algorithm}
-
 \item{resolution}{Resolution (coarseness) of clusters}
+
+\item{k}{Number of neighbors for k-nearest neighbors algorithm}
 
 \item{chain_col}{meta.data column containing chains for each cell.}
 

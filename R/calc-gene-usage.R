@@ -441,11 +441,11 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   }
 
   # Create heatmap
-  plt_args$df_in <- df_in
-  plt_args$x     <- clst_col
-  plt_args$y     <- gn_col
-  plt_args$.fill <- dat_col
-  plt_args$ttl   <- ax_ttl
+  plt_args$df_in   <- df_in
+  plt_args$x       <- clst_col
+  plt_args$y       <- gn_col
+  plt_args$.fill   <- dat_col
+  plt_args$lgd_ttl <- ax_ttl
 
   res <- purrr::lift_dl(.create_gg_heatmap)(plt_args)
 

@@ -79,14 +79,14 @@ test_all_args(
 
   # Calc frequency
   x <- x %>%
-    reduce(~ {
+    purrr::reduce(~ {
       stopifnot(length(.x) == length(.y))
       purrr::map2(.x, .y, ~ stringr::str_c(.x, .y))
     }) %>%
     map(unique) %>%
-    reduce(c) %>%
+    purrr::reduce(c) %>%
     table() %>%
-    sort(decreasing = TRUE)
+    base::sort(decreasing = TRUE)
 
   # Check results
   x <- purrr::set_names(
