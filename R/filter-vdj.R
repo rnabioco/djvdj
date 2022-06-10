@@ -68,8 +68,7 @@ filter_vdj <- function(input, filt, vdj_cols = NULL, clonotype_col = "clonotype_
                        sep = ";") {
 
   # Format input data
-  meta <- .get_meta(input)
-  vdj  <- meta
+  meta <- vdj <- .get_meta(input)
 
   # Identify columns with V(D)J data
   col_list <- .get_vdj_cols(
@@ -87,7 +86,11 @@ filter_vdj <- function(input, filt, vdj_cols = NULL, clonotype_col = "clonotype_
   }
 
   # Create list-cols for V(D)J columns that contain sep
-  if (!purrr::is_empty(sep_cols)) {
+  if (purrr::is_empty(sep_cols)) {
+    vdj <- dplyr::mutate(vdj, .KEEP = {{filt}})
+    length_one <- TRUE
+
+  } else {
     vdj <- .unnest_vdj(
       df_in    = vdj,
       sep      = sep,
@@ -101,83 +104,96 @@ filter_vdj <- function(input, filt, vdj_cols = NULL, clonotype_col = "clonotype_
 
     length_one <- map_lgl(vdj$.KEEP, ~ length(.x) == 1)
     length_one <- all(length_one)
-
-  } else {
-    length_one <- TRUE
-
-    vdj <- dplyr::mutate(vdj, .KEEP = {{filt}})
   }
 
   keep_rows <- vdj$.KEEP
+  vdj       <- dplyr::select(vdj, -.data$.KEEP)
 
-  vdj <- dplyr::select(vdj, -.data$.KEEP)
+  # If vectors in keep_rows are all length 1, filter cells
+  if (length_one) {
+    keep_rows <- unlist(keep_rows)
+    vdj_cols  <- vdj_cols[vdj_cols != CELL_COL]
+
+    vdj <- meta %>%
+      mutate(across(all_of(vdj_cols), ~ {
+        x <- .x
+        typ <- typeof(x)
+        x[!keep_rows] <- as(NA, typ)
+        x
+      }))
+
+    res <- .add_meta(input, vdj)
+
+    return(res)
+  }
 
   # If vectors in keep_rows > length 1, filter chains
-  if (!length_one) {
-    for (clmn in sep_cols) {
-      x <- vdj[[clmn]]
+  for (clmn in sep_cols) {
+    x <- vdj[[clmn]]
 
-      x <- purrr::map2_chr(x, keep_rows, ~ {
-        if (!all(is.na(.x))) {
-          if (length(.x) != length(.y)) {
-            stop(
-              "Filtering condition must return TRUE/FALSE for each chain, ",
-              "or a single TRUE/FALSE for each cell."
-            )
-          }
-        }
-
-        ifelse(
-          all(is.na(.x)) || purrr::is_empty(.x[.y]),
-          as.character(NA),
-          paste0(.x[.y], collapse = sep)
+    x <- purrr::map2_chr(x, keep_rows, ~ {
+      if (!all(is.na(.x)) && length(.x) != length(.y)) {
+        stop(
+          "Filtering condition must return TRUE/FALSE for each chain, ",
+          "or a single TRUE/FALSE for each cell."
         )
-      })
-
-      vdj <- dplyr::mutate(vdj, !!sym(clmn) := x)
-    }
-
-    # Set NAs for vdj_cols not in sep_cols
-    other_cols <- vdj_cols[!vdj_cols %in% sep_cols]
-
-    vdj <- dplyr::mutate(
-      vdj,
-      across(all_of(other_cols), ~ {
-        ifelse(
-          if_all(all_of(sep_cols), is.na),
-          NA,
-          .x
-        )
-      })
-    )
-
-  # If vectors in keep_rows == length 1, filter V(D)J data per cell
-  } else {
-    keep_rows <- unlist(keep_rows)
-
-    for (clmn in vdj_cols) {
-      x <- vdj[[clmn]]
-
-      # Collapse sep_cols
-      if (!purrr::is_empty(sep_cols) && clmn %in% sep_cols) {
-        x <- purrr::map2_chr(x, keep_rows, ~ {
-          ifelse(
-            all(is.na(.x)) | !.y,
-            as.character(NA),
-            paste0(.x, collapse = sep)
-          )
-        })
-
-      } else {
-        x <- ifelse(keep_rows, x, NA)
       }
 
-      vdj <- dplyr::mutate(vdj, !!sym(clmn) := x)
-    }
+      ifelse(
+        all(is.na(.x)) || purrr::is_empty(.x[.y]),
+        as.character(NA),
+        paste0(.x[.y], collapse = sep)
+      )
+    })
+
+    vdj[clmn] <- x
   }
+
+  # Set NAs for vdj_cols not in sep_cols
+  other_cols <- vdj_cols[!vdj_cols %in% sep_cols]
+  na_rows    <- purrr::map_lgl(keep_rows, ~ !any(.x))
+
+  vdj <- vdj %>%
+    mutate(across(all_of(other_cols), ~ {
+      x <- .x
+      typ <- typeof(x)
+      x[na_rows] <- as(NA, typ)
+      x
+    }))
 
   # Format results
   res <- .add_meta(input, vdj)
 
   res
 }
+
+
+
+# vdj <- dplyr::mutate(
+#   vdj,
+#   across(all_of(other_cols), ~ {
+#     ifelse(
+#       if_all(all_of(sep_cols), is.na),
+#       NA,
+#       .x
+#     )
+#   })
+# )
+
+# for (clmn in vdj_cols) {
+#   x <- vdj[[clmn]]
+#
+#   # Collapse sep_cols
+#   if (!purrr::is_empty(sep_cols) && clmn %in% sep_cols) {
+#     x <- purrr::map2_chr(x, keep_rows, ~ {
+#       ifelse(
+#         all(is.na(.x)) | !.y,
+#         as.character(NA),
+#         paste0(.x, collapse = sep)
+#       )
+#     })
+#
+#   } else x <- ifelse(keep_rows, x, NA)
+#
+#   vdj <- dplyr::mutate(vdj, !!sym(clmn) := x)
+# }

@@ -298,13 +298,11 @@ NULL
 #' @noRd
 .merge_meta <- function(input, meta, by = CELL_COL) {
 
-  if (is.null(input)) {
-    return(meta)
-  }
+  if (is.null(input)) return(meta)
 
   # Join meta.data
   # remove columns already present in input object to prevent duplicates
-  # this mimics behavior of Seurat::AddMetaData
+  # this mimics behavior of Seurat::AddMetaData()
   meta <- .get_meta(meta, row_col = by)
 
   rm_cols <- colnames(meta)
@@ -370,7 +368,7 @@ NULL
 #' @noRd
 .unnest_vdj <- function(df_in, sep_cols, unnest = TRUE, sep = ";") {
 
-  df_in <- as_tibble(df_in)
+  df_in <- tibble::as_tibble(df_in)
 
   # Get types to use for coercing columns
   # use first 100 rows containing V(D)J data
@@ -456,10 +454,8 @@ NULL
   }
 
   # If clone_col and cols_in are both NULL, use all columns
-  if (is.null(clone_col) && is.null(cols_in)) {
-    cols_in <- colnames(df_in)
-    cols_in <- cols_in[cols_in != cell_col]
-  }
+  # columns should not include cell_col
+  if (is.null(clone_col) && is.null(cols_in)) cols_in <- colnames(df_in)
 
   # If cols_in is NULL, identify columns with V(D)J data based on NAs in
   # clone_col
@@ -476,6 +472,8 @@ NULL
 
     cols_in <- colnames(cols_in)
   }
+
+  cols_in <- cols_in[cols_in != cell_col]
 
   # Identify columns to unnest based on sep
   # check first 1000 non-NA rows of every column
@@ -495,9 +493,7 @@ NULL
 
     sep_cols <- colnames(sep_cols)
 
-    if (purrr::is_empty(sep_cols)) {
-      sep_cols <- NULL
-    }
+    if (purrr::is_empty(sep_cols)) sep_cols <- NULL
   }
 
   # Return list of vectors
