@@ -15,6 +15,16 @@
 #'
 #' @param resolution Resolution (coarseness) of clusters
 #' @param k Number of neighbors for k-nearest neighbors algorithm
+#' @param dist_method Method to use for computing distance between sequences.
+#' If NULL, distance is calculated for amino acid sequences using the BLOSUM62
+#' substitution matrix and levenshtein distance is calculated for nucleotide
+#' sequences. Other possible values include:
+#'
+#' - 'levenshtein'
+#' - 'hamming'
+#' - The name of a substitution matrix available from the Biostrings package,
+#' e.g. 'BLOSUM62'
+#'
 #' @param chain_col meta.data column containing chains for each cell.
 #' @param prefix Prefix to add to graph name
 #' @param return_df Return results as a data.frame. If FALSE, results will be
@@ -25,11 +35,12 @@
 #' @importFrom uwot umap
 #' @importFrom dbscan kNN
 #' @importFrom igraph graph_from_data_frame cluster_louvain cluster_leiden membership
+#' @importFrom Biostrings stringDist
 #' @export
 cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
-                         resolution = 0.5, k = 10, chain_col = "chains",
-                         prefix = paste0(data_col, "_"), return_df = FALSE,
-                         sep = ";", ...) {
+                         resolution = 0.5, k = 10, dist_method = NULL,
+                         chain_col = "chains", prefix = paste0(data_col, "_"),
+                         return_df = FALSE, sep = ";", ...) {
 
   # Check inputs
   if (!method %in% c("louvain", "leiden")) {
@@ -45,15 +56,28 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
     sep       = sep
   )
 
-  vdj <- dplyr::select(vdj, all_of(c(CELL_COL, data_col)))
+  vdj  <- dplyr::select(vdj, all_of(c(CELL_COL, data_col)))
+  seqs <- vdj[[data_col]]
 
-  # Create Levenshtein distance matrix
-  seqs     <- purrr::set_names(vdj[[data_col]], vdj[[CELL_COL]])
-  lev_dist <- adist(seqs, ignore.case = TRUE)
-  lev_dist <- stats::as.dist(lev_dist)
+  # Calculate distance
+  if (is.null(dist_method)) {
+    typ <- .detect_seq_type(seqs, n = 100)
+    dist_method <- ifelse(typ == "aa", "BLOSUM62", "levenshtein")
+  }
+
+  dist_args <- list(x = seqs)
+
+  if (!dist_method %in% c("hamming", "levenshtein")) {
+    dist_args$substitutionMatrix <- dist_method
+    dist_method <- "substitutionMatrix"
+  }
+
+  dist_args$method <- dist_method
+
+  dist_mat <- purrr::lift_dl(Biostrings::stringDist)(dist_args)
 
   # Calculate UMAP
-  res <- uwot::umap(lev_dist)
+  res <- uwot::umap(dist_mat)
 
   colnames(res) <- paste0(prefix, c("UMAP_1", "UMAP_2"))
   rownames(res) <- vdj[[CELL_COL]]
@@ -61,7 +85,7 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
   res <- tibble::as_tibble(res, rownames = CELL_COL)
 
   # Run KNN
-  knn_res <- dbscan::kNN(lev_dist, k = k)
+  knn_res <- dbscan::kNN(dist_mat, k = k)
 
   make_adj_df <- function(mat) {
     res <- tibble::as_tibble(mat, rownames = "Var1")
@@ -70,14 +94,11 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
   }
 
   adj_df <- make_adj_df(knn_res$id)
-  adj_df <- dplyr::mutate(adj_df, Var2 = vdj[[CELL_COL]][Var2])
 
-  wt_df <- make_adj_df(knn_res$dist)
-
-  adj_df <- dplyr::left_join(
-    adj_df, wt_df,
-    by     = c("Var1", "name"),
-    suffix = c("", "_wt")
+  adj_df <- dplyr::mutate(
+    adj_df,
+    Var1 = vdj[[CELL_COL]][as.integer(Var1)],
+    Var2 = vdj[[CELL_COL]][Var2]
   )
 
   # Create adjacency graph
@@ -85,11 +106,7 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
   adj_grph <- igraph::graph_from_data_frame(adj_grph, directed = FALSE)
 
   # Clustering parameters
-  clst_args <- list(
-    graph   = adj_grph,
-    weights = adj_df$Var2_wt,
-    ...
-  )
+  clst_args <- list(graph = adj_grph, ...)
 
   # Louvain clustering
   if (identical(method, "louvain")) {
@@ -104,13 +121,13 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
     clst_args$objective_function <- clst_args$objective_function %||% "modularity"
   }
 
-  # Run clustering
+  # Cluster sequences
   resolution <- purrr::set_names(
     resolution,
     paste0(prefix, "cluster_", resolution)
   )
 
-  clsts <- imap_dfc(resolution, ~ {
+  clsts <- purrr::imap_dfc(resolution, ~ {
     clst_args[rsln_arg] <- .x
 
     clsts <- purrr::lift_dl(clst_method)(clst_args)
@@ -205,6 +222,13 @@ plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 
 #' Fetch chain sequences
 #'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param seq_col meta.data column containing sequences
+#' @param chain Chain to use for clustering sequences. Cells with more
+#' than one of the provided chain will be excluded from the analysis.
+#' @param chain_col meta.data column containing chains for each cell.
+#' @param sep Separator used for storing per cell V(D)J data
 #' @noRd
 .fetch_seqs <- function(input, seq_col, chain, chain_col, sep = ";") {
   res <- fetch_vdj(
@@ -234,6 +258,15 @@ plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 
 #' Trim and filter sequences
 #'
+#' @param seqs Vector of sequences
+#' @param width Integer specifying how many residues to include, sequences
+#' longer than width will be get trimmed based on the end argument, sequences
+#' shorter than width will get removed. If a fraction is provided, the width
+#' cutoff will be set to include the specified fraction of sequences, e.g. a
+#' value of 0.75 would set the cutoff so 75% of sequences are included in the
+#' output.
+#' @param end End to use for aligning sequences, specify '5' or '3' to
+#' align sequences at the 5' or 3' end.
 #' @noRd
 .trim_seq <- function(seqs, width = 0.75, end = "5") {
 
@@ -251,4 +284,60 @@ plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 
   res
 }
+
+#' Detect sequence type
+#'
+#' @param seqs Vector of sequences
+#' @param n Number of sequences to check
+#' @noRd
+.detect_seq_type <- function(seqs, n = 100) {
+
+  dna <- c("A", "T", "G", "C")
+  rna <- c("A", "U", "G", "C")
+
+  aa  <- c(
+    "A", "R", "N", "D", "C", "Q", "E", "G", "H", "I",
+    "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"
+  )
+
+  # Take first n sequences and split into residues
+  seqs <- na.omit(seqs)
+  seqs <- head(seqs, n)
+  nts  <- purrr::map(seqs, strsplit, "")
+  nts  <- unlist(nts)
+
+  # Check intersection with known characters
+  int <- intersect(nts, c(dna, rna, aa))
+
+  if (length(int) == 0) stop("Could not determine sequence type")
+
+  # Check if any characters overlap with aa and not dna, rna
+  int <- setdiff(intersect(nts, aa), c(dna, rna))
+
+  res <- dplyr::case_when(
+    length(int) > 0 ~ "aa",
+    "U" %in% nts    ~ "rna",
+    TRUE            ~ "dna"
+  )
+
+  res
+}
+
+# seqs <- vdj_so %>%
+#   filter_vdj(chains == "IGH") %>%
+#   fetch_vdj(c("cdr3", "chains")) %>%
+#   group_by(.cell_id) %>%
+#   filter(n() == 1) %>%
+#   pull(cdr3) %>%
+#   na.omit()
+
+
+
+
+
+
+
+
+
+
 

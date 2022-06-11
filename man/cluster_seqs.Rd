@@ -11,6 +11,7 @@ cluster_seqs(
   method = "louvain",
   resolution = 0.5,
   k = 10,
+  dist_method = NULL,
   chain_col = "chains",
   prefix = paste0(data_col, "_"),
   return_df = FALSE,
@@ -39,6 +40,17 @@ igraph::cluster_leiden()
 \item{resolution}{Resolution (coarseness) of clusters}
 
 \item{k}{Number of neighbors for k-nearest neighbors algorithm}
+
+\item{dist_method}{Method to use for computing distance between sequences.
+If NULL, distance is calculated for amino acid sequences using the BLOSUM62
+substitution matrix and levenshtein distance is calculated for nucleotide
+sequences. Other possible values include:
+\itemize{
+\item 'levenshtein'
+\item 'hamming'
+\item The name of a substitution matrix available from the Biostrings package,
+e.g. 'BLOSUM62'
+}}
 
 \item{chain_col}{meta.data column containing chains for each cell.}
 
