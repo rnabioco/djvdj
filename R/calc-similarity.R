@@ -306,7 +306,8 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
                             chain_col = "chains", plot_colors = NULL,
                             plot_lvls = names(plot_colors),
                             remove_upper_triangle = FALSE,
-                            remove_diagonal = FALSE, sep = ";", ...) {
+                            remove_diagonal = remove_upper_triangle, sep = ";",
+                            ...) {
 
   # Check inputs
   is_mds  <- identical(method, "mds")
