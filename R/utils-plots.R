@@ -223,9 +223,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   nms_key <- purrr::set_names(nms)
 
   nms_key <- purrr::imap(nms_key, ~ {
-    idx <- grep(.x, nms)
-
-    v <- c()
+    idx <- grep(paste0("^", .x, "$"), nms)
+    v   <- NULL
 
     if (rm_upper) {
       v <- nms[idx:length(nms)]
