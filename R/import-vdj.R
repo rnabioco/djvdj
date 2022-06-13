@@ -1034,6 +1034,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   path <- file.path(vdj_dir, file)
 
+  if (!file.exists(path)) path <- paste0(path, ".gz")
   if (!file.exists(path)) path <- NA
 
   if (is.na(path)) {
