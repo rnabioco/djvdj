@@ -58,6 +58,7 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
 
   vdj  <- dplyr::select(vdj, all_of(c(CELL_COL, data_col)))
   seqs <- vdj[[data_col]]
+  seqs <- unique(sort(seqs))
 
   # Calculate distance
   if (is.null(dist_method)) {
@@ -80,9 +81,9 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
   res <- uwot::umap(dist_mat)
 
   colnames(res) <- paste0(prefix, c("UMAP_1", "UMAP_2"))
-  rownames(res) <- vdj[[CELL_COL]]
+  rownames(res) <- seqs
 
-  res <- tibble::as_tibble(res, rownames = CELL_COL)
+  res <- tibble::as_tibble(res, rownames = data_col)
 
   # Run KNN
   knn_res <- dbscan::kNN(dist_mat, k = k)
@@ -97,8 +98,8 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
 
   adj_df <- dplyr::mutate(
     adj_df,
-    Var1 = vdj[[CELL_COL]][as.integer(Var1)],
-    Var2 = vdj[[CELL_COL]][Var2]
+    Var1 = seqs[as.integer(Var1)],
+    Var2 = seqs[Var2]
   )
 
   # Create adjacency graph
@@ -137,6 +138,10 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
   })
 
   res <- dplyr::bind_cols(res, clsts)
+
+  # Join by CDR3 to match clusters with cell IDs
+  res <- dplyr::left_join(vdj, res, by = data_col)
+  res <- dplyr::select(res, -all_of(data_col))
 
   # Format results
   meta <- .get_meta(input)
