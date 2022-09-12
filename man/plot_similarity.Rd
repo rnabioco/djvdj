@@ -14,8 +14,9 @@ plot_similarity(
   chain_col = "chains",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
+  cluster_heatmap = TRUE,
   remove_upper_triangle = FALSE,
-  remove_diagonal = FALSE,
+  remove_diagonal = remove_upper_triangle,
   sep = ";",
   ...
 )
@@ -36,13 +37,13 @@ for each treatment condition.}
 
 \item{method}{Method to use for comparing clusters, possible values are:
 \itemize{
-\item 'mds', perform multidimensional scaling, this will generate a scatter plot
-\item 'circos', create circos plot implemented with circlize::chordDiagram()
-\item 'count', count the number of clonotypes overlapping between each cluster,
-this will generate a heatmap.
 \item A function that takes two numeric vectors containing counts for each
 clonotype in the object, such as the beta diversity functions provided by
 the abdiv package. This will generate a heatmap.
+\item 'count', count the number of clonotypes overlapping between each cluster,
+this will generate a heatmap.
+\item 'mds', perform multidimensional scaling, this will generate a scatter plot
+\item 'circos', create circos plot implemented with circlize::chordDiagram()
 }}
 
 \item{chain}{Chain to use for calculating gene usage. Set to NULL to include
@@ -54,11 +55,13 @@ all chains.}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
 
-\item{remove_upper_triangle}{If TRUE, upper triangle for heatmap will not
-be shown and rows/columns will not be clustered.}
+\item{cluster_heatmap}{If FALSE, rows and columns of heatmap will not be
+clustered.}
 
-\item{remove_diagonal}{If TRUE, diagonal for heatmap will not be shown and
-rows/columns will not be clustered.}
+\item{remove_upper_triangle}{If TRUE, upper triangle for heatmap will not
+be shown.}
+
+\item{remove_diagonal}{If TRUE, diagonal for heatmap will not be shown.}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 

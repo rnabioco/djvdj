@@ -123,13 +123,16 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param rm_diag If TRUE, diagonal for heatmap will not be shown and
 #' rows/columns will not be clustered.
 #' @param ... Aditional arguments to pass to ComplexHeatmap::Heatmap()
+#' @importFrom grid grid.rect
 #' @noRd
 .create_heatmap <- function(mat_in, clrs = NULL, na_color = NA, lvls = NULL,
                             lgd_ttl = NULL, rm_upper = FALSE, rm_diag = FALSE,
-                            ...) {
+                            cluster = TRUE, ...) {
 
   # Set plot levels
   plt_args <- list(...)
+
+  plt_args$cell_fun <- NULL
 
   r_nms <- rownames(mat_in)
   c_nms <- colnames(mat_in)
@@ -147,24 +150,39 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   c_lvls <- lvls[lvls %in% c_nms]
   mat_in <- mat_in[r_lvls, c_lvls]
 
-  # Remove upper triangle and/or diagonal
-  if (rm_upper || rm_diag) {
-    mat_rm <- .remove_upper_triangle(mat_in, rm_upper, rm_diag)
+  # Remove upper triangle
+  if (rm_upper) {
+    cell_fun <- function(j, i, x, y, w, h, fill) {
+      if(as.numeric(x) <= 1 - as.numeric(y) + 1e-6) {
+        grid::grid.rect(x, y, w, h, gp = grid::gpar(fill = fill, col = fill))
+      }
+    }
+
+    plt_args$rect_gp  <- grid::gpar(type = "none")
+    plt_args$cell_fun <- cell_fun
+  }
+
+  # Remove diagonal
+  if (rm_diag) {
+    mat_rm <- .remove_upper_triangle(mat_in, rm_upper = FALSE, rm_diag)
     n_vals <- .get_unique_values(mat_rm)
 
     if (n_vals == 1) {
       warning(
-        "Cannot remove upper triangle and/or diagonal since there ",
+        "Cannot remove diagonal since there ",
         "will only be one unique value remaining."
       )
     } else {
       mat_in <- mat_rm
 
-      plt_args$cluster_rows    <- FALSE
-      plt_args$cluster_columns <- FALSE
-      plt_args$row_names_side  <- plt_args$row_names_side %||% "left"
-      plt_args$na_col          <- plt_args$na_col %||% na_color
+      plt_args$na_col <- plt_args$na_col %||% na_color
     }
+  }
+
+  # Should rows/columns be clustered
+  if (!cluster) {
+    plt_args$cluster_rows    <- FALSE
+    plt_args$cluster_columns <- FALSE
   }
 
   # Set plot colors
