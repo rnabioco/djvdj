@@ -124,6 +124,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' rows/columns will not be clustered.
 #' @param ... Aditional arguments to pass to ComplexHeatmap::Heatmap()
 #' @importFrom grid grid.rect
+#' @importFrom ComplexHeatmap Heatmap
 #' @noRd
 .create_heatmap <- function(mat_in, clrs = NULL, na_color = NA, lvls = NULL,
                             lgd_ttl = NULL, rm_upper = FALSE, rm_diag = FALSE,
@@ -289,6 +290,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param plt_ttl Plot title
 #' @param ... Additional arguments to pass to circlize::chordDiagram()
 #' @importFrom scales hue_pal
+#' @importFrom circlize chordDiagram circos.clear circos.axis circos.track mm_h
 #' @noRd
 .create_circos <- function(mat_in, clrs = NULL, na_color = "grey90",
                            lvls = NULL, grps = NULL, plt_ttl = NULL, ...) {

@@ -38,7 +38,9 @@ Imports:
     uwot,
     dbscan,
     igraph (>= 1.3.0),
-    scales
+    scales,
+    ComplexHeatmap,
+    circlize
 Suggests: 
     magrittr,
     covr,

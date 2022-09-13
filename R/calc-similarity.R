@@ -266,9 +266,6 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to plotting function
 #' @importFrom abdiv jaccard
-#' @importFrom ComplexHeatmap Heatmap
-#' @importFrom circlize chordDiagram
-#' @importFrom grid gpar
 #' @seealso [calc_similarity()], [circlize::chordDiagram()], [ComplexHeatmap::Heatmap()],
 #' [ggplot2::geom_point()]
 #'
