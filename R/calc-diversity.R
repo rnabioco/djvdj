@@ -29,7 +29,8 @@
 #' # Calculate diversity using all cells
 #' res <- calc_diversity(
 #'   vdj_so,
-#'   method = abdiv::simpson
+#'   data_col = "clonotype_id",
+#'   method   = abdiv::simpson
 #' )
 #'
 #' head(res@meta.data, 1)
@@ -37,6 +38,7 @@
 #' # Group cells based on meta.data column before calculating diversity
 #' res <- calc_diversity(
 #'   vdj_sce,
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident"
 #' )
 #'
@@ -47,7 +49,8 @@
 #' # meta.data
 #' res <- calc_diversity(
 #'   vdj_so,
-#'   prefix = "bcr_"
+#'   data_col = "clonotype_id",
+#'   prefix   = "bcr_"
 #' )
 #'
 #' head(res@meta.data, 1)
@@ -55,6 +58,7 @@
 #' # Calculate multiple metrics
 #' res <- calc_diversity(
 #'   vdj_sce,
+#'   data_col = "clonotype_id",
 #'   method = list(
 #'     simpson = abdiv::simpson,
 #'     shannon = abdiv::shannon
@@ -66,6 +70,7 @@
 #' # Return a data.frame instead of adding the results to the input object
 #' res <- calc_diversity(
 #'   vdj_so,
+#'   data_col  = "clonotype_id",
 #'   return_df = TRUE
 #' )
 #'
@@ -229,6 +234,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param facet_rows The number of facet rows for final plot, use this argument
 #' if a list of functions is passed to method
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object

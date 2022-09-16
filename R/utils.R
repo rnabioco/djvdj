@@ -365,6 +365,7 @@ NULL
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame with V(D)J data
 #' @importFrom readr guess_parser
+#' @importFrom utils head
 #' @noRd
 .unnest_vdj <- function(df_in, sep_cols, unnest = TRUE, sep = ";") {
 

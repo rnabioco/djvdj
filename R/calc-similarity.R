@@ -14,6 +14,9 @@
 #'
 #' @param data_col meta.data column containing clonotype IDs to use for
 #' calculating overlap
+#' @param chain Chain to use for calculating gene usage. Set to NULL to include
+#' all chains.
+#' @param chain_col meta.data column containing chains for each cell
 #' @param prefix Prefix to add to new columns
 #' @param return_mat Return a matrix with similarity values. If set to
 #' FALSE, results will be added to the input object.
@@ -36,6 +39,7 @@
 #' # this is useful if multiple calculations are stored in the meta.data
 #' res <- calc_similarity(
 #'   vdj_sce,
+#'   data_col = "clonotype_id",
 #'   cluster_col = "orig.ident",
 #'   prefix = "bcr_"
 #' )
@@ -45,6 +49,7 @@
 #' # Return a matrix instead of adding the results to the input object
 #' calc_similarity(
 #'   vdj_so,
+#'   data_col = "clonotype_id",
 #'   cluster_col = "orig.ident",
 #'   return_mat = TRUE
 #' )
@@ -169,7 +174,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 
   # Format data.frame
   clmns <- sort(unique(res$Var2))
-  res   <- dplyr::arrange(res, Var2)
+  res   <- dplyr::arrange(res, .data$Var2)
 
   res <- tidyr::pivot_wider(
     res,
@@ -246,7 +251,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' @param method Method to use for comparing clusters, possible values are:
 #'
 #' - A function that takes two numeric vectors containing counts for each
-#' clonotype in the object, such as the beta diversity functions provided by
+#' clonotype in the object, such as most beta diversity functions provided by
 #' the abdiv package. This will generate a heatmap.
 #' - 'count', count the number of clonotypes overlapping between each cluster,
 #' this will generate a heatmap.
@@ -273,29 +278,32 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' # Plot repertoire overlap
 #' plot_similarity(
 #'   vdj_so,
+#'   data_col = "clonotype_id",
 #'   cluster_col = "orig.ident"
 #' )
 #'
 #' # Specify method to use for calculating repertoire overlap
 #' plot_similarity(
 #'   vdj_sce,
+#'   data_col = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   method = abdiv::jaccard
+#'   method = abdiv::morisita
 #' )
 #'
 #' # Specify colors to use for heatmap
 #' plot_similarity(
 #'   vdj_so,
+#'   data_col = "clonotype_id",
 #'   cluster_col = "orig.ident",
 #'   plot_color = c("white", "red")
 #' )
 #'
-#' # Pass additional aesthetic parameters to ggplot2
+#' # Create circos plot
 #' plot_similarity(
-#'   vdj_sce,
+#'   vdj_so,
+#'   data_col = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   color = "black",
-#'   size = 2
+#'   method = "circos"
 #' )
 #'
 #' @export

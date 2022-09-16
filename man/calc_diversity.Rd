@@ -60,7 +60,8 @@ Calculate repertoire diversity
 # Calculate diversity using all cells
 res <- calc_diversity(
   vdj_so,
-  method = abdiv::simpson
+  data_col = "clonotype_id",
+  method   = abdiv::simpson
 )
 
 head(res@meta.data, 1)
@@ -68,6 +69,7 @@ head(res@meta.data, 1)
 # Group cells based on meta.data column before calculating diversity
 res <- calc_diversity(
   vdj_sce,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident"
 )
 
@@ -78,7 +80,8 @@ head(res@colData, 1)
 # meta.data
 res <- calc_diversity(
   vdj_so,
-  prefix = "bcr_"
+  data_col = "clonotype_id",
+  prefix   = "bcr_"
 )
 
 head(res@meta.data, 1)
@@ -86,6 +89,7 @@ head(res@meta.data, 1)
 # Calculate multiple metrics
 res <- calc_diversity(
   vdj_sce,
+  data_col = "clonotype_id",
   method = list(
     simpson = abdiv::simpson,
     shannon = abdiv::shannon
@@ -97,6 +101,7 @@ head(res@colData, 1)
 # Return a data.frame instead of adding the results to the input object
 res <- calc_diversity(
   vdj_so,
+  data_col  = "clonotype_id",
   return_df = TRUE
 )
 

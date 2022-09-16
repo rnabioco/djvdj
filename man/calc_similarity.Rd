@@ -35,6 +35,11 @@ unique value in the column provided to the data_col column, e.g.
 abdiv::jaccard()
 }}
 
+\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
+all chains.}
+
+\item{chain_col}{meta.data column containing chains for each cell}
+
 \item{prefix}{Prefix to add to new columns}
 
 \item{return_mat}{Return a matrix with similarity values. If set to
@@ -63,6 +68,7 @@ head(res@meta.data, 1)
 # this is useful if multiple calculations are stored in the meta.data
 res <- calc_similarity(
   vdj_sce,
+  data_col = "clonotype_id",
   cluster_col = "orig.ident",
   prefix = "bcr_"
 )
@@ -72,6 +78,7 @@ head(res@colData, 1)
 # Return a matrix instead of adding the results to the input object
 calc_similarity(
   vdj_so,
+  data_col = "clonotype_id",
   cluster_col = "orig.ident",
   return_mat = TRUE
 )

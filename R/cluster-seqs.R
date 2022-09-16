@@ -98,8 +98,8 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
 
   adj_df <- dplyr::mutate(
     adj_df,
-    Var1 = seqs[as.integer(Var1)],
-    Var2 = seqs[Var2]
+    Var1 = seqs[as.integer(.data$Var1)],
+    Var2 = seqs[.data$Var2]
   )
 
   # Create adjacency graph
@@ -307,7 +307,7 @@ plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 
   # Take first n sequences and split into residues
   seqs <- na.omit(seqs)
-  seqs <- head(seqs, n)
+  seqs <- utils::head(seqs, n)
   nts  <- purrr::map(seqs, strsplit, "")
   nts  <- unlist(nts)
 

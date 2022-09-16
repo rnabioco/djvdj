@@ -44,7 +44,7 @@ all chains}
 gene_cols argument
 \item 'heatmap', heatmap implemented with ComplexHeatmap::Heatmap()
 \item 'circos', circos plot implemented with circlize::chordDiagram().
-to create a circos plot, two columns must be passed to the gene_cols
+To create a circos plot, two columns must be passed to the gene_cols
 argument
 }}
 
@@ -113,6 +113,7 @@ plot_gene_usage(
 plot_gene_usage(
   vdj_sce,
   gene_cols = c("v_gene", "j_gene"),
+  type = "circos"
 )
 
 # Specify colors to use for each cell cluster

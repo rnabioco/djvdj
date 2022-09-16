@@ -305,7 +305,7 @@ exclude <- c(
 mets <- abdiv::beta_diversities
 mets <- mets[!mets %in% exclude]
 
-mets <- set_names(mets) %>%
+mets <- purrr::set_names(mets) %>%
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 arg_lst <- list(

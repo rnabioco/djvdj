@@ -517,7 +517,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' @return List containing one data.frame for each path provided to vdj_dir
 #' @importFrom readr read_csv cols
 #' @noRd
-.load_vdj_data <- function(vdj_dir, cell_prfxs, cell_sfxs, contig_file = "filtered_contig_annotations.csv",
+.load_vdj_data <- function(vdj_dir, cell_prfxs, cell_sfxs,
+                           contig_file = "filtered_contig_annotations.csv",
                            chk_none = c("productive", "full_length")) {
 
   # Check for file and return path
@@ -552,6 +553,19 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     cell_prfxs = cell_prfxs,
     cell_sfxs  = cell_sfxs
   )
+
+  # furrr::furrr_options(globals = FALSE)
+  # future::plan(future::multisession, workers = 2)
+  #
+  # tictoc::tic()
+  # crt_fn <- carrier::crate(
+  #   my_fn = .format_cell_prefixes,
+  #   function(...) my_fn(...)
+  # )
+  #
+  # res <- purrr::pmap(prfx_args, crt_fn, bc_col = "barcode")
+  # # res <- furrr::future_pmap(prfx_args, .format_cell_prefixes, bc_col = "barcode")
+  # tictoc::toc()
 
   res <- purrr::pmap(prfx_args, .format_cell_prefixes, bc_col = "barcode")
 
@@ -688,22 +702,35 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' @noRd
 .replace_none <- function(df_in, clmns) {
 
-  res <- dplyr::rowwise(df_in)
+  clmns <- clmns[!map_lgl(df_in[clmns], is.logical)]
+
+  if (purrr::is_empty(clmns)) return(df_in)
 
   res <- dplyr::mutate(
-    res,
-    dplyr::across(.cols = all_of(clmns), ~ {
-      ifelse(
-        !is.logical(.x),
-        as.logical(gsub("None", "FALSE", .x)),
-        .x
-      )
+    df_in,
+    dplyr::across(all_of(clmns), ~ {
+      as.logical(stringr::str_replace(.x, "^None$", "FALSE"))
     })
   )
 
-  res <- dplyr::ungroup(res)
-
   res
+
+  # WHY????
+  # res <- dplyr::rowwise(df_in)
+  #
+  # res <- dplyr::mutate(
+  #   res,
+  #   dplyr::across(.cols = all_of(clmns), ~ {
+  #     ifelse(
+  #       !is.logical(.x),
+  #       as.logical(gsub("None", "FALSE", .x)),
+  #       .x
+  #     )
+  #   })
+  # )
+  #
+  # res <- dplyr::ungroup(res)
+  # res
 }
 
 #' Load mutation information for each contig

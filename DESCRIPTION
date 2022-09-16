@@ -40,7 +40,10 @@ Imports:
     igraph (>= 1.3.0),
     scales,
     ComplexHeatmap,
-    circlize
+    circlize,
+    Biostrings,
+    MASS,
+    ggseqlogo
 Suggests: 
     magrittr,
     covr,

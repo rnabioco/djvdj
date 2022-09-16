@@ -291,6 +291,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param ... Additional arguments to pass to circlize::chordDiagram()
 #' @importFrom scales hue_pal
 #' @importFrom circlize chordDiagram circos.clear circos.axis circos.track mm_h
+#' @importFrom graphics title
 #' @noRd
 .create_circos <- function(mat_in, clrs = NULL, na_color = "grey90",
                            lvls = NULL, grps = NULL, plt_ttl = NULL, ...) {
@@ -377,7 +378,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   }
 
   # Add title
-  title(main = plt_ttl, font.main = 1)
+  graphics::title(main = plt_ttl, font.main = 1)
 }
 
 #' Set colors for circos plot

@@ -55,6 +55,8 @@ all chains.}
 \item{facet_rows}{The number of facet rows for final plot, use this argument
 if a list of functions is passed to method}
 
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
+
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
 }

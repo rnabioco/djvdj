@@ -181,7 +181,7 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' gene_cols argument
 #' - 'heatmap', heatmap implemented with ComplexHeatmap::Heatmap()
 #' - 'circos', circos plot implemented with circlize::chordDiagram().
-#' to create a circos plot, two columns must be passed to the gene_cols
+#' To create a circos plot, two columns must be passed to the gene_cols
 #' argument
 #'
 #' @param plot_colors Character vector containing colors to use for plot. If a
@@ -236,6 +236,7 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' plot_gene_usage(
 #'   vdj_sce,
 #'   gene_cols = c("v_gene", "j_gene"),
+#'   type = "circos"
 #' )
 #'
 #' # Specify colors to use for each cell cluster
@@ -605,12 +606,12 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   res <- dplyr::mutate(res, rnk = row_number(desc(!!sym(dat_col))))
 
   if (is.null(clst_col)) {
-    res <- dplyr::filter(res, !!gn_2 %in% top_2 | rnk == 1)
+    res <- dplyr::filter(res, !!gn_2 %in% top_2 | .data$rnk == 1)
 
   } else {
     res <- dplyr::filter(
       res,
-      !!gn_2 %in% top_2[[dplyr::cur_group()[[clst_col]]]] | rnk == 1
+      !!gn_2 %in% top_2[[dplyr::cur_group()[[clst_col]]]] | .data$rnk == 1
     )
   }
 

@@ -1,4 +1,15 @@
 
+test_cols <- c(
+  "#E69F00", "#56B4E9", "#009E73",
+  "#F0E442", "#d7301f", "#0072B2",
+  "#D55E00", "#6A51A3", "#CC79A7",
+  "#999999", "#875C04", "#000000"
+)
+
+test_lvls <- unique(vdj_so$seurat_clusters) %>%
+  as.character() %>%
+  rev()
+
 # Check all cluster_seqs args
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
