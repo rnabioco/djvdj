@@ -256,7 +256,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' - 'count', count the number of clonotypes overlapping between each cluster,
 #' this will generate a heatmap.
 #' - 'mds', perform multidimensional scaling, this will generate a scatter plot
-#' - 'circos', create circos plot implemented with circlize::chordDiagram()
+#' - 'circos', create a circos plot
 #'
 #' @param chain Chain to use for calculating gene usage. Set to NULL to include
 #' all chains.
@@ -270,6 +270,9 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' @param remove_diagonal If TRUE, diagonal for heatmap will not be shown.
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to plotting function
+#' @param ... Additional arguments to pass to plotting function
+#' ([ggplot2::geom_point()] for MDS plot, [ComplexHeatmap::Heatmap()] for
+#' heatmap, [circlize::chordDiagram()] for circos plot)
 #' @importFrom abdiv jaccard
 #' @seealso [calc_similarity()], [circlize::chordDiagram()], [ComplexHeatmap::Heatmap()],
 #' [ggplot2::geom_point()]

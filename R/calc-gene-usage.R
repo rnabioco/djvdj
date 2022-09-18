@@ -177,12 +177,12 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' @param chain_col meta.data column containing chains for each cell
 #' @param type Type of plot to create, possible values are:
 #'
-#' - 'bar', bargraphs can only be plotted when a single column is passed to the
+#' - 'bar', by default when a single column is passed to the gene_cols
+#' argument, a bargraph is generated
+#' - 'heatmap', by default when two columns are passed to the gene_cols
+#' argument, a heatmap is generated
+#' - 'circos', A circos plot can be created when two columns are passed to the
 #' gene_cols argument
-#' - 'heatmap', heatmap implemented with ComplexHeatmap::Heatmap()
-#' - 'circos', circos plot implemented with circlize::chordDiagram().
-#' To create a circos plot, two columns must be passed to the gene_cols
-#' argument
 #'
 #' @param plot_colors Character vector containing colors to use for plot. If a
 #' bar graph is created this will specify how to color cell clusters. For a
@@ -193,8 +193,11 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' @param plot_lvls Levels to use for ordering clusters
 #' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
-#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
-#' linetype, etc.
+#' @param ... Additional arguments to pass to plotting function
+#' ([ggplot2::geom_col()] for bargraph, [ComplexHeatmap::Heatmap()] for heatmap,
+#' [circlize::chordDiagram()] for circos plot)
+#' @seealso [calc_gene_usage()], [circlize::chordDiagram()], [ComplexHeatmap::Heatmap()],
+#' [ggplot2::geom_col()]
 #' @return ggplot object
 #'
 #' @examples
@@ -278,13 +281,17 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #'
 #' @export
 plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
-                            group_col = NULL, chain = NULL, type = "bar",
+                            group_col = NULL, chain = NULL, type = NULL,
                             plot_colors = NULL, vdj_genes = NULL, n_genes = 20,
                             plot_lvls = names(plot_colors), yaxis = "percent",
                             chain_col = "chains", sep = ";", ...) {
 
   # Check inputs
   paired <- length(gene_cols) == 2
+
+  if (is.null(type)) {
+    type <- ifelse(paired, "heatmap", "bar")
+  }
 
   if (identical(type, "circos")) yaxis <- "frequency"
 

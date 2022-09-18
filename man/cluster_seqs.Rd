@@ -32,9 +32,9 @@ of the provided chain will be excluded from the analysis.}
 \item{method}{Method to use for clustering, possible values are:
 \itemize{
 \item 'louvain', multi-level optimization of modality implemented with
-igraph::cluster_louvain()
+\code{\link[igraph:cluster_louvain]{igraph::cluster_louvain()}}
 \item 'leiden', the Leiden clustering algorithm implemented with
-igraph::cluster_leiden()
+\code{\link[igraph:cluster_leiden]{igraph::cluster_leiden()}}
 }}
 
 \item{resolution}{Resolution (coarseness) of clusters}
@@ -68,4 +68,7 @@ Single cell object or data.frame with clustering results
 }
 \description{
 Cluster cells based on CDR3 sequences
+}
+\seealso{
+\code{\link[igraph:cluster_louvain]{igraph::cluster_louvain()}}, \code{\link[igraph:cluster_leiden]{igraph::cluster_leiden()}}
 }

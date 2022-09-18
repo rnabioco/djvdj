@@ -37,12 +37,11 @@ than one of the provided chain will be excluded from the analysis.}
 
 \item{chain_col}{meta.data column containing chains for each cell.}
 
-\item{width}{Integer specifying how many residues to plot, sequences longer
-than width will be get trimmed based on the align_end argument, sequences
-shorter than width will get removed. If a fraction is provided, the width
-cutoff will be set to include the specified fraction of sequences, e.g. a
-value of 0.75 would set the cutoff so 75\% of sequences are included in the
-plot.}
+\item{width}{Integer specifying how many residues to include, sequences
+longer than width will be get trimmed based on the align_end argument,
+sequences shorter than width will get removed. If a fraction is provided,
+the width cutoff is set based on percent rank, i.e. a value of 0.75 would
+select a width where at least 75\% of sequences are longer than the cutoff.}
 
 \item{align_end}{End to use for aligning sequences, specify '5' or '3' to
 align sequences at the 5' or 3' end when plotting.}
@@ -51,7 +50,7 @@ align sequences at the 5' or 3' end when plotting.}
 
 \item{sep}{Separator used for storing per cell V(D)J data}
 
-\item{...}{Additional parameters to pass to ggseqlogo::geom_logo()}
+\item{...}{Additional parameters to pass to \code{\link[ggseqlogo:geom_logo]{ggseqlogo::geom_logo()}}}
 }
 \description{
 Create sequence logos for clusters

@@ -43,7 +43,7 @@ the abdiv package. This will generate a heatmap.
 \item 'count', count the number of clonotypes overlapping between each cluster,
 this will generate a heatmap.
 \item 'mds', perform multidimensional scaling, this will generate a scatter plot
-\item 'circos', create circos plot implemented with circlize::chordDiagram()
+\item 'circos', create a circos plot
 }}
 
 \item{chain}{Chain to use for calculating gene usage. Set to NULL to include
@@ -65,7 +65,9 @@ be shown.}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
-\item{...}{Additional arguments to pass to plotting function}
+\item{...}{Additional arguments to pass to plotting function
+(\code{\link[ggplot2:geom_point]{ggplot2::geom_point()}} for MDS plot, \code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap()}} for
+heatmap, \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for circos plot)}
 }
 \description{
 Plot repertoire overlap

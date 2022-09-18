@@ -138,13 +138,15 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   r_nms <- rownames(mat_in)
   c_nms <- colnames(mat_in)
 
+  if (!is.null(lvls) || !cluster) {
+    plt_args$cluster_rows    <- FALSE
+    plt_args$cluster_columns <- FALSE
+    plt_args$row_names_side  <- "left"
+  }
+
   if (is.null(lvls)) {
     lvls <- union(r_nms, c_nms)
     lvls <- sort(lvls)
-
-  } else {
-    plt_args$cluster_rows    <- FALSE
-    plt_args$cluster_columns <- FALSE
   }
 
   r_lvls <- lvls[lvls %in% r_nms]
@@ -178,12 +180,6 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
       plt_args$na_col <- plt_args$na_col %||% na_color
     }
-  }
-
-  # Should rows/columns be clustered
-  if (!cluster) {
-    plt_args$cluster_rows    <- FALSE
-    plt_args$cluster_columns <- FALSE
   }
 
   # Set plot colors
@@ -446,8 +442,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_bars <- function(df_in, x, y, .fill = NULL, clrs = NULL, y_ttl = y, ang = 45,
-                         hjst = 1, ...) {
+.create_bars <- function(df_in, x, y, .fill = NULL, clrs = NULL, y_ttl = y,
+                         ang = 45, hjst = 1, ...) {
 
   # Reverse bar order
   lvls  <- rev(levels(pull(df_in, x)))
