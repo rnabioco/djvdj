@@ -9,9 +9,9 @@
 #' @param method Method to use for clustering, possible values are:
 #'
 #' - 'louvain', multi-level optimization of modality implemented with
-#' igraph::cluster_louvain()
+#' [igraph::cluster_louvain()]
 #' - 'leiden', the Leiden clustering algorithm implemented with
-#' igraph::cluster_leiden()
+#' [igraph::cluster_leiden()]
 #'
 #' @param resolution Resolution (coarseness) of clusters
 #' @param k Number of neighbors for k-nearest neighbors algorithm
@@ -36,6 +36,7 @@
 #' @importFrom dbscan kNN
 #' @importFrom igraph graph_from_data_frame cluster_louvain cluster_leiden membership
 #' @importFrom Biostrings stringDist
+#' @seealso [igraph::cluster_louvain()], [igraph::cluster_leiden()]
 #' @export
 cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
                          resolution = 0.5, k = 10, dist_method = NULL,
@@ -166,17 +167,16 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param chain_col meta.data column containing chains for each cell.
-#' @param width Integer specifying how many residues to plot, sequences longer
-#' than width will be get trimmed based on the align_end argument, sequences
-#' shorter than width will get removed. If a fraction is provided, the width
-#' cutoff will be set to include the specified fraction of sequences, e.g. a
-#' value of 0.75 would set the cutoff so 75% of sequences are included in the
-#' plot.
+#' @param width Integer specifying how many residues to include, sequences
+#' longer than width will be get trimmed based on the align_end argument,
+#' sequences shorter than width will get removed. If a fraction is provided,
+#' the width cutoff is set based on percent rank, i.e. a value of 0.75 would
+#' select a width where at least 75% of sequences are longer than the cutoff.
 #' @param align_end End to use for aligning sequences, specify '5' or '3' to
 #' align sequences at the 5' or 3' end when plotting.
 #' @param facet_rows The number of facet rows for final plot
 #' @param sep Separator used for storing per cell V(D)J data
-#' @param ... Additional parameters to pass to ggseqlogo::geom_logo()
+#' @param ... Additional parameters to pass to [ggseqlogo::geom_logo()]
 #' @importFrom stringr str_trunc
 #' @export
 plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
@@ -184,6 +184,10 @@ plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
                             chain_col = "chains", width = 0.75,
                             align_end = "5", facet_rows = NULL, sep = ";",
                             ...) {
+
+  if (width <= 0) {
+    stop("The provided width cutoff must be >0.", call. = FALSE)
+  }
 
   # Fetch sequences
   seqs <- .fetch_seqs(
@@ -197,6 +201,8 @@ plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
   vdj_cols <- c(CELL_COL, data_col, cluster_col)
   seqs     <- dplyr::select(seqs, all_of(vdj_cols))
 
+  n_seqs <- nrow(seqs)
+
   # Trim/filter sequences
   trim_fn <- function(x) .trim_seq(x[[data_col]], width, align_end)
 
@@ -204,9 +210,34 @@ plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
     seqs <- .set_lvls(seqs, cluster_col, plot_lvls)
     seqs <- split(seqs, seqs[[cluster_col]])
     seqs <- purrr::map(seqs, trim_fn)
+    seqs <- purrr::discard(seqs, is.null)
+
+    plt_n_seqs <- sum(purrr::map_dbl(seqs, length))
 
   } else {
     seqs <- trim_fn(seqs)
+
+    plt_n_seqs <- length(seqs)
+  }
+
+  # Check number of removed sequences
+  if (plt_n_seqs == 0) {
+    stop(
+      "There are no sequences longer than the width cutoff, ",
+      "try selecting a shorter sequence width for plotting.",
+      call. = FALSE
+    )
+  }
+
+  if (plt_n_seqs < n_seqs) {
+    pct <- 1 - (plt_n_seqs / n_seqs)
+    pct <- round(pct * 100, 1)
+
+    warning(
+      n_seqs - plt_n_seqs, " (", pct, "%) sequences are shorter than the ",
+      "width cutoff and were removed.",
+      call. = FALSE
+    )
   }
 
   # Create logos
@@ -267,9 +298,8 @@ plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 #' @param width Integer specifying how many residues to include, sequences
 #' longer than width will be get trimmed based on the end argument, sequences
 #' shorter than width will get removed. If a fraction is provided, the width
-#' cutoff will be set to include the specified fraction of sequences, e.g. a
-#' value of 0.75 would set the cutoff so 75% of sequences are included in the
-#' output.
+#' cutoff is set based on percent rank, i.e. a value of 0.75 would select a
+#' width where at least 75% of sequences are longer than the cutoff.
 #' @param end End to use for aligning sequences, specify '5' or '3' to
 #' align sequences at the 5' or 3' end.
 #' @noRd
@@ -278,11 +308,22 @@ plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
   lens <- nchar(seqs)
 
   if (width < 1) {
-    pct   <- dplyr::percent_rank(lens)
-    width <- min(lens[pct >= width])
+    width <- 1 - width
+    pct   <- dplyr::cume_dist(lens)
+    width <- min(lens[pct > width])
   }
 
   res <- seqs[lens >= width]
+
+  if (purrr::is_empty(res)) {
+    warning(
+      "There are no sequences present in the cluster at least ", width,
+      " residues long.",
+      call. = FALSE
+    )
+
+    return(NULL)
+  }
 
   s   <- ifelse(end == "5", "right", "left")
   res <- stringr::str_trunc(res, width, side = s, ellipsis = "")
@@ -327,22 +368,4 @@ plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 
   res
 }
-
-# seqs <- vdj_so %>%
-#   filter_vdj(chains == "IGH") %>%
-#   fetch_vdj(c("cdr3", "chains")) %>%
-#   group_by(.cell_id) %>%
-#   filter(n() == 1) %>%
-#   pull(cdr3) %>%
-#   na.omit()
-
-
-
-
-
-
-
-
-
-
 
