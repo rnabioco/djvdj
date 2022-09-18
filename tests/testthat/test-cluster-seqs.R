@@ -36,7 +36,7 @@ arg_lst <- list(
   cluster_col = list(NULL, "seurat_clusters"),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls),
-  width       = c(0.5, 10),
+  width       = c(0.999, 2),
   align_end   = c("3", "5"),
   facet_rows  = list(NULL, 2)
 )
