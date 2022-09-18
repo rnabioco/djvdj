@@ -37,16 +37,6 @@ library(ggplot2)
 
 load(here("data/avid/so_avid.rda"))
 
-# Theme colors
-vdj_colors <- c(
-  "#E69F00", "#56B4E9",
-  "#009E73", "#F0E442",
-  "#d7301f", "#0072B2",
-  "#D55E00", "#6A51A3",
-  "#CC79A7", "#999999",
-  "#875C04"
-)
-
 # Rename cell types
 so_avid <- so_avid %>%
   mutate_meta(
@@ -101,7 +91,7 @@ type_umap <- so_avid %>%
 hel_umap <- so_avid %>%
   plot_features(
     feature     = "adt_HEL",
-    plot_colors = c("grey85", vdj_colors[5]),
+    plot_colors = c("grey95", rep(m_cols[["MD4"]], 2)),
     size        = 0.1
   ) +
   ggtitle("HEL signal") +
@@ -140,7 +130,15 @@ library(tibble)
 library(purrr)
 library(dplyr)
 library(ggplot2)
-# library(cowplot)
+
+# Color palette
+clrs <- c(
+  "#E69F00", "#56B4E9", "#009E73",
+  "#F0E442", "#d7301f", "#0072B2",
+  "#D55E00", "#6A51A3", "#CC79A7",
+  "#999999", "#875C04", "#000000",
+  "#024E37"
+)
 
 # Create vector of paths pointing to cellranger output
 paths <- here("data/avid/bcr/outs")
@@ -182,11 +180,6 @@ so_avid <- calc_frequency(
 For each 'calc' function provided by djvdj, there is a matching 'plot' function that will generate a summary plot. The `plot_clonal_abundance()` function will plot clonotypes ranked by abundance. As expected we see that most MD4 B cells share the same clonotype.
 
 ```{r "abund_plots", fig.width = 8, fig.height = 3.5}
-clrs <- c(
-  BL6 = "#E69F00",
-  MD4 = "#56B4E9"
-)
-
 plot_clonal_abundance(
   input       = so_avid,
   cluster_col = "mouse",           # Column containing cell clusters to compare
@@ -222,7 +215,7 @@ so_avid <- calc_diversity(
 
 <br>
 
-The `plot_diversity()` function will create plots summarizing repertoire diversity for each sample. A named list of functions can also be passed to plot multiple metrics. Two metrics for measuring diversity are the Simpson index and Shannon entropy. Both of these metrics are influenced by species richness (number of unique sequences) and evenness (relative abundance of sequences). To specifically measure species evenness, Pielou's index can be used. For these three metrics, maximally diverse samples will have values approaching 1.
+The `plot_diversity()` function will create plots summarizing repertoire diversity for each sample. A named list of functions can also be passed to plot multiple metrics. Two metrics for measuring diversity are the Simpson index and Shannon entropy. Both of these metrics are influenced by species richness (number of unique sequences) and evenness (relative abundance of sequences). Pielou's index will specifically measure species evenness. For these metrics, maximally diverse samples will have values approaching 1.
 
 As expected, BL6 B cells have a very diverse repertoire, while MD4 cells have a restricted repertoire. 
 
@@ -264,7 +257,7 @@ so_avid <- calc_similarity(
 
 <br>
 
-Sample similarity can be visualized using the `plot_similarity()` function. By default the Jaccard dissimilarity index is used to generate a heatmap, with values closer to 1 indicating minimal overlap between samples.
+Sample similarity can be visualized using the `plot_similarity()` function. By default the Jaccard dissimilarity index is used to generate a heatmap, with values closer to 1 indicating minimal overlap between samples. There is limited overlap between any of the clusters.
 
 ```{r "sim_plots", fig.width = 5, fig.height = 4}
 plot_similarity(
@@ -279,14 +272,15 @@ plot_similarity(
 
 <br>
 
-A circos plot can be generated to summarize the number of clonotypes shared between samples.
+To visualize the number of clonotypes shared between samples, a circos plot can be generated.
 
 ```{r "sim_plots_circos", fig.width = 5, fig.height = 5}
 plot_similarity(
   input       = so_avid,
   data_col    = "clonotype_id",       # Column containing clonotype IDs
   cluster_col = "seurat_clusters",    # Column containing cell clusters to compare
-  method      = "circos"
+  method      = "circos",
+  plot_colors = clrs
 )
 ```
 
@@ -365,7 +359,8 @@ plot_features(
   input   = so_avid,
   x       = "cdr3_UMAP_1",
   y       = "cdr3_UMAP_2",
-  feature = "cdr3_cluster_0.5"
+  feature = "cdr3_cluster_0.5",
+  plot_colors = clrs
 )
 ```
 
@@ -379,7 +374,8 @@ plot_seq_motifs(
   data_col    = "cdr3",              # Column containing sequences to plot
   cluster_col = "cdr3_cluster_0.5",  # Column containing cell clusters to compare
   chain       = "IGK",               # Chain to use for plotting sequences
-  width       = 11                   # Minimum width of sequence
+  width       = 11,                  # Minimum width of sequence
+  plot_colors = clrs
 )
 ```
 
