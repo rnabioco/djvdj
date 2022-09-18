@@ -18,8 +18,7 @@ library(tidyr)
 library(purrr)
 library(stringr)
 library(ggplot2)
-library(cowplot)
-library(colorblindr)
+# library(colorblindr)
 library(here)
 library(djvdj)
 
@@ -69,7 +68,7 @@ so_tcr <- import_vdj(
 
 ### **Calculate**
 
-djvdj allows you to calculate a range of population diversity and similarity metrics implemented with the [abdiv](https://github.com/kylebittinger/abdiv) package. The function `calc_diversity()` can be used to measure diversity on a per-cluster or per-sample basis to allow for comparison across conditions. `calc_similarity()` will measure repertoire overlap between clusters or samples to allow for direct comparisons between cells of interest. Additional functions are also available to calculate clonotype abundances and V(D)J gene usage (`calc_abundance()`, `calc_gene_usage()`).
+djvdj allows you to calculate a range of population diversity and similarity metrics implemented with the [abdiv](https://github.com/kylebittinger/abdiv) package. The function `calc_diversity()` can be used to measure diversity on a per-cluster or per-sample basis to allow for comparison across conditions. `calc_similarity()` will measure repertoire overlap between clusters or samples to allow for direct comparisons between cells of interest. Additional functions are also available to calculate clonotype abundances and V(D)J gene usage (`calc_clonal_abundance()`, `calc_gene_usage()`).
 
 ```{r}
 so_tcr <- calc_diversity(
@@ -92,6 +91,6 @@ ggs <- plot_gene_usage(
   chain       = "TRB"                         # Chain to plot
 )
 
-cowplot::plot_grid(plotlist = ggs)
+purrr::reduce(ggs, `+`)
 ```
 

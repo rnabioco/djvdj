@@ -23,7 +23,9 @@ knitr::opts_chunk$set(
 
 <br>
 
-For this vignette we are using AVID-seq data. This is a method developed by the Hesselberth lab which involves staining cells with DNA-tagged antigen. The DNA tag is similar to the tags present on CITE-seq antibodies and can be detected using the 10x Genomics 5’ immune profiling kit. For this experiment we mixed splenocytes from BL6 and MD4 mice and stained with a HEL-DNA conjugate. MD4 B cells are monoclonal and specifically bind HEL.
+For this vignette we are using AVID-seq data. This is a method developed by the [Hesselberth](https://hesselberthlab.org/) lab which involves staining cells with DNA-tagged antigen. The DNA tag is similar to the tags present on CITE-seq antibodies and can be detected using the 10x Genomics 5’ immune profiling kit. For this experiment we mixed splenocytes from BL6 and MD4 mice and stained with a HEL-DNA conjugate. MD4 B cells are monoclonal and should specifically bind HEL (hen egg lysozyme).
+
+Below we see that signal from the HEL-DNA conjugate is specific for MD4 B cells.
 
 ```{r "rna_umap", fig.width = 12.5, fig.height = 3, echo = FALSE}
 # Packages
@@ -127,7 +129,7 @@ plot_grid(
 
 `import_vdj()` takes the output files from [Cell Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header) and adds clonotype information to the meta.data for an existing [Seurat](https://satijalab.org/seurat/) or SingleCellExperiment object. For cells with multiple chains, the information for each chain is stored as a single row, separated by a semi-colon. For cells that do not have V(D)J sequencing data, `NA`s are added to the meta.data.
 
-If the Seurat object contains data for multiple runs, a vector containing paths to the `cellranger vdj` output files for each sample can be given. When multiple runs are included in the same object, the cell barcodes will commonly contain a unique prefix for each sample. The cell prefixes can be specified using the `cell_prefix` argument.
+If the Seurat object contains data for multiple runs, a vector containing paths to the `cellranger vdj` output files for each sample can be given.
 
 ```{r "import_vdj"}
 # Packages
@@ -138,7 +140,7 @@ library(tibble)
 library(purrr)
 library(dplyr)
 library(ggplot2)
-library(cowplot)
+# library(cowplot)
 
 # Create vector of paths pointing to cellranger output
 paths <- here("data/avid/bcr/outs")
@@ -165,19 +167,19 @@ so_avid@meta.data %>%
 
 ## Clonotype Abundance
 
-To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_abundance()` function. These calculations can be performed on a per-cluster or per-sample basis by also providing a meta.data column containing cell labels.
+To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_frequency()` function. These calculations can be performed on a per-cluster or per-sample basis by providing a meta.data column containing cell labels to use for comparison.
 
 ```{r}
 so_avid <- calc_frequency(
   input       = so_avid,
-  cluster_col = "mouse",                  # Column containing cell clusters to compare
-  data_col    = "clonotype_id"            # Column containing clonotype IDs to use
+  data_col    = "clonotype_id",    # Column containing clonotype IDs
+  cluster_col = "mouse"            # Column containing cell clusters to compare
 )
 ```
 
 <br>
 
-For each 'calc' function provided by djvdj, there is a matching 'plot' function that will generate a summary plot. The `plot_abundance()` function will plot clonotypes ranked by abundance. As expected we see that most MD4 B cells share the same clonotype.
+For each 'calc' function provided by djvdj, there is a matching 'plot' function that will generate a summary plot. The `plot_clonal_abundance()` function will plot clonotypes ranked by abundance. As expected we see that most MD4 B cells share the same clonotype.
 
 ```{r "abund_plots", fig.width = 8, fig.height = 3.5}
 clrs <- c(
@@ -187,9 +189,9 @@ clrs <- c(
 
 plot_clonal_abundance(
   input       = so_avid,
-  cluster_col = "mouse",                   # Column containing cell clusters to compare
-  n_clones    = 10,                        # Number of top clonotypes to plot
-  type        = "bar",                     # Type of plot, 'bar' or 'line'
+  cluster_col = "mouse",           # Column containing cell clusters to compare
+  n_clones    = 10,                # Number of top clonotypes to plot
+  type        = "bar",             # Type of plot, 'bar' or 'line'
   plot_colors = clrs
 )
 ```
@@ -198,7 +200,7 @@ plot_clonal_abundance(
 
 ## Repertoire Diversity
 
-The function `calc_diversity()` will calculate repertoire diversity based on the number of cells that share each clonotype. The `cluster_col` argument can be used to group cells based on a meta.data column prior to calculating diversity. `calc_diversity()` uses the R package [abdiv](https://github.com/kylebittinger/abdiv) for performing diversity calculations and any [abdiv](https://github.com/kylebittinger/abdiv) diversity function can be specified using the `method` argument. It is important to read the [abdiv](https://github.com/kylebittinger/abdiv) documentation to ensure the selected function is appropriate for your analysis. 
+The function `calc_diversity()` will calculate repertoire diversity based on the number of cells that share each clonotype. The `cluster_col` argument can be used to group cells based on a meta.data column prior to calculating diversity. `calc_diversity()` uses the R package [abdiv](https://github.com/kylebittinger/abdiv) for performing diversity calculations and any [abdiv](https://github.com/kylebittinger/abdiv) diversity function can be specified using the `method` argument. It is important to read the [abdiv](https://github.com/kylebittinger/abdiv) documentation to ensure the selected function is appropriate. 
 
 Possible methods for calculating diversity include:
 
@@ -207,32 +209,37 @@ abdiv::alpha_diversities
 ```
 <br>
 
-In this example we are calculating the Shannon diversity for each sample in the orig.ident meta.data column.
+In this example we are calculating the Shannon entropy for BL6 and MD4 samples.
 
 ```{r}
 so_avid <- calc_diversity(
   input       = so_avid,
-  cluster_col = "mouse",                    # Column containing cell clusters to compare
-  method      = abdiv::shannon              # abdiv method to use
+  data_col    = "clonotype_id",    # Column containing clonotype IDs
+  cluster_col = "mouse",           # Column containing cell clusters to compare
+  method      = abdiv::shannon     # abdiv method to use
 )
 ```
 
 <br>
 
-The `plot_diversity()` function will create plots summarizing repertoire diversity for each sample. A named list of functions can also be passed to plot multiple metrics. Two different metrics are shown in the example below. As expected, BL6 B cells have a very diverse repertoire, while MD4 cells have a restricted repertoire. 
+The `plot_diversity()` function will create plots summarizing repertoire diversity for each sample. A named list of functions can also be passed to plot multiple metrics. Two metrics for measuring diversity are the Simpson index and Shannon entropy. Both of these metrics are influenced by species richness (number of unique sequences) and evenness (relative abundance of sequences). To specifically measure species evenness, Pielou's index can be used. For these three metrics, maximally diverse samples will have values approaching 1.
 
-```{r "div_plots", fig.width = 3.5, fig.height = 3}
+As expected, BL6 B cells have a very diverse repertoire, while MD4 cells have a restricted repertoire. 
+
+```{r "div_plots", fig.width = 6, fig.height = 3}
 # Metrics to plot
 fns <- list(
   "simpson"  = abdiv::simpson,
-  "mcintosh" = abdiv::mcintosh_d
+  "shannon"  = abdiv::simpson,
+  "pielou evenness" = abdiv::pielou_e
 )
 
 plot_diversity(
   input       = so_avid,
-  cluster_col = "mouse",                    # Column containing cell clusters to compare
-  method      = fns,                        # abdiv method to use
-  plot_colors = c("#E69F00", "#56B4E9")
+  data_col    = "clonotype_id",    # Column containing clonotype IDs
+  cluster_col = "mouse",           # Column containing cell clusters to compare
+  method      = fns,               # abdiv method to use
+  plot_colors = clrs
 )
 ```
 
@@ -240,13 +247,7 @@ plot_diversity(
 
 ## Repertoire Overlap
 
-To compare repertoires for different samples or clusters, `calc_similarity()` can calculate a variety of different similarity metrics. The `cluster_col` argument should be used to specify the meta.data column containing cell groups to use for comparison. Like `calc_diversity()`, an [abdiv](https://github.com/kylebittinger/abdiv) function can be specified with the `method` argument. It is important to read the [abdiv](https://github.com/kylebittinger/abdiv) documentation to ensure the selected function is appropriate for your analysis.
-
-Possible methods for calculating repertoire similarity include:
-
-```{r, comment = "", echo = F}
-abdiv::beta_diversities
-```
+To compare repertoires for different samples or clusters, `calc_similarity()` can calculate a variety of different similarity metrics. The `cluster_col` argument should be used to specify the meta.data column containing cell groups to use for comparison. Like `calc_diversity()`, an [abdiv](https://github.com/kylebittinger/abdiv) function can be specified with the `method` argument. It is important to read the [abdiv](https://github.com/kylebittinger/abdiv) documentation to ensure the selected function is appropriate.
 
 <br>
 
@@ -255,22 +256,37 @@ By default `calc_similarity()` will add a new meta.data column for each comparis
 ```{r}
 so_avid <- calc_similarity(
   input       = so_avid,
-  cluster_col = "seurat_clusters",          # Column containing cell clusters to compare
-  method      = abdiv::jaccard              # abdiv method to use
+  data_col    = "clonotype_id",       # Column containing clonotype IDs
+  cluster_col = "seurat_clusters",    # Column containing cell clusters to compare
+  method      = abdiv::jaccard        # abdiv method to use
 )
 ```
 
 <br>
 
-A heatmap summarizing the results can be generated using the `plot_similarity()` function. Values closer to 1 indicate minimal overlap between the clusters.
+Sample similarity can be visualized using the `plot_similarity()` function. By default the Jaccard dissimilarity index is used to generate a heatmap, with values closer to 1 indicating minimal overlap between samples.
 
 ```{r "sim_plots", fig.width = 5, fig.height = 4}
 plot_similarity(
   input       = so_avid,
-  cluster_col = "seurat_clusters",          # Column containing cell clusters to compare
-  method      = abdiv::jaccard,             # abdiv method to use
-  plot_colors = "#009E73",
-  color       = "white"                     # Additional ggplot options
+  data_col    = "clonotype_id",       # Column containing clonotype IDs
+  cluster_col = "seurat_clusters",    # Column containing cell clusters to compare
+  plot_colors = c("#56B4E9", "white", "#009E73"),
+  remove_upper_triangle = TRUE,
+  cluster_heatmap = FALSE
+)
+```
+
+<br>
+
+A circos plot can be generated to summarize the number of clonotypes shared between samples.
+
+```{r "sim_plots_circos", fig.width = 5, fig.height = 5}
+plot_similarity(
+  input       = so_avid,
+  data_col    = "clonotype_id",       # Column containing clonotype IDs
+  cluster_col = "seurat_clusters",    # Column containing cell clusters to compare
+  method      = "circos"
 )
 ```
 
@@ -285,10 +301,10 @@ In this example we are summarizing the usage of different V segments for the IGH
 ```{r}
 calc_gene_usage(
   input       = so_avid,
-  gene_cols   = "v_gene",                   # Column containing genes
-  cluster_col = "mouse",                    # Column containing cell clusters to compare
-  chain       = "IGH",                      # Chain to calculate gene usage for
-  chain_col   = "chains"                    # Column containing chains
+  gene_cols   = "v_gene",          # Column containing genes
+  cluster_col = "mouse",           # Column containing cell clusters to compare
+  chain       = "IGH",             # Chain to calculate gene usage for
+  chain_col   = "chains"           # Column containing chains
 )
 ```
 
@@ -299,42 +315,71 @@ The function `plot_gene_usage()` can be used visualize gene usage across cluster
 ```{r "gene_usage_1", fig.width = 11, fig.height = 3.5}
 plot_gene_usage(
   input       = so_avid,
-  gene_cols   = "v_gene",                   # Column(s) containing genes
-  type        = "bar",                      # Type of plot, 'heatmap' or 'bar'
-  chain       = "IGH",                      # Chain to plot
-  n_genes     = 50,                         # The number of top genes to plot
+  gene_cols   = "v_gene",          # Column(s) containing genes
+  type        = "bar",             # Type of plot, 'heatmap' or 'bar'
+  chain       = "IGH",             # Chain to plot
+  n_genes     = 50,                # Number of top genes to plot
   plot_colors = "#0072B2"
 )
 ```
 
 <br>
 
-By passing multiple columns to `gene_cols`, the frequency of V-J gene pairings can also be summarized. In this example we are only looking at IGK chains.
+By passing multiple columns to `gene_cols`, the frequency of V-J gene pairings can also be summarized. This will return a list of plots, one for each cluster in the `cluster_col` column.
 
-```{r, eval = F}
-calc_gene_usage(
-  input       = so_avid,
-  gene_cols   = c("v_gene", "j_gene"),      # Column(s) containing genes
-  cluster_col = "mouse",                    # Column containing cell clusters to compare
-  chain       = "IGK"                       # Chain to plot
-)
-```
-
-<br>
-
-When multiple gene columns are passed to `plot_gene_usage()`, a list of plots will be returned, one for each cluster in the `cluster_col` column.
-
-```{r "gene_usage_2", fig.width = 12, fig.height = 2.5}
+```{r "gene_usage_2", fig.width = 12, fig.height = 2}
 ggs <- plot_gene_usage(
   input       = so_avid,
-  gene_cols   = c("v_gene", "j_gene"),      # Column(s) containing genes
-  cluster_col = "mouse",                    # Column containing cell clusters to compare
-  chain       = "IGK",                      # Chain to plot
+  gene_cols   = c("v_gene", "j_gene"),   # Column(s) containing genes
+  cluster_col = "mouse",                 # Column containing cell clusters to compare
+  chain       = "IGK",                   # Chain to plot
   plot_colors = "#6A51A3",
   n_genes     = 20
 )
 
-plot_grid(plotlist = ggs)
+reduce(ggs, `+`)
 ```
 
 <br>
+
+## Clustering
+
+Cells can be clustered based on CDR3 sequences, or any other sequences present in the object. By default, distances are calculated for amino acid sequences using the [BLOSUM62](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC50453/) substitution matrix, which is based on observed amino acid frequencies and substitution probabilities. Clustering resolution can be adjusted using the `resolution` argument. The resulting cluster IDs and new UMAP coordinates are added to the object meta.data.  
+
+```{r "clustering"}
+set.seed(42)
+
+so_avid <- cluster_seqs(
+  input    = so_avid,
+  data_col = "cdr3",      # Column containing sequences to cluster
+  chain    = "IGK"        # Chain to use for clustering sequences
+)
+```
+
+<br>
+
+Clustering results can be visualized using the generic plotting function `plot_features()`.
+
+```{r "clustering_2", fig.width = 6, fig.height = 4}
+plot_features(
+  input   = so_avid,
+  x       = "cdr3_UMAP_1",
+  y       = "cdr3_UMAP_2",
+  feature = "cdr3_cluster_0.5"
+)
+```
+
+<br>
+
+A sequence motif can be plotted for each cluster using the `plot_seq_motifs()` function. Cluster 10 includes the MD4 cells and has a sequence motif matching the expected IGK sequence.
+
+```{r "clustering_3", fig.width = 8, fig.height = 5}
+plot_seq_motifs(
+  input       = so_avid,
+  data_col    = "cdr3",              # Column containing sequences to plot
+  cluster_col = "cdr3_cluster_0.5",  # Column containing cell clusters to compare
+  chain       = "IGK",               # Chain to use for plotting sequences
+  width       = 11                   # Minimum width of sequence
+)
+```
+
