@@ -377,12 +377,13 @@ test_all_args(
 )
 
 # Check all plot_gene_usage arguments for two genes
+# when circos option is included, the first circos test fails on github actions
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
   gene_cols   = list(c("v_gene", "j_gene")),
   chain       = list(NULL, "IGH"),
   cluster_col = list(NULL, "seurat_clusters"),
-  type        = c("heatmap", "circos"),
+  type        = c("heatmap"),
   plot_colors = list(NULL, rep(test_cols, 3)),
   plot_lvls   = list(NULL, test_lvls),
   yaxis       = c("percent", "frequency")

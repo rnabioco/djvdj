@@ -21,6 +21,7 @@ reference:
 - title: Calculate
   contents:
   - starts_with("calc_")
+  - cluster_seqs
   - define_clonotypes
 
 - title: Plotting
