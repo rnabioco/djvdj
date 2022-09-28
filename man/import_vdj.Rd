@@ -11,7 +11,7 @@ import_vdj(
   filter_chains = TRUE,
   filter_paired = FALSE,
   define_clonotypes = NULL,
-  include_mutations = TRUE,
+  include_mutations = FALSE,
   aggr_dir = NULL,
   sep = ";"
 )
@@ -141,13 +141,13 @@ vdj_so <- import_vdj(
 
 head(vdj_so@meta.data, 1)
 
-# Omit indel information for each chain
+# Include mutation information for each chain
 # this information will be included if the file concat_ref.bam is present
-# to speed up data import, omit indel information
+# including mutation information will cause data import to be slower
 vdj_so <- import_vdj(
   tiny_so,
   vdj_dir = vdj_dir,
-  include_mutations = FALSE
+  include_mutations = TRUE
 )
 
 head(vdj_so@meta.data, 1)
