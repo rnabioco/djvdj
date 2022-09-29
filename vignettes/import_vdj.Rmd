@@ -1,12 +1,12 @@
 ---
-title: "data import"
+title: "Importing data"
 date: '`r format(Sys.Date(), "%B %d %Y")`'
 output:
   rmarkdown::html_vignette:
     toc_float: true
     toc_depth: 2
     vignette: >
-      %\VignetteIndexEntry{V(D)J analysis}
+      %\VignetteIndexEntry{Importing data}
       %\VignetteEncoding{UTF-8}
       %\VignetteEngine{knitr::rmarkdown}
 ---
