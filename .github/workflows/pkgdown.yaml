@@ -35,9 +35,9 @@ jobs:
 
       - name: Download data
         run: |
-          wget https://djvdj-data.s3-us-west-2.amazonaws.com/avid.zip
-          unzip avid.zip
-          mv avid data
+          wget https://djvdj-data.s3-us-west-2.amazonaws.com/splenocytes.zip
+          unzip splenocytes.zip
+          mv splenocytes data
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
