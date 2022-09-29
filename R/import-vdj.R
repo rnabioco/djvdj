@@ -236,7 +236,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
       }
     }
 
-    # sfxs <- rep(as.character(NA), length(vdj_dir))
     sfxs <- rep("-1", length(vdj_dir))
   }
 
@@ -372,13 +371,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     contigs <- dplyr::filter(contigs, !is.na(.data$clonotype_id))
   }
 
+  # Select V(D)J columns to keep
+  contigs <- dplyr::select(contigs, all_of(vdj_cols))
+
   # Check for NAs in data, additional NAs would indicate malformed input
   if (!all(stats::complete.cases(contigs))) {
     stop("Malformed input data, NAs are present, check input files.")
   }
-
-  # Select V(D)J columns to keep
-  contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
   # Check if sep is already present in sep_cols
   sep <- .check_sep(contigs, sep_cols, sep)
