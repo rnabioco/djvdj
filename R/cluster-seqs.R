@@ -180,7 +180,7 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
 #' @importFrom stringr str_trunc
 #' @export
 plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
-                            chain, plot_colors = NULL, plot_lvls = NULL,
+                            chain, plot_colors = NULL, plot_lvls = names(plot_colors),
                             chain_col = "chains", width = 0.75,
                             align_end = "5", facet_rows = NULL, sep = ";",
                             ...) {

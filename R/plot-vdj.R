@@ -41,8 +41,9 @@ plot_features <- function(input, ...) {
 #'
 #' @export
 #' @name plot_features
-plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2", plot_colors = NULL,
-                                  plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey50", ...) {
+plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
+                                  plot_colors = NULL, plot_lvls = names(plot_colors),
+                                  min_q = NULL, max_q = NULL, na_color = "grey50", ...) {
 
   # Check arguments
   if (identical(x, y)) {
@@ -148,9 +149,10 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2", pl
 #' @param data_slot Slot in the Seurat object to pull data
 #' @importFrom Seurat FetchData
 #' @export
-plot_features.Seurat <- function(input, feature, x = "UMAP_1", y = "UMAP_2", data_slot = "data",
-                                 plot_colors = NULL, plot_lvls = NULL, min_q = NULL, max_q = NULL,
-                                 na_color = "grey50", ...) {
+plot_features.Seurat <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
+                                 data_slot = "data", plot_colors = NULL,
+                                 plot_lvls = names(plot_colors), min_q = NULL,
+                                 max_q = NULL, na_color = "grey50", ...) {
 
   # Fetch variables and add to meta.data
   # want input data to include meta.data and any features from FetchData
@@ -237,8 +239,10 @@ plot_vdj_feature <- function(input, ...) {
 #' )
 #'
 #' @export
-plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", summary_fn = NULL, chain = NULL,
-                                     plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey50",
+plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2",
+                                     summary_fn = NULL, chain = NULL,
+                                     plot_lvls = names(plot_colors), min_q = NULL,
+                                     max_q = NULL, na_color = "grey50",
                                      chain_col = "chains", sep = ";", ...) {
 
   plt_dat <- summarize_vdj(
@@ -269,8 +273,10 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2"
 #' @param data_slot Slot in the Seurat object to pull data
 #' @importFrom Seurat FetchData
 #' @export
-plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2", data_slot = "data", summary_fn = NULL,
-                                    chain = NULL, plot_lvls = NULL, min_q = NULL, max_q = NULL, na_color = "grey50",
+plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2",
+                                    data_slot = "data", summary_fn = NULL,
+                                    chain = NULL, plot_lvls = names(plot_colors),
+                                    min_q = NULL, max_q = NULL, na_color = "grey50",
                                     chain_col = "chains", sep = ";", ...) {
 
   # Fetch variables and add to meta.data
@@ -440,8 +446,9 @@ NULL
 #' @export
 plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
                      cluster_col = NULL, chain = NULL, type = "histogram",
-                     yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
-                     log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
+                     yaxis = "frequency", plot_colors = NULL,
+                     plot_lvls = names(plot_colors), log_trans = FALSE,
+                     chain_col = "chains", sep = ";", ...) {
 
   # Format input data
   if (per_cell) {
@@ -507,7 +514,7 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
 #' @noRd
 .plot_vdj <- function(df_in, data_col, cluster_col = NULL, group_col = NULL,
                       type = "boxplot", yaxis = "frequency",
-                      plot_colors = NULL, plot_lvls = NULL,
+                      plot_colors = NULL, plot_lvls = names(plot_colors),
                       log_trans = FALSE, ...) {
 
   # Order clusters based on plot_lvls
@@ -549,9 +556,12 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
 
 #' @rdname plot_vdj
 #' @export
-plot_vdj_reads <- function(input, data_cols = c("reads", "umis"), cluster_col = NULL, chain = NULL,
-                           type = "violin", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
-                           log_trans = TRUE, chain_col = "chains", sep = ";", ...) {
+plot_vdj_reads <- function(input, data_cols = c("reads", "umis"),
+                           cluster_col = NULL, chain = NULL,
+                           type = "violin", yaxis = "frequency",
+                           plot_colors = NULL, plot_lvls = names(plot_colors),
+                           log_trans = TRUE, chain_col = "chains", sep = ";",
+                           ...) {
 
   res <- plot_vdj(
     input,
@@ -574,8 +584,9 @@ plot_vdj_reads <- function(input, data_cols = c("reads", "umis"), cluster_col = 
 
 #' @rdname plot_vdj
 #' @export
-plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NULL, chain = NULL,
-                             type = "histogram", yaxis = "frequency", plot_colors = NULL, plot_lvls = NULL,
+plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NULL,
+                             chain = NULL, type = "histogram", yaxis = "frequency",
+                             plot_colors = NULL, plot_lvls = names(plot_colors),
                              log_trans = TRUE, chain_col = "chains", sep = ";", ...) {
 
   res <- plot_vdj(
@@ -599,9 +610,11 @@ plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NUL
 
 #' @rdname plot_vdj
 #' @export
-plot_vdj_mutations <- function(input, data_cols = c("all_ins", "all_del", "all_mis"), cluster_col = NULL,
-                               chain = NULL, type = "boxplot", yaxis = "frequency", plot_colors = NULL,
-                               plot_lvls = NULL, log_trans = FALSE, chain_col = "chains", sep = ";", ...) {
+plot_vdj_mutations <- function(input, data_cols = c("all_ins", "all_del", "all_mis"),
+                               cluster_col = NULL, chain = NULL, type = "boxplot",
+                               yaxis = "frequency", plot_colors = NULL,
+                               plot_lvls = names(plot_colors), log_trans = FALSE,
+                               chain_col = "chains", sep = ";", ...) {
 
   res <- plot_vdj(
     input,

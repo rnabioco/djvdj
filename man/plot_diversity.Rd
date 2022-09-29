@@ -15,7 +15,7 @@ plot_diversity(
   chain = NULL,
   chain_col = "chains",
   plot_colors = NULL,
-  plot_lvls = NULL,
+  plot_lvls = names(plot_colors),
   facet_rows = 1,
   sep = ";",
   ...

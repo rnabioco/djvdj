@@ -10,7 +10,7 @@ plot_seq_motifs(
   cluster_col = NULL,
   chain,
   plot_colors = NULL,
-  plot_lvls = NULL,
+  plot_lvls = names(plot_colors),
   chain_col = "chains",
   width = 0.75,
   align_end = "5",

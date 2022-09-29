@@ -295,7 +295,7 @@ plot_diversity <- function(input, data_col = "clonotype_id",
                            cluster_col = NULL, group_col = NULL,
                            method = abdiv::simpson, downsample = FALSE,
                            n_boots = 100, chain = NULL, chain_col = "chains",
-                           plot_colors = NULL, plot_lvls = NULL,
+                           plot_colors = NULL, plot_lvls = names(plot_colors),
                            facet_rows = 1, sep = ";", ...) {
 
   if (length(method) > 1 && is.null(names(method))) {
