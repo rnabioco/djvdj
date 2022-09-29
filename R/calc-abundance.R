@@ -218,8 +218,8 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0(
 #' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
-#' @param n_clones Number of top clonotypes to plot. If type is set to 'line',
-#' this will specify the number of values to label.
+#' @param n_clones Number of top clonotypes to plot (default is 10). If type is set to 'line',
+#' this will specify the number of clonotypes to label (default is 3).
 #' @param label_aes Named list providing additional aesthetics (color, size,
 #' etc.) for clonotype labels when creating line graph
 #' @param facet_rows The number of facet rows, use this when separate bar
@@ -286,7 +286,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0(
 plot_clonal_abundance <- function(input, cluster_col = NULL,
                                   clonotype_col = "clonotype_id", type = "bar",
                                   yaxis = "percent", plot_colors = NULL,
-                                  plot_lvls = NULL, n_clones = 10,
+                                  plot_lvls = names(plot_colors), n_clones = NULL,
                                   label_aes = list(), facet_rows = 1,
                                   facet_scales = "free_x", ...) {
 
@@ -294,7 +294,17 @@ plot_clonal_abundance <- function(input, cluster_col = NULL,
     stop("yaxis must be either 'frequency' or 'percent'.")
   }
 
-  if (!type %in% c("bar", "line")) {
+  if (identical(type, "bar")) {
+    n_clones <- n_clones %||% 10
+
+    if (n_clones <= 0) stop("n_clones must be >0.")
+
+  } else if (identical(type, "line")) {
+    n_clones <- n_clones %||% 3
+
+    if (n_clones < 0) stop("n_clones must be >=0.")
+
+  } else {
     stop("type must be either 'bar' or 'line'.")
   }
 
@@ -445,14 +455,14 @@ plot_clonal_abundance <- function(input, cluster_col = NULL,
 #' Plot the frequency of each cell label present in the provided meta.data
 #' column. This is useful for comparing the proportion of cells belonging to
 #' different samples, cell types, isotypes, etc. To compare clonotype
-#' frequency, use the plot_clonal_abundance() function.
+#' abundance, use the plot_clonal_abundance() function.
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param data_col meta.data column containing cell labels to use for
-#' calculating abundance. To calculate clonotype abundance, provide the column
-#' containing clonotype IDs, to calculate isotype abundance provide the column
-#' containing cell isotypes. By default clonotype_id is used for calculations.
+#' calculating frequency, e.g. cell types, isotypes, etc. This function is not
+#' designed to plot clonal abundance, use the plot_clonal_abundance() function
+#' for this purpose.
 #' @param cluster_col meta.data column containing cluster IDs (or patients,
 #' treatment conditions, etc.) to use when calculating frequency. Calculations
 #' will be performed separately for each cluster.
@@ -462,16 +472,14 @@ plot_clonal_abundance <- function(input, cluster_col = NULL,
 #' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
-#' @param facet_rows The number of facet rows, use this when separate bar
-#' graphs are created for each cell cluster
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
 #' @export
 plot_frequency <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, yaxis = "percent",
-                           plot_colors = NULL, plot_lvls = NULL,
-                           facet_rows = NULL, ...) {
+                           plot_colors = NULL, plot_lvls = names(plot_colors),
+                           ...) {
 
   if (!yaxis %in% c("frequency", "percent")) {
     stop("yaxis must be either 'frequency' or 'percent'.")
