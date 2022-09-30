@@ -11,7 +11,7 @@ plot_diversity(
   group_col = NULL,
   method = abdiv::simpson,
   downsample = FALSE,
-  n_boots = 100,
+  n_boots = 1,
   chain = NULL,
   chain_col = "chains",
   plot_colors = NULL,

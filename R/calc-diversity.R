@@ -79,9 +79,10 @@
 #' @export
 calc_diversity <- function(input, data_col, cluster_col = NULL,
                            method = abdiv::simpson, downsample = FALSE,
-                           n_boots = 100, chain = NULL, chain_col = "chains",
+                           n_boots = 1, chain = NULL, chain_col = "chains",
                            prefix = "", return_df = FALSE, sep = ";") {
 
+  # Check input values
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if using a list of methods.")
   }
@@ -93,9 +94,12 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
     method <- purrr::set_names(list(method), nm)
   }
 
+  if (n_boots < 1) stop("n_boots must be an integer >=1.")
+
   # Format input data
-  div_cols <- names(method) <- paste0(prefix, names(method))
-  div_cols <- paste0(div_cols, "_", c("diversity", "stderr"))
+  # div_cols <- names(method) <- paste0(prefix, names(method))
+  # div_cols <- paste0(div_cols, "_", c("diversity", "stderr"))
+  names(method) <- paste0(prefix, names(method))
 
   vdj_cols <- c(data_col, cluster_col)
 
@@ -187,7 +191,12 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
     )
   })
 
-  div <- tidyr::pivot_longer(div, c(.data$diversity, .data$stderr))
+  div_cols <- "diversity"
+
+  if (n_boots > 1) div_cols <- c(div_cols, "stderr")
+  else             div <- dplyr::select(div, -.data$stderr)
+
+  div <- tidyr::pivot_longer(div, all_of(div_cols))
   div <- tidyr::unite(div, "name", .data$met, .data$name)
   div <- tidyr::pivot_wider(div)
 
@@ -294,7 +303,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 plot_diversity <- function(input, data_col = "clonotype_id",
                            cluster_col = NULL, group_col = NULL,
                            method = abdiv::simpson, downsample = FALSE,
-                           n_boots = 100, chain = NULL, chain_col = "chains",
+                           n_boots = 1, chain = NULL, chain_col = "chains",
                            plot_colors = NULL, plot_lvls = names(plot_colors),
                            facet_rows = 1, sep = ";", ...) {
 
@@ -312,16 +321,23 @@ plot_diversity <- function(input, data_col = "clonotype_id",
     names(method) <- nm
   }
 
+  if (!is.null(group_col)) n_boots <- 1
+
   # Diversity columns
   div_cols <- paste0(names(method), "_", "diversity")
   err_cols <- paste0(names(method), "_", "stderr")
 
-  plt_cols <- c(cluster_col, group_col, div_cols, err_cols)
+  all_div_cols <- div_cols
+
+  if (n_boots > 1) all_div_cols <- c(all_div_cols, err_cols)
+
+  plt_cols <- c(cluster_col, group_col, all_div_cols)
 
   # Calculate diversity
+  # remove any existing diversity columns from plt_dat
   plt_dat <- .get_meta(input)
   plt_dat <- .prepare_meta(input = NULL, plt_dat)
-  plt_dat <- dplyr::select(plt_dat, -any_of(c(div_cols, err_cols)))
+  plt_dat <- dplyr::select(plt_dat, -any_of(all_div_cols))
 
   plt_dat <- calc_diversity(
     input       = plt_dat,
@@ -339,7 +355,7 @@ plot_diversity <- function(input, data_col = "clonotype_id",
   # Format data for plotting
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
   plt_dat <- dplyr::distinct(plt_dat, !!!syms(plt_cols))
-  plt_dat <- tidyr::pivot_longer(plt_dat, all_of(c(div_cols, err_cols)))
+  plt_dat <- tidyr::pivot_longer(plt_dat, all_of(all_div_cols))
 
   re <- "^(.+)_(diversity|stderr)$"
 
@@ -356,9 +372,7 @@ plot_diversity <- function(input, data_col = "clonotype_id",
 
   include_x_labs <- !is.null(cluster_col)
 
-  if (is.null(cluster_col)) {
-    cluster_col <- "met"
-  }
+  if (is.null(cluster_col)) cluster_col <- "met"
 
   # Create grouped boxplot
   if (!is.null(group_col) && !is.null(cluster_col)) {
@@ -395,19 +409,23 @@ plot_diversity <- function(input, data_col = "clonotype_id",
   }
 
   # Create bar graphs
+  # only add error bars if n_boots > 1
   res <- ggplot2::ggplot(
     plt_dat,
     ggplot2::aes(!!sym(cluster_col), .data$diversity, fill = !!sym(cluster_col))
   ) +
-    ggplot2::geom_col(...) +
+    ggplot2::geom_col(...)
 
-    ggplot2::geom_linerange(
-      aes(
-        !!sym(cluster_col),
-        ymin = .data$diversity - .data$stderr,
-        ymax = .data$diversity + .data$stderr
+  if (n_boots > 1) {
+    res <- res +
+      ggplot2::geom_linerange(
+        aes(
+          !!sym(cluster_col),
+          ymin = .data$diversity - .data$stderr,
+          ymax = .data$diversity + .data$stderr
+        )
       )
-    )
+  }
 
   # Create facets
   if (length(method) > 1) {
