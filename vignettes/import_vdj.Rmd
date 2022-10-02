@@ -33,7 +33,7 @@ The simplest use case for `import_vdj()` involves creating an object using data 
 
 ```{r}
 library(djvdj)
-library(tidyverse)
+library(magrittr)
 library(Seurat)
 library(here)
 

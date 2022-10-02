@@ -29,7 +29,7 @@ This vignette provides detailed examples for quantifying differences in clonal a
 
 ```{r}
 library(djvdj)
-library(tidyverse)
+library(magrittr)
 library(Seurat)
 library(here)
 
@@ -101,7 +101,7 @@ so %>%
   )
 ```
 
-Clonotype abundances can also be plotted as a line graph by adjusting the `type` argument. Most djvdj plotting functions return ggplot objects and can be modified with ggplot2 functions. Here we log10-transform the y-axis using the `ggplot2::scale_y_log10()` function.
+Clonotype abundances can also be plotted as a line graph by adjusting the `type` argument. Most djvdj plotting functions return ggplot objects that can be further modified with ggplot2 functions. Here we log10-transform the y-axis using the `ggplot2::scale_y_log10()` function.
 
 ```{r}
 so %>%
@@ -111,7 +111,7 @@ so %>%
     type          = "line",
     plot_colors   = c(MD4 = "#fec44f", BL6 = "#3182bd")
   ) +
-  scale_y_log10()
+  ggplot2::scale_y_log10()
 ```
 
 <br>
@@ -150,7 +150,7 @@ so %>%
   )
 ```
 
-The frequency plots can also be separated based on an additional grouping variable such as treatment group (e.g. pacebo vs drug) or disease status (e.g. healthy vs disease). This will generate boxplots with each point representing a label present in the column passed to the `cluster_col` argument. In this example we have 5 BL6 and 5 MD4 samples, so there should be 5 points shown for each boxplot.
+Frequency plots can also be separated based on an additional grouping variable such as treatment group (e.g. pacebo vs drug) or disease status (e.g. healthy vs disease). This will generate boxplots with each point representing a label present in the `cluster_col` column. In this example we have 5 BL6 and 5 MD4 samples, so there should be 5 points shown for each boxplot.
 
 ```{r}
 so %>%

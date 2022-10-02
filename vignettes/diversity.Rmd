@@ -1,0 +1,141 @@
+---
+title: "Diversity"
+date: '`r format(Sys.Date(), "%B %d %Y")`'
+output:
+  rmarkdown::html_vignette:
+    toc_float: true
+    toc_depth: 2
+    vignette: >
+      %\VignetteIndexEntry{Diversity}
+      %\VignetteEncoding{UTF-8}
+      %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r "setup", include = FALSE}
+# Chunk opts
+knitr::opts_chunk$set(
+  collapse   = TRUE,
+  comment    = "#>",
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 8,
+  fig.height = 4
+)
+```
+
+<br>
+
+This vignette provides detailed examples for quantifying repertoire diversity. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
+
+```{r}
+library(djvdj)
+library(magrittr)
+library(Seurat)
+library(here)
+
+# Load Seurat object
+load(here("data/splenocytes/splen_so.rda"))
+
+# Add V(D)J data to object
+vdj_dirs <- c(
+  BL6 = here("data/splenocytes/BL6_BCR"),
+  MD4 = here("data/splenocytes/MD4_BCR")
+)
+
+so <- splen_so %>%
+  import_vdj(vdj_dirs)
+```
+
+<br>
+
+## Calculating diversity
+
+To calculate repertoire diversity and store the results in the object meta.data, the `calc_diversity()` function can be used. This function is designed to specifically work with the R package [abdiv](https://github.com/kylebittinger/abdiv). The diversity metric can be selected by passing the name of the function to the `method` argument. Any alpha diversity function from the abdiv package that takes a numeric vector of species counts as input can be used. Be sure to read the documentation for the function you are using to ensure it is appropriate for your analysis.
+
+In this example we are calculating the Shannon entropy for BL6 and MD4 samples.
+
+```{r}
+so_vdj <- so %>%
+  calc_diversity(
+    data_col    = "clonotype_id",
+    cluster_col = "sample",
+    method      = abdiv::shannon
+  )
+```
+
+The `downsample` argument will randomly sample cells so each sample being tested is the same size. In addition, diversity can be calculated for bootstrapped replicates by setting the `n_boots` argument. This will also return the bootstrap standard error for each sample.
+
+```{r}
+so_vdj <- so %>%
+  calc_diversity(
+    data_col    = "clonotype_id",
+    cluster_col = "sample",
+    downsample  = TRUE,
+    n_boots     = 100
+  )
+```
+
+Diversity metrics can also be calculated for a specific chain. To do this, the column passed to the `data_col` argument must contain per-chain data, such as CDR3 amino acid or nucleotide sequences. In this example diversity is calculated based only on heavy chain CDR3 sequences.
+
+```{r}
+so_vdj <- so %>%
+  calc_diversity(
+    data_col    = "cdr3_nt",
+    cluster_col = "sample",
+    chain       = "IGK"
+  )
+```
+
+<br>
+
+## Plotting diversity
+
+The `plot_diversity()` function will create plots summarizing repertoire diversity for each sample. A named list of functions can also be passed to plot multiple metrics. Two metrics for measuring diversity are the Simpson index and Shannon entropy. Both of these metrics are influenced by species richness (number of unique sequences) and evenness (relative abundance of sequences). Pielou's index will specifically measure species evenness. For these metrics, maximally diverse samples will return a value of 1.
+
+As expected, BL6 B cells have a very diverse repertoire, while MD4 cells have a restricted repertoire. 
+
+```{r "div_plots", fig.width = 6, fig.height = 3}
+div_fns <- list(
+  "simpson" = abdiv::simpson,
+  "shannon" = abdiv::simpson,
+  "pielou evenness" = abdiv::pielou_e
+)
+
+so %>%
+  plot_diversity(
+    data_col    = "clonotype_id",
+    cluster_col = "sample",
+    method      = div_fns
+  )
+```
+
+Diversity plots can also be separated based on an additional grouping variable such as treatment group (e.g. pacebo vs drug) or disease status (e.g. healthy vs disease). This will generate boxplots with each point representing a label present in the `cluster_col` column. In this example we have 5 BL6 and 5 MD4 samples, so there should be 5 points shown for each boxplot.
+
+```{r "div_plots", fig.width = 6, fig.height = 3}
+so %>%
+  plot_diversity(
+    data_col    = "clonotype_id",
+    cluster_col = "sample",
+    group_col   = "orig.ident",
+    method      = div_fns
+  )
+```
+
+Additional arguments are provided to adjust plot aesthetics. The `plot_colors` parameter can be used to modify colors and the `facet_rows` argument will adjust the number of rows used to arrange plots.
+
+```{r}
+so %>%
+  plot_diversity(
+    data_col    = "clonotype_id",
+    cluster_col = "sample",
+    group_col   = "orig.ident",
+    method      = div_fns,
+    plot_colors = c(BL6 = "#3182bd", MD4 = "#fec44f"),
+    facet_rows  = 2
+  )
+```
+
+
+
+
+
