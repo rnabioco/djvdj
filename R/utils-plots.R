@@ -452,22 +452,18 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   # Set aesthetics and geom_col arguments
   gg_aes <- aes(!!sym(x), !!sym(y))
 
-  plt_args <- list(...)
+  gg_args <- list(...)
 
-  if (!is.null(.fill)) {
-    gg_aes$fill <- sym(.fill)
+  if (!is.null(.fill)) gg_aes$fill  <- sym(.fill)
+  else                 gg_args$fill <- clrs
 
-  } else {
-    plt_args$fill <- clrs
-  }
-
-  if (is.null(plt_args$position)) {
-    plt_args$position <- ggplot2::position_dodge(preserve = "single")
+  if (is.null(gg_args$position)) {
+    gg_args$position <- ggplot2::position_dodge(preserve = "single")
   }
 
   # Create bar graph
   res <- ggplot2::ggplot(df_in, gg_aes) +
-    purrr::lift_dl(geom_col)(plt_args)
+    purrr::lift_dl(geom_col)(gg_args)
 
   # Set plot colors
   if (!is.null(.fill) && !is.null(clrs)) {

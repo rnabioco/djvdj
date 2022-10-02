@@ -2,7 +2,7 @@
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param data_col meta.data column containing clonotype IDs to use for
+#' @param data_col meta.data column containing values to use for
 #' calculating diversity
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating diversity. If cluster_col is omitted,
@@ -13,7 +13,7 @@
 #' @param downsample Downsample clusters to the same size when calculating
 #' diversity metrics
 #' @param n_boots Number of bootstrap replicates
-#' @param chain Chain to use for calculating gene usage. Set to NULL to include
+#' @param chain Chain to use for calculating diversity. Set to NULL to include
 #' all chains.
 #' @param chain_col meta.data column containing chains for each cell
 #' @param prefix Prefix to add to new columns
@@ -80,7 +80,8 @@
 calc_diversity <- function(input, data_col, cluster_col = NULL,
                            method = abdiv::simpson, downsample = FALSE,
                            n_boots = 1, chain = NULL, chain_col = "chains",
-                           prefix = "", return_df = FALSE, sep = ";") {
+                           prefix = paste0(data_col, "_"), return_df = FALSE,
+                           sep = ";") {
 
   # Check input values
   if (length(method) > 1 && is.null(names(method))) {
@@ -97,19 +98,31 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
   if (n_boots < 1) stop("n_boots must be an integer >=1.")
 
   # Format input data
-  # div_cols <- names(method) <- paste0(prefix, names(method))
-  # div_cols <- paste0(div_cols, "_", c("diversity", "stderr"))
   names(method) <- paste0(prefix, names(method))
 
-  vdj_cols <- c(data_col, cluster_col)
+  meta <- vdj <- .get_meta(input)
+
+  if (!is.null(cluster_col) && is.null(meta[[cluster_col]])) {
+    stop(cluster_col, " not found in object, provide a different cluster_col")
+  }
+
+  # Add column containing original data_col values to use when merging back
+  # with meta.data. This is important since data_col will be modified when
+  # filtering chains.
+  orig_data_col <- paste0(".", data_col)
+
+  vdj <- dplyr::mutate(vdj, !!sym(orig_data_col) := !!sym(data_col))
 
   # filter chains if provided
   # if all chains removed, NA will be returned
-  meta <- vdj <- .get_meta(input)
-
   if (!is.null(chain)) {
-    vdj <- fetch_vdj(
+    vdj <- mutate_meta(
       input,
+      dplyr::mutate, !!sym(orig_data_col) := !!sym(data_col)
+    )
+
+    vdj <- fetch_vdj(
+      vdj,
       vdj_cols      = c(data_col, chain_col),
       clonotype_col = data_col,
       filter_cells  = TRUE,
@@ -127,14 +140,9 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
     )
   }
 
-  vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
-
-  if (!is.null(cluster_col) && is.null(meta[[cluster_col]])) {
-    stop(cluster_col, " not found in object, provide a different cluster_col")
-  }
-
   # Get parameters for bootstrapped sampling
-  sam     <- vdj
+  # specify minimum and maximum number of cells for samples
+  sam      <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
   sam_rng <- c(10, Inf)
   sam_sz  <- nrow(sam)
 
@@ -157,24 +165,15 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
     sam <- dplyr::filter(sam, !!sym(cluster_col) %in% clsts)
   }
 
-  if (sam_sz > sam_rng[2]) {
-    sam_sz <- sam_rng[2]
-  }
+  if (sam_sz > sam_rng[2]) sam_sz <- sam_rng[2]
 
   # Downsample clusters to equal size
-  if (!is.null(cluster_col)) {
-    sam <- dplyr::group_by(sam, !!sym(cluster_col))
-  }
-
-  if (downsample) {
-    sam <- dplyr::slice_sample(sam, n = sam_sz)
-  }
+  if (!is.null(cluster_col)) sam <- dplyr::group_by(sam, !!sym(cluster_col))
+  if (downsample)            sam <- dplyr::slice_sample(sam, n = sam_sz)
 
   # Calculate diversity
   .calc_div <- function(x, met, n_bts = n_boots) {
-    fn <- function(x, i) {
-      met(table(x[i]))
-    }
+    fn <- function(x, i) met(table(x[i]))
 
     bt <- boot::boot(x, fn, R = n_bts)
 
@@ -201,14 +200,14 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
   div <- tidyr::pivot_wider(div)
 
   # Format results
+  vdj_cols <- c(data_col, cluster_col)
+
+  vdj <- dplyr::mutate(vdj, !!sym(data_col) := !!sym(orig_data_col))
+  vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
   vdj <- dplyr::distinct(vdj, !!!syms(vdj_cols))
 
-  if (!is.null(cluster_col)) {
-    vdj <- dplyr::left_join(vdj, div, by = cluster_col)
-
-  } else {
-    vdj <- dplyr::bind_cols(vdj, div)
-  }
+  if (!is.null(cluster_col)) vdj <- dplyr::left_join(vdj, div, by = cluster_col)
+  else                       vdj <- dplyr::bind_cols(vdj, div)
 
   res <- dplyr::left_join(meta, vdj, by = vdj_cols)
 
@@ -224,8 +223,8 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param data_col meta.data column containing clonotype IDs to use for
-#' calculating repertoire diversity
+#' @param data_col meta.data column containing values to use for
+#' calculating diversity
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
 #' @param group_col meta.data column to use for grouping IDs present in
@@ -236,7 +235,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param downsample Downsample clusters to the same size when calculating
 #' diversity metrics
 #' @param n_boots Number of bootstrap replicates
-#' @param chain Chain to use for calculating gene usage. Set to NULL to include
+#' @param chain Chain to use for calculating diversity. Set to NULL to include
 #' all chains.
 #' @param chain_col meta.data column containing chains for each cell
 #' @param plot_colors Character vector containing colors for plotting
@@ -368,31 +367,32 @@ plot_diversity <- function(input, data_col = "clonotype_id",
   )
 
   # Set plot levels
-  plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+  lvls_col <- group_col
+  lvls_col <- lvls_col %||% cluster_col
+
+  plt_dat <- .set_lvls(plt_dat, lvls_col, plot_lvls)
 
   include_x_labs <- !is.null(cluster_col)
 
-  if (is.null(cluster_col)) cluster_col <- "met"
+  if (!include_x_labs) cluster_col <- "met"
+
+  # Plot arguments
+  gg_args <- list(df_in = plt_dat, y = "diversity", clrs = plot_colors, ...)
 
   # Create grouped boxplot
   if (!is.null(group_col) && !is.null(cluster_col)) {
-    plt_dat <- .set_lvls(plt_dat, group_col, plot_lvls)
+    gg_args$alpha         <- gg_args$alpha %||% 0.5
+    gg_args$outlier.color <- gg_args$outlier.color %||% NA
 
-    res <- .create_boxes(
-      plt_dat,
-      x      = group_col,
-      y      = "diversity",
-      .color = group_col,
-      .fill  = group_col,
-      alpha  = 0.5,
-      clrs   = plot_colors,
-      outlier.color = NA,
-      ...
-    ) +
+    more_args <- list(x = group_col, .color = group_col, .fill = group_col)
+
+    gg_args <- append(gg_args, more_args)
+
+    res <- purrr::lift_dl(.create_boxes)(gg_args) +
       ggplot2::geom_jitter(
         position = ggplot2::position_jitterdodge(jitter.width = 0.05)
       ) +
-      ggplot2::theme(legend.position = "right")
+      theme(legend.position = "right")
 
     # Create facets
     if (length(method) > 1) {
@@ -410,11 +410,15 @@ plot_diversity <- function(input, data_col = "clonotype_id",
 
   # Create bar graphs
   # only add error bars if n_boots > 1
-  res <- ggplot2::ggplot(
-    plt_dat,
-    ggplot2::aes(!!sym(cluster_col), .data$diversity, fill = !!sym(cluster_col))
-  ) +
-    ggplot2::geom_col(...)
+  if (is.null(gg_args$position)) {
+    gg_args$position <- ggplot2::position_identity()
+  }
+
+  more_args <- list(x = cluster_col, .fill = cluster_col)
+
+  gg_args <- append(gg_args, more_args)
+
+  res <- purrr::lift_dl(.create_bars)(gg_args)
 
   if (n_boots > 1) {
     res <- res +
@@ -438,19 +442,9 @@ plot_diversity <- function(input, data_col = "clonotype_id",
       ggplot2::labs(y = names(method))
   }
 
-  # Set plot colors
-  if (!is.null(plot_colors)) {
-    res <- res +
-      ggplot2::scale_fill_manual(values = plot_colors)
-  }
-
   # Set theme
   res <- res +
-    djvdj_theme() +
-    ggplot2::theme(
-      legend.position = "none",
-      axis.title.x    = ggplot2::element_blank()
-    )
+    ggplot2::theme(legend.position = "none")
 
   if (!include_x_labs) {
     res <- res +

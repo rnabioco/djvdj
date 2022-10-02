@@ -522,25 +522,21 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   plt_dat <- dplyr::ungroup(plt_dat)
 
   # Plot arguments
-  gg_args <- list(
-    y    = abun_col,
-    clrs = plot_colors,
-    ...
-  )
+  gg_args <- list(y = abun_col, clrs = plot_colors, ...)
 
   # Create grouped boxplot
   if (!is.null(group_col)) {
     plt_dat <- .set_lvls(plt_dat, group_col, plot_lvls)
     plt_dat <- .set_lvls(plt_dat, data_col, rnk)
 
-    gg_args$alpha <- gg_args$alpha %||% 0.5
+    gg_args$alpha         <- gg_args$alpha %||% 0.5
+    gg_args$outlier.color <- gg_args$outlier.color %||% NA
 
     more_args <- list(
       df_in  = plt_dat,
       x      = data_col,
       .color = group_col,
-      .fill  = group_col,
-      outlier.color = NA
+      .fill  = group_col
     )
 
     gg_args <- append(gg_args, more_args)

@@ -25,8 +25,8 @@ plot_diversity(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{data_col}{meta.data column containing clonotype IDs to use for
-calculating repertoire diversity}
+\item{data_col}{meta.data column containing values to use for
+calculating diversity}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
@@ -43,7 +43,7 @@ diversity metrics}
 
 \item{n_boots}{Number of bootstrap replicates}
 
-\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
+\item{chain}{Chain to use for calculating diversity. Set to NULL to include
 all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}

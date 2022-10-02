@@ -109,17 +109,16 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
   is_lst <- purrr::map_lgl(df_in[, c(chain_col, vdj_cols)], is.list)
 
   if (all(!is_lst)) {
-    res <- dplyr::filter(
-      df_in,
-      !!sym(chain_col) %in% chain
-    )
+    res <- dplyr::filter(df_in, !!sym(chain_col) %in% chain)
 
     return(res)
 
   } else if (!all(is_lst)) {
+    bad_cols <- paste0(names(is_lst[!is_lst]), collapse = ", ")
+
     stop(
-      "chain_col and vdj_cols cannot be a mix ",
-      "of normal columns and list-cols."
+      "To filter based on chain, all columns must contain per-chain data. ",
+      "The following columns do not contain per-chain data: ", bad_cols, "."
     )
   }
 
