@@ -302,13 +302,12 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' )
 #'
 #' @export
-plot_diversity <- function(input, data_col = "clonotype_id",
-                           cluster_col = NULL, group_col = NULL,
-                           method = abdiv::simpson, downsample = FALSE,
-                           n_boots = 1, chain = NULL, chain_col = "chains",
-                           plot_colors = NULL, plot_lvls = names(plot_colors),
-                           facet_rows = 1, facet_scales = "free", sep = ";",
-                           ...) {
+plot_diversity <- function(input, data_col, cluster_col = NULL,
+                           group_col = NULL, method = abdiv::simpson,
+                           downsample = FALSE, n_boots = 1, chain = NULL,
+                           chain_col = "chains", plot_colors = NULL,
+                           plot_lvls = names(plot_colors), facet_rows = 1,
+                           facet_scales = "free", sep = ";", ...) {
 
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if providing a list of methods.")
@@ -481,6 +480,7 @@ plot_diversity <- function(input, data_col = "clonotype_id",
 #' @param facet_scales This passes a scales specification to
 #' ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
 #' will cause plot facets to share the same scales.
+#' @param ci_alpha Transparency to use when plotting 95% confidence interval
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
@@ -493,7 +493,8 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
                              chain = NULL, chain_col = "chains",
                              plot_colors = NULL,
                              plot_lvls = names(plot_colors), facet_rows = 1,
-                             facet_scales = "free", sep = ";", ...) {
+                             facet_scales = "free", ci_alpha = 0.15, sep = ";",
+                             ...) {
 
   # Set method
   mets <- c("richness" = 0, "shannon" = 1, "invsimpson" = 2)
@@ -561,7 +562,8 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
   plt_dat <- .set_lvls(plt_dat, "method", c("rarefaction", "extrapolation"))
 
   # Plot standard error
-  res <- ggplot2::ggplot(plt_dat, ggplot2::aes(m, qD, linetype = method))
+  res <- ggplot2::ggplot(plt_dat, ggplot2::aes(m, qD, linetype = method)) +
+    ggplot2::guides(linetype = ggplot2::guide_legend(title = NULL))
 
   if (n_boots > 1) {
     gg_aes <- ggplot2::aes(x = m, ymin = qD.LCL, ymax = qD.UCL)
@@ -570,7 +572,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
     else if (length(method) > 1) gg_aes$fill <- sym("Order.q")
 
     res <- res +
-      ggplot2::geom_ribbon(gg_aes, alpha = 0.25, color = NA)
+      ggplot2::geom_ribbon(gg_aes, alpha = ci_alpha, color = NA)
   }
 
   # Add curves

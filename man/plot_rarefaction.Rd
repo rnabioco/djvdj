@@ -15,7 +15,8 @@ plot_rarefaction(
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   facet_rows = 1,
-  facet_scales = "fixed",
+  facet_scales = "free",
+  ci_alpha = 0.15,
   sep = ";",
   ...
 )
@@ -49,6 +50,8 @@ all chains.}
 \item{facet_scales}{This passes a scales specification to
 ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
 will cause plot facets to share the same scales.}
+
+\item{ci_alpha}{Transparency to use when plotting 95\% confidence interval}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 

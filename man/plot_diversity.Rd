@@ -6,7 +6,7 @@
 \usage{
 plot_diversity(
   input,
-  data_col = "clonotype_id",
+  data_col,
   cluster_col = NULL,
   group_col = NULL,
   method = abdiv::simpson,
@@ -17,6 +17,7 @@ plot_diversity(
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   facet_rows = 1,
+  facet_scales = "free",
   sep = ";",
   ...
 )
@@ -55,14 +56,14 @@ all chains.}
 \item{facet_rows}{The number of facet rows for final plot, use this argument
 if a list of functions is passed to method}
 
+\item{facet_scales}{This passes a scales specification to
+ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
+will cause plot facets to share the same scales}
+
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
-
-\item{facet_scales}{This passes a scales specification to
-ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
-will cause plot facets to share the same scales}
 }
 \value{
 ggplot object
