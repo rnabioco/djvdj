@@ -234,7 +234,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 #' @param downsample Downsample clusters to the same size when calculating
 #' diversity metrics
-#' @param n_boots Number of bootstrap replicates
+#' @param n_boots Number of bootstrap replicates to use for calculating standard error
 #' @param chain Chain to use for calculating diversity. Set to NULL to include
 #' all chains.
 #' @param chain_col meta.data column containing chains for each cell
@@ -242,6 +242,9 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param facet_rows The number of facet rows for final plot, use this argument
 #' if a list of functions is passed to method
+#' @param facet_scales This passes a scales specification to
+#' ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
+#' will cause plot facets to share the same scales
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
@@ -304,7 +307,8 @@ plot_diversity <- function(input, data_col = "clonotype_id",
                            method = abdiv::simpson, downsample = FALSE,
                            n_boots = 1, chain = NULL, chain_col = "chains",
                            plot_colors = NULL, plot_lvls = names(plot_colors),
-                           facet_rows = 1, sep = ";", ...) {
+                           facet_rows = 1, facet_scales = "free", sep = ";",
+                           ...) {
 
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if providing a list of methods.")
@@ -397,7 +401,7 @@ plot_diversity <- function(input, data_col = "clonotype_id",
     # Create facets
     if (length(method) > 1) {
       res <- res +
-        ggplot2::facet_wrap(~ met, nrow = facet_rows, scales = "free") +
+        ggplot2::facet_wrap(~ met, nrow = facet_rows, scales = facet_scales) +
         ggplot2::theme(axis.title.y = ggplot2::element_blank())
 
     } else {
@@ -456,4 +460,160 @@ plot_diversity <- function(input, data_col = "clonotype_id",
 
   res
 }
+
+#' Create rarefaction curve
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing values to use for
+#' calculating diversity
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' grouping cells when calculating clonotype abundance
+#' @param method Method to use for calculating diversity
+#' @param n_boots Number of bootstrap replicates to use for calculating
+#' standard error
+#' @param chain Chain to use for calculating diversity. Set to NULL to include
+#' all chains.
+#' @param chain_col meta.data column containing chains for each cell
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_lvls Character vector containing levels for ordering
+#' @param facet_rows The number of facet rows for final plot
+#' @param facet_scales This passes a scales specification to
+#' ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
+#' will cause plot facets to share the same scales.
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
+#' linetype, etc.
+#' @return ggplot object
+#' @importFrom iNEXT iNEXT
+#' @importFrom stringr str_to_lower
+#' @export
+plot_rarefaction <- function(input, data_col, cluster_col = NULL,
+                             method = "richness", n_boots = 50,
+                             chain = NULL, chain_col = "chains",
+                             plot_colors = NULL,
+                             plot_lvls = names(plot_colors), facet_rows = 1,
+                             facet_scales = "free", sep = ";", ...) {
+
+  # Set method
+  mets <- c("richness" = 0, "shannon" = 1, "invsimpson" = 2)
+
+  if (!all(method %in% names(mets))) {
+    mets <- paste0(names(mets), collapse = ", ")
+
+    stop("method must be one of: ", mets, ".")
+  }
+
+  method <- mets[method]
+
+  met_labs <- purrr::set_names(names(method), as.character(unname(method)))
+
+  # Fetch data
+  vdj <- .get_meta(input)
+
+  # filter chains if provided
+  # if all chains removed, NA will be returned
+  if (!is.null(chain)) {
+    vdj <- fetch_vdj(
+      vdj,
+      vdj_cols      = c(data_col, chain_col),
+      clonotype_col = data_col,
+      filter_cells  = TRUE,
+      unnest        = FALSE,
+      sep           = sep
+    )
+
+    vdj <- .filter_chains(
+      vdj,
+      vdj_cols   = data_col,
+      chain      = chain,
+      chain_col  = chain_col,
+      col_names  = "{.col}",
+      allow_dups = FALSE
+    )
+  }
+
+  vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
+
+  # Split based on cluster_col
+  if (!is.null(cluster_col)) vdj <- split(vdj, vdj[[cluster_col]])
+  else                       vdj <- list(vdj)
+
+  vdj <- purrr::map(vdj, ~ as.numeric(table(.x[[data_col]])))
+
+  # Format rarefaction data
+  plt_dat <- iNEXT::iNEXT(vdj, q = unname(method), nboot = n_boots)
+  plt_dat <- plt_dat$iNextEst$size_based
+
+  plt_dat <- dplyr::mutate(
+    plt_dat,
+    method = dplyr::recode(Method, "Observed" = "Rarefaction"),
+    method = stringr::str_to_lower(method),
+    Order.q = met_labs[as.character(Order.q)]
+  )
+
+  if (!is.null(cluster_col)) {
+    plt_dat <- dplyr::rename(plt_dat, !!sym(cluster_col) := Assemblage)
+  }
+
+  plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+  plt_dat <- .set_lvls(plt_dat, "Order.q", names(method))
+  plt_dat <- .set_lvls(plt_dat, "method", c("rarefaction", "extrapolation"))
+
+  # Plot standard error
+  res <- ggplot2::ggplot(plt_dat, ggplot2::aes(m, qD, linetype = method))
+
+  if (n_boots > 1) {
+    gg_aes <- ggplot2::aes(x = m, ymin = qD.LCL, ymax = qD.UCL)
+
+    if (!is.null(cluster_col))   gg_aes$fill <- sym(cluster_col)
+    else if (length(method) > 1) gg_aes$fill <- sym("Order.q")
+
+    res <- res +
+      ggplot2::geom_ribbon(gg_aes, alpha = 0.25, color = NA)
+  }
+
+  # Add curves
+  gg_aes  <- ggplot2::aes()
+  gg_args <- list(...)
+
+  if (!is.null(cluster_col))   gg_aes$colour  <- sym(cluster_col)
+  else if (length(method) > 1) gg_aes$colour  <- sym("Order.q")
+  else                         gg_args$colour <- gg_args$color %||% plot_colors
+
+  gg_args$mapping <- gg_aes
+
+  res <- res +
+    purrr::lift_dl(ggplot2::geom_line)(gg_args) +
+    ggplot2::scale_linetype_manual(values = c(1, 2)) +
+    djvdj_theme() +
+    labs(x = "sample size")
+
+  if (!is.null(plot_colors)) {
+    res <- res +
+      ggplot2::scale_fill_manual(values = plot_colors) +
+      ggplot2::scale_color_manual(values = plot_colors)
+  }
+
+  if (length(method) > 1) {
+    res <- res +
+      ggplot2::facet_wrap(~ Order.q, nrow = facet_rows, scales = facet_scales) +
+      ggplot2::labs(y = "diversity")
+
+    if (is.null(cluster_col)) {
+      res <- res +
+        ggplot2::guides(colour = "none", fill = "none")
+    }
+
+  } else {
+    res <- res +
+      labs(y = names(method))
+  }
+
+  res
+}
+
+
+
+
 

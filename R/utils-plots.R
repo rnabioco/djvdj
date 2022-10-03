@@ -512,17 +512,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   # Set aesthetics
   plt_aes <- ggplot2::aes(y, !!sym(y))
 
-  if (!is.null(x)) {
-    plt_aes$x <- sym(x)
-  }
-
-  if (!is.null(.fill)) {
-    plt_aes$fill <- sym(.fill)
-  }
-
-  if (!is.null(.color)) {
-    plt_aes$colour <- sym(.color)
-  }
+  if (!is.null(x))      plt_aes$x      <- sym(x)
+  if (!is.null(.fill))  plt_aes$fill   <- sym(.fill)
+  if (!is.null(.color)) plt_aes$colour <- sym(.color)
 
   # Adjust theme
   res <- ggplot2::ggplot(df_in, plt_aes) +
@@ -750,9 +742,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @noRd
 .set_lvls <- function(df_in, clmn, lvls) {
 
-  if (is.null(lvls) || is.null(clmn)) {
-    return(df_in)
-  }
+  if (is.null(lvls) || is.null(clmn)) return(df_in)
 
   dat <- df_in[[clmn]]
 

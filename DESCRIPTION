@@ -43,7 +43,8 @@ Imports:
     circlize,
     Biostrings,
     MASS,
-    ggseqlogo
+    ggseqlogo,
+    iNEXT
 Suggests: 
     magrittr,
     covr,
