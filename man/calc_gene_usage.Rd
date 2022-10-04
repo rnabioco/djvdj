@@ -65,3 +65,6 @@ calc_gene_usage(
 )
 
 }
+\seealso{
+\code{\link[=plot_gene_usage]{plot_gene_usage()}}
+}

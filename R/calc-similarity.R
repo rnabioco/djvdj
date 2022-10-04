@@ -223,7 +223,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' the abdiv package. This will generate a heatmap.
 #' - 'count', count the number of clonotypes overlapping between each cluster,
 #' this will generate a heatmap.
-#' - 'circos', create a circos plot
+#' - 'circos', create a circos plot summarizing the overlap between clusters
 #'
 #' @param chain Chain to use for calculating gene usage. Set to NULL to include
 #' all chains.

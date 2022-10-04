@@ -8,8 +8,8 @@ plot_clonal_abundance(
   input,
   cluster_col = NULL,
   clonotype_col = "clonotype_id",
-  type = "bar",
-  yaxis = "percent",
+  method = "bar",
+  units = "percent",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   n_clones = NULL,
@@ -30,16 +30,18 @@ plotted separately for each cluster.}
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating clonotype abundance}
 
-\item{type}{Type of plot to create, can be 'bar' or 'line'}
+\item{method}{Method to use for plotting, 'bar' will generate a bargraph,
+'line' will generate a rank-abundance plot.}
 
-\item{yaxis}{Units to plot on the y-axis, either 'frequency' or 'percent'}
+\item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{n_clones}{Number of top clonotypes to plot (default is 10). If type is set to 'line',
-this will specify the number of clonotypes to label (default is 3).}
+\item{n_clones}{Number of top clonotypes to plot (default is 10). If method
+is set to 'line', this will specify the number of clonotypes to label
+(default is 3).}
 
 \item{label_aes}{Named list providing additional aesthetics (color, size,
 etc.) for clonotype labels when creating line graph}
@@ -78,7 +80,7 @@ plot_clonal_abundance(
 plot_clonal_abundance(
   vdj_sce,
   cluster_col = "orig.ident",
-  yaxis = "frequency"
+  units = "frequency"
 )
 
 # Specify colors to use for each cell cluster
@@ -106,8 +108,11 @@ plot_clonal_abundance(
 plot_clonal_abundance(
   vdj_so,
   cluster_col = "orig.ident",
-  type = "line",
+  method = "line",
   n_clones = 3
 )
 
+}
+\seealso{
+\code{\link[=calc_frequency]{calc_frequency()}}, \code{\link[=plot_frequency]{plot_frequency()}}
 }

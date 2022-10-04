@@ -14,8 +14,8 @@ plot_vdj(
   summary_fn = mean,
   cluster_col = NULL,
   chain = NULL,
-  type = "histogram",
-  yaxis = "frequency",
+  method = "histogram",
+  units = "frequency",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   log_trans = FALSE,
@@ -29,8 +29,8 @@ plot_vdj_reads(
   data_cols = c("reads", "umis"),
   cluster_col = NULL,
   chain = NULL,
-  type = "violin",
-  yaxis = "frequency",
+  method = "violin",
+  units = "frequency",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   log_trans = TRUE,
@@ -44,8 +44,8 @@ plot_cdr3_length(
   data_cols = "cdr3_length",
   cluster_col = NULL,
   chain = NULL,
-  type = "histogram",
-  yaxis = "frequency",
+  method = "histogram",
+  units = "frequency",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   log_trans = TRUE,
@@ -59,8 +59,8 @@ plot_vdj_mutations(
   data_cols = c("all_ins", "all_del", "all_mis"),
   cluster_col = NULL,
   chain = NULL,
-  type = "boxplot",
-  yaxis = "frequency",
+  method = "boxplot",
+  units = "frequency",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   log_trans = FALSE,
@@ -91,7 +91,7 @@ grouping cells for plotting}
 \item{chain}{Chain(s) to use for filtering data before plotting. If NULL
 data will not be filtered based on chain.}
 
-\item{type}{Type of plot to create, possible values are:
+\item{method}{Method to use for plotting, possible values are:
 \itemize{
 \item 'histogram'
 \item 'density'
@@ -99,7 +99,7 @@ data will not be filtered based on chain.}
 \item 'violin'
 }}
 
-\item{yaxis}{Units to use for y-axis when type is set to 'histogram'. Use
+\item{units}{Units to use for y-axis when method is set to 'histogram'. Use
 'frequency' to show number of values or 'percent' to show the percentage of
 total values.}
 
@@ -137,7 +137,7 @@ plot_vdj(
 plot_vdj(
   vdj_sce,
   data_cols = c("n_insertion", "n_deletion"),
-  type = "boxplot"
+  method = "boxplot"
 )
 
 # Pass additional arguments to ggplot2
@@ -153,7 +153,7 @@ plot_vdj(
   vdj_sce,
   data_cols = "cdr3_length",
   cluster_col = "orig.ident",
-  type = "violin"
+  method = "violin"
 )
 
 # log10 transform the axis
@@ -169,7 +169,7 @@ plot_vdj(
   vdj_sce,
   data_cols = "n_deletion",
   cluster_col = "orig.ident",
-  yaxis = "percent"
+  units = "percent"
 )
 
 # Only plot values for heavy chains
@@ -201,7 +201,7 @@ plot_vdj(
   data_cols = "cdr3_length",
   cluster_col = "orig.ident",
   plot_lvls = c("avid_2", "avid_1"),
-  type = "boxplot"
+  method = "boxplot"
 )
 
 }

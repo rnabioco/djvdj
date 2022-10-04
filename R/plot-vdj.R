@@ -327,14 +327,14 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2",
 #' grouping cells for plotting
 #' @param chain Chain(s) to use for filtering data before plotting. If NULL
 #' data will not be filtered based on chain.
-#' @param type Type of plot to create, possible values are:
+#' @param method Method to use for plotting, possible values are:
 #'
 #' - 'histogram'
 #' - 'density'
 #' - 'boxplot'
 #' - 'violin'
 #'
-#' @param yaxis Units to use for y-axis when type is set to 'histogram'. Use
+#' @param units Units to use for y-axis when method is set to 'histogram'. Use
 #' 'frequency' to show number of values or 'percent' to show the percentage of
 #' total values.
 #' @param plot_colors Character vector specifying colors to use for cell
@@ -376,7 +376,7 @@ NULL
 #' plot_vdj(
 #'   vdj_sce,
 #'   data_cols = c("n_insertion", "n_deletion"),
-#'   type = "boxplot"
+#'   method = "boxplot"
 #' )
 #'
 #' # Pass additional arguments to ggplot2
@@ -392,7 +392,7 @@ NULL
 #'   vdj_sce,
 #'   data_cols = "cdr3_length",
 #'   cluster_col = "orig.ident",
-#'   type = "violin"
+#'   method = "violin"
 #' )
 #'
 #' # log10 transform the axis
@@ -408,7 +408,7 @@ NULL
 #'   vdj_sce,
 #'   data_cols = "n_deletion",
 #'   cluster_col = "orig.ident",
-#'   yaxis = "percent"
+#'   units = "percent"
 #' )
 #'
 #' # Only plot values for heavy chains
@@ -440,13 +440,13 @@ NULL
 #'   data_cols = "cdr3_length",
 #'   cluster_col = "orig.ident",
 #'   plot_lvls = c("avid_2", "avid_1"),
-#'   type = "boxplot"
+#'   method = "boxplot"
 #' )
 #'
 #' @export
 plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
-                     cluster_col = NULL, chain = NULL, type = "histogram",
-                     yaxis = "frequency", plot_colors = NULL,
+                     cluster_col = NULL, chain = NULL, method = "histogram",
+                     units = "frequency", plot_colors = NULL,
                      plot_lvls = names(plot_colors), log_trans = FALSE,
                      chain_col = "chains", sep = ";", ...) {
 
@@ -492,8 +492,8 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
       plt_dat,
       data_col    = clmn,
       cluster_col = cluster_col,
-      type        = type,
-      yaxis       = yaxis,
+      method        = method,
+      units       = units,
       plot_colors = plot_colors,
       plot_lvls   = plot_lvls,
       log_trans   = log_trans,
@@ -513,7 +513,7 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
 #' @param df_in input data.frame
 #' @noRd
 .plot_vdj <- function(df_in, data_col, cluster_col = NULL, group_col = NULL,
-                      type = "boxplot", yaxis = "frequency",
+                      method = "boxplot", units = "frequency",
                       plot_colors = NULL, plot_lvls = names(plot_colors),
                       log_trans = FALSE, ...) {
 
@@ -527,7 +527,7 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
     .color    = cluster_col,
     .fill     = cluster_col,
     clrs      = plot_colors,
-    type      = type,
+    method      = method,
     log_trans = log_trans,
     ...
   )
@@ -536,9 +536,9 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
   gg_args$alpha <- gg_args$alpha %||% 0.5
 
   # Create histogram
-  if (type %in% c("histogram", "density")) {
+  if (method %in% c("histogram", "density")) {
 
-    gg_args$yaxis <- yaxis
+    gg_args$units <- units
 
     res <- purrr::lift_dl(.create_hist)(gg_args)
 
@@ -558,7 +558,7 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
 #' @export
 plot_vdj_reads <- function(input, data_cols = c("reads", "umis"),
                            cluster_col = NULL, chain = NULL,
-                           type = "violin", yaxis = "frequency",
+                           method = "violin", units = "frequency",
                            plot_colors = NULL, plot_lvls = names(plot_colors),
                            log_trans = TRUE, chain_col = "chains", sep = ";",
                            ...) {
@@ -569,8 +569,8 @@ plot_vdj_reads <- function(input, data_cols = c("reads", "umis"),
     per_cell    = FALSE,
     cluster_col = cluster_col,
     chain       = chain,
-    type        = type,
-    yaxis       = yaxis,
+    method        = method,
+    units       = units,
     plot_colors = plot_colors,
     plot_lvls   = plot_lvls,
     log_trans   = log_trans,
@@ -585,7 +585,7 @@ plot_vdj_reads <- function(input, data_cols = c("reads", "umis"),
 #' @rdname plot_vdj
 #' @export
 plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NULL,
-                             chain = NULL, type = "histogram", yaxis = "frequency",
+                             chain = NULL, method = "histogram", units = "frequency",
                              plot_colors = NULL, plot_lvls = names(plot_colors),
                              log_trans = TRUE, chain_col = "chains", sep = ";", ...) {
 
@@ -595,8 +595,8 @@ plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NUL
     per_cell    = FALSE,
     cluster_col = cluster_col,
     chain       = chain,
-    type        = type,
-    yaxis       = yaxis,
+    method        = method,
+    units       = units,
     plot_colors = plot_colors,
     plot_lvls   = plot_lvls,
     log_trans   = log_trans,
@@ -611,8 +611,8 @@ plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NUL
 #' @rdname plot_vdj
 #' @export
 plot_vdj_mutations <- function(input, data_cols = c("all_ins", "all_del", "all_mis"),
-                               cluster_col = NULL, chain = NULL, type = "boxplot",
-                               yaxis = "frequency", plot_colors = NULL,
+                               cluster_col = NULL, chain = NULL, method = "boxplot",
+                               units = "frequency", plot_colors = NULL,
                                plot_lvls = names(plot_colors), log_trans = FALSE,
                                chain_col = "chains", sep = ";", ...) {
 
@@ -622,8 +622,8 @@ plot_vdj_mutations <- function(input, data_cols = c("all_ins", "all_del", "all_m
     per_cell    = FALSE,
     cluster_col = cluster_col,
     chain       = chain,
-    type        = type,
-    yaxis       = yaxis,
+    method      = method,
+    units       = units,
     plot_colors = plot_colors,
     plot_lvls   = plot_lvls,
     log_trans   = log_trans,

@@ -15,7 +15,7 @@ plot_gene_usage(
   vdj_genes = NULL,
   n_genes = 20,
   plot_lvls = names(plot_colors),
-  yaxis = "percent",
+  units = "percent",
   chain_col = "chains",
   sep = ";",
   ...
@@ -38,16 +38,6 @@ for each treatment condition.}
 \item{chain}{Chain to use for calculating gene usage, set to NULL to include
 all chains}
 
-\item{type}{Type of plot to create, possible values are:
-\itemize{
-\item 'bar', by default when a single column is passed to the gene_cols
-argument, a bargraph is generated
-\item 'heatmap', by default when two columns are passed to the gene_cols
-argument, a heatmap is generated
-\item 'circos', A circos plot can be created when two columns are passed to the
-gene_cols argument
-}}
-
 \item{plot_colors}{Character vector containing colors to use for plot. If a
 bar graph is created this will specify how to color cell clusters. For a
 heatmap, these colors will be used to generate the color gradient.}
@@ -59,15 +49,25 @@ provided, top genes will be identified for each cluster.}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
 
-\item{yaxis}{Units to plot on the y-axis, either 'frequency' or 'percent'}
+\item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
-\item{...}{Additional arguments to pass to plotting function
-(\code{\link[ggplot2:geom_bar]{ggplot2::geom_col()}} for bargraph, \code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap()}} for heatmap,
-\code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for circos plot)}
+\item{...}{Additional arguments to pass to plotting function,
+\code{\link[ggplot2:geom_bar]{ggplot2::geom_col()}} for bargraph, \code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap()}} for heatmap,
+\code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for circos plot}
+
+\item{method}{Method to use for plotting, possible values are:
+\itemize{
+\item 'bar', create a bargraph, this is the default when a single column is
+passed to the gene_cols argument
+\item 'heatmap', create a heatmap, this is the default when two columns are
+passed to the gene_cols argument
+\item 'circos', create a circos plot, this requires two columns to be provided
+to the gene_cols argument
+}}
 }
 \value{
 ggplot object
@@ -151,11 +151,10 @@ plot_gene_usage(
 plot_gene_usage(
   vdj_so,
   gene_cols = "v_gene",
-  yaxis = "frequency"
+  units = "frequency"
 )
 
 }
 \seealso{
-\code{\link[=calc_gene_usage]{calc_gene_usage()}}, \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}}, \code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap()}},
-\code{\link[ggplot2:geom_bar]{ggplot2::geom_col()}}
+\code{\link[=calc_gene_usage]{calc_gene_usage()}}
 }

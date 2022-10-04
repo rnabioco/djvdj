@@ -9,7 +9,7 @@ plot_frequency(
   data_col,
   cluster_col = NULL,
   group_col = NULL,
-  yaxis = "percent",
+  units = "percent",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   ...
@@ -32,7 +32,7 @@ will be performed separately for each cluster.}
 cluster_col. This is useful when there are multiple replicates or patients
 for each treatment condition.}
 
-\item{yaxis}{Units to plot on the y-axis, either 'frequency' or 'percent'}
+\item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
@@ -49,4 +49,7 @@ Plot the frequency of each cell label present in the provided meta.data
 column. This is useful for comparing the proportion of cells belonging to
 different samples, cell types, isotypes, etc. To compare clonotype
 abundance, use the plot_clonal_abundance() function.
+}
+\seealso{
+\code{\link[=calc_frequency]{calc_frequency()}}, \code{\link[=plot_clonal_abundance]{plot_clonal_abundance()}}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc-similarity.R
 \name{plot_similarity}
 \alias{plot_similarity}
-\title{Plot repertoire overlap}
+\title{Plot cluster similarity}
 \usage{
 plot_similarity(
   input,
@@ -42,8 +42,7 @@ clonotype in the object, such as most beta diversity functions provided by
 the abdiv package. This will generate a heatmap.
 \item 'count', count the number of clonotypes overlapping between each cluster,
 this will generate a heatmap.
-\item 'mds', perform multidimensional scaling, this will generate a scatter plot
-\item 'circos', create a circos plot
+\item 'circos', create a circos plot summarizing the overlap between clusters
 }}
 
 \item{chain}{Chain to use for calculating gene usage. Set to NULL to include
@@ -65,12 +64,12 @@ be shown.}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
-\item{...}{Additional arguments to pass to plotting function
-(\code{\link[ggplot2:geom_point]{ggplot2::geom_point()}} for MDS plot, \code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap()}} for
-heatmap, \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for circos plot)}
+\item{...}{Additional arguments to pass to plotting function,
+\code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap()}} for heatmap, \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for
+circos plot}
 }
 \description{
-Plot repertoire overlap
+Plot cluster similarity
 }
 \examples{
 # Plot repertoire overlap
@@ -106,6 +105,5 @@ plot_similarity(
 
 }
 \seealso{
-\code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}}, \code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap()}},
-\code{\link[ggplot2:geom_point]{ggplot2::geom_point()}}
+\code{\link[=calc_similarity]{calc_similarity()}}
 }

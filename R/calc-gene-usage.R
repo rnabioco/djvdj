@@ -12,6 +12,7 @@
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame containing gene usage summary
+#' @seealso [plot_gene_usage()]
 #'
 #' @examples
 #' # Calculate V(D)J segment usage for all cells
@@ -47,9 +48,7 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
   # Format input data
   sep_cols <- gene_cols
 
-  if (!is.null(chain)) {
-    sep_cols <- c(sep_cols, chain_col)
-  }
+  if (!is.null(chain)) sep_cols <- c(sep_cols, chain_col)
 
   vdj_cols <- c(CELL_COL, cluster_col, sep_cols)
 
@@ -175,14 +174,14 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' @param chain Chain to use for calculating gene usage, set to NULL to include
 #' all chains
 #' @param chain_col meta.data column containing chains for each cell
-#' @param type Type of plot to create, possible values are:
+#' @param method Method to use for plotting, possible values are:
 #'
-#' - 'bar', by default when a single column is passed to the gene_cols
-#' argument, a bargraph is generated
-#' - 'heatmap', by default when two columns are passed to the gene_cols
-#' argument, a heatmap is generated
-#' - 'circos', A circos plot can be created when two columns are passed to the
-#' gene_cols argument
+#' - 'bar', create a bargraph, this is the default when a single column is
+#' passed to the gene_cols argument
+#' - 'heatmap', create a heatmap, this is the default when two columns are
+#' passed to the gene_cols argument
+#' - 'circos', create a circos plot, this requires two columns to be provided
+#' to the gene_cols argument
 #'
 #' @param plot_colors Character vector containing colors to use for plot. If a
 #' bar graph is created this will specify how to color cell clusters. For a
@@ -191,13 +190,12 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' @param n_genes Number of top genes to plot based on usage. If cluster_col is
 #' provided, top genes will be identified for each cluster.
 #' @param plot_lvls Levels to use for ordering clusters
-#' @param yaxis Units to plot on the y-axis, either 'frequency' or 'percent'
+#' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
-#' @param ... Additional arguments to pass to plotting function
-#' ([ggplot2::geom_col()] for bargraph, [ComplexHeatmap::Heatmap()] for heatmap,
-#' [circlize::chordDiagram()] for circos plot)
-#' @seealso [calc_gene_usage()], [circlize::chordDiagram()], [ComplexHeatmap::Heatmap()],
-#' [ggplot2::geom_col()]
+#' @param ... Additional arguments to pass to plotting function,
+#' [ggplot2::geom_col()] for bargraph, [ComplexHeatmap::Heatmap()] for heatmap,
+#' [circlize::chordDiagram()] for circos plot
+#' @seealso [calc_gene_usage()]
 #' @return ggplot object
 #'
 #' @examples
@@ -276,31 +274,27 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' plot_gene_usage(
 #'   vdj_so,
 #'   gene_cols = "v_gene",
-#'   yaxis = "frequency"
+#'   units = "frequency"
 #' )
 #'
 #' @export
 plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
                             group_col = NULL, chain = NULL, type = NULL,
                             plot_colors = NULL, vdj_genes = NULL, n_genes = 20,
-                            plot_lvls = names(plot_colors), yaxis = "percent",
+                            plot_lvls = names(plot_colors), units = "percent",
                             chain_col = "chains", sep = ";", ...) {
 
   # Check inputs
   paired <- length(gene_cols) == 2
 
-  if (is.null(type)) {
-    type <- ifelse(paired, "heatmap", "bar")
-  }
+  if (is.null(type))             type  <- ifelse(paired, "heatmap", "bar")
+  if (identical(type, "circos")) units <- "frequency"
 
-  if (identical(type, "circos")) yaxis <- "frequency"
-
-  .chk_usage_args(type, gene_cols, group_col, yaxis, paired)
-
+  .chk_usage_args(type, gene_cols, group_col, units, paired)
   .chk_group_cols(cluster_col, group_col)
 
   # Set y-axis
-  usage_col <- ifelse(identical(yaxis, "frequency"), "freq", "pct")
+  usage_col <- ifelse(identical(units, "frequency"), "freq", "pct")
 
   # Calculate gene usage
   plt_dat <- calc_gene_usage(
@@ -364,7 +358,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
     clst_col = cluster_col,
     typ      = type,
     clrs     = plot_colors,
-    ax_ttl   = yaxis,
+    ax_ttl   = units,
     ...
   )
 
@@ -680,7 +674,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
 #' @param typ type
 #' @param gn_cols gene_cols
 #' @param grp_col group_col
-#' @param axis yaxis
+#' @param axis units
 #' @param paired paired
 #' @noRd
 .chk_usage_args <- function(typ, gn_cols, grp_col, axis, paired) {
@@ -710,7 +704,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   }
 
   if (!axis %in% c("percent", "frequency")) {
-    stop("yaxis must be either 'percent' or 'frequency'")
+    stop("units must be either 'percent' or 'frequency'")
   }
 
   if (paired && !is.null(grp_col)) {

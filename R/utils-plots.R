@@ -161,7 +161,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
       }
     }
 
-    plt_args$rect_gp  <- grid::gpar(type = "none")
+    plt_args$rect_gp  <- grid::gpar(method = "none")
     plt_args$cell_fun <- cell_fun
   }
 
@@ -492,21 +492,21 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param .color Variable to use for line color
 #' @param .fill Variable to use for fill color
 #' @param clrs Vector of colors for plotting
-#' @param type Type of plot to create, either 'boxplot' or 'violin'
+#' @param method Method to use for plotting, either 'boxplot' or 'violin'
 #' @param log_trans If TRUE, log10 transform the y-axis
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
 .create_boxes <- function(df_in, x = NULL, y, .color = NULL, .fill = NULL,
-                          clrs = NULL, type = "boxplot", log_trans = FALSE,
+                          clrs = NULL, method = "boxplot", log_trans = FALSE,
                           ...) {
 
   # Check input
   typs <- c("boxplot", "violin")
 
-  if (!type %in% typs) {
-    stop("type must be one of ", paste0(typs, collapse = ", "))
+  if (!method %in% typs) {
+    stop("method must be one of ", paste0(typs, collapse = ", "))
   }
 
   # Set aesthetics
@@ -537,7 +537,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   }
 
   # Return violins
-  if (identical(type, "violin")) {
+  if (identical(method, "violin")) {
     res <- res +
       ggplot2::geom_violin(...) +
       ggplot2::stat_summary(geom = "point", fun = stats::median, color = "black")
@@ -560,8 +560,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param .color Variable to use for line color
 #' @param .fill Variable to use for fill color
 #' @param clrs Vector of colors for plotting
-#' @param type Type of plot to create, either 'histogram' or 'density'
-#' @param yaxis Units to use for y-axis when plotting histogram. Use
+#' @param method Method to use for plotting, either 'histogram' or 'density'
+#' @param units Units to use for y-axis when plotting histogram. Use
 #' 'frequency' to show the raw number of values or 'percent' to show
 #' the percentage of total values.
 #' @param log_trans If TRUE, log10 transform the x-axis
@@ -569,27 +569,27 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_hist <- function(df_in, x, .color = NULL, .fill = NULL, clrs = NULL, type = "histogram",
-                         yaxis = "frequency", log_trans = FALSE, ...) {
+.create_hist <- function(df_in, x, .color = NULL, .fill = NULL, clrs = NULL, method = "histogram",
+                         units = "frequency", log_trans = FALSE, ...) {
 
   # Check inputs
   typs <- c("histogram", "density")
 
-  if (!type %in% typs) {
-    stop("type must be one of ", paste0(typs, collapse = ", "))
+  if (!method %in% typs) {
+    stop("method must be one of ", paste0(typs, collapse = ", "))
   }
 
   axs <- c("frequency", "percent")
 
-  if (!yaxis %in% axs) {
-    stop("yaxis must be one of ", paste0(axs, collapse = ", "))
+  if (!units %in% axs) {
+    stop("units must be one of ", paste0(axs, collapse = ", "))
   }
 
   # Set aesthetics
   plt_aes <- ggplot2::aes()
 
   # Only plot percent for histogram
-  if (identical(yaxis, "percent") && identical(type, "histogram")) {
+  if (identical(units, "percent") && identical(method, "histogram")) {
     plt_aes <- ggplot2::aes(y = .data$..count.. / sum(.data$..count..) * 100)
   }
 
@@ -621,7 +621,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   }
 
   # Return density plot
-  if (identical(type, "density")) {
+  if (identical(method, "density")) {
     res <- res +
       ggplot2::geom_density(...)
 
@@ -631,7 +631,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   # Return histogram
   res <- res +
     ggplot2::geom_histogram(...) +
-    ggplot2::labs(y = yaxis)
+    ggplot2::labs(y = units)
 
   res
 }
