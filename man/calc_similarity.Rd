@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc-similarity.R
 \name{calc_similarity}
 \alias{calc_similarity}
-\title{Calculate repertoire overlap}
+\title{Calculate cluster similarity}
 \usage{
 calc_similarity(
   input,
@@ -28,11 +28,10 @@ calculating repertoire overlap}
 
 \item{method}{Method to use for comparing clusters, possible values are:
 \itemize{
-\item 'mds', perform multidimensional scaling
 \item 'count', count the number of clonotypes overlapping between each cluster
 \item A function that takes two numeric vectors containing counts for each
 unique value in the column provided to the data_col column, e.g.
-abdiv::jaccard()
+\code{\link[abdiv:jaccard]{abdiv::jaccard()}}
 }}
 
 \item{chain}{Chain to use for calculating gene usage. Set to NULL to include
@@ -51,7 +50,7 @@ FALSE, results will be added to the input object.}
 Single cell object or data.frame with similarity values
 }
 \description{
-Calculate repertoire overlap
+Calculate cluster similarity
 }
 \examples{
 # Calculate repertoire overlap
@@ -83,4 +82,7 @@ calc_similarity(
   return_mat = TRUE
 )
 
+}
+\seealso{
+\code{\link[=plot_similarity]{plot_similarity()}}
 }
