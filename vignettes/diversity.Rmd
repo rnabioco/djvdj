@@ -1,12 +1,12 @@
 ---
-title: "Diversity"
+title: "Repertoire Diversity"
 date: '`r format(Sys.Date(), "%B %d %Y")`'
 output:
   rmarkdown::html_vignette:
     toc_float: true
     toc_depth: 2
     vignette: >
-      %\VignetteIndexEntry{Diversity}
+      %\VignetteIndexEntry{Repertoire Diversity}
       %\VignetteEncoding{UTF-8}
       %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -64,7 +64,7 @@ so_vdj <- so %>%
   )
 ```
 
-Estimations of species diversity are influenced by sample size. One approach to deal with this is to equalize the number of cells present in each cluster. The `downsample` argument will randomly sample cells so each sample being tested has the same number of cells as the smallest cluster. The bootstrapped standard error can also be calculated by setting the number of bootstrap samples with the `n_boots` argument.
+Estimations of species diversity are influenced by sample size. One approach to deal with this is to equalize the number of cells present in each cluster. The `downsample` argument owill randomly sample cells so each sample being tested has the same number of cells as the smallest cluster. The bootstrapped standard error can also be calculated by setting the number of bootstrap samples with the `n_boots` argument.
 
 ```{r}
 so_vdj <- so %>%
@@ -136,7 +136,7 @@ so %>%
   )
 ```
 
-`plot_diversity()` returns a ggplot object that can be modified with ggplot2 functions such as `ggplot2::theme()`. Plots can be further adjusted by passing aesthetic parameters directly to ggplot (i.e. alpha, linetype, color, etc.).
+`plot_diversity()` returns a ggplot object that can be modified with ggplot2 functions such as `ggplot2::theme()`. Plots can be further adjusted by passing aesthetic parameters directly to ggplot2, e.g. `alpha`, `linetype`, `color`, etc.
 
 ```{r}
 so %>%
@@ -145,9 +145,9 @@ so %>%
     cluster_col = "sample",
     method      = div_fns,
     
-    alpha       = 0.5,     # parameters to pass to ggplot 
-    linetype    = 2,
-    color       = "black"    
+    alpha    = 0.5,    # parameters to pass to ggplot2
+    linetype = 2,
+    color    = "black"    
   ) +
   theme(strip.text = element_text(face = "bold"))
 ```
