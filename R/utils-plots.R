@@ -395,12 +395,14 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     if (n_clrs >= length(all_nms)) {
       clrs        <- clrs[seq_along(all_nms)]
       names(clrs) <- all_nms
+      c_clrs      <- clrs[c_nms]
 
     } else if (n_clrs == length(c_nms)) {
       c_clrs <- purrr::set_names(clrs, c_nms)
       r_clrs <- purrr::set_names(rep(na_color, length(r_nms)), r_nms)
 
-      clrs <- c(c_clrs, r_clrs)
+      clrs   <- c(c_clrs, r_clrs)
+      c_clrs <- clrs[c_nms]
 
     } else if (n_clrs == 1) {
       c_clrs <- clrs
@@ -418,9 +420,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     if (!all(all_nms %in% names(clrs))) {
       stop("A color must be provided for each group being plotted")
     }
-  }
 
-  c_clrs <- clrs[c_nms]
+    c_clrs <- clrs[c_nms]
+  }
 
   res <- list(clrs, c_clrs)
 
