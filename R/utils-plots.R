@@ -153,21 +153,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   c_lvls <- lvls[lvls %in% c_nms]
   mat_in <- mat_in[r_lvls, c_lvls]
 
-  # Remove upper triangle
-  if (rm_upper) {
-    cell_fun <- function(j, i, x, y, w, h, fill) {
-      if(as.numeric(x) <= 1 - as.numeric(y) + 1e-6) {
-        grid::grid.rect(x, y, w, h, gp = grid::gpar(fill = fill, col = fill))
-      }
-    }
-
-    plt_args$rect_gp  <- grid::gpar(method = "none")
-    plt_args$cell_fun <- cell_fun
-  }
-
-  # Remove diagonal
-  if (rm_diag) {
-    mat_rm <- .remove_upper_triangle(mat_in, rm_upper = FALSE, rm_diag)
+  # Remove upper triangle and/or diagonal
+  if (rm_upper || rm_diag) {
+    mat_rm <- .remove_upper_triangle(mat_in, rm_upper, rm_diag)
     n_vals <- .get_unique_values(mat_rm)
 
     if (n_vals == 1) {
@@ -181,6 +169,39 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
       plt_args$na_col <- plt_args$na_col %||% na_color
     }
   }
+
+  # THIS WORKED PREVIOUSLY, BUT NOW DOES NOT WORK
+  # using the 'cell_fun' argument seems like a cleaner way of removing upper
+  # triangle than adding NAs to the matrix
+  #
+  # # Remove upper triangle
+  # if (rm_upper) {
+  #   cell_fun <- function(j, i, x, y, w, h, fill) {
+  #     if(as.numeric(x) <= 1 - as.numeric(y) + 1e-6) {
+  #       grid::grid.rect(x, y, w, h, gp = grid::gpar(fill = fill, col = fill))
+  #     }
+  #   }
+  #
+  #   plt_args$rect_gp  <- grid::gpar(method = "none")
+  #   plt_args$cell_fun <- cell_fun
+  # }
+  #
+  # # Remove diagonal
+  # if (rm_diag) {
+  #   mat_rm <- .remove_upper_triangle(mat_in, rm_upper = FALSE, rm_diag)
+  #   n_vals <- .get_unique_values(mat_rm)
+  #
+  #   if (n_vals == 1) {
+  #     warning(
+  #       "Cannot remove diagonal since there ",
+  #       "will only be one unique value remaining."
+  #     )
+  #   } else {
+  #     mat_in <- mat_rm
+  #
+  #     plt_args$na_col <- plt_args$na_col %||% na_color
+  #   }
+  # }
 
   # Set plot colors
   # if all values in matrix are the same, only pass one color, otherwise error
