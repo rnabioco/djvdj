@@ -141,7 +141,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   if (!is.null(lvls) || !cluster) {
     plt_args$cluster_rows    <- FALSE
     plt_args$cluster_columns <- FALSE
-    plt_args$row_names_side  <- "left"
+    plt_args$row_names_side  <- plt_args$row_names_side %||% "left"
   }
 
   if (is.null(lvls)) {
@@ -223,7 +223,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   lgd_params <- list(
     title_gp      = grid::gpar(fontface = "plain"),
     legend_height = ggplot2::unit(80, "pt"),
-    title         = lgd_ttl
+    title         = plt_args$name %||% lgd_ttl
   )
 
   plt_args$matrix                      <- mat_in

@@ -1,4 +1,4 @@
-#' Calculate V(D)J gene segment usage
+#' Calculate V(D)J segment usage
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
@@ -155,12 +155,13 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
   }
 
   res <- dplyr::mutate(res, pct = (.data$freq / .data$n_cells) * 100)
+  res <- dplyr::arrange(res, desc(.data$pct))
 
   res
 }
 
 
-#' Plot V(D)J gene usage
+#' Plot V(D)J segment usage
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
@@ -193,7 +194,7 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to plotting function,
-#' [ggplot2::geom_col()] for bargraph, [ComplexHeatmap::Heatmap()] for heatmap,
+#' [ggplot2::geom_col()] for bargraph, [ggplot2::geom_tile()] for heatmap,
 #' [circlize::chordDiagram()] for circos plot
 #' @seealso [calc_gene_usage()]
 #' @return ggplot object
@@ -279,7 +280,7 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #'
 #' @export
 plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
-                            group_col = NULL, chain = NULL, type = NULL,
+                            group_col = NULL, chain = NULL, method = NULL,
                             plot_colors = NULL, vdj_genes = NULL, n_genes = 20,
                             plot_lvls = names(plot_colors), units = "percent",
                             chain_col = "chains", sep = ";", ...) {
@@ -287,10 +288,10 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   # Check inputs
   paired <- length(gene_cols) == 2
 
-  if (is.null(type))             type  <- ifelse(paired, "heatmap", "bar")
-  if (identical(type, "circos")) units <- "frequency"
+  if (is.null(method))             method  <- ifelse(paired, "heatmap", "bar")
+  if (identical(method, "circos")) units <- "frequency"
 
-  .chk_usage_args(type, gene_cols, group_col, units, paired)
+  .chk_usage_args(method, gene_cols, group_col, units, paired)
   .chk_group_cols(cluster_col, group_col)
 
   # Set y-axis
@@ -356,7 +357,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
     gn_col   = gene_cols,
     dat_col  = usage_col,
     clst_col = cluster_col,
-    typ      = type,
+    typ      = method,
     clrs     = plot_colors,
     ax_ttl   = units,
     ...
@@ -385,8 +386,8 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
 #' @param order Should genes be ordered based on usage
 #' @param ... Additional parameters to pass to plotting function
 #' @noRd
-.plot_single_usage <- function(df_in, gn_col, dat_col, type, clst_col = NULL,
-                               grp_col = NULL, typ, clrs = NULL, ax_ttl,
+.plot_single_usage <- function(df_in, gn_col, dat_col, typ, clst_col = NULL,
+                               grp_col = NULL, clrs = NULL, ax_ttl,
                                order = TRUE, ...) {
 
   # Order plot levels
