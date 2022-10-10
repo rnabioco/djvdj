@@ -105,5 +105,5 @@ plot_similarity(
 
 }
 \seealso{
-\code{\link[=calc_similarity]{calc_similarity()}}
+\code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[=calc_mds]{calc_mds()}}, \code{\link[=plot_mds]{plot_mds()}}
 }

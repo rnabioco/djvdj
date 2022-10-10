@@ -26,11 +26,12 @@ calculating overlap}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 calculating repertoire overlap}
 
-\item{method}{Method to use for comparing clusters, possible values are:
+\item{method}{Method to use for comparing clusters and calculating MDS
+coordinates, available methods include:
 \itemize{
-\item A function that takes two numeric vectors containing counts for each
-unique value in the column provided to the data_col column, e.g.
-abdiv::jaccard()
+\item 'jaccard', Jaccard dissimilarity index implemented with \code{\link[abdiv:jaccard]{abdiv::jaccard()}}
+\item 'horn_morisita', Horn-Morisita index implemented with
+\code{\link[abdiv:morisita]{abdiv::horn_morisita()}}
 }}
 
 \item{chain}{Chain to use for calculating gene usage. Set to NULL to include
@@ -52,5 +53,5 @@ Single cell object or data.frame with MDS coordinates
 Perform multidimensional scaling
 }
 \seealso{
-\code{\link[=plot_mds]{plot_mds()}}, \code{\link[MASS:isoMDS]{MASS::isoMDS()}}
+\code{\link[=plot_mds]{plot_mds()}}, \code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[=plot_similarity]{plot_similarity()}}, \code{\link[MASS:isoMDS]{MASS::isoMDS()}}
 }

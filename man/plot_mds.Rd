@@ -28,11 +28,12 @@ calculating overlap}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 calculating overlap}
 
-\item{method}{Method to use for comparing clusters, possible values are:
+\item{method}{Method to use for comparing clusters and calculating MDS
+coordinates, available methods include:
 \itemize{
-\item A function that takes two numeric vectors containing counts for each
-clonotype in the object, such as most beta diversity functions provided by
-the abdiv package. This will generate a heatmap.
+\item 'jaccard', Jaccard dissimilarity index implemented with \code{\link[abdiv:jaccard]{abdiv::jaccard()}}
+\item 'horn_morisita', Horn-Morisita index implemented with
+\code{\link[abdiv:morisita]{abdiv::horn_morisita()}}
 }}
 
 \item{chain}{Chain to use for calculating gene usage. Set to NULL to include
@@ -48,11 +49,11 @@ all chains.}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
-\item{...}{Additional arguments to pass to (\code{\link[ggplot2:geom_point]{ggplot2::geom_point()}}}
+\item{...}{Additional arguments to pass to \code{\link[ggplot2:geom_point]{ggplot2::geom_point()}}}
 }
 \description{
 Perform multidimensional scaling and plot results
 }
 \seealso{
-\code{\link[=calc_mds]{calc_mds()}}
+\code{\link[=calc_mds]{calc_mds()}}, \code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[=plot_similarity]{plot_similarity()}}, \code{\link[MASS:isoMDS]{MASS::isoMDS()}}
 }

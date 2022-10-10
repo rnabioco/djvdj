@@ -64,3 +64,6 @@ ggplot object
 \description{
 Create rarefaction curve
 }
+\seealso{
+\code{\link[=calc_diversity]{calc_diversity()}}, \code{\link[=plot_diversity]{plot_diversity()}}
+}

@@ -108,3 +108,6 @@ res <- calc_diversity(
 head(res, 1)
 
 }
+\seealso{
+\code{\link[=plot_diversity]{plot_diversity()}}
+}

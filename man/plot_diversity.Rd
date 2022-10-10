@@ -122,3 +122,6 @@ plot_diversity(
 )
 
 }
+\seealso{
+\code{\link[=calc_diversity]{calc_diversity()}}, \code{\link[=plot_rarefaction]{plot_rarefaction()}}
+}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc-gene-usage.R
 \name{calc_gene_usage}
 \alias{calc_gene_usage}
-\title{Calculate V(D)J gene segment usage}
+\title{Calculate V(D)J segment usage}
 \usage{
 calc_gene_usage(
   input,
@@ -35,7 +35,7 @@ all chains.}
 data.frame containing gene usage summary
 }
 \description{
-Calculate V(D)J gene segment usage
+Calculate V(D)J segment usage
 }
 \examples{
 # Calculate V(D)J segment usage for all cells

@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc-gene-usage.R
 \name{plot_gene_usage}
 \alias{plot_gene_usage}
-\title{Plot V(D)J gene usage}
+\title{Plot V(D)J segment usage}
 \usage{
 plot_gene_usage(
   input,
@@ -10,7 +10,7 @@ plot_gene_usage(
   cluster_col = NULL,
   group_col = NULL,
   chain = NULL,
-  type = NULL,
+  method = NULL,
   plot_colors = NULL,
   vdj_genes = NULL,
   n_genes = 20,
@@ -38,6 +38,16 @@ for each treatment condition.}
 \item{chain}{Chain to use for calculating gene usage, set to NULL to include
 all chains}
 
+\item{method}{Method to use for plotting, possible values are:
+\itemize{
+\item 'bar', create a bargraph, this is the default when a single column is
+passed to the gene_cols argument
+\item 'heatmap', create a heatmap, this is the default when two columns are
+passed to the gene_cols argument
+\item 'circos', create a circos plot, this requires two columns to be provided
+to the gene_cols argument
+}}
+
 \item{plot_colors}{Character vector containing colors to use for plot. If a
 bar graph is created this will specify how to color cell clusters. For a
 heatmap, these colors will be used to generate the color gradient.}
@@ -56,24 +66,14 @@ provided, top genes will be identified for each cluster.}
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{...}{Additional arguments to pass to plotting function,
-\code{\link[ggplot2:geom_bar]{ggplot2::geom_col()}} for bargraph, \code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap()}} for heatmap,
+\code{\link[ggplot2:geom_bar]{ggplot2::geom_col()}} for bargraph, \code{\link[ggplot2:geom_tile]{ggplot2::geom_tile()}} for heatmap,
 \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for circos plot}
-
-\item{method}{Method to use for plotting, possible values are:
-\itemize{
-\item 'bar', create a bargraph, this is the default when a single column is
-passed to the gene_cols argument
-\item 'heatmap', create a heatmap, this is the default when two columns are
-passed to the gene_cols argument
-\item 'circos', create a circos plot, this requires two columns to be provided
-to the gene_cols argument
-}}
 }
 \value{
 ggplot object
 }
 \description{
-Plot V(D)J gene usage
+Plot V(D)J segment usage
 }
 \examples{
 # Plot V(D)J segment usage for all cells
