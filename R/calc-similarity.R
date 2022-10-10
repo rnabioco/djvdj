@@ -22,7 +22,7 @@
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with similarity values
 #' @importFrom abdiv jaccard
-#' @seealso [plot_similarity()]
+#' @seealso [plot_similarity()], [calc_mds()], [plot_mds()]
 #'
 #' @examples
 #' # Calculate repertoire overlap
@@ -240,7 +240,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' [ComplexHeatmap::Heatmap()] for heatmap, [circlize::chordDiagram()] for
 #' circos plot
 #' @importFrom abdiv jaccard
-#' @seealso [calc_similarity()]
+#' @seealso [calc_similarity()], [calc_mds()], [plot_mds()]
 #'
 #' @examples
 #' # Plot repertoire overlap
@@ -323,7 +323,8 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
       plt_dat,
       clrs = plot_colors,
       lvls = plot_lvls,
-      grps = grps
+      grps = grps,
+      ...
     )
 
     return(invisible())
@@ -352,16 +353,17 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
-#' @param cluster_col meta.data column containing cluster IDs to use for
-#' calculating repertoire overlap
-#' @param method Method to use for comparing clusters, possible values are:
-#'
-#' - A function that takes two numeric vectors containing counts for each
-#' unique value in the column provided to the data_col column, e.g.
-#' abdiv::jaccard()
-#'
 #' @param data_col meta.data column containing clonotype IDs to use for
 #' calculating overlap
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' calculating repertoire overlap
+#' @param method Method to use for comparing clusters and calculating MDS
+#' coordinates, available methods include:
+#'
+#' - 'jaccard', Jaccard dissimilarity index implemented with [abdiv::jaccard()]
+#' - 'horn_morisita', Horn-Morisita index implemented with
+#' [abdiv::horn_morisita()]
+#'
 #' @param chain Chain to use for calculating gene usage. Set to NULL to include
 #' all chains.
 #' @param chain_col meta.data column containing chains for each cell
@@ -371,18 +373,35 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with MDS coordinates
 #' @importFrom MASS isoMDS
-#' @seealso [plot_mds()], [MASS::isoMDS()]
+#' @seealso [plot_mds()], [calc_similarity()], [plot_similarity()], [MASS::isoMDS()]
 #' @export
 calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
                      chain = NULL, chain_col = "chains", prefix = "",
                      return_df = FALSE, sep = ";") {
 
   # Check inputs
-  if (!is.function(method)) {
-    stop(
-      "method must be a function to use for comparing ",
-      "clusters, e.g. method = abdiv::jaccard."
-    )
+  if (length(method) != 1) stop("method must be a single value.")
+
+  mets <- c(
+    "jaccard" = abdiv::jaccard,
+    "horn_morisita" = abdiv::horn_morisita
+  )
+
+  if (is.character(method)) {
+    if (!method %in% names(mets)) {
+      stop("method must be 'jaccard' or 'horn_morisita'.")
+    }
+
+    method <- mets[[method]]
+
+  } else if (is.function(method)) {
+    good <- purrr::map_lgl(mets, ~ identical(method, .x))
+    good <- any(good)
+
+    if (!good) stop("method must be abdiv::jaccard or abdiv::horn_morisita.")
+
+  } else {
+    stop("method must be abdiv::jaccard or abdiv::horn_morisita.")
   }
 
   res <- calc_similarity(
@@ -456,11 +475,12 @@ calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
 #' calculating overlap
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating overlap
-#' @param method Method to use for comparing clusters, possible values are:
+#' @param method Method to use for comparing clusters and calculating MDS
+#' coordinates, available methods include:
 #'
-#' - A function that takes two numeric vectors containing counts for each
-#' clonotype in the object, such as most beta diversity functions provided by
-#' the abdiv package. This will generate a heatmap.
+#' - 'jaccard', Jaccard dissimilarity index implemented with [abdiv::jaccard()]
+#' - 'horn_morisita', Horn-Morisita index implemented with
+#' [abdiv::horn_morisita()]
 #'
 #' @param chain Chain to use for calculating gene usage. Set to NULL to include
 #' all chains.
@@ -469,8 +489,8 @@ calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
 #' @param plot_lvls Levels to use for ordering clusters
 #' @param label_points Label points on plot
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
-#' @param ... Additional arguments to pass to ([ggplot2::geom_point()]
-#' @seealso [calc_mds()]
+#' @param ... Additional arguments to pass to [ggplot2::geom_point()]
+#' @seealso [calc_mds()], [calc_similarity()], [plot_similarity()], [MASS::isoMDS()]
 #' @export
 plot_mds <- function(input, data_col, cluster_col,
                      method = abdiv::jaccard, chain = NULL,
