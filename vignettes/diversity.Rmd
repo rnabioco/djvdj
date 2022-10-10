@@ -144,8 +144,7 @@ so %>%
     data_col    = "clonotype_id",
     cluster_col = "sample",
     method      = div_fns,
-    
-    alpha    = 0.5,    # parameters to pass to ggplot2
+    alpha    = 0.5,         # parameters to pass to ggplot2
     linetype = 2,
     color    = "black"    
   ) +
