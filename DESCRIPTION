@@ -52,7 +52,8 @@ Suggests:
     roxygen2,
     testthat,
     here,
-    cowplot
+    cowplot,
+    RColorBrewer
 VignetteBuilder: 
     knitr
 Remotes:

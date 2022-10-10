@@ -24,6 +24,7 @@
 #' @importFrom abdiv simpson
 #' @importFrom broom tidy
 #' @importFrom boot boot
+#' @seealso [plot_diversity()]
 #'
 #' @examples
 #' # Calculate diversity using all cells
@@ -250,6 +251,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' linetype, etc.
 #' @return ggplot object
 #' @importFrom abdiv simpson
+#' @seealso [calc_diversity()], [plot_rarefaction()]
 #'
 #' @examples
 #' # Plot diversity using all cells
@@ -487,6 +489,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 #' @return ggplot object
 #' @importFrom iNEXT iNEXT
 #' @importFrom stringr str_to_lower
+#' @seealso [calc_diversity()], [plot_diversity()]
 #' @export
 plot_rarefaction <- function(input, data_col, cluster_col = NULL,
                              method = "richness", n_boots = 50,
