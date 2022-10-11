@@ -82,10 +82,6 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
     dat <- plt_dat[[feature]]
 
     plot_lvls <- levels(dat) %||% sort(unique(dat))
-
-    if (!any(is.na(plot_lvls))) {
-      plot_lvls <- c(NA, plot_lvls)
-    }
   }
 
   plt_dat <- .set_lvls(plt_dat, feature, plot_lvls)

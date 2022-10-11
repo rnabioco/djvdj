@@ -771,12 +771,27 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   if (!is.character(dat) && !is.factor(dat)) {
     warning("Plot levels were not modified, levels are only modified for characters and factors")
-
     return(df_in)
   }
 
-  if (any(!unique(dat) %in% lvls)) {
-    stop("Not all labels in ", clmn, " are included in plot_lvls")
+  if (any(is.na(dat)) && !any(is.na(lvls))) lvls <- c(NA, lvls)
+
+  u_dat     <- unique(dat)
+  missing   <- u_dat[!u_dat %in% lvls]
+  n_missing <- length(missing)
+
+  if (n_missing > 0) {
+    sfx <- ""
+
+    if (n_missing > 10) {
+      sfx <- "..."
+      missing <- missing[1:10]
+    }
+
+    missing <- paste0(missing, collapse = ", ")
+    missing <- paste0(missing, sfx)
+
+    stop("Not all labels in ", clmn, " are included in plot_lvls: ", missing)
   }
 
   df_in[clmn] <- factor(df_in[[clmn]], unique(lvls), exclude = NULL)
