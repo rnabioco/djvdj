@@ -25,6 +25,9 @@
 #' - The name of a substitution matrix available from the Biostrings package,
 #' e.g. 'BLOSUM62'
 #'
+#' @param run_umap Should the Uniform Manifold Approximation and Projection
+#' (UMAP) dimensional reduction method be performed. This will add UMAP
+#' coordinates to the meta.data.
 #' @param chain_col meta.data column containing chains for each cell.
 #' @param prefix Prefix to add to graph name
 #' @param return_df Return results as a data.frame. If FALSE, results will be
@@ -36,12 +39,13 @@
 #' @importFrom dbscan kNN
 #' @importFrom igraph graph_from_data_frame cluster_louvain cluster_leiden membership
 #' @importFrom Biostrings stringDist
-#' @seealso [igraph::cluster_louvain()], [igraph::cluster_leiden()]
+#' @seealso [plot_seq_motifs()]
 #' @export
 cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
                          resolution = 0.5, k = 10, dist_method = NULL,
-                         chain_col = "chains", prefix = paste0(data_col, "_"),
-                         return_df = FALSE, sep = ";", ...) {
+                         run_umap = TRUE, chain_col = "chains",
+                         prefix = paste0(data_col, "_"), return_df = FALSE,
+                         sep = ";", ...) {
 
   # Check inputs
   if (!method %in% c("louvain", "leiden")) {
@@ -79,12 +83,13 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
   dist_mat <- purrr::lift_dl(Biostrings::stringDist)(dist_args)
 
   # Calculate UMAP
-  res <- uwot::umap(dist_mat)
+  if (run_umap) {
+    umap_res <- uwot::umap(dist_mat)
 
-  colnames(res) <- paste0(prefix, c("UMAP_1", "UMAP_2"))
-  rownames(res) <- seqs
+    colnames(umap_res) <- paste0(prefix, c("UMAP_1", "UMAP_2"))
 
-  res <- tibble::as_tibble(res, rownames = data_col)
+    umap_res <- tibble::as_tibble(umap_res)
+  }
 
   # Run KNN
   knn_res <- dbscan::kNN(dist_mat, k = k)
@@ -129,7 +134,7 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
     paste0(prefix, "cluster_", resolution)
   )
 
-  clsts <- purrr::imap_dfc(resolution, ~ {
+  res <- purrr::imap_dfc(resolution, ~ {
     clst_args[rsln_arg] <- .x
 
     clsts <- purrr::lift_dl(clst_method)(clst_args)
@@ -138,7 +143,10 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
     tibble(!!sym(.y) := as.character(clsts))
   })
 
-  res <- dplyr::bind_cols(res, clsts)
+  # Combine cluster and UMAP results, add sequences
+  if (run_umap) res <- dplyr::bind_cols(umap_res, res)
+
+  res <- dplyr::mutate(res, !!sym(data_col) := seqs)
 
   # Join by CDR3 to match clusters with cell IDs
   res <- dplyr::left_join(vdj, res, by = data_col)

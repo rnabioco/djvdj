@@ -12,6 +12,7 @@ cluster_seqs(
   resolution = 0.5,
   k = 10,
   dist_method = NULL,
+  run_umap = TRUE,
   chain_col = "chains",
   prefix = paste0(data_col, "_"),
   return_df = FALSE,
@@ -52,6 +53,10 @@ sequences. Other possible values include:
 e.g. 'BLOSUM62'
 }}
 
+\item{run_umap}{Should the Uniform Manifold Approximation and Projection
+(UMAP) dimensional reduction method be performed. This will add UMAP
+coordinates to the meta.data.}
+
 \item{chain_col}{meta.data column containing chains for each cell.}
 
 \item{prefix}{Prefix to add to graph name}
@@ -70,5 +75,5 @@ Single cell object or data.frame with clustering results
 Cluster cells based on CDR3 sequences
 }
 \seealso{
-\code{\link[igraph:cluster_louvain]{igraph::cluster_louvain()}}, \code{\link[igraph:cluster_leiden]{igraph::cluster_leiden()}}
+\code{\link[=plot_seq_motifs]{plot_seq_motifs()}}
 }
