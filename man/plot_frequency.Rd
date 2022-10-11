@@ -11,7 +11,7 @@ plot_frequency(
   group_col = NULL,
   units = "percent",
   plot_colors = NULL,
-  plot_lvls = names(plot_colors),
+  plot_lvls = NULL,
   ...
 )
 }

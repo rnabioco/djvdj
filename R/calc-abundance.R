@@ -483,8 +483,7 @@ plot_clonal_abundance <- function(input, cluster_col = NULL,
 #' @export
 plot_frequency <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, units = "percent",
-                           plot_colors = NULL, plot_lvls = names(plot_colors),
-                           ...) {
+                           plot_colors = NULL, plot_lvls = NULL, ...) {
 
   if (!units %in% c("frequency", "percent")) {
     stop("units must be either 'frequency' or 'percent'.")
