@@ -95,7 +95,7 @@ so %>%
 
 ## Plotting overlap
 
-The `plot_similarity()` function will create plots summarizing repertoire overlap between samples. By default, Jaccard dissimilarity will be calculated and plotted as a heatmap. For this example, none of the samples show strong overlap. This may seem surprising since the MD4 samples are mainly composed of a single clonotype and should thus have a similar repertoire. However, Jaccard dissimilarity is only measuring the number of overlapping clonotypes and does not take into account clonotype abundance.
+The `plot_similarity()` function will create plots summarizing repertoire overlap between samples. By default, Jaccard dissimilarity will be calculated and plotted as a heatmap. For this example, none of the samples show strong overlap. This may seem surprising since the MD4 samples are mainly composed of a single clonotype and should have a very similar repertoire. However, the Jaccard index is only measuring the number of overlapping clonotypes and is not influenced by clonotype abundance.
 
 ```{r}
 so %>%
@@ -105,7 +105,7 @@ so %>%
   )
 ```
 
-A metric that is influenced by clonotype abundance is the Horn-Morisita index. This metric measures the probability that clonotypes drawn from each sample will be different. Values close to 0 indicate high similarity. In this example we see that when clonotype abundance is taken into account, the MD4 samples appear very similar to each other.
+A metric that takes into account clonotype abundance is the Horn-Morisita index. This metric measures the probability that clonotypes drawn from each sample will be different. Values close to 0 indicate high similarity. In this example we see that when clonotype abundance is taken into account, the MD4 samples appear very similar to each other.
 
 ```{r, fig.height = 4.5}
 so %>%
@@ -136,7 +136,7 @@ so %>%
 
 ## Circos plot
 
-A circos plot can be created by setting the `method` argument to 'circos'. This plot will summarize the number of clonotypes overlapping between samples. The `group_col` argument can be used to split the graph into distinct sections.
+A circos plot can be created by setting the `method` argument to 'circos'. This plot will summarize the number of clonotypes overlapping between samples. The `group_col` argument can be used to split the graph into distinct sections based on a grouping variable.
 
 The number of overlapping clonotypes is shown as the axis labels for each sample. The width of each link reflects the number of clonotypes overlapping the samples.
 
@@ -169,7 +169,7 @@ so %>%
 
 ## MDS plot
 
-Multidimensional scaling (MDS) can be used to visualize the overall similarity between samples. The `calc_mds()` function will calculate MDS coordinates using either the Jaccard dissimilarity index, or the Horn-Morisita index. The method can be specified using the `method` argument. MDS coordinates will get added to the meta.data.
+Multidimensional scaling (MDS) can be used to visualize the overall similarity between repertoires. The `calc_mds()` function will calculate MDS coordinates using either the Jaccard dissimilarity index or the Horn-Morisita index. The method can be specified using the `method` argument. MDS coordinates will get added to the meta.data.
 
 ```{r}
 so_vdj <- so %>%
@@ -197,6 +197,7 @@ so %>%
   plot_mds(
     data_col    = "clonotype_id",
     cluster_col = "sample",
+    
     size  = 4,    # parameters to pass to ggplot 
     shape = 2
   ) +

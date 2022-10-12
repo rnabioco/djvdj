@@ -1,12 +1,12 @@
 ---
-title: "Clustering"
+title: "CDR3 Clustering"
 date: '`r format(Sys.Date(), "%B %d %Y")`'
 output:
   rmarkdown::html_vignette:
     toc_float: true
     toc_depth: 2
     vignette: >
-      %\VignetteIndexEntry{Clustering}
+      %\VignetteIndexEntry{CDR3 Clustering}
       %\VignetteEncoding{UTF-8}
       %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -50,9 +50,11 @@ so <- splen_so %>%
 
 <br>
 
-## Clustering CDR3 sequences
+## Clustering sequences
 
-The `cluster_seqs()` function can be used to cluster cells based on CDR3 sequences, or any other sequences present in the object. Provide the meta.data column containing sequences to the `data_col` argument and indicate the desired chain using the `chain` argument. By default, distances are calculated for amino acid sequences using the [BLOSUM62](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC50453/) substitution matrix, which is based on observed amino acid frequencies and substitution probabilities. The calculated distances are then used to cluster cells using either the Louvain or Leiden clustering algorithms. The coarseness of the clusters an be adjusted using the `resolution` argument with smaller values returning fewer clusters.
+The `cluster_seqs()` function can be used to cluster cells based on CDR3 sequences, or any other sequences present in the object. Provide the meta.data column containing sequences to the `data_col` argument and indicate the desired chain using the `chain` argument.
+
+By default, distances are calculated for amino acid sequences using the [BLOSUM62](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC50453/) substitution matrix, which is based on observed amino acid frequencies and substitution probabilities. The calculated distances are then used to cluster cells using either the Louvain or Leiden clustering algorithms. The coarseness of the clusters an be adjusted using the `resolution` argument with smaller values returning fewer clusters.
 
 In this example we are clustering cells based on the IGK CDR3 amino acid sequence.
 
@@ -93,9 +95,11 @@ so_vdj <- so %>%
 
 <br>
 
-## Plotting CDR3 clusters
+## Plotting clusters
 
-Clustering results can be visualized on a UMAP projection using the generic plotting function `plot_features()`. This will generate a warning saying that rows with missing values were removed, this is expected since some cells do not have V(D)J data and will thus not have an assigned cluster. Colors can be adjusted using the `plot_colors` argument.
+Clustering results can be visualized on a UMAP projection using the generic plotting function `plot_features()`. Colors can be adjusted using the `plot_colors` argument.
+
+This function will often generate a warning saying that rows with missing values were removed, this is expected since some cells do not have V(D)J data. 
 
 ```{r}
 clrs <- setNames(brewer.pal(11, "Paired"), 1:11)
@@ -109,7 +113,7 @@ so_vdj %>%
   )
 ```
 
-To visualize the proportion of BL6 and MD4 cells in each cluster we can create a stacked bargraph using the `plot_frequency()` function. MD4 cells are monoclonal and as expected we see that most MD4 cells are in a single cluster (5).
+To visualize the proportion of BL6 and MD4 cells in each cluster we can create a stacked bargraph using the `plot_frequency()` function. MD4 cells are monoclonal and as expected these cells are found almost exclusively in a single cluster.
 
 ```{r}
 so_vdj %>%
@@ -127,7 +131,7 @@ so_vdj %>%
 
 Using the `plot_seq_motifs()` function we can generate sequence motifs for each cluster. We just need to provide the same `data_col` and `chain` used for clustering. To create a separate motif for each cluster, we also need to provide the column containing cluster IDs to the `cluster_col` argument.
 
-As expected we see that for cluster 5, which contains MD4 cells, almost every cell has the exact same IGK CDR3 sequence.
+As expected we see that most cells within the MD4 cluster have the exact same IGK CDR3 sequence.
 
 ```{r, fig.width = 10}
 so_vdj %>%
@@ -138,9 +142,9 @@ so_vdj %>%
   )
 ```
 
-By default sequences are aligned to the 5' end and trimmed based on the `width` parameter. Sequences can be aligned to the 3' end using the `align_end` parameter. Sequences longer than the width cutoff are trimmed, sequences shorter than the width cutoff are removed. By default the width cutoff is automatically selected for each cluster to include at least 75% of sequences.
+By default, sequences are aligned to the 5' end and trimmed based on the `width` parameter. Sequences can be aligned to the 3' end using the `align_end` parameter. Sequences longer than the width cutoff are trimmed, sequences shorter than the width cutoff are removed. By default the width cutoff is automatically selected for each cluster to include at least 75% of sequences.
 
-Here we generate motifs for the last 11 amino acids of the CDR3.
+In this example we generate motifs for the last 11 amino acids of the CDR3.
 
 ```{r, fig.width = 10}
 so_vdj %>%

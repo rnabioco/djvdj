@@ -59,7 +59,7 @@ so %>%
   calc_gene_usage(gene_cols = "v_gene")
 ```
 
-To perform gene usage calculations separately for cell clusters (or samples), provide the meta.data column containing cluster labels to the `cluster_col` argument. Here we see that the MD4 samples almost exclusively use a single V segment (IGKV-43), which is expected since MD4 B cells are monoclonal.
+To perform gene usage calculations separately for cell clusters (or samples), provide the meta.data column containing cluster labels to the `cluster_col` argument. Here we see that the MD4 samples almost exclusively use a single V segment (IGKV5-43), which is expected since MD4 B cells are monoclonal.
 
 ```{r}
 so %>%
@@ -69,7 +69,7 @@ so %>%
   )
 ```
 
-To only perform calculations for a specific chain, use the `chain` argument. In this example we are only returning results for the IGK chain. Here we see some values in the 'v_gene' column listed as 'None'. This shows the number of cells that did not have a V gene segment identified.
+To only perform calculations for a specific chain, use the `chain` argument. In this example we are only returning results for the IGK chain. Here we see some values in the 'v_gene' column labeled as 'None', this shows the number of cells that did not have a V gene segment identified.
 
 ```{r}
 so %>%
@@ -94,28 +94,18 @@ so %>%
 
 ## Plotting gene usage
 
-The `plot_gene_usage()` function will summarize the frequency of each gene segment. By default if a single column is passed to the `gene_cols` argument, a bargraph will be returned.
-
-```{r}
-so %>%
-  plot_gene_usage(
-    gene_cols = "v_gene",
-    cluster_col = "orig.ident"
-  )
-```
-
-The number of top genes to include in the plot can be specified with the `n_genes` argument. Alternatively, a vector of gene names can be passed to the `vdj_genes` argument to plot a set of desired genes.
+The `plot_gene_usage()` function will summarize the frequency of each gene segment. By default if a single column is passed to the `gene_cols` argument, a bargraph will be returned. The number of top genes to include in the plot can be specified with the `n_genes` argument. Alternatively, a vector of gene names can be passed to the `vdj_genes` argument to plot a set of desired genes.
 
 ```{r}
 so %>%
   plot_gene_usage(
     gene_cols   = "v_gene",
     cluster_col = "orig.ident",
-    n_genes     = 15
+    n_genes     = 20
   )
 ```
 
-By default percentages are shown on the y-axis, to instead plot the frequency, set the `units` argument to 'frequency'.
+By default, percentages are shown on the y-axis, to instead plot the frequency, set the `units` argument to 'frequency'.
 
 ```{r}
 so %>%

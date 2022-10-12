@@ -1,12 +1,12 @@
 ---
-title: "V(D)J analysis"
+title: "BCR Analysis"
 date: '`r format(Sys.Date(), "%B %d %Y")`'
 output:
   rmarkdown::html_vignette:
     toc_float: true
     toc_depth: 2
     vignette: >
-      %\VignetteIndexEntry{V(D)J analysis}
+      %\VignetteIndexEntry{BCR Analysis}
       %\VignetteEncoding{UTF-8}
       %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -115,7 +115,7 @@ plot_grid(
 
 <br>
 
-## Import V(D)J data
+## Import data
 
 `import_vdj()` takes the output files from [Cell Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header) and adds clonotype information to the meta.data for an existing [Seurat](https://satijalab.org/seurat/) or SingleCellExperiment object. For cells with multiple chains, the information for each chain is stored as a single row, separated by a semi-colon. For cells that do not have V(D)J sequencing data, `NA`s are added to the meta.data.
 
@@ -163,7 +163,7 @@ so_avid@meta.data %>%
 
 <br>
 
-## Clonotype Abundance
+## Clonal Abundance
 
 To identify the top clonotypes in each sample or cluster, clonotype abundance can be calculated using the `calc_frequency()` function. These calculations can be performed on a per-cluster or per-sample basis by providing a meta.data column containing cell labels to use for comparison.
 
@@ -238,7 +238,7 @@ plot_diversity(
 
 <br>
 
-## Repertoire Overlap
+## Repertoire Similarity
 
 To compare repertoires for different samples or clusters, `calc_similarity()` can calculate a variety of different similarity metrics. The `cluster_col` argument should be used to specify the meta.data column containing cell groups to use for comparison. Like `calc_diversity()`, an [abdiv](https://github.com/kylebittinger/abdiv) function can be specified with the `method` argument. It is important to read the [abdiv](https://github.com/kylebittinger/abdiv) documentation to ensure the selected function is appropriate.
 

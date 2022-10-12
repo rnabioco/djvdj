@@ -51,7 +51,7 @@ so <- splen_so %>%
 
 ## Calculating diversity
 
-To calculate repertoire diversity and store the results in the object meta.data, the `calc_diversity()` function can be used. This function is designed to specifically work with the R package [abdiv](https://github.com/kylebittinger/abdiv). The diversity metric can be selected by passing the name of the function to the `method` argument. Any alpha diversity function from the abdiv package that takes a numeric vector of species counts as input can be used. Be sure to read the documentation for the function you are using to ensure it is appropriate for your analysis.
+To calculate repertoire diversity and store the results in the object meta.data, the `calc_diversity()` function can be used. This function is designed to specifically work with the R package [abdiv](https://github.com/kylebittinger/abdiv). The diversity metric can be selected by passing the name of the function to the `method` argument. Any alpha diversity function from the abdiv package that takes species counts as input can be used. Be sure to read the documentation for the function you are using to ensure it is appropriate for your analysis.
 
 In this example we are calculating the Shannon entropy for BL6 and MD4 samples.
 
@@ -64,7 +64,7 @@ so_vdj <- so %>%
   )
 ```
 
-Estimations of species diversity are influenced by sample size. One approach to deal with this is to equalize the number of cells present in each cluster. The `downsample` argument owill randomly sample cells so each sample being tested has the same number of cells as the smallest cluster. The bootstrapped standard error can also be calculated by setting the number of bootstrap samples with the `n_boots` argument.
+Estimations of species diversity are influenced by sample size. One approach to deal with this is to equalize the number of cells present in each cluster. The `downsample` argument will randomly sample cells so each sample being tested has the same number of cells as the smallest cluster. The bootstrapped standard error can also be calculated by setting the number of bootstrap samples with the `n_boots` argument.
 
 ```{r}
 so_vdj <- so %>%
@@ -144,6 +144,7 @@ so %>%
     data_col    = "clonotype_id",
     cluster_col = "sample",
     method      = div_fns,
+    
     alpha    = 0.5,         # parameters to pass to ggplot2
     linetype = 2,
     color    = "black"    
@@ -173,7 +174,7 @@ so %>%
   )
 ```
 
-If the 95% confidence interval is not desired, set `n_boots` to 0.
+If the 95% confidence interval is not desired, set `n_boots` to 0. In this example we also plot a separate line for each BL6 and MD4 sample.
 
 ```{r}
 so %>%
