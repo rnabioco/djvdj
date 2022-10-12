@@ -193,7 +193,8 @@ test_that("import_vdj filter_chains", {
     tiny_so %>%
       import_vdj(
         vdj_dir       = ctigs,
-        filter_chains = FALSE
+        filter_chains = FALSE,
+        include_mutations = TRUE
       )
   }
 

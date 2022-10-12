@@ -84,7 +84,7 @@ mets <- list(
   simpson = abdiv::simpson
 )
 
-nms <- paste0(names(mets), "_diversity")
+nms <- paste0("cdr3_", names(mets), "_diversity")
 
 test_div <- vdj_so@meta.data %>%
   as_tibble(rownames = ".cell_id") %>%
@@ -99,8 +99,8 @@ test_div <- test_div %>%
   summarize(n = n_distinct(.cell_id), .groups = "drop") %>%
   group_by(seurat_clusters) %>%
   summarize(
-    shannon_diversity = abdiv::shannon(n),
-    simpson_diversity = abdiv::simpson(n),
+    cdr3_shannon_diversity = abdiv::shannon(n),
+    cdr3_simpson_diversity = abdiv::simpson(n),
     .groups = "drop"
   ) %>%
   arrange(seurat_clusters) %>%
@@ -162,10 +162,7 @@ test_that("calc_diversity Seurat out", {
     )
 
   res@meta.data <- res@meta.data %>%
-    select(
-      -all_of(paste0(names(fns), "_diversity")),
-      -all_of(paste0(names(fns), "_stderr"))
-    )
+    select(-all_of(paste0("cdr3_", names(fns), "_diversity")))
 
   expect_identical(res, vdj_so)
 })
@@ -198,7 +195,8 @@ test_that("calc_diversity bad method list", {
   res <- vdj_so %>%
     calc_diversity(data_col = "cdr3", method = abdiv::simpson)
 
-  nms <- paste0("simpson_", c("diversity", "stderr"))
+  nms <- paste0("cdr3_simpson_", c("diversity"))
 
   expect_true(all(nms %in% colnames(res@meta.data)))
 })
+
