@@ -1,0 +1,106 @@
+---
+title: "Plotting"
+date: '`r format(Sys.Date(), "%B %d %Y")`'
+output:
+  rmarkdown::html_vignette:
+    toc_float: true
+    toc_depth: 2
+    vignette: >
+      %\VignetteIndexEntry{Plotting}
+      %\VignetteEncoding{UTF-8}
+      %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r "setup", include = FALSE}
+# Chunk opts
+knitr::opts_chunk$set(
+  collapse   = TRUE,
+  comment    = "#>",
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 8,
+  fig.height = 3
+)
+```
+
+<br>
+
+This vignette provides detailed examples for plotting V(D)J data imported into a single-cell object using djvdj. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
+
+```{r}
+library(djvdj)
+library(Seurat)
+library(magrittr)
+library(dplyr)
+library(here)
+library(ggplot2)
+
+# Load Seurat object
+load(here("data/splenocytes/splen_so.rda"))
+
+# Add V(D)J data to object
+vdj_dirs <- c(
+  BL6 = here("data/splenocytes/BL6_BCR"),
+  MD4 = here("data/splenocytes/MD4_BCR")
+)
+
+so <- splen_so %>%
+  import_vdj(vdj_dirs, include_mutations = TRUE)
+```
+
+<br>
+
+## Plotting continuous data
+
+```{r}
+so %>%
+  plot_vdj(
+    data_cols   = c("reads", "umis"),
+    cluster_col = "orig.ident",
+    chain       = "IGK",
+    log_trans   = TRUE
+  )
+```
+
+```{r}
+so %>%
+  plot_vdj(
+    data_cols   = c("reads", "umis"),
+    cluster_col = "sample",
+    method      = "boxplot",
+    log_trans   = TRUE,
+    
+    per_cell    = TRUE,
+    summary_fn  = mean
+  )
+```
+
+## UMAP projections
+
+```{r, fig.width = 8, fig.height = 6}
+so %>%
+  plot_vdj_feature(
+    data_col   = "cdr3_length",
+    summary_fn = max
+  ) +
+  theme_void()
+```
+
+```{r, fig.width = 8, fig.height = 6}
+so %>%
+  plot_vdj_feature(
+    data_col = "cdr3_length",
+    chain    = "IGK"
+  ) +
+  theme_void()
+```
+
+
+
+
+
+
+
+
+
+

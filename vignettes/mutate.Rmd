@@ -1,0 +1,129 @@
+---
+title: "Data Manipulation"
+date: '`r format(Sys.Date(), "%B %d %Y")`'
+output:
+  rmarkdown::html_vignette:
+    toc_float: true
+    toc_depth: 2
+    vignette: >
+      %\VignetteIndexEntry{Data Manipulation}
+      %\VignetteEncoding{UTF-8}
+      %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r "setup", include = FALSE}
+# Chunk opts
+knitr::opts_chunk$set(
+  collapse  = TRUE,
+  comment   = "#>",
+  warning   = FALSE,
+  message   = FALSE
+)
+```
+
+<br>
+
+This vignette provides detailed examples for manipulating V(D)J data imported into a single-cell object using djvdj. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
+
+```{r}
+library(djvdj)
+library(Seurat)
+library(magrittr)
+library(dplyr)
+library(here)
+library(ggplot2)
+
+# Load Seurat object
+load(here("data/splenocytes/splen_so.rda"))
+
+# Add V(D)J data to object
+vdj_dirs <- c(
+  BL6 = here("data/splenocytes/BL6_BCR"),
+  MD4 = here("data/splenocytes/MD4_BCR")
+)
+
+so <- splen_so %>%
+  import_vdj(vdj_dirs, include_mutations = TRUE)
+```
+
+<br>
+
+## Filtering V(D)J data
+
+```{r}
+res <- so %>%
+  filter_vdj(
+    all(c("IGH", "IGK", "IGL") %in% chains)
+  )
+
+res@meta.data %>%
+  filter(!is.na(clonotype_id)) %>%
+  select(chains, cdr3) %>%
+  head(3)
+```
+
+```{r}
+res <- so %>%
+  filter_vdj(
+    chains == "IGH"
+  )
+
+res@meta.data %>%
+  filter(!is.na(clonotype_id)) %>%
+  select(chains, cdr3) %>%
+  head(3)
+```
+
+<br>
+
+## Summarizing per-chain data
+
+```{r}
+res <- so %>%
+  summarize_vdj(
+    vdj_cols  = c("all_del", "all_ins"),
+    fn        = stats::median,
+    col_names = "median_{.col}"
+  )
+
+res@meta.data %>%
+  select(all_del, all_ins, median_all_del, median_all_ins) %>%
+  head(2)
+```
+
+```{r}
+res <- so %>%
+  summarize_vdj(
+    vdj_cols  = "chains",
+    fn        = ~ paste0(unique(.x), collapse = "_"),
+    col_names = "unique_chains"
+  )
+
+res@meta.data %>%
+  filter(n_chains > 2) %>%
+  select(chains, unique_chains) %>%
+  head(2)
+```
+
+<br>
+
+## Mutating per-chain data
+
+```{r}
+res <- so %>%
+  mutate_vdj(
+    total_indels = sum(all_ins, all_del),
+    indels       = list(all_ins + all_del)
+  )
+
+res@meta.data %>%
+  select(all_ins, all_del, indels, total_indels) %>%
+  head()
+```
+
+
+
+
+
+
+
