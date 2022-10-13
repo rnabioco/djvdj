@@ -747,43 +747,35 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 .load_muts <- function(vdj_dir, cell_prfxs, cell_sfxs, bam_file = "concat_ref.bam",
                        airr_file = "airr_rearrangement.tsv") {
 
-  # Check for bam file and return path
-  # if bam is missing for any sample, return NULL
-  # do not want extra NAs in the V(D)J data columns
-  bam_path <- purrr::map_chr(
-    vdj_dir,
-    .get_vdj_path,
-    file = bam_file,
-    warn = TRUE
-  )
+  # Retrieve bam and airr file paths
+  file_paths <- c(bam = bam_file, airr = airr_file)
 
-  if (any(is.na(bam_path))) {
+  file_paths <- purrr::map(file_paths, ~ {
+    fl <- .x
+
+    purrr::map_chr(
+      vdj_dir, .get_vdj_path,
+      file = fl, warn = TRUE
+    )
+  })
+
+  any_missing <- any(purrr::map_lgl(file_paths, ~ any(is.na(.x))))
+
+  if (any_missing) {
     warning(
-      bam_file, " not found, check provided paths, ",
-      "mutation data not added to object."
+      "To add mutation data to object, ", bam_file, " and ", airr_file,
+      " must be present for all samples, check that these files are in the",
+      " provided directory paths, mutation data not added to object."
     )
 
     return(NULL)
   }
 
-  # Check for AIRR file and return path
-  # if AIRR is missing for any sample, set sample path to NA
-  airr_file <- purrr::map_chr(
-    vdj_dir,
-    .get_vdj_path,
-    file = airr_file,
-    warn = TRUE
-  )
-
-  if (any(is.na(airr_file))) {
-    airr_file[!is.na(airr_file)] <- NA
-  }
-
   # Extract mutations from bam file
-  mut_coords <- purrr::map(bam_path, .extract_mut_coords)
+  mut_coords <- purrr::map(file_paths$bam, .extract_mut_coords)
 
   # Extract VDJ coords from AIRR
-  vdj_coords <- purrr::map(airr_file, .extract_vdj_coords)
+  vdj_coords <- purrr::map(file_paths$airr, .extract_vdj_coords)
 
   # Map mutations to VDJ segments
   res <- purrr::map2(mut_coords, vdj_coords, .map_muts)
@@ -867,10 +859,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
 .extract_vdj_coords <- function(airr_file) {
 
-  if (is.na(airr_file)) {
-    return(NA)
-  }
-
   airr <- readr::read_tsv(
     airr_file,
     col_types = readr::cols(),
@@ -922,12 +910,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     mut_coords,
     type = dplyr::recode(.data$type, !!!mut_key)
   )
-
-  # Count total mutations
-  all_muts <- dplyr::mutate(mut_coords, type = paste0("all_", .data$type))
-
-  all_muts <- dplyr::group_by(all_muts, .data$contig_id, .data$len, .data$type)
-  all_muts <- dplyr::summarize(all_muts, n = sum(.data$n), .groups = "drop")
 
   # If no vdj_coords, return mutation totals
   if (identical(vdj_coords, NA)) {
@@ -998,9 +980,24 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   # Summarize mutation counts
   vdj_muts <- dplyr::group_by(vdj_muts, .data$contig_id, .data$len, .data$type, .data$seg)
   vdj_muts <- dplyr::summarize(vdj_muts, n = sum(.data$n), .groups = "drop")
-  vdj_muts <- tidyr::unite(vdj_muts, "type", .data$seg, .data$type, sep = "_")
 
-  # Add total mutations to output
+  # Summarize total mutations and total length per contig
+  # for each mutation type, sum total for v, d, j, and c segments, exclude jxns
+  all_muts <- dplyr::filter(vdj_muts, !seg %in% c("vd", "dj"))
+  all_muts <- dplyr::group_by(all_muts, .data$contig_id, .data$type)
+
+  all_muts <- dplyr::summarize(
+    all_muts,
+    n       = sum(n),
+    len     = sum(len),
+    seg     = "all",
+    .groups = "drop"
+  )
+
+  vdj_muts <- dplyr::bind_rows(vdj_muts, all_muts)
+  res      <- tidyr::unite(vdj_muts, "type", .data$seg, .data$type, sep = "_")
+
+  # Set final output columns
   freq_cols <- mut_cols <- c("v", "d", "j", "c", "all")
   jxn_cols  <- c("vd", "dj")
 
@@ -1012,8 +1009,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   mut_cols <- c(mut_cols, jxn_cols)
 
   freq_cols <- purrr::map_chr(freq_cols, paste0, "_", mut_key[["X"]])
-
-  res <- dplyr::bind_rows(vdj_muts, all_muts)
 
   # Calculate mismatch frequency
   freq <- dplyr::filter(res, .data$type %in% freq_cols)

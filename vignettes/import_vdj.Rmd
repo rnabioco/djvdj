@@ -202,22 +202,6 @@ so_vdj@meta.data %>%
 
 <br>
 
-## Other object types
-
-In addition to Seurat objects, djvdj also works with SingleCellExperiment objects and with data.frames. If no input object is provided to `import_vdj()`, a data.frame containing V(D)J information will be returned. This data.frame can be used with other djvdj functions to perform further downstream analysis.
-
-```{r}
-vdj_dirs <- c(
-  MD4 = here("data/splenocytes/MD4_BCR"),
-  BL6 = here("data/splenocytes/BL6_BCR")
-)
-
-# This will load V(D)J data and return a data.frame
-df_vdj <- import_vdj(vdj_dir = vdj_dirs)
-```
-
-<br>
-
 ## Loading TCR and BCR data
 
 To add both BCR and TCR data to the object, run `import_vdj()` separately for each data type. To distinguish between columns containing BCR or TCR data, use the `prefix` argument to add unique column names.
@@ -238,9 +222,25 @@ so_vdj <- so %>%
   import_vdj(tcr_dirs, prefix = "tcr_")
 ```
 
-This results in two sets of new columns being added to the meta.data. When performing downstream analysis using other djvdj functions, be sure to specify the correct clonotype_id column, i.e. 'bcr_clonotype_id' or 'tcr_clonotype_id'.
+This results in two sets of new columns being added to the meta.data. When performing downstream analysis using other djvdj functions, be sure to specify the correct columns, i.e. 'bcr_clonotype_id' or 'tcr_clonotype_id'.
 
 ```{r}
 so_vdj@meta.data %>%
   head(3)
+```
+
+<br>
+
+## Other object types
+
+In addition to Seurat objects, djvdj also works with SingleCellExperiment objects and with data.frames. If no input object is provided to `import_vdj()`, a data.frame containing V(D)J information will be returned. This data.frame can be used with other djvdj functions to perform further downstream analysis.
+
+```{r}
+vdj_dirs <- c(
+  MD4 = here("data/splenocytes/MD4_BCR"),
+  BL6 = here("data/splenocytes/BL6_BCR")
+)
+
+# This will load V(D)J data and return a data.frame
+df_vdj <- import_vdj(vdj_dir = vdj_dirs)
 ```
