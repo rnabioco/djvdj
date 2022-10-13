@@ -43,7 +43,7 @@ plot_features <- function(input, ...) {
 #' @name plot_features
 plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
                                   plot_colors = NULL, plot_lvls = names(plot_colors),
-                                  min_q = NULL, max_q = NULL, na_color = "grey50", ...) {
+                                  min_q = NULL, max_q = NULL, na_color = "grey80", ...) {
 
   # Check arguments
   if (identical(x, y)) {
@@ -71,6 +71,9 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
     )
   }
 
+  # Default continuous colors
+  if (is_num) plot_colors <- plot_colors %||% c("#132B43", "#56B1F7")
+
   # Convert logical to character
   if (is.logical(plt_dat[[feature]])) {
     plt_dat <- purrr::modify_at(plt_dat, feature, as.character)
@@ -87,7 +90,9 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
   plt_dat <- .set_lvls(plt_dat, feature, plot_lvls)
 
   # Sort data so largest values are plotted on top
-  res <- arrange(plt_dat, !!sym(feature))
+  # Do not use arrange() since NAs always get sorted to bottom
+  # res <- arrange(plt_dat, !!sym(feature))
+  res <- plt_dat[order(plt_dat[[feature]], na.last = FALSE), ]
 
   # Create scatter plot
   res <- ggplot2::ggplot(
@@ -96,34 +101,35 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
   ) +
     ggplot2::geom_point(...)
 
-  # Set feature colors
-  if (!is.null(plot_colors)) {
+  # Set feature colors, use ggplot2 defaults if NULL
+  if (is_num) {
+    plot_colors <- plot_colors %||% c("#132B43", "#56B1F7")
 
-    if (is_num) {
-      res <- res +
-        ggplot2::scale_color_gradientn(
-          colors   = plot_colors,
-          na.value = na_color
-        )
+    res <- res +
+      ggplot2::scale_color_gradientn(
+        colors   = plot_colors,
+        na.value = na_color
+      )
 
-    } else {
-      # Set color names, need to do this so na_color is not overridden if the
-      # user provides extra values for plot_colors
-      if (is.null(names(plot_colors))) {
-        lvls <- stats::na.omit(plot_lvls)
+  } else {
+    plot_colors <- plot_colors %||% scales::hue_pal()(length(plot_lvls))
 
-        plot_colors <- plot_colors[seq_along(lvls)]
-        plot_colors <- stats::na.omit(plot_colors)
+    # Set color names, need to do this so na_color is not overridden if the
+    # user provides extra values for plot_colors
+    if (is.null(names(plot_colors))) {
+      lvls <- stats::na.omit(plot_lvls)
 
-        names(plot_colors) <- lvls[seq_along(plot_colors)]
-      }
+      plot_colors <- plot_colors[seq_along(lvls)]
+      plot_colors <- stats::na.omit(plot_colors)
 
-      res <- res +
-        ggplot2::scale_color_manual(
-          values   = plot_colors,
-          na.value = na_color
-        )
+      names(plot_colors) <- lvls[seq_along(plot_colors)]
     }
+
+    res <- res +
+      ggplot2::scale_color_manual(
+        values   = plot_colors,
+        na.value = na_color
+      )
   }
 
   # Set theme
@@ -148,7 +154,7 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
 plot_features.Seurat <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
                                  data_slot = "data", plot_colors = NULL,
                                  plot_lvls = names(plot_colors), min_q = NULL,
-                                 max_q = NULL, na_color = "grey50", ...) {
+                                 max_q = NULL, na_color = "grey80", ...) {
 
   # Fetch variables and add to meta.data
   # want input data to include meta.data and any features from FetchData
@@ -238,7 +244,7 @@ plot_vdj_feature <- function(input, ...) {
 plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2",
                                      summary_fn = NULL, chain = NULL,
                                      plot_lvls = names(plot_colors), min_q = NULL,
-                                     max_q = NULL, na_color = "grey50",
+                                     max_q = NULL, na_color = "grey80",
                                      chain_col = "chains", sep = ";", ...) {
 
   plt_dat <- summarize_vdj(
@@ -272,7 +278,7 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2"
 plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2",
                                     data_slot = "data", summary_fn = NULL,
                                     chain = NULL, plot_lvls = names(plot_colors),
-                                    min_q = NULL, max_q = NULL, na_color = "grey50",
+                                    min_q = NULL, max_q = NULL, na_color = "grey80",
                                     chain_col = "chains", sep = ";", ...) {
 
   # Fetch variables and add to meta.data
