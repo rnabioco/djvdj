@@ -39,13 +39,14 @@
 #' @importFrom dbscan kNN
 #' @importFrom igraph graph_from_data_frame cluster_louvain cluster_leiden membership
 #' @importFrom Biostrings stringDist
-#' @seealso [plot_seq_motifs()]
+#' @seealso [plot_motifs()]
 #' @export
-cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
-                         resolution = 0.5, k = 10, dist_method = NULL,
-                         run_umap = TRUE, chain_col = "chains",
-                         prefix = paste0(data_col, "_"), return_df = FALSE,
-                         sep = ";", ...) {
+cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
+                              method = "louvain", resolution = 0.5, k = 10,
+                              dist_method = NULL, run_umap = TRUE,
+                              chain_col = "chains",
+                              prefix = paste0(data_col, "_"),
+                              return_df = FALSE, sep = ";", ...) {
 
   # Check inputs
   if (!method %in% c("louvain", "leiden")) {
@@ -61,9 +62,13 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
     sep       = sep
   )
 
-  vdj  <- dplyr::select(vdj, all_of(c(CELL_COL, data_col)))
+  browser()
+
+  # vdj  <- dplyr::select(vdj, all_of(c(CELL_COL, data_col)))
+
+  vdj <- dplyr::distinct(vdj, !!!syms(c(CELL_COL, data_col)))
   seqs <- vdj[[data_col]]
-  seqs <- unique(sort(seqs))
+  # seqs <- unique(sort(seqs))
 
   # Calculate distance
   if (is.null(dist_method)) {
@@ -186,12 +191,13 @@ cluster_seqs <- function(input, data_col = "cdr3", chain, method = "louvain",
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional parameters to pass to [ggseqlogo::geom_logo()]
 #' @importFrom stringr str_trunc
+#' @seealso [cluster_sequences()]
 #' @export
-plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
-                            chain, plot_colors = NULL, plot_lvls = names(plot_colors),
-                            chain_col = "chains", width = 0.75,
-                            align_end = "5", facet_rows = NULL, sep = ";",
-                            ...) {
+plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
+                        chain, plot_colors = NULL,
+                        plot_lvls = names(plot_colors), chain_col = "chains",
+                        width = 0.75, align_end = "5", facet_rows = NULL,
+                        sep = ";", ...) {
 
   if (width <= 0) {
     stop("The provided width cutoff must be >0.", call. = FALSE)
@@ -273,28 +279,43 @@ plot_seq_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 #' than one of the provided chain will be excluded from the analysis.
 #' @param chain_col meta.data column containing chains for each cell.
 #' @param sep Separator used for storing per cell V(D)J data
+#' @importFrom stringr str_remove_all
 #' @noRd
 .fetch_seqs <- function(input, seq_col, chain, chain_col, sep = ";") {
+
+  per_cell <- ifelse(is.null(chain), TRUE, FALSE)
+
   res <- fetch_vdj(
     input,
-    vdj_cols      = c(seq_col, chain_col),
+    data_cols     = c(seq_col, chain_col),
     unnest        = FALSE,
     filter_cells  = TRUE,
+    per_cell      = per_cell,
     clonotype_col = seq_col,
     sep           = sep
   )
 
+  if (per_cell) {
+    if (is.null(sep)) stop("Must provide sep if per_cell is TRUE")
+
+    res <- dplyr::mutate(
+      res,
+      !!sym(seq_col) := stringr::str_remove_all(!!sym(seq_col), sep)
+    )
+
+    return(res)
+  }
+
   res <- .filter_chains(
     res,
-    vdj_cols  = seq_col,
-    chain     = chain,
-    chain_col = chain_col,
-    col_names = "{.col}",
+    data_cols  = seq_col,
+    chain      = chain,
+    chain_col  = chain_col,
+    col_names  = "{.col}",
     allow_dups = FALSE
   )
 
-  res <- dplyr::select(res, -all_of(chain_col))
-  res <- tidyr::unnest(res, cols = all_of(seq_col))
+  res <- tidyr::unnest(res, cols = all_of(c(chain_col, seq_col)))
   res <- dplyr::filter(res, !is.na(!!sym(seq_col)))
 
   res
