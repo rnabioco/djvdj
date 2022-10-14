@@ -124,7 +124,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 
     vdj <- fetch_vdj(
       vdj,
-      vdj_cols      = c(data_col, chain_col),
+      data_cols     = c(data_col, chain_col),
       clonotype_col = data_col,
       filter_cells  = TRUE,
       unnest        = FALSE,
@@ -133,7 +133,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 
     vdj <- .filter_chains(
       vdj,
-      vdj_cols   = data_col,
+      data_cols  = data_col,
       chain      = chain,
       chain_col  = chain_col,
       col_names  = "{.col}",
@@ -520,7 +520,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
   if (!is.null(chain)) {
     vdj <- fetch_vdj(
       vdj,
-      vdj_cols      = c(data_col, chain_col),
+      data_cols     = c(data_col, chain_col),
       clonotype_col = data_col,
       filter_cells  = TRUE,
       unnest        = FALSE,
@@ -529,7 +529,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
 
     vdj <- .filter_chains(
       vdj,
-      vdj_cols   = data_col,
+      data_cols  = data_col,
       chain      = chain,
       chain_col  = chain_col,
       col_names  = "{.col}",

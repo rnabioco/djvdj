@@ -12,13 +12,15 @@
 #' condition must return TRUE/FALSE for each chain or a single TRUE/FALSE for
 #' each cell. Data can be filtered based on cell barcodes by referring to the
 #' '.cell_id' column.
-#' @param vdj_cols meta.data columns containing V(D)J data to use for
+#' @param data_cols meta.data columns containing V(D)J data to use for
 #' filtering. If NULL, V(D)J data are automatically selected by identifying
 #' columns that have NAs in the same rows as clonotype_col.
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
 #' is used to determine which columns contain V(D)J data.
-#' @param sep Separator used for storing per cell V(D)J data. If NULL, columns
-#' containing V(D)J data will not be converted to vectors for filtering.
+#' @param per_cell Filter data based on per-cell values instead of per-chain
+#' values. If TRUE, per-chain values will not be parsed.
+#' @param sep Separator used for storing per cell V(D)J data. If NULL, per_cell
+#' will be set TRUE.
 #' @return Object with filtered meta.data
 #'
 #' @examples
@@ -64,7 +66,7 @@
 #' head(res@meta.data, 3)
 #'
 #' @export
-filter_vdj <- function(input, filt, vdj_cols = NULL, clonotype_col = "clonotype_id",
+filter_vdj <- function(input, filt, data_cols = NULL, clonotype_col = "clonotype_id",
                        sep = ";") {
 
   # Format input data
@@ -74,7 +76,7 @@ filter_vdj <- function(input, filt, vdj_cols = NULL, clonotype_col = "clonotype_
   col_list <- .get_vdj_cols(
     df_in     = vdj,
     clone_col = clonotype_col,
-    cols_in   = vdj_cols,
+    cols_in   = data_cols,
     sep       = sep
   )
 

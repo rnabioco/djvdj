@@ -2,7 +2,7 @@
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
-#' @param gene_cols meta.data column containing V(D)J genes identified for each
+#' @param data_cols meta.data column containing V(D)J genes identified for each
 #' clonotype. If multiple columns are provided, paired usage of genes will be
 #' calculated.
 #' @param cluster_col meta.data column containing cell clusters to use when
@@ -18,35 +18,35 @@
 #' # Calculate V(D)J segment usage for all cells
 #' calc_gene_usage(
 #'   vdj_so,
-#'   gene_cols = "v_gene"
+#'   data_cols = "v_gene"
 #' )
 #'
 #' # Calculate gene usage separately for cell clusters
 #' calc_gene_usage(
 #'   vdj_sce,
-#'   gene_cols = "v_gene",
+#'   data_cols = "v_gene",
 #'   cluster_col = "orig.ident"
 #' )
 #'
 #' # Calculate gene usage for a specific chain(s)
 #' calc_gene_usage(
 #'   vdj_so,
-#'   gene_cols = "v_gene",
+#'   data_cols = "v_gene",
 #'   chain = c("IGK", "IGL")
 #' )
 #'
 #' # Calculate paired usage of V(D)J segments
 #' calc_gene_usage(
 #'   vdj_sce,
-#'   gene_cols = c("v_gene", "j_gene"),
+#'   data_cols = c("v_gene", "j_gene"),
 #' )
 #'
 #' @export
-calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
+calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
                             chain_col = "chains", sep = ";") {
 
   # Format input data
-  sep_cols <- gene_cols
+  sep_cols <- data_cols
 
   if (!is.null(chain)) sep_cols <- c(sep_cols, chain_col)
 
@@ -59,7 +59,7 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
   meta <- dplyr::select(meta, all_of(vdj_cols))
 
   meta <- dplyr::filter(meta, dplyr::if_all(
-    all_of(gene_cols),
+    all_of(data_cols),
     ~ !is.na(.x)
   ))
 
@@ -82,14 +82,14 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
       remove = FALSE
     )
 
-    clst_key <- dplyr::select(res, -all_of(gene_cols))
+    clst_key <- dplyr::select(res, -all_of(data_cols))
   }
 
   # Filter chains
   if (!is.null(chain)) {
     res <- .filter_chains(
       res,
-      vdj_cols  = gene_cols,
+      data_cols = data_cols,
       chain     = chain,
       chain_col = chain_col,
       col_names = "{.col}",
@@ -99,11 +99,11 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
     res <- dplyr::select(res, -all_of(chain_col))
   }
 
-  res <- tidyr::unnest(res, cols = all_of(gene_cols))
+  res <- tidyr::unnest(res, cols = all_of(data_cols))
   res <- dplyr::distinct(res)
 
   # Count genes used
-  res <- dplyr::group_by(res, !!!syms(gene_cols))
+  res <- dplyr::group_by(res, !!!syms(data_cols))
 
   if (!is.null(cluster_col)) {
     res <- dplyr::group_by(res, !!!syms(c(clst_nm, cluster_col)), .add = TRUE)
@@ -150,7 +150,7 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 
     res <- dplyr::select(
       res,
-      all_of(c(gene_cols, cluster_col, "n_cells", "freq"))
+      all_of(c(data_cols, cluster_col, "n_cells", "freq"))
     )
   }
 
@@ -165,7 +165,7 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
-#' @param gene_cols meta.data column containing genes for each clonotype,
+#' @param data_cols meta.data column containing genes for each clonotype,
 #' provide a vector with two column names to plot paired usage of genes
 #' @param cluster_col meta.data column containing cell clusters to use for
 #' calculating gene usage
@@ -178,11 +178,11 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' @param method Method to use for plotting, possible values are:
 #'
 #' - 'bar', create a bargraph, this is the default when a single column is
-#' passed to the gene_cols argument
+#' passed to the data_cols argument
 #' - 'heatmap', create a heatmap, this is the default when two columns are
-#' passed to the gene_cols argument
+#' passed to the data_cols argument
 #' - 'circos', create a circos plot, this requires two columns to be provided
-#' to the gene_cols argument
+#' to the data_cols argument
 #'
 #' @param plot_colors Character vector containing colors to use for plot. If a
 #' bar graph is created this will specify how to color cell clusters. For a
@@ -203,48 +203,48 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' # Plot V(D)J segment usage for all cells
 #' plot_gene_usage(
 #'   vdj_so,
-#'   gene_cols = "v_gene"
+#'   data_cols = "v_gene"
 #' )
 #'
 #' # Plot gene usage separately for cell clusters
 #' plot_gene_usage(
 #'   vdj_sce,
-#'   gene_cols = "v_gene",
+#'   data_cols = "v_gene",
 #'   cluster_col = "orig.ident"
 #' )
 #'
 #' # Plot gene usage for a specific chain
 #' plot_gene_usage(
 #'   vdj_so,
-#'   gene_cols = "v_gene",
+#'   data_cols = "v_gene",
 #'   chain = c("IGH", "IGK")
 #' )
 #'
 #' # Plot gene usage for a specific chain
 #' plot_gene_usage(
 #'   vdj_sce,
-#'   gene_cols = "v_gene",
+#'   data_cols = "v_gene",
 #'   chain = c("IGH", "IGK")
 #' )
 #'
 #' # Create a heatmap
 #' plot_gene_usage(
 #'   vdj_so,
-#'   gene_cols = "v_gene",
+#'   data_cols = "v_gene",
 #'   type = "heatmap"
 #' )
 #'
 #' # Plot paired usage of V(D)J segments
 #' plot_gene_usage(
 #'   vdj_sce,
-#'   gene_cols = c("v_gene", "j_gene"),
+#'   data_cols = c("v_gene", "j_gene"),
 #'   type = "circos"
 #' )
 #'
 #' # Specify colors to use for each cell cluster
 #' plot_gene_usage(
 #'   vdj_so,
-#'   gene_cols = "v_gene",
+#'   data_cols = "v_gene",
 #'   cluster_col = "orig.ident",
 #'   plot_colors = c(avid_2 = "blue", avid_1 = "green")
 #' )
@@ -252,7 +252,7 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' # Specify order to use for plotting cell clusters
 #' plot_gene_usage(
 #'   vdj_sce,
-#'   gene_cols = "v_gene",
+#'   data_cols = "v_gene",
 #'   cluster_col = "orig.ident",
 #'   plot_lvls = c("avid_2", "avid_1")
 #' )
@@ -260,38 +260,38 @@ calc_gene_usage <- function(input, gene_cols, cluster_col = NULL, chain = NULL,
 #' # Specify certain V(D)J genes to include in plot
 #' plot_gene_usage(
 #'   vdj_so,
-#'   gene_cols = "v_gene",
+#'   data_cols = "v_gene",
 #'   vdj_genes = c("IGKV5-43", "IGLV1", "IGHV1-64")
 #' )
 #'
 #' # Specify the number of top V(D)J genes to include in plot
 #' plot_gene_usage(
 #'   vdj_sce,
-#'   gene_cols = "v_gene",
+#'   data_cols = "v_gene",
 #'   n_genes = 10
 #' )
 #'
 #' # Plot the frequency of each V(D)J segment instead of percent
 #' plot_gene_usage(
 #'   vdj_so,
-#'   gene_cols = "v_gene",
+#'   data_cols = "v_gene",
 #'   units = "frequency"
 #' )
 #'
 #' @export
-plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
+plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
                             group_col = NULL, chain = NULL, method = NULL,
                             plot_colors = NULL, vdj_genes = NULL, n_genes = 20,
                             plot_lvls = names(plot_colors), units = "percent",
                             chain_col = "chains", sep = ";", ...) {
 
   # Check inputs
-  paired <- length(gene_cols) == 2
+  paired <- length(data_cols) == 2
 
   if (is.null(method))             method  <- ifelse(paired, "heatmap", "bar")
   if (identical(method, "circos")) units <- "frequency"
 
-  .chk_usage_args(method, gene_cols, group_col, units, paired)
+  .chk_usage_args(method, data_cols, group_col, units, paired)
   .chk_group_cols(cluster_col, group_col)
 
   # Set y-axis
@@ -300,7 +300,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   # Calculate gene usage
   plt_dat <- calc_gene_usage(
     input       = input,
-    gene_cols   = gene_cols,
+    data_cols   = data_cols,
     cluster_col = c(cluster_col, group_col),
     chain       = chain,
     chain_col   = chain_col,
@@ -308,7 +308,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   )
 
   plt_dat <- dplyr::filter(plt_dat, dplyr::if_all(
-    dplyr::all_of(gene_cols),
+    dplyr::all_of(data_cols),
     ~ .x != "None"
   ))
 
@@ -316,7 +316,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   top_genes <- unique(vdj_genes)
 
   if (!is.null(top_genes)) {
-    absent <- unlist(plt_dat[, gene_cols], use.names = FALSE)
+    absent <- unlist(plt_dat[, data_cols], use.names = FALSE)
     absent <- top_genes[!top_genes %in% absent]
 
     if (identical(absent, top_genes)) {
@@ -328,10 +328,10 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
       warning("Some genes not found: ", absent)
     }
 
-    # if vdj_genes are provided and two gene_cols are provided, gene pairs
+    # if vdj_genes are provided and two data_cols are provided, gene pairs
     # containing at least one of the specified genes will be included
     plt_dat <- dplyr::filter(plt_dat, dplyr::if_any(
-      dplyr::all_of(gene_cols),
+      dplyr::all_of(data_cols),
       ~ .x %in% top_genes
     ))
 
@@ -341,7 +341,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
     plt_dat <- .filter_top_genes(
       plt_dat,
       dat_col  = usage_col,
-      gn_col   = gene_cols,
+      gn_col   = data_cols,
       clst_col = cluster_col,
       n        = n_genes
     )
@@ -354,7 +354,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   # Plot gene usage
   plt_args <- list(
     df_in    = plt_dat,
-    gn_col   = gene_cols,
+    gn_col   = data_cols,
     dat_col  = usage_col,
     clst_col = cluster_col,
     typ      = method,
@@ -689,19 +689,19 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   if (paired && !typ %in% c("heatmap", "circos")) {
     stop(
       "type must be 'heatmap' or 'circos' when two columns ",
-      "are passed to the gene_cols argument."
+      "are passed to the data_cols argument."
     )
   }
 
   if (identical(typ, "circos") && !paired) {
     stop(
       "A circos plot can only be generated when two columns ",
-      "are passed to the gene_cols argument."
+      "are passed to the data_cols argument."
     )
   }
 
   if (length(gn_cols) > 2) {
-    stop("Cannot specify more than two values for gene_cols")
+    stop("Cannot specify more than two values for data_cols")
   }
 
   if (!axis %in% c("percent", "frequency")) {
@@ -711,7 +711,7 @@ plot_gene_usage <- function(input, gene_cols, cluster_col = NULL,
   if (paired && !is.null(grp_col)) {
     stop(
       "The group_col argument can only be used when a single column ",
-      "is passed to the gene_cols argument."
+      "is passed to the data_cols argument."
     )
   }
 }

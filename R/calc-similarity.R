@@ -88,7 +88,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
   if (!is.null(chain)) {
     vdj <- fetch_vdj(
       input,
-      vdj_cols      = c(data_col, chain_col),
+      data_cols     = c(data_col, chain_col),
       clonotype_col = data_col,
       filter_cells  = TRUE,
       unnest        = FALSE,
@@ -97,7 +97,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 
     vdj <- .filter_chains(
       vdj,
-      vdj_cols   = data_col,
+      data_cols  = data_col,
       chain      = chain,
       chain_col  = chain_col,
       col_names  = "{.col}",

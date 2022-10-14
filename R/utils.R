@@ -84,7 +84,7 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 #' Filter V(D)J data based on chain
 #'
 #' @param df_in data.frame
-#' @param vdj_cols meta.data column(s) containing V(D)J data to filter based on
+#' @param data_cols meta.data column(s) containing V(D)J data to filter based on
 #' chain
 #' @param chain Chain to use for filtering V(D)J data
 #' @param chain_col meta.data column(s) containing chains for each cell
@@ -97,7 +97,7 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 #' This filtering is only performed for list-cols.
 #' @return filtered data.frame
 #' @noRd
-.filter_chains <- function(df_in, vdj_cols, chain, chain_col = "chains",
+.filter_chains <- function(df_in, data_cols, chain, chain_col = "chains",
                            col_names = "{.col}", allow_dups = TRUE,
                            empty_val = NA) {
 
@@ -105,8 +105,8 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
   chain <- unique(chain)
 
-  # If all vdj_cols are not list-cols, filter data.frame normally
-  is_lst <- purrr::map_lgl(df_in[, c(chain_col, vdj_cols)], is.list)
+  # If all data_cols are not list-cols, filter data.frame normally
+  is_lst <- purrr::map_lgl(df_in[, c(chain_col, data_cols)], is.list)
 
   if (all(!is_lst)) {
     res <- dplyr::filter(df_in, !!sym(chain_col) %in% chain)
@@ -127,7 +127,7 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
     if (length(x) != length(chns)) {
       stop(
-        "Values in ", chain_col,  " are not the same length as vdj_cols, ",
+        "Values in ", chain_col,  " are not the same length as data_cols, ",
         "are you using the correct chain_col?"
       )
     }
@@ -148,7 +148,7 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
   res <- dplyr::mutate(
     res,
     across(
-      all_of(vdj_cols),
+      all_of(data_cols),
       ~ .map_fn(.x, !!sym(chain_col)),
       .names = col_names
     )
@@ -156,7 +156,7 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
   res <- dplyr::ungroup(res)
 
-  if (!allow_dups) res <- tidyr::unnest(res, all_of(vdj_cols))
+  if (!allow_dups) res <- tidyr::unnest(res, all_of(data_cols))
 
   res
 }

@@ -480,7 +480,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
     res <- define_clonotypes(
       res,
-      vdj_cols      = clone_cols,
+      data_cols     = clone_cols,
       filter_chains = filt_chains
     )
   }
@@ -1276,7 +1276,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param vdj_cols meta.data columns containing V(D)J data to use for defining
+#' @param data_cols meta.data columns containing V(D)J data to use for defining
 #' clonotypes
 #' @param clonotype_col Name of column to use for storing clonotype IDs
 #' @param filter_chains Column(s) to use for filtering chains prior to defining
@@ -1290,7 +1290,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' # Define clonotypes using the CDR3 nucleotide sequence
 #' res <- define_clonotypes(
 #'   vdj_so,
-#'   vdj_cols = "cdr3_nt"
+#'   data_cols = "cdr3_nt"
 #' )
 #'
 #' head(res@meta.data, 1)
@@ -1299,7 +1299,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' # and the V and J genes
 #' res <- define_clonotypes(
 #'   vdj_sce,
-#'   vdj_cols = c("cdr3_nt", "v_gene", "j_gene")
+#'   data_cols = c("cdr3_nt", "v_gene", "j_gene")
 #' )
 #'
 #' head(res@colData, 1)
@@ -1307,7 +1307,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' # Modify the name of the column used to store clonotype IDs
 #' res <- define_clonotypes(
 #'   vdj_so,
-#'   vdj_cols = "cdr3_nt",
+#'   data_cols = "cdr3_nt",
 #'   clonotype_col = "NEW_clonotype_id"
 #' )
 #'
@@ -1316,14 +1316,14 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' # When defining clonotypes only use chains that are productive
 #' res <- define_clonotypes(
 #'   vdj_sce,
-#'   vdj_cols = "cdr3_nt",
+#'   data_cols = "cdr3_nt",
 #'   filter_chains = "productive"
 #' )
 #'
 #' head(res@colData, 1)
 #'
 #' @export
-define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
+define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
                               filter_chains = c("productive", "full_length"), sep = ";") {
 
   # Get meta.data
@@ -1332,7 +1332,7 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
 
   meta <- dplyr::select(meta, -any_of(clonotype_col))
 
-  all_cols <- c(vdj_cols, filter_chains)
+  all_cols <- c(data_cols, filter_chains)
 
   if (!all(all_cols %in% colnames(meta))) {
     stop(
@@ -1341,7 +1341,7 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
     )
   }
 
-  # Remove cells with NAs for any vdj_cols
+  # Remove cells with NAs for any data_cols
   vdj <- dplyr::filter(
     meta,
     dplyr::if_all(dplyr::all_of(all_cols), ~ !is.na(.x))
@@ -1349,11 +1349,10 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
 
   vdj <- dplyr::select(vdj, all_of(c(CELL_COL, all_cols)))
 
-  # Only use values in vdj_cols that are TRUE for all filter_chains columns
+  # Only use values in data_cols that are TRUE for all filter_chains columns
   # first identify contigs TRUE for all filter_chains columns
-  # subset each vdj_cols column based on .clone_idx
+  # subset each data_cols column based on .clone_idx
   if (!is.null(filter_chains)) {
-
     clmns <- syms(filter_chains)
 
     vdj <- tibble::column_to_rownames(vdj, CELL_COL)
@@ -1363,16 +1362,16 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
       .clone_idx = list(purrr::reduce(list(!!!clmns), ~ .x & .y)),
 
       dplyr::across(
-        dplyr::all_of(vdj_cols),
+        dplyr::all_of(data_cols),
         ~ paste0(.x[.data$.clone_idx], collapse = ""),
         .names = ".clone_{.col}"
       ),
 
       clonotype_col = NULL,
-      vdj_cols = all_cols
+      data_cols = all_cols
     )
 
-    vdj_cols <- paste0(".clone_", vdj_cols)
+    data_cols <- paste0(".clone_", data_cols)
 
     vdj <- .get_meta(vdj)
   }
@@ -1380,7 +1379,7 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
   # Add new clonotype IDs
   vdj <- dplyr::mutate(
     vdj,
-    .new_clone = paste(!!!syms(vdj_cols), sep = ""),
+    .new_clone = paste(!!!syms(data_cols), sep = ""),
     .new_id    = rank(.data$.new_clone, ties.method = "min"),
 
     !!sym(clonotype_col) := ifelse(

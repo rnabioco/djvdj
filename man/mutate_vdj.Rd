@@ -8,7 +8,7 @@ mutate_vdj(
   input,
   ...,
   clonotype_col = "clonotype_id",
-  vdj_cols = NULL,
+  data_cols = NULL,
   return_df = FALSE,
   sep = ";"
 )
@@ -31,7 +31,7 @@ new_col = list(umis + 1).}
 \item{clonotype_col}{meta.data column containing clonotype IDs. This is used
 to identify columns containing V(D)J data.}
 
-\item{vdj_cols}{meta.data columns containing V(D)J data to modify. If NULL,
+\item{data_cols}{meta.data columns containing V(D)J data to modify. If NULL,
 data are automatically selected by identifying columns that have NAs in the
 same rows as clonotype_col.}
 
