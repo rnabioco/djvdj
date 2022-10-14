@@ -52,20 +52,29 @@ so <- splen_so %>%
 
 ## Clustering sequences
 
-The `cluster_seqs()` function can be used to cluster cells based on CDR3 sequences, or any other sequences present in the object. Provide the meta.data column containing sequences to the `data_col` argument and indicate the desired chain using the `chain` argument.
+The `cluster_sequences()` function can be used to cluster cells based on CDR3 sequences, or any other sequences present in the object. Provide the meta.data column containing sequences to the `data_col` argument. By default if a cell has multiple chains, the sequences will be concatenated.
 
 By default, distances are calculated for amino acid sequences using the [BLOSUM62](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC50453/) substitution matrix, which is based on observed amino acid frequencies and substitution probabilities. The calculated distances are then used to cluster cells using either the Louvain or Leiden clustering algorithms. The coarseness of the clusters an be adjusted using the `resolution` argument with smaller values returning fewer clusters.
 
-In this example we are clustering cells based on the IGK CDR3 amino acid sequence.
+In this example we are clustering cells based on the CDR3 amino acid sequence.
 
 ```{r}
 so_vdj <- so %>%
-  cluster_seqs(
+  cluster_sequences(
     data_col    = "cdr3",
-    chain       = "IGK",
     method      = "louvain",   # clustering method
     dist_method = "BLOSUM62",  # method for calculating sequence distances
     resolution  = 0.5
+  )
+```
+
+Use the `chain` argument to cluster using only sequences from a specific chain.
+
+```{r}
+so_vdj <- so %>%
+  cluster_sequences(
+    data_col = "cdr3",
+    chain    = "IGK"
   )
 ```
 
@@ -73,7 +82,7 @@ By default the Uniform Manifold Approximation and Projection (UMAP) dimensional 
 
 ```{r}
 so_vdj <- so %>%
-  cluster_seqs(
+  cluster_sequences(
     data_col = "cdr3",
     chain    = "IGK",
     run_umap = FALSE
@@ -86,7 +95,7 @@ To return clustering results for multiple resolutions, a vector can be provided 
 set.seed(42)
 
 so_vdj <- so %>%
-  cluster_seqs(
+  cluster_sequences(
     data_col   = "cdr3",
     chain      = "IGK",
     resolution = c(0.4, 0.8, 1.6)
@@ -129,13 +138,13 @@ so_vdj %>%
 
 ## CDR3 motifs
 
-Using the `plot_seq_motifs()` function we can generate sequence motifs for each cluster. We just need to provide the same `data_col` and `chain` used for clustering. To create a separate motif for each cluster, we also need to provide the column containing cluster IDs to the `cluster_col` argument.
+Using the `plot_motifs()` function we can generate sequence motifs for each cluster. We just need to provide the same `data_col` and `chain` used for clustering. To create a separate motif for each cluster, we also need to provide the column containing cluster IDs to the `cluster_col` argument.
 
 As expected we see that most cells within the MD4 cluster have the exact same IGK CDR3 sequence.
 
 ```{r, fig.width = 10}
 so_vdj %>%
-  plot_seq_motifs(
+  plot_motifs(
     data_col    = "cdr3",
     cluster_col = "cdr3_cluster_0.4",
     chain       = "IGK"
@@ -148,7 +157,7 @@ In this example we generate motifs for the last 11 amino acids of the CDR3.
 
 ```{r, fig.width = 10}
 so_vdj %>%
-  plot_seq_motifs(
+  plot_motifs(
     data_col    = "cdr3",
     cluster_col = "cdr3_cluster_0.4",
     chain       = "IGK",
@@ -157,11 +166,11 @@ so_vdj %>%
   )
 ```
 
-Plot colors can be modified using the `plot_colors` argument and the number of rows used to arrange panels can be adjusted with the `facet_rows` argument. Like most djvdj plotting functions, `plot_seq_motifs()` will return a ggplot2 object that can be modified with other ggplot2 functions.
+Plot colors can be modified using the `plot_colors` argument and the number of rows used to arrange panels can be adjusted with the `facet_rows` argument. Like most djvdj plotting functions, `plot_motifs()` will return a ggplot2 object that can be modified with other ggplot2 functions.
 
 ```{r, fig.height = 6}
 so_vdj %>%
-  plot_seq_motifs(
+  plot_motifs(
     data_col    = "cdr3",
     cluster_col = "cdr3_cluster_0.4",
     chain       = "IGK",
