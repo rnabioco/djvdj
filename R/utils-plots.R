@@ -1,7 +1,7 @@
 #' ggplot2 imports
 #'
 #' @importFrom ggplot2 ggplot aes geom_point geom_line geom_histogram geom_density geom_tile geom_boxplot geom_violin geom_col
-#' @importFrom ggplot2 scale_x_discrete scale_y_continuous scale_x_log10 scale_y_log10 position_dodge
+#' @importFrom ggplot2 scale_x_discrete scale_y_continuous scale_x_continuous position_dodge
 #' @importFrom ggplot2 scale_color_manual scale_fill_manual scale_color_gradientn scale_fill_gradientn
 #' @importFrom ggplot2 stat_summary facet_wrap guides guide_legend labs
 #' @importFrom ggplot2 theme element_blank element_text element_line
@@ -516,13 +516,14 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param .fill Variable to use for fill color
 #' @param clrs Vector of colors for plotting
 #' @param method Method to use for plotting, either 'boxplot' or 'violin'
-#' @param log_trans If TRUE, log10 transform the y-axis
+#' @param trans Transformation to use for plotting data, e.g. 'log10', refer
+#' to [ggplot2::continuous_scale()] for more options.
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
 .create_boxes <- function(df_in, x = NULL, y, .color = NULL, .fill = NULL,
-                          clrs = NULL, method = "boxplot", log_trans = FALSE,
+                          clrs = NULL, method = "boxplot", trans = "identity",
                           ...) {
 
   # Check input
@@ -539,24 +540,19 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   if (!is.null(.fill))  plt_aes$fill   <- sym(.fill)
   if (!is.null(.color)) plt_aes$colour <- sym(.color)
 
-  # Adjust theme
+  # Adjust theme and transform axis
   res <- ggplot2::ggplot(df_in, plt_aes) +
     djvdj_theme() +
     ggplot2::theme(
       legend.position = "none",
       axis.title.x    = ggplot2::element_blank()
-    )
+    ) +
+    ggplot2::scale_y_continuous(trans = trans)
 
   if (!is.null(clrs)) {
     res <- res +
       ggplot2::scale_color_manual(values = clrs) +
       ggplot2::scale_fill_manual(values = clrs)
-  }
-
-  # Log10 tranform y-axis
-  if (log_trans) {
-    res <- res +
-      ggplot2::scale_y_log10()
   }
 
   # Return violins
@@ -587,13 +583,15 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param units Units to use for y-axis when plotting histogram. Use
 #' 'frequency' to show the raw number of values or 'percent' to show
 #' the percentage of total values.
-#' @param log_trans If TRUE, log10 transform the x-axis
+#' @param trans Transformation to use for plotting data, e.g. 'log10', refer
+#' to [ggplot2::continuous_scale()] for more options.
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_hist <- function(df_in, x, .color = NULL, .fill = NULL, clrs = NULL, method = "histogram",
-                         units = "frequency", log_trans = FALSE, ...) {
+.create_hist <- function(df_in, x, .color = NULL, .fill = NULL, clrs = NULL,
+                         method = "histogram", units = "frequency",
+                         trans = "identity", ...) {
 
   # Check inputs
   typs <- c("histogram", "density")
@@ -618,29 +616,19 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   plt_aes$x <- sym(x)
 
-  if (!is.null(.fill)) {
-    plt_aes$fill <- sym(.fill)
-  }
+  if (!is.null(.fill))  plt_aes$fill   <- sym(.fill)
+  if (!is.null(.color)) plt_aes$colour <- sym(.color)
 
-  if (!is.null(.color)) {
-    plt_aes$colour <- sym(.color)
-  }
-
-  # Adjust theme
+  # Adjust theme and transform axis
   res <- ggplot2::ggplot(df_in, plt_aes) +
     djvdj_theme() +
-    ggplot2::theme(legend.position = "top")
+    ggplot2::theme(legend.position = "top") +
+    ggplot2::scale_x_continuous(trans = trans)
 
   if (!is.null(clrs)) {
     res <- res +
       ggplot2::scale_color_manual(values = clrs) +
       ggplot2::scale_fill_manual(values = clrs)
-  }
-
-  # Log10 transform axis
-  if (log_trans) {
-    res <- res +
-      ggplot2::scale_x_log10()
   }
 
   # Return density plot

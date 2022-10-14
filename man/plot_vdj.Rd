@@ -18,7 +18,7 @@ plot_vdj(
   units = "frequency",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
-  log_trans = FALSE,
+  trans = "identity",
   chain_col = "chains",
   sep = ";",
   ...
@@ -33,7 +33,7 @@ plot_vdj_reads(
   units = "frequency",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
-  log_trans = TRUE,
+  trans = "log10",
   chain_col = "chains",
   sep = ";",
   ...
@@ -48,7 +48,7 @@ plot_cdr3_length(
   units = "frequency",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
-  log_trans = TRUE,
+  trans = "log10",
   chain_col = "chains",
   sep = ";",
   ...
@@ -63,7 +63,7 @@ plot_vdj_mutations(
   units = "frequency",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
-  log_trans = FALSE,
+  trans = "identity",
   chain_col = "chains",
   sep = ";",
   ...
@@ -111,7 +111,8 @@ e.g. fill = "red", color = "black"}
 \item{plot_lvls}{Character vector containing order to use for plotting cell
 clusters specified by cluster_col}
 
-\item{log_trans}{If TRUE, axis will be log10 transformed}
+\item{trans}{Transformation to use for plotting data, e.g. 'log10', refer
+to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}} for more options.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
@@ -124,7 +125,7 @@ linetype, etc.}
 ggplot object
 }
 \description{
-Compare V(D)J data for cell clusters
+Plot continuous V(D)J data
 }
 \examples{
 # Plot the number of indels for each chain
@@ -161,7 +162,7 @@ plot_vdj(
   vdj_so,
   data_cols = "reads",
   cluster_col = "orig.ident",
-  log_trans = TRUE
+  trans = "log10"
 )
 
 # Express y-axis units as percent of total values

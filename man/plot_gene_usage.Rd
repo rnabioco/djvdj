@@ -6,7 +6,7 @@
 \usage{
 plot_gene_usage(
   input,
-  gene_cols,
+  data_cols,
   cluster_col = NULL,
   group_col = NULL,
   chain = NULL,
@@ -25,7 +25,7 @@ plot_gene_usage(
 \item{input}{Object containing V(D)J data. If a data.frame is provided, the
 cell barcodes should be stored as row names.}
 
-\item{gene_cols}{meta.data column containing genes for each clonotype,
+\item{data_cols}{meta.data column containing genes for each clonotype,
 provide a vector with two column names to plot paired usage of genes}
 
 \item{cluster_col}{meta.data column containing cell clusters to use for
@@ -41,11 +41,11 @@ all chains}
 \item{method}{Method to use for plotting, possible values are:
 \itemize{
 \item 'bar', create a bargraph, this is the default when a single column is
-passed to the gene_cols argument
+passed to the data_cols argument
 \item 'heatmap', create a heatmap, this is the default when two columns are
-passed to the gene_cols argument
+passed to the data_cols argument
 \item 'circos', create a circos plot, this requires two columns to be provided
-to the gene_cols argument
+to the data_cols argument
 }}
 
 \item{plot_colors}{Character vector containing colors to use for plot. If a
@@ -79,48 +79,48 @@ Plot V(D)J segment usage
 # Plot V(D)J segment usage for all cells
 plot_gene_usage(
   vdj_so,
-  gene_cols = "v_gene"
+  data_cols = "v_gene"
 )
 
 # Plot gene usage separately for cell clusters
 plot_gene_usage(
   vdj_sce,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   cluster_col = "orig.ident"
 )
 
 # Plot gene usage for a specific chain
 plot_gene_usage(
   vdj_so,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   chain = c("IGH", "IGK")
 )
 
 # Plot gene usage for a specific chain
 plot_gene_usage(
   vdj_sce,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   chain = c("IGH", "IGK")
 )
 
 # Create a heatmap
 plot_gene_usage(
   vdj_so,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   type = "heatmap"
 )
 
 # Plot paired usage of V(D)J segments
 plot_gene_usage(
   vdj_sce,
-  gene_cols = c("v_gene", "j_gene"),
+  data_cols = c("v_gene", "j_gene"),
   type = "circos"
 )
 
 # Specify colors to use for each cell cluster
 plot_gene_usage(
   vdj_so,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   cluster_col = "orig.ident",
   plot_colors = c(avid_2 = "blue", avid_1 = "green")
 )
@@ -128,7 +128,7 @@ plot_gene_usage(
 # Specify order to use for plotting cell clusters
 plot_gene_usage(
   vdj_sce,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   cluster_col = "orig.ident",
   plot_lvls = c("avid_2", "avid_1")
 )
@@ -136,21 +136,21 @@ plot_gene_usage(
 # Specify certain V(D)J genes to include in plot
 plot_gene_usage(
   vdj_so,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   vdj_genes = c("IGKV5-43", "IGLV1", "IGHV1-64")
 )
 
 # Specify the number of top V(D)J genes to include in plot
 plot_gene_usage(
   vdj_sce,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   n_genes = 10
 )
 
 # Plot the frequency of each V(D)J segment instead of percent
 plot_gene_usage(
   vdj_so,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   units = "frequency"
 )
 

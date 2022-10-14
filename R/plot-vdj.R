@@ -17,6 +17,9 @@ plot_features <- function(input, ...) {
 #' @param y Variable to plot on y-axis
 #' @param plot_colors Vector of colors to use for plotting
 #' @param plot_lvls Levels to use for ordering feature
+#' @param trans Transformation to use when coloring cells by a continuous
+#' variable, e.g. 'log10', refer to [ggplot2::continuous_scale()] for more
+#' options.
 #' @param min_q Minimum quantile cutoff for color scale.
 #' @param max_q Maximum quantile cutoff for color scale.
 #' @param na_color Color to use for missing values
@@ -43,7 +46,8 @@ plot_features <- function(input, ...) {
 #' @name plot_features
 plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
                                   plot_colors = NULL, plot_lvls = names(plot_colors),
-                                  min_q = NULL, max_q = NULL, na_color = "grey80", ...) {
+                                  trans = "identity", min_q = NULL, max_q = NULL,
+                                  na_color = "grey80", ...) {
 
   # Check arguments
   if (identical(x, y)) {
@@ -101,14 +105,15 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
   ) +
     ggplot2::geom_point(...)
 
-  # Set feature colors, use ggplot2 defaults if NULL
+  # Set feature colors, use ggplot2 defaults if plot_colors is NULL
   if (is_num) {
     plot_colors <- plot_colors %||% c("#132B43", "#56B1F7")
 
     res <- res +
       ggplot2::scale_color_gradientn(
         colors   = plot_colors,
-        na.value = na_color
+        na.value = na_color,
+        trans    = trans
       )
 
   } else {
@@ -153,7 +158,8 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
 #' @export
 plot_features.Seurat <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
                                  data_slot = "data", plot_colors = NULL,
-                                 plot_lvls = names(plot_colors), min_q = NULL,
+                                 plot_lvls = names(plot_colors),
+                                 trans = "identity", min_q = NULL,
                                  max_q = NULL, na_color = "grey80", ...) {
 
   # Fetch variables and add to meta.data
@@ -178,6 +184,7 @@ plot_features.Seurat <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
     feature     = feature,
     plot_colors = plot_colors,
     plot_lvls   = plot_lvls,
+    trans       = trans,
     min_q       = min_q,
     max_q       = max_q,
     na_color    = na_color,
@@ -241,9 +248,11 @@ plot_vdj_feature <- function(input, ...) {
 #' )
 #'
 #' @export
-plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2",
-                                     summary_fn = NULL, chain = NULL,
-                                     plot_lvls = names(plot_colors), min_q = NULL,
+plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
+                                     y = "UMAP_2", summary_fn = NULL,
+                                     chain = NULL,
+                                     plot_lvls = names(plot_colors),
+                                     trans = "identity", min_q = NULL,
                                      max_q = NULL, na_color = "grey80",
                                      chain_col = "chains", sep = ";", ...) {
 
@@ -275,10 +284,12 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1", y = "UMAP_2"
 #' @param data_slot Slot in the Seurat object to pull data
 #' @importFrom Seurat FetchData
 #' @export
-plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2",
-                                    data_slot = "data", summary_fn = NULL,
-                                    chain = NULL, plot_lvls = names(plot_colors),
-                                    min_q = NULL, max_q = NULL, na_color = "grey80",
+plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
+                                    y = "UMAP_2", data_slot = "data",
+                                    summary_fn = NULL, chain = NULL,
+                                    plot_lvls = names(plot_colors),
+                                    trans = "identity", min_q = NULL,
+                                    max_q = NULL, na_color = "grey80",
                                     chain_col = "chains", sep = ";", ...) {
 
   # Fetch variables and add to meta.data
@@ -318,8 +329,6 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1", y = "UMAP_2",
 
 
 #' Plot continuous V(D)J data
-#'
-#' Compare V(D)J data for cell clusters
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, cell barcodes should be stored as row names.
@@ -363,7 +372,8 @@ NULL
 #' TRUE, possible values can be either a function, e.g. mean, or a purrr-style
 #' lambda, e.g. ~ mean(.x, na.rm = TRUE) where ".x" refers to the column. If
 #' NULL, the mean will be calculated.
-#' @param log_trans If TRUE, axis will be log10 transformed
+#' @param trans Transformation to use for plotting data, e.g. 'log10', refer
+#' to [ggplot2::continuous_scale()] for more options.
 #' @seealso [summarize_vdj()] for more examples on how per-chain data can be
 #' summarized for each cell
 #'
@@ -402,7 +412,7 @@ NULL
 #'   vdj_so,
 #'   data_cols = "reads",
 #'   cluster_col = "orig.ident",
-#'   log_trans = TRUE
+#'   trans = "log10"
 #' )
 #'
 #' # Express y-axis units as percent of total values
@@ -449,7 +459,7 @@ NULL
 plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
                      cluster_col = NULL, chain = NULL, method = "histogram",
                      units = "frequency", plot_colors = NULL,
-                     plot_lvls = names(plot_colors), log_trans = FALSE,
+                     plot_lvls = names(plot_colors), trans = "identity",
                      chain_col = "chains", sep = ";", ...) {
 
   # Format input data
@@ -498,7 +508,7 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
       units       = units,
       plot_colors = plot_colors,
       plot_lvls   = plot_lvls,
-      log_trans   = log_trans,
+      trans       = trans,
       ...
     )
   }
@@ -517,20 +527,20 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
 .plot_vdj <- function(df_in, data_col, cluster_col = NULL, group_col = NULL,
                       method = "boxplot", units = "frequency",
                       plot_colors = NULL, plot_lvls = names(plot_colors),
-                      log_trans = FALSE, ...) {
+                      trans = "identity", ...) {
 
   # Order clusters based on plot_lvls
   df_in <- .set_lvls(df_in, cluster_col, plot_lvls)
 
   # Set ggplot arguments
   gg_args <- list(
-    df_in     = df_in,
-    x         = data_col,
-    .color    = cluster_col,
-    .fill     = cluster_col,
-    clrs      = plot_colors,
-    method      = method,
-    log_trans = log_trans,
+    df_in  = df_in,
+    x      = data_col,
+    .color = cluster_col,
+    .fill  = cluster_col,
+    clrs   = plot_colors,
+    method = method,
+    trans  = trans,
     ...
   )
 
@@ -539,7 +549,6 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
 
   # Create histogram
   if (method %in% c("histogram", "density")) {
-
     gg_args$units <- units
 
     res <- purrr::lift_dl(.create_hist)(gg_args)
@@ -562,7 +571,7 @@ plot_vdj_reads <- function(input, data_cols = c("reads", "umis"),
                            cluster_col = NULL, chain = NULL,
                            method = "violin", units = "frequency",
                            plot_colors = NULL, plot_lvls = names(plot_colors),
-                           log_trans = TRUE, chain_col = "chains", sep = ";",
+                           trans = "log10", chain_col = "chains", sep = ";",
                            ...) {
 
   res <- plot_vdj(
@@ -575,7 +584,7 @@ plot_vdj_reads <- function(input, data_cols = c("reads", "umis"),
     units       = units,
     plot_colors = plot_colors,
     plot_lvls   = plot_lvls,
-    log_trans   = log_trans,
+    trans       = trans,
     chain_col   = chain_col,
     sep         = sep,
     ...
@@ -589,7 +598,7 @@ plot_vdj_reads <- function(input, data_cols = c("reads", "umis"),
 plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NULL,
                              chain = NULL, method = "histogram", units = "frequency",
                              plot_colors = NULL, plot_lvls = names(plot_colors),
-                             log_trans = TRUE, chain_col = "chains", sep = ";", ...) {
+                             trans = "log10", chain_col = "chains", sep = ";", ...) {
 
   res <- plot_vdj(
     input,
@@ -601,7 +610,7 @@ plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NUL
     units       = units,
     plot_colors = plot_colors,
     plot_lvls   = plot_lvls,
-    log_trans   = log_trans,
+    trans       = trans,
     chain_col   = chain_col,
     sep         = sep,
     ...
@@ -615,7 +624,7 @@ plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NUL
 plot_vdj_mutations <- function(input, data_cols = c("all_ins", "all_del", "all_mis"),
                                cluster_col = NULL, chain = NULL, method = "boxplot",
                                units = "frequency", plot_colors = NULL,
-                               plot_lvls = names(plot_colors), log_trans = FALSE,
+                               plot_lvls = names(plot_colors), trans = "identity",
                                chain_col = "chains", sep = ";", ...) {
 
   res <- plot_vdj(
@@ -628,7 +637,7 @@ plot_vdj_mutations <- function(input, data_cols = c("all_ins", "all_del", "all_m
     units       = units,
     plot_colors = plot_colors,
     plot_lvls   = plot_lvls,
-    log_trans   = log_trans,
+    trans       = trans,
     chain_col   = chain_col,
     sep         = sep,
     ...

@@ -18,6 +18,7 @@ plot_features(input, ...)
   y = "UMAP_2",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
+  trans = "identity",
   min_q = NULL,
   max_q = NULL,
   na_color = "grey80",
@@ -32,6 +33,7 @@ plot_features(input, ...)
   data_slot = "data",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
+  trans = "identity",
   min_q = NULL,
   max_q = NULL,
   na_color = "grey80",
@@ -48,6 +50,7 @@ plot_vdj_feature(input, ...)
   summary_fn = NULL,
   chain = NULL,
   plot_lvls = names(plot_colors),
+  trans = "identity",
   min_q = NULL,
   max_q = NULL,
   na_color = "grey80",
@@ -65,6 +68,7 @@ plot_vdj_feature(input, ...)
   summary_fn = NULL,
   chain = NULL,
   plot_lvls = names(plot_colors),
+  trans = "identity",
   min_q = NULL,
   max_q = NULL,
   na_color = "grey80",
@@ -89,6 +93,10 @@ linetype, etc.}
 \item{plot_colors}{Vector of colors to use for plotting}
 
 \item{plot_lvls}{Levels to use for ordering feature}
+
+\item{trans}{Transformation to use when coloring cells by a continuous
+variable, e.g. 'log10', refer to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}} for more
+options.}
 
 \item{min_q}{Minimum quantile cutoff for color scale.}
 
