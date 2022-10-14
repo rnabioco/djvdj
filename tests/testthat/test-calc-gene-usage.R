@@ -7,7 +7,7 @@ df_2 <- vdj_so@meta.data %>%
 # Check all calc_gene_usage arguments
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce, df_1, df_2),
-  gene_cols   = list("v_gene", "d_gene", "j_gene", "c_gene", c("v_gene", "j_gene")),
+  data_cols   = list("v_gene", "d_gene", "j_gene", "c_gene", c("v_gene", "j_gene")),
   cluster_col = list(NULL, "seurat_clusters"),
   chain       = list(NULL, "IGH", "IGL", "IGK"),
   chain_col   = "chains"
@@ -26,7 +26,7 @@ test_all_args(
   # calc_gene_usage results
   res <- calc_gene_usage(
     input,
-    gene_cols = genes,
+    data_cols = genes,
     chain = chain
   ) %>%
     rowwise() %>%

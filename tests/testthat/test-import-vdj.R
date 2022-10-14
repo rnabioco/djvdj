@@ -352,7 +352,7 @@ test_that("import_vdj BCR and TCR", {
 # Check .classify_vdj
 test_that(".classify_vdj", {
   dat <- vdj_so %>%
-    fetch_vdj(vdj_cols = "chains")
+    fetch_vdj(data_cols = "chains")
 
   expect_error(
     dat %>%

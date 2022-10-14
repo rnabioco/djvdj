@@ -7,7 +7,7 @@ df_2 <- vdj_so@meta.data %>%
 # Check fetch_vdj arguments
 arg_lst <- list(
   input         = list(vdj_so, vdj_sce, df_1, df_2),
-  vdj_cols      = list(NULL, c("umis", "reads")),
+  data_cols      = list(NULL, c("umis", "reads")),
   clonotype_col = list(NULL, "clonotype_id"),
   unnest        = c(TRUE, FALSE),
   sep           = c(NULL, ";")
@@ -24,7 +24,7 @@ test_all_args(
 test_that("fetch_vdj sep", {
   res <- vdj_so %>%
     fetch_vdj(
-      vdj_cols      = c("umis", "reads"),
+      data_cols      = c("umis", "reads"),
       clonotype_col = "clonotype_id",
       filter_cells  = FALSE,
       sep           = NULL
@@ -35,7 +35,7 @@ test_that("fetch_vdj sep", {
   expect_warning(
     res <- vdj_so %>%
       fetch_vdj(
-        vdj_cols      = c("umis", "reads"),
+        data_cols      = c("umis", "reads"),
         clonotype_col = "clonotype_id",
         filter_cells  = FALSE,
         sep           = "BAD"
@@ -49,7 +49,7 @@ test_that("fetch_vdj filter_cells", {
   expect_error(
     res <- vdj_so %>%
       fetch_vdj(
-        vdj_cols     = c("umis", "reads"),
+        data_cols     = c("umis", "reads"),
         filter_cells = TRUE
       ),
     "clonotype_col must be provided"
@@ -57,7 +57,7 @@ test_that("fetch_vdj filter_cells", {
 
   res <- vdj_so %>%
     fetch_vdj(
-      vdj_cols      = c("umis", "reads"),
+      data_cols      = c("umis", "reads"),
       clonotype_col = "clonotype_id",
       filter_cells  = FALSE
     )
@@ -66,7 +66,7 @@ test_that("fetch_vdj filter_cells", {
 
   res <- vdj_so %>%
     fetch_vdj(
-      vdj_cols      = c("umis", "reads"),
+      data_cols      = c("umis", "reads"),
       clonotype_col = "clonotype_id",
       filter_cells  = TRUE
     )
@@ -85,7 +85,7 @@ test_that(".filter_chains", {
 
   res <- dat %>%
     .filter_chains(
-      vdj_cols = c("umis", "reads"),
+      data_cols = c("umis", "reads"),
       chain = NULL
     )
 
@@ -94,10 +94,10 @@ test_that(".filter_chains", {
   expect_error(
     res <- dat %>%
       .filter_chains(
-        vdj_cols = c("umis", "nCount_RNA"),
+        data_cols = c("umis", "nCount_RNA"),
         chain = "IGK"
       ),
-    "cannot be a mix of normal columns and list-cols"
+    "To filter based on chain, all columns must contain per-chain data"
   )
 
   dat <- vdj_so %>%
@@ -105,7 +105,7 @@ test_that(".filter_chains", {
 
   res <- dat %>%
     .filter_chains(
-      vdj_cols = c("umis", "reads"),
+      data_cols = c("umis", "reads"),
       chain = "IGK"
     )
 
@@ -113,7 +113,7 @@ test_that(".filter_chains", {
 
   res <- dat %>%
     .filter_chains(
-      vdj_cols = "chains",
+      data_cols = "chains",
       chain    = "IGK"
     )
 
@@ -127,7 +127,7 @@ test_that(".filter_chains", {
 
   res <- dat %>%
     .filter_chains(
-      vdj_cols = "chains",
+      data_cols = "chains",
       chain    = c("IGH", "IGL")
     )
 
@@ -148,7 +148,7 @@ test_that(".filter_chains", {
 
   res <- dat %>%
     .filter_chains(
-      vdj_cols = c("umis", "reads"),
+      data_cols = c("umis", "reads"),
       chain = NULL
     )
 
@@ -157,10 +157,10 @@ test_that(".filter_chains", {
   expect_error(
     res <- dat %>%
       .filter_chains(
-        vdj_cols = c("umis", "nCount_RNA"),
+        data_cols = c("umis", "nCount_RNA"),
         chain = "IGK"
       ),
-    "cannot be a mix of normal columns and list-cols"
+    "To filter based on chain, all columns must contain per-chain data"
   )
 
   dat <- vdj_so %>%
@@ -168,7 +168,7 @@ test_that(".filter_chains", {
 
   res <- dat %>%
     .filter_chains(
-      vdj_cols = c("umis", "reads"),
+      data_cols = c("umis", "reads"),
       chain = "IGK"
     )
 
@@ -176,7 +176,7 @@ test_that(".filter_chains", {
 
   res <- dat %>%
     .filter_chains(
-      vdj_cols = "chains",
+      data_cols = "chains",
       chain    = "IGK"
     )
 
@@ -190,7 +190,7 @@ test_that(".filter_chains", {
 
   res <- dat %>%
     .filter_chains(
-      vdj_cols = "chains",
+      data_cols = "chains",
       chain    = c("IGH", "IGL")
     )
 

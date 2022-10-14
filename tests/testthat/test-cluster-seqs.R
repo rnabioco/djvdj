@@ -23,7 +23,7 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = cluster_seqs,
+  .fn     = cluster_sequences,
   desc    = "cluster_seqs args",
   chk     = expect_silent
 )
@@ -43,7 +43,7 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_seq_motifs,
+  .fn     = plot_motifs,
   desc    = "plot_seq_motifs args",
   chk     = expect_silent
 )

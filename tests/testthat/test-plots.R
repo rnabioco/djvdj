@@ -360,7 +360,7 @@ test_that("plot_similarity bad cluster col", {
 # Check all plot_gene_usage arguments for one gene
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
-  gene_cols   = list("v_gene", "j_gene"),
+  data_cols   = list("v_gene", "j_gene"),
   chain       = list(NULL, "IGH", "IGL", "IGK"),
   cluster_col = list(NULL, "seurat_clusters"),
   type        = c("heatmap", "bar"),
@@ -380,7 +380,7 @@ test_all_args(
 # when circos option is included, the first circos test fails on github actions
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
-  gene_cols   = list(c("v_gene", "j_gene")),
+  data_cols   = list(c("v_gene", "j_gene")),
   chain       = list(NULL, "IGH"),
   cluster_col = list(NULL, "seurat_clusters"),
   type        = c("heatmap"),
@@ -405,7 +405,7 @@ test_genes <- vdj_so %>%
 
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
-  gene_cols   = "v_gene",
+  data_cols   = "v_gene",
   vdj_genes   = list(test_genes),
   type        = c("heatmap", "bar"),
   plot_colors = list(NULL, test_cols),
@@ -422,7 +422,7 @@ test_all_args(
 
 # Check plot_gene_usage vdj_genes single column
 arg_lst$type      <- c("heatmap", "circos")
-arg_lst$gene_cols <- list(c("v_gene", "j_gene"))
+arg_lst$data_cols <- list(c("v_gene", "j_gene"))
 arg_lst$plot_lvls <- NULL
 
 test_all_args(
@@ -435,12 +435,12 @@ test_all_args(
 # Check plot_gene_usage bad plot_genes
 test_that("plot_gene_usage bad plot_genes", {
   expect_error(
-    plot_gene_usage(vdj_so, gene_cols = "v_gene", vdj_genes = "BAD"),
+    plot_gene_usage(vdj_so, data_cols = "v_gene", vdj_genes = "BAD"),
     "None of the provided genes were found"
   )
 
   expect_warning(
-    plot_gene_usage(vdj_so, gene_cols = "v_gene", vdj_genes = c(test_genes, "BAD")),
+    plot_gene_usage(vdj_so, data_cols = "v_gene", vdj_genes = c(test_genes, "BAD")),
     "Some genes not found: "
   )
 })
@@ -450,7 +450,7 @@ test_that("plot_gene_usage bad type", {
   expect_error(
     vdj_so %>%
       plot_gene_usage(
-        gene_cols = "v_gene",
+        data_cols = "v_gene",
         type      = "BAD"
       )
   )
@@ -461,17 +461,17 @@ test_that("plot_gene_usage bad type", {
   expect_error(
     vdj_so %>%
       plot_gene_usage(
-        gene_cols = "v_gene",
+        data_cols = "v_gene",
         yaxis     = "BAD"
       )
   )
 })
 
-# Check plot_gene_usage bad gene_cols
-test_that("plot_gene_usage bad gene_cols", {
+# Check plot_gene_usage bad data_cols
+test_that("plot_gene_usage bad data_cols", {
   expect_error(
     vdj_so %>%
-      plot_gene_usage(gene_cols = c("v_gene", "d_gene", "j_gene"))
+      plot_gene_usage(data_cols = c("v_gene", "d_gene", "j_gene"))
   )
 })
 
