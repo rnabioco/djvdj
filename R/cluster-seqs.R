@@ -62,13 +62,9 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
     sep       = sep
   )
 
-  browser()
-
-  # vdj  <- dplyr::select(vdj, all_of(c(CELL_COL, data_col)))
-
-  vdj <- dplyr::distinct(vdj, !!!syms(c(CELL_COL, data_col)))
+  vdj  <- dplyr::distinct(vdj, !!!syms(c(CELL_COL, data_col)))
   seqs <- vdj[[data_col]]
-  # seqs <- unique(sort(seqs))
+  seqs <- unique(sort(seqs))
 
   # Calculate distance
   if (is.null(dist_method)) {
@@ -203,6 +199,8 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
     stop("The provided width cutoff must be >0.", call. = FALSE)
   }
 
+  if (!is.character(chain)) stop("chain must be a character string.")
+
   # Fetch sequences
   seqs <- .fetch_seqs(
     input,
@@ -315,7 +313,10 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
     allow_dups = FALSE
   )
 
-  res <- tidyr::unnest(res, cols = all_of(c(chain_col, seq_col)))
+  # Remove chain_col since it does not get filtered by .filter_chains() and
+  # will be included in the results as a list-col
+  res <- dplyr::select(res, -all_of(chain_col))
+  res <- tidyr::unnest(res, cols = all_of(seq_col))
   res <- dplyr::filter(res, !is.na(!!sym(seq_col)))
 
   res
