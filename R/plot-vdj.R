@@ -18,8 +18,8 @@ plot_features <- function(input, ...) {
 #' @param plot_colors Vector of colors to use for plotting
 #' @param plot_lvls Levels to use for ordering feature
 #' @param trans Transformation to use when coloring cells by a continuous
-#' variable, e.g. 'log10', refer to [ggplot2::continuous_scale()] for more
-#' options.
+#' variable, e.g. 'log10'. By default values are not transformed, refer to
+#' [ggplot2::continuous_scale()] for more options.
 #' @param min_q Minimum quantile cutoff for color scale.
 #' @param max_q Maximum quantile cutoff for color scale.
 #' @param na_color Color to use for missing values
@@ -258,7 +258,7 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
 
   plt_dat <- summarize_vdj(
     input,
-    vdj_cols  = data_col,
+    data_cols = data_col,
     fn        = summary_fn,
     chain     = chain,
     chain_col = chain_col,
@@ -372,8 +372,9 @@ NULL
 #' TRUE, possible values can be either a function, e.g. mean, or a purrr-style
 #' lambda, e.g. ~ mean(.x, na.rm = TRUE) where ".x" refers to the column. If
 #' NULL, the mean will be calculated.
-#' @param trans Transformation to use for plotting data, e.g. 'log10', refer
-#' to [ggplot2::continuous_scale()] for more options.
+#' @param trans Transformation to use for plotting data, e.g. 'log10'. By
+#' default values are not transformed, refer to [ggplot2::continuous_scale()]
+#' for more options.
 #' @seealso [summarize_vdj()] for more examples on how per-chain data can be
 #' summarized for each cell
 #'
@@ -466,7 +467,7 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
   if (per_cell) {
     plt_dat <- summarize_vdj(
       input,
-      vdj_cols  = data_cols,
+      data_cols = data_cols,
       fn        = summary_fn,
       chain     = chain,
       chain_col = chain_col,
@@ -483,7 +484,7 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
 
     plt_dat <- fetch_vdj(
       input,
-      vdj_cols      = fetch_cols,
+      data_cols      = fetch_cols,
       clonotype_col = NULL,
       unnest        = TRUE
     )

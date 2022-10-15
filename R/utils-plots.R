@@ -72,6 +72,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param clrs Vector of colors for plotting
 #' @param na_color Color to use for missing values
 #' @param plt_ttl Plot title
+#' @param trans Method to use for transforming data
 #' @param lgd_ttl Legend title
 #' @param ang Angle of x-axis text
 #' @param hjst Horizontal justification for x-axis text
@@ -80,8 +81,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @return ggplot object
 #' @noRd
 .create_gg_heatmap <- function(df_in, x = NULL, y, .fill, clrs = NULL,
-                               na_color = NA, plt_ttl = NULL, lgd_ttl = .fill,
-                               ang = 45, hjst = 1, ...) {
+                               na_color = NA, plt_ttl = ggplot2::waiver(),
+                               trans = "identity", lgd_ttl = .fill, ang = 45,
+                               hjst = 1, ...) {
 
   clrs <- clrs %||% "#619CFF"
 
@@ -94,19 +96,19 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res <- ggplot2::ggplot(df_in, plt_aes) +
     ggplot2::geom_tile(...) +
     ggplot2::guides(fill = ggplot2::guide_colorbar(title = lgd_ttl)) +
-    ggplot2::scale_fill_gradientn(colors = clrs, na.value = na_color) +
+    ggplot2::scale_fill_gradientn(
+      colors   = clrs,
+      na.value = na_color,
+      trans    = trans
+    ) +
     djvdj_theme() +
     ggplot2::theme(
       axis.title  = ggplot2::element_blank(),
       axis.line   = ggplot2::element_blank(),
       axis.ticks  = ggplot2::element_blank(),
       axis.text.x = ggplot2::element_text(angle = ang, hjust = hjst)
-    )
-
-  if (!is.null(plt_ttl)) {
-    res <- res +
-      ggplot2::ggtitle(plt_ttl)
-  }
+    ) +
+    labs(title = plt_ttl)
 
   res
 }
@@ -458,6 +460,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param y Variable to plot on y-axis
 #' @param .fill Variable to use for fill color
 #' @param clrs Vector of colors for plotting
+#' @param trans Method to use for tranforming data
 #' @param y_ttl Title for y-axis
 #' @param ang Angle of x-axis text
 #' @param hjst Horizontal justification for x-axis text
@@ -465,8 +468,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_bars <- function(df_in, x, y, .fill = NULL, clrs = NULL, y_ttl = y,
-                         ang = 45, hjst = 1, ...) {
+.create_bars <- function(df_in, x, y, .fill = NULL, clrs = NULL,
+                         trans = "identity", y_ttl = y, ang = 45, hjst = 1,
+                         ...) {
 
   # Reverse bar order
   lvls  <- rev(levels(pull(df_in, x)))
@@ -486,7 +490,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   # Create bar graph
   res <- ggplot2::ggplot(df_in, gg_aes) +
-    purrr::lift_dl(geom_col)(gg_args)
+    purrr::lift_dl(geom_col)(gg_args) +
+    ggplot2::scale_y_continuous(trans = trans)
 
   # Set plot colors
   if (!is.null(.fill) && !is.null(clrs)) {

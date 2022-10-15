@@ -191,6 +191,9 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 #' @param n_genes Number of top genes to plot based on usage. If cluster_col is
 #' provided, top genes will be identified for each cluster.
 #' @param plot_lvls Levels to use for ordering clusters
+#' @param trans Transformation to use when plotting segment usage, e.g.
+#' 'log10'. By default values are not transformed, refer to
+#' [ggplot2::continuous_scale()] for more options.
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to plotting function,
@@ -282,8 +285,9 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
                             group_col = NULL, chain = NULL, method = NULL,
                             plot_colors = NULL, vdj_genes = NULL, n_genes = 20,
-                            plot_lvls = names(plot_colors), units = "percent",
-                            chain_col = "chains", sep = ";", ...) {
+                            plot_lvls = names(plot_colors), trans = "identity",
+                            units = "percent", chain_col = "chains", sep = ";",
+                            ...) {
 
   # Check inputs
   paired <- length(data_cols) == 2
@@ -359,6 +363,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     clst_col = cluster_col,
     typ      = method,
     clrs     = plot_colors,
+    trans    = trans,
     ax_ttl   = units,
     ...
   )
@@ -382,13 +387,14 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' @param grp_col Column with IDs to use for grouping clusters
 #' @param typ Plot type
 #' @param clrs Plot colors
+#' @param trans Method to use for transforming data
 #' @param ax_ttl Y-axis title
 #' @param order Should genes be ordered based on usage
 #' @param ... Additional parameters to pass to plotting function
 #' @noRd
 .plot_single_usage <- function(df_in, gn_col, dat_col, typ, clst_col = NULL,
-                               grp_col = NULL, clrs = NULL, ax_ttl,
-                               order = TRUE, ...) {
+                               grp_col = NULL, clrs = NULL, trans = "identity",
+                               ax_ttl, order = TRUE, ...) {
 
   # Order plot levels
   if (order) {
@@ -402,7 +408,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   }
 
   # Set common arguments
-  plt_args <- list(clrs = clrs, ...)
+  plt_args <- list(clrs = clrs, trans = trans, ...)
 
   if (identical(typ, "bar") || !is.null(grp_col)) {
     plt_args$x <- gn_col
@@ -463,12 +469,14 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' @param clst_col Column containing clusters
 #' @param typ Plot type
 #' @param clrs Plot colors
+#' @param trans Method to use for transforming data
 #' @param ax_ttl Y-axis title
 #' @param order Should genes be ordered based on usage
 #' @param ... Additional parameters to pass to plotting function
 #' @noRd
 .plot_paired_usage <- function(df_in, gn_col, dat_col, clst_col = NULL,
-                               typ, clrs = NULL, ax_ttl, order = TRUE, ...) {
+                               typ, clrs = NULL, trans = "identity", ax_ttl,
+                               order = TRUE, ...) {
 
   # Create plot when two columns are passed to gene_col
   # group_split will order list based on the sorted column
@@ -516,6 +524,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     plt_args$y       <- gn_col[2]
     plt_args$.fill   <- dat_col
     plt_args$lgd_ttl <- ax_ttl
+    plt_args$trans   <- trans
 
     res <- purrr::imap(res, ~ {
       plt_args$df_in <- .x

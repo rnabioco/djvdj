@@ -83,6 +83,11 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
 #' Filter V(D)J data based on chain
 #'
+#' This will remove V(D)J data for chains that do not match the provided chain.
+#' NAs will be added for cells that do not have any matching chains. Filtered
+#' data_cols will be returned as list-cols. The chain_col will not be filtered,
+#' but will be included in the results as a list-col.
+#'
 #' @param df_in data.frame
 #' @param data_cols meta.data column(s) containing V(D)J data to filter based on
 #' chain
@@ -212,6 +217,7 @@ NULL
 #' @rdname .add_meta
 #' @noRd
 .prepare_meta <- function(input, meta, row_col = CELL_COL) {
+
   if (!is.data.frame(meta)) {
     stop("meta.data must be a data.frame.")
   }

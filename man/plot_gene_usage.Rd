@@ -15,6 +15,7 @@ plot_gene_usage(
   vdj_genes = NULL,
   n_genes = 20,
   plot_lvls = names(plot_colors),
+  trans = "identity",
   units = "percent",
   chain_col = "chains",
   sep = ";",
@@ -58,6 +59,9 @@ heatmap, these colors will be used to generate the color gradient.}
 provided, top genes will be identified for each cluster.}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
+
+\item{trans}{Transformation to use for plotting segment usage, e.g. 'log10',
+refer to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}} for more options.}
 
 \item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
