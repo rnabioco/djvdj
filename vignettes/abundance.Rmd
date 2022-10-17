@@ -114,6 +114,12 @@ so %>%
   ggplot2::scale_y_log10()
 ```
 
+```{r, eval = FALSE}
+so_vdj %>%
+  calc_frequency(data_col = "clonotype_id") %>%
+  plot_features(feature = "clonotype_id_grp")
+```
+
 <br>
 
 ## Other frequency calculations

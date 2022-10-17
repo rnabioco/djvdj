@@ -45,7 +45,7 @@ vdj_dirs <- c(
 )
 
 so <- splen_so %>%
-  import_vdj(vdj_dirs)
+  import_vdj(vdj_dirs, define_clonotypes = "cdr3_gene")
 ```
 
 <br>
@@ -108,7 +108,7 @@ so_vdj <- so %>%
 
 Clustering results can be visualized on a UMAP projection using the generic plotting function `plot_features()`. Colors can be adjusted using the `plot_colors` argument.
 
-This function will often generate a warning saying that rows with missing values were removed, this is expected since some cells do not have V(D)J data. 
+This function will often generate a warning saying that rows with missing values were removed, this is expected since some cells do not have V(D)J data.
 
 ```{r}
 clrs <- setNames(brewer.pal(11, "Paired"), 1:11)
@@ -131,6 +131,33 @@ so_vdj %>%
     cluster_col = "sample",
     position    = "stack",  # parameter passed to ggplot2
     plot_colors = clrs
+  )
+```
+
+<br>
+
+## CDR3 length
+
+```{r}
+so_vdj %>%
+  plot_vdj(
+    data_cols   = "cdr3_length",
+    cluster_col = "cdr3_cluster_0.4"
+  ) +
+  facet_wrap(~ cdr3_cluster_0.4, scales = "free_y")
+```
+
+```{r, eval = FALSE}
+so_vdj %>%
+  plot_vdj_feature(
+    data_col = "cdr3_length",
+    chain    = "IGK"
+  )
+
+so_vdj %>%
+  plot_vdj_feature(
+    data_col = "cdr3_cluster_0.4",
+    chain    = "IGK"
   )
 ```
 

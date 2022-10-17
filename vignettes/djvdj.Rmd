@@ -184,7 +184,7 @@ plot_clonal_abundance(
   input       = so_avid,
   cluster_col = "mouse",           # Column containing cell clusters to compare
   n_clones    = 10,                # Number of top clonotypes to plot
-  type        = "bar",             # Type of plot, 'bar' or 'line'
+  method      = "bar",             # Type of plot, 'bar' or 'line'
   plot_colors = clrs
 )
 ```
@@ -295,7 +295,7 @@ In this example we are summarizing the usage of different V segments for the IGH
 ```{r}
 calc_gene_usage(
   input       = so_avid,
-  gene_cols   = "v_gene",          # Column containing genes
+  data_cols   = "v_gene",          # Column containing genes
   cluster_col = "mouse",           # Column containing cell clusters to compare
   chain       = "IGH",             # Chain to calculate gene usage for
   chain_col   = "chains"           # Column containing chains
@@ -309,8 +309,8 @@ The function `plot_gene_usage()` can be used visualize gene usage across cluster
 ```{r "gene_usage_1", fig.width = 11, fig.height = 3.5}
 plot_gene_usage(
   input       = so_avid,
-  gene_cols   = "v_gene",          # Column(s) containing genes
-  type        = "bar",             # Type of plot, 'heatmap' or 'bar'
+  data_cols   = "v_gene",          # Column(s) containing genes
+  method      = "bar",             # Type of plot, 'heatmap' or 'bar'
   chain       = "IGH",             # Chain to plot
   n_genes     = 50,                # Number of top genes to plot
   plot_colors = "#0072B2"
@@ -319,12 +319,12 @@ plot_gene_usage(
 
 <br>
 
-By passing multiple columns to `gene_cols`, the frequency of V-J gene pairings can also be summarized. This will return a list of plots, one for each cluster in the `cluster_col` column.
+By passing multiple columns to `data_cols`, the frequency of V-J gene pairings can also be summarized. This will return a list of plots, one for each cluster in the `cluster_col` column.
 
 ```{r "gene_usage_2", fig.width = 12, fig.height = 2}
 ggs <- plot_gene_usage(
   input       = so_avid,
-  gene_cols   = c("v_gene", "j_gene"),   # Column(s) containing genes
+  data_cols   = c("v_gene", "j_gene"),   # Column(s) containing genes
   cluster_col = "mouse",                 # Column containing cell clusters to compare
   chain       = "IGK",                   # Chain to plot
   plot_colors = "#6A51A3",
@@ -343,7 +343,7 @@ Cells can be clustered based on CDR3 sequences, or any other sequences present i
 ```{r "clustering"}
 set.seed(42)
 
-so_avid <- cluster_seqs(
+so_avid <- cluster_sequences(
   input    = so_avid,
   data_col = "cdr3",      # Column containing sequences to cluster
   chain    = "IGK"        # Chain to use for clustering sequences
@@ -369,7 +369,7 @@ plot_features(
 A sequence motif can be plotted for each cluster using the `plot_seq_motifs()` function. Cluster 10 includes the MD4 cells and has a sequence motif matching the expected IGK sequence.
 
 ```{r "clustering_3", fig.width = 8, fig.height = 5}
-plot_seq_motifs(
+plot_motifs(
   input       = so_avid,
   data_col    = "cdr3",              # Column containing sequences to plot
   cluster_col = "cdr3_cluster_0.5",  # Column containing cell clusters to compare

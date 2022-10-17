@@ -81,7 +81,7 @@ res@meta.data %>%
 ```{r}
 res <- so %>%
   summarize_vdj(
-    vdj_cols  = c("all_del", "all_ins"),
+    data_cols = c("all_del", "all_ins"),
     fn        = stats::median,
     col_names = "median_{.col}"
   )
@@ -94,7 +94,7 @@ res@meta.data %>%
 ```{r}
 res <- so %>%
   summarize_vdj(
-    vdj_cols  = "chains",
+    data_cols = "chains",
     fn        = ~ paste0(unique(.x), collapse = "_"),
     col_names = "unique_chains"
   )

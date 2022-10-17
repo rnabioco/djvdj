@@ -58,7 +58,7 @@ so %>%
     data_cols   = c("reads", "umis"),
     cluster_col = "orig.ident",
     chain       = "IGK",
-    log_trans   = TRUE
+    trans       = "log10"
   )
 ```
 
@@ -68,7 +68,7 @@ so %>%
     data_cols   = c("reads", "umis"),
     cluster_col = "sample",
     method      = "boxplot",
-    log_trans   = TRUE,
+    trans       = "log10",
     
     per_cell    = TRUE,
     summary_fn  = mean
