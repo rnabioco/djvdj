@@ -20,8 +20,8 @@ calc_similarity(
 \item{input}{Object containing V(D)J data. If a data.frame is provided, the
 cell barcodes should be stored as row names.}
 
-\item{data_col}{meta.data column containing clonotype IDs to use for
-calculating overlap}
+\item{data_col}{meta.data column containing values to use for
+calculating pairwise similarity between clusters, e.g. 'clonotype_id'}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 calculating repertoire overlap}
@@ -56,9 +56,9 @@ Calculate cluster similarity
 # Calculate repertoire overlap
 res <- calc_similarity(
   vdj_so,
-  data_col = "clonotype_id",
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  method = abdiv::jaccard
+  method      = abdiv::jaccard
 )
 
 head(res@meta.data, 1)
@@ -67,9 +67,9 @@ head(res@meta.data, 1)
 # this is useful if multiple calculations are stored in the meta.data
 res <- calc_similarity(
   vdj_sce,
-  data_col = "clonotype_id",
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  prefix = "bcr_"
+  prefix      = "bcr_"
 )
 
 head(res@colData, 1)
@@ -77,9 +77,9 @@ head(res@colData, 1)
 # Return a matrix instead of adding the results to the input object
 calc_similarity(
   vdj_so,
-  data_col = "clonotype_id",
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  return_mat = TRUE
+  return_mat  = TRUE
 )
 
 }

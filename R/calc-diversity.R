@@ -3,7 +3,7 @@
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param data_col meta.data column containing values to use for
-#' calculating diversity
+#' calculating diversity, e.g. 'clonotype_id'
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating diversity. If cluster_col is omitted,
 #' diversity index will be calculated using all cells.
@@ -225,14 +225,15 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param data_col meta.data column containing values to use for
-#' calculating diversity
+#' calculating diversity, e.g. 'clonotype_id'
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
 #' @param group_col meta.data column to use for grouping IDs present in
 #' cluster_col
-#' @param method Function to use for calculating diversity. A named list of
-#' functions can be passed to plot multiple diversity metrics,
-#' e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)
+#' @param method Function to use for calculating diversity, e.g.
+#' abdiv::simpson. A named list of functions can be passed to plot multiple
+#' diversity metrics, e.g.
+#' list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 #' @param downsample Downsample clusters to the same size when calculating
 #' diversity metrics
 #' @param n_boots Number of bootstrap replicates to use for calculating standard error
@@ -255,30 +256,37 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'
 #' @examples
 #' # Plot diversity using all cells
-#' plot_diversity(vdj_so)
+#' plot_diversity(
+#'   vdj_so,
+#'   data_col = "clonotype_id"
+#')
 #'
 #' # Specify method to use for calculating repertoire diversity
 #' plot_diversity(
 #'   vdj_sce,
-#'   method = abdiv::shannon
+#'   data_col = "clonotype_id",
+#'   method   = abdiv::shannon
 #' )
 #'
 #' # Plot diversity separately for each cell cluster
 #' plot_diversity(
 #'   vdj_so,
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident"
 #' )
 #'
 #' # Plot multiple diversity metrics
 #' plot_diversity(
 #'   vdj_sce,
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   method = list(simpson = abdiv::simpson, shannon = abdiv::shannon)
+#'   method      = list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 #' )
 #'
 #' # Specify colors to use for each cell cluster
 #' plot_diversity(
 #'   vdj_so,
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
 #'   plot_colors = c(avid_2 = "green", avid_1 = "purple")
 #' )
@@ -286,8 +294,9 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' # Specify order to use for plotting cell clusters
 #' plot_diversity(
 #'   vdj_sce,
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   plot_lvls = c("avid_2", "avid_1")
+#'   plot_lvls   = c("avid_2", "avid_1")
 #' )
 #'
 #' # Specify how to organize facets when plotting multiple metrics
@@ -299,7 +308,8 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'
 #' plot_diversity(
 #'   vdj_so,
-#'   method = mets,
+#'   data_col   = "clonotype_id",
+#'   method     = mets,
 #'   facet_rows = 2
 #' )
 #'
@@ -551,13 +561,13 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
 
   plt_dat <- dplyr::mutate(
     plt_dat,
-    method = dplyr::recode(Method, "Observed" = "Rarefaction"),
+    method = dplyr::recode(.data$Method, "Observed" = "Rarefaction"),
     method = stringr::str_to_lower(method),
-    Order.q = met_labs[as.character(Order.q)]
+    Order.q = met_labs[as.character(.data$Order.q)]
   )
 
   if (!is.null(cluster_col)) {
-    plt_dat <- dplyr::rename(plt_dat, !!sym(cluster_col) := Assemblage)
+    plt_dat <- dplyr::rename(plt_dat, !!sym(cluster_col) := .data$Assemblage)
   }
 
   plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
@@ -565,11 +575,16 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
   plt_dat <- .set_lvls(plt_dat, "method", c("rarefaction", "extrapolation"))
 
   # Plot standard error
-  res <- ggplot2::ggplot(plt_dat, ggplot2::aes(m, qD, linetype = method)) +
+  res <- ggplot2::ggplot(
+    plt_dat,
+    ggplot2::aes(.data$m, .data$qD, linetype = method)
+  ) +
     ggplot2::guides(linetype = ggplot2::guide_legend(title = NULL))
 
   if (n_boots > 1) {
-    gg_aes <- ggplot2::aes(x = m, ymin = qD.LCL, ymax = qD.UCL)
+    gg_aes <- ggplot2::aes(
+      x = .data$m, ymin = .data$qD.LCL, ymax = .data$qD.UCL
+    )
 
     if (!is.null(cluster_col))   gg_aes$fill <- sym(cluster_col)
     else if (length(method) > 1) gg_aes$fill <- sym("Order.q")
@@ -617,8 +632,4 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
 
   res
 }
-
-
-
-
 

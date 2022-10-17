@@ -25,8 +25,8 @@ plot_similarity(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{data_col}{meta.data column containing clonotype IDs to use for
-calculating overlap}
+\item{data_col}{meta.data column containing values to use for
+calculating pairwise similarity between clusters, e.g. 'clonotype_id'}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 calculating overlap}
@@ -73,34 +73,35 @@ Plot cluster similarity
 }
 \examples{
 # Plot repertoire overlap
+# use clonotype IDs present in 'clonotype_id' column for calculations
 plot_similarity(
   vdj_so,
-  data_col = "clonotype_id",
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident"
 )
 
 # Specify method to use for calculating repertoire overlap
 plot_similarity(
   vdj_sce,
-  data_col = "clonotype_id",
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  method = abdiv::morisita
+  method      = abdiv::morisita
 )
 
 # Specify colors to use for heatmap
 plot_similarity(
   vdj_so,
-  data_col = "clonotype_id",
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  plot_color = c("white", "red")
+  plot_color  = c("white", "red")
 )
 
 # Create circos plot
 plot_similarity(
   vdj_so,
-  data_col = "clonotype_id",
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  method = "circos"
+  method      = "circos"
 )
 
 }

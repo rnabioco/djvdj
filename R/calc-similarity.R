@@ -2,6 +2,8 @@
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing values to use for
+#' calculating pairwise similarity between clusters, e.g. 'clonotype_id'
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating repertoire overlap
 #' @param method Method to use for comparing clusters, possible values are:
@@ -11,8 +13,6 @@
 #' unique value in the column provided to the data_col column, e.g.
 #' [abdiv::jaccard()]
 #'
-#' @param data_col meta.data column containing clonotype IDs to use for
-#' calculating overlap
 #' @param chain Chain to use for calculating gene usage. Set to NULL to include
 #' all chains.
 #' @param chain_col meta.data column containing chains for each cell
@@ -28,9 +28,9 @@
 #' # Calculate repertoire overlap
 #' res <- calc_similarity(
 #'   vdj_so,
-#'   data_col = "clonotype_id",
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   method = abdiv::jaccard
+#'   method      = abdiv::jaccard
 #' )
 #'
 #' head(res@meta.data, 1)
@@ -39,9 +39,9 @@
 #' # this is useful if multiple calculations are stored in the meta.data
 #' res <- calc_similarity(
 #'   vdj_sce,
-#'   data_col = "clonotype_id",
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   prefix = "bcr_"
+#'   prefix      = "bcr_"
 #' )
 #'
 #' head(res@colData, 1)
@@ -49,9 +49,9 @@
 #' # Return a matrix instead of adding the results to the input object
 #' calc_similarity(
 #'   vdj_so,
-#'   data_col = "clonotype_id",
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   return_mat = TRUE
+#'   return_mat  = TRUE
 #' )
 #'
 #' @export
@@ -209,8 +209,8 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param data_col meta.data column containing clonotype IDs to use for
-#' calculating overlap
+#' @param data_col meta.data column containing values to use for
+#' calculating pairwise similarity between clusters, e.g. 'clonotype_id'
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating overlap
 #' @param group_col meta.data column to use for grouping cluster IDs present in
@@ -244,34 +244,35 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #'
 #' @examples
 #' # Plot repertoire overlap
+#' # use clonotype IDs present in 'clonotype_id' column for calculations
 #' plot_similarity(
 #'   vdj_so,
-#'   data_col = "clonotype_id",
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident"
 #' )
 #'
 #' # Specify method to use for calculating repertoire overlap
 #' plot_similarity(
 #'   vdj_sce,
-#'   data_col = "clonotype_id",
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   method = abdiv::morisita
+#'   method      = abdiv::morisita
 #' )
 #'
 #' # Specify colors to use for heatmap
 #' plot_similarity(
 #'   vdj_so,
-#'   data_col = "clonotype_id",
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   plot_color = c("white", "red")
+#'   plot_color  = c("white", "red")
 #' )
 #'
 #' # Create circos plot
 #' plot_similarity(
 #'   vdj_so,
-#'   data_col = "clonotype_id",
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   method = "circos"
+#'   method      = "circos"
 #' )
 #'
 #' @export
@@ -353,8 +354,8 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
-#' @param data_col meta.data column containing clonotype IDs to use for
-#' calculating overlap
+#' @param data_col meta.data column containing values to use for
+#' calculating pairwise similarity between clusters, e.g. 'clonotype_id'
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating repertoire overlap
 #' @param method Method to use for comparing clusters and calculating MDS
@@ -471,8 +472,8 @@ calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param data_col meta.data column containing clonotype IDs to use for
-#' calculating overlap
+#' @param data_col meta.data column containing values to use for
+#' calculating pairwise similarity between clusters, e.g. 'clonotype_id'
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating overlap
 #' @param method Method to use for comparing clusters and calculating MDS

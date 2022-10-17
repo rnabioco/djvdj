@@ -111,8 +111,9 @@ e.g. fill = "red", color = "black"}
 \item{plot_lvls}{Character vector containing order to use for plotting cell
 clusters specified by cluster_col}
 
-\item{trans}{Transformation to use for plotting data, e.g. 'log10', refer
-to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}} for more options.}
+\item{trans}{Transformation to use for plotting data, e.g. 'log10'. By
+default values are not transformed, refer to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}}
+for more options.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 

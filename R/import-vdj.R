@@ -950,12 +950,23 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   vdj_muts <- dplyr::mutate(
     vdj_muts,
-    len       = .data$len.seg,
-    new_start = ifelse(.data$start >= .data$start.seg, .data$start,       .data$start.seg),
-    new_end   = ifelse(.data$end   <= .data$end.seg,   .data$end,         .data$end.seg),
-    new_end   = ifelse(.data$type  == mut_key[["D"]],  .data$new_end + 1, .data$new_end),
+    len = .data$len.seg,
 
-    n = ifelse(.data$type != mut_key[["D"]], .data$new_end - .data$new_start, .data$n)
+    new_start = ifelse(
+      .data$start >= .data$start.seg, .data$start, .data$start.seg
+    ),
+
+    new_end = ifelse(
+      .data$end <= .data$end.seg, .data$end, .data$end.seg
+    ),
+
+    new_end = ifelse(
+      .data$type == mut_key[["D"]], .data$new_end + 1, .data$new_end
+    ),
+
+    n = ifelse(
+      .data$type != mut_key[["D"]], .data$new_end - .data$new_start, .data$n
+    )
   )
 
   # Identify junction indels
@@ -978,18 +989,22 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   vdj_muts <- bind_rows(vdj_muts, jxn_muts)
 
   # Summarize mutation counts
-  vdj_muts <- dplyr::group_by(vdj_muts, .data$contig_id, .data$len, .data$type, .data$seg)
+  vdj_muts <- dplyr::group_by(
+    vdj_muts,
+    .data$contig_id, .data$len, .data$type, .data$seg
+  )
+
   vdj_muts <- dplyr::summarize(vdj_muts, n = sum(.data$n), .groups = "drop")
 
   # Summarize total mutations and total length per contig
   # for each mutation type, sum total for v, d, j, and c segments, exclude jxns
-  all_muts <- dplyr::filter(vdj_muts, !seg %in% c("vd", "dj"))
+  all_muts <- dplyr::filter(vdj_muts, !.data$seg %in% c("vd", "dj"))
   all_muts <- dplyr::group_by(all_muts, .data$contig_id, .data$type)
 
   all_muts <- dplyr::summarize(
     all_muts,
-    n       = sum(n),
-    len     = sum(len),
+    n       = sum(.data$n),
+    len     = sum(.data$len),
     seg     = "all",
     .groups = "drop"
   )

@@ -23,7 +23,7 @@ calc_diversity(
 data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{data_col}{meta.data column containing values to use for
-calculating diversity}
+calculating diversity, e.g. 'clonotype_id'}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating diversity. If cluster_col is omitted,

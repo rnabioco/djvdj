@@ -27,7 +27,7 @@ plot_diversity(
 data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{data_col}{meta.data column containing values to use for
-calculating diversity}
+calculating diversity, e.g. 'clonotype_id'}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
@@ -35,9 +35,10 @@ grouping cells when calculating clonotype abundance}
 \item{group_col}{meta.data column to use for grouping IDs present in
 cluster_col}
 
-\item{method}{Function to use for calculating diversity. A named list of
-functions can be passed to plot multiple diversity metrics,
-e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)}
+\item{method}{Function to use for calculating diversity, e.g.
+abdiv::simpson. A named list of functions can be passed to plot multiple
+diversity metrics, e.g.
+list(simpson = abdiv::simpson, shannon = abdiv::shannon)}
 
 \item{downsample}{Downsample clusters to the same size when calculating
 diversity metrics}
@@ -73,30 +74,37 @@ Plot repertoire diversity
 }
 \examples{
 # Plot diversity using all cells
-plot_diversity(vdj_so)
+plot_diversity(
+  vdj_so,
+  data_col = "clonotype_id"
+)
 
 # Specify method to use for calculating repertoire diversity
 plot_diversity(
   vdj_sce,
-  method = abdiv::shannon
+  data_col = "clonotype_id",
+  method   = abdiv::shannon
 )
 
 # Plot diversity separately for each cell cluster
 plot_diversity(
   vdj_so,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident"
 )
 
 # Plot multiple diversity metrics
 plot_diversity(
   vdj_sce,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  method = list(simpson = abdiv::simpson, shannon = abdiv::shannon)
+  method      = list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 )
 
 # Specify colors to use for each cell cluster
 plot_diversity(
   vdj_so,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
   plot_colors = c(avid_2 = "green", avid_1 = "purple")
 )
@@ -104,8 +112,9 @@ plot_diversity(
 # Specify order to use for plotting cell clusters
 plot_diversity(
   vdj_sce,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  plot_lvls = c("avid_2", "avid_1")
+  plot_lvls   = c("avid_2", "avid_1")
 )
 
 # Specify how to organize facets when plotting multiple metrics
@@ -117,7 +126,8 @@ mets <- list(
 
 plot_diversity(
   vdj_so,
-  method = mets,
+  data_col   = "clonotype_id",
+  method     = mets,
   facet_rows = 2
 )
 

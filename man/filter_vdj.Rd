@@ -9,7 +9,8 @@ filter_vdj(
   filt,
   data_cols = NULL,
   clonotype_col = "clonotype_id",
-  sep = ";"
+  sep = ";",
+  per_cell = FALSE
 )
 }
 \arguments{
@@ -34,8 +35,8 @@ is used to determine which columns contain V(D)J data.}
 \item{sep}{Separator used for storing per cell V(D)J data. If NULL, per_cell
 will be set TRUE.}
 
-\item{per_cell}{Filter data based on per-cell values instead of per-chain
-values. If TRUE, per-chain values will not be parsed.}
+\item{per_cell}{If TRUE, per-chain data will not be parsed and values
+in each meta.data column will be filtered as is.}
 }
 \value{
 Object with filtered meta.data

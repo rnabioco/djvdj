@@ -60,8 +60,9 @@ provided, top genes will be identified for each cluster.}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
 
-\item{trans}{Transformation to use for plotting segment usage, e.g. 'log10',
-refer to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}} for more options.}
+\item{trans}{Transformation to use when plotting segment usage, e.g.
+'log10'. By default values are not transformed, refer to
+\code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}} for more options.}
 
 \item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 

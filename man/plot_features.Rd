@@ -49,6 +49,7 @@ plot_vdj_feature(input, ...)
   y = "UMAP_2",
   summary_fn = NULL,
   chain = NULL,
+  plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
   min_q = NULL,
@@ -67,6 +68,7 @@ plot_vdj_feature(input, ...)
   data_slot = "data",
   summary_fn = NULL,
   chain = NULL,
+  plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
   min_q = NULL,
@@ -95,8 +97,8 @@ linetype, etc.}
 \item{plot_lvls}{Levels to use for ordering feature}
 
 \item{trans}{Transformation to use when coloring cells by a continuous
-variable, e.g. 'log10', refer to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}} for more
-options.}
+variable, e.g. 'log10'. By default values are not transformed, refer to
+\code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}} for more options.}
 
 \item{min_q}{Minimum quantile cutoff for color scale.}
 
