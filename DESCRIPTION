@@ -53,7 +53,8 @@ Suggests:
     testthat,
     here,
     cowplot,
-    RColorBrewer
+    RColorBrewer,
+    rmarkdown
 VignetteBuilder: 
     knitr
 Remotes:
