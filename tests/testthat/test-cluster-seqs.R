@@ -14,10 +14,10 @@ test_lvls <- unique(vdj_so$seurat_clusters) %>%
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
   data_col    = "cdr3",
-  chain       = "IGH",
+  chain       = list(NULL, "IGH"),
   method      = c("louvain", "leiden"),
   k           = c(5, 10),
-  resolution  = c(0.1, 5),
+  resolution  = list(0.1, 5, c(0.1, 5)),
   return_df   = c(TRUE, FALSE)
 )
 

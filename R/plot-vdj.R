@@ -23,8 +23,8 @@ plot_features <- function(input, ...) {
 #' @param min_q Minimum quantile cutoff for color scale.
 #' @param max_q Maximum quantile cutoff for color scale.
 #' @param na_color Color to use for missing values
-#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
-#' linetype, etc.
+#' @param ... Additional arguments to pass to [ggplot2::geom_point()], e.g.
+#' color, fill, size, linetype, etc.
 #' @return ggplot object
 #'
 #' @examples
@@ -45,9 +45,10 @@ plot_features <- function(input, ...) {
 #' @export
 #' @name plot_features
 plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
-                                  plot_colors = NULL, plot_lvls = names(plot_colors),
-                                  trans = "identity", min_q = NULL, max_q = NULL,
-                                  na_color = "grey80", ...) {
+                                  plot_colors = NULL,
+                                  plot_lvls = names(plot_colors),
+                                  trans = "identity", min_q = NULL,
+                                  max_q = NULL, na_color = "grey80", ...) {
 
   # Check arguments
   if (identical(x, y)) {
@@ -250,7 +251,7 @@ plot_vdj_feature <- function(input, ...) {
 #' @export
 plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
                                      y = "UMAP_2", summary_fn = NULL,
-                                     chain = NULL,
+                                     chain = NULL, plot_colors = NULL,
                                      plot_lvls = names(plot_colors),
                                      trans = "identity", min_q = NULL,
                                      max_q = NULL, na_color = "grey80",
@@ -268,12 +269,14 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
 
   res <- plot_features(
     plt_dat,
-    x        = x,
-    y        = y,
-    feature  = data_col,
-    min_q    = min_q,
-    max_q    = max_q,
-    na_color = na_color,
+    x           = x,
+    y           = y,
+    feature     = data_col,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    min_q       = min_q,
+    max_q       = max_q,
+    na_color    = na_color,
     ...
   )
 
@@ -287,6 +290,7 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
 plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
                                     y = "UMAP_2", data_slot = "data",
                                     summary_fn = NULL, chain = NULL,
+                                    plot_colors = NULL,
                                     plot_lvls = names(plot_colors),
                                     trans = "identity", min_q = NULL,
                                     max_q = NULL, na_color = "grey80",
@@ -310,17 +314,18 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
 
   res <- plot_vdj_feature(
     plt_dat,
-    x          = x,
-    y          = y,
-    data_col   = data_col,
-    summary_fn = summary_fn,
-    chain      = chain,
-    plot_lvls  = plot_lvls,
-    min_q      = min_q,
-    max_q      = max_q,
-    na_color   = na_color,
-    chain_col  = chain_col,
-    sep        = sep,
+    x           = x,
+    y           = y,
+    data_col    = data_col,
+    summary_fn  = summary_fn,
+    chain       = chain,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    min_q       = min_q,
+    max_q       = max_q,
+    na_color    = na_color,
+    chain_col   = chain_col,
+    sep         = sep,
     ...
   )
 
@@ -478,9 +483,7 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
   } else {
     fetch_cols <- data_cols
 
-    if (!is.null(chain)) {
-      fetch_cols <- c(chain_col, fetch_cols)
-    }
+    if (!is.null(chain)) fetch_cols <- c(chain_col, fetch_cols)
 
     plt_dat <- fetch_vdj(
       input,
