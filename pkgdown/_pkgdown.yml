@@ -35,7 +35,7 @@ reference:
 - title: CDR3 Clustering
   contents:
   - cluster_sequences
-  - plot_motif
+  - plot_motifs
 
 - title: Data Manipulation
   contents:

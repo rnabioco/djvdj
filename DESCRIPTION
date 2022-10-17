@@ -44,7 +44,8 @@ Imports:
     Biostrings,
     MASS,
     ggseqlogo,
-    iNEXT
+    iNEXT,
+    SummarizedExperiment
 Suggests: 
     magrittr,
     covr,
