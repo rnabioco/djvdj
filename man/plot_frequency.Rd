@@ -10,6 +10,7 @@ plot_frequency(
   cluster_col = NULL,
   group_col = NULL,
   units = "percent",
+  stack = TRUE,
   plot_colors = NULL,
   plot_lvls = NULL,
   ...
@@ -33,6 +34,8 @@ cluster_col. This is useful when there are multiple replicates or patients
 for each treatment condition.}
 
 \item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
+
+\item{stack}{If TRUE, stacked bargraphs will be generated.}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 

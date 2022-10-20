@@ -58,8 +58,8 @@
 #' head(res, 1)
 #'
 #' @export
-calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0(data_col, "_"),
-                           return_df = FALSE) {
+calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
+                           (data_col, "_"), return_df = FALSE) {
 
   # Format input data
   meta <- .get_meta(input)
@@ -111,7 +111,8 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0(
 #' @param out_prefix Prefix to add to output columns
 #' @return data.frame containing clonotype abundances
 #' @noRd
-.calc_freq <- function(df_in, cell_col, dat_col, clust_col = NULL, out_prefix = "") {
+.calc_freq <- function(df_in, cell_col, dat_col, clust_col = NULL,
+                       out_prefix = "") {
 
   # Count number of cells in each group
   if (!is.null(clust_col)) {
@@ -288,11 +289,13 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0(
 #'
 #' @export
 plot_clonal_abundance <- function(input, cluster_col = NULL,
-                                  clonotype_col = "clonotype_id", method = "bar",
-                                  units = "percent", plot_colors = NULL,
-                                  plot_lvls = names(plot_colors), n_clones = NULL,
-                                  label_aes = list(), facet_rows = 1,
-                                  facet_scales = "free_x", ...) {
+                                  clonotype_col = "clonotype_id",
+                                  method = "bar", units = "percent",
+                                  plot_colors = NULL,
+                                  plot_lvls = names(plot_colors),
+                                  n_clones = NULL, label_aes = list(),
+                                  facet_rows = 1, facet_scales = "free_x",
+                                  ...) {
 
   if (!units %in% c("frequency", "percent")) {
     stop("units must be either 'frequency' or 'percent'.")
@@ -474,6 +477,7 @@ plot_clonal_abundance <- function(input, cluster_col = NULL,
 #' cluster_col. This is useful when there are multiple replicates or patients
 #' for each treatment condition.
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
+#' @param stack If TRUE, stacked bargraphs will be generated.
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
@@ -482,7 +486,7 @@ plot_clonal_abundance <- function(input, cluster_col = NULL,
 #' @seealso [calc_frequency()], [plot_clonal_abundance()]
 #' @export
 plot_frequency <- function(input, data_col, cluster_col = NULL,
-                           group_col = NULL, units = "percent",
+                           group_col = NULL, units = "percent", stack = TRUE,
                            plot_colors = NULL, plot_lvls = NULL, ...) {
 
   if (!units %in% c("frequency", "percent")) {
@@ -580,6 +584,8 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   # When cluster_col is provided set default position to dodge
   if (!is.null(cluster_col)) {
     gg_pos <- ggplot2::position_dodge(preserve = "single")
+
+    if (stack) gg_pos <- ggplot2::position_stack()
 
     gg_args$position <- gg_args$position %||% gg_pos
   }
