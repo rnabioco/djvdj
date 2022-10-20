@@ -27,24 +27,29 @@ knitr::opts_chunk$set(
 
 This vignette provides detailed examples for quantifying repertoire diversity. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
 
+```{bash}
+wget -nc -q https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip
+
+unzip -n -qq splenocytes.zip
+```
+
 ```{r}
 library(djvdj)
 library(magrittr)
 library(Seurat)
-library(here)
 library(ggplot2)
 
 # Load Seurat object
-load(here("data/splenocytes/splen_so.rda"))
+load("splenocytes/splen_so.rda")
 
 # Add V(D)J data to object
 vdj_dirs <- c(
-  BL6 = here("data/splenocytes/BL6_BCR"),
-  MD4 = here("data/splenocytes/MD4_BCR")
+  BL6 = "splenocytes/BL6_BCR",
+  MD4 = "splenocytes/MD4_BCR"
 )
 
 so <- splen_so %>%
-  import_vdj(vdj_dirs)
+  import_vdj(vdj_dirs, define_clonotypes = "cdr3_gene")
 ```
 
 <br>
