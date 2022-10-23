@@ -14,7 +14,7 @@ plot_motifs(
   chain_col = "chains",
   width = 0.75,
   align_end = "5",
-  facet_rows = NULL,
+  panel_nrow = NULL,
   sep = ";",
   ...
 )
@@ -46,7 +46,7 @@ select a width where at least 75\% of sequences are longer than the cutoff.}
 \item{align_end}{End to use for aligning sequences, specify '5' or '3' to
 align sequences at the 5' or 3' end when plotting.}
 
-\item{facet_rows}{The number of facet rows for final plot}
+\item{panel_nrow}{The number of rows to use for arranging plot panels}
 
 \item{sep}{Separator used for storing per cell V(D)J data}
 

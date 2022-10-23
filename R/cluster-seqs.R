@@ -183,7 +183,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' select a width where at least 75% of sequences are longer than the cutoff.
 #' @param align_end End to use for aligning sequences, specify '5' or '3' to
 #' align sequences at the 5' or 3' end when plotting.
-#' @param facet_rows The number of facet rows for final plot
+#' @param panel_nrow The number of rows to use for arranging plot panels
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional parameters to pass to [ggseqlogo::geom_logo()]
 #' @importFrom stringr str_trunc
@@ -192,7 +192,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
                         chain, plot_colors = NULL,
                         plot_lvls = names(plot_colors), chain_col = "chains",
-                        width = 0.75, align_end = "5", facet_rows = NULL,
+                        width = 0.75, align_end = "5", panel_nrow = NULL,
                         sep = ";", ...) {
 
   if (width <= 0) {
@@ -255,7 +255,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
   # Create logos
   res <- ggplot() +
     ggseqlogo::geom_logo(seqs, ...) +
-    ggplot2::facet_wrap(~ seq_group, scales = "free", nrow = facet_rows) +
+    ggplot2::facet_wrap(~ seq_group, scales = "free", nrow = panel_nrow) +
     djvdj_theme()
 
   if (!is.null(plot_colors)) {

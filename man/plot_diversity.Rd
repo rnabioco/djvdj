@@ -16,8 +16,8 @@ plot_diversity(
   chain_col = "chains",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
-  facet_rows = 1,
-  facet_scales = "free",
+  panel_nrow = NULL,
+  panel_scales = "free",
   sep = ";",
   ...
 )
@@ -32,7 +32,7 @@ calculating diversity, e.g. 'clonotype_id'}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
 
-\item{group_col}{meta.data column to use for grouping IDs present in
+\item{group_col}{meta.data column to use for grouping clusters present in
 cluster_col}
 
 \item{method}{Function to use for calculating diversity, e.g.
@@ -54,12 +54,11 @@ all chains.}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{facet_rows}{The number of facet rows for final plot, use this argument
-if a list of functions is passed to method}
+\item{panel_nrow}{The number of rows to use for arranging plot panels}
 
-\item{facet_scales}{This passes a scales specification to
-ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
-will cause plot facets to share the same scales}
+\item{panel_scales}{Should scales for plot panels be fixed or free. This
+passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
+'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
@@ -128,7 +127,7 @@ plot_diversity(
   vdj_so,
   data_col   = "clonotype_id",
   method     = mets,
-  facet_rows = 2
+  panel_nrow = 2
 )
 
 }

@@ -517,19 +517,22 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param df_in data.frame
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
+#' @param grp Variable to use for facet_wrap
 #' @param .color Variable to use for line color
 #' @param .fill Variable to use for fill color
 #' @param clrs Vector of colors for plotting
 #' @param method Method to use for plotting, either 'boxplot' or 'violin'
 #' @param trans Transformation to use for plotting data, e.g. 'log10', refer
 #' to [ggplot2::continuous_scale()] for more options.
+#' @param nrow Number of rows for facets
+#' @param scales scales specification for facet_wrap
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_boxes <- function(df_in, x = NULL, y, .color = NULL, .fill = NULL,
+.create_boxes <- function(df_in, x = NULL, y, grp = NULL, .color = NULL, .fill = NULL,
                           clrs = NULL, method = "boxplot", trans = "identity",
-                          ...) {
+                          nrow = NULL, scales = "fixed", ...) {
 
   # Check input
   typs <- c("boxplot", "violin")
@@ -553,6 +556,15 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
       axis.title.x    = ggplot2::element_blank()
     ) +
     ggplot2::scale_y_continuous(trans = trans)
+
+  if (!is.null(grp)) {
+    res <- res +
+      ggplot2::facet_wrap(
+        stats::as.formula(paste("~", grp)),
+        nrow = nrow,
+        scales = scales
+      )
+  }
 
   if (!is.null(clrs)) {
     res <- res +
@@ -581,6 +593,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #'
 #' @param df_in data.frame
 #' @param x Variable to plot on x-axis
+#' @param grp Variable to use for facet_wrap
 #' @param .color Variable to use for line color
 #' @param .fill Variable to use for fill color
 #' @param clrs Vector of colors for plotting
@@ -590,13 +603,16 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' the percentage of total values.
 #' @param trans Transformation to use for plotting data, e.g. 'log10', refer
 #' to [ggplot2::continuous_scale()] for more options.
+#' @param nrow Number of rows for facets
+#' @param scales scales specification for facet_wrap
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_hist <- function(df_in, x, .color = NULL, .fill = NULL, clrs = NULL,
-                         method = "histogram", units = "frequency",
-                         trans = "identity", ...) {
+.create_hist <- function(df_in, x, grp, .color = NULL, .fill = NULL,
+                         clrs = NULL, method = "histogram",
+                         units = "frequency", trans = "identity", nrow = NULL,
+                         scales = "fixed", ...) {
 
   # Check inputs
   typs <- c("histogram", "density")
@@ -629,6 +645,15 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     djvdj_theme() +
     ggplot2::theme(legend.position = "top") +
     ggplot2::scale_x_continuous(trans = trans)
+
+  if (!is.null(grp)) {
+    res <- res +
+      ggplot2::facet_wrap(
+        stats::as.formula(paste("~", grp)),
+        nrow = nrow,
+        scales = scales
+      )
+  }
 
   if (!is.null(clrs)) {
     res <- res +

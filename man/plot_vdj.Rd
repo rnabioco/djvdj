@@ -9,16 +9,19 @@
 \usage{
 plot_vdj(
   input,
-  data_cols,
+  data_col,
   per_cell = FALSE,
   summary_fn = mean,
   cluster_col = NULL,
+  group_col = NULL,
   chain = NULL,
   method = "histogram",
   units = "frequency",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
+  panel_nrow = NULL,
+  panel_scales = "free_x",
   chain_col = "chains",
   sep = ";",
   ...
@@ -28,12 +31,15 @@ plot_vdj_reads(
   input,
   data_cols = c("reads", "umis"),
   cluster_col = NULL,
+  group_col = NULL,
   chain = NULL,
   method = "violin",
   units = "frequency",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "log10",
+  panel_nrow = NULL,
+  panel_scales = "fixed",
   chain_col = "chains",
   sep = ";",
   ...
@@ -43,6 +49,7 @@ plot_cdr3_length(
   input,
   data_cols = "cdr3_length",
   cluster_col = NULL,
+  group_col = NULL,
   chain = NULL,
   method = "histogram",
   units = "frequency",
@@ -58,12 +65,15 @@ plot_vdj_mutations(
   input,
   data_cols = c("all_ins", "all_del", "all_mis"),
   cluster_col = NULL,
+  group_col = NULL,
   chain = NULL,
   method = "boxplot",
   units = "frequency",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
+  panel_nrow = NULL,
+  panel_scales = "fixed",
   chain_col = "chains",
   sep = ";",
   ...
@@ -73,20 +83,20 @@ plot_vdj_mutations(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, cell barcodes should be stored as row names.}
 
-\item{data_cols}{meta.data column(s) containing continuous V(D)J data to
-plot}
-
 \item{per_cell}{Should values be plotted per cell, i.e. each data point
 would represent one cell. If TRUE, values will be summarized for each cell
 using summary_fn. If FALSE, values will be plotted for each chain.}
 
 \item{summary_fn}{Function to use for summarizing values when per_cell is
 TRUE, possible values can be either a function, e.g. mean, or a purrr-style
-lambda, e.g. ~ mean(.x, na.rm = TRUE) where ".x" refers to the column. If
+lambda, e.g. ~ mean(.x, na.rm = TRUE) where '.x' refers to the column. If
 NULL, the mean will be calculated.}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells for plotting}
+
+\item{group_col}{meta.dats column to use for grouping clusters present in
+cluster_col}
 
 \item{chain}{Chain(s) to use for filtering data before plotting. If NULL
 data will not be filtered based on chain.}
@@ -115,12 +125,21 @@ clusters specified by cluster_col}
 default values are not transformed, refer to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}}
 for more options.}
 
+\item{panel_nrow}{The number of rows to use for arranging plot panels}
+
+\item{panel_scales}{Should scales for plot panels be fixed or free. This
+passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
+'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.}
+
 \item{chain_col}{meta.data column containing chains for each cell}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
+
+\item{data_cols}{meta.data column(s) containing continuous V(D)J data to
+plot}
 }
 \value{
 ggplot object
@@ -200,7 +219,7 @@ plot_vdj(
 # Set order to use for plotting cell clusters
 plot_vdj(
   vdj_sce,
-  data_cols = "cdr3_length",
+  data_col = "cdr3_length",
   cluster_col = "orig.ident",
   plot_lvls = c("avid_2", "avid_1"),
   method = "boxplot"

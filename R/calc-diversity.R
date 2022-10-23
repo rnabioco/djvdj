@@ -228,7 +228,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' calculating diversity, e.g. 'clonotype_id'
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
-#' @param group_col meta.data column to use for grouping IDs present in
+#' @param group_col meta.data column to use for grouping clusters present in
 #' cluster_col
 #' @param method Function to use for calculating diversity, e.g.
 #' abdiv::simpson. A named list of functions can be passed to plot multiple
@@ -242,11 +242,10 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param chain_col meta.data column containing chains for each cell
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
-#' @param facet_rows The number of facet rows for final plot, use this argument
-#' if a list of functions is passed to method
-#' @param facet_scales This passes a scales specification to
-#' ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
-#' will cause plot facets to share the same scales
+#' @param panel_nrow The number of rows to use for arranging plot panels
+#' @param panel_scales Should scales for plot panels be fixed or free. This
+#' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
+#' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
@@ -310,7 +309,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'   vdj_so,
 #'   data_col   = "clonotype_id",
 #'   method     = mets,
-#'   facet_rows = 2
+#'   panel_nrow = 2
 #' )
 #'
 #' @export
@@ -318,8 +317,8 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, method = abdiv::simpson,
                            downsample = FALSE, n_boots = 1, chain = NULL,
                            chain_col = "chains", plot_colors = NULL,
-                           plot_lvls = names(plot_colors), facet_rows = 1,
-                           facet_scales = "free", sep = ";", ...) {
+                           plot_lvls = names(plot_colors), panel_nrow = NULL,
+                           panel_scales = "free", sep = ";", ...) {
 
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if providing a list of methods.")
@@ -412,7 +411,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
     # Create facets
     if (length(method) > 1) {
       res <- res +
-        ggplot2::facet_wrap(~ met, nrow = facet_rows, scales = facet_scales) +
+        ggplot2::facet_wrap(~ met, nrow = panel_nrow, scales = panel_scales) +
         ggplot2::theme(axis.title.y = ggplot2::element_blank())
 
     } else {
@@ -449,7 +448,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   # Create facets
   if (length(method) > 1) {
     res <- res +
-      ggplot2::facet_wrap(~ met, nrow = facet_rows, scales = "free") +
+      ggplot2::facet_wrap(~ met, nrow = panel_nrow, scales = "free") +
       ggplot2::theme(axis.title.y = ggplot2::element_blank())
 
   } else {
@@ -488,10 +487,10 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param chain_col meta.data column containing chains for each cell
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
-#' @param facet_rows The number of facet rows for final plot
-#' @param facet_scales This passes a scales specification to
-#' ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
-#' will cause plot facets to share the same scales.
+#' @param panel_nrow The number of rows to use for arranging plot panels
+#' @param panel_scales Should scales for plot panels be fixed or free. This
+#' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
+#' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' @param ci_alpha Transparency to use when plotting 95% confidence interval
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
@@ -505,8 +504,8 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
                              method = "richness", n_boots = 50,
                              chain = NULL, chain_col = "chains",
                              plot_colors = NULL,
-                             plot_lvls = names(plot_colors), facet_rows = 1,
-                             facet_scales = "free", ci_alpha = 0.15, sep = ";",
+                             plot_lvls = names(plot_colors), panel_nrow = NULL,
+                             panel_scales = "free", ci_alpha = 0.15, sep = ";",
                              ...) {
 
   # Set method
@@ -617,7 +616,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
 
   if (length(method) > 1) {
     res <- res +
-      ggplot2::facet_wrap(~ Order.q, nrow = facet_rows, scales = facet_scales) +
+      ggplot2::facet_wrap(~ Order.q, nrow = panel_nrow, scales = panel_scales) +
       ggplot2::labs(y = "diversity")
 
     if (is.null(cluster_col)) {

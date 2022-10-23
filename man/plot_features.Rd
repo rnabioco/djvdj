@@ -13,29 +13,35 @@ plot_features(input, ...)
 
 \method{plot_features}{default}(
   input,
-  feature,
+  feature = NULL,
   x = "UMAP_1",
   y = "UMAP_2",
+  group_col = NULL,
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
   min_q = NULL,
   max_q = NULL,
+  panel_nrow = NULL,
+  panel_scales = "fixed",
   na_color = "grey80",
   ...
 )
 
 \method{plot_features}{Seurat}(
   input,
-  feature,
+  feature = NULL,
   x = "UMAP_1",
   y = "UMAP_2",
+  group_col = NULL,
   data_slot = "data",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
   min_q = NULL,
   max_q = NULL,
+  panel_nrow = NULL,
+  panel_scales = "fixed",
   na_color = "grey80",
   ...
 )
@@ -47,6 +53,7 @@ plot_vdj_feature(input, ...)
   data_col,
   x = "UMAP_1",
   y = "UMAP_2",
+  group_col = NULL,
   summary_fn = NULL,
   chain = NULL,
   plot_colors = NULL,
@@ -54,6 +61,8 @@ plot_vdj_feature(input, ...)
   trans = "identity",
   min_q = NULL,
   max_q = NULL,
+  panel_nrow = NULL,
+  panel_scales = "fixed",
   na_color = "grey80",
   chain_col = "chains",
   sep = ";",
@@ -65,6 +74,7 @@ plot_vdj_feature(input, ...)
   data_col,
   x = "UMAP_1",
   y = "UMAP_2",
+  group_col = NULL,
   data_slot = "data",
   summary_fn = NULL,
   chain = NULL,
@@ -73,6 +83,8 @@ plot_vdj_feature(input, ...)
   trans = "identity",
   min_q = NULL,
   max_q = NULL,
+  panel_nrow = NULL,
+  panel_scales = "fixed",
   na_color = "grey80",
   chain_col = "chains",
   sep = ";",
@@ -92,6 +104,8 @@ linetype, etc.}
 
 \item{y}{Variable to plot on y-axis}
 
+\item{group_col}{meta.data column to use for splitting plot into panels}
+
 \item{plot_colors}{Vector of colors to use for plotting}
 
 \item{plot_lvls}{Levels to use for ordering feature}
@@ -103,6 +117,12 @@ variable, e.g. 'log10'. By default values are not transformed, refer to
 \item{min_q}{Minimum quantile cutoff for color scale.}
 
 \item{max_q}{Maximum quantile cutoff for color scale.}
+
+\item{panel_nrow}{The number of rows to use for arranging plot panels}
+
+\item{panel_scales}{Should scales for plot panels be fixed or free. This
+passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
+'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.}
 
 \item{na_color}{Color to use for missing values}
 

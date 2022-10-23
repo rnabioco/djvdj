@@ -15,6 +15,7 @@ plot_features <- function(input, ...) {
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
+#' @param group_col meta.data column to use for splitting plot into panels
 #' @param plot_colors Vector of colors to use for plotting
 #' @param plot_lvls Levels to use for ordering feature
 #' @param trans Transformation to use when coloring cells by a continuous
@@ -22,6 +23,10 @@ plot_features <- function(input, ...) {
 #' [ggplot2::continuous_scale()] for more options.
 #' @param min_q Minimum quantile cutoff for color scale.
 #' @param max_q Maximum quantile cutoff for color scale.
+#' @param panel_nrow The number of rows to use for arranging plot panels
+#' @param panel_scales Should scales for plot panels be fixed or free. This
+#' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
+#' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' @param na_color Color to use for missing values
 #' @param ... Additional arguments to pass to [ggplot2::geom_point()], e.g.
 #' color, fill, size, linetype, etc.
@@ -44,16 +49,45 @@ plot_features <- function(input, ...) {
 #'
 #' @export
 #' @name plot_features
-plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
+plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
+                                  y = "UMAP_2", group_col = NULL,
                                   plot_colors = NULL,
                                   plot_lvls = names(plot_colors),
                                   trans = "identity", min_q = NULL,
-                                  max_q = NULL, na_color = "grey80", ...) {
+                                  max_q = NULL, panel_nrow = NULL,
+                                  panel_scales = "fixed", na_color = "grey80",
+                                  ...) {
+
+  .create_scatter <- function(dat, x, y, feat = feature,
+                              grp = group_col, p_nrow = panel_nrow,
+                              p_scales = panel_scales, pt_args) {
+
+    # If don't use lift_dl() to set plt_aes, will get a warning when
+    # manually adjusting colors: "Scale for 'colour' is already present..."
+    plt_aes <- list(x = sym(x), y = sym(y))
+
+    if (!is.null(feat)) plt_aes$color <- sym(feat)
+
+    plt_aes <- purrr::lift_dl(ggplot2::aes)(plt_aes)
+
+    res <- ggplot2::ggplot(dat, plt_aes) +
+      purrr::lift_dl(ggplot2::geom_point)(pt_args) +
+      djvdj_theme()
+
+    if (!is.null(grp)) {
+      res <- res +
+        ggplot2::facet_wrap(
+          stats::as.formula(paste("~", grp)),
+          nrow   = p_nrow,
+          scales = p_scales
+        )
+    }
+
+    res
+  }
 
   # Check arguments
-  if (identical(x, y)) {
-    stop("'x' and 'y' must be different")
-  }
+  if (identical(x, y)) stop("'x' and 'y' must be different")
 
   plt_dat <- .get_meta(input)
 
@@ -62,6 +96,17 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
 
   if (length(miss_vars) > 0) {
     stop(paste(miss_vars, collapse = ", "), " not found in object")
+  }
+
+  gg_args <- list(...)
+
+  # If no feature provided, return scatter plot
+  if (is.null(feature)) {
+    gg_args$color <- gg_args$color %||% plot_colors
+
+    res <- .create_scatter(plt_dat, x, y, pt_args = gg_args)
+
+    return(res)
   }
 
   # Adjust values based on min_q and max_q
@@ -97,14 +142,9 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
   # Sort data so largest values are plotted on top
   # Do not use arrange() since NAs always get sorted to bottom
   # res <- arrange(plt_dat, !!sym(feature))
-  res <- plt_dat[order(plt_dat[[feature]], na.last = FALSE), ]
+  plt_dat <- plt_dat[order(plt_dat[[feature]], na.last = FALSE), ]
 
-  # Create scatter plot
-  res <- ggplot2::ggplot(
-    res,
-    ggplot2::aes(!!sym(x), !!sym(y), color = !!sym(feature))
-  ) +
-    ggplot2::geom_point(...)
+  res <- .create_scatter(plt_dat, x, y, pt_args = gg_args)
 
   # Set feature colors, use ggplot2 defaults if plot_colors is NULL
   if (is_num) {
@@ -135,15 +175,7 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
       ggplot2::scale_color_manual(
         values   = plot_colors,
         na.value = na_color
-      )
-  }
-
-  # Set theme
-  res <- res +
-    djvdj_theme()
-
-  if (!is_num) {
-    res <- res +
+      ) +
       ggplot2::guides(
         color = ggplot2::guide_legend(override.aes = list(size = 3))
       )
@@ -157,15 +189,18 @@ plot_features.default <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
 #' @param data_slot Slot in the Seurat object to pull data
 #' @importFrom Seurat FetchData
 #' @export
-plot_features.Seurat <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
+plot_features.Seurat <- function(input, feature = NULL, x = "UMAP_1",
+                                 y = "UMAP_2", group_col = NULL,
                                  data_slot = "data", plot_colors = NULL,
                                  plot_lvls = names(plot_colors),
                                  trans = "identity", min_q = NULL,
-                                 max_q = NULL, na_color = "grey80", ...) {
+                                 max_q = NULL, panel_nrow = NULL,
+                                 panel_scales = "fixed", na_color = "grey80",
+                                 ...) {
 
   # Fetch variables and add to meta.data
   # want input data to include meta.data and any features from FetchData
-  plt_vars <- c(x, y, feature)
+  plt_vars <- c(x, y, feature, group_col)
 
   plt_dat <- Seurat::FetchData(
     input,
@@ -179,16 +214,19 @@ plot_features.Seurat <- function(input, feature, x = "UMAP_1", y = "UMAP_2",
   plt_dat <- .get_meta(plt_dat)
 
   res <- plot_features(
-    input       = plt_dat,
-    x           = x,
-    y           = y,
-    feature     = feature,
-    plot_colors = plot_colors,
-    plot_lvls   = plot_lvls,
-    trans       = trans,
-    min_q       = min_q,
-    max_q       = max_q,
-    na_color    = na_color,
+    input        = plt_dat,
+    x            = x,
+    y            = y,
+    feature      = feature,
+    group_col    = group_col,
+    plot_colors  = plot_colors,
+    plot_lvls    = plot_lvls,
+    trans        = trans,
+    min_q        = min_q,
+    max_q        = max_q,
+    panel_nrow   = panel_nrow,
+    panel_scales = panel_scales,
+    na_color     = na_color,
     ...
   )
 
@@ -250,12 +288,15 @@ plot_vdj_feature <- function(input, ...) {
 #'
 #' @export
 plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
-                                     y = "UMAP_2", summary_fn = NULL,
+                                     y = "UMAP_2", group_col = NULL,
+                                     summary_fn = NULL,
                                      chain = NULL, plot_colors = NULL,
                                      plot_lvls = names(plot_colors),
                                      trans = "identity", min_q = NULL,
-                                     max_q = NULL, na_color = "grey80",
-                                     chain_col = "chains", sep = ";", ...) {
+                                     max_q = NULL, panel_nrow = NULL,
+                                     panel_scales = "fixed",
+                                     na_color = "grey80", chain_col = "chains",
+                                     sep = ";", ...) {
 
   plt_dat <- summarize_vdj(
     input,
@@ -269,14 +310,18 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
 
   res <- plot_features(
     plt_dat,
-    x           = x,
-    y           = y,
-    feature     = data_col,
-    plot_colors = plot_colors,
-    plot_lvls   = plot_lvls,
-    min_q       = min_q,
-    max_q       = max_q,
-    na_color    = na_color,
+    x            = x,
+    y            = y,
+    feature      = data_col,
+    group_col    = group_col,
+    plot_colors  = plot_colors,
+    plot_lvls    = plot_lvls,
+    min_q        = min_q,
+    max_q        = max_q,
+    panel_nrow   = panel_nrow,
+    panel_scales = panel_scales,
+    na_color     = na_color,
+    trans        = trans,
     ...
   )
 
@@ -288,18 +333,19 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
 #' @importFrom Seurat FetchData
 #' @export
 plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
-                                    y = "UMAP_2", data_slot = "data",
-                                    summary_fn = NULL, chain = NULL,
-                                    plot_colors = NULL,
+                                    y = "UMAP_2", group_col = NULL,
+                                    data_slot = "data", summary_fn = NULL,
+                                    chain = NULL, plot_colors = NULL,
                                     plot_lvls = names(plot_colors),
                                     trans = "identity", min_q = NULL,
-                                    max_q = NULL, na_color = "grey80",
+                                    max_q = NULL, panel_nrow = NULL,
+                                    panel_scales = "fixed", na_color = "grey80",
                                     chain_col = "chains", sep = ";", ...) {
 
   # Fetch variables and add to meta.data
   # want input data to include meta.data and any features from FetchData
   # SHOULD WARNINGS BE SUPPRESSED??
-  plt_vars <- c(x, y, data_col)
+  plt_vars <- c(x, y, data_col, group_col)
 
   plt_dat <- Seurat::FetchData(
     input,
@@ -314,18 +360,22 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
 
   res <- plot_vdj_feature(
     plt_dat,
-    x           = x,
-    y           = y,
-    data_col    = data_col,
-    summary_fn  = summary_fn,
-    chain       = chain,
-    plot_colors = plot_colors,
-    plot_lvls   = plot_lvls,
-    min_q       = min_q,
-    max_q       = max_q,
-    na_color    = na_color,
-    chain_col   = chain_col,
-    sep         = sep,
+    x            = x,
+    y            = y,
+    data_col     = data_col,
+    group_col    = group_col,
+    summary_fn   = summary_fn,
+    chain        = chain,
+    plot_colors  = plot_colors,
+    plot_lvls    = plot_lvls,
+    min_q        = min_q,
+    max_q        = max_q,
+    panel_nrow   = panel_nrow,
+    panel_scales = panel_scales,
+    na_color     = na_color,
+    trans        = trans,
+    chain_col    = chain_col,
+    sep          = sep,
     ...
   )
 
@@ -341,6 +391,8 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
 #' plot
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells for plotting
+#' @param group_col meta.dats column to use for grouping clusters present in
+#' cluster_col
 #' @param chain Chain(s) to use for filtering data before plotting. If NULL
 #' data will not be filtered based on chain.
 #' @param method Method to use for plotting, possible values are:
@@ -359,6 +411,10 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
 #' e.g. fill = "red", color = "black"
 #' @param plot_lvls Character vector containing order to use for plotting cell
 #' clusters specified by cluster_col
+#' @param panel_nrow The number of rows to use for arranging plot panels
+#' @param panel_scales Should scales for plot panels be fixed or free. This
+#' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
+#' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
@@ -371,11 +427,9 @@ NULL
 #' @param per_cell Should values be plotted per cell, i.e. each data point
 #' would represent one cell. If TRUE, values will be summarized for each cell
 #' using summary_fn. If FALSE, values will be plotted for each chain.
-#' @param summary_fn Function to use for summarizing values for each cell, e.g.
-#' specifying stats::median will plot the median value per cell
 #' @param summary_fn Function to use for summarizing values when per_cell is
 #' TRUE, possible values can be either a function, e.g. mean, or a purrr-style
-#' lambda, e.g. ~ mean(.x, na.rm = TRUE) where ".x" refers to the column. If
+#' lambda, e.g. ~ mean(.x, na.rm = TRUE) where '.x' refers to the column. If
 #' NULL, the mean will be calculated.
 #' @param trans Transformation to use for plotting data, e.g. 'log10'. By
 #' default values are not transformed, refer to [ggplot2::continuous_scale()]
@@ -455,24 +509,26 @@ NULL
 #' # Set order to use for plotting cell clusters
 #' plot_vdj(
 #'   vdj_sce,
-#'   data_cols = "cdr3_length",
+#'   data_col = "cdr3_length",
 #'   cluster_col = "orig.ident",
 #'   plot_lvls = c("avid_2", "avid_1"),
 #'   method = "boxplot"
 #' )
 #'
 #' @export
-plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
-                     cluster_col = NULL, chain = NULL, method = "histogram",
+plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
+                     cluster_col = NULL, group_col = NULL, chain = NULL,
+                     method = "histogram",
                      units = "frequency", plot_colors = NULL,
                      plot_lvls = names(plot_colors), trans = "identity",
+                     panel_nrow = NULL, panel_scales = "free_x",
                      chain_col = "chains", sep = ";", ...) {
 
   # Format input data
   if (per_cell) {
     plt_dat <- summarize_vdj(
       input,
-      data_cols = data_cols,
+      data_cols = data_col,
       fn        = summary_fn,
       chain     = chain,
       chain_col = chain_col,
@@ -481,13 +537,13 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
     )
 
   } else {
-    fetch_cols <- data_cols
+    fetch_cols <- data_col
 
     if (!is.null(chain)) fetch_cols <- c(chain_col, fetch_cols)
 
     plt_dat <- fetch_vdj(
       input,
-      data_cols      = fetch_cols,
+      data_cols     = fetch_cols,
       clonotype_col = NULL,
       unnest        = TRUE
     )
@@ -499,30 +555,45 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
 
   plt_dat <- dplyr::filter(
     plt_dat,
-    if_all(all_of(data_cols), ~ !is.na(.x))
+    if_all(all_of(data_col), ~ !is.na(.x))
   )
 
   # Create plots
-  fn <- function(clmn) {
-    .plot_vdj(
-      plt_dat,
-      data_col    = clmn,
-      cluster_col = cluster_col,
-      method        = method,
-      units       = units,
-      plot_colors = plot_colors,
-      plot_lvls   = plot_lvls,
-      trans       = trans,
-      ...
-    )
-  }
-
-  res <- purrr::map(data_cols, fn)
-
-  # Combine plots
-  res <- purrr::reduce(res, `+`)
+  res <- .plot_vdj(
+    plt_dat,
+    data_col     = data_col,
+    cluster_col  = cluster_col,
+    group_col    = group_col,
+    method       = method,
+    units        = units,
+    plot_colors  = plot_colors,
+    plot_lvls    = plot_lvls,
+    trans        = trans,
+    panel_nrow   = panel_nrow,
+    panel_scales = panel_scales,
+    ...
+  )
 
   res
+
+  # fn <- function(clmn) {
+  #   .plot_vdj(
+  #     plt_dat,
+  #     data_col    = clmn,
+  #     cluster_col = cluster_col,
+  #     method      = method,
+  #     units       = units,
+  #     plot_colors = plot_colors,
+  #     plot_lvls   = plot_lvls,
+  #     trans       = trans,
+  #     ...
+  #   )
+  # }
+  #
+  # res <- purrr::map(data_cols, fn)
+  #
+  # # Combine plots
+  # res <- purrr::reduce(res, `+`)
 }
 
 #' @rdname plot_vdj
@@ -531,7 +602,8 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
 .plot_vdj <- function(df_in, data_col, cluster_col = NULL, group_col = NULL,
                       method = "boxplot", units = "frequency",
                       plot_colors = NULL, plot_lvls = names(plot_colors),
-                      trans = "identity", ...) {
+                      trans = "identity", panel_nrow = NULL,
+                      panel_scales = "fixed", ...) {
 
   # Order clusters based on plot_lvls
   df_in <- .set_lvls(df_in, cluster_col, plot_lvls)
@@ -540,11 +612,14 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
   gg_args <- list(
     df_in  = df_in,
     x      = data_col,
+    grp    = group_col,
     .color = cluster_col,
     .fill  = cluster_col,
     clrs   = plot_colors,
     method = method,
     trans  = trans,
+    nrow   = panel_nrow,
+    scales = panel_scales,
     ...
   )
 
@@ -572,25 +647,29 @@ plot_vdj <- function(input, data_cols, per_cell = FALSE, summary_fn = mean,
 #' @rdname plot_vdj
 #' @export
 plot_vdj_reads <- function(input, data_cols = c("reads", "umis"),
-                           cluster_col = NULL, chain = NULL,
+                           cluster_col = NULL, group_col = NULL, chain = NULL,
                            method = "violin", units = "frequency",
                            plot_colors = NULL, plot_lvls = names(plot_colors),
-                           trans = "log10", chain_col = "chains", sep = ";",
-                           ...) {
+                           trans = "log10", panel_nrow = NULL,
+                           panel_scales = "fixed", chain_col = "chains",
+                           sep = ";", ...) {
 
   res <- plot_vdj(
     input,
-    data_cols   = data_cols,
-    per_cell    = FALSE,
-    cluster_col = cluster_col,
-    chain       = chain,
-    method        = method,
-    units       = units,
-    plot_colors = plot_colors,
-    plot_lvls   = plot_lvls,
-    trans       = trans,
-    chain_col   = chain_col,
-    sep         = sep,
+    data_cols    = data_cols,
+    per_cell     = FALSE,
+    cluster_col  = cluster_col,
+    group_col    = group_col,
+    chain        = chain,
+    method       = method,
+    units        = units,
+    plot_colors  = plot_colors,
+    plot_lvls    = plot_lvls,
+    trans        = trans,
+    panel_nrow   = panel_nrow,
+    panel_scales = panel_scales,
+    chain_col    = chain_col,
+    sep          = sep,
     ...
   )
 
@@ -599,24 +678,29 @@ plot_vdj_reads <- function(input, data_cols = c("reads", "umis"),
 
 #' @rdname plot_vdj
 #' @export
-plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NULL,
-                             chain = NULL, method = "histogram", units = "frequency",
-                             plot_colors = NULL, plot_lvls = names(plot_colors),
-                             trans = "log10", chain_col = "chains", sep = ";", ...) {
+plot_cdr3_length <- function(input, data_cols = "cdr3_length",
+                             cluster_col = NULL, group_col = NULL,
+                             chain = NULL, method = "histogram",
+                             units = "frequency", plot_colors = NULL,
+                             plot_lvls = names(plot_colors), trans = "log10",
+                             chain_col = "chains", sep = ";", ...) {
 
   res <- plot_vdj(
     input,
-    data_cols   = data_cols,
-    per_cell    = FALSE,
-    cluster_col = cluster_col,
-    chain       = chain,
-    method        = method,
-    units       = units,
-    plot_colors = plot_colors,
-    plot_lvls   = plot_lvls,
-    trans       = trans,
-    chain_col   = chain_col,
-    sep         = sep,
+    data_cols    = data_cols,
+    per_cell     = FALSE,
+    cluster_col  = cluster_col,
+    group_col    = group_col,
+    chain        = chain,
+    method       = method,
+    units        = units,
+    plot_colors  = plot_colors,
+    plot_lvls    = plot_lvls,
+    trans        = trans,
+    panel_nrow   = panel_nrow,
+    panel_scales = panel_scales,
+    chain_col    = chain_col,
+    sep          = sep,
     ...
   )
 
@@ -625,25 +709,32 @@ plot_cdr3_length <- function(input, data_cols = "cdr3_length", cluster_col = NUL
 
 #' @rdname plot_vdj
 #' @export
-plot_vdj_mutations <- function(input, data_cols = c("all_ins", "all_del", "all_mis"),
-                               cluster_col = NULL, chain = NULL, method = "boxplot",
+plot_vdj_mutations <- function(input,
+                               data_cols = c("all_ins", "all_del", "all_mis"),
+                               cluster_col = NULL, group_col = NULL,
+                               chain = NULL, method = "boxplot",
                                units = "frequency", plot_colors = NULL,
-                               plot_lvls = names(plot_colors), trans = "identity",
-                               chain_col = "chains", sep = ";", ...) {
+                               plot_lvls = names(plot_colors),
+                               trans = "identity", panel_nrow = NULL,
+                               panel_scales = "fixed", chain_col = "chains",
+                               sep = ";", ...) {
 
   res <- plot_vdj(
     input,
-    data_cols   = data_cols,
-    per_cell    = FALSE,
-    cluster_col = cluster_col,
-    chain       = chain,
-    method      = method,
-    units       = units,
-    plot_colors = plot_colors,
-    plot_lvls   = plot_lvls,
-    trans       = trans,
-    chain_col   = chain_col,
-    sep         = sep,
+    data_cols    = data_cols,
+    per_cell     = FALSE,
+    cluster_col  = cluster_col,
+    group_col    = group_col,
+    chain        = chain,
+    method       = method,
+    units        = units,
+    plot_colors  = plot_colors,
+    plot_lvls    = plot_lvls,
+    trans        = trans,
+    panel_nrow   = panel_nrow,
+    panel_scales = panel_scales,
+    chain_col    = chain_col,
+    sep          = sep,
     ...
   )
 

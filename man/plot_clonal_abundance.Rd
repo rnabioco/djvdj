@@ -14,8 +14,8 @@ plot_clonal_abundance(
   plot_lvls = names(plot_colors),
   n_clones = NULL,
   label_aes = list(),
-  facet_rows = 1,
-  facet_scales = "free_x",
+  panel_nrow = NULL,
+  panel_scales = "free_x",
   ...
 )
 }
@@ -46,13 +46,13 @@ is set to 'line', this will specify the number of clonotypes to label
 \item{label_aes}{Named list providing additional aesthetics (color, size,
 etc.) for clonotype labels when creating line graph}
 
-\item{facet_rows}{The number of facet rows, use this when separate bar
-graphs are created for each cell cluster}
+\item{panel_nrow}{The number of rows to use for arranging plot panels, use
+this when separate bar graphs are created for each cell cluster}
 
-\item{facet_scales}{This passes a scales specification to
-ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
-will cause plot facets to share the same scales. Use this when separate bar
-graphs are created for each cell cluster.}
+\item{panel_scales}{Should scales for plot panels be fixed or free. This
+passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
+'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
+Use this when separate bar graphs are created for each cell cluster.}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}

@@ -14,8 +14,8 @@ plot_rarefaction(
   chain_col = "chains",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
-  facet_rows = 1,
-  facet_scales = "free",
+  panel_nrow = NULL,
+  panel_scales = "free",
   ci_alpha = 0.15,
   sep = ";",
   ...
@@ -45,11 +45,11 @@ all chains.}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{facet_rows}{The number of facet rows for final plot}
+\item{panel_nrow}{The number of rows to use for arranging plot panels}
 
-\item{facet_scales}{This passes a scales specification to
-ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
-will cause plot facets to share the same scales.}
+\item{panel_scales}{Should scales for plot panels be fixed or free. This
+passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
+'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.}
 
 \item{ci_alpha}{Transparency to use when plotting 95\% confidence interval}
 
