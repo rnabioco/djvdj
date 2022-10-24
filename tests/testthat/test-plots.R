@@ -148,7 +148,7 @@ test_that("plot_vdj_feature bad chain filtering", {
 # Check all plot_vdj arguments
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce, df_1),
-  data_cols   = list("umis", c("reads", "n_deletion")),
+  data_col    = "umis",
   per_cell    = c(FALSE, TRUE),
   cluster_col = list(NULL, "seurat_clusters"),
   chain       = list(NULL, "IGH", c("IGH", "IGK")),
@@ -164,25 +164,6 @@ test_all_args(
   desc    = "plot_vdj args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
-
-# Check plot_vdj_*
-fns <- list(plot_vdj_reads, plot_cdr3_length)
-
-test_that("plot_vdj_reads", {
-
-  purrr::walk(fns, ~ {
-    expect_s3_class(.x(vdj_so), "ggplot")
-    expect_s3_class(.x(vdj_sce), "ggplot")
-    expect_s3_class(.x(df_1), "ggplot")
-  })
-})
-
-# Check plot_vdj_reads
-test_that("plot_vdj_reads", {
-  expect_s3_class(plot_vdj_reads(vdj_so), "ggplot")
-  expect_s3_class(plot_vdj_reads(vdj_sce), "ggplot")
-  expect_s3_class(plot_vdj_reads(df_1), "ggplot")
-})
 
 # Check all plot_clonal_abundance arguments for line plot
 arg_lst <- list(

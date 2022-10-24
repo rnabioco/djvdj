@@ -126,7 +126,7 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 
     res <- tidyr::pivot_wider(
       res,
-      names_from  = clst_nm,
+      names_from  = all_of(clst_nm),
       values_from = .data$freq,
       values_fill = 0
     )

@@ -131,7 +131,7 @@ so %>%
   )
 ```
 
-Additional arguments are provided to adjust plot aesthetics. The `plot_colors` parameter can be used to modify colors, the `facet_rows` and `facet_scales` arguments will adjust the plot scales and number of rows used to arrange plots.
+Additional arguments are provided to adjust plot aesthetics. The `plot_colors` parameter can be used to modify colors, the `panel_nrow` and `panel_scales` arguments will adjust the plot scales and number of rows used to arrange plots.
 
 ```{r, fig.width = 6, fig.height = 6}
 so %>%
@@ -141,7 +141,7 @@ so %>%
     group_col   = "orig.ident",
     method      = div_fns,
     plot_colors = c(BL6 = "#3182bd", MD4 = "#fec44f"),
-    facet_rows  = 2
+    panel_nrow  = 2
   )
 ```
 

@@ -99,7 +99,7 @@ so %>%
   )
 ```
 
-Abundance values can be calculated and plotted separately for each sample or cluster using the `cluster_col` argument. The `facet_rows` and `facet_scales` arguments can be used to add separate scales for each sample or to adjust the number of rows used to arrange plots.
+Abundance values can be calculated and plotted separately for each sample or cluster using the `cluster_col` argument. The `panel_nrow` and `panel_scales` arguments can be used to add separate scales for each sample or to adjust the number of rows used to arrange plots.
 
 As expected we see that most MD4 B cells share the same clonotype, while BL6 cells have a diverse repertoire.
 
@@ -108,7 +108,7 @@ so %>%
   plot_clonal_abundance(
     clonotype_col = "clonotype_id",
     cluster_col   = "orig.ident",
-    facet_scales  = "free"
+    panel_scales  = "free"
   )
 ```
 

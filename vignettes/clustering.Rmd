@@ -202,7 +202,7 @@ so_vdj %>%
   )
 ```
 
-Plot colors can be modified using the `plot_colors` argument and the number of rows used to arrange panels can be adjusted with the `facet_rows` argument. Like most djvdj plotting functions, `plot_motifs()` will return a ggplot2 object that can be modified with other ggplot2 functions.
+Plot colors can be modified using the `plot_colors` argument and the number of rows used to arrange panels can be adjusted with the `panel_nrow` argument. Like most djvdj plotting functions, `plot_motifs()` will return a ggplot2 object that can be modified with other ggplot2 functions.
 
 ```{r, fig.height = 6}
 so_vdj %>%
@@ -211,7 +211,7 @@ so_vdj %>%
     cluster_col = "cdr3_cluster_0.4",
     chain       = "IGK",
     plot_colors = brewer.pal(5, "Set1"),
-    facet_rows  = 4
+    panel_nrow  = 4
   ) +
   theme(
     axis.text.x  = element_blank(),

@@ -38,7 +38,7 @@ arg_lst <- list(
   plot_lvls   = list(NULL, test_lvls),
   width       = c(0.999, 2),
   align_end   = c("3", "5"),
-  facet_rows  = list(NULL, 2)
+  panel_nrow  = list(NULL, 2)
 )
 
 test_all_args(

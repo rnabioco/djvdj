@@ -127,16 +127,16 @@ test_that("calc_gene_usage check calcs", {
   })
 })
 
-# Bad vdj gene
-test_that("calc_gene_usage bad gene", {
-
-  ins <- list(vdj_so, vdj_sce, vdj_so@meta.data)
-
-  purrr::walk(ins, ~ {
-    expect_error(
-      calc_gene_usage(.x, "BAD"),
-      "Column .+ doesn't exist"
-    )
-  })
-})
+# # Bad vdj gene
+# test_that("calc_gene_usage bad gene", {
+#
+#   ins <- list(vdj_so, vdj_sce, vdj_so@meta.data)
+#
+#   purrr::walk(ins, ~ {
+#     expect_error(
+#       calc_gene_usage(.x, "BAD"),
+#       "Column .+ doesn't exist"
+#     )
+#   })
+# })
 
