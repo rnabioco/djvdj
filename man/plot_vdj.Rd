@@ -2,9 +2,6 @@
 % Please edit documentation in R/plot-vdj.R
 \name{plot_vdj}
 \alias{plot_vdj}
-\alias{plot_vdj_reads}
-\alias{plot_cdr3_length}
-\alias{plot_vdj_mutations}
 \title{Plot continuous V(D)J data}
 \usage{
 plot_vdj(
@@ -22,58 +19,6 @@ plot_vdj(
   trans = "identity",
   panel_nrow = NULL,
   panel_scales = "free_x",
-  chain_col = "chains",
-  sep = ";",
-  ...
-)
-
-plot_vdj_reads(
-  input,
-  data_cols = c("reads", "umis"),
-  cluster_col = NULL,
-  group_col = NULL,
-  chain = NULL,
-  method = "violin",
-  units = "frequency",
-  plot_colors = NULL,
-  plot_lvls = names(plot_colors),
-  trans = "log10",
-  panel_nrow = NULL,
-  panel_scales = "fixed",
-  chain_col = "chains",
-  sep = ";",
-  ...
-)
-
-plot_cdr3_length(
-  input,
-  data_cols = "cdr3_length",
-  cluster_col = NULL,
-  group_col = NULL,
-  chain = NULL,
-  method = "histogram",
-  units = "frequency",
-  plot_colors = NULL,
-  plot_lvls = names(plot_colors),
-  trans = "log10",
-  chain_col = "chains",
-  sep = ";",
-  ...
-)
-
-plot_vdj_mutations(
-  input,
-  data_cols = c("all_ins", "all_del", "all_mis"),
-  cluster_col = NULL,
-  group_col = NULL,
-  chain = NULL,
-  method = "boxplot",
-  units = "frequency",
-  plot_colors = NULL,
-  plot_lvls = names(plot_colors),
-  trans = "identity",
-  panel_nrow = NULL,
-  panel_scales = "fixed",
   chain_col = "chains",
   sep = ";",
   ...
