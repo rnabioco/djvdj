@@ -27,10 +27,14 @@ knitr::opts_chunk$set(
 
 This vignette provides detailed examples for calculating and visualizing V(D)J gene usage. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
 
-```{bash}
-wget -nc -q https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip
+```{r}
+download.file(
+  "https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip",
+  "splenocytes.zip",
+  quiet = TRUE
+)
 
-unzip -n -qq splenocytes.zip
+unzip("splenocytes.zip", overwrite = FALSE)
 ```
 
 ```{r}
