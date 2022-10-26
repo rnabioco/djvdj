@@ -28,6 +28,9 @@ plot_vdj(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, cell barcodes should be stored as row names.}
 
+\item{data_col}{meta.data column(s) containing continuous V(D)J data to
+plot}
+
 \item{per_cell}{Should values be plotted per cell, i.e. each data point
 would represent one cell. If TRUE, values will be summarized for each cell
 using summary_fn. If FALSE, values will be plotted for each chain.}
@@ -82,9 +85,6 @@ passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
-
-\item{data_cols}{meta.data column(s) containing continuous V(D)J data to
-plot}
 }
 \value{
 ggplot object
@@ -93,23 +93,23 @@ ggplot object
 Plot continuous V(D)J data
 }
 \examples{
-# Plot the number of indels for each chain
+# Create histogram
 plot_vdj(
-  vdj_so,
-  data_cols = c("n_insertion", "n_deletion")
+  vdj_sce,
+  data_col = "reads"
 )
 
 # Create boxplots
 plot_vdj(
   vdj_sce,
-  data_cols = c("n_insertion", "n_deletion"),
+  data_col = "reads",
   method = "boxplot"
 )
 
 # Pass additional arguments to ggplot2
 plot_vdj(
   vdj_so,
-  data_cols = "reads",
+  data_col = "reads",
   color = "red",
   bins = 25
 )
@@ -117,7 +117,7 @@ plot_vdj(
 # Compare cell clusters
 plot_vdj(
   vdj_sce,
-  data_cols = "cdr3_length",
+  data_col = "cdr3_length",
   cluster_col = "orig.ident",
   method = "violin"
 )
@@ -125,7 +125,7 @@ plot_vdj(
 # log10 transform the axis
 plot_vdj(
   vdj_so,
-  data_cols = "reads",
+  data_col = "reads",
   cluster_col = "orig.ident",
   trans = "log10"
 )
@@ -133,7 +133,7 @@ plot_vdj(
 # Express y-axis units as percent of total values
 plot_vdj(
   vdj_sce,
-  data_cols = "n_deletion",
+  data_col = "umis",
   cluster_col = "orig.ident",
   units = "percent"
 )
@@ -141,14 +141,14 @@ plot_vdj(
 # Only plot values for heavy chains
 plot_vdj(
   vdj_so,
-  data_cols = "umis",
+  data_col = "umis",
   chain = "IGH"
 )
 
-# Plot the median number of deletions for each cell
+# Plot the median number of reads for each cell
 plot_vdj(
   vdj_sce,
-  data_cols = "n_deletion",
+  data_col = "reads",
   per_cell = TRUE,
   summary_fn = stats::median
 )
@@ -156,7 +156,7 @@ plot_vdj(
 # Set colors for cell clusters
 plot_vdj(
   vdj_so,
-  data_cols = "cdr3_length",
+  data_col = "cdr3_length",
   cluster_col = "orig.ident",
   plot_colors = c(avid_1 = "red", avid_2 = "purple")
 )
