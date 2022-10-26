@@ -42,6 +42,7 @@ library(djvdj)
 library(magrittr)
 library(Seurat)
 library(ggplot2)
+library(RColorBrewer)
 
 # Load Seurat object
 load("splenocytes/splen_so.rda")
