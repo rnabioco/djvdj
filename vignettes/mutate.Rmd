@@ -38,6 +38,7 @@ unzip("splenocytes.zip", overwrite = FALSE)
 ```{r}
 library(djvdj)
 library(magrittr)
+library(dplyr)
 library(Seurat)
 library(ggplot2)
 
@@ -62,6 +63,10 @@ so <- splen_so %>%
 
 ## Filtering V(D)J data
 
+Per-chain data can be filtered with the `filter_vdj()` function. The per-chain values for each cell are parsed based on the `;` separator and converted to a vector. This allow vector operations to be used for filtering. This function will not remove cells from the object, but instead remove the V(D)J data for cells that do not match the provided filtering expression.
+
+In this example we are only including V(D)J data for cells that have all of the chains, IGH, IGK, and IGL.
+
 ```{r}
 res <- so %>%
   filter_vdj(
@@ -73,6 +78,8 @@ res@meta.data %>%
   select(chains, cdr3) %>%
   head(3)
 ```
+
+In this example we are removing V(D)J data for all chains except IGH.
 
 ```{r}
 res <- so %>%
@@ -90,6 +97,8 @@ res@meta.data %>%
 
 ## Summarizing per-chain data
 
+The `summarize_vdj()` function can be used to summarize the per-chain data for each cell and add the results to the meta.data. In this example we are calculating the median number of deletions and the median number of insertions for each cell.
+
 ```{r}
 res <- so %>%
   summarize_vdj(
@@ -102,6 +111,8 @@ res@meta.data %>%
   select(all_del, all_ins, median_all_del, median_all_ins) %>%
   head(2)
 ```
+
+This function can also be used for character strings such as the chains column. In this example we are creating a new column in the meta.data containing the unique chains for each cell.
 
 ```{r}
 res <- so %>%

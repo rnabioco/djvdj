@@ -138,7 +138,6 @@ so_vdj %>%
   plot_frequency(
     data_col    = "cdr3_cluster_0.4",
     cluster_col = "sample",
-    position    = "stack",  # parameter passed to ggplot2
     plot_colors = clrs
   )
 ```
