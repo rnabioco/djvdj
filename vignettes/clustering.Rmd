@@ -150,7 +150,7 @@ so_vdj %>%
 ```{r}
 so_vdj %>%
   plot_vdj(
-    data_cols   = "cdr3_length",
+    data_col    = "cdr3_length",
     cluster_col = "cdr3_cluster_0.4"
   ) +
   facet_wrap(~ cdr3_cluster_0.4, scales = "free_y")
