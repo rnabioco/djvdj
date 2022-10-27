@@ -141,7 +141,7 @@ res <- so %>%
   )
 
 res@meta.data %>%
-  select(all_ins, all_del, indels, total_indels) %>%
+  select(all_ins, all_del, total_indels) %>%
   head()
 ```
 
