@@ -63,7 +63,7 @@ so <- splen_so %>%
 
 ## Filtering V(D)J data
 
-Per-chain data can be filtered with the `filter_vdj()` function. The per-chain values for each cell are parsed based on the `;` separator and converted to a vector. This allow vector operations to be used for filtering. This function will not remove cells from the object, but instead remove the V(D)J data for cells that do not match the provided filtering expression.
+Per-chain data can be filtered with the `filter_vdj()` function. The per-chain values for each cell are parsed based on the `;` separator and converted to a vector. This allows vector operations to be used for filtering. This function will not remove cells from the object, but instead remove the V(D)J data for cells that do not match the provided filtering expression.
 
 In this example we are only including V(D)J data for cells that have all of the chains, IGH, IGK, and IGL.
 
@@ -83,9 +83,7 @@ In this example we are removing V(D)J data for all chains except IGH.
 
 ```{r}
 res <- so %>%
-  filter_vdj(
-    chains == "IGH"
-  )
+  filter_vdj(chains == "IGH")
 
 res@meta.data %>%
   filter(!is.na(clonotype_id)) %>%
@@ -97,7 +95,7 @@ res@meta.data %>%
 
 ## Summarizing per-chain data
 
-The `summarize_vdj()` function can be used to summarize the per-chain data for each cell and add the results to the meta.data. In this example we are calculating the median number of deletions and the median number of insertions for each cell.
+The `summarize_vdj()` function can be used to summarize the per-chain data for each cell and add the results to the meta.data. In this example we are calculating the median number of deletions and the median number of insertions for each cell. The `col_names` argument can be used to name the new columns, use '{.col}' to refer to the original column name.
 
 ```{r}
 res <- so %>%
@@ -132,21 +130,18 @@ res@meta.data %>%
 
 ## Mutating per-chain data
 
+Another way to modify V(D)J data present in the object is with the `mutate_vdj()` function. The function behaves in a similar way as `dplyr::mutate()`, but will parse the per-chain values for each cell and convert them to a vector. This allows vector operations to be performed when modifying the meta.data.
+
+In this example we are calculating the sum of all insertions and deletions for each cell and storing this information in a new column called 'total_indels'.
+
 ```{r}
 res <- so %>%
   mutate_vdj(
-    total_indels = sum(all_ins, all_del),
-    indels       = list(all_ins + all_del)
+    total_indels = sum(all_ins, all_del)
   )
 
 res@meta.data %>%
   select(all_ins, all_del, indels, total_indels) %>%
   head()
 ```
-
-
-
-
-
-
 

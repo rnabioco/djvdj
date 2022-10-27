@@ -18,8 +18,8 @@ knitr::opts_chunk$set(
   comment    = "#>",
   warning    = FALSE,
   message    = FALSE,
-  fig.width  = 8,
-  fig.height = 3
+  fig.width  = 7,
+  fig.height = 4
 )
 ```
 
@@ -62,7 +62,20 @@ so <- splen_so %>%
 
 <br>
 
-## Plotting continuous data
+## Plotting numerical data
+
+The `plot_vdj()` function can be used to plot numerical V(D)J data present in the object. By default, this will plot the values present in the `data_col` column for every chain. The `trans` argument can be used to specify an axis transformation.
+
+```{r}
+so %>%
+  plot_vdj(
+    data_col    = "umis",
+    cluster_col = "orig.ident",
+    trans       = "log10"
+  )
+```
+
+To only plot values for a specific chain, the `chain` argument can be used. In this example we are plotting of the number of UMIs for each IGK chain.
 
 ```{r}
 so %>%
@@ -74,12 +87,26 @@ so %>%
   )
 ```
 
+The `method` argument can be used to generate other types of plots including boxplots.
+
 ```{r}
 so %>%
   plot_vdj(
-    data_col    = "umis",
+    data_col    = "reads",
     cluster_col = "sample",
     method      = "boxplot",
+    trans       = "log10"
+  )
+```
+
+Instead of plotting values for each chain, per-chain values can be summarized and plotted for each cell. In this example we are plotting the mean number of reads for each cell.
+
+```{r}
+so %>%
+  plot_vdj(
+    data_col    = "reads",
+    cluster_col = "sample",
+    method      = "violin",
     trans       = "log10",
     
     per_cell    = TRUE,
@@ -87,27 +114,39 @@ so %>%
   )
 ```
 
+<br>
+
 ## UMAP projections
 
-```{r, fig.width = 8, fig.height = 6}
+To plot V(D)J information on UMAP projections, the `plot_vdj_feature()` can be used. A summary function to use for summarizing per-chain values for each cell must be specified using the `summary_fn` argument. In this example we are plotting the mean number of mutations for each cell.
+
+```{r, fig.width = 7, fig.height = 6}
 so %>%
   plot_vdj_feature(
-    data_col   = "cdr3_length",
-    summary_fn = max
-  ) +
-  theme_void()
+    data_col   = "all_mis",
+    summary_fn = mean
+  )
 ```
 
-```{r, fig.width = 8, fig.height = 6}
+Instead of summarizing the per-chain values for each cell, we can also specify a specific chain to use for plotting. In this example we are plotting the CDR3 length for IGK chains. If a cell does not have an IGK chain or has multiple IGK chains, it will be plotted as an `NA`.
+
+```{r, fig.width = 7, fig.height = 6}
 so %>%
   plot_vdj_feature(
     data_col = "cdr3_length",
     chain    = "IGK"
-  ) +
-  theme_void()
+  )
 ```
 
+Like `plot_vdj()`, the scale can also be transformed using the `trans` argument.
 
+```{r, fig.width = 7, fig.height = 6}
+so %>%
+  plot_vdj_feature(
+    data_col = "umis",
+    trans    = "log10"
+  )
+```
 
 
 
