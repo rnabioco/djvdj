@@ -1,9 +1,16 @@
-pandoc: 2.14.2
-pkgdown: 2.0.3
+pandoc: 2.19.2
+pkgdown: 2.0.6
 pkgdown_sha: ~
 articles:
-  avid: avid.html
-last_built: 2022-05-27T16:43Z
+  abundance: abundance.html
+  clustering: clustering.html
+  diversity: diversity.html
+  gene-usage: gene-usage.html
+  import_vdj: import_vdj.html
+  mutate: mutate.html
+  plotting: plotting.html
+  similarity: similarity.html
+last_built: 2022-10-28T17:52Z
 urls:
   reference: https://rnabioco.github.io/djvdj/reference
   article: https://rnabioco.github.io/djvdj/articles

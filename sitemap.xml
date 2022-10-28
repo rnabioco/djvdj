@@ -10,10 +10,31 @@
     <loc>https://rnabioco.github.io/djvdj/LICENSE.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/articles/avid.html</loc>
+    <loc>https://rnabioco.github.io/djvdj/articles/abundance.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/articles/clustering.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/articles/diversity.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/articles/gene-usage.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/articles/import_vdj.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/articles/index.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/articles/mutate.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/articles/plotting.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/articles/similarity.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/authors.html</loc>
@@ -34,7 +55,13 @@
     <loc>https://rnabioco.github.io/djvdj/reference/calc_gene_usage.html</loc>
   </url>
   <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/calc_mds.html</loc>
+  </url>
+  <url>
     <loc>https://rnabioco.github.io/djvdj/reference/calc_similarity.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/cluster_sequences.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/define_clonotypes.html</loc>
@@ -77,6 +104,15 @@
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/plot_gene_usage.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/plot_mds.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/plot_motifs.html</loc>
+  </url>
+  <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/plot_rarefaction.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/plot_similarity.html</loc>
