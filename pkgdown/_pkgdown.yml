@@ -8,24 +8,47 @@ development:
   mode: auto
 
 reference:
-
-- title: Manipulate
+- title: Data Import
   contents:
   - import_vdj
+  - define_clonotypes
+
+- title: Clonal Abundance
+  contents:
+  - ends_with("_frequency")
+  - plot_clonal_abundance
+
+- title: Repertoire Diversity
+  contents:
+  - ends_with("_diversity")
+  - ends_with("_rarefaction")
+
+- title: Repertoire Similarity
+  contents:
+  - ends_with("_similarity")
+  - ends_with("_mds")
+
+- title: Gene Usage
+  contents:
+  - ends_with("_gene_usage")
+
+- title: CDR3 Clustering
+  contents:
+  - cluster_sequences
+  - plot_motifs
+
+- title: Data Manipulation
+  contents:
   - fetch_vdj
   - filter_vdj
   - summarize_vdj
   - mutate_vdj
   - mutate_meta
 
-- title: Calculate
-  contents:
-  - starts_with("calc_")
-  - define_clonotypes
-
 - title: Plotting
   contents:
-  - starts_with("plot_")
+  - ends_with("_features")
+  - plot_vdj
   - djvdj_theme
 
 - title: Data

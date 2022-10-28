@@ -11,7 +11,7 @@ import_vdj(
   filter_chains = TRUE,
   filter_paired = FALSE,
   define_clonotypes = NULL,
-  include_mutations = TRUE,
+  include_mutations = FALSE,
   aggr_dir = NULL,
   sep = ";"
 )
@@ -39,9 +39,9 @@ chain.}
 useful if the V(D)J datasets being loaded do not have consistent clonotype
 IDs, i.e., clonotype1 is not the same across samples. Possible values are:
 \itemize{
-\item cdr3aa, define clonotypes based on the CDR3 amino acid sequence
-\item cdr3nt, define clonotypes based on the CDR3 nucleotide sequence
-\item cdr3_gene, define clonotypes based on the combination of the CDR3
+\item 'cdr3aa', define clonotypes based on the CDR3 amino acid sequence
+\item 'cdr3nt', define clonotypes based on the CDR3 nucleotide sequence
+\item 'cdr3_gene', define clonotypes based on the combination of the CDR3
 nucleotide sequence and the V(D)J genes.
 }
 
@@ -141,13 +141,13 @@ vdj_so <- import_vdj(
 
 head(vdj_so@meta.data, 1)
 
-# Omit indel information for each chain
+# Include mutation information for each chain
 # this information will be included if the file concat_ref.bam is present
-# to speed up data import, omit indel information
+# including mutation information will cause data import to be slower
 vdj_so <- import_vdj(
   tiny_so,
   vdj_dir = vdj_dir,
-  include_mutations = FALSE
+  include_mutations = TRUE
 )
 
 head(vdj_so@meta.data, 1)

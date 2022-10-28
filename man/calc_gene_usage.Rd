@@ -2,11 +2,11 @@
 % Please edit documentation in R/calc-gene-usage.R
 \name{calc_gene_usage}
 \alias{calc_gene_usage}
-\title{Calculate V(D)J gene segment usage}
+\title{Calculate V(D)J segment usage}
 \usage{
 calc_gene_usage(
   input,
-  gene_cols,
+  data_cols,
   cluster_col = NULL,
   chain = NULL,
   chain_col = "chains",
@@ -17,7 +17,7 @@ calc_gene_usage(
 \item{input}{Object containing V(D)J data. If a data.frame is provided, the
 cell barcodes should be stored as row names.}
 
-\item{gene_cols}{meta.data column containing V(D)J genes identified for each
+\item{data_cols}{meta.data column containing V(D)J genes identified for each
 clonotype. If multiple columns are provided, paired usage of genes will be
 calculated.}
 
@@ -35,33 +35,36 @@ all chains.}
 data.frame containing gene usage summary
 }
 \description{
-Calculate V(D)J gene segment usage
+Calculate V(D)J segment usage
 }
 \examples{
 # Calculate V(D)J segment usage for all cells
 calc_gene_usage(
   vdj_so,
-  gene_cols = "v_gene"
+  data_cols = "v_gene"
 )
 
 # Calculate gene usage separately for cell clusters
 calc_gene_usage(
   vdj_sce,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   cluster_col = "orig.ident"
 )
 
 # Calculate gene usage for a specific chain(s)
 calc_gene_usage(
   vdj_so,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   chain = c("IGK", "IGL")
 )
 
 # Calculate paired usage of V(D)J segments
 calc_gene_usage(
   vdj_sce,
-  gene_cols = c("v_gene", "j_gene"),
+  data_cols = c("v_gene", "j_gene"),
 )
 
+}
+\seealso{
+\code{\link[=plot_gene_usage]{plot_gene_usage()}}
 }

@@ -193,7 +193,8 @@ test_that("import_vdj filter_chains", {
     tiny_so %>%
       import_vdj(
         vdj_dir       = ctigs,
-        filter_chains = FALSE
+        filter_chains = FALSE,
+        include_mutations = TRUE
       )
   }
 
@@ -351,7 +352,7 @@ test_that("import_vdj BCR and TCR", {
 # Check .classify_vdj
 test_that(".classify_vdj", {
   dat <- vdj_so %>%
-    fetch_vdj(vdj_cols = "chains")
+    fetch_vdj(data_cols = "chains")
 
   expect_error(
     dat %>%

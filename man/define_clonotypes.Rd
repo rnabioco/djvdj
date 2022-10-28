@@ -6,7 +6,7 @@
 \usage{
 define_clonotypes(
   input,
-  vdj_cols,
+  data_cols,
   clonotype_col = "clonotype_id",
   filter_chains = c("productive", "full_length"),
   sep = ";"
@@ -16,7 +16,7 @@ define_clonotypes(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{vdj_cols}{meta.data columns containing V(D)J data to use for defining
+\item{data_cols}{meta.data columns containing V(D)J data to use for defining
 clonotypes}
 
 \item{clonotype_col}{Name of column to use for storing clonotype IDs}
@@ -39,7 +39,7 @@ present in the provided columns
 # Define clonotypes using the CDR3 nucleotide sequence
 res <- define_clonotypes(
   vdj_so,
-  vdj_cols = "cdr3_nt"
+  data_cols = "cdr3_nt"
 )
 
 head(res@meta.data, 1)
@@ -48,7 +48,7 @@ head(res@meta.data, 1)
 # and the V and J genes
 res <- define_clonotypes(
   vdj_sce,
-  vdj_cols = c("cdr3_nt", "v_gene", "j_gene")
+  data_cols = c("cdr3_nt", "v_gene", "j_gene")
 )
 
 head(res@colData, 1)
@@ -56,7 +56,7 @@ head(res@colData, 1)
 # Modify the name of the column used to store clonotype IDs
 res <- define_clonotypes(
   vdj_so,
-  vdj_cols = "cdr3_nt",
+  data_cols = "cdr3_nt",
   clonotype_col = "NEW_clonotype_id"
 )
 
@@ -65,7 +65,7 @@ head(res@meta.data, 1)
 # When defining clonotypes only use chains that are productive
 res <- define_clonotypes(
   vdj_sce,
-  vdj_cols = "cdr3_nt",
+  data_cols = "cdr3_nt",
   filter_chains = "productive"
 )
 

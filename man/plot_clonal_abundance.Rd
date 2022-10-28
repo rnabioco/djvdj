@@ -8,14 +8,14 @@ plot_clonal_abundance(
   input,
   cluster_col = NULL,
   clonotype_col = "clonotype_id",
-  type = "bar",
-  yaxis = "percent",
+  method = "bar",
+  units = "percent",
   plot_colors = NULL,
-  plot_lvls = NULL,
-  n_clones = 10,
+  plot_lvls = names(plot_colors),
+  n_clones = NULL,
   label_aes = list(),
-  facet_rows = 1,
-  facet_scales = "free_x",
+  panel_nrow = NULL,
+  panel_scales = "free_x",
   ...
 )
 }
@@ -30,27 +30,29 @@ plotted separately for each cluster.}
 \item{clonotype_col}{meta.data column containing clonotype IDs to use for
 calculating clonotype abundance}
 
-\item{type}{Type of plot to create, can be 'bar' or 'line'}
+\item{method}{Method to use for plotting, 'bar' will generate a bargraph,
+'line' will generate a rank-abundance plot.}
 
-\item{yaxis}{Units to plot on the y-axis, either 'frequency' or 'percent'}
+\item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{n_clones}{Number of top clonotypes to plot. If type is set to 'line',
-this will specify the number of values to label.}
+\item{n_clones}{Number of top clonotypes to plot (default is 10). If method
+is set to 'line', this will specify the number of clonotypes to label
+(default is 3).}
 
 \item{label_aes}{Named list providing additional aesthetics (color, size,
 etc.) for clonotype labels when creating line graph}
 
-\item{facet_rows}{The number of facet rows, use this when separate bar
-graphs are created for each cell cluster}
+\item{panel_nrow}{The number of rows to use for arranging plot panels, use
+this when separate bar graphs are created for each cell cluster}
 
-\item{facet_scales}{This passes a scales specification to
-ggplot2::facet_wrap, can be 'fixed', 'free', 'free_x', or 'free_y'. 'fixed'
-will cause plot facets to share the same scales. Use this when separate bar
-graphs are created for each cell cluster.}
+\item{panel_scales}{Should scales for plot panels be fixed or free. This
+passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
+'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
+Use this when separate bar graphs are created for each cell cluster.}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
@@ -78,7 +80,7 @@ plot_clonal_abundance(
 plot_clonal_abundance(
   vdj_sce,
   cluster_col = "orig.ident",
-  yaxis = "frequency"
+  units = "frequency"
 )
 
 # Specify colors to use for each cell cluster
@@ -106,8 +108,11 @@ plot_clonal_abundance(
 plot_clonal_abundance(
   vdj_so,
   cluster_col = "orig.ident",
-  type = "line",
+  method = "line",
   n_clones = 3
 )
 
+}
+\seealso{
+\code{\link[=calc_frequency]{calc_frequency()}}, \code{\link[=plot_frequency]{plot_frequency()}}
 }

@@ -174,7 +174,7 @@ test_that("mutate_vdj calcs", {
 test_that("summarize_vdj Seurat out", {
   res <- vdj_so %>%
     summarize_vdj(
-      vdj_cols = "umis",
+      data_cols = "umis",
       col_names = "NEW_{.col}"
     )
 
@@ -187,7 +187,7 @@ test_that("summarize_vdj Seurat out", {
 test_that("summarize_vdj SCE out", {
   res <- vdj_sce %>%
     summarize_vdj(
-      vdj_cols = "umis",
+      data_cols = "umis",
       col_names = "NEW_{.col}"
     )
 
@@ -200,7 +200,7 @@ test_that("summarize_vdj SCE out", {
 test_that("summarize_vdj df out", {
   res <- vdj_so %>%
     summarize_vdj(
-      vdj_cols = "umis",
+      data_cols = "umis",
       col_names = "NEW_{.col}",
       return_df = TRUE
     )
@@ -214,7 +214,7 @@ test_that("summarize_vdj df out", {
 test_that("summarize_vdj df in", {
   res <- vdj_so@meta.data %>%
     summarize_vdj(
-      vdj_cols = "umis",
+      data_cols = "umis",
       col_names = "NEW_{.col}"
     )
 
@@ -227,7 +227,7 @@ test_that("summarize_vdj df in", {
 test_that("summarize_vdj calcs", {
   res <- vdj_so@meta.data %>%
     summarize_vdj(
-      vdj_cols = "umis",
+      data_cols = "umis",
       col_names = "NEW_{.col}"
     )
 
@@ -240,7 +240,7 @@ test_that("summarize_vdj calcs", {
 
   res <- vdj_so@meta.data %>%
     summarize_vdj(
-      vdj_cols  = "v_gene",
+      data_cols  = "v_gene",
       fn        = ~ ifelse(all(is.na(.x)), NA, paste0(.x, collapse = "_")),
       col_names = "NEW_{.col}"
     )
@@ -255,7 +255,7 @@ test_that("summarize_vdj calcs", {
   # Check chain filtering
   res <- vdj_so@meta.data %>%
     summarize_vdj(
-      vdj_cols  = "umis",
+      data_cols  = "umis",
       col_names = "NEW_{.col}",
       chain     = "IGK"
     )
@@ -279,13 +279,13 @@ test_that("summarize_vdj calcs", {
 test_that("summarize_vdj return length > 1", {
   res_1 <- vdj_so %>%
     summarize_vdj(
-      vdj_cols = "umis",
+      data_cols = "umis",
       fn = ~ .x[.x > 30]
     )
 
   res_2 <- vdj_so %>%
     summarize_vdj(
-      vdj_cols = "umis",
+      data_cols = "umis",
       fn = ~ ifelse(length(.x[.x > 30]) > 0, paste0(.x[.x > 30], collapse = ";"), NA)
     )
 
@@ -293,13 +293,13 @@ test_that("summarize_vdj return length > 1", {
 
   res_1 <- vdj_so %>%
     summarize_vdj(
-      vdj_cols = "chains",
+      data_cols = "chains",
       fn = ~ .x[.x == "IGH"]
     )
 
   res_2 <- vdj_so %>%
     summarize_vdj(
-      vdj_cols = "chains",
+      data_cols = "chains",
       fn = ~ ifelse(length(.x[.x == "IGH"]) > 0, paste0(.x[.x == "IGH"], collapse = ";"), NA)
     )
 
@@ -311,7 +311,7 @@ test_that("summarize_vdj bad column chain filtering", {
   expect_warning(
     res <- vdj_so %>%
       summarize_vdj(
-        vdj_cols = "nCount_RNA",
+        data_cols = "nCount_RNA",
         chain = "IGK"
       ),
     "does not contain per-chain V\\(D\\)J data"

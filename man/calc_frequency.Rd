@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc-abundance.R
 \name{calc_frequency}
 \alias{calc_frequency}
-\title{Calculate frequency of cell groups present in the object}
+\title{Calculate frequency of groups present in object}
 \usage{
 calc_frequency(
   input,
@@ -76,4 +76,7 @@ res <- calc_frequency(
 
 head(res, 1)
 
+}
+\seealso{
+\code{\link[=plot_frequency]{plot_frequency()}}, \code{\link[=plot_clonal_abundance]{plot_clonal_abundance()}}
 }

@@ -2,14 +2,22 @@
 % Please edit documentation in R/calc-similarity.R
 \name{plot_similarity}
 \alias{plot_similarity}
-\title{Plot repertoire overlap}
+\title{Plot cluster similarity}
 \usage{
 plot_similarity(
   input,
+  data_col,
   cluster_col,
+  group_col = NULL,
   method = abdiv::jaccard,
-  clonotype_col = "clonotype_id",
+  chain = NULL,
+  chain_col = "chains",
   plot_colors = NULL,
+  plot_lvls = names(plot_colors),
+  cluster_heatmap = TRUE,
+  remove_upper_triangle = FALSE,
+  remove_diagonal = remove_upper_triangle,
+  sep = ";",
   ...
 )
 }
@@ -17,52 +25,86 @@ plot_similarity(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
+\item{data_col}{meta.data column containing values to use for
+calculating pairwise similarity between clusters, e.g. 'clonotype_id'}
+
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 calculating overlap}
 
-\item{method}{Method to use for calculating similarity between clusters}
+\item{group_col}{meta.data column to use for grouping cluster IDs present in
+cluster_col. This is useful when there are multiple replicates or patients
+for each treatment condition.}
 
-\item{clonotype_col}{meta.data column containing clonotype IDs to use for
-calculating overlap}
+\item{method}{Method to use for comparing clusters, possible values are:
+\itemize{
+\item A function that takes two numeric vectors containing counts for each
+clonotype in the object, such as most beta diversity functions provided by
+the abdiv package. This will generate a heatmap.
+\item 'count', count the number of clonotypes overlapping between each cluster,
+this will generate a heatmap.
+\item 'circos', create a circos plot summarizing the overlap between clusters
+}}
+
+\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
+all chains.}
+
+\item{chain_col}{meta.data column containing chains for each cell}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
-\item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
-linetype, etc.}
-}
-\value{
-ggplot object
+\item{plot_lvls}{Levels to use for ordering clusters}
+
+\item{cluster_heatmap}{If FALSE, rows and columns of heatmap will not be
+clustered.}
+
+\item{remove_upper_triangle}{If TRUE, upper triangle for heatmap will not
+be shown.}
+
+\item{remove_diagonal}{If TRUE, diagonal for heatmap will not be shown.}
+
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
+
+\item{...}{Additional arguments to pass to plotting function,
+\code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap()}} for heatmap, \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for
+circos plot}
 }
 \description{
-Plot repertoire overlap
+Plot cluster similarity
 }
 \examples{
 # Plot repertoire overlap
+# use clonotype IDs present in 'clonotype_id' column for calculations
 plot_similarity(
   vdj_so,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident"
 )
 
 # Specify method to use for calculating repertoire overlap
 plot_similarity(
   vdj_sce,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  method = abdiv::jaccard
+  method      = abdiv::morisita
 )
 
 # Specify colors to use for heatmap
 plot_similarity(
   vdj_so,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  plot_color = c("white", "red")
+  plot_color  = c("white", "red")
 )
 
-# Pass additional aesthetic parameters to ggplot2
+# Create circos plot
 plot_similarity(
-  vdj_sce,
+  vdj_so,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  color = "black",
-  size = 2
+  method      = "circos"
 )
 
+}
+\seealso{
+\code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[=calc_mds]{calc_mds()}}, \code{\link[=plot_mds]{plot_mds()}}
 }

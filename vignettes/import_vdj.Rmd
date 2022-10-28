@@ -1,0 +1,256 @@
+---
+title: "Data Import"
+date: '`r format(Sys.Date(), "%B %d %Y")`'
+output:
+  rmarkdown::html_vignette:
+    toc_float: true
+    toc_depth: 2
+    vignette: >
+      %\VignetteIndexEntry{Data Import}
+      %\VignetteEncoding{UTF-8}
+      %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r "setup", include = FALSE}
+# Chunk opts
+knitr::opts_chunk$set(
+  collapse  = TRUE,
+  comment   = "#>",
+  warning   = FALSE,
+  message   = FALSE
+)
+```
+
+<br>
+
+This vignette provides detailed examples for loading gene expression and V(D)J data into a single object. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
+
+```{r}
+download.file(
+  "https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip",
+  "splenocytes.zip",
+  quiet = TRUE
+)
+
+unzip("splenocytes.zip", overwrite = FALSE)
+```
+
+## Basic usage
+
+To load and parse V(D)J data, FASTQ files must first be processed using [Cell Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/what-is-cell-ranger). The data used for this vignette was processed using Cell Ranger v7.0. Cell Ranger generates several files that djvdj uses for the downstream analysis. This includes the outs/filtered_contig_annotations.csv file, which contains basic information about each chain and is required for the `import_vdj()` function.
+
+The simplest use case for `import_vdj()` involves creating an object using data from a single run.
+
+```{r}
+library(djvdj)
+library(magrittr)
+library(Seurat)
+library(here)
+
+# Create Seurat object
+so <- "splenocytes/BL6_GEX/filtered_feature_bc_matrix" %>%
+  Read10X() %>%
+  CreateSeuratObject()
+
+# Add V(D)J data to object
+so_vdj <- so %>%
+  import_vdj(vdj_dir = "splenocytes/BL6_BCR")
+```
+
+`import_vdj()` adds a variety of per-chain metrics to the object meta.data. Information for each chain identified for the cell is separated by a semicolon. The separator used for storing and parsing per-chain V(D)J data can be specified using the `sep` argument included for most djvdj functions. `NA`s will be included for cells that lack V(D)J data. 
+
+```{r}
+so_vdj@meta.data %>%
+  head(2)
+```
+
+To modify/filter/plot per-chain data, djvdj provides a range of functions that make it easy to parse and visualize this information. For detailed examples refer to the vignettes and documentation for the following functions: `filter_vdj()`, `mutate_vdj()`, `summarize_vdj()`, `plot_vdj()`, `plot_vdj_feature()`.
+
+<br>
+
+## Loading multiple runs
+
+When combining gene expression and V(D)J data from multiple runs into the same Seurat object, we must ensure that `import_vdj()` is able to match the cell barcodes from the two data types. The easiest way to do this is to load the gene expression and V(D)J samples in the same order. 
+
+```{r}
+# Load GEX data
+gex_dirs <- c(
+  "splenocytes/BL6_GEX/filtered_feature_bc_matrix",
+  "splenocytes/MD4_GEX/filtered_feature_bc_matrix"
+)
+
+so <- gex_dirs %>%
+  Read10X() %>%
+  CreateSeuratObject()
+
+# Load BCR data
+# note that the BL6 and MD4 paths are in the same order as the gene
+# expression data
+vdj_dirs <- c(
+  "splenocytes/BL6_BCR",
+  "splenocytes/MD4_BCR"
+)
+
+so_vdj <- so %>%
+  import_vdj(vdj_dir = vdj_dirs)
+```
+
+If the V(D)J samples are not loaded in the same order as the gene expression data, the cell barcodes will not match and you will receive an error.
+
+```{r, eval = FALSE}
+# Here we try to load the V(D)J data in the opposite order as the gene
+# expression data. THIS PRODUCES AN ERROR!
+vdj_dirs <- c(
+  "splenocytes/MD4_BCR",
+  "splenocytes/BL6_BCR"
+)
+
+so_vdj <- so %>%
+  import_vdj(vdj_dir = vdj_dirs)
+```
+
+Another way to ensure the cell barcodes from the gene expression and V(D)J data are able to be matched is to specify cell barcode prefixes for each sample. For both the `Seurat::Read10X()` and `import_vdj()` functions this can be done by passing a named vector. In this scenario, the names will be added as prefixes for the cell barcodes.
+
+```{r}
+# Load GEX data
+gex_dirs <- c(
+  BL6 = "splenocytes/BL6_GEX/filtered_feature_bc_matrix",
+  MD4 = "splenocytes/MD4_GEX/filtered_feature_bc_matrix"
+)
+
+so <- gex_dirs %>%
+  Read10X() %>%
+  CreateSeuratObject()
+
+# Load BCR data
+# note that the samples are not in the same order as the gene expression data,
+# but this is okay since cell prefixes are provided as names for the
+# input vector
+vdj_dirs <- c(
+  MD4 = "splenocytes/MD4_BCR",
+  BL6 = "splenocytes/BL6_BCR"
+)
+
+so_vdj <- so %>%
+  import_vdj(vdj_dir = vdj_dirs)
+```
+
+<br>
+
+## Defining clonotypes
+
+When results from multiple Cell Ranger runs are added to the object, the clonotype IDs will not match, i.e. clonotype1 will not be the same for all samples. To allow clonotypes to be directly compared between multiple samples, the clonotypes can be recalculated using the `define_clonotypes` argument. This argument will assign new clonotype IDs using information available for each chain. There are three options to specify how this step is performed:
+
+* 'cdr3aa': use only the CDR3 amino acid sequence
+* 'cdr3nt': use only the CDR3 nucleotide sequence
+* 'cdr3_gene': use both the CDR3 nucleotide sequence and the combination of all V(D)J genes identified for the cell
+
+```{r}
+so_vdj <- so %>%
+  import_vdj(
+    vdj_dir = vdj_dirs,
+    define_clonotypes = "cdr3_gene"
+  )
+```
+
+The clonotype IDs can also be adjusted for multiple samples using the [aggregate](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/aggr) function available with Cell Ranger. To load aggregated output files just pass the `cellranger aggr` output directory to the `aggr_dir` argument. To correctly match cell barcodes from aggregated V(D)J data with the gene expression data, the gene expression samples must be loaded into the object in the same order the samples were listed in the `cellranger aggr` [config file](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/aggr#vdj_aggr).
+
+<br>
+
+## Filtering chains
+
+The `import_vdj()` function has several arguments that can be used to perform basic filtering for each chain. The `filter_chains` argument will only include chains with at least one productive and full length contig. However, it should be noted that in recent versions of Cell Ranger the output files are already filtered based on this criteria, so this argument is only relevant when loading data processed with earlier versions such as Cell Ranger v3.0.
+
+The `filter_paired` argument will only include clonotypes with paired chains. For TCR data, this means each clonotype must have at least one TRA and TRB chain. For BCR data each clonotype must have at least one IGH chain and at least one IGK or IGL chain. It should be noted that if a clonotype has multiple chains of the same type, it will still be included, e.g. TRA;TRB;TRB or IGH;IGK;IGK will still be included. Clonotypes that include more than two chains can be filtered using `filter_vdj()`, for more information refer to the filtering [vignette](add/link/here).
+
+```{r}
+vdj_dirs <- c(
+  MD4 = "splenocytes/MD4_BCR",
+  BL6 = "splenocytes/BL6_BCR"
+)
+
+so_vdj <- so %>%
+  import_vdj(
+    vdj_dir = vdj_dirs,
+    filter_chains = TRUE,
+    filter_paired = TRUE
+  )
+
+# To only include clonotypes with exactly 2 chains
+so_vdj <- so_vdj %>%
+  filter_vdj(n_chains == 2)
+```
+
+<br>
+
+## Loading mutation information
+
+Mutation information for each chain can be parsed using two additional output files from Cell Ranger:
+
+* outs/concat_ref.bam: this file contains alignment information and is required to quantify insertions, deletions, and mismatches for each chain.
+* outs/airr_rearrangement.tsv: this file contains coordinates for each V(D)J gene segment and is only required if you want mutation information quantified for each segment and/or junction.
+
+```{r}
+vdj_dirs <- c(
+  MD4 = "splenocytes/MD4_BCR",
+  BL6 = "splenocytes/BL6_BCR"
+)
+
+so_vdj <- so %>%
+  import_vdj(
+    vdj_dir = vdj_dirs,
+    include_mutations = TRUE
+  )
+```
+
+The additional columns added to the meta.data will include the number of insertions, deletions, and mismatches (ending in 'ins', 'del', or 'mis') for each V(D)J segment (prefixed with 'v', 'd', 'j', or 'c'). Columns containing junction information will be prefixed with either 'vd' or 'dj'. Columns ending in 'freq' show the event frequency which is calculated as the number of events divided by the length of the region.
+
+```{r}
+so_vdj@meta.data %>%
+  head(2)
+```
+
+<br>
+
+## Loading TCR and BCR data
+
+To add both BCR and TCR data to the object, run `import_vdj()` separately for each data type. To distinguish between columns containing BCR or TCR data, use the `prefix` argument to add unique column names.
+
+```{r}
+bcr_dirs <- c(
+  MD4 = "splenocytes/MD4_BCR",
+  BL6 = "splenocytes/BL6_BCR"
+)
+
+tcr_dirs <- c(
+  MD4 = "splenocytes/MD4_TCR",
+  BL6 = "splenocytes/BL6_TCR"
+)
+
+so_vdj <- so %>%
+  import_vdj(bcr_dirs, prefix = "bcr_") %>%
+  import_vdj(tcr_dirs, prefix = "tcr_")
+```
+
+This results in two sets of new columns being added to the meta.data. When performing downstream analysis using other djvdj functions, be sure to specify the correct columns, i.e. 'bcr_clonotype_id' or 'tcr_clonotype_id'.
+
+```{r}
+so_vdj@meta.data %>%
+  head(3)
+```
+
+<br>
+
+## Other object types
+
+In addition to Seurat objects, djvdj also works with SingleCellExperiment objects and with data.frames. If no input object is provided to `import_vdj()`, a data.frame containing V(D)J information will be returned. This data.frame can be used with other djvdj functions to perform further downstream analysis.
+
+```{r}
+vdj_dirs <- c(
+  MD4 = "splenocytes/MD4_BCR",
+  BL6 = "splenocytes/BL6_BCR"
+)
+
+# This will load V(D)J data and return a data.frame
+df_vdj <- import_vdj(vdj_dir = vdj_dirs)
+```

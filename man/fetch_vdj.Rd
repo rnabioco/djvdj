@@ -6,9 +6,10 @@
 \usage{
 fetch_vdj(
   input,
-  vdj_cols = NULL,
+  data_cols = NULL,
   clonotype_col = NULL,
   filter_cells = FALSE,
+  per_cell = FALSE,
   unnest = TRUE,
   sep = ";"
 )
@@ -17,16 +18,18 @@ fetch_vdj(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{vdj_cols}{meta.data columns containing per-chain V(D)J data to unnest.
+\item{data_cols}{meta.data columns containing per-chain V(D)J data to unnest.
 If NULL, V(D)J data are automatically selected by identifying columns that
 have NAs in the same rows as clonotype_col.}
 
 \item{clonotype_col}{meta.data column containing clonotype IDs. This column
 is used to determine which columns have V(D)J data. If both clonotype_col
-and vdj_cols are NULL, all columns are included.}
+and data_cols are NULL, all columns are included.}
 
 \item{filter_cells}{Remove cells that do not have V(D)J data, clonotype_col
 must be provided to determine which cells to filter.}
+
+\item{per_cell}{Return per-cell data instead of per-chain data.}
 
 \item{unnest}{If FALSE, a nested data.frame is returned where each row
 represents a cell and V(D)J data is stored as list-cols. If TRUE, columns
@@ -41,7 +44,7 @@ data.frame containing V(D)J data
 \description{
 Fetch per-chain V(D)J data from object. Within the object meta.data, each
 row represents a single cell and can include information for multiple
-chains. This function returns an unnested data.frame where each row
+chains. This function can return a data.frame where each row
 represents a single chain. This is useful for plotting per-chain metrics
 such as CDR3 length or the number of insertions/deletions.
 }
@@ -53,7 +56,7 @@ fetch_vdj(vdj_so)
 # per-cell data will be returned for all other columns
 fetch_vdj(
   vdj_sce,
-  vdj_cols = c("chains", "n_insertion")
+  data_cols = c("chains", "n_insertion")
 )
 
 # Only include cells that have V(D)J data

@@ -17,9 +17,9 @@
 #' useful if the V(D)J datasets being loaded do not have consistent clonotype
 #' IDs, i.e., clonotype1 is not the same across samples. Possible values are:
 #'
-#' - cdr3aa, define clonotypes based on the CDR3 amino acid sequence
-#' - cdr3nt, define clonotypes based on the CDR3 nucleotide sequence
-#' - cdr3_gene, define clonotypes based on the combination of the CDR3
+#' - 'cdr3aa', define clonotypes based on the CDR3 amino acid sequence
+#' - 'cdr3nt', define clonotypes based on the CDR3 nucleotide sequence
+#' - 'cdr3_gene', define clonotypes based on the combination of the CDR3
 #' nucleotide sequence and the V(D)J genes.
 #'
 #' When defining clonotypes, only productive full length chains will be used.
@@ -112,13 +112,13 @@
 #'
 #' head(vdj_so@meta.data, 1)
 #'
-#' # Omit indel information for each chain
+#' # Include mutation information for each chain
 #' # this information will be included if the file concat_ref.bam is present
-#' # to speed up data import, omit indel information
+#' # including mutation information will cause data import to be slower
 #' vdj_so <- import_vdj(
 #'   tiny_so,
 #'   vdj_dir = vdj_dir,
-#'   include_mutations = FALSE
+#'   include_mutations = TRUE
 #' )
 #'
 #' head(vdj_so@meta.data, 1)
@@ -136,7 +136,7 @@
 #'
 #' @export
 import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains = TRUE,
-                       filter_paired = FALSE, define_clonotypes = NULL, include_mutations = TRUE,
+                       filter_paired = FALSE, define_clonotypes = NULL, include_mutations = FALSE,
                        aggr_dir = NULL, sep = ";") {
 
   # Check that vdj_dir or aggr_dir is provided
@@ -236,7 +236,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
       }
     }
 
-    # sfxs <- rep(as.character(NA), length(vdj_dir))
     sfxs <- rep("-1", length(vdj_dir))
   }
 
@@ -372,13 +371,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     contigs <- dplyr::filter(contigs, !is.na(.data$clonotype_id))
   }
 
+  # Select V(D)J columns to keep
+  contigs <- dplyr::select(contigs, all_of(vdj_cols))
+
   # Check for NAs in data, additional NAs would indicate malformed input
   if (!all(stats::complete.cases(contigs))) {
     stop("Malformed input data, NAs are present, check input files.")
   }
-
-  # Select V(D)J columns to keep
-  contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
   # Check if sep is already present in sep_cols
   sep <- .check_sep(contigs, sep_cols, sep)
@@ -481,7 +480,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
     res <- define_clonotypes(
       res,
-      vdj_cols      = clone_cols,
+      data_cols     = clone_cols,
       filter_chains = filt_chains
     )
   }
@@ -517,7 +516,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' @return List containing one data.frame for each path provided to vdj_dir
 #' @importFrom readr read_csv cols
 #' @noRd
-.load_vdj_data <- function(vdj_dir, cell_prfxs, cell_sfxs, contig_file = "filtered_contig_annotations.csv",
+.load_vdj_data <- function(vdj_dir, cell_prfxs, cell_sfxs,
+                           contig_file = "filtered_contig_annotations.csv",
                            chk_none = c("productive", "full_length")) {
 
   # Check for file and return path
@@ -552,6 +552,19 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     cell_prfxs = cell_prfxs,
     cell_sfxs  = cell_sfxs
   )
+
+  # furrr::furrr_options(globals = FALSE)
+  # future::plan(future::multisession, workers = 2)
+  #
+  # tictoc::tic()
+  # crt_fn <- carrier::crate(
+  #   my_fn = .format_cell_prefixes,
+  #   function(...) my_fn(...)
+  # )
+  #
+  # res <- purrr::pmap(prfx_args, crt_fn, bc_col = "barcode")
+  # # res <- furrr::future_pmap(prfx_args, .format_cell_prefixes, bc_col = "barcode")
+  # tictoc::toc()
 
   res <- purrr::pmap(prfx_args, .format_cell_prefixes, bc_col = "barcode")
 
@@ -688,22 +701,35 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' @noRd
 .replace_none <- function(df_in, clmns) {
 
-  res <- dplyr::rowwise(df_in)
+  clmns <- clmns[!map_lgl(df_in[clmns], is.logical)]
+
+  if (purrr::is_empty(clmns)) return(df_in)
 
   res <- dplyr::mutate(
-    res,
-    dplyr::across(.cols = all_of(clmns), ~ {
-      ifelse(
-        !is.logical(.x),
-        as.logical(gsub("None", "FALSE", .x)),
-        .x
-      )
+    df_in,
+    dplyr::across(all_of(clmns), ~ {
+      as.logical(stringr::str_replace(.x, "^None$", "FALSE"))
     })
   )
 
-  res <- dplyr::ungroup(res)
-
   res
+
+  # WHY????
+  # res <- dplyr::rowwise(df_in)
+  #
+  # res <- dplyr::mutate(
+  #   res,
+  #   dplyr::across(.cols = all_of(clmns), ~ {
+  #     ifelse(
+  #       !is.logical(.x),
+  #       as.logical(gsub("None", "FALSE", .x)),
+  #       .x
+  #     )
+  #   })
+  # )
+  #
+  # res <- dplyr::ungroup(res)
+  # res
 }
 
 #' Load mutation information for each contig
@@ -721,43 +747,35 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 .load_muts <- function(vdj_dir, cell_prfxs, cell_sfxs, bam_file = "concat_ref.bam",
                        airr_file = "airr_rearrangement.tsv") {
 
-  # Check for bam file and return path
-  # if bam is missing for any sample, return NULL
-  # do not want extra NAs in the V(D)J data columns
-  bam_path <- purrr::map_chr(
-    vdj_dir,
-    .get_vdj_path,
-    file = bam_file,
-    warn = TRUE
-  )
+  # Retrieve bam and airr file paths
+  file_paths <- c(bam = bam_file, airr = airr_file)
 
-  if (any(is.na(bam_path))) {
+  file_paths <- purrr::map(file_paths, ~ {
+    fl <- .x
+
+    purrr::map_chr(
+      vdj_dir, .get_vdj_path,
+      file = fl, warn = TRUE
+    )
+  })
+
+  any_missing <- any(purrr::map_lgl(file_paths, ~ any(is.na(.x))))
+
+  if (any_missing) {
     warning(
-      bam_file, " not found, check provided paths, ",
-      "mutation data not added to object."
+      "To add mutation data to object, ", bam_file, " and ", airr_file,
+      " must be present for all samples, check that these files are in the",
+      " provided directory paths, mutation data not added to object."
     )
 
     return(NULL)
   }
 
-  # Check for AIRR file and return path
-  # if AIRR is missing for any sample, set sample path to NA
-  airr_file <- purrr::map_chr(
-    vdj_dir,
-    .get_vdj_path,
-    file = airr_file,
-    warn = TRUE
-  )
-
-  if (any(is.na(airr_file))) {
-    airr_file[!is.na(airr_file)] <- NA
-  }
-
   # Extract mutations from bam file
-  mut_coords <- purrr::map(bam_path, .extract_mut_coords)
+  mut_coords <- purrr::map(file_paths$bam, .extract_mut_coords)
 
   # Extract VDJ coords from AIRR
-  vdj_coords <- purrr::map(airr_file, .extract_vdj_coords)
+  vdj_coords <- purrr::map(file_paths$airr, .extract_vdj_coords)
 
   # Map mutations to VDJ segments
   res <- purrr::map2(mut_coords, vdj_coords, .map_muts)
@@ -841,10 +859,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
 .extract_vdj_coords <- function(airr_file) {
 
-  if (is.na(airr_file)) {
-    return(NA)
-  }
-
   airr <- readr::read_tsv(
     airr_file,
     col_types = readr::cols(),
@@ -897,12 +911,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     type = dplyr::recode(.data$type, !!!mut_key)
   )
 
-  # Count total mutations
-  all_muts <- dplyr::mutate(mut_coords, type = paste0("all_", .data$type))
-
-  all_muts <- dplyr::group_by(all_muts, .data$contig_id, .data$len, .data$type)
-  all_muts <- dplyr::summarize(all_muts, n = sum(.data$n), .groups = "drop")
-
   # If no vdj_coords, return mutation totals
   if (identical(vdj_coords, NA)) {
     res <- all_muts %>%
@@ -942,12 +950,23 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   vdj_muts <- dplyr::mutate(
     vdj_muts,
-    len       = .data$len.seg,
-    new_start = ifelse(.data$start >= .data$start.seg, .data$start,       .data$start.seg),
-    new_end   = ifelse(.data$end   <= .data$end.seg,   .data$end,         .data$end.seg),
-    new_end   = ifelse(.data$type  == mut_key[["D"]],  .data$new_end + 1, .data$new_end),
+    len = .data$len.seg,
 
-    n = ifelse(.data$type != mut_key[["D"]], .data$new_end - .data$new_start, .data$n)
+    new_start = ifelse(
+      .data$start >= .data$start.seg, .data$start, .data$start.seg
+    ),
+
+    new_end = ifelse(
+      .data$end <= .data$end.seg, .data$end, .data$end.seg
+    ),
+
+    new_end = ifelse(
+      .data$type == mut_key[["D"]], .data$new_end + 1, .data$new_end
+    ),
+
+    n = ifelse(
+      .data$type != mut_key[["D"]], .data$new_end - .data$new_start, .data$n
+    )
   )
 
   # Identify junction indels
@@ -970,11 +989,30 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   vdj_muts <- bind_rows(vdj_muts, jxn_muts)
 
   # Summarize mutation counts
-  vdj_muts <- dplyr::group_by(vdj_muts, .data$contig_id, .data$len, .data$type, .data$seg)
-  vdj_muts <- dplyr::summarize(vdj_muts, n = sum(.data$n), .groups = "drop")
-  vdj_muts <- tidyr::unite(vdj_muts, "type", .data$seg, .data$type, sep = "_")
+  vdj_muts <- dplyr::group_by(
+    vdj_muts,
+    .data$contig_id, .data$len, .data$type, .data$seg
+  )
 
-  # Add total mutations to output
+  vdj_muts <- dplyr::summarize(vdj_muts, n = sum(.data$n), .groups = "drop")
+
+  # Summarize total mutations and total length per contig
+  # for each mutation type, sum total for v, d, j, and c segments, exclude jxns
+  all_muts <- dplyr::filter(vdj_muts, !.data$seg %in% c("vd", "dj"))
+  all_muts <- dplyr::group_by(all_muts, .data$contig_id, .data$type)
+
+  all_muts <- dplyr::summarize(
+    all_muts,
+    n       = sum(.data$n),
+    len     = sum(.data$len),
+    seg     = "all",
+    .groups = "drop"
+  )
+
+  vdj_muts <- dplyr::bind_rows(vdj_muts, all_muts)
+  res      <- tidyr::unite(vdj_muts, "type", .data$seg, .data$type, sep = "_")
+
+  # Set final output columns
   freq_cols <- mut_cols <- c("v", "d", "j", "c", "all")
   jxn_cols  <- c("vd", "dj")
 
@@ -986,8 +1024,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   mut_cols <- c(mut_cols, jxn_cols)
 
   freq_cols <- purrr::map_chr(freq_cols, paste0, "_", mut_key[["X"]])
-
-  res <- dplyr::bind_rows(vdj_muts, all_muts)
 
   # Calculate mismatch frequency
   freq <- dplyr::filter(res, .data$type %in% freq_cols)
@@ -1034,6 +1070,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   path <- file.path(vdj_dir, file)
 
+  if (!file.exists(path)) path <- paste0(path, ".gz")
   if (!file.exists(path)) path <- NA
 
   if (is.na(path)) {
@@ -1254,7 +1291,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param vdj_cols meta.data columns containing V(D)J data to use for defining
+#' @param data_cols meta.data columns containing V(D)J data to use for defining
 #' clonotypes
 #' @param clonotype_col Name of column to use for storing clonotype IDs
 #' @param filter_chains Column(s) to use for filtering chains prior to defining
@@ -1268,7 +1305,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' # Define clonotypes using the CDR3 nucleotide sequence
 #' res <- define_clonotypes(
 #'   vdj_so,
-#'   vdj_cols = "cdr3_nt"
+#'   data_cols = "cdr3_nt"
 #' )
 #'
 #' head(res@meta.data, 1)
@@ -1277,7 +1314,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' # and the V and J genes
 #' res <- define_clonotypes(
 #'   vdj_sce,
-#'   vdj_cols = c("cdr3_nt", "v_gene", "j_gene")
+#'   data_cols = c("cdr3_nt", "v_gene", "j_gene")
 #' )
 #'
 #' head(res@colData, 1)
@@ -1285,7 +1322,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' # Modify the name of the column used to store clonotype IDs
 #' res <- define_clonotypes(
 #'   vdj_so,
-#'   vdj_cols = "cdr3_nt",
+#'   data_cols = "cdr3_nt",
 #'   clonotype_col = "NEW_clonotype_id"
 #' )
 #'
@@ -1294,14 +1331,14 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' # When defining clonotypes only use chains that are productive
 #' res <- define_clonotypes(
 #'   vdj_sce,
-#'   vdj_cols = "cdr3_nt",
+#'   data_cols = "cdr3_nt",
 #'   filter_chains = "productive"
 #' )
 #'
 #' head(res@colData, 1)
 #'
 #' @export
-define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
+define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
                               filter_chains = c("productive", "full_length"), sep = ";") {
 
   # Get meta.data
@@ -1310,7 +1347,7 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
 
   meta <- dplyr::select(meta, -any_of(clonotype_col))
 
-  all_cols <- c(vdj_cols, filter_chains)
+  all_cols <- c(data_cols, filter_chains)
 
   if (!all(all_cols %in% colnames(meta))) {
     stop(
@@ -1319,7 +1356,7 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
     )
   }
 
-  # Remove cells with NAs for any vdj_cols
+  # Remove cells with NAs for any data_cols
   vdj <- dplyr::filter(
     meta,
     dplyr::if_all(dplyr::all_of(all_cols), ~ !is.na(.x))
@@ -1327,11 +1364,10 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
 
   vdj <- dplyr::select(vdj, all_of(c(CELL_COL, all_cols)))
 
-  # Only use values in vdj_cols that are TRUE for all filter_chains columns
+  # Only use values in data_cols that are TRUE for all filter_chains columns
   # first identify contigs TRUE for all filter_chains columns
-  # subset each vdj_cols column based on .clone_idx
+  # subset each data_cols column based on .clone_idx
   if (!is.null(filter_chains)) {
-
     clmns <- syms(filter_chains)
 
     vdj <- tibble::column_to_rownames(vdj, CELL_COL)
@@ -1341,16 +1377,16 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
       .clone_idx = list(purrr::reduce(list(!!!clmns), ~ .x & .y)),
 
       dplyr::across(
-        dplyr::all_of(vdj_cols),
+        dplyr::all_of(data_cols),
         ~ paste0(.x[.data$.clone_idx], collapse = ""),
         .names = ".clone_{.col}"
       ),
 
       clonotype_col = NULL,
-      vdj_cols = all_cols
+      data_cols = all_cols
     )
 
-    vdj_cols <- paste0(".clone_", vdj_cols)
+    data_cols <- paste0(".clone_", data_cols)
 
     vdj <- .get_meta(vdj)
   }
@@ -1358,7 +1394,7 @@ define_clonotypes <- function(input, vdj_cols, clonotype_col = "clonotype_id",
   # Add new clonotype IDs
   vdj <- dplyr::mutate(
     vdj,
-    .new_clone = paste(!!!syms(vdj_cols), sep = ""),
+    .new_clone = paste(!!!syms(data_cols), sep = ""),
     .new_id    = rank(.data$.new_clone, ties.method = "min"),
 
     !!sym(clonotype_col) := ifelse(

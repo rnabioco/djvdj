@@ -2,20 +2,21 @@
 #'
 #' Fetch per-chain V(D)J data from object. Within the object meta.data, each
 #' row represents a single cell and can include information for multiple
-#' chains. This function returns an unnested data.frame where each row
+#' chains. This function can return a data.frame where each row
 #' represents a single chain. This is useful for plotting per-chain metrics
 #' such as CDR3 length or the number of insertions/deletions.
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param vdj_cols meta.data columns containing per-chain V(D)J data to unnest.
+#' @param data_cols meta.data columns containing per-chain V(D)J data to unnest.
 #' If NULL, V(D)J data are automatically selected by identifying columns that
 #' have NAs in the same rows as clonotype_col.
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
 #' is used to determine which columns have V(D)J data. If both clonotype_col
-#' and vdj_cols are NULL, all columns are included.
+#' and data_cols are NULL, all columns are included.
 #' @param filter_cells Remove cells that do not have V(D)J data, clonotype_col
 #' must be provided to determine which cells to filter.
+#' @param per_cell Return per-cell data instead of per-chain data.
 #' @param unnest If FALSE, a nested data.frame is returned where each row
 #' represents a cell and V(D)J data is stored as list-cols. If TRUE, columns
 #' are unnested so each row represents a single chain.
@@ -31,7 +32,7 @@
 #' # per-cell data will be returned for all other columns
 #' fetch_vdj(
 #'   vdj_sce,
-#'   vdj_cols = c("chains", "n_insertion")
+#'   data_cols = c("chains", "n_insertion")
 #' )
 #'
 #' # Only include cells that have V(D)J data
@@ -43,34 +44,12 @@
 #' )
 #'
 #' @export
-fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells = FALSE,
-                      unnest = TRUE, sep = ";") {
+fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
+                      filter_cells = FALSE, per_cell = FALSE, unnest = TRUE,
+                      sep = ";") {
 
   # Format input data
   meta <- .get_meta(input)
-
-  if (is.null(sep)) {
-    return(meta)
-  }
-
-  # Identify columns with V(D)J data
-  col_list <- .get_vdj_cols(
-    df_in     = meta,
-    clone_col = clonotype_col,
-    cols_in   = vdj_cols,
-    sep       = sep
-  )
-
-  sep_cols <- col_list$sep
-
-  if (purrr::is_empty(sep_cols)) {
-    warning(
-      "The separator '", sep, "' was not identified in any columns specified ",
-      "by vdj_cols, the unmodified meta.data will be returned"
-    )
-
-    return(meta)
-  }
 
   # Filter cells
   if (filter_cells) {
@@ -79,6 +58,28 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells
     }
 
     meta <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
+  }
+
+  # If NULL sep or per_cell, return meta.data
+  if (is.null(sep) || per_cell) return(meta)
+
+  # Identify columns with V(D)J data
+  col_list <- .get_vdj_cols(
+    df_in     = meta,
+    clone_col = clonotype_col,
+    cols_in   = data_cols,
+    sep       = sep
+  )
+
+  sep_cols <- col_list$sep
+
+  if (purrr::is_empty(sep_cols)) {
+    warning(
+      "The separator '", sep, "' was not identified in any columns specified ",
+      "by data_cols."
+    )
+
+    return(meta)
   }
 
   # Unnest V(D)J data
@@ -113,7 +114,7 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells
 #'
 #' @param clonotype_col meta.data column containing clonotype IDs. This is used
 #' to identify columns containing V(D)J data.
-#' @param vdj_cols meta.data columns containing V(D)J data to modify. If NULL,
+#' @param data_cols meta.data columns containing V(D)J data to modify. If NULL,
 #' data are automatically selected by identifying columns that have NAs in the
 #' same rows as clonotype_col.
 #' @param return_df Return results as a data.frame. If FALSE, results will be
@@ -167,7 +168,7 @@ fetch_vdj <- function(input, vdj_cols = NULL, clonotype_col = NULL, filter_cells
 #' head(res@meta.data, 3)
 #'
 #' @export
-mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NULL,
+mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", data_cols = NULL,
                        return_df = FALSE, sep = ";") {
 
   # Format input data
@@ -178,7 +179,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
   col_list <- .get_vdj_cols(
     df_in     = vdj,
     clone_col = clonotype_col,
-    cols_in   = vdj_cols,
+    cols_in   = data_cols,
     sep       = sep
   )
 
@@ -227,7 +228,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param vdj_cols meta.data column(s) containing V(D)J data to summarize for
+#' @param data_cols meta.data column(s) containing V(D)J data to summarize for
 #' each cell
 #' @param fn Function to apply to each selected column, possible values can be
 #' either a function, e.g. mean, or a purrr-style lambda, e.g. ~ mean(.x,
@@ -250,7 +251,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #' # by default the mean will be calculated for numeric columns
 #' res <- summarize_vdj(
 #'   vdj_so,
-#'   vdj_cols = c("n_deletion", "n_insertion")
+#'   data_cols = c("n_deletion", "n_insertion")
 #' )
 #'
 #' head(res@meta.data, 3)
@@ -260,7 +261,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #' # cell
 #' res <- summarize_vdj(
 #'   vdj_sce,
-#'   vdj_cols = c("n_deletion", "n_insertion"),
+#'   data_cols = c("n_deletion", "n_insertion"),
 #'   fn = stats::median
 #' )
 #'
@@ -269,7 +270,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #' # Summarize values for a specific chain
 #' res <- summarize_vdj(
 #'   vdj_so,
-#'   vdj_cols = c("n_deletion", "n_insertion"),
+#'   data_cols = c("n_deletion", "n_insertion"),
 #'   chain = "IGK"
 #' )
 #'
@@ -279,7 +280,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #' # use {.col} to refer to the original column name
 #' res <- summarize_vdj(
 #'   vdj_sce,
-#'   vdj_cols = c("n_deletion", "n_insertion"),
+#'   data_cols = c("n_deletion", "n_insertion"),
 #'   fn = stats::median,
 #'   col_names = "median_{.col}"
 #' )
@@ -289,7 +290,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #' # Return a data.frame instead of adding the results to the input object
 #' res <- summarize_vdj(
 #'   vdj_so,
-#'   vdj_cols = c("n_deletion", "n_insertion"),
+#'   data_cols = c("n_deletion", "n_insertion"),
 #'   return_df = TRUE
 #' )
 #'
@@ -300,7 +301,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #' # this creates a new column showing the unique chains for each cell
 #' res <- summarize_vdj(
 #'   vdj_sce,
-#'   vdj_cols = "chains",
+#'   data_cols = "chains",
 #'   fn = ~ paste0(unique(.x), collapse = "_"),
 #'   col_names = "unique_chains"
 #' )
@@ -312,7 +313,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #' # the V(D)J data can be filtered based on this new column
 #' res <- summarize_vdj(
 #'   vdj_so,
-#'   vdj_cols = "n_insertion",
+#'   data_cols = "n_insertion",
 #'   fn = ~ all(.x == 0),
 #'   col_names = "no_insertions"
 #' )
@@ -325,36 +326,34 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", vdj_cols = NU
 #' head(res@meta.data, 3)
 #'
 #' @export
-summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_col = "chains",
+summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL, chain_col = "chains",
                           sep = ";", col_names = "{.col}", return_df = FALSE) {
 
   # Names of new columns
-  new_cols <- gsub("\\{.col\\}", "{vdj_cols}", col_names)
+  new_cols <- gsub("\\{.col\\}", "{data_cols}", col_names)
   new_cols <- glue::glue(new_cols)
 
   # Fetch V(D)J data
-  # * this is a key performance bottleneck as the length of vdj_cols increases
-  fetch_cols <- vdj_cols
+  # * this is a key performance bottleneck as the length of data_cols increases
+  fetch_cols <- data_cols
 
-  if (!is.null(chain)) {
-    fetch_cols <- c(vdj_cols, chain_col)
-  }
+  if (!is.null(chain)) fetch_cols <- c(data_cols, chain_col)
 
   res <- fetch_vdj(
     input,
     clonotype_col = NULL,
-    vdj_cols      = fetch_cols,
+    data_cols     = fetch_cols,
     sep           = sep,
     unnest        = FALSE
   )
 
   # Set default fn
   # * default is mean if all vdj_col are numeric
-  # * if !is.null(chain), collapse vdj_cols into string
+  # * if !is.null(chain), collapse data_cols into string
   # * if is.null(chain), return input unchanged
   if (is.null(fn)) {
     is_num <- purrr::map_lgl(
-      res[, vdj_cols],
+      res[, data_cols],
       ~ all(purrr::map_lgl(.x, is.numeric))
     )
 
@@ -372,9 +371,9 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
   }
 
   # Filter chains
-  # check that all vdj_cols contain per-chain data
+  # check that all data_cols contain per-chain data
   if (!is.null(chain)) {
-    is_lst      <- purrr::map_lgl(res[, vdj_cols], is.list)
+    is_lst      <- purrr::map_lgl(res[, data_cols], is.list)
     not_lst     <- names(is_lst[!is_lst])
     filt_chains <- purrr::is_empty(not_lst)
 
@@ -383,15 +382,15 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
 
       res <- .filter_chains(
         res,
-        vdj_cols  = vdj_cols,
+        data_cols = data_cols,
         chain     = chain,
         chain_col = chain_col,
         col_names = paste0(prfx, "{.col}"),
         empty_val = NA
       )
 
-      # Add prefix to vdj_cols so temporary columns are usedvdj %>% hea
-      vdj_cols <- paste0(prfx, vdj_cols)
+      # Add prefix to data_cols so temporary columns are usedvdj %>% hea
+      data_cols <- paste0(prfx, data_cols)
 
       # Set col_names so prefix is removed from columns
       col_names <- gsub(
@@ -405,7 +404,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
 
       warning(
         not_lst, " does not contain per-chain V(D)J data, can only filter ",
-        "based on chain if all vdj_cols contain per-chain data."
+        "based on chain if all data_cols contain per-chain data."
       )
     }
   }
@@ -418,7 +417,7 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
   # * skip row if is.na
   # * use for loops instead of map to avoid '<<-' operator
   # * not clear how to do this with across, instead do:
-  #     1) iterate through vdj_cols
+  #     1) iterate through data_cols
   #     2) apply fn to each row in column
   #     3) check length of fn result and set variable if length > 1
   #
@@ -426,8 +425,8 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
   # fn, e.g. ~ .x[productive] does not work :(
   fn <- purrr::as_mapper(fn, ...)
 
-  for (i in seq_along(vdj_cols)) {
-    clmn       <- vdj_cols[i]
+  for (i in seq_along(data_cols)) {
+    clmn       <- data_cols[i]
     new_clmn   <- new_cols[i]
     length_one <- TRUE
 
@@ -462,10 +461,10 @@ summarize_vdj <- function(input, vdj_cols, fn = NULL, ..., chain = NULL, chain_c
 
   # If chain provided remove temporary columns
   if (!is.null(chain) && filt_chains) {
-    res <- dplyr::select(res, -all_of(vdj_cols))
+    res <- dplyr::select(res, -all_of(data_cols))
   }
 
-  # Re-nest vdj_cols
+  # Re-nest data_cols
   res <- .nest_vdj(res, sep_cols = NULL, sep = sep)
 
   # Add results back to object

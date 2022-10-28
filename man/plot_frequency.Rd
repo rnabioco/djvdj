@@ -9,10 +9,10 @@ plot_frequency(
   data_col,
   cluster_col = NULL,
   group_col = NULL,
-  yaxis = "percent",
+  units = "percent",
+  stack = TRUE,
   plot_colors = NULL,
   plot_lvls = NULL,
-  facet_rows = NULL,
   ...
 )
 }
@@ -21,26 +21,25 @@ plot_frequency(
 data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{data_col}{meta.data column containing cell labels to use for
-calculating abundance. To calculate clonotype abundance, provide the column
-containing clonotype IDs, to calculate isotype abundance provide the column
-containing cell isotypes. By default clonotype_id is used for calculations.}
+calculating frequency, e.g. cell types, isotypes, etc. This function is not
+designed to plot clonal abundance, use the plot_clonal_abundance() function
+for this purpose.}
 
 \item{cluster_col}{meta.data column containing cluster IDs (or patients,
-treatment conditions, etc.) to use when calculating frequency. Calculations will be
-performed separately for each cluster.}
+treatment conditions, etc.) to use when calculating frequency. Calculations
+will be performed separately for each cluster.}
 
 \item{group_col}{meta.data column to use for grouping cluster IDs present in
 cluster_col. This is useful when there are multiple replicates or patients
 for each treatment condition.}
 
-\item{yaxis}{Units to plot on the y-axis, either 'frequency' or 'percent'}
+\item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
+
+\item{stack}{If TRUE, stacked bargraphs will be generated.}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
-
-\item{facet_rows}{The number of facet rows, use this when separate bar
-graphs are created for each cell cluster}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
@@ -52,5 +51,8 @@ ggplot object
 Plot the frequency of each cell label present in the provided meta.data
 column. This is useful for comparing the proportion of cells belonging to
 different samples, cell types, isotypes, etc. To compare clonotype
-frequency, use the plot_clonal_abundance() function.
+abundance, use the plot_clonal_abundance() function.
+}
+\seealso{
+\code{\link[=calc_frequency]{calc_frequency()}}, \code{\link[=plot_clonal_abundance]{plot_clonal_abundance()}}
 }

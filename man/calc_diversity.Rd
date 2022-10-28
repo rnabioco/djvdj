@@ -6,17 +6,24 @@
 \usage{
 calc_diversity(
   input,
+  data_col,
   cluster_col = NULL,
   method = abdiv::simpson,
-  clonotype_col = "clonotype_id",
-  n_boots = 100,
-  prefix = "",
-  return_df = FALSE
+  downsample = FALSE,
+  n_boots = 1,
+  chain = NULL,
+  chain_col = "chains",
+  prefix = paste0(data_col, "_"),
+  return_df = FALSE,
+  sep = ";"
 )
 }
 \arguments{
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
+
+\item{data_col}{meta.data column containing values to use for
+calculating diversity, e.g. 'clonotype_id'}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating diversity. If cluster_col is omitted,
@@ -26,15 +33,22 @@ diversity index will be calculated using all cells.}
 be passed to use multiple methods. The names should specify names for the
 output columns.}
 
-\item{clonotype_col}{meta.data column containing clonotype IDs to use for
-calculating diversity}
+\item{downsample}{Downsample clusters to the same size when calculating
+diversity metrics}
 
 \item{n_boots}{Number of bootstrap replicates}
 
+\item{chain}{Chain to use for calculating diversity. Set to NULL to include
+all chains.}
+
+\item{chain_col}{meta.data column containing chains for each cell}
+
 \item{prefix}{Prefix to add to new columns}
 
-\item{return_df}{Return results as a data.frame. If set to FALSE, results
-will be added to the input object.}
+\item{return_df}{Return results as a data.frame. If FALSE, results will be
+added to the input object.}
+
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 }
 \value{
 Single cell object or data.frame with diversity metrics
@@ -46,7 +60,8 @@ Calculate repertoire diversity
 # Calculate diversity using all cells
 res <- calc_diversity(
   vdj_so,
-  method = abdiv::simpson
+  data_col = "clonotype_id",
+  method   = abdiv::simpson
 )
 
 head(res@meta.data, 1)
@@ -54,6 +69,7 @@ head(res@meta.data, 1)
 # Group cells based on meta.data column before calculating diversity
 res <- calc_diversity(
   vdj_sce,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident"
 )
 
@@ -64,7 +80,8 @@ head(res@colData, 1)
 # meta.data
 res <- calc_diversity(
   vdj_so,
-  prefix = "bcr_"
+  data_col = "clonotype_id",
+  prefix   = "bcr_"
 )
 
 head(res@meta.data, 1)
@@ -72,6 +89,7 @@ head(res@meta.data, 1)
 # Calculate multiple metrics
 res <- calc_diversity(
   vdj_sce,
+  data_col = "clonotype_id",
   method = list(
     simpson = abdiv::simpson,
     shannon = abdiv::shannon
@@ -83,9 +101,13 @@ head(res@colData, 1)
 # Return a data.frame instead of adding the results to the input object
 res <- calc_diversity(
   vdj_so,
+  data_col  = "clonotype_id",
   return_df = TRUE
 )
 
 head(res, 1)
 
+}
+\seealso{
+\code{\link[=plot_diversity]{plot_diversity()}}
 }

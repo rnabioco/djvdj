@@ -47,9 +47,9 @@ paths <- c(
 )
 
 so_tcr <- import_vdj(
-  input         = so_tcr,                     # Seurat object
-  vdj_dir       = paths,                      # Cellranger output directories
-  filter_paired = FALSE                       # Only include clonotypes with paired chains
+  input         = so_tcr,  # Seurat object
+  vdj_dir       = paths,   # Cellranger output directories
+  filter_paired = FALSE    # Only include clonotypes with paired chains
 )
 ```
 
@@ -63,14 +63,15 @@ per-sample basis to allow for comparison across conditions.
 `calc_similarity()` will measure repertoire overlap between clusters or
 samples to allow for direct comparisons between cells of interest.
 Additional functions are also available to calculate clonotype
-abundances and V(D)J gene usage (`calc_abundance()`,
+abundances and V(D)J gene usage (`calc_frequency()`,
 `calc_gene_usage()`).
 
 ``` r
 so_tcr <- calc_diversity(
-  input       = so_tcr,                       # Seurat object
-  cluster_col = "orig.ident",                 # Column containing cell clusters to compare
-  method      = abdiv::simpson                # Diversity metric to use
+  input       = so_tcr,          # Seurat object
+  data_col    = "clonotype_id",  # Column containing clonotypes
+  cluster_col = "orig.ident",    # Column containing cell clusters to compare
+  method      = abdiv::simpson   # Diversity metric to use
 )
 ```
 
@@ -82,13 +83,14 @@ function to summarize the results.
 ``` r
 # Compare the usage of different V and J genes
 ggs <- plot_gene_usage(
-  input       = so_tcr,                       # Seurat object
-  gene_cols   = c("v_gene", "j_gene"),        # Column(s) containing V(D)J genes to plot
-  cluster_col = "orig.ident",                 # Column containing cell clusters to compare
-  chain       = "TRB"                         # Chain to plot
+  input       = so_tcr,                 # Seurat object
+  gene_cols   = c("v_gene", "j_gene"),  # Column(s) containing V(D)J genes to plot
+  cluster_col = "orig.ident",           # Column containing cell clusters to compare
+  chain       = "TRB",                  # Chain to plot
+  plot_colors = "#6A51A3"
 )
 
-cowplot::plot_grid(plotlist = ggs)
+Reduce(`+`, ggs)
 ```
 
 ![](man/figures/README-usage-1.png)<!-- -->

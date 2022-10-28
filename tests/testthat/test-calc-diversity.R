@@ -11,11 +11,13 @@ mets <- abdiv::alpha_diversities %>%
 names(mets) <- abdiv::alpha_diversities
 
 arg_lst <- list(
-  input         = list(vdj_so),
-  clonotype_col = "cdr3",
-  cluster_col   = list(NULL, "seurat_clusters"),
-  method        = list(mets, abdiv::simpson),
-  return_df     = FALSE
+  input       = list(vdj_so),
+  data_col    = "cdr3",
+  chain       = list(NULL, "IGH"),
+  cluster_col = list(NULL, "seurat_clusters"),
+  downsample  = c(TRUE, FALSE),
+  method      = list(mets, abdiv::simpson),
+  return_df   = FALSE
 )
 
 test_all_args(
@@ -57,11 +59,11 @@ test_all_args(
 test_that("calc_diversity prefix", {
   res <- vdj_so %>%
     calc_diversity(
-      clonotype_col = "cdr3",
-      cluster_col   = "seurat_clusters",
-      return_df     = FALSE,
-      method        = mets,
-      prefix        = "X_"
+      data_col    = "cdr3",
+      cluster_col = "seurat_clusters",
+      return_df   = FALSE,
+      method      = mets,
+      prefix      = "X_"
     )
 
   nms <- paste0("X_", names(mets), "_diversity")
@@ -82,7 +84,7 @@ mets <- list(
   simpson = abdiv::simpson
 )
 
-nms <- paste0(names(mets), "_diversity")
+nms <- paste0("cdr3_", names(mets), "_diversity")
 
 test_div <- vdj_so@meta.data %>%
   as_tibble(rownames = ".cell_id") %>%
@@ -97,8 +99,8 @@ test_div <- test_div %>%
   summarize(n = n_distinct(.cell_id), .groups = "drop") %>%
   group_by(seurat_clusters) %>%
   summarize(
-    shannon_diversity = abdiv::shannon(n),
-    simpson_diversity = abdiv::simpson(n),
+    cdr3_shannon_diversity = abdiv::shannon(n),
+    cdr3_simpson_diversity = abdiv::simpson(n),
     .groups = "drop"
   ) %>%
   arrange(seurat_clusters) %>%
@@ -110,10 +112,10 @@ test_that("div calc Seurat out", {
 
   res <- vdj_so %>%
     calc_diversity(
-      clonotype_col = "cdr3",
-      cluster_col   = "seurat_clusters",
-      return_df     = FALSE,
-      method        = mets
+      data_col    = "cdr3",
+      cluster_col = "seurat_clusters",
+      return_df   = FALSE,
+      method      = mets
     )
 
   res <- res@meta.data %>%
@@ -131,7 +133,7 @@ test_that("div calc Seurat out", {
 test_that("div calc df out", {
   res <- vdj_so %>%
     calc_diversity(
-      clonotype_col = "cdr3",
+      data_col = "cdr3",
       cluster_col   = "seurat_clusters",
       return_df     = TRUE,
       method        = mets
@@ -155,15 +157,12 @@ test_that("calc_diversity Seurat out", {
 
   res <- vdj_so %>%
     calc_diversity(
-      clonotype_col = "cdr3",
-      method        = fns
+      data_col = "cdr3",
+      method   = fns
     )
 
   res@meta.data <- res@meta.data %>%
-    select(
-      -all_of(paste0(names(fns), "_diversity")),
-      -all_of(paste0(names(fns), "_stderr"))
-    )
+    select(-all_of(paste0("cdr3_", names(fns), "_diversity")))
 
   expect_identical(res, vdj_so)
 })
@@ -172,9 +171,9 @@ test_that("calc_diversity Seurat out", {
 test_that("calc_diversity df in", {
   res <- vdj_so@meta.data %>%
     calc_diversity(
-      clonotype_col = "cdr3",
-      cluster_col   = "seurat_clusters",
-      method        = mets
+      data_col    = "cdr3",
+      cluster_col = "seurat_clusters",
+      method      = mets
     ) %>%
     arrange(seurat_clusters) %>%
     distinct(seurat_clusters, !!!syms(nms)) %>%
@@ -194,9 +193,10 @@ test_that("calc_diversity bad method list", {
   )
 
   res <- vdj_so %>%
-    calc_diversity(method = abdiv::simpson)
+    calc_diversity(data_col = "cdr3", method = abdiv::simpson)
 
-  nms <- paste0("simpson_", c("diversity", "stderr"))
+  nms <- paste0("cdr3_simpson_", c("diversity"))
 
   expect_true(all(nms %in% colnames(res@meta.data)))
 })
+

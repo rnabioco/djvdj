@@ -1,25 +1,36 @@
-#' Calculate repertoire overlap
+#' Calculate cluster similarity
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing values to use for
+#' calculating pairwise similarity between clusters, e.g. 'clonotype_id'
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating repertoire overlap
-#' @param method Method to use for calculating similarity between clusters
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating overlap
+#' @param method Method to use for comparing clusters, possible values are:
+#'
+#' - 'count', count the number of clonotypes overlapping between each cluster
+#' - A function that takes two numeric vectors containing counts for each
+#' unique value in the column provided to the data_col column, e.g.
+#' [abdiv::jaccard()]
+#'
+#' @param chain Chain to use for calculating gene usage. Set to NULL to include
+#' all chains.
+#' @param chain_col meta.data column containing chains for each cell
 #' @param prefix Prefix to add to new columns
 #' @param return_mat Return a matrix with similarity values. If set to
 #' FALSE, results will be added to the input object.
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with similarity values
 #' @importFrom abdiv jaccard
+#' @seealso [plot_similarity()], [calc_mds()], [plot_mds()]
 #'
 #' @examples
 #' # Calculate repertoire overlap
 #' res <- calc_similarity(
 #'   vdj_so,
-#'   clonotype_col = "clonotype_id",
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   method = abdiv::jaccard
+#'   method      = abdiv::jaccard
 #' )
 #'
 #' head(res@meta.data, 1)
@@ -28,8 +39,9 @@
 #' # this is useful if multiple calculations are stored in the meta.data
 #' res <- calc_similarity(
 #'   vdj_sce,
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   prefix = "bcr_"
+#'   prefix      = "bcr_"
 #' )
 #'
 #' head(res@colData, 1)
@@ -37,13 +49,30 @@
 #' # Return a matrix instead of adding the results to the input object
 #' calc_similarity(
 #'   vdj_so,
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   return_mat = TRUE
+#'   return_mat  = TRUE
 #' )
 #'
 #' @export
-calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonotype_col = "clonotype_id",
-                            prefix = NULL, return_mat = FALSE) {
+calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccard,
+                            chain = NULL, chain_col = "chains", prefix = NULL,
+                            return_mat = FALSE, sep = ";") {
+
+  # Check inputs
+  is_counts <- identical(method, "count")
+
+  if (!is.function(method) && !is_counts) {
+    stop(
+      "method must be 'count' or a function to use for comparing ",
+      "clusters, e.g. method = abdiv::jaccard."
+    )
+  }
+
+  if (is_counts) {
+    method <- function(x, y) length(x[x > 0 & y > 0])
+    prefix <- prefix %||% "count_"
+  }
 
   # If no prefix provided, use method name
   if (is.null(prefix)) {
@@ -52,40 +81,58 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
     prefix <- paste0(prefix, "_")
   }
 
-  # Format input data
-  meta <- .get_meta(input)
-  vdj  <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
+  # filter chains if provided
+  # if all chains removed, NA will be returned
+  meta <- vdj <- .get_meta(input)
 
-  vdj <- dplyr::select(
-    vdj,
-    all_of(c(CELL_COL, clonotype_col, cluster_col))
-  )
+  if (!is.null(chain)) {
+    vdj <- fetch_vdj(
+      input,
+      data_cols     = c(data_col, chain_col),
+      clonotype_col = data_col,
+      filter_cells  = TRUE,
+      unnest        = FALSE,
+      sep           = sep
+    )
 
-  vdj <- dplyr::group_by(
-    vdj,
-    !!!syms(c(cluster_col, clonotype_col))
-  )
+    vdj <- .filter_chains(
+      vdj,
+      data_cols  = data_col,
+      chain      = chain,
+      chain_col  = chain_col,
+      col_names  = "{.col}",
+      allow_dups = FALSE
+    )
+  }
+
+  # Check number of clusters after filtering
+  vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
+  vdj <- dplyr::select(vdj, all_of(c(CELL_COL, data_col, cluster_col)))
+
+  n_clsts <- dplyr::n_distinct(vdj[[cluster_col]])
+
+  if (n_clsts < 2) {
+    stop("cluster_col must contain at least two unique groups.")
+  }
+
+  # Count number of occurrences of each value in data_col
+  vdj <- dplyr::group_by(vdj, !!!syms(c(cluster_col, data_col)))
 
   vdj <- dplyr::summarize(
     vdj,
-    n       = dplyr::n_distinct(!!sym(CELL_COL)),
-    .groups = "drop"
+    n = dplyr::n_distinct(!!sym(CELL_COL)), .groups = "drop"
   )
+
+  clsts <- unique(vdj[[cluster_col]])
 
   vdj <- tidyr::pivot_wider(
     vdj,
     names_from  = all_of(cluster_col),
-    values_from = .data$n
+    values_from = .data$n,
+    values_fill = 0
   )
 
   # Calculate similarity index
-  clsts <- colnames(vdj)
-  clsts <- clsts[clsts != clonotype_col]
-
-  vdj <- dplyr::mutate(vdj, across(
-    all_of(clsts), ~ tidyr::replace_na(.x, 0)
-  ))
-
   combs <- utils::combn(clsts, 2, simplify = FALSE)
 
   res <- purrr::map_dfr(combs, ~ {
@@ -99,20 +146,6 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
     )
   })
 
-  # Return matrix
-  if (return_mat) {
-    res <- tidyr::pivot_wider(
-      res,
-      names_from  = .data$Var1,
-      values_from = .data$sim
-    )
-
-    res <- tibble::column_to_rownames(res, "Var2")
-    res <- as.matrix(res)
-
-    return(res)
-  }
-
   # Calculate self similarity
   res_s <- purrr::map_dfr(clsts, ~ {
     d <- pull(vdj, .x)
@@ -124,11 +157,13 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
     )
   })
 
-  # Add inverse combinations
+  # Combine with inverse combinations
   res_i <- dplyr::rename(res, Var1 = .data$Var2, Var2 = .data$Var1)
+  res   <- dplyr::bind_rows(res, res_i, res_s)
 
-  res <- dplyr::bind_rows(res, res_i, res_s)
-  res <- dplyr::mutate(res, Var1 = paste0(prefix, .data$Var1))
+  # Format data.frame
+  clmns <- sort(unique(res$Var2))
+  res   <- dplyr::arrange(res, .data$Var2)
 
   res <- tidyr::pivot_wider(
     res,
@@ -136,10 +171,20 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
     values_from = .data$sim
   )
 
-  # Add results to input
-  j_cols <- purrr::set_names("Var2", cluster_col)
+  res <- dplyr::select(res, !!sym(cluster_col) := .data$Var2, all_of(clmns))
 
-  res <- dplyr::left_join(meta, res, by = j_cols)
+  # Return matrix
+  if (return_mat) {
+    res <- tibble::column_to_rownames(res, cluster_col)
+
+    return(as.matrix(res))
+  }
+
+  # Add column prefixes
+  res <- dplyr::rename_with(res, ~ paste0(prefix, .x), all_of(clmns))
+
+  # Add results to input
+  res <- dplyr::left_join(meta, res, by = cluster_col)
 
   # Format results
   # join will cause factor levels to be lost, add these back
@@ -148,7 +193,10 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
   if (is.factor(clst_col)) {
     res <- dplyr::mutate(
       res,
-      !!sym(cluster_col) := factor(!!sym(cluster_col), levels = levels(clst_col))
+      !!sym(cluster_col) := factor(
+        !!sym(cluster_col),
+        levels = levels(clst_col)
+      )
     )
   }
 
@@ -157,97 +205,328 @@ calc_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonoty
   res
 }
 
-
-#' Plot repertoire overlap
+#' Plot cluster similarity
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing values to use for
+#' calculating pairwise similarity between clusters, e.g. 'clonotype_id'
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating overlap
-#' @param method Method to use for calculating similarity between clusters
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating overlap
+#' @param group_col meta.data column to use for grouping cluster IDs present in
+#' cluster_col. This is useful when there are multiple replicates or patients
+#' for each treatment condition.
+#' @param method Method to use for comparing clusters, possible values are:
+#'
+#' - A function that takes two numeric vectors containing counts for each
+#' clonotype in the object, such as most beta diversity functions provided by
+#' the abdiv package. This will generate a heatmap.
+#' - 'count', count the number of clonotypes overlapping between each cluster,
+#' this will generate a heatmap.
+#' - 'circos', create a circos plot summarizing the overlap between clusters
+#'
+#' @param chain Chain to use for calculating gene usage. Set to NULL to include
+#' all chains.
+#' @param chain_col meta.data column containing chains for each cell
 #' @param plot_colors Character vector containing colors for plotting
-#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
-#' linetype, etc.
-#' @return ggplot object
+#' @param plot_lvls Levels to use for ordering clusters
+#' @param cluster_heatmap If FALSE, rows and columns of heatmap will not be
+#' clustered.
+#' @param remove_upper_triangle If TRUE, upper triangle for heatmap will not
+#' be shown.
+#' @param remove_diagonal If TRUE, diagonal for heatmap will not be shown.
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#' @param ... Additional arguments to pass to plotting function,
+#' [ComplexHeatmap::Heatmap()] for heatmap, [circlize::chordDiagram()] for
+#' circos plot
 #' @importFrom abdiv jaccard
+#' @seealso [calc_similarity()], [calc_mds()], [plot_mds()]
 #'
 #' @examples
 #' # Plot repertoire overlap
+#' # use clonotype IDs present in 'clonotype_id' column for calculations
 #' plot_similarity(
 #'   vdj_so,
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident"
 #' )
 #'
 #' # Specify method to use for calculating repertoire overlap
 #' plot_similarity(
 #'   vdj_sce,
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   method = abdiv::jaccard
+#'   method      = abdiv::morisita
 #' )
 #'
 #' # Specify colors to use for heatmap
 #' plot_similarity(
 #'   vdj_so,
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   plot_color = c("white", "red")
+#'   plot_color  = c("white", "red")
 #' )
 #'
-#' # Pass additional aesthetic parameters to ggplot2
+#' # Create circos plot
 #' plot_similarity(
-#'   vdj_sce,
+#'   vdj_so,
+#'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
-#'   color = "black",
-#'   size = 2
+#'   method      = "circos"
 #' )
 #'
 #' @export
-plot_similarity <- function(input, cluster_col, method = abdiv::jaccard, clonotype_col = "clonotype_id",
-                            plot_colors = NULL, ...) {
+plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
+                            method = abdiv::jaccard, chain = NULL,
+                            chain_col = "chains", plot_colors = NULL,
+                            plot_lvls = names(plot_colors),
+                            cluster_heatmap = TRUE,
+                            remove_upper_triangle = FALSE,
+                            remove_diagonal = remove_upper_triangle, sep = ";",
+                            ...) {
+
+  # Check inputs
+  is_circ <- identical(method, "circos")
+
+  if (is_circ) method <- "count"
+
+  .chk_group_cols(cluster_col, group_col)
 
   # Calculate similarity
   plt_dat <- calc_similarity(
-    input         = input,
-    cluster_col   = cluster_col,
-    method        = method,
-    clonotype_col = clonotype_col,
-    prefix        = "",
-    return_mat    = TRUE
+    input       = input,
+    data_col    = data_col,
+    cluster_col = cluster_col,
+    method      = method,
+    chain       = chain,
+    chain_col   = chain_col,
+    prefix      = "",
+    return_mat  = TRUE,
+    sep         = sep
   )
 
+  # Create circos plot
+  # if level order not provided, sort columns/rows
+  if (is_circ) {
+    grps <- NULL
+
+    if (!is.null(group_col)) {
+      meta <- .get_meta(input)
+      grps <- dplyr::distinct(meta, !!!syms(c(cluster_col, group_col)))
+      grps <- dplyr::arrange(grps, !!sym(cluster_col))
+      grps <- purrr::set_names(grps[[group_col]], grps[[cluster_col]])
+    }
+
+    all_nms   <- union(colnames(plt_dat), rownames(plt_dat))
+    plot_lvls <- plot_lvls %||% sort(all_nms)
+
+    .create_circos(
+      plt_dat,
+      clrs = plot_colors,
+      lvls = plot_lvls,
+      grps = grps,
+      ...
+    )
+
+    return(invisible())
+  }
+
+  # Similarity column
   sim_col <- as.character(substitute(method))
   sim_col <- dplyr::last(sim_col)
-
-  var_lvls <- unique(c(rownames(plt_dat), colnames(plt_dat)))
-  var_lvls <- sort(var_lvls)
-
-  plt_dat <- tibble::as_tibble(plt_dat, rownames = "Var1")
-
-  plt_dat <- tidyr::pivot_longer(
-    plt_dat,
-    cols      = -.data$Var1,
-    names_to  = "Var2",
-    values_to = sim_col
-  )
-
-  # Set Var levels
-  plt_dat <- dplyr::mutate(
-    plt_dat,
-    Var1 = factor(.data$Var1, levels = rev(var_lvls)),
-    Var2 = factor(.data$Var2, levels = var_lvls)
-  )
 
   # Create heatmap
   res <- .create_heatmap(
     plt_dat,
-    x     = "Var1",
-    y     = "Var2",
-    .fill = sim_col,
-    clrs  = plot_colors,
+    clrs     = plot_colors,
+    lvls     = plot_lvls,
+    lgd_ttl  = sim_col,
+    cluster  = cluster_heatmap,
+    rm_upper = remove_upper_triangle,
+    rm_diag  = remove_diagonal,
     ...
   )
 
   res
 }
 
+#' Perform multidimensional scaling
+#'
+#' @param input Object containing V(D)J data. If a data.frame is provided, the
+#' cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing values to use for
+#' calculating pairwise similarity between clusters, e.g. 'clonotype_id'
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' calculating repertoire overlap
+#' @param method Method to use for comparing clusters and calculating MDS
+#' coordinates, available methods include:
+#'
+#' - 'jaccard', Jaccard dissimilarity index implemented with [abdiv::jaccard()]
+#' - 'horn_morisita', Horn-Morisita index implemented with
+#' [abdiv::horn_morisita()]
+#'
+#' @param chain Chain to use for calculating gene usage. Set to NULL to include
+#' all chains.
+#' @param chain_col meta.data column containing chains for each cell
+#' @param prefix Prefix to add to new columns
+#' @param return_df Return results as a data.frame. If set to FALSE, results
+#' will be added to the input object.
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#' @return Single cell object or data.frame with MDS coordinates
+#' @importFrom MASS isoMDS
+#' @seealso [plot_mds()], [calc_similarity()], [plot_similarity()], [MASS::isoMDS()]
+#' @export
+calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
+                     chain = NULL, chain_col = "chains", prefix = "",
+                     return_df = FALSE, sep = ";") {
+
+  # Check inputs
+  if (length(method) != 1) stop("method must be a single value.")
+
+  mets <- c(
+    "jaccard" = abdiv::jaccard,
+    "horn_morisita" = abdiv::horn_morisita
+  )
+
+  if (is.character(method)) {
+    if (!method %in% names(mets)) {
+      stop("method must be 'jaccard' or 'horn_morisita'.")
+    }
+
+    method <- mets[[method]]
+
+  } else if (is.function(method)) {
+    good <- purrr::map_lgl(mets, ~ identical(method, .x))
+    good <- any(good)
+
+    if (!good) stop("method must be abdiv::jaccard or abdiv::horn_morisita.")
+
+  } else {
+    stop("method must be abdiv::jaccard or abdiv::horn_morisita.")
+  }
+
+  res <- calc_similarity(
+    input,
+    data_col    = data_col,
+    cluster_col = cluster_col,
+    method      = method,
+    chain       = chain,
+    chain_col   = chain_col,
+    return_mat  = TRUE,
+    sep         = sep
+  )
+
+  # Must have at least 3 clusters
+  if (nrow(res) < 3) {
+    stop("cluster_col must contain at least three unique groups.")
+  }
+
+  # Calculate MDS
+  clmns <- c("MDS_1", "MDS_2")
+
+  mds_fn <- purrr::quietly(MASS::isoMDS)
+  res    <- mds_fn(as.dist(res))
+  res    <- res$result$points
+
+  colnames(res) <- clmns
+
+  res <- tibble::as_tibble(res, rownames = cluster_col)
+
+  # Return data.frame
+  if (return_df) return(res)
+
+  # Add column prefixes
+  res <- dplyr::rename_with(
+    res,
+    ~ paste0(prefix, .x),
+    all_of(clmns)
+  )
+
+  # Add results to input
+  meta <- .get_meta(input)
+
+  res <- dplyr::left_join(meta, res, by = cluster_col)
+
+  # Format results
+  # join will cause factor levels to be lost, add these back
+  clst_col <- pull(meta, cluster_col)
+
+  if (is.factor(clst_col)) {
+    res <- dplyr::mutate(
+      res,
+      !!sym(cluster_col) := factor(
+        !!sym(cluster_col),
+        levels = levels(clst_col)
+      )
+    )
+  }
+
+  res <- .add_meta(input, meta = res)
+
+  res
+}
+
+#' Create MDS plot
+#'
+#' Perform multidimensional scaling and plot results
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing values to use for
+#' calculating pairwise similarity between clusters, e.g. 'clonotype_id'
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' calculating overlap
+#' @param method Method to use for comparing clusters and calculating MDS
+#' coordinates, available methods include:
+#'
+#' - 'jaccard', Jaccard dissimilarity index implemented with [abdiv::jaccard()]
+#' - 'horn_morisita', Horn-Morisita index implemented with
+#' [abdiv::horn_morisita()]
+#'
+#' @param chain Chain to use for calculating gene usage. Set to NULL to include
+#' all chains.
+#' @param chain_col meta.data column containing chains for each cell
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_lvls Levels to use for ordering clusters
+#' @param label_points Label points on plot
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#' @param ... Additional arguments to pass to [ggplot2::geom_point()]
+#' @seealso [calc_mds()], [calc_similarity()], [plot_similarity()], [MASS::isoMDS()]
+#' @export
+plot_mds <- function(input, data_col, cluster_col,
+                     method = abdiv::jaccard, chain = NULL,
+                     chain_col = "chains", plot_colors = NULL,
+                     plot_lvls = names(plot_colors), label_points = TRUE,
+                     sep = ";", ...) {
+
+    # Calculate MDS
+    plt_dat <- calc_mds(
+      input       = input,
+      data_col    = data_col,
+      cluster_col = cluster_col,
+      method      = method,
+      chain       = chain,
+      chain_col   = chain_col,
+      prefix      = "",
+      return_df  = TRUE,
+      sep         = sep
+    )
+
+    # Create MDS plot
+    res <- plot_features(
+      plt_dat,
+      x = "MDS_1",
+      y = "MDS_2",
+      feature     = cluster_col,
+      plot_colors = plot_colors,
+      plot_lvls   = plot_lvls,
+      ...
+    )
+
+    if (label_points) {
+      res <- res +
+        ggrepel::geom_text_repel(ggplot2::aes(label = !!sym(cluster_col)))
+    }
+
+    res
+  }

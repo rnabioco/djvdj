@@ -6,13 +6,19 @@
 \usage{
 plot_diversity(
   input,
+  data_col,
   cluster_col = NULL,
   group_col = NULL,
   method = abdiv::simpson,
-  clonotype_col = "clonotype_id",
+  downsample = FALSE,
+  n_boots = 1,
+  chain = NULL,
+  chain_col = "chains",
   plot_colors = NULL,
-  plot_lvls = NULL,
-  facet_rows = 1,
+  plot_lvls = names(plot_colors),
+  panel_nrow = NULL,
+  panel_scales = "free",
+  sep = ";",
   ...
 )
 }
@@ -20,25 +26,41 @@ plot_diversity(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
+\item{data_col}{meta.data column containing values to use for
+calculating diversity, e.g. 'clonotype_id'}
+
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance}
 
-\item{group_col}{meta.data column to use for grouping IDs present in
+\item{group_col}{meta.data column to use for grouping clusters present in
 cluster_col}
 
-\item{method}{Function to use for calculating diversity. A named list of
-functions can be passed to plot multiple diversity metrics,
-e.g. list(simpson = abdiv::simpson, shannon = abdiv::shannon)}
+\item{method}{Function to use for calculating diversity, e.g.
+abdiv::simpson. A named list of functions can be passed to plot multiple
+diversity metrics, e.g.
+list(simpson = abdiv::simpson, shannon = abdiv::shannon)}
 
-\item{clonotype_col}{meta.data column containing clonotype IDs to use for
-calculating repertoire diversity}
+\item{downsample}{Downsample clusters to the same size when calculating
+diversity metrics}
+
+\item{n_boots}{Number of bootstrap replicates to use for calculating standard error}
+
+\item{chain}{Chain to use for calculating diversity. Set to NULL to include
+all chains.}
+
+\item{chain_col}{meta.data column containing chains for each cell}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
 
-\item{facet_rows}{The number of facet rows, use this argument if a list of
-functions is passed to method}
+\item{panel_nrow}{The number of rows to use for arranging plot panels}
+
+\item{panel_scales}{Should scales for plot panels be fixed or free. This
+passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
+'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.}
+
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
@@ -51,30 +73,37 @@ Plot repertoire diversity
 }
 \examples{
 # Plot diversity using all cells
-plot_diversity(vdj_so)
+plot_diversity(
+  vdj_so,
+  data_col = "clonotype_id"
+)
 
 # Specify method to use for calculating repertoire diversity
 plot_diversity(
   vdj_sce,
-  method = abdiv::shannon
+  data_col = "clonotype_id",
+  method   = abdiv::shannon
 )
 
 # Plot diversity separately for each cell cluster
 plot_diversity(
   vdj_so,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident"
 )
 
 # Plot multiple diversity metrics
 plot_diversity(
   vdj_sce,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  method = list(simpson = abdiv::simpson, shannon = abdiv::shannon)
+  method      = list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 )
 
 # Specify colors to use for each cell cluster
 plot_diversity(
   vdj_so,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
   plot_colors = c(avid_2 = "green", avid_1 = "purple")
 )
@@ -82,8 +111,9 @@ plot_diversity(
 # Specify order to use for plotting cell clusters
 plot_diversity(
   vdj_sce,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  plot_lvls = c("avid_2", "avid_1")
+  plot_lvls   = c("avid_2", "avid_1")
 )
 
 # Specify how to organize facets when plotting multiple metrics
@@ -95,8 +125,12 @@ mets <- list(
 
 plot_diversity(
   vdj_so,
-  method = mets,
-  facet_rows = 2
+  data_col   = "clonotype_id",
+  method     = mets,
+  panel_nrow = 2
 )
 
+}
+\seealso{
+\code{\link[=calc_diversity]{calc_diversity()}}, \code{\link[=plot_rarefaction]{plot_rarefaction()}}
 }

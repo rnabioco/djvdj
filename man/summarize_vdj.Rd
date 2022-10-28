@@ -6,7 +6,7 @@
 \usage{
 summarize_vdj(
   input,
-  vdj_cols,
+  data_cols,
   fn = NULL,
   ...,
   chain = NULL,
@@ -20,7 +20,7 @@ summarize_vdj(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
-\item{vdj_cols}{meta.data column(s) containing V(D)J data to summarize for
+\item{data_cols}{meta.data column(s) containing V(D)J data to summarize for
 each cell}
 
 \item{fn}{Function to apply to each selected column, possible values can be
@@ -56,7 +56,7 @@ meta.data.
 # by default the mean will be calculated for numeric columns
 res <- summarize_vdj(
   vdj_so,
-  vdj_cols = c("n_deletion", "n_insertion")
+  data_cols = c("n_deletion", "n_insertion")
 )
 
 head(res@meta.data, 3)
@@ -66,7 +66,7 @@ head(res@meta.data, 3)
 # cell
 res <- summarize_vdj(
   vdj_sce,
-  vdj_cols = c("n_deletion", "n_insertion"),
+  data_cols = c("n_deletion", "n_insertion"),
   fn = stats::median
 )
 
@@ -75,7 +75,7 @@ head(res@colData, 3)
 # Summarize values for a specific chain
 res <- summarize_vdj(
   vdj_so,
-  vdj_cols = c("n_deletion", "n_insertion"),
+  data_cols = c("n_deletion", "n_insertion"),
   chain = "IGK"
 )
 
@@ -85,7 +85,7 @@ head(res@meta.data, 3)
 # use {.col} to refer to the original column name
 res <- summarize_vdj(
   vdj_sce,
-  vdj_cols = c("n_deletion", "n_insertion"),
+  data_cols = c("n_deletion", "n_insertion"),
   fn = stats::median,
   col_names = "median_{.col}"
 )
@@ -95,7 +95,7 @@ head(res@colData, 1)
 # Return a data.frame instead of adding the results to the input object
 res <- summarize_vdj(
   vdj_so,
-  vdj_cols = c("n_deletion", "n_insertion"),
+  data_cols = c("n_deletion", "n_insertion"),
   return_df = TRUE
 )
 
@@ -106,7 +106,7 @@ head(res, 1)
 # this creates a new column showing the unique chains for each cell
 res <- summarize_vdj(
   vdj_sce,
-  vdj_cols = "chains",
+  data_cols = "chains",
   fn = ~ paste0(unique(.x), collapse = "_"),
   col_names = "unique_chains"
 )
@@ -118,7 +118,7 @@ head(res@colData, 3)
 # the V(D)J data can be filtered based on this new column
 res <- summarize_vdj(
   vdj_so,
-  vdj_cols = "n_insertion",
+  data_cols = "n_insertion",
   fn = ~ all(.x == 0),
   col_names = "no_insertions"
 )

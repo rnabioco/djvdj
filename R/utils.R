@@ -13,7 +13,7 @@ NULL
 
 #' stats imports
 #'
-#' @importFrom stats median complete.cases as.formula na.omit
+#' @importFrom stats median complete.cases as.formula as.dist hclust cutree na.omit
 #' @noRd
 NULL
 
@@ -83,36 +83,48 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
 #' Filter V(D)J data based on chain
 #'
+#' This will remove V(D)J data for chains that do not match the provided chain.
+#' NAs will be added for cells that do not have any matching chains. Filtered
+#' data_cols will be returned as list-cols. The chain_col will not be filtered,
+#' but will be included in the results as a list-col.
+#'
 #' @param df_in data.frame
-#' @param vdj_cols meta.data column(s) containing V(D)J data to filter based on
+#' @param data_cols meta.data column(s) containing V(D)J data to filter based on
 #' chain
 #' @param chain Chain to use for filtering V(D)J data
 #' @param chain_col meta.data column(s) containing chains for each cell
 #' @param col_names A glue specification that describes how to name the output
 #' columns, this can use {.col} to stand for the selected column name
 #' @param empty_val Value to use when no chains match chain
+#' @param allow_dups Allow cells to have multiple copies of the same chain. If
+#' FALSE, cells must have exactly one copy of each chain specified. If a cell
+#' has multiple copies of the same chain, V(D)J data for the cell is removed.
+#' This filtering is only performed for list-cols.
 #' @return filtered data.frame
 #' @noRd
-.filter_chains <- function(df_in, vdj_cols, chain, chain_col = "chains", col_names = "{.col}",
+.filter_chains <- function(df_in, data_cols, chain, chain_col = "chains",
+                           col_names = "{.col}", allow_dups = TRUE,
                            empty_val = NA) {
 
-  if (is.null(chain)) {
-    return(df_in)
-  }
+  if (is.null(chain)) return(df_in)
 
-  # If all vdj_cols are not list-cols, filter data.frame normally
-  is_lst <- purrr::map_lgl(df_in[, c(chain_col, vdj_cols)], is.list)
+  chain <- unique(chain)
+
+  # If all data_cols are not list-cols, filter data.frame normally
+  is_lst <- purrr::map_lgl(df_in[, c(chain_col, data_cols)], is.list)
 
   if (all(!is_lst)) {
-    res <- dplyr::filter(
-      df_in,
-      !!sym(chain_col) %in% chain
-    )
+    res <- dplyr::filter(df_in, !!sym(chain_col) %in% chain)
 
     return(res)
 
   } else if (!all(is_lst)) {
-    stop("chain_col and vdj_cols cannot be a mix of normal columns and list-cols.")
+    bad_cols <- paste0(names(is_lst[!is_lst]), collapse = ", ")
+
+    stop(
+      "To filter based on chain, all columns must contain per-chain data. ",
+      "The following columns do not contain per-chain data: ", bad_cols, "."
+    )
   }
 
   # Function to check/filter chains
@@ -120,16 +132,17 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
     if (length(x) != length(chns)) {
       stop(
-        "Values in ", chain_col,  " are not the same length as vdj_cols, ",
+        "Values in ", chain_col,  " are not the same length as data_cols, ",
         "are you using the correct chain_col?"
       )
     }
 
     r <- x[chns %in% chain]
 
-    if (purrr::is_empty(r)) {
-      r <- empty_val
-    }
+    dup_chns <- chns[chns %in% chain]
+    dup_chns <- any(duplicated(dup_chns))
+
+    if (purrr::is_empty(r) || (!allow_dups && dup_chns)) r <- empty_val
 
     list(r)
   }
@@ -140,13 +153,15 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
   res <- dplyr::mutate(
     res,
     across(
-      all_of(vdj_cols),
+      all_of(data_cols),
       ~ .map_fn(.x, !!sym(chain_col)),
       .names = col_names
     )
   )
 
   res <- dplyr::ungroup(res)
+
+  if (!allow_dups) res <- tidyr::unnest(res, all_of(data_cols))
 
   res
 }
@@ -201,7 +216,8 @@ NULL
 #'
 #' @rdname .add_meta
 #' @noRd
-.prepare_meta <- function(input, meta, row_col) {
+.prepare_meta <- function(input, meta, row_col = CELL_COL) {
+
   if (!is.data.frame(meta)) {
     stop("meta.data must be a data.frame.")
   }
@@ -212,7 +228,7 @@ NULL
     stop("meta.data cannot include list-cols.")
   }
 
-  if (!identical(colnames(input), meta[[row_col]])) {
+  if (!is.null(input) && !identical(colnames(input), meta[[row_col]])) {
     stop(
       "To add meta.data to an object, the meta.data must contain the same ",
       "cells as the target object."
@@ -287,13 +303,11 @@ NULL
 #' @noRd
 .merge_meta <- function(input, meta, by = CELL_COL) {
 
-  if (is.null(input)) {
-    return(meta)
-  }
+  if (is.null(input)) return(meta)
 
   # Join meta.data
   # remove columns already present in input object to prevent duplicates
-  # this mimics behavior of Seurat::AddMetaData
+  # this mimics behavior of Seurat::AddMetaData()
   meta <- .get_meta(meta, row_col = by)
 
   rm_cols <- colnames(meta)
@@ -356,10 +370,11 @@ NULL
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame with V(D)J data
 #' @importFrom readr guess_parser
+#' @importFrom utils head
 #' @noRd
 .unnest_vdj <- function(df_in, sep_cols, unnest = TRUE, sep = ";") {
 
-  df_in <- as_tibble(df_in)
+  df_in <- tibble::as_tibble(df_in)
 
   # Get types to use for coercing columns
   # use first 100 rows containing V(D)J data
@@ -427,7 +442,8 @@ NULL
 #' @return List with two vectors, one containing columns with V(D)J data and
 #' the other containing columns where separator has been detected.
 #' @noRd
-.get_vdj_cols <- function(df_in, clone_col, cols_in, sep, cell_col = CELL_COL) {
+.get_vdj_cols <- function(df_in, clone_col, cols_in, sep,
+                          cell_col = CELL_COL) {
 
   # Check clone_col
   if (length(clone_col) > 1) {
@@ -444,10 +460,8 @@ NULL
   }
 
   # If clone_col and cols_in are both NULL, use all columns
-  if (is.null(clone_col) && is.null(cols_in)) {
-    cols_in <- colnames(df_in)
-    cols_in <- cols_in[cols_in != cell_col]
-  }
+  # columns should not include cell_col
+  if (is.null(clone_col) && is.null(cols_in)) cols_in <- colnames(df_in)
 
   # If cols_in is NULL, identify columns with V(D)J data based on NAs in
   # clone_col
@@ -464,6 +478,8 @@ NULL
 
     cols_in <- colnames(cols_in)
   }
+
+  cols_in <- cols_in[cols_in != cell_col]
 
   # Identify columns to unnest based on sep
   # check first 1000 non-NA rows of every column
@@ -483,9 +499,7 @@ NULL
 
     sep_cols <- colnames(sep_cols)
 
-    if (purrr::is_empty(sep_cols)) {
-      sep_cols <- NULL
-    }
+    if (purrr::is_empty(sep_cols)) sep_cols <- NULL
   }
 
   # Return list of vectors

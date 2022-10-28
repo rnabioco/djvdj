@@ -2,47 +2,63 @@
 % Please edit documentation in R/calc-similarity.R
 \name{calc_similarity}
 \alias{calc_similarity}
-\title{Calculate repertoire overlap}
+\title{Calculate cluster similarity}
 \usage{
 calc_similarity(
   input,
+  data_col,
   cluster_col,
   method = abdiv::jaccard,
-  clonotype_col = "clonotype_id",
+  chain = NULL,
+  chain_col = "chains",
   prefix = NULL,
-  return_mat = FALSE
+  return_mat = FALSE,
+  sep = ";"
 )
 }
 \arguments{
 \item{input}{Object containing V(D)J data. If a data.frame is provided, the
 cell barcodes should be stored as row names.}
 
+\item{data_col}{meta.data column containing values to use for
+calculating pairwise similarity between clusters, e.g. 'clonotype_id'}
+
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 calculating repertoire overlap}
 
-\item{method}{Method to use for calculating similarity between clusters}
+\item{method}{Method to use for comparing clusters, possible values are:
+\itemize{
+\item 'count', count the number of clonotypes overlapping between each cluster
+\item A function that takes two numeric vectors containing counts for each
+unique value in the column provided to the data_col column, e.g.
+\code{\link[abdiv:jaccard]{abdiv::jaccard()}}
+}}
 
-\item{clonotype_col}{meta.data column containing clonotype IDs to use for
-calculating overlap}
+\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
+all chains.}
+
+\item{chain_col}{meta.data column containing chains for each cell}
 
 \item{prefix}{Prefix to add to new columns}
 
 \item{return_mat}{Return a matrix with similarity values. If set to
 FALSE, results will be added to the input object.}
+
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 }
 \value{
 Single cell object or data.frame with similarity values
 }
 \description{
-Calculate repertoire overlap
+Calculate cluster similarity
 }
 \examples{
 # Calculate repertoire overlap
 res <- calc_similarity(
   vdj_so,
-  clonotype_col = "clonotype_id",
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  method = abdiv::jaccard
+  method      = abdiv::jaccard
 )
 
 head(res@meta.data, 1)
@@ -51,8 +67,9 @@ head(res@meta.data, 1)
 # this is useful if multiple calculations are stored in the meta.data
 res <- calc_similarity(
   vdj_sce,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  prefix = "bcr_"
+  prefix      = "bcr_"
 )
 
 head(res@colData, 1)
@@ -60,8 +77,12 @@ head(res@colData, 1)
 # Return a matrix instead of adding the results to the input object
 calc_similarity(
   vdj_so,
+  data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  return_mat = TRUE
+  return_mat  = TRUE
 )
 
+}
+\seealso{
+\code{\link[=plot_similarity]{plot_similarity()}}, \code{\link[=calc_mds]{calc_mds()}}, \code{\link[=plot_mds]{plot_mds()}}
 }

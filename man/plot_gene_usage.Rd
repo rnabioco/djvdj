@@ -2,19 +2,21 @@
 % Please edit documentation in R/calc-gene-usage.R
 \name{plot_gene_usage}
 \alias{plot_gene_usage}
-\title{Plot V(D)J gene usage}
+\title{Plot V(D)J segment usage}
 \usage{
 plot_gene_usage(
   input,
-  gene_cols,
+  data_cols,
   cluster_col = NULL,
+  group_col = NULL,
   chain = NULL,
-  type = "bar",
+  method = NULL,
   plot_colors = NULL,
   vdj_genes = NULL,
-  n_genes = 50,
-  plot_lvls = NULL,
-  yaxis = "percent",
+  n_genes = 20,
+  plot_lvls = names(plot_colors),
+  trans = "identity",
+  units = "percent",
   chain_col = "chains",
   sep = ";",
   ...
@@ -24,17 +26,28 @@ plot_gene_usage(
 \item{input}{Object containing V(D)J data. If a data.frame is provided, the
 cell barcodes should be stored as row names.}
 
-\item{gene_cols}{meta.data column containing genes for each clonotype,
+\item{data_cols}{meta.data column containing genes for each clonotype,
 provide a vector with two column names to plot paired usage of genes}
 
 \item{cluster_col}{meta.data column containing cell clusters to use for
 calculating gene usage}
 
+\item{group_col}{meta.data column to use for grouping cluster IDs present in
+cluster_col. This is useful when there are multiple replicates or patients
+for each treatment condition.}
+
 \item{chain}{Chain to use for calculating gene usage, set to NULL to include
 all chains}
 
-\item{type}{Type of plot to create, can be either 'heatmap' or 'bar'. If
-multiple columns are provided to gene_cols, a heatmap is generated.}
+\item{method}{Method to use for plotting, possible values are:
+\itemize{
+\item 'bar', create a bargraph, this is the default when a single column is
+passed to the data_cols argument
+\item 'heatmap', create a heatmap, this is the default when two columns are
+passed to the data_cols argument
+\item 'circos', create a circos plot, this requires two columns to be provided
+to the data_cols argument
+}}
 
 \item{plot_colors}{Character vector containing colors to use for plot. If a
 bar graph is created this will specify how to color cell clusters. For a
@@ -47,66 +60,72 @@ provided, top genes will be identified for each cluster.}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
 
-\item{yaxis}{Units to plot on the y-axis, either 'frequency' or 'percent'}
+\item{trans}{Transformation to use when plotting segment usage, e.g.
+'log10'. By default values are not transformed, refer to
+\code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}} for more options.}
+
+\item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
-\item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
-linetype, etc.}
+\item{...}{Additional arguments to pass to plotting function,
+\code{\link[ggplot2:geom_bar]{ggplot2::geom_col()}} for bargraph, \code{\link[ggplot2:geom_tile]{ggplot2::geom_tile()}} for heatmap,
+\code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for circos plot}
 }
 \value{
 ggplot object
 }
 \description{
-Plot V(D)J gene usage
+Plot V(D)J segment usage
 }
 \examples{
 # Plot V(D)J segment usage for all cells
 plot_gene_usage(
   vdj_so,
-  gene_cols = "v_gene"
+  data_cols = "v_gene"
 )
 
 # Plot gene usage separately for cell clusters
 plot_gene_usage(
   vdj_sce,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   cluster_col = "orig.ident"
 )
 
 # Plot gene usage for a specific chain
 plot_gene_usage(
   vdj_so,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   chain = c("IGH", "IGK")
 )
 
 # Plot gene usage for a specific chain
 plot_gene_usage(
   vdj_sce,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   chain = c("IGH", "IGK")
 )
 
 # Create a heatmap
 plot_gene_usage(
   vdj_so,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   type = "heatmap"
 )
 
 # Plot paired usage of V(D)J segments
 plot_gene_usage(
   vdj_sce,
-  gene_cols = c("v_gene", "j_gene"),
+  data_cols = c("v_gene", "j_gene"),
+  type = "circos"
 )
 
 # Specify colors to use for each cell cluster
 plot_gene_usage(
   vdj_so,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   cluster_col = "orig.ident",
   plot_colors = c(avid_2 = "blue", avid_1 = "green")
 )
@@ -114,7 +133,7 @@ plot_gene_usage(
 # Specify order to use for plotting cell clusters
 plot_gene_usage(
   vdj_sce,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   cluster_col = "orig.ident",
   plot_lvls = c("avid_2", "avid_1")
 )
@@ -122,22 +141,25 @@ plot_gene_usage(
 # Specify certain V(D)J genes to include in plot
 plot_gene_usage(
   vdj_so,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   vdj_genes = c("IGKV5-43", "IGLV1", "IGHV1-64")
 )
 
 # Specify the number of top V(D)J genes to include in plot
 plot_gene_usage(
   vdj_sce,
-  gene_cols = "v_gene",
+  data_cols = "v_gene",
   n_genes = 10
 )
 
 # Plot the frequency of each V(D)J segment instead of percent
 plot_gene_usage(
   vdj_so,
-  gene_cols = "v_gene",
-  yaxis = "frequency"
+  data_cols = "v_gene",
+  units = "frequency"
 )
 
+}
+\seealso{
+\code{\link[=calc_gene_usage]{calc_gene_usage()}}
 }

@@ -2,68 +2,23 @@
 % Please edit documentation in R/plot-vdj.R
 \name{plot_vdj}
 \alias{plot_vdj}
-\alias{plot_vdj_reads}
-\alias{plot_cdr3_length}
-\alias{plot_vdj_mutations}
 \title{Plot continuous V(D)J data}
 \usage{
 plot_vdj(
   input,
-  data_cols,
+  data_col,
   per_cell = FALSE,
   summary_fn = mean,
   cluster_col = NULL,
+  group_col = NULL,
   chain = NULL,
-  type = "histogram",
-  yaxis = "frequency",
+  method = "histogram",
+  units = "frequency",
   plot_colors = NULL,
-  plot_lvls = NULL,
-  log_trans = FALSE,
-  chain_col = "chains",
-  sep = ";",
-  ...
-)
-
-plot_vdj_reads(
-  input,
-  data_cols = c("reads", "umis"),
-  cluster_col = NULL,
-  chain = NULL,
-  type = "violin",
-  yaxis = "frequency",
-  plot_colors = NULL,
-  plot_lvls = NULL,
-  log_trans = TRUE,
-  chain_col = "chains",
-  sep = ";",
-  ...
-)
-
-plot_cdr3_length(
-  input,
-  data_cols = "cdr3_length",
-  cluster_col = NULL,
-  chain = NULL,
-  type = "histogram",
-  yaxis = "frequency",
-  plot_colors = NULL,
-  plot_lvls = NULL,
-  log_trans = TRUE,
-  chain_col = "chains",
-  sep = ";",
-  ...
-)
-
-plot_vdj_mutations(
-  input,
-  data_cols = c("all_ins", "all_del", "all_mis"),
-  cluster_col = NULL,
-  chain = NULL,
-  type = "boxplot",
-  yaxis = "frequency",
-  plot_colors = NULL,
-  plot_lvls = NULL,
-  log_trans = FALSE,
+  plot_lvls = names(plot_colors),
+  trans = "identity",
+  panel_nrow = NULL,
+  panel_scales = "free_x",
   chain_col = "chains",
   sep = ";",
   ...
@@ -73,7 +28,7 @@ plot_vdj_mutations(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, cell barcodes should be stored as row names.}
 
-\item{data_cols}{meta.data column(s) containing continuous V(D)J data to
+\item{data_col}{meta.data column(s) containing continuous V(D)J data to
 plot}
 
 \item{per_cell}{Should values be plotted per cell, i.e. each data point
@@ -82,19 +37,27 @@ using summary_fn. If FALSE, values will be plotted for each chain.}
 
 \item{summary_fn}{Function to use for summarizing values when per_cell is
 TRUE, possible values can be either a function, e.g. mean, or a purrr-style
-lambda, e.g. ~ mean(.x, na.rm = TRUE) where ".x" refers to the column. If
+lambda, e.g. ~ mean(.x, na.rm = TRUE) where '.x' refers to the column. If
 NULL, the mean will be calculated.}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells for plotting}
 
+\item{group_col}{meta.dats column to use for grouping clusters present in
+cluster_col}
+
 \item{chain}{Chain(s) to use for filtering data before plotting. If NULL
 data will not be filtered based on chain.}
 
-\item{type}{Type of plot to create, can be 'histogram', 'density',
-'boxplot', or 'violin'}
+\item{method}{Method to use for plotting, possible values are:
+\itemize{
+\item 'histogram'
+\item 'density'
+\item 'boxplot'
+\item 'violin'
+}}
 
-\item{yaxis}{Units to use for y-axis when type is set to 'histogram'. Use
+\item{units}{Units to use for y-axis when method is set to 'histogram'. Use
 'frequency' to show number of values or 'percent' to show the percentage of
 total values.}
 
@@ -106,7 +69,15 @@ e.g. fill = "red", color = "black"}
 \item{plot_lvls}{Character vector containing order to use for plotting cell
 clusters specified by cluster_col}
 
-\item{log_trans}{If TRUE, axis will be log10 transformed}
+\item{trans}{Transformation to use for plotting data, e.g. 'log10'. By
+default values are not transformed, refer to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}}
+for more options.}
+
+\item{panel_nrow}{The number of rows to use for arranging plot panels}
+
+\item{panel_scales}{Should scales for plot panels be fixed or free. This
+passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
+'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
@@ -119,26 +90,26 @@ linetype, etc.}
 ggplot object
 }
 \description{
-Compare V(D)J data for cell clusters
+Plot continuous V(D)J data
 }
 \examples{
-# Plot the number of indels for each chain
+# Create histogram
 plot_vdj(
-  vdj_so,
-  data_cols = c("n_insertion", "n_deletion")
+  vdj_sce,
+  data_col = "reads"
 )
 
 # Create boxplots
 plot_vdj(
   vdj_sce,
-  data_cols = c("n_insertion", "n_deletion"),
-  type = "boxplot"
+  data_col = "reads",
+  method = "boxplot"
 )
 
 # Pass additional arguments to ggplot2
 plot_vdj(
   vdj_so,
-  data_cols = "reads",
+  data_col = "reads",
   color = "red",
   bins = 25
 )
@@ -146,38 +117,38 @@ plot_vdj(
 # Compare cell clusters
 plot_vdj(
   vdj_sce,
-  data_cols = "cdr3_length",
+  data_col = "cdr3_length",
   cluster_col = "orig.ident",
-  type = "violin"
+  method = "violin"
 )
 
 # log10 transform the axis
 plot_vdj(
   vdj_so,
-  data_cols = "reads",
+  data_col = "reads",
   cluster_col = "orig.ident",
-  log_trans = TRUE
+  trans = "log10"
 )
 
 # Express y-axis units as percent of total values
 plot_vdj(
   vdj_sce,
-  data_cols = "n_deletion",
+  data_col = "umis",
   cluster_col = "orig.ident",
-  yaxis = "percent"
+  units = "percent"
 )
 
 # Only plot values for heavy chains
 plot_vdj(
   vdj_so,
-  data_cols = "umis",
+  data_col = "umis",
   chain = "IGH"
 )
 
-# Plot the median number of deletions for each cell
+# Plot the median number of reads for each cell
 plot_vdj(
   vdj_sce,
-  data_cols = "n_deletion",
+  data_col = "reads",
   per_cell = TRUE,
   summary_fn = stats::median
 )
@@ -185,7 +156,7 @@ plot_vdj(
 # Set colors for cell clusters
 plot_vdj(
   vdj_so,
-  data_cols = "cdr3_length",
+  data_col = "cdr3_length",
   cluster_col = "orig.ident",
   plot_colors = c(avid_1 = "red", avid_2 = "purple")
 )
@@ -193,10 +164,10 @@ plot_vdj(
 # Set order to use for plotting cell clusters
 plot_vdj(
   vdj_sce,
-  data_cols = "cdr3_length",
+  data_col = "cdr3_length",
   cluster_col = "orig.ident",
   plot_lvls = c("avid_2", "avid_1"),
-  type = "boxplot"
+  method = "boxplot"
 )
 
 }
