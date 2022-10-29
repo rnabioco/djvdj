@@ -12,7 +12,7 @@ Authors@R: c(
 Description: djvdj provides a range of tools to analyze single-cell V(D)J
     data.
 License: MIT + file LICENSE
-URL: https://rnabioco.github.io/djvdj, https://github.com/rnabioco/djvdj
+URL: https://rnabioco.github.io/djvdj/, https://github.com/rnabioco/djvdj/
 BugReports: https://github.com/rnabioco/djvdj/issues
 Depends: 
     R (>= 4.0.0)

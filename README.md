@@ -5,7 +5,7 @@
 
 [![R build
 status](https://github.com/rnabioco/djvdj/workflows/R-CMD-check/badge.svg)](https://github.com/rnabioco/djvdj/actions)
-[![codecov](https://codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg)](https://codecov.io/gh/rnabioco/djvdj)
+[![codecov](https://app.codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg)](https://app.codecov.io/gh/rnabioco/djvdj)
 <!-- badges: end -->
 
 The djvdj package provides a range of tools to analyze and manipulate

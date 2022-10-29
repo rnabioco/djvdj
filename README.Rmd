@@ -23,7 +23,7 @@ load(here("data/tcr/so_tcr.rda"))
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/rnabioco/djvdj/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rnabioco/djvdj/actions/workflows/R-CMD-check.yaml)
-[![codecov](https://codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg)](https://codecov.io/gh/rnabioco/djvdj)
+[![codecov](https://app.codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg)](https://app.codecov.io/gh/rnabioco/djvdj)
 <!-- badges: end -->
 
 The djvdj package provides a range of tools to analyze and manipulate single cell V(D)J sequencing data. These tools are straightforward and easily integrate into a standard [Seurat](https://satijalab.org/seurat/) workflow. This is a work in progress, please report any bugs by opening a new issue.
