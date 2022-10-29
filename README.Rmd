@@ -22,7 +22,7 @@ load(here("data/tcr/so_tcr.rda"))
 # **djvdj** <img src="man/figures/logo.png" align="right" alt="" width="120" />
 
 <!-- badges: start -->
-[![R build status](https://github.com/rnabioco/djvdj/workflows/R-CMD-check/badge.svg)](https://github.com/rnabioco/djvdj/actions)
+[![R-CMD-check](https://github.com/rnabioco/djvdj/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rnabioco/djvdj/actions/workflows/R-CMD-check.yaml)
 [![codecov](https://codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg)](https://codecov.io/gh/rnabioco/djvdj)
 <!-- badges: end -->
 
