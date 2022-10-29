@@ -13,8 +13,8 @@ djvdj provides a range of tools to analyze single-cell V(D)J data.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://rnabioco.github.io/djvdj}
-  \item \url{https://github.com/rnabioco/djvdj}
+  \item \url{https://rnabioco.github.io/djvdj/}
+  \item \url{https://github.com/rnabioco/djvdj/}
   \item Report bugs at \url{https://github.com/rnabioco/djvdj/issues}
 }
 

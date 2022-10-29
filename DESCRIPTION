@@ -12,57 +12,55 @@ Authors@R: c(
 Description: djvdj provides a range of tools to analyze single-cell V(D)J
     data.
 License: MIT + file LICENSE
-URL: https://rnabioco.github.io/djvdj, https://github.com/rnabioco/djvdj
+URL: https://rnabioco.github.io/djvdj/, https://github.com/rnabioco/djvdj/
 BugReports: https://github.com/rnabioco/djvdj/issues
 Depends: 
     R (>= 4.0.0)
 Imports: 
+    abdiv,
+    Biostrings,
+    boot,
+    broom,
+    circlize,
+    ComplexHeatmap,
+    dbscan,
     dplyr,
     ggplot2,
     ggrepel,
+    ggseqlogo,
+    glue,
+    igraph (>= 1.3.0),
+    iNEXT,
+    MASS,
     purrr,
     readr,
-    rlang (>= 0.1.2),
+    rlang (>= 0.4.11),
+    Rsamtools,
     S4Vectors,
+    scales,
     Seurat (>= 4.0.0),
+    SingleCellExperiment,
     stats,
+    stringr,
     tibble,
     tidyr,
-    Rsamtools,
-    abdiv,
-    SingleCellExperiment,
-    glue,
-    broom,
-    boot,
-    stringr,
-    uwot,
-    dbscan,
-    igraph (>= 1.3.0),
-    scales,
-    ComplexHeatmap,
-    circlize,
-    Biostrings,
-    MASS,
-    ggseqlogo,
-    iNEXT
+    uwot
 Suggests: 
-    magrittr,
     covr,
-    knitr,
-    roxygen2,
-    testthat,
-    here,
     cowplot,
+    here,
+    knitr,
+    magrittr,
     RColorBrewer,
-    rmarkdown
+    rmarkdown,
+    roxygen2,
+    testthat
 VignetteBuilder: 
     knitr
 Remotes:
     tidyverse/magrittr
+Config/Needs/website:pkgdown, rnabioco/rbitemplate
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
-Config/Needs/website:
-    pkgdown,
-    rnabioco/rbitemplate

@@ -63,7 +63,7 @@ so <- splen_so %>%
 
 The `cluster_sequences()` function can be used to cluster cells based on CDR3 sequences, or any other sequences present in the object. Provide the meta.data column containing sequences to the `data_col` argument. By default if a cell has multiple chains, the sequences will be concatenated.
 
-By default, distances are calculated for amino acid sequences using the [BLOSUM62](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC50453/) substitution matrix, which is based on observed amino acid frequencies and substitution probabilities. The calculated distances are then used to cluster cells using either the Louvain or Leiden clustering algorithms. The coarseness of the clusters an be adjusted using the `resolution` argument with smaller values returning fewer clusters.
+By default, distances are calculated for amino acid sequences using the [BLOSUM62](https://pubmed.ncbi.nlm.nih.gov/1438297/) substitution matrix, which is based on observed amino acid frequencies and substitution probabilities. The calculated distances are then used to cluster cells using either the Louvain or Leiden clustering algorithms. The coarseness of the clusters an be adjusted using the `resolution` argument with smaller values returning fewer clusters.
 
 In this example we are clustering cells based on the CDR3 amino acid sequence.
 
