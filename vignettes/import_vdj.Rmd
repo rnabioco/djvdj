@@ -12,6 +12,11 @@ output:
 ---
 
 ```{r "setup", include = FALSE}
+library(djvdj)
+library(magrittr)
+library(Seurat)
+library(here)
+
 # Chunk opts
 knitr::opts_chunk$set(
   collapse  = TRUE,
@@ -42,11 +47,6 @@ To load and parse V(D)J data, FASTQ files must first be processed using [Cell Ra
 The simplest use case for `import_vdj()` involves creating an object using data from a single run.
 
 ```{r}
-library(djvdj)
-library(magrittr)
-library(Seurat)
-library(here)
-
 # Create Seurat object
 so <- "splenocytes/BL6_GEX/filtered_feature_bc_matrix" %>%
   Read10X() %>%
@@ -161,7 +161,7 @@ The clonotype IDs can also be adjusted for multiple samples using the [aggregate
 
 The `import_vdj()` function has several arguments that can be used to perform basic filtering for each chain. The `filter_chains` argument will only include chains with at least one productive and full length contig. However, it should be noted that in recent versions of Cell Ranger the output files are already filtered based on this criteria, so this argument is only relevant when loading data processed with earlier versions such as Cell Ranger v3.0.
 
-The `filter_paired` argument will only include clonotypes with paired chains. For TCR data, this means each clonotype must have at least one TRA and TRB chain. For BCR data each clonotype must have at least one IGH chain and at least one IGK or IGL chain. It should be noted that if a clonotype has multiple chains of the same type, it will still be included, e.g. TRA;TRB;TRB or IGH;IGK;IGK will still be included. Clonotypes that include more than two chains can be filtered using `filter_vdj()`, for more information refer to the filtering [vignette](add/link/here).
+The `filter_paired` argument will only include clonotypes with paired chains. For TCR data, this means each clonotype must have at least one TRA and TRB chain. For BCR data each clonotype must have at least one IGH chain and at least one IGK or IGL chain. It should be noted that if a clonotype has multiple chains of the same type, it will still be included, e.g. TRA;TRB;TRB or IGH;IGK;IGK will still be included. Clonotypes that include more than two chains can be filtered using `filter_vdj()`.
 
 ```{r}
 vdj_dirs <- c(
@@ -187,8 +187,8 @@ so_vdj <- so_vdj %>%
 
 Mutation information for each chain can be parsed using two additional output files from Cell Ranger:
 
-* outs/concat_ref.bam: this file contains alignment information and is required to quantify insertions, deletions, and mismatches for each chain.
-* outs/airr_rearrangement.tsv: this file contains coordinates for each V(D)J gene segment and is only required if you want mutation information quantified for each segment and/or junction.
+* outs/concat_ref.bam: this file contains alignment information used to quantify insertions, deletions, and mismatches for each chain.
+* outs/airr_rearrangement.tsv: this file contains coordinates for each V(D)J gene segment and is used to quantify mutations for each segment and/or junction.
 
 ```{r}
 vdj_dirs <- c(

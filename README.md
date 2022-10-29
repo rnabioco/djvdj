@@ -3,9 +3,8 @@
 
 <!-- badges: start -->
 
-[![R build
-status](https://github.com/rnabioco/djvdj/workflows/R-CMD-check/badge.svg)](https://github.com/rnabioco/djvdj/actions)
-[![codecov](https://app.codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg)](https://app.codecov.io/gh/rnabioco/djvdj)
+[![R-CMD-check](https://github.com/rnabioco/djvdj/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rnabioco/djvdj/actions/workflows/R-CMD-check.yaml)
+[![codecov](https://codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg?token=ZI26OJII4P)](https://codecov.io/gh/rnabioco/djvdj)
 <!-- badges: end -->
 
 The djvdj package provides a range of tools to analyze and manipulate
@@ -14,7 +13,7 @@ easily integrate into a standard [Seurat](https://satijalab.org/seurat/)
 workflow. This is a work in progress, please report any bugs by opening
 a new issue.
 
-### **Installation**
+## Installation
 
 You can install the development version of djvdj from
 [GitHub](https://github.com/rnabioco/djvdj) with:
@@ -23,7 +22,7 @@ You can install the development version of djvdj from
 devtools::install_github("rnabioco/djvdj")
 ```
 
-### **Import**
+## Import
 
 With djvdj you can import V(D)J sequencing results from [Cell
 Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header)
@@ -40,20 +39,19 @@ sequences.
 # If prefixes were added to the cell barcodes when the object was generated,
 # include these as the vector names
 paths <- c(
-  KI_DN3_GE = "data/tcr/KI_DN3_TCR/outs",
-  KI_DN4_GE = "data/tcr/KI_DN4_TCR/outs",
-  WT_DN3_GE = "data/tcr/WT_DN3_TCR/outs",
-  WT_DN4_GE = "data/tcr/WT_DN4_TCR/outs"
+  BL6 = "splenocytes/BL6_BCR",
+  MD4 = "splenocytes/MD4_BCR"
 )
 
-so_tcr <- import_vdj(
-  input         = so_tcr,  # Seurat object
+# Add V(D)J data to object
+so <- import_vdj(
+  input         = so,      # Seurat or SingleCellExperiment object
   vdj_dir       = paths,   # Cellranger output directories
   filter_paired = FALSE    # Only include clonotypes with paired chains
 )
 ```
 
-### **Calculate**
+## Calculate
 
 djvdj allows you to calculate a range of population diversity and
 similarity metrics implemented with the
@@ -67,15 +65,15 @@ abundances and V(D)J gene usage (`calc_frequency()`,
 `calc_gene_usage()`).
 
 ``` r
-so_tcr <- calc_diversity(
-  input       = so_tcr,          # Seurat object
+so <- calc_diversity(
+  input       = so,              # Seurat object
   data_col    = "clonotype_id",  # Column containing clonotypes
   cluster_col = "orig.ident",    # Column containing cell clusters to compare
   method      = abdiv::simpson   # Diversity metric to use
 )
 ```
 
-### **Plot**
+## Plot
 
 For each ‘calc’ function, djvdj also provides a corresponding ‘plot’
 function to summarize the results.
@@ -83,10 +81,10 @@ function to summarize the results.
 ``` r
 # Compare the usage of different V and J genes
 ggs <- plot_gene_usage(
-  input       = so_tcr,                 # Seurat object
-  gene_cols   = c("v_gene", "j_gene"),  # Column(s) containing V(D)J genes to plot
+  input       = so,                     # Seurat object
+  data_cols   = c("v_gene", "j_gene"),  # Column(s) containing V(D)J genes to plot
   cluster_col = "orig.ident",           # Column containing cell clusters to compare
-  chain       = "TRB",                  # Chain to plot
+  chain       = "IGK",                  # Chain to plot
   plot_colors = "#6A51A3"
 )
 

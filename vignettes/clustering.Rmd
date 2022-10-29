@@ -28,6 +28,12 @@ knitr::opts_chunk$set(
 This vignette provides detailed examples for clustering cells based on CDR3 sequences. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
 
 ```{r}
+library(djvdj)
+library(magrittr)
+library(Seurat)
+library(ggplot2)
+library(RColorBrewer)
+
 download.file(
   "https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip",
   "splenocytes.zip",
@@ -38,12 +44,6 @@ unzip("splenocytes.zip", overwrite = FALSE)
 ```
 
 ```{r}
-library(djvdj)
-library(magrittr)
-library(Seurat)
-library(ggplot2)
-library(RColorBrewer)
-
 # Load Seurat object
 load("splenocytes/splen_so.rda")
 
@@ -142,11 +142,7 @@ so_vdj %>%
   )
 ```
 
-<br>
-
-## CDR3 length
-
-```{r}
+```{r, eval = FALSE}
 so_vdj %>%
   plot_vdj(
     data_col    = "cdr3_length",
