@@ -7,6 +7,26 @@ template:
 development:
   mode: auto
 
+articles:
+- title: ~
+  navbar: Data import and manipulation
+  contents:
+  - import_vdj
+  - mutate
+
+- title: VDJ analysis
+  navbar: VDJ analysis
+  contents:
+  - gene-usage
+  - abundance
+  - diversity
+  - clustering
+
+- title: Visualization
+  navbar: Visualization
+  contents:
+  - plotting
+
 reference:
 - title: Data Import
   contents:
