@@ -1,7 +1,7 @@
 # Test data
 df_1 <- vdj_so@meta.data
 
-df_2 <- vdj_so@meta.data %>%
+df_2 <- vdj_so@meta.data |>
   as_tibble(rownames = ".cell_id")
 
 # Check all calc_gene_usage arguments
@@ -28,16 +28,16 @@ test_all_args(
     input,
     data_cols = genes,
     chain = chain
-  ) %>%
-    rowwise() %>%
-    mutate(nm = stringr::str_c(!!!syms(genes))) %>%
+  ) |>
+    rowwise() |>
+    mutate(nm = stringr::str_c(!!!syms(genes))) |>
     arrange(desc(freq), nm)
 
   freq <- purrr::set_names(res$freq, res$nm)
   pct  <- purrr::set_names(res$pct, res$nm)
 
   # data for manual calc
-  dat <- vdj_so@meta.data %>%
+  dat <- vdj_so@meta.data |>
     filter(!is.na(clonotype_id))
 
   gns <- genes
@@ -46,16 +46,16 @@ test_all_args(
     gns <- c("chains", genes)
   }
 
-  x <- gns %>%
-    purrr::set_names() %>%
+  x <- gns |>
+    purrr::set_names() |>
     map(~ {
-      dat[[.x]] %>%
-        map(stringr::str_split, ";") %>%
+      dat[[.x]] |>
+        map(stringr::str_split, ";") |>
         purrr::flatten()
     })
 
   # Get total n cells
-  n_cells <- map_int(x, length) %>%
+  n_cells <- map_int(x, length) |>
     unique()
 
   stopifnot(length(n_cells) == 1)
@@ -64,13 +64,13 @@ test_all_args(
   if (!is.null(chain)) {
     chns <- x$chains
 
-    chns <- chns %>%
+    chns <- chns |>
       map(~ .x %in% chain)
 
     x <- x[names(x) != "chains"]
 
-    x <- x %>%
-      map(~ purrr::map2(.x, chns, ~ .x[.y])) %>%
+    x <- x |>
+      map(~ purrr::map2(.x, chns, ~ .x[.y])) |>
       map(~ map(.x, ~ {
         if (purrr::is_empty(.x)) .x <- "None"
         .x
@@ -78,14 +78,14 @@ test_all_args(
   }
 
   # Calc frequency
-  x <- x %>%
+  x <- x |>
     purrr::reduce(~ {
       stopifnot(length(.x) == length(.y))
       purrr::map2(.x, .y, ~ stringr::str_c(.x, .y))
-    }) %>%
-    map(unique) %>%
-    purrr::reduce(c) %>%
-    table() %>%
+    }) |>
+    map(unique) |>
+    purrr::reduce(c) |>
+    table() |>
     base::sort(decreasing = TRUE)
 
   # Check results
@@ -105,24 +105,24 @@ test_that("calc_gene_usage check calcs", {
     "j_gene", "c_gene"
   )
 
-  vdj_genes <- seq_along(vdj_genes) %>%
-    map(combn, x = vdj_genes, simplify = FALSE) %>%
+  vdj_genes <- seq_along(vdj_genes) |>
+    map(combn, x = vdj_genes, simplify = FALSE) |>
     purrr::flatten()
 
   ins <- list(vdj_so, vdj_sce, vdj_so@meta.data)
 
   purrr::walk(ins, ~ {
-    vdj_genes %>%
+    vdj_genes |>
       purrr::walk(.check_gene_usage, input = .x)
   })
 
   purrr::walk(ins, ~ {
-    vdj_genes %>%
+    vdj_genes |>
       purrr::walk(.check_gene_usage, input = .x, chain = "IGH")
   })
 
   purrr::walk(ins, ~ {
-    vdj_genes %>%
+    vdj_genes |>
       purrr::walk(.check_gene_usage, input = .x, chain = c("IGH", "IGK"))
   })
 })
