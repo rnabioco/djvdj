@@ -913,7 +913,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   # If no vdj_coords, return mutation totals
   if (identical(vdj_coords, NA)) {
-    res <- all_muts %>%
+    res <- all_muts |>
       tidyr::pivot_wider(
         names_from  = .data$type,
         values_from = .data$n,

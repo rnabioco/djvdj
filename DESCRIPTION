@@ -46,7 +46,6 @@ Imports:
     ggseqlogo,
     iNEXT
 Suggests: 
-    magrittr,
     covr,
     knitr,
     roxygen2,
@@ -57,8 +56,6 @@ Suggests:
     rmarkdown
 VignetteBuilder: 
     knitr
-Remotes:
-    tidyverse/magrittr
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
