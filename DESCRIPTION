@@ -22,7 +22,7 @@ Imports:
     ggrepel,
     purrr,
     readr,
-    rlang (>= 0.1.2),
+    rlang (>= 0.4.11),
     S4Vectors,
     Seurat (>= 4.0.0),
     stats,
