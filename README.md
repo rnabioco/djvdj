@@ -4,7 +4,7 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/rnabioco/djvdj/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rnabioco/djvdj/actions/workflows/R-CMD-check.yaml)
-[![codecov](https://app.codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg)](https://app.codecov.io/gh/rnabioco/djvdj)
+[![codecov](https://codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg?token=ZI26OJII4P)](https://codecov.io/gh/rnabioco/djvdj)
 <!-- badges: end -->
 
 The djvdj package provides a range of tools to analyze and manipulate
@@ -66,7 +66,7 @@ abundances and V(D)J gene usage (`calc_frequency()`,
 
 ``` r
 so <- calc_diversity(
-  input       = so,          # Seurat object
+  input       = so,              # Seurat object
   data_col    = "clonotype_id",  # Column containing clonotypes
   cluster_col = "orig.ident",    # Column containing cell clusters to compare
   method      = abdiv::simpson   # Diversity metric to use
