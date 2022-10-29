@@ -20,6 +20,7 @@ articles:
   - gene-usage
   - abundance
   - diversity
+  - similarity
   - clustering
 
 - title: Visualization
