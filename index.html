@@ -99,18 +99,16 @@
 <!-- badges: start -->
 
 <p>The djvdj package provides a range of tools to analyze and manipulate single cell V(D)J sequencing data. These tools are straightforward and easily integrate into a standard <a href="https://satijalab.org/seurat/" class="external-link">Seurat</a> workflow. This is a work in progress, please report any bugs by opening a new issue.</p>
-<div class="section level3">
-<h3 id="installation">
-<strong>Installation</strong><a class="anchor" aria-label="anchor" href="#installation"></a>
-</h3>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
 <p>You can install the development version of djvdj from <a href="https://github.com/rnabioco/djvdj" class="external-link">GitHub</a> with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"rnabioco/djvdj"</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="import">
-<strong>Import</strong><a class="anchor" aria-label="anchor" href="#import"></a>
-</h3>
+<div class="section level2">
+<h2 id="import">Import<a class="anchor" aria-label="anchor" href="#import"></a>
+</h2>
 <p>With djvdj you can import V(D)J sequencing results from <a href="https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header" class="external-link">Cell Ranger</a> and add these data to a <a href="https://satijalab.org/seurat/" class="external-link">Seurat</a> or <a href="https://www.bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html" class="external-link">SingleCellExperiment</a> object using <code><a href="reference/import_vdj.html">import_vdj()</a></code>. Additional functions are provided to filter and modify (<code><a href="reference/filter_vdj.html">filter_vdj()</a></code>, <code><a href="reference/mutate_vdj.html">mutate_vdj()</a></code>, <code><a href="reference/summarize_vdj.html">summarize_vdj()</a></code>) the object based on V(D)J metrics including chains, clonotypes, and CDR3 sequences.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Import VDJ data</span></span>
@@ -118,43 +116,40 @@
 <span><span class="co"># If prefixes were added to the cell barcodes when the object was generated,</span></span>
 <span><span class="co"># include these as the vector names</span></span>
 <span><span class="va">paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  KI_DN3_GE <span class="op">=</span> <span class="st">"data/tcr/KI_DN3_TCR/outs"</span>,</span>
-<span>  KI_DN4_GE <span class="op">=</span> <span class="st">"data/tcr/KI_DN4_TCR/outs"</span>,</span>
-<span>  WT_DN3_GE <span class="op">=</span> <span class="st">"data/tcr/WT_DN3_TCR/outs"</span>,</span>
-<span>  WT_DN4_GE <span class="op">=</span> <span class="st">"data/tcr/WT_DN4_TCR/outs"</span></span>
+<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_BCR"</span>,</span>
+<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_BCR"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/import_vdj.html">import_vdj</a></span><span class="op">(</span></span>
-<span>  input         <span class="op">=</span> <span class="va">so_tcr</span>,  <span class="co"># Seurat object</span></span>
+<span><span class="co"># Add V(D)J data to object</span></span>
+<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/import_vdj.html">import_vdj</a></span><span class="op">(</span></span>
+<span>  input         <span class="op">=</span> <span class="va">so</span>,      <span class="co"># Seurat or SingleCellExperiment object</span></span>
 <span>  vdj_dir       <span class="op">=</span> <span class="va">paths</span>,   <span class="co"># Cellranger output directories</span></span>
 <span>  filter_paired <span class="op">=</span> <span class="cn">FALSE</span>    <span class="co"># Only include clonotypes with paired chains</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="calculate">
-<strong>Calculate</strong><a class="anchor" aria-label="anchor" href="#calculate"></a>
-</h3>
+<div class="section level2">
+<h2 id="calculate">Calculate<a class="anchor" aria-label="anchor" href="#calculate"></a>
+</h2>
 <p>djvdj allows you to calculate a range of population diversity and similarity metrics implemented with the <a href="https://github.com/kylebittinger/abdiv" class="external-link">abdiv</a> package. The function <code><a href="reference/calc_diversity.html">calc_diversity()</a></code> can be used to measure diversity on a per-cluster or per-sample basis to allow for comparison across conditions. <code><a href="reference/calc_similarity.html">calc_similarity()</a></code> will measure repertoire overlap between clusters or samples to allow for direct comparisons between cells of interest. Additional functions are also available to calculate clonotype abundances and V(D)J gene usage (<code><a href="reference/calc_frequency.html">calc_frequency()</a></code>, <code><a href="reference/calc_gene_usage.html">calc_gene_usage()</a></code>).</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_tcr</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/calc_diversity.html">calc_diversity</a></span><span class="op">(</span></span>
-<span>  input       <span class="op">=</span> <span class="va">so_tcr</span>,          <span class="co"># Seurat object</span></span>
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/calc_diversity.html">calc_diversity</a></span><span class="op">(</span></span>
+<span>  input       <span class="op">=</span> <span class="va">so</span>,              <span class="co"># Seurat object</span></span>
 <span>  data_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,  <span class="co"># Column containing clonotypes</span></span>
 <span>  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,    <span class="co"># Column containing cell clusters to compare</span></span>
 <span>  method      <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/simpson.html" class="external-link">simpson</a></span>   <span class="co"># Diversity metric to use</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="plot">
-<strong>Plot</strong><a class="anchor" aria-label="anchor" href="#plot"></a>
-</h3>
+<div class="section level2">
+<h2 id="plot">Plot<a class="anchor" aria-label="anchor" href="#plot"></a>
+</h2>
 <p>For each ‘calc’ function, djvdj also provides a corresponding ‘plot’ function to summarize the results.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Compare the usage of different V and J genes</span></span>
 <span><span class="va">ggs</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
-<span>  input       <span class="op">=</span> <span class="va">so_tcr</span>,                 <span class="co"># Seurat object</span></span>
-<span>  gene_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,  <span class="co"># Column(s) containing V(D)J genes to plot</span></span>
+<span>  input       <span class="op">=</span> <span class="va">so</span>,                     <span class="co"># Seurat object</span></span>
+<span>  data_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,  <span class="co"># Column(s) containing V(D)J genes to plot</span></span>
 <span>  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,           <span class="co"># Column containing cell clusters to compare</span></span>
-<span>  chain       <span class="op">=</span> <span class="st">"TRB"</span>,                  <span class="co"># Chain to plot</span></span>
+<span>  chain       <span class="op">=</span> <span class="st">"IGK"</span>,                  <span class="co"># Chain to plot</span></span>
 <span>  plot_colors <span class="op">=</span> <span class="st">"#6A51A3"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -200,8 +195,8 @@
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/rnabioco/djvdj/actions" class="external-link"><img src="https://github.com/rnabioco/djvdj/workflows/R-CMD-check/badge.svg" alt="R build status"></a></li>
-<li><a href="https://app.codecov.io/gh/rnabioco/djvdj" class="external-link"><img src="https://app.codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg" alt="codecov"></a></li>
+<li><a href="https://github.com/rnabioco/djvdj/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/rnabioco/djvdj/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://codecov.io/gh/rnabioco/djvdj" class="external-link"><img src="https://codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg?token=ZI26OJII4P" alt="codecov"></a></li>
 </ul>
 </div>
 
