@@ -48,19 +48,19 @@ The simplest use case for `import_vdj()` involves creating an object using data 
 
 ```{r}
 # Create Seurat object
-so <- "splenocytes/BL6_GEX/filtered_feature_bc_matrix" %>%
-  Read10X() %>%
+so <- "splenocytes/BL6_GEX/filtered_feature_bc_matrix" |>
+  Read10X() |>
   CreateSeuratObject()
 
 # Add V(D)J data to object
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(vdj_dir = "splenocytes/BL6_BCR")
 ```
 
 `import_vdj()` adds a variety of per-chain metrics to the object meta.data. Information for each chain identified for the cell is separated by a semicolon. The separator used for storing and parsing per-chain V(D)J data can be specified using the `sep` argument included for most djvdj functions. `NA`s will be included for cells that lack V(D)J data. 
 
 ```{r}
-so_vdj@meta.data %>%
+so_vdj@meta.data |>
   head(2)
 ```
 
@@ -79,8 +79,8 @@ gex_dirs <- c(
   "splenocytes/MD4_GEX/filtered_feature_bc_matrix"
 )
 
-so <- gex_dirs %>%
-  Read10X() %>%
+so <- gex_dirs |>
+  Read10X() |>
   CreateSeuratObject()
 
 # Load BCR data
@@ -91,7 +91,7 @@ vdj_dirs <- c(
   "splenocytes/MD4_BCR"
 )
 
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(vdj_dir = vdj_dirs)
 ```
 
@@ -105,7 +105,7 @@ vdj_dirs <- c(
   "splenocytes/BL6_BCR"
 )
 
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(vdj_dir = vdj_dirs)
 ```
 
@@ -118,8 +118,8 @@ gex_dirs <- c(
   MD4 = "splenocytes/MD4_GEX/filtered_feature_bc_matrix"
 )
 
-so <- gex_dirs %>%
-  Read10X() %>%
+so <- gex_dirs |>
+  Read10X() |>
   CreateSeuratObject()
 
 # Load BCR data
@@ -131,7 +131,7 @@ vdj_dirs <- c(
   BL6 = "splenocytes/BL6_BCR"
 )
 
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(vdj_dir = vdj_dirs)
 ```
 
@@ -146,7 +146,7 @@ When results from multiple Cell Ranger runs are added to the object, the clonoty
 * 'cdr3_gene': use both the CDR3 nucleotide sequence and the combination of all V(D)J genes identified for the cell
 
 ```{r}
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(
     vdj_dir = vdj_dirs,
     define_clonotypes = "cdr3_gene"
@@ -169,7 +169,7 @@ vdj_dirs <- c(
   BL6 = "splenocytes/BL6_BCR"
 )
 
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(
     vdj_dir = vdj_dirs,
     filter_chains = TRUE,
@@ -177,7 +177,7 @@ so_vdj <- so %>%
   )
 
 # To only include clonotypes with exactly 2 chains
-so_vdj <- so_vdj %>%
+so_vdj <- so_vdj |>
   filter_vdj(n_chains == 2)
 ```
 
@@ -196,7 +196,7 @@ vdj_dirs <- c(
   BL6 = "splenocytes/BL6_BCR"
 )
 
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(
     vdj_dir = vdj_dirs,
     include_mutations = TRUE
@@ -206,7 +206,7 @@ so_vdj <- so %>%
 The additional columns added to the meta.data will include the number of insertions, deletions, and mismatches (ending in 'ins', 'del', or 'mis') for each V(D)J segment (prefixed with 'v', 'd', 'j', or 'c'). Columns containing junction information will be prefixed with either 'vd' or 'dj'. Columns ending in 'freq' show the event frequency which is calculated as the number of events divided by the length of the region.
 
 ```{r}
-so_vdj@meta.data %>%
+so_vdj@meta.data |>
   head(2)
 ```
 
@@ -227,15 +227,15 @@ tcr_dirs <- c(
   BL6 = "splenocytes/BL6_TCR"
 )
 
-so_vdj <- so %>%
-  import_vdj(bcr_dirs, prefix = "bcr_") %>%
+so_vdj <- so |>
+  import_vdj(bcr_dirs, prefix = "bcr_") |>
   import_vdj(tcr_dirs, prefix = "tcr_")
 ```
 
 This results in two sets of new columns being added to the meta.data. When performing downstream analysis using other djvdj functions, be sure to specify the correct columns, i.e. 'bcr_clonotype_id' or 'tcr_clonotype_id'.
 
 ```{r}
-so_vdj@meta.data %>%
+so_vdj@meta.data |>
   head(3)
 ```
 

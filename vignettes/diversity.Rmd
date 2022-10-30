@@ -52,7 +52,7 @@ vdj_dirs <- c(
   MD4 = "splenocytes/MD4_BCR"
 )
 
-so <- splen_so %>%
+so <- splen_so |>
   import_vdj(vdj_dirs, define_clonotypes = "cdr3_gene")
 ```
 
@@ -65,7 +65,7 @@ To calculate repertoire diversity and store the results in the object meta.data,
 In this example we are calculating the Shannon entropy for BL6 and MD4 samples.
 
 ```{r}
-so_vdj <- so %>%
+so_vdj <- so |>
   calc_diversity(
     data_col    = "clonotype_id",
     cluster_col = "sample",
@@ -76,7 +76,7 @@ so_vdj <- so %>%
 Estimations of species diversity are influenced by sample size. One approach to deal with this is to equalize the number of cells present in each cluster. The `downsample` argument will randomly sample cells so each sample being tested has the same number of cells as the smallest cluster. The bootstrapped standard error can also be calculated by setting the number of bootstrap samples with the `n_boots` argument.
 
 ```{r}
-so_vdj <- so %>%
+so_vdj <- so |>
   calc_diversity(
     data_col    = "clonotype_id",
     cluster_col = "sample",
@@ -88,7 +88,7 @@ so_vdj <- so %>%
 Diversity metrics can also be calculated for a specific chain. To do this, the column passed to the `data_col` argument must contain per-chain data, such as CDR3 amino acid or nucleotide sequences. In this example diversity is calculated based only on heavy chain CDR3 sequences.
 
 ```{r}
-so_vdj <- so %>%
+so_vdj <- so |>
   calc_diversity(
     data_col    = "cdr3_nt",
     cluster_col = "sample",
@@ -111,7 +111,7 @@ div_fns <- list(
   "pielou evenness" = abdiv::pielou_e
 )
 
-so %>%
+so |>
   plot_diversity(
     data_col    = "clonotype_id",
     cluster_col = "sample",
@@ -122,7 +122,7 @@ so %>%
 Diversity plots can also be separated based on an additional grouping variable such as treatment group (e.g. pacebo vs drug) or disease status (e.g. healthy vs disease). This will generate boxplots with each point representing a label present in the `cluster_col` column. In this example we have 5 BL6 and 5 MD4 samples, so there should be 5 points shown for each boxplot.
 
 ```{r}
-so %>%
+so |>
   plot_diversity(
     data_col    = "clonotype_id",
     cluster_col = "sample",
@@ -134,7 +134,7 @@ so %>%
 Additional arguments are provided to adjust plot aesthetics. The `plot_colors` parameter can be used to modify colors, the `panel_nrow` and `panel_scales` arguments will adjust the plot scales and number of rows used to arrange plots.
 
 ```{r, fig.width = 6, fig.height = 6}
-so %>%
+so |>
   plot_diversity(
     data_col    = "clonotype_id",
     cluster_col = "sample",
@@ -148,7 +148,7 @@ so %>%
 `plot_diversity()` returns a ggplot object that can be modified with ggplot2 functions such as `ggplot2::theme()`. Plots can be further adjusted by passing aesthetic parameters directly to ggplot2, e.g. `alpha`, `linetype`, `color`, etc.
 
 ```{r}
-so %>%
+so |>
   plot_diversity(
     data_col    = "clonotype_id",
     cluster_col = "sample",
@@ -174,7 +174,7 @@ Calculations used to generate rarefaction curves are performed using the iNEXT p
 * 'invsimpson', the inverse Simpson index, this is equivalent to the calculation performed by `abdiv::invsimpson()`
 
 ```{r}
-so %>%
+so |>
   plot_rarefaction(
     data_col    = "clonotype_id",
     cluster_col = "orig.ident",
@@ -186,7 +186,7 @@ so %>%
 If the 95% confidence interval is not desired, set `n_boots` to 0. In this example we also plot a separate line for each BL6 and MD4 sample.
 
 ```{r}
-so %>%
+so |>
   plot_rarefaction(
     data_col    = "clonotype_id",
     cluster_col = "sample",

@@ -1,7 +1,7 @@
 # Test data
 df_1 <- vdj_so@meta.data
 
-df_2 <- vdj_so@meta.data %>%
+df_2 <- vdj_so@meta.data |>
   as_tibble(rownames = ".cell_id")
 
 # Check fetch_vdj arguments
@@ -22,7 +22,7 @@ test_all_args(
 
 # Check sep
 test_that("fetch_vdj sep", {
-  res <- vdj_so %>%
+  res <- vdj_so |>
     fetch_vdj(
       data_cols      = c("umis", "reads"),
       clonotype_col = "clonotype_id",
@@ -33,7 +33,7 @@ test_that("fetch_vdj sep", {
   expect_identical(res, as_tibble(vdj_so@meta.data, rownames = ".cell_id"))
 
   expect_warning(
-    res <- vdj_so %>%
+    res <- vdj_so |>
       fetch_vdj(
         data_cols      = c("umis", "reads"),
         clonotype_col = "clonotype_id",
@@ -47,7 +47,7 @@ test_that("fetch_vdj sep", {
 # Check filter_cells
 test_that("fetch_vdj filter_cells", {
   expect_error(
-    res <- vdj_so %>%
+    res <- vdj_so |>
       fetch_vdj(
         data_cols     = c("umis", "reads"),
         filter_cells = TRUE
@@ -55,7 +55,7 @@ test_that("fetch_vdj filter_cells", {
     "clonotype_col must be provided"
   )
 
-  res <- vdj_so %>%
+  res <- vdj_so |>
     fetch_vdj(
       data_cols      = c("umis", "reads"),
       clonotype_col = "clonotype_id",
@@ -64,15 +64,15 @@ test_that("fetch_vdj filter_cells", {
 
   expect_identical(unique(res$.cell_id), colnames(vdj_so))
 
-  res <- vdj_so %>%
+  res <- vdj_so |>
     fetch_vdj(
       data_cols      = c("umis", "reads"),
       clonotype_col = "clonotype_id",
       filter_cells  = TRUE
     )
 
-  no_na <- vdj_so@meta.data %>%
-    filter(!is.na(clonotype_id)) %>%
+  no_na <- vdj_so@meta.data |>
+    filter(!is.na(clonotype_id)) |>
     rownames()
 
   expect_identical(no_na, unique(res$.cell_id))
@@ -80,10 +80,10 @@ test_that("fetch_vdj filter_cells", {
 
 # Check .filter_chains
 test_that(".filter_chains", {
-  dat <- vdj_so %>%
+  dat <- vdj_so |>
     fetch_vdj(unnest = FALSE)
 
-  res <- dat %>%
+  res <- dat |>
     .filter_chains(
       data_cols = c("umis", "reads"),
       chain = NULL
@@ -92,7 +92,7 @@ test_that(".filter_chains", {
   expect_identical(res, dat)
 
   expect_error(
-    res <- dat %>%
+    res <- dat |>
       .filter_chains(
         data_cols = c("umis", "nCount_RNA"),
         chain = "IGK"
@@ -100,10 +100,10 @@ test_that(".filter_chains", {
     "To filter based on chain, all columns must contain per-chain data"
   )
 
-  dat <- vdj_so %>%
+  dat <- vdj_so |>
     fetch_vdj(unnest = TRUE)
 
-  res <- dat %>%
+  res <- dat |>
     .filter_chains(
       data_cols = c("umis", "reads"),
       chain = "IGK"
@@ -111,31 +111,31 @@ test_that(".filter_chains", {
 
   expect_identical(res, filter(dat, chains %in% "IGK"))
 
-  res <- dat %>%
+  res <- dat |>
     .filter_chains(
       data_cols = "chains",
       chain    = "IGK"
     )
 
-  new_chains <- res$chains %>%
-    reduce(c) %>%
-    unique() %>%
-    na.omit() %>%
+  new_chains <- res$chains |>
+    reduce(c) |>
+    unique() |>
+    na.omit() |>
     as.character()
 
   expect_identical(new_chains, "IGK")
 
-  res <- dat %>%
+  res <- dat |>
     .filter_chains(
       data_cols = "chains",
       chain    = c("IGH", "IGL")
     )
 
-  new_chains <- res$chains %>%
-    reduce(c) %>%
-    unique() %>%
-    na.omit() %>%
-    as.character() %>%
+  new_chains <- res$chains |>
+    reduce(c) |>
+    unique() |>
+    na.omit() |>
+    as.character() |>
     sort()
 
   expect_identical(new_chains, c("IGH", "IGL"))
@@ -143,10 +143,10 @@ test_that(".filter_chains", {
 
 # Check .filter_chains
 test_that(".filter_chains", {
-  dat <- vdj_so %>%
+  dat <- vdj_so |>
     fetch_vdj(unnest = FALSE)
 
-  res <- dat %>%
+  res <- dat |>
     .filter_chains(
       data_cols = c("umis", "reads"),
       chain = NULL
@@ -155,7 +155,7 @@ test_that(".filter_chains", {
   expect_identical(res, dat)
 
   expect_error(
-    res <- dat %>%
+    res <- dat |>
       .filter_chains(
         data_cols = c("umis", "nCount_RNA"),
         chain = "IGK"
@@ -163,10 +163,10 @@ test_that(".filter_chains", {
     "To filter based on chain, all columns must contain per-chain data"
   )
 
-  dat <- vdj_so %>%
+  dat <- vdj_so |>
     fetch_vdj(unnest = TRUE)
 
-  res <- dat %>%
+  res <- dat |>
     .filter_chains(
       data_cols = c("umis", "reads"),
       chain = "IGK"
@@ -174,31 +174,31 @@ test_that(".filter_chains", {
 
   expect_identical(res, filter(dat, chains %in% "IGK"))
 
-  res <- dat %>%
+  res <- dat |>
     .filter_chains(
       data_cols = "chains",
       chain    = "IGK"
     )
 
-  new_chains <- res$chains %>%
-    reduce(c) %>%
-    unique() %>%
-    na.omit() %>%
+  new_chains <- res$chains |>
+    reduce(c) |>
+    unique() |>
+    na.omit() |>
     as.character()
 
   expect_identical(new_chains, "IGK")
 
-  res <- dat %>%
+  res <- dat |>
     .filter_chains(
       data_cols = "chains",
       chain    = c("IGH", "IGL")
     )
 
-  new_chains <- res$chains %>%
-    reduce(c) %>%
-    unique() %>%
-    na.omit() %>%
-    as.character() %>%
+  new_chains <- res$chains |>
+    reduce(c) |>
+    unique() |>
+    na.omit() |>
+    as.character() |>
     sort()
 
   expect_identical(new_chains, c("IGH", "IGL"))
@@ -208,7 +208,7 @@ test_that(".filter_chains", {
 test_that(".get_vdj_cols", {
   clmns <- c("reads", "nCount_RNA")
 
-  res <- vdj_so@meta.data %>%
+  res <- vdj_so@meta.data |>
     .get_vdj_cols(
       clone_col = NULL,
       cols_in = clmns,
@@ -218,7 +218,7 @@ test_that(".get_vdj_cols", {
   expect_identical(res$vdj, clmns)
   expect_identical(res$sep, "reads")
 
-  res <- vdj_so@meta.data %>%
+  res <- vdj_so@meta.data |>
     .get_vdj_cols(
       clone_col = NULL,
       cols_in = clmns,

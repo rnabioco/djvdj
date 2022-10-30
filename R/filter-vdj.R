@@ -119,7 +119,7 @@ filter_vdj <- function(input, filt, data_cols = NULL,
     keep_rows <- unlist(keep_rows)
     vdj_cols  <- vdj_cols[vdj_cols != CELL_COL]
 
-    vdj <- meta %>%
+    vdj <- meta |>
       mutate(across(all_of(vdj_cols), ~ {
         x <- .x
         typ <- typeof(x)
@@ -158,7 +158,7 @@ filter_vdj <- function(input, filt, data_cols = NULL,
   other_cols <- vdj_cols[!vdj_cols %in% sep_cols]
   na_rows    <- purrr::map_lgl(keep_rows, ~ !any(.x))
 
-  vdj <- vdj %>%
+  vdj <- vdj |>
     mutate(across(all_of(other_cols), ~ {
       x <- .x
       typ <- typeof(x)
