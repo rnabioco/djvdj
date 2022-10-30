@@ -60,7 +60,8 @@ so_vdj <- so %>%
 `import_vdj()` adds a variety of per-chain metrics to the object meta.data. Information for each chain identified for the cell is separated by a semicolon. The separator used for storing and parsing per-chain V(D)J data can be specified using the `sep` argument included for most djvdj functions. `NA`s will be included for cells that lack V(D)J data. 
 
 ```{r}
-so_vdj@meta.data %>%
+# or use `so_vdj@meta.data`
+slot(so_vdj, 'meta.data') %>%
   head(2)
 ```
 
@@ -206,7 +207,8 @@ so_vdj <- so %>%
 The additional columns added to the meta.data will include the number of insertions, deletions, and mismatches (ending in 'ins', 'del', or 'mis') for each V(D)J segment (prefixed with 'v', 'd', 'j', or 'c'). Columns containing junction information will be prefixed with either 'vd' or 'dj'. Columns ending in 'freq' show the event frequency which is calculated as the number of events divided by the length of the region.
 
 ```{r}
-so_vdj@meta.data %>%
+# or use `so_vdj@meta.data`
+slot(so_vdj, 'meta.data') %>%
   head(2)
 ```
 
@@ -235,7 +237,8 @@ so_vdj <- so %>%
 This results in two sets of new columns being added to the meta.data. When performing downstream analysis using other djvdj functions, be sure to specify the correct columns, i.e. 'bcr_clonotype_id' or 'tcr_clonotype_id'.
 
 ```{r}
-so_vdj@meta.data %>%
+# or use `so_vdj@meta.data`
+slot(so_vdj, 'meta.data') %>%
   head(3)
 ```
 
