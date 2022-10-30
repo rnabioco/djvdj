@@ -51,7 +51,7 @@ vdj_dirs <- c(
   MD4 = "splenocytes/MD4_BCR"
 )
 
-so <- splen_so %>%
+so <- splen_so |>
   import_vdj(
     vdj_dirs,
     define_clonotypes = "cdr3_gene",
@@ -68,26 +68,26 @@ Per-chain data can be filtered with the `filter_vdj()` function. The per-chain v
 In this example we are only including V(D)J data for cells that have all of the chains, IGH, IGK, and IGL.
 
 ```{r}
-res <- so %>%
+res <- so |>
   filter_vdj(
     all(c("IGH", "IGK", "IGL") %in% chains)
   )
 
-res@meta.data %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(chains, cdr3) %>%
+res@meta.data |>
+  filter(!is.na(clonotype_id)) |>
+  select(chains, cdr3) |>
   head(3)
 ```
 
 In this example we are removing V(D)J data for all chains except IGH.
 
 ```{r}
-res <- so %>%
+res <- so |>
   filter_vdj(chains == "IGH")
 
-res@meta.data %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(chains, cdr3) %>%
+res@meta.data |>
+  filter(!is.na(clonotype_id)) |>
+  select(chains, cdr3) |>
   head(3)
 ```
 
@@ -98,31 +98,31 @@ res@meta.data %>%
 The `summarize_vdj()` function can be used to summarize the per-chain data for each cell and add the results to the meta.data. In this example we are calculating the median number of deletions and the median number of insertions for each cell. The `col_names` argument can be used to name the new columns, use '{.col}' to refer to the original column name.
 
 ```{r}
-res <- so %>%
+res <- so |>
   summarize_vdj(
     data_cols = c("all_del", "all_ins"),
     fn        = stats::median,
     col_names = "median_{.col}"
   )
 
-res@meta.data %>%
-  select(all_del, all_ins, median_all_del, median_all_ins) %>%
+res@meta.data |>
+  select(all_del, all_ins, median_all_del, median_all_ins) |>
   head(2)
 ```
 
 This function can also be used for character strings such as the chains column. In this example we are creating a new column in the meta.data containing the unique chains for each cell.
 
 ```{r}
-res <- so %>%
+res <- so |>
   summarize_vdj(
     data_cols = "chains",
     fn        = ~ paste0(unique(.x), collapse = "_"),
     col_names = "unique_chains"
   )
 
-res@meta.data %>%
-  filter(n_chains > 2) %>%
-  select(chains, unique_chains) %>%
+res@meta.data |>
+  filter(n_chains > 2) |>
+  select(chains, unique_chains) |>
   head(2)
 ```
 
@@ -135,13 +135,13 @@ Another way to modify V(D)J data present in the object is with the `mutate_vdj()
 In this example we are calculating the sum of all insertions and deletions for each cell and storing this information in a new column called 'total_indels'.
 
 ```{r}
-res <- so %>%
+res <- so |>
   mutate_vdj(
     total_indels = sum(all_ins, all_del)
   )
 
-res@meta.data %>%
-  select(all_ins, all_del, total_indels) %>%
+res@meta.data |>
+  select(all_ins, all_del, total_indels) |>
   head()
 ```
 

@@ -1,11 +1,11 @@
 # Test data
 df_1 <- vdj_so@meta.data
 
-df_2 <- vdj_so@meta.data %>%
+df_2 <- vdj_so@meta.data |>
   as_tibble(rownames = ".cell_id")
 
 # Check all calc_diversity arguments
-mets <- abdiv::alpha_diversities %>%
+mets <- abdiv::alpha_diversities |>
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 names(mets) <- abdiv::alpha_diversities
@@ -57,7 +57,7 @@ test_all_args(
 
 # Check diversity column prefix
 test_that("calc_diversity prefix", {
-  res <- vdj_so %>%
+  res <- vdj_so |>
     calc_diversity(
       data_col    = "cdr3",
       cluster_col = "seurat_clusters",
@@ -70,7 +70,7 @@ test_that("calc_diversity prefix", {
 
   expect_true(all(nms %in% names(res@meta.data)))
 
-  res <- res %>%
+  res <- res |>
     mutate_meta(select, -starts_with("X_"))
 
   expect_identical(res, vdj_so)
@@ -86,31 +86,31 @@ mets <- list(
 
 nms <- paste0("cdr3_", names(mets), "_diversity")
 
-test_div <- vdj_so@meta.data %>%
-  as_tibble(rownames = ".cell_id") %>%
+test_div <- vdj_so@meta.data |>
+  as_tibble(rownames = ".cell_id") |>
   filter(!is.na(cdr3))
 
 sm_clst <- table(test_div$seurat_clusters)
 sm_clst <- names(sm_clst[sm_clst == min(sm_clst)])
 
-test_div <- test_div %>%
-  filter(seurat_clusters %in% sm_clst) %>%
-  group_by(cdr3, seurat_clusters) %>%
-  summarize(n = n_distinct(.cell_id), .groups = "drop") %>%
-  group_by(seurat_clusters) %>%
+test_div <- test_div |>
+  filter(seurat_clusters %in% sm_clst) |>
+  group_by(cdr3, seurat_clusters) |>
+  summarize(n = n_distinct(.cell_id), .groups = "drop") |>
+  group_by(seurat_clusters) |>
   summarize(
     cdr3_shannon_diversity = abdiv::shannon(n),
     cdr3_simpson_diversity = abdiv::simpson(n),
     .groups = "drop"
-  ) %>%
-  arrange(seurat_clusters) %>%
+  ) |>
+  arrange(seurat_clusters) |>
   as.data.frame()
 
 
 test_that("div calc Seurat out", {
   set.seed(42)
 
-  res <- vdj_so %>%
+  res <- vdj_so |>
     calc_diversity(
       data_col    = "cdr3",
       cluster_col = "seurat_clusters",
@@ -118,30 +118,30 @@ test_that("div calc Seurat out", {
       method      = mets
     )
 
-  res <- res@meta.data %>%
-    as_tibble() %>%
-    filter(!is.na(cdr3)) %>%
-    select(seurat_clusters, all_of(nms)) %>%
-    distinct() %>%
-    arrange(seurat_clusters) %>%
-    as.data.frame() %>%
+  res <- res@meta.data |>
+    as_tibble() |>
+    filter(!is.na(cdr3)) |>
+    select(seurat_clusters, all_of(nms)) |>
+    distinct() |>
+    arrange(seurat_clusters) |>
+    as.data.frame() |>
     filter(seurat_clusters %in% sm_clst)
 
   expect_identical(res, test_div)
 })
 
 test_that("div calc df out", {
-  res <- vdj_so %>%
+  res <- vdj_so |>
     calc_diversity(
       data_col = "cdr3",
       cluster_col   = "seurat_clusters",
       return_df     = TRUE,
       method        = mets
-    ) %>%
-    arrange(seurat_clusters) %>%
-    distinct(seurat_clusters, !!!syms(nms)) %>%
-    filter(if_all(all_of(nms), ~ !is.na(.x))) %>%
-    tibble::remove_rownames() %>%
+    ) |>
+    arrange(seurat_clusters) |>
+    distinct(seurat_clusters, !!!syms(nms)) |>
+    filter(if_all(all_of(nms), ~ !is.na(.x))) |>
+    tibble::remove_rownames() |>
     filter(seurat_clusters %in% sm_clst)
 
   expect_s3_class(res, "data.frame")
@@ -150,18 +150,18 @@ test_that("div calc df out", {
 
 # Check Seurat output
 test_that("calc_diversity Seurat out", {
-  fns <- abdiv::alpha_diversities %>%
+  fns <- abdiv::alpha_diversities |>
     map(~ eval(parse(text = paste0("abdiv::", .x))))
 
   names(fns) <- abdiv::alpha_diversities
 
-  res <- vdj_so %>%
+  res <- vdj_so |>
     calc_diversity(
       data_col = "cdr3",
       method   = fns
     )
 
-  res@meta.data <- res@meta.data %>%
+  res@meta.data <- res@meta.data |>
     select(-all_of(paste0("cdr3_", names(fns), "_diversity")))
 
   expect_identical(res, vdj_so)
@@ -169,16 +169,16 @@ test_that("calc_diversity Seurat out", {
 
 # Check data.frame input
 test_that("calc_diversity df in", {
-  res <- vdj_so@meta.data %>%
+  res <- vdj_so@meta.data |>
     calc_diversity(
       data_col    = "cdr3",
       cluster_col = "seurat_clusters",
       method      = mets
-    ) %>%
-    arrange(seurat_clusters) %>%
-    distinct(seurat_clusters, !!!syms(nms)) %>%
-    filter(if_all(all_of(nms), ~ !is.na(.x))) %>%
-    tibble::remove_rownames() %>%
+    ) |>
+    arrange(seurat_clusters) |>
+    distinct(seurat_clusters, !!!syms(nms)) |>
+    filter(if_all(all_of(nms), ~ !is.na(.x))) |>
+    tibble::remove_rownames() |>
     filter(seurat_clusters %in% sm_clst)
 
   expect_s3_class(res, "data.frame")
@@ -188,11 +188,11 @@ test_that("calc_diversity df in", {
 # Check bad method list
 test_that("calc_diversity bad method list", {
   expect_error(
-    vdj_so %>% calc_diversity(method = list(abdiv::simpson, abdiv::mcintosh_d)),
+    vdj_so |> calc_diversity(method = list(abdiv::simpson, abdiv::mcintosh_d)),
     "Must include names if using a list of methods"
   )
 
-  res <- vdj_so %>%
+  res <- vdj_so |>
     calc_diversity(data_col = "cdr3", method = abdiv::simpson)
 
   nms <- paste0("cdr3_simpson_", c("diversity"))

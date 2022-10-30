@@ -6,13 +6,13 @@ test_cols <- c(
   "#999999", "#875C04", "#000000"
 )
 
-test_lvls <- unique(vdj_so$seurat_clusters) %>%
-  as.character() %>%
+test_lvls <- unique(vdj_so$seurat_clusters) |>
+  as.character() |>
   rev()
 
 df_1 <- vdj_so@meta.data
 
-df_2 <- vdj_so@meta.data %>%
+df_2 <- vdj_so@meta.data |>
   as_tibble(rownames = ".cell_id")
 
 # Check all plot_features arguments except data_slot
@@ -60,7 +60,7 @@ test_all_args(
 # Check plot_features warning for numeric feature
 test_that("plot_features warning num feat", {
   expect_warning(
-    vdj_so %>%
+    vdj_so |>
       plot_features(
         feature   = "nCount_RNA",
         plot_lvls = test_lvls
@@ -71,7 +71,7 @@ test_that("plot_features warning num feat", {
 # Check plot_features error for same x and y
 test_that("plot_features error same x y", {
   expect_error(
-    vdj_so %>%
+    vdj_so |>
       plot_features(
         x         = "UMAP_1",
         y         = "UMAP_1",
@@ -117,10 +117,10 @@ test_all_args(
 
 arg_lst$data_col <- "chains"
 
-chain_lvls <- vdj_so@meta.data %>%
-  pull(chains) %>%
-  unique() %>%
-  c("IGH;IGH", "IGH") %>%
+chain_lvls <- vdj_so@meta.data |>
+  pull(chains) |>
+  unique() |>
+  c("IGH;IGH", "IGH") |>
   list()
 
 arg_lst$plot_lvls <- chain_lvls
@@ -136,7 +136,7 @@ test_all_args(
 test_that("plot_vdj_feature bad chain filtering", {
 
   expect_warning(
-    vdj_so %>%
+    vdj_so |>
       plot_vdj_feature(
         data_col = "nCount_RNA",
         chain = "IGK"
@@ -223,7 +223,7 @@ test_all_args(
 # Check plot_clonal_abundance bad units
 test_that("plot_clonal_abundance bad units", {
   expect_error(
-    vdj_so %>%
+    vdj_so |>
       plot_clonal_abundance(
         method          = "line",
         clonotype_col = "cdr3_nt",
@@ -235,7 +235,7 @@ test_that("plot_clonal_abundance bad units", {
 # Check plot_clonal_abundance bad method
 test_that("plot_clonal_abundance bad method", {
   expect_error(
-    vdj_so %>%
+    vdj_so |>
       plot_clonal_abundance(
         method          = "BAD",
         clonotype_col = "cdr3_nt"
@@ -246,7 +246,7 @@ test_that("plot_clonal_abundance bad method", {
 # Check plot_clonal_abundance bad n_clonotypes
 test_that("plot_clonal_abundance bad n_clonotypes", {
   expect_error(
-    vdj_so %>%
+    vdj_so |>
       plot_clonal_abundance(
         method          = "bar",
         clonotype_col = "cdr3_nt",
@@ -256,7 +256,7 @@ test_that("plot_clonal_abundance bad n_clonotypes", {
 })
 
 # Check all plot_diversity arguments
-mets <- abdiv::alpha_diversities %>%
+mets <- abdiv::alpha_diversities |>
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 names(mets) <- abdiv::alpha_diversities
@@ -279,12 +279,12 @@ test_all_args(
 )
 
 # Check plot_diversity bad method names
-mets <- abdiv::alpha_diversities %>%
+mets <- abdiv::alpha_diversities |>
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 test_that("plot_diversity bad names", {
   expect_error(
-    vdj_so %>%
+    vdj_so |>
       plot_diversity(
         clonotype_col = "cdr3_nt",
         method        = mets
@@ -302,7 +302,7 @@ exclude <- c(
 mets <- abdiv::beta_diversities
 mets <- mets[!mets %in% exclude]
 
-mets <- purrr::set_names(mets) %>%
+mets <- purrr::set_names(mets) |>
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 arg_lst <- list(
@@ -335,7 +335,7 @@ test_all_args(
 # Check plot_similarity bad clonotype_col
 test_that("plot_similarity bad clonotype col", {
   expect_error(
-    vdj_so %>%
+    vdj_so |>
       plot_similarity(
         data_col    = "BAD",
         cluster_col = "orig.ident"
@@ -346,7 +346,7 @@ test_that("plot_similarity bad clonotype col", {
 # Check plot_similarity bad cluster_col
 test_that("plot_similarity bad cluster col", {
   expect_error(
-    vdj_so %>%
+    vdj_so |>
       plot_similarity(
         cluster_col = NULL,
         data_col    = "cdr3_nt"
@@ -393,10 +393,10 @@ test_all_args(
 )
 
 # Check plot_gene_usage vdj_genes single column
-test_genes <- vdj_so %>%
-  fetch_vdj() %>%
-  pull(v_gene) %>%
-  na.omit() %>%
+test_genes <- vdj_so |>
+  fetch_vdj() |>
+  pull(v_gene) |>
+  na.omit() |>
   head(10)
 
 arg_lst <- list(
@@ -447,7 +447,7 @@ test_that("plot_gene_usage bad plot_genes", {
 # Check plot_gene_usage bad method
 test_that("plot_gene_usage bad method", {
   expect_error(
-    vdj_so %>%
+    vdj_so |>
       plot_gene_usage(
         data_cols = "v_gene",
         method      = "BAD"
@@ -458,7 +458,7 @@ test_that("plot_gene_usage bad method", {
 # Check plot_gene_usage bad units
 test_that("plot_gene_usage bad method", {
   expect_error(
-    vdj_so %>%
+    vdj_so |>
       plot_gene_usage(
         data_cols = "v_gene",
         units     = "BAD"
@@ -469,7 +469,7 @@ test_that("plot_gene_usage bad method", {
 # Check plot_gene_usage bad data_cols
 test_that("plot_gene_usage bad data_cols", {
   expect_error(
-    vdj_so %>%
+    vdj_so |>
       plot_gene_usage(data_cols = c("v_gene", "d_gene", "j_gene"))
   )
 })

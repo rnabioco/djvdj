@@ -50,15 +50,12 @@ Suggests:
     cowplot,
     here,
     knitr,
-    magrittr,
     RColorBrewer,
     rmarkdown,
     roxygen2,
     testthat
 VignetteBuilder: 
     knitr
-Remotes:
-    tidyverse/magrittr
 Config/Needs/website:pkgdown, rnabioco/rbitemplate
 Encoding: UTF-8
 LazyData: true

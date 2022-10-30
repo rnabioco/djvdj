@@ -6,8 +6,8 @@ test_cols <- c(
   "#999999", "#875C04", "#000000"
 )
 
-test_lvls <- unique(vdj_so$seurat_clusters) %>%
-  as.character() %>%
+test_lvls <- unique(vdj_so$seurat_clusters) |>
+  as.character() |>
   rev()
 
 # Check all cluster_seqs args
