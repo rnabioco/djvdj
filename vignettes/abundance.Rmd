@@ -29,7 +29,6 @@ This vignette provides detailed examples for quantifying differences in clonal a
 
 ```{r}
 library(djvdj)
-library(magrittr)
 library(Seurat)
 library(ggplot2)
 library(dplyr)

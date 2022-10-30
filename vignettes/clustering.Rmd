@@ -29,7 +29,6 @@ This vignette provides detailed examples for clustering cells based on CDR3 sequ
 
 ```{r}
 library(djvdj)
-library(magrittr)
 library(Seurat)
 library(ggplot2)
 library(RColorBrewer)

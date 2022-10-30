@@ -29,7 +29,6 @@ This vignette provides detailed examples for calculating and visualizing V(D)J g
 
 ```{r}
 library(djvdj)
-library(magrittr)
 library(Seurat)
 library(ggplot2)
 library(RColorBrewer)

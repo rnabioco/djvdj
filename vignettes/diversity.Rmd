@@ -29,7 +29,6 @@ This vignette provides detailed examples for quantifying repertoire diversity. F
 
 ```{r}
 library(djvdj)
-library(magrittr)
 library(Seurat)
 library(ggplot2)
 

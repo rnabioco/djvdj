@@ -29,7 +29,6 @@ This vignette provides detailed examples for plotting V(D)J data imported into a
 
 ```{r}
 library(djvdj)
-library(magrittr)
 library(Seurat)
 library(ggplot2)
 

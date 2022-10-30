@@ -27,7 +27,6 @@ This vignette provides detailed examples for manipulating V(D)J data imported in
 
 ```{r}
 library(djvdj)
-library(magrittr)
 library(dplyr)
 library(Seurat)
 library(ggplot2)

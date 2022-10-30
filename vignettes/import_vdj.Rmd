@@ -13,7 +13,6 @@ output:
 
 ```{r "setup", include = FALSE}
 library(djvdj)
-library(magrittr)
 library(Seurat)
 library(here)
 
