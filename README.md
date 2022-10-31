@@ -47,7 +47,7 @@ paths <- c(
 so <- import_vdj(
   input         = so,      # Seurat or SingleCellExperiment object
   vdj_dir       = paths,   # Cellranger output directories
-  filter_paired = FALSE    # Only include clonotypes with paired chains
+  filter_paired = FALSE    # Keep clonotypes without paired chains
 )
 ```
 
