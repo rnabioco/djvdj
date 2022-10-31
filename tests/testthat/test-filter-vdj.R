@@ -1,3 +1,6 @@
+data(vdj_so)
+data(vdj_sce)
+
 # Check NAs in result
 check_nas <- function(df_in) {
 

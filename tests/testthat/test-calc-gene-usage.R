@@ -1,3 +1,6 @@
+data(vdj_so)
+data(vdj_sce)
+
 # Test data
 df_1 <- vdj_so@meta.data
 

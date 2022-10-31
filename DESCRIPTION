@@ -58,7 +58,7 @@ Suggests:
     RColorBrewer,
     rmarkdown,
     roxygen2,
-    testthat
+    testthat (>= 3.0.0)
 VignetteBuilder: 
     knitr
 Config/Needs/website:
@@ -68,3 +68,4 @@ biocViews: DataImport, GeneExpression, SingleCell, RNASeq, ImmunoOncology
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
+Config/testthat/edition: 3
