@@ -520,6 +520,40 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
                            contig_file = "filtered_contig_annotations.csv",
                            chk_none = c("productive", "full_length")) {
 
+  col_spec <- readr::cols(
+    barcode = readr::col_character(),
+    is_cell = readr::col_logical(),
+    contig_id = readr::col_character(),
+    high_confidence = readr::col_logical(),
+    length = readr::col_double(),
+    chain = readr::col_character(),
+    v_gene = readr::col_character(),
+    d_gene = readr::col_character(),
+    j_gene = readr::col_character(),
+    c_gene = readr::col_character(),
+    full_length = readr::col_logical(),
+    productive = readr::col_logical(),
+    fwr1 = readr::col_character(),
+    fwr1_nt = readr::col_character(),
+    cdr1 = readr::col_character(),
+    cdr1_nt = readr::col_character(),
+    fwr2 = readr::col_character(),
+    fwr2_nt = readr::col_character(),
+    cdr2 = readr::col_character(),
+    cdr2_nt = readr::col_character(),
+    fwr3 = readr::col_character(),
+    fwr3_nt = readr::col_character(),
+    cdr3 = readr::col_character(),
+    cdr3_nt = readr::col_character(),
+    fwr4 = readr::col_character(),
+    fwr4_nt = readr::col_character(),
+    reads = readr::col_double(),
+    umis = readr::col_double(),
+    raw_clonotype_id = readr::col_character(),
+    raw_consensus_id = readr::col_character(),
+    exact_subclonotype_id = readr::col_double()
+  )
+
   # Check for file and return path
   res <- purrr::map_chr(vdj_dir, .get_vdj_path, file = contig_file)
 
@@ -527,7 +561,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   res <- purrr::map(
     res,
     readr::read_csv,
-    col_types = readr::cols(),
+    col_types = col_spec,
     progress  = FALSE
   )
 
@@ -539,8 +573,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
     d <- dplyr::rename(
       d,
-      chains       = .data$chain,
-      clonotype_id = .data$raw_clonotype_id
+      chains       = chain,
+      clonotype_id = raw_clonotype_id
     )
 
     d
@@ -859,9 +893,44 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
 .extract_vdj_coords <- function(airr_file) {
 
+  col_spec <- readr::cols(
+    cell_id = readr::col_character(),
+    clone_id = readr::col_character(),
+    sequence_id = readr::col_character(),
+    sequence = readr::col_character(),
+    sequence_aa = readr::col_character(),
+    productive = readr::col_logical(),
+    rev_comp = readr::col_logical(),
+    v_call = readr::col_character(),
+    v_cigar = readr::col_character(),
+    d_call = readr::col_character(),
+    d_cigar = readr::col_character(),
+    j_call = readr::col_character(),
+    j_cigar = readr::col_character(),
+    c_call = readr::col_character(),
+    c_cigar = readr::col_character(),
+    sequence_alignment = readr::col_character(),
+    germline_alignment = readr::col_character(),
+    junction = readr::col_character(),
+    junction_aa = readr::col_character(),
+    junction_length = readr::col_double(),
+    junction_aa_length = readr::col_double(),
+    v_sequence_start = readr::col_double(),
+    v_sequence_end = readr::col_double(),
+    d_sequence_start = readr::col_double(),
+    d_sequence_end = readr::col_double(),
+    j_sequence_start = readr::col_double(),
+    j_sequence_end = readr::col_double(),
+    c_sequence_start = readr::col_double(),
+    c_sequence_end = readr::col_double(),
+    consensus_count = readr::col_double(),
+    duplicate_count = readr::col_double(),
+    is_cell = readr::col_logical()
+  )
+
   airr <- readr::read_tsv(
     airr_file,
-    col_types = readr::cols(),
+    col_types = col_spec,
     progress  = FALSE
   )
 
@@ -871,7 +940,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   res <- dplyr::select(
     airr,
-    contig_id = .data$sequence_id,
+    contig_id = sequence_id,
     dplyr::matches(coord_cols_re, perl = TRUE)
   )
 
@@ -879,10 +948,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     stop("V(D)J coordinates not found, check ", airr_file)
   }
 
-  res <- tidyr::pivot_longer(res, -.data$contig_id)
+  res <- tidyr::pivot_longer(res, -contig_id)
   res <- dplyr::filter(res, !is.na(.data$value))
   res <- tidyr::extract(res, .data$name, c("seg", "pos"), coord_cols_re)
-  res <- tidyr::pivot_wider(res, names_from = .data$pos)
+  res <- tidyr::pivot_wider(res, names_from = pos)
 
   res <- dplyr::mutate(
     res,
