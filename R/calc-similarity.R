@@ -241,6 +241,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' circos plot
 #' @importFrom abdiv jaccard
 #' @seealso [calc_similarity()], [calc_mds()], [plot_mds()]
+#' @return ggplot object
 #'
 #' @examples
 #' # Plot repertoire overlap
@@ -492,6 +493,7 @@ calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to [ggplot2::geom_point()]
 #' @seealso [calc_mds()], [calc_similarity()], [plot_similarity()], [MASS::isoMDS()]
+#' @return ggplot object
 #' @export
 plot_mds <- function(input, data_col, cluster_col,
                      method = abdiv::jaccard, chain = NULL,

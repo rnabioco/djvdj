@@ -188,6 +188,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' @param ... Additional parameters to pass to [ggseqlogo::geom_logo()]
 #' @importFrom stringr str_trunc
 #' @seealso [cluster_sequences()]
+#' @return ggplot object
 #' @export
 plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
                         chain, plot_colors = NULL,

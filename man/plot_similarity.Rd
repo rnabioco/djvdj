@@ -68,6 +68,9 @@ be shown.}
 \code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap()}} for heatmap, \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for
 circos plot}
 }
+\value{
+ggplot object
+}
 \description{
 Plot cluster similarity
 }
