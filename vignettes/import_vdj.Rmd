@@ -257,3 +257,12 @@ vdj_dirs <- c(
 # This will load V(D)J data and return a data.frame
 df_vdj <- import_vdj(vdj_dir = vdj_dirs)
 ```
+
+<details style="margin-bottom:10px;">
+<summary>
+    Session info
+</summary>
+```{r}
+sessionInfo()
+```
+</details>

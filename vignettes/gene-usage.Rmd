@@ -183,3 +183,12 @@ so %>%
     scale       = TRUE
   )
 ```
+
+<details style="margin-bottom:10px;">
+<summary>
+    Session info
+</summary>
+```{r}
+sessionInfo()
+```
+</details>

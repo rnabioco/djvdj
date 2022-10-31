@@ -218,3 +218,12 @@ so %>%
     plot_colors = c(MD4 = "#fec44f", BL6 = "#3182bd")
   )
 ```
+
+<details style="margin-bottom:10px;">
+<summary>
+    Session info
+</summary>
+```{r}
+sessionInfo()
+```
+</details>
