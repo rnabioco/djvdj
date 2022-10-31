@@ -632,7 +632,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   # Only plot percent for histogram
   if (identical(units, "percent") && identical(method, "histogram")) {
-    plt_aes <- ggplot2::aes(y = .data$..count.. / sum(.data$..count..) * 100)
+    plt_aes <- ggplot2::aes(y = ..count.. / sum(..count..) * 100)
   }
 
   plt_aes$x <- sym(x)
@@ -728,8 +728,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
     res <- dplyr::mutate(
       res,
-      !!ft := ifelse(.data$pct > mn, !!ft, NA),
-      !!ft := ifelse(.data$pct <= mn, min(!!ft, na.rm = TRUE), !!ft)
+      !!ft := ifelse(pct > mn, !!ft, NA),
+      !!ft := ifelse(pct <= mn, min(!!ft, na.rm = TRUE), !!ft)
     )
   }
 
@@ -738,12 +738,12 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
     res <- dplyr::mutate(
       res,
-      !!ft := ifelse(.data$pct < mx, !!ft, NA),
-      !!ft := ifelse(.data$pct >= mx, max(!!ft, na.rm = TRUE), !!ft)
+      !!ft := ifelse(pct < mx, !!ft, NA),
+      !!ft := ifelse(pct >= mx, max(!!ft, na.rm = TRUE), !!ft)
     )
   }
 
-  res <- dplyr::select(res, -.data$pct)
+  res <- dplyr::select(res, -pct)
 
   res
 }

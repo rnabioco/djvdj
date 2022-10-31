@@ -130,7 +130,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
   res <- dplyr::mutate(
     res,
     .freq = dplyr::n_distinct(!!sym(cell_col)),
-    .pct  = (.data$.freq / .data$.n_cells) * 100
+    .pct  = (.freq / .n_cells) * 100
   )
 
   # Identify shared labels
@@ -188,7 +188,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
   )
 
   # Format labels
-  labs <- dplyr::group_by(labs, .data$grp)
+  labs <- dplyr::group_by(labs, grp)
   labs <- dplyr::mutate(
     labs,
     lab = paste0(unique(range(x)), collapse = "-")
@@ -442,7 +442,7 @@ plot_clonal_abundance <- function(input, cluster_col = NULL,
   if (n_clones > 0) {
     res <- res +
       ggrepel::geom_text_repel(
-        ggplot2::aes(label = .data$.lab),
+        ggplot2::aes(label = .lab),
         data          = top_clones,
         nudge_x       = 500,
         direction     = "y",
@@ -524,7 +524,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   plt_dat <- dplyr::group_by(plt_dat, !!sym(data_col))
 
   rnk <- dplyr::summarize(plt_dat, mn = mean(!!sym(abun_col)))
-  rnk <- dplyr::arrange(rnk, desc(.data$mn))
+  rnk <- dplyr::arrange(rnk, desc(mn))
   rnk <- pull(rnk, data_col)
 
   plt_dat <- dplyr::ungroup(plt_dat)
