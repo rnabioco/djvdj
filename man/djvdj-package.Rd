@@ -8,7 +8,7 @@
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-djvdj provides a range of tools to analyze single-cell V(D)J data.
+djvdj provides import, manipulation, analysis, and plotting tools for analyzing single-cell V(D)J gene expression data, integrating with both Seurat and SigleCellExperiment-based workflows.
 }
 \seealso{
 Useful links:
@@ -24,10 +24,10 @@ Useful links:
 
 Other contributors:
 \itemize{
-  \item Jay Hesselberth \email{jay.hesselberth@gmail.com} [contributor]
+  \item Jay Hesselberth \email{jay.hesselberth@cuanschutz.com} [contributor]
   \item Rui Fu \email{raysinensis@gmail.com} [contributor]
-  \item Kent Riemondy \email{kent.riemondy@ucdenver.edu} [contributor]
-  \item RNA Bioscience Initiative [funder]
+  \item Kent Riemondy \email{kent.riemondy@cuanschutz.edu} [contributor]
+  \item RNA Bioscience Initiative [funder, copyright holder]
 }
 
 }

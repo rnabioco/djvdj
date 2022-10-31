@@ -10,3 +10,5 @@
 ^codecov\.yml$
 ^vignettes/$
 ^vignettes/avid\.Rmd$
+splenocytes.zip
+splenocytes

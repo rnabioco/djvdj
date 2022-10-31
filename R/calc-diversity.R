@@ -34,7 +34,7 @@
 #'   method   = abdiv::simpson
 #' )
 #'
-#' head(res@meta.data, 1)
+#' head(slot(res, 'meta.data'), 1)
 #'
 #' # Group cells based on meta.data column before calculating diversity
 #' res <- calc_diversity(
@@ -43,7 +43,7 @@
 #'   cluster_col = "orig.ident"
 #' )
 #'
-#' head(res@colData, 1)
+#' head(slot(res, 'colData'), 1)
 #'
 #' # Add a prefix to the new columns
 #' # this is useful if multiple diversity calculations are stored in the
@@ -54,7 +54,7 @@
 #'   prefix   = "bcr_"
 #' )
 #'
-#' head(res@meta.data, 1)
+#' head(slot(res, 'meta.data'), 1)
 #'
 #' # Calculate multiple metrics
 #' res <- calc_diversity(
@@ -66,7 +66,7 @@
 #'   )
 #' )
 #'
-#' head(res@colData, 1)
+#' head(slot(res, 'colData'), 1)
 #'
 #' # Return a data.frame instead of adding the results to the input object
 #' res <- calc_diversity(
