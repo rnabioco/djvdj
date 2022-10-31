@@ -12,3 +12,4 @@
 ^vignettes/avid\.Rmd$
 splenocytes.zip
 splenocytes
+^inst/bench$
