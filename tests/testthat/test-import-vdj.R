@@ -1,6 +1,7 @@
 data(vdj_so)
 data(vdj_sce)
 data(tiny_so)
+data(tiny_sce)
 
 # Test data
 ctigs <- c(
