@@ -81,7 +81,8 @@ so_vdj <- so %>%
 When `cluster_col` is specified, an additional meta.data column ('shared') will be added indicating whether the clonotype is shared between multiple clusters.
 
 ```{r}
-so_vdj@meta.data %>%
+# or use `so_vdj@meta.data`
+slot(so_vdj, 'meta.data') %>%
   head(2)
 ```
 
@@ -217,3 +218,12 @@ so %>%
     plot_colors = c(MD4 = "#fec44f", BL6 = "#3182bd")
   )
 ```
+
+<details style="margin-bottom:10px;">
+<summary>
+    Session info
+</summary>
+```{r}
+sessionInfo()
+```
+</details>

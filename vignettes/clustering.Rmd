@@ -213,3 +213,12 @@ so_vdj %>%
     axis.ticks.x = element_blank()
   )
 ```
+
+<details style="margin-bottom:10px;">
+<summary>
+    Session info
+</summary>
+```{r}
+sessionInfo()
+```
+</details>

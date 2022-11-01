@@ -97,7 +97,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 
   make_adj_df <- function(mat) {
     res <- tibble::as_tibble(mat, rownames = "Var1")
-    res <- tidyr::pivot_longer(res, -.data$Var1, values_to = "Var2")
+    res <- tidyr::pivot_longer(res, -Var1, values_to = "Var2")
     res
   }
 
@@ -105,8 +105,8 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 
   adj_df <- dplyr::mutate(
     adj_df,
-    Var1 = seqs[as.integer(.data$Var1)],
-    Var2 = seqs[.data$Var2]
+    Var1 = seqs[as.integer(Var1)],
+    Var2 = seqs[Var2]
   )
 
   # Create adjacency graph
@@ -188,6 +188,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' @param ... Additional parameters to pass to [ggseqlogo::geom_logo()]
 #' @importFrom stringr str_trunc
 #' @seealso [cluster_sequences()]
+#' @return ggplot object
 #' @export
 plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
                         chain, plot_colors = NULL,

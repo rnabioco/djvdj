@@ -193,7 +193,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     bcs <- .get_meta(input)[[CELL_COL]]
 
     prfx_df <- .extract_cell_prefix(bcs, strip_bcs = FALSE)
-    prfx_df <- dplyr::distinct(prfx_df, .data$prfx, .data$sfx)
+    prfx_df <- dplyr::distinct(prfx_df, prfx, sfx)
 
     prfxs <- prfx_df$prfx
     sfxs  <- prfx_df$sfx
@@ -274,8 +274,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     contigs <- purrr::map(
       contigs,
       mutate,
-      contig_sfx = unlist(.str_extract_all(.data$contig_id, "_contig_[0-9]+$")),
-      contig_id  = paste0(.data$barcode, .data$contig_sfx),
+      contig_sfx = unlist(.str_extract_all(contig_id, "_contig_[0-9]+$")),
+      contig_id  = paste0(barcode, contig_sfx),
       contig_sfx = NULL
     )
 
@@ -368,7 +368,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
       "these contigs will be removed."
     )
 
-    contigs <- dplyr::filter(contigs, !is.na(.data$clonotype_id))
+    contigs <- dplyr::filter(contigs, !is.na(clonotype_id))
   }
 
   # Select V(D)J columns to keep
@@ -402,7 +402,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   vdj_cols  <- c(vdj_cols, "paired")
 
   if (filter_paired) {
-    contigs <- dplyr::filter(contigs, .data$paired)
+    contigs <- dplyr::filter(contigs, paired)
   }
 
   # Order chains and CDR3 sequences
@@ -411,7 +411,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   # the clonotype ID
   contigs <- dplyr::arrange(
     contigs,
-    .data$barcode, .data$chains, .data$cdr3_nt
+    barcode, chains, cdr3_nt
   )
 
   # Extract isotypes from c_gene for IGH chain (for BCR data only)
@@ -438,13 +438,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   )
 
   # Reorder columns
-  meta <- dplyr::relocate(meta, .data$paired, .after = "full_length")
+  meta <- dplyr::relocate(meta, paired, .after = "full_length")
   meta <- dplyr::relocate(meta, all_of(len_cols), .after = last(cdr3_cols))
-  meta <- dplyr::relocate(meta, .data$n_chains, .after = "chains")
+  meta <- dplyr::relocate(meta, n_chains, .after = "chains")
   meta <- dplyr::relocate(meta, all_of(gene_cols), .after = last(len_cols))
 
   if (vdj_class %in% c("BCR", "Multi")) {
-    meta <- dplyr::relocate(meta, .data$isotype, .after = "c_gene")
+    meta <- dplyr::relocate(meta, isotype, .after = "c_gene")
   }
 
   # Check for duplicated cell barcodes
@@ -487,7 +487,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   # Filter to only include cells with valid clonotype_id
   # cells with missing clonotype have a clonotype_id of 'None'
-  res <- dplyr::filter(res, .data$clonotype_id != "None")
+  res <- dplyr::filter(res, clonotype_id != "None")
 
   if (nrow(res) == 0) {
     warning("No valid clonotypes present, check input data.")
@@ -539,8 +539,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
     d <- dplyr::rename(
       d,
-      chains       = .data$chain,
-      clonotype_id = .data$raw_clonotype_id
+      chains       = chain,
+      clonotype_id = raw_clonotype_id
     )
 
     d
@@ -595,15 +595,15 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   )
 
   # Filter for contigs in cells
-  res <- dplyr::filter(res, .data$is_cell)
+  res <- dplyr::filter(res, is_cell)
 
   # Replace 'None' with FALSE for QC columns
   res <- .replace_none(res, chk_none)
 
   res <- dplyr::rename(
     res,
-    chains       = .data$chain,
-    clonotype_id = .data$raw_clonotype_id
+    chains       = chain,
+    clonotype_id = raw_clonotype_id
   )
 
   # Format cell barcode prefixes
@@ -633,7 +633,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   prfx_df <- .extract_cell_prefix(bcs, strip_bcs = TRUE)
 
   # Match old and new prefixes
-  new <- dplyr::distinct(prfx_df, .data$prfx, .data$sfx)
+  new <- dplyr::distinct(prfx_df, prfx, sfx)
 
   if (nrow(new) != length(cell_prfxs)) {
     stop(
@@ -650,9 +650,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   # Format cell barcodes
   prfx_df <- dplyr::mutate(
     prfx_df,
-    prfx = ifelse(is.na(.data$new_prfx), .data$prfx, .data$new_prfx),
-    sfx  = ifelse(is.na(.data$new_sfx), .data$sfx, .data$new_sfx),
-    bc   = paste0(.data$prfx, .data$bc, .data$sfx)
+    prfx = ifelse(is.na(new_prfx), prfx, new_prfx),
+    sfx  = ifelse(is.na(new_sfx), sfx, new_sfx),
+    bc   = paste0(prfx, bc, sfx)
   )
 
   df_in[[bc_col]] <- prfx_df$bc
@@ -678,8 +678,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   if (strip_bcs) {
     res <- dplyr::mutate(
       res,
-      bc = stringr::str_remove(.data$bc, paste0("^", .data$prfx)),
-      bc = stringr::str_remove(.data$bc, paste0(.data$sfx, "$"))
+      bc = stringr::str_remove(bc, paste0("^", prfx)),
+      bc = stringr::str_remove(bc, paste0(sfx, "$"))
     )
   }
 
@@ -786,7 +786,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   res <- purrr::map(
     res,
     mutate,
-    barcode = unlist(.str_extract_all(.data$contig_id, id_re))
+    barcode = unlist(.str_extract_all(contig_id, id_re))
   )
 
   # Format cell barcode prefixes
@@ -801,8 +801,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   res <- purrr::map(
     res,
     mutate,
-    contig_sfx = unlist(.str_extract_all(.data$contig_id, "_contig_[0-9]+$")),
-    contig_id  = paste0(.data$barcode, .data$contig_sfx),
+    contig_sfx = unlist(.str_extract_all(contig_id, "_contig_[0-9]+$")),
+    contig_id  = paste0(barcode, contig_sfx),
     contig_sfx = NULL,
     barcode    = NULL
   )
@@ -824,30 +824,30 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   bam_info <- dplyr::filter(
     bam_info,
-    grepl("_contig_[0-9]+$", .data$contig_id)
+    grepl("_contig_[0-9]+$", contig_id)
   )
 
   # Get 0-based coordinates for mutations
   # set width of deletion coordinates as 0
   res <- dplyr::mutate(
     bam_info,
-    n    = .str_extract_all(.data$cigar, "[0-9]+(?=[^0-9])"),
-    type = .str_extract_all(.data$cigar, "(?<=[0-9])[^0-9]{1}")
+    n    = .str_extract_all(cigar, "[0-9]+(?=[^0-9])"),
+    type = .str_extract_all(cigar, "(?<=[0-9])[^0-9]{1}")
   )
 
-  res <- tidyr::unnest(res, c(.data$n, .data$type))
-  res <- dplyr::group_by(res, .data$contig_id)
+  res <- tidyr::unnest(res, c(n, type))
+  res <- dplyr::group_by(res, contig_id)
 
   res <- dplyr::mutate(
     res,
-    n     = as.numeric(.data$n),
-    idx   = ifelse(.data$type != "D", .data$n, 0),
-    end   = cumsum(.data$idx),
-    start = lag(.data$end, default = 0)
+    n     = as.numeric(n),
+    idx   = ifelse(type != "D", n, 0),
+    end   = cumsum(idx),
+    start = lag(end, default = 0)
   )
 
   res <- dplyr::ungroup(res)
-  res <- dplyr::filter(res, .data$type != "=")
+  res <- dplyr::filter(res, type != "=")
 
   res <- dplyr::select(
     res,
@@ -871,7 +871,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   res <- dplyr::select(
     airr,
-    contig_id = .data$sequence_id,
+    contig_id = sequence_id,
     dplyr::matches(coord_cols_re, perl = TRUE)
   )
 
@@ -879,15 +879,15 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     stop("V(D)J coordinates not found, check ", airr_file)
   }
 
-  res <- tidyr::pivot_longer(res, -.data$contig_id)
-  res <- dplyr::filter(res, !is.na(.data$value))
-  res <- tidyr::extract(res, .data$name, c("seg", "pos"), coord_cols_re)
-  res <- tidyr::pivot_wider(res, names_from = .data$pos)
+  res <- tidyr::pivot_longer(res, -contig_id)
+  res <- dplyr::filter(res, !is.na(value))
+  res <- tidyr::extract(res, name, c("seg", "pos"), coord_cols_re)
+  res <- tidyr::pivot_wider(res, names_from = pos)
 
   res <- dplyr::mutate(
     res,
-    start = .data$start - 1,
-    len   = .data$end - .data$start
+    start = start - 1,
+    len   = end - start
   )
 
   res <- dplyr::select(
@@ -908,15 +908,15 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   mut_coords <- dplyr::mutate(
     mut_coords,
-    type = dplyr::recode(.data$type, !!!mut_key)
+    type = dplyr::recode(type, !!!mut_key)
   )
 
   # If no vdj_coords, return mutation totals
   if (identical(vdj_coords, NA)) {
     res <- all_muts %>%
       tidyr::pivot_wider(
-        names_from  = .data$type,
-        values_from = .data$n,
+        names_from  = type,
+        values_from = n,
         values_fill = 0
       )
 
@@ -924,7 +924,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
       res,
       across(
         starts_with("all_"),
-        ~ .x / .data$len,
+        ~ .x / len,
         .names = "{.col}_freq"
       )
     )
@@ -944,73 +944,73 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   vdj_muts <- dplyr::filter(
     vdj_muts,
-    .data$start < .data$end.seg &
-    .data$end   > .data$start.seg
+    start < end.seg &
+    end   > start.seg
   )
 
   vdj_muts <- dplyr::mutate(
     vdj_muts,
-    len = .data$len.seg,
+    len = len.seg,
 
     new_start = ifelse(
-      .data$start >= .data$start.seg, .data$start, .data$start.seg
+      start >= start.seg, start, start.seg
     ),
 
     new_end = ifelse(
-      .data$end <= .data$end.seg, .data$end, .data$end.seg
+      end <= end.seg, end, end.seg
     ),
 
     new_end = ifelse(
-      .data$type == mut_key[["D"]], .data$new_end + 1, .data$new_end
+      type == mut_key[["D"]], new_end + 1, new_end
     ),
 
     n = ifelse(
-      .data$type != mut_key[["D"]], .data$new_end - .data$new_start, .data$n
+      type != mut_key[["D"]], new_end - new_start, n
     )
   )
 
   # Identify junction indels
-  jxn_muts <- filter(vdj_muts, .data$type %in% unname(mut_key[c("I", "D")]))
+  jxn_muts <- filter(vdj_muts, type %in% unname(mut_key[c("I", "D")]))
 
   jxn_muts <- mutate(
     jxn_muts,
     seg = case_when(
-      .data$seg == "v" & .data$end.seg   == .data$new_end   ~ "vd",
-      .data$seg == "d" & .data$start.seg == .data$new_start ~ "vd",
-      .data$seg == "d" & .data$end.seg   == .data$new_end   ~ "dj",
-      .data$seg == "j" & .data$start.seg == .data$new_start ~ "dj",
+      seg == "v" & end.seg   == new_end   ~ "vd",
+      seg == "d" & start.seg == new_start ~ "vd",
+      seg == "d" & end.seg   == new_end   ~ "dj",
+      seg == "j" & start.seg == new_start ~ "dj",
       TRUE ~ as.character(NA)
     )
   )
 
-  jxn_muts <- dplyr::filter(jxn_muts, !is.na(.data$seg))
-  jxn_muts <- dplyr::select(jxn_muts, -.data$len)
+  jxn_muts <- dplyr::filter(jxn_muts, !is.na(seg))
+  jxn_muts <- dplyr::select(jxn_muts, -len)
 
   vdj_muts <- bind_rows(vdj_muts, jxn_muts)
 
   # Summarize mutation counts
   vdj_muts <- dplyr::group_by(
     vdj_muts,
-    .data$contig_id, .data$len, .data$type, .data$seg
+    contig_id, len, type, seg
   )
 
-  vdj_muts <- dplyr::summarize(vdj_muts, n = sum(.data$n), .groups = "drop")
+  vdj_muts <- dplyr::summarize(vdj_muts, n = sum(n), .groups = "drop")
 
   # Summarize total mutations and total length per contig
   # for each mutation type, sum total for v, d, j, and c segments, exclude jxns
-  all_muts <- dplyr::filter(vdj_muts, !.data$seg %in% c("vd", "dj"))
-  all_muts <- dplyr::group_by(all_muts, .data$contig_id, .data$type)
+  all_muts <- dplyr::filter(vdj_muts, !seg %in% c("vd", "dj"))
+  all_muts <- dplyr::group_by(all_muts, contig_id, type)
 
   all_muts <- dplyr::summarize(
     all_muts,
-    n       = sum(.data$n),
-    len     = sum(.data$len),
+    n       = sum(n),
+    len     = sum(len),
     seg     = "all",
     .groups = "drop"
   )
 
   vdj_muts <- dplyr::bind_rows(vdj_muts, all_muts)
-  res      <- tidyr::unite(vdj_muts, "type", .data$seg, .data$type, sep = "_")
+  res      <- tidyr::unite(vdj_muts, "type", seg, type, sep = "_")
 
   # Set final output columns
   freq_cols <- mut_cols <- c("v", "d", "j", "c", "all")
@@ -1026,22 +1026,22 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   freq_cols <- purrr::map_chr(freq_cols, paste0, "_", mut_key[["X"]])
 
   # Calculate mismatch frequency
-  freq <- dplyr::filter(res, .data$type %in% freq_cols)
+  freq <- dplyr::filter(res, type %in% freq_cols)
 
   freq <- dplyr::mutate(
     freq,
-    n    = round(.data$n / .data$len, 6),
-    type = paste0(.data$type, "_freq"),
+    n    = round(n / len, 6),
+    type = paste0(type, "_freq"),
     len  = NULL
   )
 
   res <- dplyr::bind_rows(res, freq)
-  res <- dplyr::select(res, -.data$len)
+  res <- dplyr::select(res, -len)
 
   res <- tidyr::pivot_wider(
     res,
-    names_from  = .data$type,
-    values_from = .data$n,
+    names_from  = type,
+    values_from = n,
     values_fill = 0
   )
 
@@ -1219,12 +1219,12 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' @noRd
 .identify_paired <- function(df_in) {
 
-  res <- dplyr::group_by(df_in, .data$barcode)
+  res <- dplyr::group_by(df_in, barcode)
 
   res <- dplyr::mutate(
     res,
-    paired = (all(c("TRA", "TRB") %in% .data$chains)) |
-      ("IGH" %in% .data$chains & any(c("IGL", "IGK") %in% .data$chains))
+    paired = (all(c("TRA", "TRB") %in% chains)) |
+      ("IGH" %in% chains & any(c("IGL", "IGK") %in% chains))
   )
 
   res <- dplyr::ungroup(res)
@@ -1258,7 +1258,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   iso_df[iso_col] <- isos
 
-  iso_df <- dplyr::distinct(iso_df, .data$barcode, .data$c_gene)
+  iso_df <- dplyr::distinct(iso_df, barcode, c_gene)
   iso_df <- stats::na.omit(iso_df)
 
   dups <- iso_df$barcode
@@ -1267,7 +1267,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   # Add isotypes to meta.data
   iso_df <- mutate(
     iso_df,
-    isotype = ifelse(.data$barcode %in% dups, "Multi", !!sym(iso_col))
+    isotype = ifelse(barcode %in% dups, "Multi", !!sym(iso_col))
   )
 
   isos <- purrr::set_names(
@@ -1277,8 +1277,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 
   res <- mutate(
     df_in,
-    isotype = unname(isos[.data$barcode]),
-    isotype = tidyr::replace_na(.data$isotype, "None")
+    isotype = unname(isos[barcode]),
+    isotype = tidyr::replace_na(isotype, "None")
   )
 
   res
@@ -1378,7 +1378,7 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
 
       dplyr::across(
         dplyr::all_of(data_cols),
-        ~ paste0(.x[.data$.clone_idx], collapse = ""),
+        ~ paste0(.x[.clone_idx], collapse = ""),
         .names = ".clone_{.col}"
       ),
 
@@ -1395,12 +1395,12 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
   vdj <- dplyr::mutate(
     vdj,
     .new_clone = paste(!!!syms(data_cols), sep = ""),
-    .new_id    = rank(.data$.new_clone, ties.method = "min"),
+    .new_id    = rank(.new_clone, ties.method = "min"),
 
     !!sym(clonotype_col) := ifelse(
-      .data$.new_clone == "",
+      .new_clone == "",
       "None",
-      paste0("clonotype", .data$.new_id)
+      paste0("clonotype", .new_id)
     )
   )
 
@@ -1440,17 +1440,17 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
 #       contig_id = bam_lst[[1]]$qname
 #     )
 #
-#     res <- dplyr::filter(res, grepl("_contig_[0-9]+$", .data$contig_id))
+#     res <- dplyr::filter(res, grepl("_contig_[0-9]+$", contig_id))
 #
 #     # Add indel columns
 #     res <- dplyr::mutate(
 #       res,
-#       n_insertion = .extract_pat(.data$cigar, "[0-9]+(?=I)"),
-#       n_deletion  = .extract_pat(.data$cigar, "[0-9]+(?=D)"),
-#       n_mismatch  = .extract_pat(.data$cigar, "[0-9]+(?=X)"),
+#       n_insertion = .extract_pat(cigar, "[0-9]+(?=I)"),
+#       n_deletion  = .extract_pat(cigar, "[0-9]+(?=D)"),
+#       n_mismatch  = .extract_pat(cigar, "[0-9]+(?=X)"),
 #     )
 #
-#     res <- dplyr::select(res, -.data$cigar)
+#     res <- dplyr::select(res, -cigar)
 #
 #     res
 #   }

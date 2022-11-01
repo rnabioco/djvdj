@@ -1,3 +1,5 @@
+data(vdj_so)
+data(vdj_sce)
 
 test_cols <- c(
   "#E69F00", "#56B4E9", "#009E73",

@@ -112,7 +112,7 @@ filter_vdj <- function(input, filt, data_cols = NULL,
   }
 
   keep_rows <- vdj$.KEEP
-  vdj       <- dplyr::select(vdj, -.data$.KEEP)
+  vdj       <- dplyr::select(vdj, -.KEEP)
 
   # If vectors in keep_rows are all length 1, filter cells
   if (length_one) {

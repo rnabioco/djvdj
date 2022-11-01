@@ -127,7 +127,7 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
     res <- tidyr::pivot_wider(
       res,
       names_from  = all_of(clst_nm),
-      values_from = .data$freq,
+      values_from = freq,
       values_fill = 0
     )
 
@@ -154,8 +154,8 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
     )
   }
 
-  res <- dplyr::mutate(res, pct = (.data$freq / .data$n_cells) * 100)
-  res <- dplyr::arrange(res, desc(.data$pct))
+  res <- dplyr::mutate(res, pct = (freq / n_cells) * 100)
+  res <- dplyr::arrange(res, desc(pct))
 
   res
 }
@@ -617,12 +617,12 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   res <- dplyr::mutate(res, rnk = row_number(desc(!!sym(dat_col))))
 
   if (is.null(clst_col)) {
-    res <- dplyr::filter(res, !!gn_2 %in% top_2 | .data$rnk == 1)
+    res <- dplyr::filter(res, !!gn_2 %in% top_2 | rnk == 1)
 
   } else {
     res <- dplyr::filter(
       res,
-      !!gn_2 %in% top_2[[dplyr::cur_group()[[clst_col]]]] | .data$rnk == 1
+      !!gn_2 %in% top_2[[dplyr::cur_group()[[clst_col]]]] | rnk == 1
     )
   }
 

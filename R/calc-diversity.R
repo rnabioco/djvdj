@@ -34,7 +34,7 @@
 #'   method   = abdiv::simpson
 #' )
 #'
-#' head(res@meta.data, 1)
+#' head(slot(res, 'meta.data'), 1)
 #'
 #' # Group cells based on meta.data column before calculating diversity
 #' res <- calc_diversity(
@@ -43,7 +43,7 @@
 #'   cluster_col = "orig.ident"
 #' )
 #'
-#' head(res@colData, 1)
+#' head(slot(res, 'colData'), 1)
 #'
 #' # Add a prefix to the new columns
 #' # this is useful if multiple diversity calculations are stored in the
@@ -54,7 +54,7 @@
 #'   prefix   = "bcr_"
 #' )
 #'
-#' head(res@meta.data, 1)
+#' head(slot(res, 'meta.data'), 1)
 #'
 #' # Calculate multiple metrics
 #' res <- calc_diversity(
@@ -66,7 +66,7 @@
 #'   )
 #' )
 #'
-#' head(res@colData, 1)
+#' head(slot(res, 'colData'), 1)
 #'
 #' # Return a data.frame instead of adding the results to the input object
 #' res <- calc_diversity(
@@ -186,18 +186,18 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
       sam,
       met       = .y,
       diversity = list(.calc_div(!!sym(data_col), met = .x)),
-      stderr    = purrr::map_dbl(.data$diversity, pull, "std.error"),
-      diversity = purrr::map_dbl(.data$diversity, pull, "statistic")
+      stderr    = purrr::map_dbl(diversity, pull, "std.error"),
+      diversity = purrr::map_dbl(diversity, pull, "statistic")
     )
   })
 
   div_cols <- "diversity"
 
   if (n_boots > 1) div_cols <- c(div_cols, "stderr")
-  else             div <- dplyr::select(div, -.data$stderr)
+  else             div <- dplyr::select(div, -stderr)
 
   div <- tidyr::pivot_longer(div, all_of(div_cols))
-  div <- tidyr::unite(div, "name", .data$met, .data$name)
+  div <- tidyr::unite(div, "name", met, name)
   div <- tidyr::pivot_wider(div)
 
   # Format results
@@ -372,12 +372,12 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
   re <- "^(.+)_(diversity|stderr)$"
 
-  plt_dat <- tidyr::extract(plt_dat, .data$name, into = c("met", "type"), re)
+  plt_dat <- tidyr::extract(plt_dat, name, into = c("met", "type"), re)
 
   plt_dat <- tidyr::pivot_wider(
     plt_dat,
-    names_from  = .data$type,
-    values_from = .data$value
+    names_from  = type,
+    values_from = value
   )
 
   # Set plot levels
@@ -439,8 +439,8 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
       ggplot2::geom_linerange(
         aes(
           !!sym(cluster_col),
-          ymin = .data$diversity - .data$stderr,
-          ymax = .data$diversity + .data$stderr
+          ymin = diversity - stderr,
+          ymax = diversity + stderr
         )
       )
   }
@@ -560,13 +560,13 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
 
   plt_dat <- dplyr::mutate(
     plt_dat,
-    method = dplyr::recode(.data$Method, "Observed" = "Rarefaction"),
+    method = dplyr::recode(Method, "Observed" = "Rarefaction"),
     method = stringr::str_to_lower(method),
-    Order.q = met_labs[as.character(.data$Order.q)]
+    Order.q = met_labs[as.character(Order.q)]
   )
 
   if (!is.null(cluster_col)) {
-    plt_dat <- dplyr::rename(plt_dat, !!sym(cluster_col) := .data$Assemblage)
+    plt_dat <- dplyr::rename(plt_dat, !!sym(cluster_col) := Assemblage)
   }
 
   plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
@@ -576,13 +576,13 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
   # Plot standard error
   res <- ggplot2::ggplot(
     plt_dat,
-    ggplot2::aes(.data$m, .data$qD, linetype = method)
+    ggplot2::aes(m, qD, linetype = method)
   ) +
     ggplot2::guides(linetype = ggplot2::guide_legend(title = NULL))
 
   if (n_boots > 1) {
     gg_aes <- ggplot2::aes(
-      x = .data$m, ymin = .data$qD.LCL, ymax = .data$qD.UCL
+      x = m, ymin = qD.LCL, ymax = qD.UCL
     )
 
     if (!is.null(cluster_col))   gg_aes$fill <- sym(cluster_col)

@@ -1,21 +1,22 @@
 Package: djvdj
 Title: A collection of single-cell V(D)J tools
-Version: 0.0.0.9000
+Version: 0.99.0
 Authors@R: c(
     person("Ryan", "Sheridan", , "ryan.sheridan@cuanschutz.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-4012-3147")),
-    person("Jay", "Hesselberth", , "jay.hesselberth@gmail.com", role = "ctb"),
+    person("Jay", "Hesselberth", , "jay.hesselberth@cuanschutz.com", role = "ctb"),
     person("Rui", "Fu", , "raysinensis@gmail.com", role = "ctb"),
-    person("Kent", "Riemondy", , "kent.riemondy@ucdenver.edu", role = "ctb"),
-    person("RNA Bioscience Initiative", role = "fnd")
+    person("Kent", "Riemondy", , "kent.riemondy@cuanschutz.edu", role = "ctb"),
+    person("RNA Bioscience Initiative", role = c("fnd", "cph"))
   )
-Description: djvdj provides a range of tools to analyze single-cell V(D)J
-    data.
+Description: djvdj provides import, manipulation, analysis, and plotting tools
+  for analyzing single-cell V(D)J gene expression data, integrating with both
+  Seurat and SigleCellExperiment-based workflows.
 License: MIT + file LICENSE
 URL: https://rnabioco.github.io/djvdj/, https://github.com/rnabioco/djvdj/
 BugReports: https://github.com/rnabioco/djvdj/issues
 Depends: 
-    R (>= 4.0.0)
+    R (>= 4.2.0)
 Imports: 
     abdiv,
     Biostrings,
@@ -29,6 +30,8 @@ Imports:
     ggrepel,
     ggseqlogo,
     glue,
+    graphics,
+    grid,
     igraph (>= 1.3.0),
     iNEXT,
     MASS,
@@ -44,6 +47,7 @@ Imports:
     stringr,
     tibble,
     tidyr,
+    utils,
     uwot
 Suggests: 
     covr,
@@ -54,13 +58,14 @@ Suggests:
     RColorBrewer,
     rmarkdown,
     roxygen2,
-    testthat
+    testthat (>= 3.0.0)
 VignetteBuilder: 
     knitr
-Remotes:
-    tidyverse/magrittr
-Config/Needs/website:pkgdown, rnabioco/rbitemplate
+Config/Needs/website:
+  pkgdown,
+  rnabioco/rbitemplate
+biocViews: DataImport, GeneExpression, SingleCell, RNASeq, ImmunoOncology
 Encoding: UTF-8
-LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
+Config/testthat/edition: 3

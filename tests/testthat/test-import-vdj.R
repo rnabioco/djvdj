@@ -1,3 +1,8 @@
+data(vdj_so)
+data(vdj_sce)
+data(tiny_so)
+data(tiny_sce)
+
 # Test data
 ctigs <- c(
   system.file("extdata/bcr_1/outs", package = "djvdj"),

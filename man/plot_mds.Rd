@@ -51,6 +51,9 @@ all chains.}
 
 \item{...}{Additional arguments to pass to \code{\link[ggplot2:geom_point]{ggplot2::geom_point()}}}
 }
+\value{
+ggplot object
+}
 \description{
 Perform multidimensional scaling and plot results
 }

@@ -194,3 +194,12 @@ so %>%
     n_boots     = 0
   )
 ```
+
+<details style="margin-bottom:10px;">
+<summary>
+    Session info
+</summary>
+```{r}
+sessionInfo()
+```
+</details>
