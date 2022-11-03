@@ -135,8 +135,9 @@
 #' head(vdj_df, 1)
 #'
 #' @export
-import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains = TRUE,
-                       filter_paired = FALSE, define_clonotypes = NULL, include_mutations = FALSE,
+import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
+                       filter_chains = TRUE, filter_paired = FALSE,
+                       define_clonotypes = NULL, include_mutations = FALSE,
                        aggr_dir = NULL, sep = ";") {
 
   # Check that vdj_dir or aggr_dir is provided
@@ -521,37 +522,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
                            chk_none = c("productive", "full_length")) {
 
   col_spec <- readr::cols(
-    barcode = readr::col_character(),
-    is_cell = readr::col_logical(),
-    contig_id = readr::col_character(),
-    high_confidence = readr::col_logical(),
-    length = readr::col_double(),
-    chain = readr::col_character(),
     v_gene = readr::col_character(),
     d_gene = readr::col_character(),
     j_gene = readr::col_character(),
-    c_gene = readr::col_character(),
-    full_length = readr::col_logical(),
-    productive = readr::col_logical(),
-    fwr1 = readr::col_character(),
-    fwr1_nt = readr::col_character(),
-    cdr1 = readr::col_character(),
-    cdr1_nt = readr::col_character(),
-    fwr2 = readr::col_character(),
-    fwr2_nt = readr::col_character(),
-    cdr2 = readr::col_character(),
-    cdr2_nt = readr::col_character(),
-    fwr3 = readr::col_character(),
-    fwr3_nt = readr::col_character(),
-    cdr3 = readr::col_character(),
-    cdr3_nt = readr::col_character(),
-    fwr4 = readr::col_character(),
-    fwr4_nt = readr::col_character(),
-    reads = readr::col_double(),
-    umis = readr::col_double(),
-    raw_clonotype_id = readr::col_character(),
-    raw_consensus_id = readr::col_character(),
-    exact_subclonotype_id = readr::col_double()
+    c_gene = readr::col_character()
   )
 
   # Check for file and return path
@@ -562,7 +536,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     res,
     readr::read_csv,
     col_types = col_spec,
-    progress  = FALSE
+    progress  = FALSE,
+    show_col_types = FALSE
   )
 
   # Replace 'None' in productive with FALSE
@@ -587,19 +562,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     cell_sfxs  = cell_sfxs
   )
 
-  # furrr::furrr_options(globals = FALSE)
-  # future::plan(future::multisession, workers = 2)
-  #
-  # tictoc::tic()
-  # crt_fn <- carrier::crate(
-  #   my_fn = .format_cell_prefixes,
-  #   function(...) my_fn(...)
-  # )
-  #
-  # res <- purrr::pmap(prfx_args, crt_fn, bc_col = "barcode")
-  # # res <- furrr::future_pmap(prfx_args, .format_cell_prefixes, bc_col = "barcode")
-  # tictoc::toc()
-
   res <- purrr::pmap(prfx_args, .format_cell_prefixes, bc_col = "barcode")
 
   res
@@ -613,10 +575,17 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' @param chk_none Value of 'None' will be replaced with FALSE for the
 #' specified columns and converted to logical
 #' @return data.frame
-#' @importFrom readr read_csv cols
 #' @noRd
-.load_aggr_data <- function(aggr_dir, cell_prfxs, cell_sfxs, contig_file = "filtered_contig_annotations.csv",
+.load_aggr_data <- function(aggr_dir, cell_prfxs, cell_sfxs,
+                            contig_file = "filtered_contig_annotations.csv",
                             chk_none = c("productive", "full_length")) {
+
+  col_spec <- readr::cols(
+    v_gene = readr::col_character(),
+    d_gene = readr::col_character(),
+    j_gene = readr::col_character(),
+    c_gene = readr::col_character()
+  )
 
   # Check for file and return path
   res <- .get_vdj_path(aggr_dir, file = contig_file)
@@ -624,8 +593,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   # Load data
   res <- readr::read_csv(
     res,
-    col_types = readr::cols(),
-    progress  = FALSE
+    col_types = col_spec,
+    progress  = FALSE,
+    show_col_types = FALSE
   )
 
   # Filter for contigs in cells
@@ -659,7 +629,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' @return data.frame with formatted barcodes
 #' @importFrom stringr str_remove
 #' @noRd
-.format_cell_prefixes <- function(df_in, bc_col = "barcode", cell_prfxs, cell_sfxs) {
+.format_cell_prefixes <- function(df_in, bc_col = "barcode", cell_prfxs,
+                                  cell_sfxs) {
 
   # Extract current cell prefixes
   bcs <- df_in[[bc_col]]
@@ -747,23 +718,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   )
 
   res
-
-  # WHY????
-  # res <- dplyr::rowwise(df_in)
-  #
-  # res <- dplyr::mutate(
-  #   res,
-  #   dplyr::across(.cols = all_of(clmns), ~ {
-  #     ifelse(
-  #       !is.logical(.x),
-  #       as.logical(gsub("None", "FALSE", .x)),
-  #       .x
-  #     )
-  #   })
-  # )
-  #
-  # res <- dplyr::ungroup(res)
-  # res
 }
 
 #' Load mutation information for each contig
@@ -773,12 +727,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' vector is given, the cell barcodes will be prefixed with the provided names.
 #' This mimics the behavior of the Read10X function found in the Seurat
 #' package.
-#' @param bam_file bam file from cellranger vdj containing alignment data comparing
-#' each contig with the germline reference
+#' @param bam_file bam file from cellranger vdj containing alignment data
+#' comparing each contig with the germline reference
 #' @return List containing one data.frame for each path provided to vdj_dir
 #' @importFrom Rsamtools scanBam
 #' @noRd
-.load_muts <- function(vdj_dir, cell_prfxs, cell_sfxs, bam_file = "concat_ref.bam",
+.load_muts <- function(vdj_dir, cell_prfxs, cell_sfxs,
+                       bam_file = "concat_ref.bam",
                        airr_file = "airr_rearrangement.tsv") {
 
   # Retrieve bam and airr file paths
@@ -894,44 +849,29 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 .extract_vdj_coords <- function(airr_file) {
 
   col_spec <- readr::cols(
-    cell_id = readr::col_character(),
-    clone_id = readr::col_character(),
-    sequence_id = readr::col_character(),
-    sequence = readr::col_character(),
-    sequence_aa = readr::col_character(),
-    productive = readr::col_logical(),
-    rev_comp = readr::col_logical(),
-    v_call = readr::col_character(),
+    v_call  = readr::col_character(),
     v_cigar = readr::col_character(),
-    d_call = readr::col_character(),
+    d_call  = readr::col_character(),
     d_cigar = readr::col_character(),
-    j_call = readr::col_character(),
+    j_call  = readr::col_character(),
     j_cigar = readr::col_character(),
-    c_call = readr::col_character(),
+    c_call  = readr::col_character(),
     c_cigar = readr::col_character(),
-    sequence_alignment = readr::col_character(),
-    germline_alignment = readr::col_character(),
-    junction = readr::col_character(),
-    junction_aa = readr::col_character(),
-    junction_length = readr::col_double(),
-    junction_aa_length = readr::col_double(),
     v_sequence_start = readr::col_double(),
-    v_sequence_end = readr::col_double(),
+    v_sequence_end   = readr::col_double(),
     d_sequence_start = readr::col_double(),
-    d_sequence_end = readr::col_double(),
+    d_sequence_end   = readr::col_double(),
     j_sequence_start = readr::col_double(),
-    j_sequence_end = readr::col_double(),
+    j_sequence_end   = readr::col_double(),
     c_sequence_start = readr::col_double(),
-    c_sequence_end = readr::col_double(),
-    consensus_count = readr::col_double(),
-    duplicate_count = readr::col_double(),
-    is_cell = readr::col_logical()
+    c_sequence_end   = readr::col_double()
   )
 
   airr <- readr::read_tsv(
     airr_file,
     col_types = col_spec,
-    progress  = FALSE
+    progress  = FALSE,
+    show_col_types = FALSE
   )
 
   # Pull V(D)J gene coordinates from AIRR file
@@ -944,9 +884,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
     dplyr::matches(coord_cols_re, perl = TRUE)
   )
 
-  if (ncol(res) == 1) {
-    stop("V(D)J coordinates not found, check ", airr_file)
-  }
+  if (ncol(res) == 1) stop("V(D)J coordinates not found, check ", airr_file)
 
   res <- tidyr::pivot_longer(res, -contig_id)
   res <- dplyr::filter(res, !is.na(.data$value))
@@ -1178,7 +1116,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
   has_sep <- grepl(sep, df_in[, sep_cols, drop = FALSE], fixed = TRUE)
 
   if (any(has_sep)) {
-    stop("The string '", sep, "' is already present in the input data, select a different value for 'sep'.")
+    stop(
+      "The string '", sep, "' is already present in the input data, ",
+      "select a different value for 'sep'."
+    )
   }
 
   sep
@@ -1246,9 +1187,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #' @noRd
 .check_overlap <- function(input, meta, nm, pct_min = 25) {
 
-  if (is.null(input)) {
-    return(meta)
-  }
+  if (is.null(input)) return(meta)
 
   obj_meta  <- .get_meta(input)
   obj_cells <- obj_meta[[CELL_COL]]
@@ -1408,7 +1347,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "", filter_chains 
 #'
 #' @export
 define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
-                              filter_chains = c("productive", "full_length"), sep = ";") {
+                              filter_chains = c("productive", "full_length"),
+                              sep = ";") {
 
   # Get meta.data
   # overwrite exising clonotype_col if it has the same name
@@ -1481,204 +1421,3 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
 
   res
 }
-
-
-
-
-
-# #' Load insertion/deletion information for each contig
-# #'
-# #' VERSION TO LOAD INDELS FROM CONCAT_REF BAM
-# #'
-# #' @param vdj_dir Directory containing the output from cellranger vdj. A vector
-# #' or named vector can be given to load data from several runs. If a named
-# #' vector is given, the cell barcodes will be prefixed with the provided names.
-# #' This mimics the behavior of the Read10X function found in the Seurat
-# #' package.
-# #' @param bam_file bam file from cellranger vdj containing alignment data comparing
-# #' each contig with the germline reference
-# #' @return List containing one data.frame for each path provided to vdj_dir
-# #' @importFrom Rsamtools scanBam
-# #' @noRd
-# .load_bam_indels <- function(vdj_dir, bam_file = "concat_ref.bam") {
-#
-#   .extract_indels <- function(bam_lst) {
-#
-#     res <- tibble::tibble(
-#       cigar     = bam_lst[[1]]$cigar,
-#       contig_id = bam_lst[[1]]$qname
-#     )
-#
-#     res <- dplyr::filter(res, grepl("_contig_[0-9]+$", .data$contig_id))
-#
-#     # Add indel columns
-#     res <- dplyr::mutate(
-#       res,
-#       n_insertion = .extract_pat(.data$cigar, "[0-9]+(?=I)"),
-#       n_deletion  = .extract_pat(.data$cigar, "[0-9]+(?=D)"),
-#       n_mismatch  = .extract_pat(.data$cigar, "[0-9]+(?=X)"),
-#     )
-#
-#     res <- dplyr::select(res, -.data$cigar)
-#
-#     res
-#   }
-#
-#   .extract_pat <- function(string, pat) {
-#     res <- purrr::map_dbl(string, ~ {
-#       strg  <- .x
-#       mtch  <- gregexpr(pat, strg, perl = TRUE)[[1]]
-#       strts <- as.integer(mtch)
-#       lens  <- attr(mtch, "match.length", exact = TRUE)
-#
-#       n <- purrr::map2_int(strts, lens, ~ {
-#         x <- substr(strg, .x, .x + .y - 1)
-#         x <- as.integer(x)
-#         x
-#       })
-#
-#       # Multiple indel sites will result in vector with length > 1
-#       # sum bp from all sites and replace NAs with 0
-#       n <- tidyr::replace_na(sum(n), 0)
-#
-#       n
-#     })
-#
-#     res
-#   }
-#
-#   # Check for file and return path
-#   # if bam is missing for any sample, return NULL
-#   # do not want extra NAs in the V(D)J data columns
-#   res <- purrr::map_chr(vdj_dir, .get_vdj_path, file = bam_file, warn = TRUE)
-#
-#   if (any(is.na(res))) {
-#     return(NULL)
-#   }
-#
-#   # Load data
-#   res <- purrr::map(res, Rsamtools::scanBam)
-#
-#   # Extract indel data
-#   res <- purrr::map(res, .extract_indels)
-#
-#   res
-# }
-
-# #' Load insertion/deletion information for each contig
-# #'
-# #' @param vdj_dir Directory containing the output from cellranger vdj. A vector
-# #' or named vector can be given to load data from several runs. If a named
-# #' vector is given, the cell barcodes will be prefixed with the provided names.
-# #' This mimics the behavior of the Read10X function found in the Seurat
-# #' package.
-# #' @param airr_file file following AIRR format from cellranger vdj
-# #' @return List containing one data.frame for each path provided to vdj_dir
-# #' @importFrom Rsamtools scanBam
-# #' @noRd
-# .load_airr_indels <- function(vdj_dir, airr_file = "airr_rearrangement.tsv") {
-#
-#   len_cols <- c("junction_aa_length", "junction_length")
-#
-#   # Check for file and return path
-#   # if airr is missing for any sample, return NULL
-#   # do not want extra NAs in the V(D)J data columns
-#   res <- purrr::map_chr(vdj_dir, .get_vdj_path, file = airr_file, warn = TRUE)
-#
-#   if (any(is.na(res))) {
-#     return(NULL)
-#   }
-#
-#   # Load data
-#   res <- purrr::map(
-#     res,
-#     readr::read_tsv,
-#     col_types = readr::cols(),
-#     progress  = FALSE
-#   )
-#
-#   # Add indel columns
-#   clmns <- c("_insertions", "_deletions", "_mismatches")
-#
-#   res <- purrr::map(res, ~ {
-#     .x <- .extract_indels(.x, "v_cigar", "v_")
-#     .x <- .extract_indels(.x, "d_cigar", "d_")
-#     .x <- .extract_indels(.x, "j_cigar", "j_")
-#
-#     .x <- dplyr::select(
-#       .x,
-#       contig_id = sequence_id,
-#       all_of(len_cols),
-#       ends_with(clmns)
-#     )
-#
-#     .x
-#   })
-#
-#   # Sum indels
-#   clmns <- purrr::set_names(clmns)
-#   clmns <- map(clmns, ~ str_c(c("v", "d", "j"), .x))
-#
-#   res <- purrr::map(res, ~ {
-#     .x <- dplyr::rowwise(.x)
-#
-#     .x <- mutate(
-#       .x,
-#       all_insertions = sum(!!!syms(clmns$`_insertions`)),
-#       all_deletions  = sum(!!!syms(clmns$`_deletions`)),
-#       all_mismatches = sum(!!!syms(clmns$`_mismatches`))
-#     )
-#
-#     .x <- dplyr::ungroup(.x)
-#
-#     .x
-#   })
-#
-#   res
-# }
-# .extract_indels <- function(df_in, clmn, prfx) {
-#   new_clmns <- c(
-#     insertions = "[0-9]+(?=I)",
-#     deletions  = "[0-9]+(?=D)",
-#     mismatches = "[0-9]+(?=X)"
-#   )
-#
-#   names(new_clmns) <- paste0(prfx, names(new_clmns))
-#
-#   res <- df_in
-#
-#   for (i in seq_along(new_clmns)) {
-#     new <- names(new_clmns[i])
-#     pat <- new_clmns[[i]]
-#
-#     res <- mutate(
-#       res,
-#       !!sym(new) := .extract_pat(!!sym(clmn), pat)
-#     )
-#   }
-#
-#   res
-# }
-# .extract_pat <- function(string, pat) {
-#   res <- purrr::map_dbl(string, ~ {
-#     strg  <- .x
-#     mtch  <- gregexpr(pat, strg, perl = TRUE)[[1]]
-#     strts <- as.integer(mtch)
-#     lens  <- attr(mtch, "match.length", exact = TRUE)
-#
-#     n <- purrr::map2_int(strts, lens, ~ {
-#       x <- substr(strg, .x, .x + .y - 1)
-#       x <- as.integer(x)
-#       x
-#     })
-#
-#     # Multiple indel sites will result in vector with length > 1
-#     # sum bp from all sites and replace NAs with 0
-#     n <- tidyr::replace_na(sum(n), 0)
-#
-#     n
-#   })
-#
-#   res
-# }
-
