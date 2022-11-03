@@ -912,16 +912,16 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   res <- dplyr::select(
     airr,
-    contig_id = sequence_id,
+    contig_id = "sequence_id",
     dplyr::matches(coord_cols_re, perl = TRUE)
   )
 
   if (ncol(res) == 1) stop("V(D)J coordinates not found, check ", airr_file)
 
-  res <- tidyr::pivot_longer(res, -contig_id)
+  res <- tidyr::pivot_longer(res, -"contig_id")
   res <- dplyr::filter(res, !is.na(.data$value))
   res <- tidyr::extract(res, .data$name, c("seg", "pos"), coord_cols_re)
-  res <- tidyr::pivot_wider(res, names_from = pos)
+  res <- tidyr::pivot_wider(res, names_from = "pos")
 
   res <- dplyr::mutate(
     res,
@@ -954,8 +954,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   if (identical(vdj_coords, NA)) {
     res <- all_muts %>%
       tidyr::pivot_wider(
-        names_from  = .data$type,
-        values_from = .data$n,
+        names_from  = "type",
+        values_from = "n",
         values_fill = 0
       )
 
@@ -1023,7 +1023,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   )
 
   jxn_muts <- dplyr::filter(jxn_muts, !is.na(.data$seg))
-  jxn_muts <- dplyr::select(jxn_muts, -.data$len)
+  jxn_muts <- dplyr::select(jxn_muts, -"len")
 
   vdj_muts <- bind_rows(vdj_muts, jxn_muts)
 
@@ -1075,12 +1075,12 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   )
 
   res <- dplyr::bind_rows(res, freq)
-  res <- dplyr::select(res, -.data$len)
+  res <- dplyr::select(res, -"len")
 
   res <- tidyr::pivot_wider(
     res,
-    names_from  = .data$type,
-    values_from = .data$n,
+    names_from  = "type",
+    values_from = "n",
     values_fill = 0
   )
 
