@@ -7,6 +7,8 @@
 #' vector is given, the cell barcodes will be prefixed with the provided names.
 #' This mimics the behavior of Seurat::Read10X().
 #' @param prefix Prefix to add to new columns
+#' @param data_cols Additional columns from filtered_contig_annotations.csv to
+#' include in object.
 #' @param filter_chains Only include chains with at least one productive and
 #' full length contig.
 #' @param filter_paired Only include clonotypes with paired chains. For TCR
@@ -136,9 +138,9 @@
 #'
 #' @export
 import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
-                       filter_chains = TRUE, filter_paired = FALSE,
-                       define_clonotypes = NULL, include_mutations = FALSE,
-                       aggr_dir = NULL, sep = ";") {
+                       data_cols = NULL, filter_chains = TRUE,
+                       filter_paired = FALSE, define_clonotypes = NULL,
+                       include_mutations = FALSE, aggr_dir = NULL, sep = ";") {
 
   # Check that vdj_dir or aggr_dir is provided
   load_aggr <- !is.null(aggr_dir)
@@ -169,12 +171,22 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     )
   }
 
+  # Sequence columns to include
+  # lengths will be calculated for these columns
+  # by default only include CDR3 sequences unless user specifies others
+  # LIST AA COLUMN FIRST
+  seq_cols  <- c("fwr1", "cdr1", "fwr2", "cdr2", "fwr3", "cdr3", "fwr4")
+  seq_cols  <- purrr::map(seq_cols, ~ c(.x, paste0(.x, "_nt")))
+  seq_cols  <- purrr::reduce(seq_cols, c)
+  cdr3_cols <- grep("^cdr3", seq_cols, value = TRUE)
+  seq_cols  <- seq_cols[seq_cols %in% c(cdr3_cols, data_cols)]
+  data_cols <- data_cols[!data_cols %in% seq_cols]
+
   # V(D)J columns to include
-  cdr3_cols  <- c("cdr3", "cdr3_nt")  # list aa column first
-  count_cols <- c("reads", "umis")
   gene_cols  <- c("v_gene", "d_gene", "j_gene", "c_gene")
+  count_cols <- c("reads", "umis")
   qc_cols    <- c("productive", "full_length")
-  len_cols   <- paste0(cdr3_cols, "_length")
+  len_cols   <- paste0(seq_cols, "_length")
 
   # Columns containing per-cell info
   cell_cols <- c("barcode", "clonotype_id")
@@ -183,13 +195,18 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   aggr_cols <- c("donor", "origin")
 
   # Columns containing per-chain info that needs to be collapsed for each cell
+  # user provided columns are included here
   sep_cols <- c(
     gene_cols, "chains",
-    cdr3_cols, count_cols,
+    seq_cols,  count_cols,
     qc_cols
   )
 
+  data_cols <- data_cols[!data_cols %in% c(sep_cols, cell_cols, len_cols)]
+  sep_cols  <- c(sep_cols, data_cols)
+
   # Set cell barcode prefixes
+  # if input object is provided, must match barcodes
   if (!is.null(input)) {
     bcs <- .get_meta(input)[[CELL_COL]]
 
@@ -292,7 +309,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       indel_cols <- indel_cols[indel_cols != "contig_id"]
 
       # Join indel data
-      # NEED TO CHECK BARCODE OVERLAP HERE!!!
+      # SHOULD CHECK BARCODE OVERLAP HERE!!!
+      # IF BARCODES DO NOT OVERLAP HERE, WILL RETURN ALL 0s
       indel_ctigs <- purrr::map2(
         contigs, indels,
         dplyr::left_join,
@@ -344,12 +362,12 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     vdj_cols  <- c(vdj_cols, "exact_subclonotype_id")
   }
 
-  # Calculate CDR3 length
+  # Calculate sequence lengths
   # report length 0 if there is no reported CDR3 sequence
   contigs <- dplyr::mutate(
     contigs,
     across(
-      all_of(cdr3_cols),
+      all_of(seq_cols),
       ~ ifelse(.x == "None", 0, nchar(.x)),
       .names = "{.col}_length"
     )
@@ -373,6 +391,23 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   }
 
   # Select V(D)J columns to keep
+  # check that all vdj_cols are in data
+  # some columns could be duplicated if also provided to data_cols argument
+  vdj_cols <- unique(vdj_cols)
+
+  missing_cols <- vdj_cols[!vdj_cols %in% colnames(contigs)]
+
+  if (!is_empty(missing_cols)) {
+    missing_cols <- paste0(missing_cols, collapse = ", ")
+    avail_cols <- paste0(colnames(contigs), collapse = ", ")
+
+    stop(
+      "Some of the columns provided to data_cols were not found in ",
+      "filtered_contig_annotations.csv: ", missing_cols, ". ",
+      "Available columns include: ", avail_cols, "."
+    )
+  }
+
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
   # Check for NAs in data, additional NAs would indicate malformed input
@@ -400,11 +435,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   contigs <- .identify_paired(contigs)
 
   cell_cols <- c(cell_cols, "paired")
-  vdj_cols  <- c(vdj_cols, "paired")
 
-  if (filter_paired) {
-    contigs <- dplyr::filter(contigs, .data$paired)
-  }
+  if (filter_paired) contigs <- dplyr::filter(contigs, .data$paired)
 
   # Order chains and CDR3 sequences
   # when rows are collapsed, the cdr3 sequences must be in the same order for
@@ -420,13 +452,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     contigs <- .extract_isotypes(contigs)
 
     cell_cols <- c(cell_cols, "isotype")
-    vdj_cols  <- c(vdj_cols,  "isotype")
   }
 
   # Collapse chains into a single row for each cell
   # include columns containing per-cell info groups so they are included in the
   # summarized results
-  contigs <- dplyr::group_by(contigs, !!!syms(cell_cols))
+  sep_cols <- sep_cols[!sep_cols %in% cell_cols]
+  contigs  <- dplyr::group_by(contigs, !!!syms(cell_cols))
 
   meta <- summarize(
     contigs,
@@ -439,13 +471,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   )
 
   # Reorder columns
-  meta <- dplyr::relocate(meta, .data$paired, .after = "full_length")
-  meta <- dplyr::relocate(meta, all_of(len_cols), .after = last(cdr3_cols))
-  meta <- dplyr::relocate(meta, .data$n_chains, .after = "chains")
+  meta <- dplyr::relocate(meta, .data$paired,      .after = "full_length")
+  meta <- dplyr::relocate(meta, all_of(len_cols),  .after = last(seq_cols))
+  meta <- dplyr::relocate(meta, .data$n_chains,    .after = "chains")
   meta <- dplyr::relocate(meta, all_of(gene_cols), .after = last(len_cols))
 
   if (vdj_class %in% c("BCR", "Multi")) {
-    meta <- dplyr::relocate(meta, .data$isotype, .after = "c_gene")
+    meta <- dplyr::relocate(meta, .data$isotype, .after = last(gene_cols))
   }
 
   # Check for duplicated cell barcodes
@@ -1099,18 +1131,11 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @return Separator with white space stripped
 #' @noRd
 .check_sep <- function(df_in, sep_cols, sep) {
-  if (is.null(sep_cols)) {
-    sep_cols <- colnames(df_in)
-  }
+  if (is.null(sep_cols))  sep_cols <- colnames(df_in)
+  if (is.null(sep))       return(sep)
+  if (!is.character(sep)) stop("'sep' must be a character.")
 
-  if (is.null(sep)) {
-    return(sep)
-  }
-
-  if (!is.character(sep)) {
-    stop("'sep' must be a character.")
-  }
-
+  # Strip whitespace from sep
   sep <- gsub("[[:space:]]", "", sep)
 
   has_sep <- grepl(sep, df_in[, sep_cols, drop = FALSE], fixed = TRUE)
