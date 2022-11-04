@@ -471,13 +471,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   )
 
   # Reorder columns
-  meta <- dplyr::relocate(meta, .data$paired,      .after = "full_length")
+  meta <- dplyr::relocate(meta, "paired",          .after = "full_length")
   meta <- dplyr::relocate(meta, all_of(len_cols),  .after = last(seq_cols))
-  meta <- dplyr::relocate(meta, .data$n_chains,    .after = "chains")
+  meta <- dplyr::relocate(meta, "n_chains",        .after = "chains")
   meta <- dplyr::relocate(meta, all_of(gene_cols), .after = last(len_cols))
 
   if (vdj_class %in% c("BCR", "Multi")) {
-    meta <- dplyr::relocate(meta, .data$isotype, .after = last(gene_cols))
+    meta <- dplyr::relocate(meta, "isotype", .after = last(gene_cols))
   }
 
   # Check for duplicated cell barcodes
@@ -636,11 +636,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # Replace 'None' with FALSE for QC columns
   res <- .replace_none(res, chk_none)
 
-  res <- dplyr::rename(
-    res,
-    chains       = .data$chain,
-    clonotype_id = .data$raw_clonotype_id
-  )
+  res <- dplyr::rename(res, chains = "chain", clonotype_id = "raw_clonotype_id")
 
   # Format cell barcode prefixes
   res <- .format_cell_prefixes(
@@ -843,10 +839,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     len       = wdths
   )
 
-  bam_info <- dplyr::filter(
-    bam_info,
-    grepl("_contig_[0-9]+$", .data$contig_id)
-  )
+  bam_info <- dplyr::filter(bam_info, grepl("_contig_[0-9]+$", .data$contig_id))
 
   # Get 0-based coordinates for mutations
   # set width of deletion coordinates as 0
@@ -856,7 +849,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     type = .str_extract_all(.data$cigar, "(?<=[0-9])[^0-9]{1}")
   )
 
-  res <- tidyr::unnest(res, c(.data$n, .data$type))
+  res <- tidyr::unnest(res, all_of(c("n", "type")))
   res <- dplyr::group_by(res, .data$contig_id)
 
   res <- dplyr::mutate(
@@ -920,13 +913,11 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   res <- tidyr::pivot_longer(res, -"contig_id")
   res <- dplyr::filter(res, !is.na(.data$value))
-  res <- tidyr::extract(res, .data$name, c("seg", "pos"), coord_cols_re)
+  res <- tidyr::extract(res, "name", c("seg", "pos"), coord_cols_re)
   res <- tidyr::pivot_wider(res, names_from = "pos")
 
-  res <- dplyr::mutate(
-    res,
-    start = .data$start - 1,
-    len   = .data$end - .data$start
+  res <- dplyr::mutate(res,
+    start = .data$start - 1, len = .data$end - .data$start
   )
 
   res <- dplyr::select(
@@ -939,11 +930,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
 .map_muts <- function(mut_coords, vdj_coords) {
 
-  mut_key <- c(
-    I = "ins",
-    D = "del",
-    X = "mis"
-  )
+  mut_key <- c(I = "ins", D = "del", X = "mis")
 
   mut_coords <- dplyr::mutate(
     mut_coords,
@@ -961,11 +948,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
     res <- dplyr::mutate(
       res,
-      across(
-        starts_with("all_"),
-        ~ .x / .data$len,
-        .names = "{.col}_freq"
-      )
+      across(starts_with("all_"), ~ .x / .data$len, .names = "{.col}_freq")
     )
 
     return(res)
@@ -976,15 +959,11 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # left_join + mutate is much faster than valr::bed_intersect, probably due
   # to the extreme number of "chromosomes"
   vdj_muts <- dplyr::left_join(
-    mut_coords, vdj_coords,
-    by     = "contig_id",
-    suffix = c("", ".seg")
+    mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg")
   )
 
   vdj_muts <- dplyr::filter(
-    vdj_muts,
-    .data$start < .data$end.seg &
-    .data$end   > .data$start.seg
+    vdj_muts, .data$start < .data$end.seg & .data$end > .data$start.seg
   )
 
   vdj_muts <- dplyr::mutate(
@@ -1029,8 +1008,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   # Summarize mutation counts
   vdj_muts <- dplyr::group_by(
-    vdj_muts,
-    .data$contig_id, .data$len, .data$type, .data$seg
+    vdj_muts, .data$contig_id, .data$len, .data$type, .data$seg
   )
 
   vdj_muts <- dplyr::summarize(vdj_muts, n = sum(.data$n), .groups = "drop")
@@ -1049,7 +1027,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   )
 
   vdj_muts <- dplyr::bind_rows(vdj_muts, all_muts)
-  res      <- tidyr::unite(vdj_muts, "type", .data$seg, .data$type, sep = "_")
+  res      <- tidyr::unite(
+    vdj_muts, "type", all_of(c("seg", "type")), sep = "_"
+  )
 
   # Set final output columns
   freq_cols <- mut_cols <- c("v", "d", "j", "c", "all")
@@ -1432,9 +1412,7 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
     .new_id    = rank(.data$.new_clone, ties.method = "min"),
 
     !!sym(clonotype_col) := ifelse(
-      .data$.new_clone == "",
-      "None",
-      paste0("clonotype", .data$.new_id)
+      .data$.new_clone == "", "None", paste0("clonotype", .data$.new_id)
     )
   )
 
