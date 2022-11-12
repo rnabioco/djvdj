@@ -8,6 +8,7 @@ import_vdj(
   input = NULL,
   vdj_dir = NULL,
   prefix = "",
+  data_cols = NULL,
   filter_chains = TRUE,
   filter_paired = FALSE,
   define_clonotypes = NULL,
@@ -26,6 +27,9 @@ vector is given, the cell barcodes will be prefixed with the provided names.
 This mimics the behavior of Seurat::Read10X().}
 
 \item{prefix}{Prefix to add to new columns}
+
+\item{data_cols}{Additional columns from filtered_contig_annotations.csv to
+include in object.}
 
 \item{filter_chains}{Only include chains with at least one productive and
 full length contig.}
