@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
 
 <br>
 
-This vignette provides detailed examples for calculating and visualizing V(D)J gene usage. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
+This vignette provides detailed examples for calculating and visualizing V(D)J gene usage. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme.
 
 ```{r}
 library(djvdj)
@@ -33,23 +33,10 @@ library(Seurat)
 library(ggplot2)
 library(RColorBrewer)
 
-download.file(
-  "https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip",
-  "splenocytes.zip",
-  quiet = TRUE
-)
-
-unzip("splenocytes.zip", overwrite = FALSE)
-```
-
-```{r}
-# Load Seurat object
-load("splenocytes/splen_so.rda")
-
 # Add V(D)J data to object
 vdj_dirs <- c(
-  BL6 = "splenocytes/BL6_BCR",
-  MD4 = "splenocytes/MD4_BCR"
+  BL6 = system.file("extdata/splen/BL6_BCR", package = "djvdj"),
+  MD4 = system.file("extdata/splen/MD4_BCR", package = "djvdj")
 )
 
 so <- splen_so |>
@@ -127,13 +114,14 @@ so |>
 If two columns are passed to the `data_cols` argument, a heatmap will be generated summarizing the usage of segment pairs. If a column is provided to the `cluster_col` argument, a separate heatmap will be generated for each cluster.
 
 ```{r, fig.height = 2.5}
-so |>
+ggs <- so |>
   plot_gene_usage(
     data_cols   = c("v_gene", "j_gene"),
     cluster_col = "orig.ident",
     n_genes     = 15
-  ) |>
-  Reduce(`+`, .)
+  )
+
+Reduce(`+`, ggs)
 ```
 
 Plot colors can be adjusted using the `plot_colors` argument. In addition, `plot_gene_usage()` returns a ggplot object that can be modified with ggplot2 functions such as `ggplot2::theme()`. Plots can be further adjusted by passing aesthetic parameters directly to ggplot2, e.g. `alpha`, `linetype`, `color`, etc.

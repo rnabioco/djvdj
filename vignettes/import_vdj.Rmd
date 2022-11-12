@@ -12,10 +12,6 @@ output:
 ---
 
 ```{r "setup", include = FALSE}
-library(djvdj)
-library(Seurat)
-library(here)
-
 # Chunk opts
 knitr::opts_chunk$set(
   collapse  = TRUE,
@@ -27,17 +23,7 @@ knitr::opts_chunk$set(
 
 <br>
 
-This vignette provides detailed examples for loading gene expression and V(D)J data into a single object. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
-
-```{r}
-download.file(
-  "https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip",
-  "splenocytes.zip",
-  quiet = TRUE
-)
-
-unzip("splenocytes.zip", overwrite = FALSE)
-```
+This vignette provides detailed examples for loading gene expression and V(D)J data into a single object. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme.
 
 ## Basic usage
 
@@ -46,14 +32,19 @@ To load and parse V(D)J data, FASTQ files must first be processed using [Cell Ra
 The simplest use case for `import_vdj()` involves creating an object using data from a single run.
 
 ```{r}
+library(djvdj)
+library(Seurat)
+
+data_dir <- system.file("extdata/splen", package = "djvdj")
+
 # Create Seurat object
-so <- "splenocytes/BL6_GEX/filtered_feature_bc_matrix" |>
+so <- file.path(data_dir, "BL6_GEX/filtered_feature_bc_matrix") |>
   Read10X() |>
   CreateSeuratObject()
 
 # Add V(D)J data to object
 so_vdj <- so |>
-  import_vdj(vdj_dir = "splenocytes/BL6_BCR")
+  import_vdj(vdj_dir = file.path(data_dir, "BL6_BCR"))
 ```
 
 `import_vdj()` adds a variety of per-chain metrics to the object meta.data. Information for each chain identified for the cell is separated by a semicolon. The separator used for storing and parsing per-chain V(D)J data can be specified using the `sep` argument included for most djvdj functions. `NA`s will be included for cells that lack V(D)J data. 
@@ -74,8 +65,8 @@ When combining gene expression and V(D)J data from multiple runs into the same S
 ```{r}
 # Load GEX data
 gex_dirs <- c(
-  "splenocytes/BL6_GEX/filtered_feature_bc_matrix",
-  "splenocytes/MD4_GEX/filtered_feature_bc_matrix"
+  file.path(data_dir, "BL6_GEX/filtered_feature_bc_matrix"),
+  file.path(data_dir, "MD4_GEX/filtered_feature_bc_matrix")
 )
 
 so <- gex_dirs |>
@@ -86,8 +77,8 @@ so <- gex_dirs |>
 # note that the BL6 and MD4 paths are in the same order as the gene
 # expression data
 vdj_dirs <- c(
-  "splenocytes/BL6_BCR",
-  "splenocytes/MD4_BCR"
+  file.path(data_dir, "BL6_BCR"),
+  file.path(data_dir, "MD4_BCR")
 )
 
 so_vdj <- so |>
@@ -100,8 +91,8 @@ If the V(D)J samples are not loaded in the same order as the gene expression dat
 # Here we try to load the V(D)J data in the opposite order as the gene
 # expression data. THIS PRODUCES AN ERROR!
 vdj_dirs <- c(
-  "splenocytes/MD4_BCR",
-  "splenocytes/BL6_BCR"
+  file.path(data_dir, "MD4_BCR"),
+  file.path(data_dir, "BL6_BCR")
 )
 
 so_vdj <- so |>
@@ -113,8 +104,8 @@ Another way to ensure the cell barcodes from the gene expression and V(D)J data 
 ```{r}
 # Load GEX data
 gex_dirs <- c(
-  BL6 = "splenocytes/BL6_GEX/filtered_feature_bc_matrix",
-  MD4 = "splenocytes/MD4_GEX/filtered_feature_bc_matrix"
+  BL6 = file.path(data_dir, "BL6_GEX/filtered_feature_bc_matrix"),
+  MD4 = file.path(data_dir, "MD4_GEX/filtered_feature_bc_matrix")
 )
 
 so <- gex_dirs |>
@@ -126,8 +117,8 @@ so <- gex_dirs |>
 # but this is okay since cell prefixes are provided as names for the
 # input vector
 vdj_dirs <- c(
-  MD4 = "splenocytes/MD4_BCR",
-  BL6 = "splenocytes/BL6_BCR"
+  MD4 = file.path(data_dir, "MD4_BCR"),
+  BL6 = file.path(data_dir, "BL6_BCR")
 )
 
 so_vdj <- so |>
@@ -164,8 +155,8 @@ The `filter_paired` argument will only include clonotypes with paired chains. Fo
 
 ```{r}
 vdj_dirs <- c(
-  MD4 = "splenocytes/MD4_BCR",
-  BL6 = "splenocytes/BL6_BCR"
+  MD4 = file.path(data_dir, "MD4_BCR"),
+  BL6 = file.path(data_dir, "BL6_BCR")
 )
 
 so_vdj <- so |>
@@ -191,8 +182,8 @@ Mutation information for each chain can be parsed using two additional output fi
 
 ```{r}
 vdj_dirs <- c(
-  MD4 = "splenocytes/MD4_BCR",
-  BL6 = "splenocytes/BL6_BCR"
+  MD4 = file.path(data_dir, "MD4_BCR"),
+  BL6 = file.path(data_dir, "BL6_BCR")
 )
 
 so_vdj <- so |>
@@ -217,13 +208,13 @@ To add both BCR and TCR data to the object, run `import_vdj()` separately for ea
 
 ```{r}
 bcr_dirs <- c(
-  MD4 = "splenocytes/MD4_BCR",
-  BL6 = "splenocytes/BL6_BCR"
+  MD4 = file.path(data_dir, "MD4_BCR"),
+  BL6 = file.path(data_dir, "BL6_BCR")
 )
 
 tcr_dirs <- c(
-  MD4 = "splenocytes/MD4_TCR",
-  BL6 = "splenocytes/BL6_TCR"
+  MD4 = file.path(data_dir, "MD4_TCR"),
+  BL6 = file.path(data_dir, "BL6_TCR")
 )
 
 so_vdj <- so |>
@@ -246,8 +237,8 @@ In addition to Seurat objects, djvdj also works with SingleCellExperiment object
 
 ```{r}
 vdj_dirs <- c(
-  MD4 = "splenocytes/MD4_BCR",
-  BL6 = "splenocytes/BL6_BCR"
+  MD4 = file.path(data_dir, "MD4_BCR"),
+  BL6 = file.path(data_dir, "BL6_BCR")
 )
 
 # This will load V(D)J data and return a data.frame

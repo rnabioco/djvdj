@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
 
 <br>
 
-This vignette provides detailed examples for quantifying repertoire overlap between samples. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
+This vignette provides detailed examples for quantifying repertoire overlap between samples. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme.
 
 ```{r}
 library(djvdj)
@@ -33,23 +33,10 @@ library(Seurat)
 library(ggplot2)
 library(RColorBrewer)
 
-download.file(
-  "https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip",
-  "splenocytes.zip",
-  quiet = TRUE
-)
-
-unzip("splenocytes.zip", overwrite = FALSE)
-```
-
-```{r}
-# Load Seurat object
-load("splenocytes/splen_so.rda")
-
 # Add V(D)J data to object
 vdj_dirs <- c(
-  BL6 = "splenocytes/BL6_BCR",
-  MD4 = "splenocytes/MD4_BCR"
+  BL6 = system.file("extdata/splen/BL6_BCR", package = "djvdj"),
+  MD4 = system.file("extdata/splen/MD4_BCR", package = "djvdj")
 )
 
 so <- splen_so |>
