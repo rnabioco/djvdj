@@ -3,8 +3,8 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/rnabioco/djvdj/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rnabioco/djvdj/actions/workflows/R-CMD-check.yaml)
-[![codecov](https://codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg?token=ZI26OJII4P)](https://codecov.io/gh/rnabioco/djvdj)
+[![R-CMD-check](https://github.com/rnabioco/djvdj/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/rnabioco/djvdj/actions/workflows/check-standard.yaml)
+[![codecov](https://codecov.io/gh/rnabioco/djvdj/branch/master/graph/badge.svg)](https://app.codecov.io/gh/rnabioco/djvdj)
 <!-- badges: end -->
 
 The djvdj package provides a range of tools to analyze and manipulate
@@ -47,7 +47,7 @@ paths <- c(
 so <- import_vdj(
   input         = so,      # Seurat or SingleCellExperiment object
   vdj_dir       = paths,   # Cellranger output directories
-  filter_paired = FALSE    # Only include clonotypes with paired chains
+  filter_paired = FALSE    # Keep clonotypes without paired chains
 )
 ```
 
