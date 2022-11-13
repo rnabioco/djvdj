@@ -93,7 +93,7 @@ As expected, BL6 B cells have a very diverse repertoire, while MD4 cells have a 
 ```{r}
 div_fns <- list(
   "simpson" = abdiv::simpson,
-  "shannon" = abdiv::simpson,
+  "shannon" = abdiv::shannon,
   "pielou evenness" = abdiv::pielou_e
 )
 

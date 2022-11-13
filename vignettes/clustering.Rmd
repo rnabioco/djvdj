@@ -159,7 +159,7 @@ Using the `plot_motifs()` function we can generate sequence motifs for each clus
 
 As expected we see that most cells within the MD4 cluster have the exact same IGK CDR3 sequence.
 
-```{r, fig.width = 10}
+```{r, fig.width = 10, fig.height = 2.5}
 so_vdj |>
   plot_motifs(
     data_col    = "cdr3",
@@ -172,7 +172,7 @@ By default, sequences are aligned to the 5' end and trimmed based on the `width`
 
 In this example we generate motifs for the last 11 amino acids of the CDR3.
 
-```{r, fig.width = 10}
+```{r, fig.width = 10, fig.height = 2.5}
 so_vdj |>
   plot_motifs(
     data_col    = "cdr3",

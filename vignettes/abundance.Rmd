@@ -192,7 +192,7 @@ so |>
   )
 ```
 
-Frequency plots can also be separated based on an additional grouping variable such as treatment group (e.g. placebo vs drug) or disease status (e.g. healthy vs disease). This will generate boxplots with each point representing a label present in the `cluster_col` column. In this example we have 5 BL6 and 5 MD4 samples, so there are 5 points shown for each boxplot.
+Frequency plots can also be separated based on an additional grouping variable such as treatment group (e.g. placebo vs drug) or disease status (e.g. healthy vs disease). This will generate boxplots with each point representing a label present in the `cluster_col` column. In this example we have 3 BL6 and 3 MD4 samples, so there are 3 points shown for each boxplot.
 
 ```{r}
 so |>
