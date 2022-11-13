@@ -272,7 +272,7 @@ params <- list(
   file   = "splen",
   n      = 500,
   frac   = 0.8,
-  n_grps = 5
+  n_grps = 3
 )
 
 params %>%
