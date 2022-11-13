@@ -50,7 +50,8 @@ so_vdj <- so |>
 `import_vdj()` adds a variety of per-chain metrics to the object meta.data. Information for each chain identified for the cell is separated by a semicolon. The separator used for storing and parsing per-chain V(D)J data can be specified using the `sep` argument included for most djvdj functions. `NA`s will be included for cells that lack V(D)J data. 
 
 ```{r}
-slot(so_vdj, "meta.data") %>%
+so_vdj |>
+  slot("meta.data") |>
   head(2)
 ```
 
@@ -61,6 +62,8 @@ To modify/filter/plot per-chain data, djvdj provides a range of functions that m
 ## Loading multiple runs
 
 When combining gene expression and V(D)J data from multiple runs into the same Seurat object, we must ensure that `import_vdj()` is able to match the cell barcodes from the two data types. The easiest way to do this is to load the gene expression and V(D)J samples in the same order. 
+
+If the V(D)J samples are not loaded in the same order as the gene expression data, the cell barcodes will not match and you will receive an error.
 
 ```{r}
 # Load GEX data
@@ -79,20 +82,6 @@ so <- gex_dirs |>
 vdj_dirs <- c(
   file.path(data_dir, "BL6_BCR"),
   file.path(data_dir, "MD4_BCR")
-)
-
-so_vdj <- so |>
-  import_vdj(vdj_dir = vdj_dirs)
-```
-
-If the V(D)J samples are not loaded in the same order as the gene expression data, the cell barcodes will not match and you will receive an error.
-
-```{r, eval = FALSE}
-# Here we try to load the V(D)J data in the opposite order as the gene
-# expression data. THIS PRODUCES AN ERROR!
-vdj_dirs <- c(
-  file.path(data_dir, "MD4_BCR"),
-  file.path(data_dir, "BL6_BCR")
 )
 
 so_vdj <- so |>
@@ -196,7 +185,8 @@ so_vdj <- so |>
 The additional columns added to the meta.data will include the number of insertions, deletions, and mismatches (ending in 'ins', 'del', or 'mis') for each V(D)J segment (prefixed with 'v', 'd', 'j', or 'c'). Columns containing junction information will be prefixed with either 'vd' or 'dj'. Columns ending in 'freq' show the event frequency which is calculated as the number of events divided by the length of the region.
 
 ```{r}
-slot(so_vdj, "meta.data") %>%
+so_vdj |>
+  slot("meta.data") |>
   head(2)
 ```
 
@@ -207,13 +197,14 @@ slot(so_vdj, "meta.data") %>%
 By default the only sequence information loaded by `import_vdj()` will be for the CDR3 region. Newer versions of Cell Ranger will include additional sequences in the filtered_contig_annotations.csv file. This includes the FWR1, CDR1, FWR2, CDR2, FWR3, and FWR4 regions. These additional sequences can be loaded using the `data_cols` argument.
 
 ```{r}
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(
     vdj_dir   = vdj_dirs,
     data_cols = c("cdr1", "cdr1_nt", "cdr2", "cdr2_nt")
   )
 
-slot(so_vdj, "meta.data") %>%
+so_vdj |>
+  slot("meta.data") |>
   head(3)
 ```
 
@@ -242,7 +233,8 @@ so_vdj <- so |>
 This results in two sets of new columns being added to the meta.data. When performing downstream analysis using other djvdj functions, be sure to specify the correct columns, i.e. 'bcr_clonotype_id' or 'tcr_clonotype_id'.
 
 ```{r}
-slot(so_vdj, "meta.data") %>%
+so_vdj |>
+  slot("meta.data") |>
   head(3)
 ```
 

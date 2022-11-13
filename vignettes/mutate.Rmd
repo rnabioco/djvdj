@@ -59,10 +59,11 @@ res <- so |>
     all(c("IGH", "IGK", "IGL") %in% chains)
   )
 
-res@meta.data |>
+res |>
+  slot("meta.data") |>
   filter(!is.na(clonotype_id)) |>
   select(chains, cdr3) |>
-  head(3)
+  head()
 ```
 
 In this example we are removing V(D)J data for all chains except IGH.
@@ -71,7 +72,8 @@ In this example we are removing V(D)J data for all chains except IGH.
 res <- so |>
   filter_vdj(chains == "IGH")
 
-res@meta.data |>
+res |>
+  slot("meta.data") |>
   filter(!is.na(clonotype_id)) |>
   select(chains, cdr3) |>
   head(3)
@@ -86,13 +88,15 @@ The `summarize_vdj()` function can be used to summarize the per-chain data for e
 ```{r}
 res <- so |>
   summarize_vdj(
-    data_cols = c("all_del", "all_ins"),
+    data_cols = c("all_ins", "all_del"),
     fn        = stats::median,
     col_names = "median_{.col}"
   )
 
-res@meta.data |>
-  select(all_del, all_ins, median_all_del, median_all_ins) |>
+res |>
+  slot("meta.data") |>
+  filter(n_chains > 1) %>%
+  select(matches("all_(del|ins)")) |>
   head(2)
 ```
 
@@ -106,7 +110,8 @@ res <- so |>
     col_names = "unique_chains"
   )
 
-res@meta.data |>
+res |>
+  slot("meta.data") |>
   filter(n_chains > 2) |>
   select(chains, unique_chains) |>
   head(2)
@@ -126,7 +131,8 @@ res <- so |>
     total_indels = sum(all_ins, all_del)
   )
 
-res@meta.data |>
+res |>
+  slot("meta.data") |>
   select(all_ins, all_del, total_indels) |>
   head()
 ```

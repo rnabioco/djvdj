@@ -66,7 +66,8 @@ so_vdj <- so |>
 When `cluster_col` is specified, an additional meta.data column ('shared') will be added indicating whether the clonotype is shared between multiple clusters.
 
 ```{r}
-so_vdj@meta.data |>
+so_vdj |>
+  slot("meta.data") |>
   head(2)
 ```
 
