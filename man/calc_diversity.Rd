@@ -10,7 +10,7 @@ calc_diversity(
   cluster_col = NULL,
   method = abdiv::simpson,
   downsample = FALSE,
-  n_boots = 1,
+  n_boots = 0,
   chain = NULL,
   chain_col = "chains",
   prefix = paste0(data_col, "_"),
@@ -36,7 +36,8 @@ output columns.}
 \item{downsample}{Downsample clusters to the same size when calculating
 diversity metrics}
 
-\item{n_boots}{Number of bootstrap replicates}
+\item{n_boots}{Number of bootstrap replicates for calculating standard error,
+if n_boots is 0 this will be skipped.}
 
 \item{chain}{Chain to use for calculating diversity. Set to NULL to include
 all chains.}

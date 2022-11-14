@@ -81,14 +81,16 @@ downsample_so <- function(so_in, n, b_frac = 0.8) {
   if (is.null(n) || is.null(b_frac)) return(so_in)
 
   # Sample B and T cells
-  n_b <- n * b_frac
+  n_b <- round(n * b_frac, 1)
   n_t <- n - n_b
 
+  set.seed(42)
   b_bcs <- so %>%
     subset(cell_type == "B cells") %>%
     colnames() %>%
     sample(n_b)
 
+  set.seed(42)
   t_bcs <- so %>%
     subset(cell_type == "T cells") %>%
     colnames() %>%
@@ -242,7 +244,7 @@ write_so <- function(dat_dir, write_dir, file, n_grps = 5) {
   # Create Seurat objects
   so <- rna_dirs %>%
     Read10X() %>%
-    CreateSeuratObject() %>%
+    CreateSeuratObject(min.cells = 1) %>%
     preprocess_so()
 
   # Add mock groups

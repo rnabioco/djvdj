@@ -33,8 +33,8 @@ grouping cells when calculating clonotype abundance}
 
 \item{method}{Method to use for calculating diversity}
 
-\item{n_boots}{Number of bootstrap replicates to use for calculating
-standard error}
+\item{n_boots}{Number of bootstrap replicates for calculating standard error,
+if n_boots is 0 this will be skipped.}
 
 \item{chain}{Chain to use for calculating diversity. Set to NULL to include
 all chains.}

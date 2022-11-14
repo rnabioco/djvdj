@@ -21,3 +21,9 @@
 #' A tiny SingleCellExperiment object with V(D)J data
 #' @format A SingleCellExperiment object with 200 features, 204 cells, and 1 assay
 "vdj_sce"
+
+#' A small Seurat object containing downsampled splenocyte data
+#' 
+#' A small Seurat object containing downsampled splenocyte data
+#' @format A Seurat object with 10701 features, 500 cells, and 1 assay
+"splen_so"
