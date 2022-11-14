@@ -347,7 +347,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
     stop("Must include names if providing a list of methods.")
   }
 
-  .chk_group_cols(input, cluster_col, group_col)
+  .chk_group_cols(cluster_col, group_col, input)
 
   if (length(method) == 1 && is.null(names(method))) {
     nm <- as.character(substitute(method))
