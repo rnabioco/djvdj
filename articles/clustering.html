@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>CDR3 Clustering</h1>
             
-            <h4 data-toc-skip class="date">November 13 2022</h4>
+            <h4 data-toc-skip class="date">November 16 2022</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/rnabioco/djvdj/blob/HEAD/vignettes/clustering.Rmd" class="external-link"><code>vignettes/clustering.Rmd</code></a></small>
       <div class="d-none name"><code>clustering.Rmd</code></div>
@@ -108,33 +108,20 @@
 on CDR3 sequences. For the examples shown below, we use data for
 splenocytes from BL6 and MD4 mice collected using the 10X Genomics
 scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen
-egg lysozyme. A Seurat object along with the raw matrices can be
-downloaded <a href="https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip" class="external-link">here</a>.</p>
+egg lysozyme.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rnabioco.github.io/djvdj/">djvdj</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">RColorBrewer</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span></span>
-<span>  <span class="st">"https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip"</span>,</span>
-<span>  <span class="st">"splenocytes.zip"</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/unzip.html" class="external-link">unzip</a></span><span class="op">(</span><span class="st">"splenocytes.zip"</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load Seurat object</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/load.html" class="external-link">load</a></span><span class="op">(</span><span class="st">"splenocytes/splen_so.rda"</span><span class="op">)</span></span>
-<span></span>
 <span><span class="co"># Add V(D)J data to object</span></span>
 <span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_BCR"</span>,</span>
-<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_BCR"</span></span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/BL6_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span>,</span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/MD4_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">splen_so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">splen_so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span><span class="va">vdj_dirs</span>, define_clonotypes <span class="op">=</span> <span class="st">"cdr3_gene"</span><span class="op">)</span></span></code></pre></div>
 <p><br></p>
 <div class="section level2">
@@ -155,8 +142,8 @@ algorithms. The coarseness of the clusters an be adjusted using the
 clusters.</p>
 <p>In this example we are clustering cells based on the CDR3 amino acid
 sequence.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/cluster_sequences.html">cluster_sequences</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"cdr3"</span>,</span>
 <span>    method      <span class="op">=</span> <span class="st">"louvain"</span>,   <span class="co"># clustering method</span></span>
@@ -165,8 +152,8 @@ sequence.</p>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p>Use the <code>chain</code> argument to cluster using only sequences
 from a specific chain.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/cluster_sequences.html">cluster_sequences</a></span><span class="op">(</span></span>
 <span>    data_col <span class="op">=</span> <span class="st">"cdr3"</span>,</span>
 <span>    chain    <span class="op">=</span> <span class="st">"IGK"</span></span>
@@ -175,8 +162,8 @@ from a specific chain.</p>
 dimensional reduction method will be performed and UMAP coordinates will
 be added to the object. To skip this step, set the <code>run_umap</code>
 argument to <code>FALSE</code>.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/cluster_sequences.html">cluster_sequences</a></span><span class="op">(</span></span>
 <span>    data_col <span class="op">=</span> <span class="st">"cdr3"</span>,</span>
 <span>    chain    <span class="op">=</span> <span class="st">"IGK"</span>,</span>
@@ -184,10 +171,10 @@ argument to <code>FALSE</code>.</p>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p>To return clustering results for multiple resolutions, a vector can
 be provided to the <code>resolution</code> argument.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/cluster_sequences.html">cluster_sequences</a></span><span class="op">(</span></span>
 <span>    data_col   <span class="op">=</span> <span class="st">"cdr3"</span>,</span>
 <span>    chain      <span class="op">=</span> <span class="st">"IGK"</span>,</span>
@@ -204,44 +191,44 @@ adjusted using the <code>plot_colors</code> argument.</p>
 <p>This function will often generate a warning saying that rows with
 missing values were removed, this is expected since some cells do not
 have V(D)J data.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clrs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/RColorBrewer/man/ColorBrewer.html" class="external-link">brewer.pal</a></span><span class="op">(</span><span class="fl">11</span>, <span class="st">"Paired"</span><span class="op">)</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">11</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so_vdj</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so_vdj</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_features.html">plot_features</a></span><span class="op">(</span></span>
 <span>    x <span class="op">=</span> <span class="st">"cdr3_UMAP_1"</span>,</span>
 <span>    y <span class="op">=</span> <span class="st">"cdr3_UMAP_2"</span>,</span>
 <span>    feature <span class="op">=</span> <span class="st">"cdr3_cluster_0.4"</span>,</span>
 <span>    plot_colors <span class="op">=</span> <span class="va">clrs</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="clustering_files/figure-html/unnamed-chunk-7-1.png" width="768"></p>
+<p><img src="clustering_files/figure-html/unnamed-chunk-6-1.png" width="768"></p>
 <p>To visualize the proportion of BL6 and MD4 cells in each cluster we
 can create a stacked bargraph using the <code><a href="../reference/plot_frequency.html">plot_frequency()</a></code>
 function. MD4 cells are monoclonal and as expected these cells are found
 almost exclusively in a single cluster.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_frequency.html">plot_frequency</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"cdr3_cluster_0.4"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>    plot_colors <span class="op">=</span> <span class="va">clrs</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="clustering_files/figure-html/unnamed-chunk-8-1.png" width="768"></p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<p><img src="clustering_files/figure-html/unnamed-chunk-7-1.png" width="768"></p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_vdj.html">plot_vdj</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"cdr3_length"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"cdr3_cluster_0.4"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span> <span class="va">cdr3_cluster_0.4</span>, scales <span class="op">=</span> <span class="st">"free_y"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_features.html">plot_vdj_feature</a></span><span class="op">(</span></span>
 <span>    data_col <span class="op">=</span> <span class="st">"cdr3_length"</span>,</span>
 <span>    chain    <span class="op">=</span> <span class="st">"IGK"</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
-<span><span class="va">so_vdj</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so_vdj</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_features.html">plot_vdj_feature</a></span><span class="op">(</span></span>
 <span>    data_col <span class="op">=</span> <span class="st">"cdr3_cluster_0.4"</span>,</span>
 <span>    chain    <span class="op">=</span> <span class="st">"IGK"</span></span>
@@ -259,14 +246,14 @@ column containing cluster IDs to the <code>cluster_col</code>
 argument.</p>
 <p>As expected we see that most cells within the MD4 cluster have the
 exact same IGK CDR3 sequence.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_motifs.html">plot_motifs</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"cdr3"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"cdr3_cluster_0.4"</span>,</span>
 <span>    chain       <span class="op">=</span> <span class="st">"IGK"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="clustering_files/figure-html/unnamed-chunk-11-1.png" width="960"></p>
+<p><img src="clustering_files/figure-html/unnamed-chunk-10-1.png" width="960"></p>
 <p>By default, sequences are aligned to the 5’ end and trimmed based on
 the <code>width</code> parameter. Sequences can be aligned to the 3’ end
 using the <code>align_end</code> parameter. Sequences longer than the
@@ -275,8 +262,8 @@ removed. By default the width cutoff is automatically selected for each
 cluster to include at least 75% of sequences.</p>
 <p>In this example we generate motifs for the last 11 amino acids of the
 CDR3.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_motifs.html">plot_motifs</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"cdr3"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"cdr3_cluster_0.4"</span>,</span>
@@ -284,14 +271,14 @@ CDR3.</p>
 <span>    align_end   <span class="op">=</span> <span class="st">"3"</span>,</span>
 <span>    width       <span class="op">=</span> <span class="fl">11</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="clustering_files/figure-html/unnamed-chunk-12-1.png" width="960"></p>
+<p><img src="clustering_files/figure-html/unnamed-chunk-11-1.png" width="960"></p>
 <p>Plot colors can be modified using the <code>plot_colors</code>
 argument and the number of rows used to arrange panels can be adjusted
 with the <code>panel_nrow</code> argument. Like most djvdj plotting
 functions, <code><a href="../reference/plot_motifs.html">plot_motifs()</a></code> will return a ggplot2 object that
 can be modified with other ggplot2 functions.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_motifs.html">plot_motifs</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"cdr3"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"cdr3_cluster_0.4"</span>,</span>
@@ -303,7 +290,7 @@ can be modified with other ggplot2 functions.</p>
 <span>    axis.text.x  <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>    axis.ticks.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="clustering_files/figure-html/unnamed-chunk-13-1.png" width="768"></p>
+<p><img src="clustering_files/figure-html/unnamed-chunk-12-1.png" width="768"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

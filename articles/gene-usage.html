@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Gene Usage</h1>
             
-            <h4 data-toc-skip class="date">November 13 2022</h4>
+            <h4 data-toc-skip class="date">November 16 2022</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/rnabioco/djvdj/blob/HEAD/vignettes/gene-usage.Rmd" class="external-link"><code>vignettes/gene-usage.Rmd</code></a></small>
       <div class="d-none name"><code>gene-usage.Rmd</code></div>
@@ -108,33 +108,20 @@
 visualizing V(D)J gene usage. For the examples shown below, we use data
 for splenocytes from BL6 and MD4 mice collected using the 10X Genomics
 scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen
-egg lysozyme. A Seurat object along with the raw matrices can be
-downloaded <a href="https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip" class="external-link">here</a>.</p>
+egg lysozyme.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rnabioco.github.io/djvdj/">djvdj</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">RColorBrewer</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span></span>
-<span>  <span class="st">"https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip"</span>,</span>
-<span>  <span class="st">"splenocytes.zip"</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/unzip.html" class="external-link">unzip</a></span><span class="op">(</span><span class="st">"splenocytes.zip"</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load Seurat object</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/load.html" class="external-link">load</a></span><span class="op">(</span><span class="st">"splenocytes/splen_so.rda"</span><span class="op">)</span></span>
-<span></span>
 <span><span class="co"># Add V(D)J data to object</span></span>
 <span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_BCR"</span>,</span>
-<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_BCR"</span></span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/BL6_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span>,</span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/MD4_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">splen_so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">splen_so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span><span class="va">vdj_dirs</span>, define_clonotypes <span class="op">=</span> <span class="st">"cdr3_gene"</span><span class="op">)</span></span></code></pre></div>
 <p><br></p>
 <div class="section level2">
@@ -145,97 +132,97 @@ of cells (‘freq’) and percentage of cells (‘pct’) with each gene in the
 <code>data_cols</code> column(s). The ‘n_cells’ column shows the total
 number of cells used for calculating percentages. A data.frame is
 returned summarizing the results.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/calc_gene_usage.html">calc_gene_usage</a></span><span class="op">(</span>data_cols <span class="op">=</span> <span class="st">"v_gene"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 179 × 4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 103 × 4</span></span></span>
 <span><span class="co">#&gt;    v_gene     n_cells  freq   pct</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43      <span style="text-decoration: underline;">5</span>989  <span style="text-decoration: underline;">2</span>717 45.4 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV10-96     <span style="text-decoration: underline;">5</span>989   199  3.32</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV1-135     <span style="text-decoration: underline;">5</span>989   181  3.02</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGKV6-17      <span style="text-decoration: underline;">5</span>989   152  2.54</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGLV1         <span style="text-decoration: underline;">5</span>989   149  2.49</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> IGKV1-117     <span style="text-decoration: underline;">5</span>989   117  1.95</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> IGKV6-23      <span style="text-decoration: underline;">5</span>989   108  1.80</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGKV1-110     <span style="text-decoration: underline;">5</span>989   106  1.77</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV19-93     <span style="text-decoration: underline;">5</span>989    97  1.62</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV14-111    <span style="text-decoration: underline;">5</span>989    94  1.57</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 169 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43       329   156 47.4 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV10-96      329    14  4.26</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV6-17       329     9  2.74</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGLV1          329     9  2.74</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGKV14-111     329     8  2.43</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> IGKV1-117      329     7  2.13</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> IGKV13-84      329     7  2.13</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGKV1-135      329     6  1.82</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV19-93      329     6  1.82</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV3-4        329     6  1.82</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># … with 93 more rows</span></span></span></code></pre></div>
 <p>To perform gene usage calculations separately for cell clusters (or
 samples), provide the meta.data column containing cluster labels to the
 <code>cluster_col</code> argument. Here we see that the MD4 samples
 almost exclusively use a single V segment (IGKV5-43), which is expected
 since MD4 B cells are monoclonal.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/calc_gene_usage.html">calc_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols <span class="op">=</span> <span class="st">"v_gene"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,790 × 5</span></span></span>
-<span><span class="co">#&gt;    v_gene    sample n_cells  freq   pct</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43  MD4-5      553   531 96.0 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV5-43  MD4-2      569   545 95.8 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV5-43  MD4-4      590   565 95.8 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGKV5-43  MD4-1      530   501 94.5 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGKV5-43  MD4-3      551   520 94.4 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> IGKV10-96 BL6-1      617    43  6.97</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> IGKV10-96 BL6-5      632    42  6.65</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGKV10-96 BL6-3      654    42  6.42</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV6-17  BL6-3      654    41  6.27</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV10-96 BL6-4      661    41  6.20</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 1,780 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 618 × 5</span></span></span>
+<span><span class="co">#&gt;    v_gene     sample n_cells  freq    pct</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43   MD4-2       55    55 100   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV5-43   MD4-3       54    51  94.4 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV5-43   MD4-1       50    47  94   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGKV10-96  BL6-1       55     6  10.9 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGKV10-96  BL6-3       52     5   9.62</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> IGKV14-111 BL6-2       63     6   9.52</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> IGLV1      BL6-3       52     4   7.69</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGHV6-6    BL6-1       55     4   7.27</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV6-17   BL6-2       63     4   6.35</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV8-24   BL6-2       63     4   6.35</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># … with 608 more rows</span></span></span></code></pre></div>
 <p>To only perform calculations for a specific chain, use the
 <code>chain</code> argument. In this example we are only returning
 results for the IGK chain. Here we see some values in the ‘v_gene’
 column labeled as ‘None’, this shows the number of cells that did not
 have a V gene segment identified.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/calc_gene_usage.html">calc_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>    chain       <span class="op">=</span> <span class="st">"IGK"</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 890 × 5</span></span></span>
-<span><span class="co">#&gt;    v_gene    sample n_cells  freq   pct</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43  MD4-5      553   531 96.0 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV5-43  MD4-2      569   545 95.8 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV5-43  MD4-4      590   565 95.8 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGKV5-43  MD4-1      530   501 94.5 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGKV5-43  MD4-3      551   520 94.4 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> None      BL6-1      617    46  7.46</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> None      BL6-5      632    46  7.28</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGKV10-96 BL6-1      617    43  6.97</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV10-96 BL6-5      632    42  6.65</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> None      BL6-3      654    43  6.57</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 880 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 336 × 5</span></span></span>
+<span><span class="co">#&gt;    v_gene     sample n_cells  freq    pct</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43   MD4-2       55    55 100   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV5-43   MD4-3       54    51  94.4 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV5-43   MD4-1       50    47  94   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGKV10-96  BL6-1       55     6  10.9 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGKV10-96  BL6-3       52     5   9.62</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> None       BL6-3       52     5   9.62</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> IGKV14-111 BL6-2       63     6   9.52</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGKV6-17   BL6-2       63     4   6.35</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV8-24   BL6-2       63     4   6.35</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV3-4    BL6-3       52     3   5.77</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># … with 326 more rows</span></span></span></code></pre></div>
 <p>If two columns are provided to the <code>data_cols</code> argument,
 the number of cells containing each combination of genes is
 returned.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/calc_gene_usage.html">calc_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5,680 × 6</span></span></span>
-<span><span class="co">#&gt;    v_gene    j_gene sample n_cells  freq   pct</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43  IGKJ2  MD4-5      553   531 96.0 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV5-43  IGKJ2  MD4-2      569   545 95.8 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV5-43  IGKJ2  MD4-4      590   564 95.6 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGKV5-43  IGKJ2  MD4-1      530   501 94.5 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGKV5-43  IGKJ2  MD4-3      551   520 94.4 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> IGKV10-96 IGKJ1  BL6-1      617    31  5.02</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> IGLV1     IGLJ1  BL6-1      617    31  5.02</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGLV1     IGLJ1  BL6-5      632    31  4.91</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGLV1     IGLJ1  BL6-3      654    31  4.74</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV10-96 IGKJ1  BL6-3      654    29  4.43</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 5,670 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,062 × 6</span></span></span>
+<span><span class="co">#&gt;    v_gene     j_gene sample n_cells  freq    pct</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43   IGKJ2  MD4-2       55    55 100   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV5-43   IGKJ2  MD4-3       54    51  94.4 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV5-43   IGKJ2  MD4-1       50    47  94   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGKV14-111 IGKJ2  BL6-2       63     4   6.35</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGKV10-96  IGKJ1  BL6-3       52     3   5.77</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> IGLV1      IGLJ1  BL6-3       52     3   5.77</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> IGKV10-96  IGKJ2  BL6-1       55     3   5.45</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGKV10-96  IGKJ1  BL6-2       63     3   4.76</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV1-135  IGKJ1  BL6-3       52     2   3.85</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV10-96  IGKJ2  BL6-3       52     2   3.85</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># … with 1,052 more rows</span></span></span></code></pre></div>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -248,45 +235,46 @@ number of top genes to include in the plot can be specified with the
 <code>n_genes</code> argument. Alternatively, a vector of gene names can
 be passed to the <code>vdj_genes</code> argument to plot a set of
 desired genes.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
 <span>    n_genes     <span class="op">=</span> <span class="fl">20</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="gene-usage_files/figure-html/unnamed-chunk-7-1.png" width="768"></p>
+<p><img src="gene-usage_files/figure-html/unnamed-chunk-6-1.png" width="768"></p>
 <p>By default, percentages are shown on the y-axis, to instead plot the
 frequency, set the <code>units</code> argument to ‘frequency’.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
 <span>    units       <span class="op">=</span> <span class="st">"frequency"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="gene-usage_files/figure-html/unnamed-chunk-8-1.png" width="768"></p>
+<p><img src="gene-usage_files/figure-html/unnamed-chunk-7-1.png" width="768"></p>
 <p>If two columns are passed to the <code>data_cols</code> argument, a
 heatmap will be generated summarizing the usage of segment pairs. If a
 column is provided to the <code>cluster_col</code> argument, a separate
 heatmap will be generated for each cluster.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ggs</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
 <span>    n_genes     <span class="op">=</span> <span class="fl">15</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/funprog.html" class="external-link">Reduce</a></span><span class="op">(</span><span class="va">`+`</span>, <span class="va">.</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gene-usage_files/figure-html/unnamed-chunk-9-1.png" width="768"></p>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/funprog.html" class="external-link">Reduce</a></span><span class="op">(</span><span class="va">`+`</span>, <span class="va">ggs</span><span class="op">)</span></span></code></pre></div>
+<p><img src="gene-usage_files/figure-html/unnamed-chunk-8-1.png" width="768"></p>
 <p>Plot colors can be adjusted using the <code>plot_colors</code>
 argument. In addition, <code><a href="../reference/plot_gene_usage.html">plot_gene_usage()</a></code> returns a ggplot
 object that can be modified with ggplot2 functions such as
 <code><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">ggplot2::theme()</a></code>. Plots can be further adjusted by passing
 aesthetic parameters directly to ggplot2, e.g. <code>alpha</code>,
 <code>linetype</code>, <code>color</code>, etc.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
@@ -296,7 +284,7 @@ aesthetic parameters directly to ggplot2, e.g. <code>alpha</code>,
 <span>    alpha <span class="op">=</span> <span class="fl">0.7</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">90</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gene-usage_files/figure-html/unnamed-chunk-10-1.png" width="768"></p>
+<p><img src="gene-usage_files/figure-html/unnamed-chunk-9-1.png" width="768"></p>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -309,21 +297,21 @@ the axis labels for each sample.</p>
 <p>In this example, we are summarizing the segment usage for the entire
 dataset (BL6 and MD4 cells combined). The <code>cluster_col</code>
 argument can be used to create a separate plot for each sample.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,</span>
 <span>    method    <span class="op">=</span> <span class="st">"circos"</span>,</span>
 <span>    n_genes   <span class="op">=</span> <span class="fl">6</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="gene-usage_files/figure-html/unnamed-chunk-11-1.png" width="576"></p>
+<p><img src="gene-usage_files/figure-html/unnamed-chunk-10-1.png" width="576"></p>
 <p>Plot colors can be modified using the <code>plot_colors</code>
 argument, additional parameters can be passed directly to
 <code><a href="https://rdrr.io/pkg/circlize/man/chordDiagram.html" class="external-link">circlize::chordDiagram()</a></code>. In this example we add a border
 around the links and scale the plot so each sample is the same
 width.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,</span>
 <span>    method      <span class="op">=</span> <span class="st">"circos"</span>,</span>
@@ -333,7 +321,7 @@ width.</p>
 <span>    link.border <span class="op">=</span> <span class="st">"black"</span>,  <span class="co"># parameters to pass to chordDiagram()</span></span>
 <span>    scale       <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="gene-usage_files/figure-html/unnamed-chunk-12-1.png" width="576"></p>
+<p><img src="gene-usage_files/figure-html/unnamed-chunk-11-1.png" width="576"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

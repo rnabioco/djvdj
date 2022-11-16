@@ -76,7 +76,7 @@
 <span>  group_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  method <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/simpson.html" class="external-link">simpson</a></span>,</span>
 <span>  downsample <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  n_boots <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  n_boots <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  chain <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  chain_col <span class="op">=</span> <span class="st">"chains"</span>,</span>
 <span>  plot_colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -123,7 +123,8 @@ diversity metrics</p></dd>
 
 
 <dt>n_boots</dt>
-<dd><p>Number of bootstrap replicates to use for calculating standard error</p></dd>
+<dd><p>Number of bootstrap replicates for calculating standard error,
+if n_boots is 0 this will be skipped.</p></dd>
 
 
 <dt>chain</dt>

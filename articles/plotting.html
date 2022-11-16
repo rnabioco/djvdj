@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Plotting</h1>
             
-            <h4 data-toc-skip class="date">November 13 2022</h4>
+            <h4 data-toc-skip class="date">November 16 2022</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/rnabioco/djvdj/blob/HEAD/vignettes/plotting.Rmd" class="external-link"><code>vignettes/plotting.Rmd</code></a></small>
       <div class="d-none name"><code>plotting.Rmd</code></div>
@@ -108,32 +108,19 @@
 imported into a single-cell object using djvdj. For the examples shown
 below, we use data for splenocytes from BL6 and MD4 mice collected using
 the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and
-specifically bind hen egg lysozyme. A Seurat object along with the raw
-matrices can be downloaded <a href="https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip" class="external-link">here</a>.</p>
+specifically bind hen egg lysozyme.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rnabioco.github.io/djvdj/">djvdj</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span></span>
-<span>  <span class="st">"https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip"</span>,</span>
-<span>  <span class="st">"splenocytes.zip"</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/unzip.html" class="external-link">unzip</a></span><span class="op">(</span><span class="st">"splenocytes.zip"</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load Seurat object</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/load.html" class="external-link">load</a></span><span class="op">(</span><span class="st">"splenocytes/splen_so.rda"</span><span class="op">)</span></span>
-<span></span>
 <span><span class="co"># Add V(D)J data to object</span></span>
 <span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_BCR"</span>,</span>
-<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_BCR"</span></span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/BL6_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span>,</span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/MD4_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">splen_so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">splen_so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span></span>
 <span>    <span class="va">vdj_dirs</span>,</span>
 <span>    define_clonotypes <span class="op">=</span> <span class="st">"cdr3_gene"</span>,</span>
@@ -148,42 +135,42 @@ V(D)J data present in the object. By default, this will plot the values
 present in the <code>data_col</code> column for every chain. The
 <code>trans</code> argument can be used to specify an axis
 transformation.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_vdj.html">plot_vdj</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"umis"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
 <span>    trans       <span class="op">=</span> <span class="st">"log10"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="plotting_files/figure-html/unnamed-chunk-3-1.png" width="672"></p>
+<p><img src="plotting_files/figure-html/unnamed-chunk-2-1.png" width="672"></p>
 <p>To only plot values for a specific chain, the <code>chain</code>
 argument can be used. In this example we are plotting of the number of
 UMIs for each IGK chain.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_vdj.html">plot_vdj</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"umis"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
 <span>    chain       <span class="op">=</span> <span class="st">"IGK"</span>,</span>
 <span>    trans       <span class="op">=</span> <span class="st">"log10"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="plotting_files/figure-html/unnamed-chunk-4-1.png" width="672"></p>
+<p><img src="plotting_files/figure-html/unnamed-chunk-3-1.png" width="672"></p>
 <p>The <code>method</code> argument can be used to generate other types
 of plots including boxplots.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_vdj.html">plot_vdj</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"reads"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>    method      <span class="op">=</span> <span class="st">"boxplot"</span>,</span>
 <span>    trans       <span class="op">=</span> <span class="st">"log10"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="plotting_files/figure-html/unnamed-chunk-5-1.png" width="672"></p>
+<p><img src="plotting_files/figure-html/unnamed-chunk-4-1.png" width="672"></p>
 <p>Instead of plotting values for each chain, per-chain values can be
 summarized and plotted for each cell. In this example we are plotting
 the mean number of reads for each cell.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_vdj.html">plot_vdj</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"reads"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
@@ -193,7 +180,7 @@ the mean number of reads for each cell.</p>
 <span>    per_cell    <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    summary_fn  <span class="op">=</span> <span class="va">mean</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="plotting_files/figure-html/unnamed-chunk-6-1.png" width="672"></p>
+<p><img src="plotting_files/figure-html/unnamed-chunk-5-1.png" width="672"></p>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -204,34 +191,34 @@ the mean number of reads for each cell.</p>
 for summarizing per-chain values for each cell must be specified using
 the <code>summary_fn</code> argument. In this example we are plotting
 the mean number of mutations for each cell.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_features.html">plot_vdj_feature</a></span><span class="op">(</span></span>
 <span>    data_col   <span class="op">=</span> <span class="st">"all_mis"</span>,</span>
 <span>    summary_fn <span class="op">=</span> <span class="va">mean</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="plotting_files/figure-html/unnamed-chunk-7-1.png" width="672"></p>
+<p><img src="plotting_files/figure-html/unnamed-chunk-6-1.png" width="672"></p>
 <p>Instead of summarizing the per-chain values for each cell, we can
 also specify a specific chain to use for plotting. In this example we
 are plotting the CDR3 length for IGK chains. If a cell does not have an
 IGK chain or has multiple IGK chains, it will be plotted as an
 <code>NA</code>.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_features.html">plot_vdj_feature</a></span><span class="op">(</span></span>
 <span>    data_col <span class="op">=</span> <span class="st">"cdr3_length"</span>,</span>
 <span>    chain    <span class="op">=</span> <span class="st">"IGK"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="plotting_files/figure-html/unnamed-chunk-8-1.png" width="672"></p>
+<p><img src="plotting_files/figure-html/unnamed-chunk-7-1.png" width="672"></p>
 <p>Like <code><a href="../reference/plot_vdj.html">plot_vdj()</a></code>, the scale can also be transformed using
 the <code>trans</code> argument.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_features.html">plot_vdj_feature</a></span><span class="op">(</span></span>
 <span>    data_col <span class="op">=</span> <span class="st">"umis"</span>,</span>
 <span>    trans    <span class="op">=</span> <span class="st">"log10"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="plotting_files/figure-html/unnamed-chunk-9-1.png" width="672"></p>
+<p><img src="plotting_files/figure-html/unnamed-chunk-8-1.png" width="672"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

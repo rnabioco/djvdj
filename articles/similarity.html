@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Repertoire Similarity</h1>
             
-            <h4 data-toc-skip class="date">November 13 2022</h4>
+            <h4 data-toc-skip class="date">November 16 2022</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/rnabioco/djvdj/blob/HEAD/vignettes/similarity.Rmd" class="external-link"><code>vignettes/similarity.Rmd</code></a></small>
       <div class="d-none name"><code>similarity.Rmd</code></div>
@@ -108,33 +108,20 @@
 overlap between samples. For the examples shown below, we use data for
 splenocytes from BL6 and MD4 mice collected using the 10X Genomics
 scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen
-egg lysozyme. A Seurat object along with the raw matrices can be
-downloaded <a href="https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip" class="external-link">here</a>.</p>
+egg lysozyme.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rnabioco.github.io/djvdj/">djvdj</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">RColorBrewer</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span></span>
-<span>  <span class="st">"https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip"</span>,</span>
-<span>  <span class="st">"splenocytes.zip"</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/unzip.html" class="external-link">unzip</a></span><span class="op">(</span><span class="st">"splenocytes.zip"</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load Seurat object</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/load.html" class="external-link">load</a></span><span class="op">(</span><span class="st">"splenocytes/splen_so.rda"</span><span class="op">)</span></span>
-<span></span>
 <span><span class="co"># Add V(D)J data to object</span></span>
 <span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_BCR"</span>,</span>
-<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_BCR"</span></span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/BL6_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span>,</span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/MD4_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">splen_so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">splen_so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span><span class="va">vdj_dirs</span>, define_clonotypes <span class="op">=</span> <span class="st">"cdr3_gene"</span><span class="op">)</span></span></code></pre></div>
 <p><br></p>
 <div class="section level2">
@@ -157,8 +144,8 @@ present in both x and y, <span class="math inline">\(b\)</span> is the
 number of species present in y but not x, and <span class="math inline">\(c\)</span> is the number of species present in x
 but not y.</p>
 <p><span class="math display">\[ 1 - {a \over a + b + c} \]</span></p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/calc_similarity.html">calc_similarity</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
@@ -169,8 +156,8 @@ this, the column passed to the <code>data_col</code> argument must
 contain per-chain data, such as CDR3 amino acid or nucleotide sequences.
 In this example similarity is calculated based on heavy chain CDR3
 sequences.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/calc_similarity.html">calc_similarity</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"cdr3_nt"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
@@ -178,35 +165,20 @@ sequences.</p>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p>Instead of adding the results to the object meta.data, a matrix can
 also be returned.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/calc_similarity.html">calc_similarity</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>    return_mat  <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt;           BL6-1     BL6-2     BL6-3     BL6-4     BL6-5     MD4-1</span></span>
-<span><span class="co">#&gt; BL6-1 0.0000000 0.8569697 0.8627451 0.8445532 0.8542964 0.9747899</span></span>
-<span><span class="co">#&gt; BL6-2 0.8569697 0.0000000 0.8653396 0.8625866 0.8680801 0.9787645</span></span>
-<span><span class="co">#&gt; BL6-3 0.8627451 0.8653396 0.0000000 0.8561321 0.8574879 0.9760956</span></span>
-<span><span class="co">#&gt; BL6-4 0.8445532 0.8625866 0.8561321 0.0000000 0.8615385 0.9788054</span></span>
-<span><span class="co">#&gt; BL6-5 0.8542964 0.8680801 0.8574879 0.8615385 0.0000000 0.9757085</span></span>
-<span><span class="co">#&gt; MD4-1 0.9747899 0.9787645 0.9760956 0.9788054 0.9757085 0.0000000</span></span>
-<span><span class="co">#&gt; MD4-2 0.9831579 0.9785575 0.9820000 0.9825581 0.9817073 0.9384615</span></span>
-<span><span class="co">#&gt; MD4-3 0.9749478 0.9788868 0.9782609 0.9769674 0.9717172 0.9452055</span></span>
-<span><span class="co">#&gt; MD4-4 0.9832985 0.9806950 0.9821429 0.9787645 0.9756592 0.9264706</span></span>
-<span><span class="co">#&gt; MD4-5 0.9764957 0.9803922 0.9777328 0.9784314 0.9752577 0.9166667</span></span>
-<span><span class="co">#&gt;           MD4-2     MD4-3     MD4-4     MD4-5</span></span>
-<span><span class="co">#&gt; BL6-1 0.9831579 0.9749478 0.9832985 0.9764957</span></span>
-<span><span class="co">#&gt; BL6-2 0.9785575 0.9788868 0.9806950 0.9803922</span></span>
-<span><span class="co">#&gt; BL6-3 0.9820000 0.9782609 0.9821429 0.9777328</span></span>
-<span><span class="co">#&gt; BL6-4 0.9825581 0.9769674 0.9787645 0.9784314</span></span>
-<span><span class="co">#&gt; BL6-5 0.9817073 0.9717172 0.9756592 0.9752577</span></span>
-<span><span class="co">#&gt; MD4-1 0.9384615 0.9452055 0.9264706 0.9166667</span></span>
-<span><span class="co">#&gt; MD4-2 0.0000000 0.9411765 0.9032258 0.9285714</span></span>
-<span><span class="co">#&gt; MD4-3 0.9411765 0.0000000 0.9295775 0.9032258</span></span>
-<span><span class="co">#&gt; MD4-4 0.9032258 0.9295775 0.0000000 0.8965517</span></span>
-<span><span class="co">#&gt; MD4-5 0.9285714 0.9032258 0.8965517 0.0000000</span></span></code></pre></div>
+<span><span class="co">#&gt;           BL6-1     BL6-2     BL6-3     MD4-1     MD4-2     MD4-3</span></span>
+<span><span class="co">#&gt; BL6-1 0.0000000 0.9639640 0.9696970 1.0000000 1.0000000 0.9830508</span></span>
+<span><span class="co">#&gt; BL6-2 0.9639640 0.0000000 0.9813084 1.0000000 1.0000000 0.9848485</span></span>
+<span><span class="co">#&gt; BL6-3 0.9696970 0.9813084 0.0000000 0.9807692 1.0000000 1.0000000</span></span>
+<span><span class="co">#&gt; MD4-1 1.0000000 1.0000000 0.9807692 0.0000000 0.8571429 0.9000000</span></span>
+<span><span class="co">#&gt; MD4-2 1.0000000 1.0000000 1.0000000 0.8571429 0.0000000 0.8750000</span></span>
+<span><span class="co">#&gt; MD4-3 0.9830508 0.9848485 1.0000000 0.9000000 0.8750000 0.0000000</span></span></code></pre></div>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -220,27 +192,27 @@ surprising since the MD4 samples are mainly composed of a single
 clonotype and should have a very similar repertoire. However, the
 Jaccard index is only measuring the number of overlapping clonotypes and
 is not influenced by clonotype abundance.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_similarity.html">plot_similarity</a></span><span class="op">(</span></span>
 <span>    data_col <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="similarity_files/figure-html/unnamed-chunk-6-1.png" width="576"></p>
+<p><img src="similarity_files/figure-html/unnamed-chunk-5-1.png" width="576"></p>
 <p>A metric that takes into account clonotype abundance is the
 Horn-Morisita index. This metric measures the probability that
 clonotypes drawn from each sample will be different. Values close to 0
 indicate high similarity. In this example we see that when clonotype
 abundance is taken into account, the MD4 samples appear very similar to
 each other.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_similarity.html">plot_similarity</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>    method      <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/morisita.html" class="external-link">horn_morisita</a></span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="similarity_files/figure-html/unnamed-chunk-7-1.png" width="576"></p>
+<p><img src="similarity_files/figure-html/unnamed-chunk-6-1.png" width="576"></p>
 <p>The appearance of the heatmap can be modified with additional
 arguments. Setting <code>cluster_heatmap</code> to <code>FALSE</code>
 will remove the dendrograph. The <code>remove_upper_triangle</code>
@@ -248,8 +220,8 @@ argument can be used to only plot the lower triangle of the heatmap. The
 <code>plot_colors</code> argument will adjust the color gradient.
 Additional parameters can be passed directly to
 <code><a href="https://rdrr.io/pkg/ComplexHeatmap/man/Heatmap.html" class="external-link">ComplexHeatmap::Heatmap()</a></code>.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_similarity.html">plot_similarity</a></span><span class="op">(</span></span>
 <span>    data_col        <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span>
 <span>    cluster_col     <span class="op">=</span> <span class="st">"sample"</span>,</span>
@@ -260,7 +232,7 @@ Additional parameters can be passed directly to
 <span>    </span>
 <span>    name <span class="op">=</span> <span class="st">"Horn-Morisita"</span>  <span class="co"># parameter to pass to Heatmap()</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="similarity_files/figure-html/unnamed-chunk-8-1.png" width="576"></p>
+<p><img src="similarity_files/figure-html/unnamed-chunk-7-1.png" width="576"></p>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -274,21 +246,21 @@ variable.</p>
 <p>The number of overlapping clonotypes is shown as the axis labels for
 each sample. The width of each link reflects the number of clonotypes
 overlapping the samples.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_similarity.html">plot_similarity</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>    group_col   <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
 <span>    method      <span class="op">=</span> <span class="st">"circos"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="similarity_files/figure-html/unnamed-chunk-9-1.png" width="576"></p>
+<p><img src="similarity_files/figure-html/unnamed-chunk-8-1.png" width="576"></p>
 <p>Plot colors can be modified using the <code>plot_colors</code>
 argument, additional parameters can be passed directly to
 <code><a href="https://rdrr.io/pkg/circlize/man/chordDiagram.html" class="external-link">circlize::chordDiagram()</a></code>. In this example we scale the plot
 so each sample is the same width.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_similarity.html">plot_similarity</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
@@ -298,7 +270,7 @@ so each sample is the same width.</p>
 <span>    </span>
 <span>    scale <span class="op">=</span> <span class="cn">TRUE</span>  <span class="co"># parameter to pass to chordDiagram()</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="similarity_files/figure-html/unnamed-chunk-10-1.png" width="576"></p>
+<p><img src="similarity_files/figure-html/unnamed-chunk-9-1.png" width="576"></p>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -310,8 +282,8 @@ will calculate MDS coordinates using either the Jaccard dissimilarity
 index or the Horn-Morisita index. The method can be specified using the
 <code>method</code> argument. MDS coordinates will get added to the
 meta.data.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/calc_mds.html">calc_mds</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
@@ -319,18 +291,18 @@ meta.data.</p>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p>The <code><a href="../reference/plot_mds.html">plot_mds()</a></code> function will create an MDS plot with
 labels added for each sample.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_mds.html">plot_mds</a></span><span class="op">(</span></span>
 <span>    data_col <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="similarity_files/figure-html/unnamed-chunk-12-1.png" width="576"></p>
+<p><img src="similarity_files/figure-html/unnamed-chunk-11-1.png" width="576"></p>
 <p>ggplot2 functions can be used to further adjust plot aesthetics, or
 additional arguments can be passed directly to ggplot2,
 e.g. <code>size</code>, <code>shape</code>, etc.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_mds.html">plot_mds</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
@@ -339,17 +311,17 @@ e.g. <code>size</code>, <code>shape</code>, etc.</p>
 <span>    shape <span class="op">=</span> <span class="fl">2</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="similarity_files/figure-html/unnamed-chunk-13-1.png" width="576"></p>
+<p><img src="similarity_files/figure-html/unnamed-chunk-12-1.png" width="576"></p>
 <p>To remove sample labels, set <code>label_points</code> to
 <code>FALSE</code>.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_mds.html">plot_mds</a></span><span class="op">(</span></span>
 <span>    data_col     <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span>
 <span>    cluster_col  <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>    label_points <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="similarity_files/figure-html/unnamed-chunk-14-1.png" width="576"></p>
+<p><img src="similarity_files/figure-html/unnamed-chunk-13-1.png" width="576"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Data Manipulation</h1>
             
-            <h4 data-toc-skip class="date">November 13 2022</h4>
+            <h4 data-toc-skip class="date">November 16 2022</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/rnabioco/djvdj/blob/HEAD/vignettes/mutate.Rmd" class="external-link"><code>vignettes/mutate.Rmd</code></a></small>
       <div class="d-none name"><code>mutate.Rmd</code></div>
@@ -108,33 +108,20 @@
 imported into a single-cell object using djvdj. For the examples shown
 below, we use data for splenocytes from BL6 and MD4 mice collected using
 the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and
-specifically bind hen egg lysozyme. A Seurat object along with the raw
-matrices can be downloaded <a href="https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip" class="external-link">here</a>.</p>
+specifically bind hen egg lysozyme.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rnabioco.github.io/djvdj/">djvdj</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span></span>
-<span>  <span class="st">"https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip"</span>,</span>
-<span>  <span class="st">"splenocytes.zip"</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/unzip.html" class="external-link">unzip</a></span><span class="op">(</span><span class="st">"splenocytes.zip"</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load Seurat object</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/load.html" class="external-link">load</a></span><span class="op">(</span><span class="st">"splenocytes/splen_so.rda"</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Add V(D)J data to object</span></span>
 <span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_BCR"</span>,</span>
-<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_BCR"</span></span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/BL6_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span>,</span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/MD4_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">splen_so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">splen_so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span></span>
 <span>    <span class="va">vdj_dirs</span>,</span>
 <span>    define_clonotypes <span class="op">=</span> <span class="st">"cdr3_gene"</span>,</span>
@@ -152,38 +139,36 @@ from the object, but instead remove the V(D)J data for cells that do not
 match the provided filtering expression.</p>
 <p>In this example we are only including V(D)J data for cells that have
 all of the chains, IGH, IGK, and IGL.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"IGH"</span>, <span class="st">"IGK"</span>, <span class="st">"IGL"</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">chains</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
-<span><span class="va">res</span><span class="op">@</span><span class="va">meta.data</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">clonotype_id</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">chains</span>, <span class="va">cdr3</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span>
+<span><span class="va">res</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/methods/slot.html" class="external-link">slot</a></span><span class="op">(</span><span class="st">"meta.data"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">clonotype_id</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">chains</span>, <span class="va">cdr3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                             chains</span></span>
-<span><span class="co">#&gt; BL6_AACTCTTTCATAGCAC-1 IGH;IGK;IGL</span></span>
-<span><span class="co">#&gt; BL6_ACACTGATCGCCTGAG-1 IGH;IGK;IGL</span></span>
-<span><span class="co">#&gt; BL6_ACGATGTCATAGGATA-1 IGH;IGK;IGL</span></span>
+<span><span class="co">#&gt; BL6_CCACTACTCTGCAAGT-1 IGH;IGK;IGL</span></span>
 <span><span class="co">#&gt;                                                           cdr3</span></span>
-<span><span class="co">#&gt; BL6_AACTCTTTCATAGCAC-1   CARVGLRGHFDYW;CQQWSSNPYTF;CALWYSNLWVF</span></span>
-<span><span class="co">#&gt; BL6_ACACTGATCGCCTGAG-1    CARMEDWAMDYW;CQQHYSTPWTF;CALWYSNHFIF</span></span>
-<span><span class="co">#&gt; BL6_ACGATGTCATAGGATA-1 CARYYYGSSYWFAYW;CQQLVEYPLTF;CALWYSNHLVF</span></span></code></pre></div>
+<span><span class="co">#&gt; BL6_CCACTACTCTGCAAGT-1 CARGDSSGYVAMDYW;CLQSDNMPYTF;CALWYSNHFIF</span></span></code></pre></div>
 <p>In this example we are removing V(D)J data for all chains except
 IGH.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span><span class="va">chains</span> <span class="op">==</span> <span class="st">"IGH"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">res</span><span class="op">@</span><span class="va">meta.data</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">clonotype_id</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">chains</span>, <span class="va">cdr3</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">res</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/methods/slot.html" class="external-link">slot</a></span><span class="op">(</span><span class="st">"meta.data"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">clonotype_id</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">chains</span>, <span class="va">cdr3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                        chains              cdr3</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1    IGH        CARHPAMDYW</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGGTCTCGTTC-1    IGH CARSGYGSSPWWYFDVW</span></span>
-<span><span class="co">#&gt; BL6_AAACGGGCATGTAGTC-1    IGH   CTREGGDSVGYFDVW</span></span></code></pre></div>
+<span><span class="co">#&gt;                        chains           cdr3</span></span>
+<span><span class="co">#&gt; BL6_ACACCAAAGAATTGTG-1    IGH    CAHGSRDFDVW</span></span>
+<span><span class="co">#&gt; BL6_ACACCGGCACAAGTAA-1    IGH CARHEGYYEAMDYW</span></span>
+<span><span class="co">#&gt; BL6_ACAGCTATCTGCCCTA-1    IGH   CARLLLRWMDYW</span></span></code></pre></div>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -195,38 +180,41 @@ In this example we are calculating the median number of deletions and
 the median number of insertions for each cell. The
 <code>col_names</code> argument can be used to name the new columns, use
 ‘{.col}’ to refer to the original column name.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/summarize_vdj.html">summarize_vdj</a></span><span class="op">(</span></span>
-<span>    data_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"all_del"</span>, <span class="st">"all_ins"</span><span class="op">)</span>,</span>
+<span>    data_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"all_ins"</span>, <span class="st">"all_del"</span><span class="op">)</span>,</span>
 <span>    fn        <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span>,</span>
 <span>    col_names <span class="op">=</span> <span class="st">"median_{.col}"</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
-<span><span class="va">res</span><span class="op">@</span><span class="va">meta.data</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">all_del</span>, <span class="va">all_ins</span>, <span class="va">median_all_del</span>, <span class="va">median_all_ins</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">res</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/methods/slot.html" class="external-link">slot</a></span><span class="op">(</span><span class="st">"meta.data"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">n_chains</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">matches</a></span><span class="op">(</span><span class="st">"all_(del|ins)"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                        all_del all_ins median_all_del median_all_ins</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1     4;6     0;0              5              0</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1       4       0              4              0</span></span></code></pre></div>
+<span><span class="co">#&gt;                        all_ins all_del median_all_ins median_all_del</span></span>
+<span><span class="co">#&gt; BL6_ACACCAAAGAATTGTG-1     2;0     0;3              1            1.5</span></span>
+<span><span class="co">#&gt; BL6_ACACCGGCACAAGTAA-1     0;0     0;6              0            3.0</span></span></code></pre></div>
 <p>This function can also be used for character strings such as the
 chains column. In this example we are creating a new column in the
 meta.data containing the unique chains for each cell.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/summarize_vdj.html">summarize_vdj</a></span><span class="op">(</span></span>
 <span>    data_cols <span class="op">=</span> <span class="st">"chains"</span>,</span>
 <span>    fn        <span class="op">=</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">.x</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"_"</span><span class="op">)</span>,</span>
 <span>    col_names <span class="op">=</span> <span class="st">"unique_chains"</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
-<span><span class="va">res</span><span class="op">@</span><span class="va">meta.data</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">n_chains</span> <span class="op">&gt;</span> <span class="fl">2</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">chains</span>, <span class="va">unique_chains</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">res</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/methods/slot.html" class="external-link">slot</a></span><span class="op">(</span><span class="st">"meta.data"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">n_chains</span> <span class="op">&gt;</span> <span class="fl">2</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">chains</span>, <span class="va">unique_chains</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                             chains unique_chains</span></span>
-<span><span class="co">#&gt; BL6_AAACGGGTCTACTATC-1 IGH;IGK;IGK       IGH_IGK</span></span>
-<span><span class="co">#&gt; BL6_AAAGATGAGGAGCGAG-1 IGH;IGK;IGK       IGH_IGK</span></span></code></pre></div>
+<span><span class="co">#&gt; BL6_AGTGGGACATTTCACT-1 IGH;IGK;IGK       IGH_IGK</span></span>
+<span><span class="co">#&gt; BL6_AGTGGGAGTCAGATAA-1 IGH;IGK;IGK       IGH_IGK</span></span></code></pre></div>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -240,22 +228,23 @@ operations to be performed when modifying the meta.data.</p>
 <p>In this example we are calculating the sum of all insertions and
 deletions for each cell and storing this information in a new column
 called ‘total_indels’.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mutate_vdj.html">mutate_vdj</a></span><span class="op">(</span></span>
 <span>    total_indels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">all_ins</span>, <span class="va">all_del</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
-<span><span class="va">res</span><span class="op">@</span><span class="va">meta.data</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">all_ins</span>, <span class="va">all_del</span>, <span class="va">total_indels</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">res</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/methods/slot.html" class="external-link">slot</a></span><span class="op">(</span><span class="st">"meta.data"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">all_ins</span>, <span class="va">all_del</span>, <span class="va">total_indels</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                        all_ins all_del total_indels</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1     0;0     4;6           10</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1       0       4            4</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1    &lt;NA&gt;    &lt;NA&gt;           NA</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTCAAGCG-1    &lt;NA&gt;    &lt;NA&gt;           NA</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTGAAGTT-1    &lt;NA&gt;    &lt;NA&gt;           NA</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTGGAGTC-1    &lt;NA&gt;    &lt;NA&gt;           NA</span></span></code></pre></div>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1    &lt;NA&gt;    &lt;NA&gt;           NA</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1       0       3            3</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1       0       6            6</span></span>
+<span><span class="co">#&gt; BL6_AACTTTCTCGCCTGTT-1       0       5            5</span></span>
+<span><span class="co">#&gt; BL6_AAGGTTCTCAGTTGAC-1    &lt;NA&gt;    &lt;NA&gt;           NA</span></span>
+<span><span class="co">#&gt; BL6_AAGTCTGAGTACGACG-1       0       8            8</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Data Import</h1>
             
-            <h4 data-toc-skip class="date">November 13 2022</h4>
+            <h4 data-toc-skip class="date">November 16 2022</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/rnabioco/djvdj/blob/HEAD/vignettes/import_vdj.Rmd" class="external-link"><code>vignettes/import_vdj.Rmd</code></a></small>
       <div class="d-none name"><code>import_vdj.Rmd</code></div>
@@ -108,16 +108,7 @@
 and V(D)J data into a single object. For the examples shown below, we
 use data for splenocytes from BL6 and MD4 mice collected using the 10X
 Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically
-bind hen egg lysozyme. A Seurat object along with the raw matrices can
-be downloaded <a href="https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip" class="external-link">here</a>.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span></span>
-<span>  <span class="st">"https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip"</span>,</span>
-<span>  <span class="st">"splenocytes.zip"</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/unzip.html" class="external-link">unzip</a></span><span class="op">(</span><span class="st">"splenocytes.zip"</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+bind hen egg lysozyme.</p>
 <div class="section level2">
 <h2 id="basic-usage">Basic usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
 </h2>
@@ -131,45 +122,45 @@ information about each chain and is required for the
 <code><a href="../reference/import_vdj.html">import_vdj()</a></code> function.</p>
 <p>The simplest use case for <code><a href="../reference/import_vdj.html">import_vdj()</a></code> involves creating
 an object using data from a single run.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Create Seurat object</span></span>
-<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="st">"splenocytes/BL6_GEX/filtered_feature_bc_matrix"</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://satijalab.org/seurat/reference/Read10X.html" class="external-link">Read10X</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rnabioco.github.io/djvdj/">djvdj</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">data_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Create Seurat object</span></span>
+<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_GEX/filtered_feature_bc_matrix"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://satijalab.org/seurat/reference/Read10X.html" class="external-link">Read10X</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://mojaveazure.github.io/seurat-object/reference/CreateSeuratObject.html" class="external-link">CreateSeuratObject</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Add V(D)J data to object</span></span>
-<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span>vdj_dir <span class="op">=</span> <span class="st">"splenocytes/BL6_BCR"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span>vdj_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_BCR"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><code><a href="../reference/import_vdj.html">import_vdj()</a></code> adds a variety of per-chain metrics to the
 object meta.data. Information for each chain identified for the cell is
 separated by a semicolon. The separator used for storing and parsing
 per-chain V(D)J data can be specified using the <code>sep</code>
 argument included for most djvdj functions. <code>NA</code>s will be
 included for cells that lack V(D)J data.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/methods/slot.html" class="external-link">slot</a></span><span class="op">(</span><span class="va">so_vdj</span>, <span class="st">"meta.data"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/methods/slot.html" class="external-link">slot</a></span><span class="op">(</span><span class="st">"meta.data"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                       orig.ident nCount_RNA nFeature_RNA  clonotype_id</span></span>
-<span><span class="co">#&gt; AAACCTGAGACCTTTG-1 SeuratProject        273          208 clonotype2240</span></span>
-<span><span class="co">#&gt; AAACCTGAGGAATCGC-1 SeuratProject        243          199   clonotype40</span></span>
-<span><span class="co">#&gt;                    exact_subclonotype_id  chains n_chains</span></span>
-<span><span class="co">#&gt; AAACCTGAGACCTTTG-1                     1 IGH;IGK        2</span></span>
-<span><span class="co">#&gt; AAACCTGAGGAATCGC-1                     1     IGL        1</span></span>
-<span><span class="co">#&gt;                                      cdr3</span></span>
-<span><span class="co">#&gt; AAACCTGAGACCTTTG-1 CARHPAMDYW;CWQGTHFPRTF</span></span>
-<span><span class="co">#&gt; AAACCTGAGGAATCGC-1            CALWYSTHYVF</span></span>
-<span><span class="co">#&gt;                                                                             cdr3_nt</span></span>
-<span><span class="co">#&gt; AAACCTGAGACCTTTG-1 TGTGCCAGACATCCCGCTATGGACTACTGG;TGCTGGCAAGGTACACATTTTCCTCGGACGTTC</span></span>
-<span><span class="co">#&gt; AAACCTGAGGAATCGC-1                                TGTGCTCTATGGTACAGCACCCATTATGTTTTC</span></span>
-<span><span class="co">#&gt;                    cdr3_length cdr3_nt_length            v_gene    d_gene</span></span>
-<span><span class="co">#&gt; AAACCTGAGACCTTTG-1       10;11          30;33 IGHV2-6;IGKV1-135 None;None</span></span>
-<span><span class="co">#&gt; AAACCTGAGGAATCGC-1          11             33             IGLV2      None</span></span>
-<span><span class="co">#&gt;                         j_gene    c_gene isotype  reads umis productive</span></span>
-<span><span class="co">#&gt; AAACCTGAGACCTTTG-1 IGHJ4;IGKJ1 IGHM;IGKC    IGHM 60;376 6;22  TRUE;TRUE</span></span>
-<span><span class="co">#&gt; AAACCTGAGGAATCGC-1       IGLJ2     IGLC2    None    360   13       TRUE</span></span>
-<span><span class="co">#&gt;                    full_length paired</span></span>
-<span><span class="co">#&gt; AAACCTGAGACCTTTG-1   TRUE;TRUE   TRUE</span></span>
-<span><span class="co">#&gt; AAACCTGAGGAATCGC-1        TRUE  FALSE</span></span></code></pre></div>
+<span><span class="co">#&gt;                       orig.ident nCount_RNA nFeature_RNA clonotype_id</span></span>
+<span><span class="co">#&gt; AAACGGGGTTCTGTTT-1 SeuratProject        666          341         &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; AAAGATGCAACAACCT-1 SeuratProject        308          233   clonotype7</span></span>
+<span><span class="co">#&gt;                    exact_subclonotype_id chains n_chains        cdr3</span></span>
+<span><span class="co">#&gt; AAACGGGGTTCTGTTT-1                    NA   &lt;NA&gt;       NA        &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; AAAGATGCAACAACCT-1                     1    IGK        1 CFQGSHVPWTF</span></span>
+<span><span class="co">#&gt;                                              cdr3_nt cdr3_length</span></span>
+<span><span class="co">#&gt; AAACGGGGTTCTGTTT-1                              &lt;NA&gt;        &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; AAAGATGCAACAACCT-1 TGCTTTCAAGGTTCACATGTTCCGTGGACGTTC          11</span></span>
+<span><span class="co">#&gt;                    cdr3_nt_length    v_gene d_gene j_gene c_gene isotype</span></span>
+<span><span class="co">#&gt; AAACGGGGTTCTGTTT-1           &lt;NA&gt;      &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; AAAGATGCAACAACCT-1             33 IGKV1-117   None  IGKJ1   IGKC    None</span></span>
+<span><span class="co">#&gt;                    reads umis productive full_length paired</span></span>
+<span><span class="co">#&gt; AAACGGGGTTCTGTTT-1  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;     NA</span></span>
+<span><span class="co">#&gt; AAAGATGCAACAACCT-1   352   21       TRUE        TRUE  FALSE</span></span></code></pre></div>
 <p>To modify/filter/plot per-chain data, djvdj provides a range of
 functions that make it easy to parse and visualize this information. For
 detailed examples refer to the vignettes and documentation for the
@@ -186,39 +177,29 @@ the same Seurat object, we must ensure that <code><a href="../reference/import_v
 able to match the cell barcodes from the two data types. The easiest way
 to do this is to load the gene expression and V(D)J samples in the same
 order.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<p>If the V(D)J samples are not loaded in the same order as the gene
+expression data, the cell barcodes will not match and you will receive
+an error.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Load GEX data</span></span>
 <span><span class="va">gex_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="st">"splenocytes/BL6_GEX/filtered_feature_bc_matrix"</span>,</span>
-<span>  <span class="st">"splenocytes/MD4_GEX/filtered_feature_bc_matrix"</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_GEX/filtered_feature_bc_matrix"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"MD4_GEX/filtered_feature_bc_matrix"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">gex_dirs</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://satijalab.org/seurat/reference/Read10X.html" class="external-link">Read10X</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">gex_dirs</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://satijalab.org/seurat/reference/Read10X.html" class="external-link">Read10X</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://mojaveazure.github.io/seurat-object/reference/CreateSeuratObject.html" class="external-link">CreateSeuratObject</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Load BCR data</span></span>
 <span><span class="co"># note that the BL6 and MD4 paths are in the same order as the gene</span></span>
 <span><span class="co"># expression data</span></span>
 <span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="st">"splenocytes/BL6_BCR"</span>,</span>
-<span>  <span class="st">"splenocytes/MD4_BCR"</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_BCR"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"MD4_BCR"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span>vdj_dir <span class="op">=</span> <span class="va">vdj_dirs</span><span class="op">)</span></span></code></pre></div>
-<p>If the V(D)J samples are not loaded in the same order as the gene
-expression data, the cell barcodes will not match and you will receive
-an error.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Here we try to load the V(D)J data in the opposite order as the gene</span></span>
-<span><span class="co"># expression data. THIS PRODUCES AN ERROR!</span></span>
-<span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="st">"splenocytes/MD4_BCR"</span>,</span>
-<span>  <span class="st">"splenocytes/BL6_BCR"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span>vdj_dir <span class="op">=</span> <span class="va">vdj_dirs</span><span class="op">)</span></span></code></pre></div>
 <p>Another way to ensure the cell barcodes from the gene expression and
 V(D)J data are able to be matched is to specify cell barcode prefixes
@@ -226,15 +207,15 @@ for each sample. For both the <code><a href="https://satijalab.org/seurat/refere
 <code><a href="../reference/import_vdj.html">import_vdj()</a></code> functions this can be done by passing a named
 vector. In this scenario, the names will be added as prefixes for the
 cell barcodes.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Load GEX data</span></span>
 <span><span class="va">gex_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_GEX/filtered_feature_bc_matrix"</span>,</span>
-<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_GEX/filtered_feature_bc_matrix"</span></span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_GEX/filtered_feature_bc_matrix"</span><span class="op">)</span>,</span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"MD4_GEX/filtered_feature_bc_matrix"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">gex_dirs</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://satijalab.org/seurat/reference/Read10X.html" class="external-link">Read10X</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">gex_dirs</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://satijalab.org/seurat/reference/Read10X.html" class="external-link">Read10X</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://mojaveazure.github.io/seurat-object/reference/CreateSeuratObject.html" class="external-link">CreateSeuratObject</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Load BCR data</span></span>
@@ -242,11 +223,11 @@ cell barcodes.</p>
 <span><span class="co"># but this is okay since cell prefixes are provided as names for the</span></span>
 <span><span class="co"># input vector</span></span>
 <span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_BCR"</span>,</span>
-<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_BCR"</span></span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"MD4_BCR"</span><span class="op">)</span>,</span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_BCR"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span>vdj_dir <span class="op">=</span> <span class="va">vdj_dirs</span><span class="op">)</span></span></code></pre></div>
 <p><br></p>
 </div>
@@ -266,8 +247,8 @@ three options to specify how this step is performed:</p>
 <li>‘cdr3_gene’: use both the CDR3 nucleotide sequence and the
 combination of all V(D)J genes identified for the cell</li>
 </ul>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span></span>
 <span>    vdj_dir <span class="op">=</span> <span class="va">vdj_dirs</span>,</span>
 <span>    define_clonotypes <span class="op">=</span> <span class="st">"cdr3_gene"</span></span>
@@ -302,13 +283,13 @@ noted that if a clonotype has multiple chains of the same type, it will
 still be included, e.g. TRA;TRB;TRB or IGH;IGK;IGK will still be
 included. Clonotypes that include more than two chains can be filtered
 using <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code>.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_BCR"</span>,</span>
-<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_BCR"</span></span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"MD4_BCR"</span><span class="op">)</span>,</span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_BCR"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span></span>
 <span>    vdj_dir <span class="op">=</span> <span class="va">vdj_dirs</span>,</span>
 <span>    filter_chains <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -316,7 +297,7 @@ using <code><a href="../reference/filter_vdj.html">filter_vdj()</a></code>.</p>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="co"># To only include clonotypes with exactly 2 chains</span></span>
-<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so_vdj</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so_vdj</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/filter_vdj.html">filter_vdj</a></span><span class="op">(</span><span class="va">n_chains</span> <span class="op">==</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 <p><br></p>
 </div>
@@ -332,13 +313,13 @@ to quantify insertions, deletions, and mismatches for each chain.</li>
 V(D)J gene segment and is used to quantify mutations for each segment
 and/or junction.</li>
 </ul>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_BCR"</span>,</span>
-<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_BCR"</span></span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"MD4_BCR"</span><span class="op">)</span>,</span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_BCR"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span></span>
 <span>    vdj_dir <span class="op">=</span> <span class="va">vdj_dirs</span>,</span>
 <span>    include_mutations <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -350,42 +331,37 @@ Columns containing junction information will be prefixed with either
 ‘vd’ or ‘dj’. Columns ending in ‘freq’ show the event frequency which is
 calculated as the number of events divided by the length of the
 region.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/methods/slot.html" class="external-link">slot</a></span><span class="op">(</span><span class="va">so_vdj</span>, <span class="st">"meta.data"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/methods/slot.html" class="external-link">slot</a></span><span class="op">(</span><span class="st">"meta.data"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                        orig.ident nCount_RNA nFeature_RNA  clonotype_id</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1        BL6        273          208 clonotype2240</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1        BL6        243          199   clonotype40</span></span>
-<span><span class="co">#&gt;                        exact_subclonotype_id  chains n_chains</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1                     1 IGH;IGK        2</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1                     1     IGL        1</span></span>
-<span><span class="co">#&gt;                                          cdr3</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1 CARHPAMDYW;CWQGTHFPRTF</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1            CALWYSTHYVF</span></span>
-<span><span class="co">#&gt;                                                                                 cdr3_nt</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1 TGTGCCAGACATCCCGCTATGGACTACTGG;TGCTGGCAAGGTACACATTTTCCTCGGACGTTC</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1                                TGTGCTCTATGGTACAGCACCCATTATGTTTTC</span></span>
-<span><span class="co">#&gt;                        cdr3_length cdr3_nt_length            v_gene</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1       10;11          30;33 IGHV2-6;IGKV1-135</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1          11             33             IGLV2</span></span>
-<span><span class="co">#&gt;                           d_gene      j_gene    c_gene isotype  reads</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1 None;None IGHJ4;IGKJ1 IGHM;IGKC    IGHM 60;376</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1      None       IGLJ2     IGLC2    None    360</span></span>
-<span><span class="co">#&gt;                        umis productive full_length paired v_ins v_del</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1 6;22  TRUE;TRUE   TRUE;TRUE   TRUE   0;0   4;3</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1   13       TRUE        TRUE  FALSE     0     4</span></span>
-<span><span class="co">#&gt;                        v_mis d_ins d_del d_mis j_ins j_del j_mis c_ins</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1   0;0   0;0   0;0   0;0   0;0   0;3   0;0   0;0</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1     0     0     0     0     0     0     0     0</span></span>
-<span><span class="co">#&gt;                        c_del c_mis all_ins all_del all_mis vd_ins vd_del</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1   0;0   0;0     0;0     4;6     0;0    0;0    4;3</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1     0     0       0       4       0      0      0</span></span>
-<span><span class="co">#&gt;                        dj_ins dj_del v_mis_freq d_mis_freq j_mis_freq</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1    0;0    0;0        0;0        0;0        0;0</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1      0      0          0          0          0</span></span>
-<span><span class="co">#&gt;                        c_mis_freq all_mis_freq</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1        0;0          0;0</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1          0            0</span></span></code></pre></div>
+<span><span class="co">#&gt;                        orig.ident nCount_RNA nFeature_RNA clonotype_id</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1        BL6        666          341         &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1        BL6        308          233   clonotype7</span></span>
+<span><span class="co">#&gt;                        exact_subclonotype_id chains n_chains        cdr3</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1                    NA   &lt;NA&gt;       NA        &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1                     1    IGK        1 CFQGSHVPWTF</span></span>
+<span><span class="co">#&gt;                                                  cdr3_nt cdr3_length</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1                              &lt;NA&gt;        &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1 TGCTTTCAAGGTTCACATGTTCCGTGGACGTTC          11</span></span>
+<span><span class="co">#&gt;                        cdr3_nt_length    v_gene d_gene j_gene c_gene</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1           &lt;NA&gt;      &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1             33 IGKV1-117   None  IGKJ1   IGKC</span></span>
+<span><span class="co">#&gt;                        isotype reads umis productive full_length paired</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1    &lt;NA&gt;  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;     NA</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1    None   352   21       TRUE        TRUE  FALSE</span></span>
+<span><span class="co">#&gt;                        v_ins v_del v_mis d_ins d_del d_mis j_ins j_del</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1     0     3     0     0     0     0     0     0</span></span>
+<span><span class="co">#&gt;                        j_mis c_ins c_del c_mis all_ins all_del all_mis</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1     0     0     0     0       0       3       0</span></span>
+<span><span class="co">#&gt;                        vd_ins vd_del dj_ins dj_del v_mis_freq d_mis_freq</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1      0      0      0      0          0          0</span></span>
+<span><span class="co">#&gt;                        j_mis_freq c_mis_freq all_mis_freq</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1       &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1          0          0            0</span></span></code></pre></div>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -397,63 +373,56 @@ Cell Ranger will include additional sequences in the
 filtered_contig_annotations.csv file. This includes the FWR1, CDR1,
 FWR2, CDR2, FWR3, and FWR4 regions. These additional sequences can be
 loaded using the <code>data_cols</code> argument.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span></span>
 <span>    vdj_dir   <span class="op">=</span> <span class="va">vdj_dirs</span>,</span>
 <span>    data_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cdr1"</span>, <span class="st">"cdr1_nt"</span>, <span class="st">"cdr2"</span>, <span class="st">"cdr2_nt"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/methods/slot.html" class="external-link">slot</a></span><span class="op">(</span><span class="va">so_vdj</span>, <span class="st">"meta.data"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so_vdj</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/methods/slot.html" class="external-link">slot</a></span><span class="op">(</span><span class="st">"meta.data"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                        orig.ident nCount_RNA nFeature_RNA  clonotype_id</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1        BL6        273          208 clonotype2240</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1        BL6        243          199   clonotype40</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1        BL6        250          202          &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                        exact_subclonotype_id  chains n_chains</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1                     1 IGH;IGK        2</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1                     1     IGL        1</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1                    NA    &lt;NA&gt;       NA</span></span>
-<span><span class="co">#&gt;                                            cdr1</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1 GFSLTSY;KSSQSLLDSDGKTYLN</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1           RSSTGAVTTSNYAN</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1                     &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                                                                                       cdr1_nt</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1 GGGTTCTCATTAACCAGCTAT;AAGTCAAGTCAGAGCCTCTTAGATAGTGATGGAAAGACATATTTGAAT</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1                             CGCTCAAGTACTGGGGCTGTTACAACTAGTAACTATGCCAAC</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1                                                                   &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                                 cdr2</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1 WSDGS;LVSKLDS</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1       GTSNRAP</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1          &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                                                      cdr2_nt</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1 TGGAGTGATGGAAGC;CTGGTGTCTAAACTGGACTCT</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1                 GGTACCAGCAACCGAGCTCCA</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1                                  &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                                          cdr3</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1 CARHPAMDYW;CWQGTHFPRTF</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1            CALWYSTHYVF</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1                   &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                                                                                 cdr3_nt</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1 TGTGCCAGACATCCCGCTATGGACTACTGG;TGCTGGCAAGGTACACATTTTCCTCGGACGTTC</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1                                TGTGCTCTATGGTACAGCACCCATTATGTTTTC</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1                                                             &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                        cdr1_length cdr1_nt_length cdr2_length</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1        7;16          21;48         5;7</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1          14             42           7</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1        &lt;NA&gt;           &lt;NA&gt;        &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                        cdr2_nt_length cdr3_length cdr3_nt_length</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1          15;21       10;11          30;33</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1             21          11             33</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1           &lt;NA&gt;        &lt;NA&gt;           &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                                   v_gene    d_gene      j_gene    c_gene</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1 IGHV2-6;IGKV1-135 None;None IGHJ4;IGKJ1 IGHM;IGKC</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1             IGLV2      None       IGLJ2     IGLC2</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1              &lt;NA&gt;      &lt;NA&gt;        &lt;NA&gt;      &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                        isotype  reads umis productive full_length paired</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1    IGHM 60;376 6;22  TRUE;TRUE   TRUE;TRUE   TRUE</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1    None    360   13       TRUE        TRUE  FALSE</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1    &lt;NA&gt;   &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;     NA</span></span></code></pre></div>
+<span><span class="co">#&gt;                        orig.ident nCount_RNA nFeature_RNA clonotype_id</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1        BL6        666          341         &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1        BL6        308          233   clonotype7</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1        BL6        302          214  clonotype32</span></span>
+<span><span class="co">#&gt;                        exact_subclonotype_id chains n_chains</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1                    NA   &lt;NA&gt;       NA</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1                     1    IGK        1</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1                     1    IGK        1</span></span>
+<span><span class="co">#&gt;                                    cdr1</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1             &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1 RSSQSIVHSNGNTYLE</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1      KASQNVGTNVA</span></span>
+<span><span class="co">#&gt;                                                                 cdr1_nt</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1                                             &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1 AGATCTAGTCAGAGCATTGTACATAGTAATGGAAACACCTATTTAGAA</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1                AAGGCCAGTCAGAATGTGGGTACTAATGTAGCC</span></span>
+<span><span class="co">#&gt;                           cdr2               cdr2_nt        cdr3</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1    &lt;NA&gt;                  &lt;NA&gt;        &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1 KVSNRFS AAAGTTTCCAACCGATTTTCT CFQGSHVPWTF</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1 SASYRYS TCGGCATCCTACCGGTACAGT CQQYNSYPLTF</span></span>
+<span><span class="co">#&gt;                                                  cdr3_nt cdr1_length</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1                              &lt;NA&gt;        &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1 TGCTTTCAAGGTTCACATGTTCCGTGGACGTTC          16</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1 TGTCAGCAATATAACAGCTATCCTCTCACGTTC          11</span></span>
+<span><span class="co">#&gt;                        cdr1_nt_length cdr2_length cdr2_nt_length</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1           &lt;NA&gt;        &lt;NA&gt;           &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1             48           7             21</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1             33           7             21</span></span>
+<span><span class="co">#&gt;                        cdr3_length cdr3_nt_length    v_gene d_gene j_gene</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1        &lt;NA&gt;           &lt;NA&gt;      &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1          11             33 IGKV1-117   None  IGKJ1</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1          11             33  IGKV6-15   None  IGKJ5</span></span>
+<span><span class="co">#&gt;                        c_gene isotype reads umis productive full_length</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1   &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1   IGKC    None   352   21       TRUE        TRUE</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1   IGKC    None   342   18       TRUE        TRUE</span></span>
+<span><span class="co">#&gt;                        paired</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1     NA</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1  FALSE</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1  FALSE</span></span></code></pre></div>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -463,83 +432,76 @@ loaded using the <code>data_cols</code> argument.</p>
 <code><a href="../reference/import_vdj.html">import_vdj()</a></code> separately for each data type. To distinguish
 between columns containing BCR or TCR data, use the <code>prefix</code>
 argument to add unique column names.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bcr_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_BCR"</span>,</span>
-<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_BCR"</span></span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"MD4_BCR"</span><span class="op">)</span>,</span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_BCR"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">tcr_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_TCR"</span>,</span>
-<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_TCR"</span></span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"MD4_TCR"</span><span class="op">)</span>,</span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_TCR"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span><span class="va">bcr_dirs</span>, prefix <span class="op">=</span> <span class="st">"bcr_"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span><span class="va">bcr_dirs</span>, prefix <span class="op">=</span> <span class="st">"bcr_"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span><span class="va">tcr_dirs</span>, prefix <span class="op">=</span> <span class="st">"tcr_"</span><span class="op">)</span></span></code></pre></div>
 <p>This results in two sets of new columns being added to the meta.data.
 When performing downstream analysis using other djvdj functions, be sure
 to specify the correct columns, i.e. ‘bcr_clonotype_id’ or
 ‘tcr_clonotype_id’.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/methods/slot.html" class="external-link">slot</a></span><span class="op">(</span><span class="va">so_vdj</span>, <span class="st">"meta.data"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/methods/slot.html" class="external-link">slot</a></span><span class="op">(</span><span class="st">"meta.data"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                        orig.ident nCount_RNA nFeature_RNA</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1        BL6        273          208</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1        BL6        243          199</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1        BL6        250          202</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1        BL6        666          341</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1        BL6        308          233</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1        BL6        302          214</span></span>
 <span><span class="co">#&gt;                        bcr_clonotype_id bcr_exact_subclonotype_id</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1    clonotype2240                         1</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1      clonotype40                         1</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1             &lt;NA&gt;                        NA</span></span>
-<span><span class="co">#&gt;                        bcr_chains bcr_n_chains               bcr_cdr3</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1    IGH;IGK            2 CARHPAMDYW;CWQGTHFPRTF</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1        IGL            1            CALWYSTHYVF</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1       &lt;NA&gt;           NA                   &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                                                                             bcr_cdr3_nt</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1 TGTGCCAGACATCCCGCTATGGACTACTGG;TGCTGGCAAGGTACACATTTTCCTCGGACGTTC</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1                                TGTGCTCTATGGTACAGCACCCATTATGTTTTC</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1                                                             &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                        bcr_cdr3_length bcr_cdr3_nt_length</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1           10;11              30;33</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1              11                 33</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1            &lt;NA&gt;               &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                               bcr_v_gene bcr_d_gene  bcr_j_gene</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1 IGHV2-6;IGKV1-135  None;None IGHJ4;IGKJ1</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1             IGLV2       None       IGLJ2</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1              &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                        bcr_c_gene bcr_isotype bcr_reads bcr_umis</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1  IGHM;IGKC        IGHM    60;376     6;22</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1      IGLC2        None       360       13</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1       &lt;NA&gt;        &lt;NA&gt;      &lt;NA&gt;     &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;                        bcr_productive bcr_full_length bcr_paired</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1      TRUE;TRUE       TRUE;TRUE       TRUE</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1           TRUE            TRUE      FALSE</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1           &lt;NA&gt;            &lt;NA&gt;         NA</span></span>
-<span><span class="co">#&gt;                        tcr_clonotype_id tcr_chains tcr_n_chains</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1             &lt;NA&gt;       &lt;NA&gt;           NA</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1             &lt;NA&gt;       &lt;NA&gt;           NA</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1    clonotype1970        TRB            1</span></span>
-<span><span class="co">#&gt;                              tcr_cdr3</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1           &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1           &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1 CAWSRDTNNSPLYF</span></span>
-<span><span class="co">#&gt;                                                       tcr_cdr3_nt</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1                                       &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1                                       &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1 TGTGCCTGGAGCCGGGACACCAATAATTCGCCCCTCTACTTT</span></span>
-<span><span class="co">#&gt;                        tcr_cdr3_length tcr_cdr3_nt_length tcr_v_gene</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1            &lt;NA&gt;               &lt;NA&gt;       &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1            &lt;NA&gt;               &lt;NA&gt;       &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1              14                 42     TRBV31</span></span>
-<span><span class="co">#&gt;                        tcr_d_gene tcr_j_gene tcr_c_gene tcr_reads</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;      &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;      &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1       None    TRBJ1-6      TRBC1       234</span></span>
-<span><span class="co">#&gt;                        tcr_umis tcr_productive tcr_full_length tcr_paired</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGACCTTTG-1     &lt;NA&gt;           &lt;NA&gt;            &lt;NA&gt;         NA</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGGAATCGC-1     &lt;NA&gt;           &lt;NA&gt;            &lt;NA&gt;         NA</span></span>
-<span><span class="co">#&gt; BL6_AAACCTGAGTATCGAA-1        2           TRUE            TRUE      FALSE</span></span></code></pre></div>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1             &lt;NA&gt;                        NA</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1       clonotype7                         1</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1      clonotype32                         1</span></span>
+<span><span class="co">#&gt;                        bcr_chains bcr_n_chains    bcr_cdr3</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1       &lt;NA&gt;           NA        &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1        IGK            1 CFQGSHVPWTF</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1        IGK            1 CQQYNSYPLTF</span></span>
+<span><span class="co">#&gt;                                              bcr_cdr3_nt bcr_cdr3_length</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1                              &lt;NA&gt;            &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1 TGCTTTCAAGGTTCACATGTTCCGTGGACGTTC              11</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1 TGTCAGCAATATAACAGCTATCCTCTCACGTTC              11</span></span>
+<span><span class="co">#&gt;                        bcr_cdr3_nt_length bcr_v_gene bcr_d_gene</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1               &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1                 33  IGKV1-117       None</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1                 33   IGKV6-15       None</span></span>
+<span><span class="co">#&gt;                        bcr_j_gene bcr_c_gene bcr_isotype bcr_reads</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1       &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;      &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1      IGKJ1       IGKC        None       352</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1      IGKJ5       IGKC        None       342</span></span>
+<span><span class="co">#&gt;                        bcr_umis bcr_productive bcr_full_length bcr_paired</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1     &lt;NA&gt;           &lt;NA&gt;            &lt;NA&gt;         NA</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1       21           TRUE            TRUE      FALSE</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1       18           TRUE            TRUE      FALSE</span></span>
+<span><span class="co">#&gt;                        tcr_clonotype_id tcr_chains tcr_n_chains tcr_cdr3</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1             &lt;NA&gt;       &lt;NA&gt;           NA     &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1             &lt;NA&gt;       &lt;NA&gt;           NA     &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1             &lt;NA&gt;       &lt;NA&gt;           NA     &lt;NA&gt;</span></span>
+<span><span class="co">#&gt;                        tcr_cdr3_nt tcr_cdr3_length tcr_cdr3_nt_length</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1        &lt;NA&gt;            &lt;NA&gt;               &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1        &lt;NA&gt;            &lt;NA&gt;               &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1        &lt;NA&gt;            &lt;NA&gt;               &lt;NA&gt;</span></span>
+<span><span class="co">#&gt;                        tcr_v_gene tcr_d_gene tcr_j_gene tcr_c_gene</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span></span>
+<span><span class="co">#&gt;                        tcr_reads tcr_umis tcr_productive tcr_full_length</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1      &lt;NA&gt;     &lt;NA&gt;           &lt;NA&gt;            &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1      &lt;NA&gt;     &lt;NA&gt;           &lt;NA&gt;            &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1      &lt;NA&gt;     &lt;NA&gt;           &lt;NA&gt;            &lt;NA&gt;</span></span>
+<span><span class="co">#&gt;                        tcr_paired</span></span>
+<span><span class="co">#&gt; BL6_AAACGGGGTTCTGTTT-1         NA</span></span>
+<span><span class="co">#&gt; BL6_AAAGATGCAACAACCT-1         NA</span></span>
+<span><span class="co">#&gt; BL6_AACGTTGCACGACTCG-1         NA</span></span></code></pre></div>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -550,10 +512,10 @@ SingleCellExperiment objects and with data.frames. If no input object is
 provided to <code><a href="../reference/import_vdj.html">import_vdj()</a></code>, a data.frame containing V(D)J
 information will be returned. This data.frame can be used with other
 djvdj functions to perform further downstream analysis.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_BCR"</span>,</span>
-<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_BCR"</span></span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"MD4_BCR"</span><span class="op">)</span>,</span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_BCR"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># This will load V(D)J data and return a data.frame</span></span>
