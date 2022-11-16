@@ -406,8 +406,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   )
 
   # Set plot levels
-  lvls_col <- group_col
-  lvls_col <- lvls_col %||% cluster_col
+  lvls_col <- group_col %||% cluster_col
 
   plt_dat <- .set_lvls(plt_dat, lvls_col, plot_lvls)
   plt_dat <- .set_lvls(plt_dat, "met", names(method))

@@ -292,11 +292,11 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   # Check inputs
   paired <- length(data_cols) == 2
 
-  if (is.null(method))             method  <- ifelse(paired, "heatmap", "bar")
-  if (identical(method, "circos")) units <- "frequency"
+  if (is.null(method))             method <- ifelse(paired, "heatmap", "bar")
+  if (identical(method, "circos")) units  <- "frequency"
 
   .chk_usage_args(method, data_cols, group_col, units, paired)
-  .chk_group_cols(cluster_col, group_col)
+  .chk_group_cols(cluster_col, group_col, input)
 
   # Set y-axis
   usage_col <- ifelse(identical(units, "frequency"), "freq", "pct")
@@ -352,7 +352,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   }
 
   # Order clusters based on plot_lvls
-  lvl_col <- dplyr::if_else(is.null(group_col), cluster_col, group_col)
+  lvl_col <- group_col %||% cluster_col
   plt_dat <- .set_lvls(plt_dat, lvl_col, plot_lvls)
 
   # Plot gene usage

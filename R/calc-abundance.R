@@ -82,7 +82,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
   vdj <- dplyr::select(vdj, -all_of(data_col))
 
   freq_clmn <- paste0(prefix, "freq")
-  grp_clmn <- paste0(prefix, "grp")
+  grp_clmn  <- paste0(prefix, "grp")
 
   vdj <- dplyr::mutate(
     vdj,
@@ -211,16 +211,16 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing clonotype IDs to use for
+#' calculating clonotype abundance
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance. Clonotypes will be
 #' plotted separately for each cluster.
-#' @param clonotype_col meta.data column containing clonotype IDs to use for
-#' calculating clonotype abundance
 #' @param method Method to use for plotting, 'bar' will generate a bargraph,
 #' 'line' will generate a rank-abundance plot.
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param plot_colors Character vector containing colors for plotting
-#' @param plot_lvls Character vector containing levels for ordering
+#' @param plot_lvls Levels to use for ordering clusters
 #' @param n_clones Number of top clonotypes to plot (default is 10). If method
 #' is set to 'line', this will specify the number of clonotypes to label
 #' (default is 3).
@@ -289,7 +289,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 #'
 #' @export
 plot_clonal_abundance <- function(input, cluster_col = NULL,
-                                  clonotype_col = "clonotype_id",
+                                  data_col = "clonotype_id",
                                   method = "bar", units = "percent",
                                   plot_colors = NULL,
                                   plot_lvls = names(plot_colors),
@@ -297,54 +297,42 @@ plot_clonal_abundance <- function(input, cluster_col = NULL,
                                   panel_nrow = NULL, panel_scales = "free_x",
                                   ...) {
 
+  n_clones <- n_clones %||% switch(method, bar = 10, line = 3)
+
   if (!units %in% c("frequency", "percent")) {
     stop("units must be either 'frequency' or 'percent'.")
   }
 
-  if (identical(method, "bar")) {
-    n_clones <- n_clones %||% 10
-
-    if (n_clones <= 0) stop("n_clones must be >0.")
-
-  } else if (identical(method, "line")) {
-    n_clones <- n_clones %||% 3
-
-    if (n_clones < 0) stop("n_clones must be >=0.")
-
-  } else {
+  if (!method %in% c("bar", "line")) {
     stop("method must be either 'bar' or 'line'.")
   }
 
-  if (identical(method, "bar") && n_clones <= 0) {
-    stop("If method is set to 'bar', n_clones must be >0.")
-  }
+  if (identical(method, "bar") && n_clones <= 0) stop("n_clones must be >0.")
+  if (identical(method, "line") && n_clones < 0) stop("n_clones must be >=0.")
+
+  abun_col <- switch(units, frequency = ".freq", percent = ".pct")
+  y_lab <- switch(units, frequency = "number of cells", percent = "% of cells")
 
   # Calculate clonotype abundance
   plt_dat <- calc_frequency(
     input       = input,
     cluster_col = cluster_col,
-    data_col    = clonotype_col,
+    data_col    = data_col,
     prefix      = ".",
     return_df   = TRUE
   )
 
-  abun_col <- ".pct"
-
-  if (identical(units, "frequency")) {
-    abun_col <- ".freq"
-  }
-
   plt_dat <- tibble::as_tibble(plt_dat, rownames = CELL_COL)
-  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(clonotype_col)))
+  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
-  keep_cols <- c(cluster_col, clonotype_col, abun_col)
-
-  plt_dat <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
+  keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
+  keep_cols <- c(cluster_col, data_col, keep_cols)
+  plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
 
   # Add and format label column for plotting
   plt_dat <- dplyr::mutate(
     plt_dat,
-    .lab = trim_lab(!!sym(clonotype_col))
+    .lab = trim_lab(!!sym(data_col))
   )
 
   # Rank by abundance
@@ -354,7 +342,7 @@ plot_clonal_abundance <- function(input, cluster_col = NULL,
 
     plt_dat <- dplyr::mutate(
       plt_dat,
-      !!sym(clonotype_col) := paste0(!!sym(cluster_col), "_", !!sym(clonotype_col))
+      !!sym(data_col) := paste0(!!sym(cluster_col), "_", !!sym(data_col))
     )
   }
 
@@ -378,24 +366,24 @@ plot_clonal_abundance <- function(input, cluster_col = NULL,
   if (identical(method, "bar")) {
     plt_labs <- purrr::set_names(
       top_clones$.lab,
-      top_clones[[clonotype_col]]
+      top_clones[[data_col]]
     )
 
     top_clones <- dplyr::arrange(top_clones, desc(!!sym(abun_col)))
 
-    lvls <- rev(unique(top_clones[[clonotype_col]]))
+    lvls <- unique(top_clones[[data_col]])
 
     top_clones <- .set_lvls(
       df_in = top_clones,
-      clmn  = clonotype_col,
+      clmn  = data_col,
       lvls  = lvls
     )
 
     res <- .create_bars(
       df_in = top_clones,
-      x     = clonotype_col,
+      x     = data_col,
       y     = abun_col,
-      y_ttl = units,
+      y_ttl = y_lab,
       .fill = cluster_col,
       clrs  = plot_colors,
       ang   = 45,
@@ -479,7 +467,11 @@ plot_clonal_abundance <- function(input, cluster_col = NULL,
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param stack If TRUE, stacked bargraphs will be generated.
 #' @param plot_colors Character vector containing colors for plotting
-#' @param plot_lvls Character vector containing levels for ordering
+#' @param plot_lvls Levels to use for ordering clusters or groups
+#' @param trans Transformation to use for plotting data, e.g. 'log10'. By
+#' default values are not transformed, refer to [ggplot2::continuous_scale()]
+#' for more options. Axis transformation can only be performed when the `units`
+#' argument is 'frequency'.
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
@@ -489,11 +481,14 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, units = "percent", stack = TRUE,
                            plot_colors = NULL, plot_lvls = NULL, ...) {
 
+  .chk_group_cols(cluster_col, group_col, input)
+
   if (!units %in% c("frequency", "percent")) {
     stop("units must be either 'frequency' or 'percent'.")
   }
 
-  .chk_group_cols(cluster_col, group_col)
+  abun_col <- switch(units, frequency = ".freq", percent = ".pct")
+  y_lab <- switch(units, frequency = "number of cells", percent = "% of cells")
 
   # Calculate clonotype abundance
   plt_dat <- calc_frequency(
@@ -504,38 +499,28 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     return_df   = TRUE
   )
 
-  # Set axis labels
-  y_lab <- paste0(data_col, " ", units)
-
-  abun_col <- ".pct"
-
-  if (identical(units, "frequency")) {
-    abun_col <- ".freq"
-  }
-
+  # Format plot data
   plt_dat <- tibble::as_tibble(plt_dat, rownames = CELL_COL)
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
-  keep_cols <- c(cluster_col, group_col, data_col, abun_col)
-
-  plt_dat <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
+  keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
+  keep_cols <- c(cluster_col, data_col, keep_cols)
+  plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
 
   # Rank values in data_col
-  plt_dat <- dplyr::group_by(plt_dat, !!sym(data_col))
-
-  rnk <- dplyr::summarize(plt_dat, mn = mean(!!sym(abun_col)))
+  rnk <- dplyr::group_by(plt_dat, !!sym(data_col))
+  rnk <- dplyr::summarize(rnk, mn = mean(!!sym(abun_col)))
   rnk <- dplyr::arrange(rnk, desc(.data$mn))
   rnk <- pull(rnk, data_col)
-
-  plt_dat <- dplyr::ungroup(plt_dat)
 
   # Plot arguments
   gg_args <- list(y = abun_col, clrs = plot_colors, ...)
 
   # Create grouped boxplot
   if (!is.null(group_col)) {
-    plt_dat <- .set_lvls(plt_dat, group_col, plot_lvls)
-    plt_dat <- .set_lvls(plt_dat, data_col, rnk)
+    plot_lvls <- plot_lvls %||% names(plot_colors)
+    plt_dat   <- .set_lvls(plt_dat, group_col, plot_lvls)
+    plt_dat   <- .set_lvls(plt_dat, data_col, rnk)
 
     gg_args$alpha         <- gg_args$alpha %||% 0.5
     gg_args$outlier.color <- gg_args$outlier.color %||% NA
@@ -568,7 +553,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     x_col   <- cluster_col
   }
 
-  plt_dat <- .set_lvls(plt_dat, data_col, rev(rnk))
+  plt_dat <- .set_lvls(plt_dat, data_col, rnk)
 
   more_args <- list(
     df_in = plt_dat,
@@ -595,3 +580,169 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   res
 }
 
+
+
+
+
+# plot_frequency <- function(input, data_col, cluster_col = NULL,
+#                            group_col = NULL, units = "percent", stack = TRUE,
+#                            plot_colors = NULL, plot_lvls = NULL,
+#                            trans = "identity", ...) {
+#
+#   # Check arguments
+#   if (!units %in% c("frequency", "percent")) {
+#     stop("units must be either 'frequency' or 'percent'.")
+#   }
+#
+#   y_lab <- c(
+#     percent   = "% of cells",
+#     frequency = "number of cells"
+#   )
+#
+#   y_lab <- y_lab[[units]]
+#
+#   .chk_group_cols(cluster_col, group_col)
+#
+#   if (!identical("frequency", units) && !identical("identity", trans)) {
+#     trans <- "identity"
+#
+#     warning(
+#       "Axis transformations can only be performed when the units argument is ",
+#       "'frequency'."
+#     )
+#   }
+#
+#   # Format plot data
+#   plt_dat <- .get_meta(input)
+#   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
+#
+#   rnk <- dplyr::group_by(plt_dat, !!sym(data_col))
+#   rnk <- dplyr::summarize(rnk, n = n())
+#   rnk <- dplyr::arrange(rnk, desc(.data$n))
+#   rnk <- pull(rnk, data_col)
+#
+#   plt_dat <- .set_lvls(plt_dat, data_col, rnk)
+#   plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+#
+#   # Bar position
+#   if (stack) {
+#     if (identical("frequency", units)) pos <- ggplot2::position_stack()
+#     else                               pos <- ggplot2::position_fill()
+#
+#   } else {
+#     if (identical("frequency", units)) {
+#       pos <- ggplot2::position_dodge(preserve = "single")
+#     } else {
+#       pos <- position_dodge_fraction(preserve = "single")
+#     }
+#   }
+#
+#   # Create bargraphs
+#   gg_args <- list(...)
+#
+#   gg_args$position <- gg_args$position %||% pos
+#
+#   gg_aes <- c(
+#     x    = sym(ifelse(!is.null(cluster_col), cluster_col, data_col)),
+#     fill = sym(data_col)
+#   )
+#
+#   gg_aes <- purrr::lift_dl(aes)(gg_aes)
+#
+#   res <- ggplot(plt_dat, gg_aes) +
+#     purrr::lift_dl(geom_bar)(gg_args) +
+#     ggplot2::scale_y_continuous(trans = trans)
+#
+#   # Set plot colors
+#   if (!is.null(plot_colors)) {
+#     res <- res +
+#       ggplot2::scale_fill_manual(values = plot_colors)
+#   }
+#
+#   # Set theme
+#   res <- res +
+#     ggplot2::labs(y = y_lab) +
+#     djvdj_theme() +
+#     ggplot2::theme(
+#       axis.title.x = ggplot2::element_blank(),
+#       axis.text.x  = ggplot2::element_text(angle = 45, hjust = 1)
+#     )
+#
+#   res
+#
+#
+#
+#
+#
+#   # # Create bar graph
+#   # more_args <- list(
+#   #   df_in = plt_dat,
+#   #   x     = x_col,
+#   #   y_ttl = y_lab,
+#   #   .fill = data_col,
+#   #   ang   = 45,
+#   #   hjst  = 1
+#   # )
+#   #
+#   # gg_args <- append(gg_args, more_args)
+#
+#   # # When cluster_col is provided set default position to dodge
+#   # if (!is.null(cluster_col)) {
+#   #   gg_pos <- ggplot2::position_dodge(preserve = "single")
+#   #
+#   #   if (stack) gg_pos <- ggplot2::position_stack()
+#   #
+#   #   gg_args$position <- gg_args$position %||% gg_pos
+#   # }
+#   #
+#   # res <- purrr::lift_dl(.create_bars)(gg_args)
+#
+#   # Create grouped boxplot
+#   # if (!is.null(group_col)) {
+#   #
+#   #   # Calculate clonotype abundance
+#   #   plt_dat <- calc_frequency(
+#   #     input       = input,
+#   #     cluster_col = cluster_col,
+#   #     data_col    = data_col,
+#   #     prefix      = ".",
+#   #     return_df   = TRUE
+#   #   )
+#   #
+#   #   abun_col <- ".pct"
+#   #
+#   #   if (identical(units, "frequency")) abun_col <- ".freq"
+#   #
+#   #   plt_dat <- tibble::as_tibble(plt_dat, rownames = CELL_COL)
+#   #   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
+#   #
+#   #   keep_cols <- c(cluster_col, group_col, data_col, abun_col)
+#   #
+#   #   plt_dat <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
+#   #
+#   #   plt_dat <- .set_lvls(plt_dat, group_col, plot_lvls)
+#   #   plt_dat <- .set_lvls(plt_dat, data_col, rnk)
+#   #
+#   #   gg_args$y             <- abun_col
+#   #   gg_args$alpha         <- gg_args$alpha %||% 0.5
+#   #   gg_args$outlier.color <- gg_args$outlier.color %||% NA
+#   #
+#   #   more_args <- list(
+#   #     df_in  = plt_dat,
+#   #     x      = data_col,
+#   #     .color = group_col,
+#   #     .fill  = group_col
+#   #   )
+#   #
+#   #   gg_args <- append(gg_args, more_args)
+#   #
+#   #   res <- purrr::lift_dl(.create_boxes)(gg_args) +
+#   #     ggplot2::geom_jitter(
+#   #       position = ggplot2::position_jitterdodge(jitter.width = 0.05)
+#   #     ) +
+#   #     labs(y = y_lab) +
+#   #     theme(legend.position = "right")
+#   #
+#   #   return(res)
+#   # }
+# }

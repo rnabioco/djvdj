@@ -7,7 +7,7 @@
 plot_clonal_abundance(
   input,
   cluster_col = NULL,
-  clonotype_col = "clonotype_id",
+  data_col = "clonotype_id",
   method = "bar",
   units = "percent",
   plot_colors = NULL,
@@ -27,7 +27,7 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 grouping cells when calculating clonotype abundance. Clonotypes will be
 plotted separately for each cluster.}
 
-\item{clonotype_col}{meta.data column containing clonotype IDs to use for
+\item{data_col}{meta.data column containing clonotype IDs to use for
 calculating clonotype abundance}
 
 \item{method}{Method to use for plotting, 'bar' will generate a bargraph,
@@ -37,7 +37,7 @@ calculating clonotype abundance}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
-\item{plot_lvls}{Character vector containing levels for ordering}
+\item{plot_lvls}{Levels to use for ordering clusters}
 
 \item{n_clones}{Number of top clonotypes to plot (default is 10). If method
 is set to 'line', this will specify the number of clonotypes to label

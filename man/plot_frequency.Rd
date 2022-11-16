@@ -39,10 +39,15 @@ for each treatment condition.}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
-\item{plot_lvls}{Character vector containing levels for ordering}
+\item{plot_lvls}{Levels to use for ordering clusters or groups}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
+
+\item{trans}{Transformation to use for plotting data, e.g. 'log10'. By
+default values are not transformed, refer to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}}
+for more options. Axis transformation can only be performed when the \code{units}
+argument is 'frequency'.}
 }
 \value{
 ggplot object
