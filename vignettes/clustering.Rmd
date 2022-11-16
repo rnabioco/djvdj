@@ -25,35 +25,21 @@ knitr::opts_chunk$set(
 
 <br>
 
-This vignette provides detailed examples for clustering cells based on CDR3 sequences. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
+This vignette provides detailed examples for clustering cells based on CDR3 sequences. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme.
 
 ```{r}
 library(djvdj)
-library(magrittr)
 library(Seurat)
 library(ggplot2)
 library(RColorBrewer)
 
-download.file(
-  "https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip",
-  "splenocytes.zip",
-  quiet = TRUE
-)
-
-unzip("splenocytes.zip", overwrite = FALSE)
-```
-
-```{r}
-# Load Seurat object
-load("splenocytes/splen_so.rda")
-
 # Add V(D)J data to object
 vdj_dirs <- c(
-  BL6 = "splenocytes/BL6_BCR",
-  MD4 = "splenocytes/MD4_BCR"
+  BL6 = system.file("extdata/splen/BL6_BCR", package = "djvdj"),
+  MD4 = system.file("extdata/splen/MD4_BCR", package = "djvdj")
 )
 
-so <- splen_so %>%
+so <- splen_so |>
   import_vdj(vdj_dirs, define_clonotypes = "cdr3_gene")
 ```
 
@@ -68,7 +54,7 @@ By default, distances are calculated for amino acid sequences using the [BLOSUM6
 In this example we are clustering cells based on the CDR3 amino acid sequence.
 
 ```{r}
-so_vdj <- so %>%
+so_vdj <- so |>
   cluster_sequences(
     data_col    = "cdr3",
     method      = "louvain",   # clustering method
@@ -80,7 +66,7 @@ so_vdj <- so %>%
 Use the `chain` argument to cluster using only sequences from a specific chain.
 
 ```{r}
-so_vdj <- so %>%
+so_vdj <- so |>
   cluster_sequences(
     data_col = "cdr3",
     chain    = "IGK"
@@ -90,7 +76,7 @@ so_vdj <- so %>%
 By default the Uniform Manifold Approximation and Projection (UMAP) dimensional reduction method will be performed and UMAP coordinates will be added to the object. To skip this step, set the `run_umap` argument to `FALSE`.
 
 ```{r}
-so_vdj <- so %>%
+so_vdj <- so |>
   cluster_sequences(
     data_col = "cdr3",
     chain    = "IGK",
@@ -103,7 +89,7 @@ To return clustering results for multiple resolutions, a vector can be provided 
 ```{r}
 set.seed(42)
 
-so_vdj <- so %>%
+so_vdj <- so |>
   cluster_sequences(
     data_col   = "cdr3",
     chain      = "IGK",
@@ -122,7 +108,7 @@ This function will often generate a warning saying that rows with missing values
 ```{r}
 clrs <- setNames(brewer.pal(11, "Paired"), 1:11)
 
-so_vdj %>%
+so_vdj |>
   plot_features(
     x = "cdr3_UMAP_1",
     y = "cdr3_UMAP_2",
@@ -134,7 +120,7 @@ so_vdj %>%
 To visualize the proportion of BL6 and MD4 cells in each cluster we can create a stacked bargraph using the `plot_frequency()` function. MD4 cells are monoclonal and as expected these cells are found almost exclusively in a single cluster.
 
 ```{r}
-so_vdj %>%
+so_vdj |>
   plot_frequency(
     data_col    = "cdr3_cluster_0.4",
     cluster_col = "sample",
@@ -143,7 +129,7 @@ so_vdj %>%
 ```
 
 ```{r, eval = FALSE}
-so_vdj %>%
+so_vdj |>
   plot_vdj(
     data_col    = "cdr3_length",
     cluster_col = "cdr3_cluster_0.4"
@@ -152,13 +138,13 @@ so_vdj %>%
 ```
 
 ```{r, eval = FALSE}
-so_vdj %>%
+so_vdj |>
   plot_vdj_feature(
     data_col = "cdr3_length",
     chain    = "IGK"
   )
 
-so_vdj %>%
+so_vdj |>
   plot_vdj_feature(
     data_col = "cdr3_cluster_0.4",
     chain    = "IGK"
@@ -173,8 +159,8 @@ Using the `plot_motifs()` function we can generate sequence motifs for each clus
 
 As expected we see that most cells within the MD4 cluster have the exact same IGK CDR3 sequence.
 
-```{r, fig.width = 10}
-so_vdj %>%
+```{r, fig.width = 10, fig.height = 2.5}
+so_vdj |>
   plot_motifs(
     data_col    = "cdr3",
     cluster_col = "cdr3_cluster_0.4",
@@ -186,8 +172,8 @@ By default, sequences are aligned to the 5' end and trimmed based on the `width`
 
 In this example we generate motifs for the last 11 amino acids of the CDR3.
 
-```{r, fig.width = 10}
-so_vdj %>%
+```{r, fig.width = 10, fig.height = 2.5}
+so_vdj |>
   plot_motifs(
     data_col    = "cdr3",
     cluster_col = "cdr3_cluster_0.4",
@@ -200,7 +186,7 @@ so_vdj %>%
 Plot colors can be modified using the `plot_colors` argument and the number of rows used to arrange panels can be adjusted with the `panel_nrow` argument. Like most djvdj plotting functions, `plot_motifs()` will return a ggplot2 object that can be modified with other ggplot2 functions.
 
 ```{r, fig.height = 6}
-so_vdj %>%
+so_vdj |>
   plot_motifs(
     data_col    = "cdr3",
     cluster_col = "cdr3_cluster_0.4",

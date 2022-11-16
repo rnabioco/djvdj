@@ -460,7 +460,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param y Variable to plot on y-axis
 #' @param .fill Variable to use for fill color
 #' @param clrs Vector of colors for plotting
-#' @param trans Method to use for tranforming data
+#' @param trans Method to use for transforming data
 #' @param y_ttl Title for y-axis
 #' @param ang Angle of x-axis text
 #' @param hjst Horizontal justification for x-axis text
@@ -472,7 +472,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
                          trans = "identity", y_ttl = y, ang = 45, hjst = 1,
                          ...) {
 
-  # Reverse bar order
+  # Reverse bar order... WHY???
   lvls  <- rev(levels(pull(df_in, x)))
   df_in <- .set_lvls(df_in, x, lvls)
 
@@ -820,7 +820,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
 #' Check cluster_col and group_col arguments
 #' @noRd
-.chk_group_cols <- function(cluster_col, group_col) {
+.chk_group_cols <- function(cluster_col, group_col, input = NULL) {
   if (!is.null(group_col) && is.null(cluster_col)) {
     stop("cluster_col must be provided when group_col is specified.")
   }
@@ -828,5 +828,42 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   if (!is.null(group_col) && identical(group_col, cluster_col)) {
     stop("group_col and cluster_col must specify different columns.")
   }
+
+  if (!is.null(cluster_col) && !is.null(group_col) && !is.null(input)) {
+    dat <- .get_meta(input)
+
+    chk <- .chk_matching_vals(dat[[cluster_col]], dat[[group_col]])
+
+    if (!chk) {
+      stop(
+        "There must be a single group label for each cluster, ",
+        "i.e. each cluster can only belong to one group. ",
+        "Check the values in group_col and cluster_col."
+      )
+    }
+  }
+}
+
+.chk_matching_vals <- function(x, y) {
+  if (length(x) != length(y)) stop("x and y must be the same length.")
+
+  res <- paste0(x, y)
+
+  dplyr::n_distinct(x) == dplyr::n_distinct(res)
+}
+
+.get_matching_clmns <- function(df, clmn) {
+  dat <- as.list(df)
+
+  clmns <- names(dat)
+  clmns <- clmns[!clmns %in% clmn]
+  clmns <- dat[clmns]
+
+  clmn <- dat[clmn]
+  clmn <- purrr::reduce(clmn, paste0)
+
+  mtch <- purrr::map_lgl(clmns, ~ .chk_matching_vals(clmn, .x))
+
+  names(clmns[mtch])
 }
 

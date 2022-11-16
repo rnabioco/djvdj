@@ -1,7 +1,7 @@
 # Test data
 df_1 <- vdj_so@meta.data
 
-df_2 <- vdj_so@meta.data %>%
+df_2 <- vdj_so@meta.data |>
   as_tibble(rownames = ".cell_id")
 
 # Check all calc_frequency arguments
@@ -21,7 +21,7 @@ test_all_args(
 )
 
 test_that("Check Seurat output", {
-  res <- vdj_so %>%
+  res <- vdj_so |>
     calc_frequency(
       data_col = "cdr3",
       return_df     = FALSE
@@ -33,7 +33,7 @@ test_that("Check Seurat output", {
 
 # Check data.frame output
 test_that("calc_frequency df out", {
-  res <- vdj_so %>%
+  res <- vdj_so |>
     calc_frequency(
       data_col = "cdr3",
       return_df     = TRUE
@@ -44,7 +44,7 @@ test_that("calc_frequency df out", {
 
 # Check data.frame input
 test_that("calc_frequency df in", {
-  res <- vdj_so@meta.data %>%
+  res <- vdj_so@meta.data |>
     calc_frequency(data_col = "cdr3")
 
   expect_s3_class(res, "data.frame")

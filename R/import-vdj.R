@@ -939,12 +939,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   # If no vdj_coords, return mutation totals
   if (identical(vdj_coords, NA)) {
-    res <- all_muts %>%
-      tidyr::pivot_wider(
-        names_from  = "type",
-        values_from = "n",
-        values_fill = 0
-      )
+    res <- tidyr::pivot_wider(
+      all_muts,
+      names_from  = "type", values_from = "n", values_fill = 0
+    )
 
     res <- dplyr::mutate(
       res,

@@ -12,11 +12,6 @@ output:
 ---
 
 ```{r "setup", include = FALSE}
-library(djvdj)
-library(magrittr)
-library(Seurat)
-library(here)
-
 # Chunk opts
 knitr::opts_chunk$set(
   collapse  = TRUE,
@@ -28,17 +23,7 @@ knitr::opts_chunk$set(
 
 <br>
 
-This vignette provides detailed examples for loading gene expression and V(D)J data into a single object. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
-
-```{r}
-download.file(
-  "https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip",
-  "splenocytes.zip",
-  quiet = TRUE
-)
-
-unzip("splenocytes.zip", overwrite = FALSE)
-```
+This vignette provides detailed examples for loading gene expression and V(D)J data into a single object. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme.
 
 ## Basic usage
 
@@ -47,20 +32,26 @@ To load and parse V(D)J data, FASTQ files must first be processed using [Cell Ra
 The simplest use case for `import_vdj()` involves creating an object using data from a single run.
 
 ```{r}
+library(djvdj)
+library(Seurat)
+
+data_dir <- system.file("extdata/splen", package = "djvdj")
+
 # Create Seurat object
-so <- "splenocytes/BL6_GEX/filtered_feature_bc_matrix" %>%
-  Read10X() %>%
+so <- file.path(data_dir, "BL6_GEX/filtered_feature_bc_matrix") |>
+  Read10X() |>
   CreateSeuratObject()
 
 # Add V(D)J data to object
-so_vdj <- so %>%
-  import_vdj(vdj_dir = "splenocytes/BL6_BCR")
+so_vdj <- so |>
+  import_vdj(vdj_dir = file.path(data_dir, "BL6_BCR"))
 ```
 
 `import_vdj()` adds a variety of per-chain metrics to the object meta.data. Information for each chain identified for the cell is separated by a semicolon. The separator used for storing and parsing per-chain V(D)J data can be specified using the `sep` argument included for most djvdj functions. `NA`s will be included for cells that lack V(D)J data. 
 
 ```{r}
-slot(so_vdj, "meta.data") %>%
+so_vdj |>
+  slot("meta.data") |>
   head(2)
 ```
 
@@ -72,40 +63,28 @@ To modify/filter/plot per-chain data, djvdj provides a range of functions that m
 
 When combining gene expression and V(D)J data from multiple runs into the same Seurat object, we must ensure that `import_vdj()` is able to match the cell barcodes from the two data types. The easiest way to do this is to load the gene expression and V(D)J samples in the same order. 
 
+If the V(D)J samples are not loaded in the same order as the gene expression data, the cell barcodes will not match and you will receive an error.
+
 ```{r}
 # Load GEX data
 gex_dirs <- c(
-  "splenocytes/BL6_GEX/filtered_feature_bc_matrix",
-  "splenocytes/MD4_GEX/filtered_feature_bc_matrix"
+  file.path(data_dir, "BL6_GEX/filtered_feature_bc_matrix"),
+  file.path(data_dir, "MD4_GEX/filtered_feature_bc_matrix")
 )
 
-so <- gex_dirs %>%
-  Read10X() %>%
+so <- gex_dirs |>
+  Read10X() |>
   CreateSeuratObject()
 
 # Load BCR data
 # note that the BL6 and MD4 paths are in the same order as the gene
 # expression data
 vdj_dirs <- c(
-  "splenocytes/BL6_BCR",
-  "splenocytes/MD4_BCR"
+  file.path(data_dir, "BL6_BCR"),
+  file.path(data_dir, "MD4_BCR")
 )
 
-so_vdj <- so %>%
-  import_vdj(vdj_dir = vdj_dirs)
-```
-
-If the V(D)J samples are not loaded in the same order as the gene expression data, the cell barcodes will not match and you will receive an error.
-
-```{r, eval = FALSE}
-# Here we try to load the V(D)J data in the opposite order as the gene
-# expression data. THIS PRODUCES AN ERROR!
-vdj_dirs <- c(
-  "splenocytes/MD4_BCR",
-  "splenocytes/BL6_BCR"
-)
-
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(vdj_dir = vdj_dirs)
 ```
 
@@ -114,12 +93,12 @@ Another way to ensure the cell barcodes from the gene expression and V(D)J data 
 ```{r}
 # Load GEX data
 gex_dirs <- c(
-  BL6 = "splenocytes/BL6_GEX/filtered_feature_bc_matrix",
-  MD4 = "splenocytes/MD4_GEX/filtered_feature_bc_matrix"
+  BL6 = file.path(data_dir, "BL6_GEX/filtered_feature_bc_matrix"),
+  MD4 = file.path(data_dir, "MD4_GEX/filtered_feature_bc_matrix")
 )
 
-so <- gex_dirs %>%
-  Read10X() %>%
+so <- gex_dirs |>
+  Read10X() |>
   CreateSeuratObject()
 
 # Load BCR data
@@ -127,11 +106,11 @@ so <- gex_dirs %>%
 # but this is okay since cell prefixes are provided as names for the
 # input vector
 vdj_dirs <- c(
-  MD4 = "splenocytes/MD4_BCR",
-  BL6 = "splenocytes/BL6_BCR"
+  MD4 = file.path(data_dir, "MD4_BCR"),
+  BL6 = file.path(data_dir, "BL6_BCR")
 )
 
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(vdj_dir = vdj_dirs)
 ```
 
@@ -146,7 +125,7 @@ When results from multiple Cell Ranger runs are added to the object, the clonoty
 * 'cdr3_gene': use both the CDR3 nucleotide sequence and the combination of all V(D)J genes identified for the cell
 
 ```{r}
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(
     vdj_dir = vdj_dirs,
     define_clonotypes = "cdr3_gene"
@@ -165,11 +144,11 @@ The `filter_paired` argument will only include clonotypes with paired chains. Fo
 
 ```{r}
 vdj_dirs <- c(
-  MD4 = "splenocytes/MD4_BCR",
-  BL6 = "splenocytes/BL6_BCR"
+  MD4 = file.path(data_dir, "MD4_BCR"),
+  BL6 = file.path(data_dir, "BL6_BCR")
 )
 
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(
     vdj_dir = vdj_dirs,
     filter_chains = TRUE,
@@ -177,7 +156,7 @@ so_vdj <- so %>%
   )
 
 # To only include clonotypes with exactly 2 chains
-so_vdj <- so_vdj %>%
+so_vdj <- so_vdj |>
   filter_vdj(n_chains == 2)
 ```
 
@@ -192,11 +171,11 @@ Mutation information for each chain can be parsed using two additional output fi
 
 ```{r}
 vdj_dirs <- c(
-  MD4 = "splenocytes/MD4_BCR",
-  BL6 = "splenocytes/BL6_BCR"
+  MD4 = file.path(data_dir, "MD4_BCR"),
+  BL6 = file.path(data_dir, "BL6_BCR")
 )
 
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(
     vdj_dir = vdj_dirs,
     include_mutations = TRUE
@@ -206,7 +185,8 @@ so_vdj <- so %>%
 The additional columns added to the meta.data will include the number of insertions, deletions, and mismatches (ending in 'ins', 'del', or 'mis') for each V(D)J segment (prefixed with 'v', 'd', 'j', or 'c'). Columns containing junction information will be prefixed with either 'vd' or 'dj'. Columns ending in 'freq' show the event frequency which is calculated as the number of events divided by the length of the region.
 
 ```{r}
-slot(so_vdj, "meta.data") %>%
+so_vdj |>
+  slot("meta.data") |>
   head(2)
 ```
 
@@ -217,13 +197,14 @@ slot(so_vdj, "meta.data") %>%
 By default the only sequence information loaded by `import_vdj()` will be for the CDR3 region. Newer versions of Cell Ranger will include additional sequences in the filtered_contig_annotations.csv file. This includes the FWR1, CDR1, FWR2, CDR2, FWR3, and FWR4 regions. These additional sequences can be loaded using the `data_cols` argument.
 
 ```{r}
-so_vdj <- so %>%
+so_vdj <- so |>
   import_vdj(
     vdj_dir   = vdj_dirs,
     data_cols = c("cdr1", "cdr1_nt", "cdr2", "cdr2_nt")
   )
 
-slot(so_vdj, "meta.data") %>%
+so_vdj |>
+  slot("meta.data") |>
   head(3)
 ```
 
@@ -235,24 +216,25 @@ To add both BCR and TCR data to the object, run `import_vdj()` separately for ea
 
 ```{r}
 bcr_dirs <- c(
-  MD4 = "splenocytes/MD4_BCR",
-  BL6 = "splenocytes/BL6_BCR"
+  MD4 = file.path(data_dir, "MD4_BCR"),
+  BL6 = file.path(data_dir, "BL6_BCR")
 )
 
 tcr_dirs <- c(
-  MD4 = "splenocytes/MD4_TCR",
-  BL6 = "splenocytes/BL6_TCR"
+  MD4 = file.path(data_dir, "MD4_TCR"),
+  BL6 = file.path(data_dir, "BL6_TCR")
 )
 
-so_vdj <- so %>%
-  import_vdj(bcr_dirs, prefix = "bcr_") %>%
+so_vdj <- so |>
+  import_vdj(bcr_dirs, prefix = "bcr_") |>
   import_vdj(tcr_dirs, prefix = "tcr_")
 ```
 
 This results in two sets of new columns being added to the meta.data. When performing downstream analysis using other djvdj functions, be sure to specify the correct columns, i.e. 'bcr_clonotype_id' or 'tcr_clonotype_id'.
 
 ```{r}
-slot(so_vdj, "meta.data") %>%
+so_vdj |>
+  slot("meta.data") |>
   head(3)
 ```
 
@@ -264,8 +246,8 @@ In addition to Seurat objects, djvdj also works with SingleCellExperiment object
 
 ```{r}
 vdj_dirs <- c(
-  MD4 = "splenocytes/MD4_BCR",
-  BL6 = "splenocytes/BL6_BCR"
+  MD4 = file.path(data_dir, "MD4_BCR"),
+  BL6 = file.path(data_dir, "BL6_BCR")
 )
 
 # This will load V(D)J data and return a data.frame

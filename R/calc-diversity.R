@@ -12,7 +12,8 @@
 #' output columns.
 #' @param downsample Downsample clusters to the same size when calculating
 #' diversity metrics
-#' @param n_boots Number of bootstrap replicates
+#' @param n_boots Number of bootstrap replicates for calculating standard error,
+#' if n_boots is 0 this will be skipped.
 #' @param chain Chain to use for calculating diversity. Set to NULL to include
 #' all chains.
 #' @param chain_col meta.data column containing chains for each cell
@@ -80,7 +81,7 @@
 #' @export
 calc_diversity <- function(input, data_col, cluster_col = NULL,
                            method = abdiv::simpson, downsample = FALSE,
-                           n_boots = 1, chain = NULL, chain_col = "chains",
+                           n_boots = 0, chain = NULL, chain_col = "chains",
                            prefix = paste0(data_col, "_"), return_df = FALSE,
                            sep = ";") {
 
@@ -96,7 +97,9 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
     method <- purrr::set_names(list(method), nm)
   }
 
-  if (n_boots < 1) stop("n_boots must be an integer >=1.")
+  if (length(n_boots) != 1 || n_boots < 0) {
+    stop("n_boots must be a single value >= 0.")
+  }
 
   # Format input data
   names(method) <- paste0(prefix, names(method))
@@ -173,19 +176,11 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
   if (downsample)            sam <- dplyr::slice_sample(sam, n = sam_sz)
 
   # Calculate diversity
-  .calc_div <- function(x, met, n_bts = n_boots) {
-    fn <- function(x, i) met(table(x[i]))
-
-    bt <- boot::boot(x, fn, R = n_bts)
-
-    broom::tidy(bt)
-  }
-
   div <- purrr::imap_dfr(method, ~ {
     dplyr::summarize(
       sam,
       met       = .y,
-      diversity = list(.calc_div(!!sym(data_col), met = .x)),
+      diversity = list(.calc_div(!!sym(data_col), met = .x, n_bts = n_boots)),
       stderr    = purrr::map_dbl(.data$diversity, pull, "std.error"),
       diversity = purrr::map_dbl(.data$diversity, pull, "statistic")
     )
@@ -219,6 +214,33 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
   res
 }
 
+# Calculate diversity
+# n_boots should be 0 to just calculate stat w/ no reps
+# n_boots must be >1 to calculate standard error
+# t0 is the calculated stat from the original data
+.calc_div <- function(x, met, n_bts) {
+  fn <- function(x, i) {
+    res <- met(table(x[i]))
+
+    if (is.na(res)) {
+      stop(
+        "The diversity metric returned NA. Some metrics will return NA if a ",
+        "cluster is composed entirely of a single clonotype, ",
+        "check your clusters and rerun."
+      )
+    }
+
+    res
+  }
+
+  bt  <- boot::boot(x, fn, R = n_bts)
+  res <- broom::tidy(bt)
+
+  if (n_bts == 0) res <- tibble::tibble(statistic = bt$t0, std.error = NA)
+
+  res
+}
+
 
 #' Plot repertoire diversity
 #'
@@ -236,7 +258,8 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 #' @param downsample Downsample clusters to the same size when calculating
 #' diversity metrics
-#' @param n_boots Number of bootstrap replicates to use for calculating standard error
+#' @param n_boots Number of bootstrap replicates for calculating standard error,
+#' if n_boots is 0 this will be skipped.
 #' @param chain Chain to use for calculating diversity. Set to NULL to include
 #' all chains.
 #' @param chain_col meta.data column containing chains for each cell
@@ -315,7 +338,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' @export
 plot_diversity <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, method = abdiv::simpson,
-                           downsample = FALSE, n_boots = 1, chain = NULL,
+                           downsample = FALSE, n_boots = 0, chain = NULL,
                            chain_col = "chains", plot_colors = NULL,
                            plot_lvls = names(plot_colors), panel_nrow = NULL,
                            panel_scales = "free", sep = ";", ...) {
@@ -324,17 +347,17 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
     stop("Must include names if providing a list of methods.")
   }
 
-  .chk_group_cols(cluster_col, group_col)
+  .chk_group_cols(cluster_col, group_col, input)
 
   if (length(method) == 1 && is.null(names(method))) {
     nm <- as.character(substitute(method))
     nm <- dplyr::last(nm)
 
-    method        <- list(method)
+    method <- list(method)
     names(method) <- nm
   }
 
-  if (!is.null(group_col)) n_boots <- 1
+  if (!is.null(group_col)) n_boots <- 0
 
   # Diversity columns
   div_cols <- paste0(names(method), "_", "diversity")
@@ -343,8 +366,6 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   all_div_cols <- div_cols
 
   if (n_boots > 1) all_div_cols <- c(all_div_cols, err_cols)
-
-  plt_cols <- c(cluster_col, group_col, all_div_cols)
 
   # Calculate diversity
   # remove any existing diversity columns from plt_dat
@@ -367,7 +388,11 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
   # Format data for plotting
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
-  plt_dat <- dplyr::distinct(plt_dat, !!!syms(plt_cols))
+
+  keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
+  keep_cols <- c(cluster_col, data_col, keep_cols)
+  plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
+
   plt_dat <- tidyr::pivot_longer(plt_dat, all_of(all_div_cols))
 
   re <- "^(.+)_(diversity|stderr)$"
@@ -385,6 +410,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   lvls_col <- lvls_col %||% cluster_col
 
   plt_dat <- .set_lvls(plt_dat, lvls_col, plot_lvls)
+  plt_dat <- .set_lvls(plt_dat, "met", names(method))
 
   include_x_labs <- !is.null(cluster_col)
 
@@ -480,8 +506,8 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
 #' @param method Method to use for calculating diversity
-#' @param n_boots Number of bootstrap replicates to use for calculating
-#' standard error
+#' @param n_boots Number of bootstrap replicates for calculating standard error,
+#' if n_boots is 0 this will be skipped.
 #' @param chain Chain to use for calculating diversity. Set to NULL to include
 #' all chains.
 #' @param chain_col meta.data column containing chains for each cell

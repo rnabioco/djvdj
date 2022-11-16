@@ -25,35 +25,21 @@ knitr::opts_chunk$set(
 
 <br>
 
-This vignette provides detailed examples for quantifying repertoire overlap between samples. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
+This vignette provides detailed examples for quantifying repertoire overlap between samples. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme.
 
 ```{r}
 library(djvdj)
-library(magrittr)
 library(Seurat)
 library(ggplot2)
 library(RColorBrewer)
 
-download.file(
-  "https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip",
-  "splenocytes.zip",
-  quiet = TRUE
-)
-
-unzip("splenocytes.zip", overwrite = FALSE)
-```
-
-```{r}
-# Load Seurat object
-load("splenocytes/splen_so.rda")
-
 # Add V(D)J data to object
 vdj_dirs <- c(
-  BL6 = "splenocytes/BL6_BCR",
-  MD4 = "splenocytes/MD4_BCR"
+  BL6 = system.file("extdata/splen/BL6_BCR", package = "djvdj"),
+  MD4 = system.file("extdata/splen/MD4_BCR", package = "djvdj")
 )
 
-so <- splen_so %>%
+so <- splen_so |>
   import_vdj(vdj_dirs, define_clonotypes = "cdr3_gene")
 ```
 
@@ -70,7 +56,7 @@ Jaccard dissimilarity is calculated using the following equation, where $a$ is t
 $$ 1 - {a \over a + b + c} $$
 
 ```{r}
-so_vdj <- so %>%
+so_vdj <- so |>
   calc_similarity(
     data_col    = "clonotype_id",
     cluster_col = "sample",
@@ -81,7 +67,7 @@ so_vdj <- so %>%
 Similarity metrics can also be calculated for a specific chain. To do this, the column passed to the `data_col` argument must contain per-chain data, such as CDR3 amino acid or nucleotide sequences. In this example similarity is calculated based on heavy chain CDR3 sequences.
 
 ```{r}
-so_vdj <- so %>%
+so_vdj <- so |>
   calc_similarity(
     data_col    = "cdr3_nt",
     cluster_col = "sample",
@@ -92,7 +78,7 @@ so_vdj <- so %>%
 Instead of adding the results to the object meta.data, a matrix can also be returned.
 
 ```{r}
-so %>%
+so |>
   calc_similarity(
     data_col    = "clonotype_id",
     cluster_col = "sample",
@@ -107,7 +93,7 @@ so %>%
 The `plot_similarity()` function will create plots summarizing repertoire overlap between samples. By default, Jaccard dissimilarity will be calculated and plotted as a heatmap. For this example, none of the samples show strong overlap. This may seem surprising since the MD4 samples are mainly composed of a single clonotype and should have a very similar repertoire. However, the Jaccard index is only measuring the number of overlapping clonotypes and is not influenced by clonotype abundance.
 
 ```{r}
-so %>%
+so |>
   plot_similarity(
     data_col = "clonotype_id",
     cluster_col = "sample"
@@ -117,7 +103,7 @@ so %>%
 A metric that takes into account clonotype abundance is the Horn-Morisita index. This metric measures the probability that clonotypes drawn from each sample will be different. Values close to 0 indicate high similarity. In this example we see that when clonotype abundance is taken into account, the MD4 samples appear very similar to each other.
 
 ```{r, fig.height = 4.5}
-so %>%
+so |>
   plot_similarity(
     data_col    = "clonotype_id",
     cluster_col = "sample",
@@ -128,7 +114,7 @@ so %>%
 The appearance of the heatmap can be modified with additional arguments. Setting `cluster_heatmap` to `FALSE` will remove the dendrograph. The `remove_upper_triangle` argument can be used to only plot the lower triangle of the heatmap. The `plot_colors` argument will adjust the color gradient. Additional parameters can be passed directly to `ComplexHeatmap::Heatmap()`.
 
 ```{r, fig.height = 4.5}
-so %>%
+so |>
   plot_similarity(
     data_col        = "clonotype_id",
     cluster_col     = "sample",
@@ -150,7 +136,7 @@ A circos plot can be created by setting the `method` argument to 'circos'. This 
 The number of overlapping clonotypes is shown as the axis labels for each sample. The width of each link reflects the number of clonotypes overlapping the samples.
 
 ```{r}
-so %>%
+so |>
   plot_similarity(
     data_col    = "clonotype_id",
     cluster_col = "sample",
@@ -162,7 +148,7 @@ so %>%
 Plot colors can be modified using the `plot_colors` argument, additional parameters can be passed directly to `circlize::chordDiagram()`. In this example we scale the plot so each sample is the same width.
 
 ```{r}
-so %>%
+so |>
   plot_similarity(
     data_col    = "clonotype_id",
     cluster_col = "sample",
@@ -181,7 +167,7 @@ so %>%
 Multidimensional scaling (MDS) can be used to visualize the overall similarity between repertoires. The `calc_mds()` function will calculate MDS coordinates using either the Jaccard dissimilarity index or the Horn-Morisita index. The method can be specified using the `method` argument. MDS coordinates will get added to the meta.data.
 
 ```{r}
-so_vdj <- so %>%
+so_vdj <- so |>
   calc_mds(
     data_col    = "clonotype_id",
     cluster_col = "sample",
@@ -192,7 +178,7 @@ so_vdj <- so %>%
 The `plot_mds()` function will create an MDS plot with labels added for each sample.
 
 ```{r}
-so %>%
+so |>
   plot_mds(
     data_col = "clonotype_id",
     cluster_col = "sample"
@@ -202,7 +188,7 @@ so %>%
 ggplot2 functions can be used to further adjust plot aesthetics, or additional arguments can be passed directly to ggplot2, e.g. `size`, `shape`, etc.
 
 ```{r}
-so %>%
+so |>
   plot_mds(
     data_col    = "clonotype_id",
     cluster_col = "sample",
@@ -216,7 +202,7 @@ so %>%
 To remove sample labels, set `label_points` to `FALSE`.
 
 ```{r}
-so %>%
+so |>
   plot_mds(
     data_col     = "clonotype_id",
     cluster_col  = "sample",

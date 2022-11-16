@@ -23,35 +23,21 @@ knitr::opts_chunk$set(
 
 <br>
 
-This vignette provides detailed examples for manipulating V(D)J data imported into a single-cell object using djvdj. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme. A Seurat object along with the raw matrices can be downloaded [here](https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip).
+This vignette provides detailed examples for manipulating V(D)J data imported into a single-cell object using djvdj. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme.
 
 ```{r}
 library(djvdj)
-library(magrittr)
-library(dplyr)
 library(Seurat)
 library(ggplot2)
-
-download.file(
-  "https://djvdj-data.s3.us-west-2.amazonaws.com/splenocytes.zip",
-  "splenocytes.zip",
-  quiet = TRUE
-)
-
-unzip("splenocytes.zip", overwrite = FALSE)
-```
-
-```{r}
-# Load Seurat object
-load("splenocytes/splen_so.rda")
+library(dplyr)
 
 # Add V(D)J data to object
 vdj_dirs <- c(
-  BL6 = "splenocytes/BL6_BCR",
-  MD4 = "splenocytes/MD4_BCR"
+  BL6 = system.file("extdata/splen/BL6_BCR", package = "djvdj"),
+  MD4 = system.file("extdata/splen/MD4_BCR", package = "djvdj")
 )
 
-so <- splen_so %>%
+so <- splen_so |>
   import_vdj(
     vdj_dirs,
     define_clonotypes = "cdr3_gene",
@@ -68,26 +54,28 @@ Per-chain data can be filtered with the `filter_vdj()` function. The per-chain v
 In this example we are only including V(D)J data for cells that have all of the chains, IGH, IGK, and IGL.
 
 ```{r}
-res <- so %>%
+res <- so |>
   filter_vdj(
     all(c("IGH", "IGK", "IGL") %in% chains)
   )
 
-res@meta.data %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(chains, cdr3) %>%
-  head(3)
+res |>
+  slot("meta.data") |>
+  filter(!is.na(clonotype_id)) |>
+  select(chains, cdr3) |>
+  head()
 ```
 
 In this example we are removing V(D)J data for all chains except IGH.
 
 ```{r}
-res <- so %>%
+res <- so |>
   filter_vdj(chains == "IGH")
 
-res@meta.data %>%
-  filter(!is.na(clonotype_id)) %>%
-  select(chains, cdr3) %>%
+res |>
+  slot("meta.data") |>
+  filter(!is.na(clonotype_id)) |>
+  select(chains, cdr3) |>
   head(3)
 ```
 
@@ -98,31 +86,34 @@ res@meta.data %>%
 The `summarize_vdj()` function can be used to summarize the per-chain data for each cell and add the results to the meta.data. In this example we are calculating the median number of deletions and the median number of insertions for each cell. The `col_names` argument can be used to name the new columns, use '{.col}' to refer to the original column name.
 
 ```{r}
-res <- so %>%
+res <- so |>
   summarize_vdj(
-    data_cols = c("all_del", "all_ins"),
+    data_cols = c("all_ins", "all_del"),
     fn        = stats::median,
     col_names = "median_{.col}"
   )
 
-res@meta.data %>%
-  select(all_del, all_ins, median_all_del, median_all_ins) %>%
+res |>
+  slot("meta.data") |>
+  filter(n_chains > 1) %>%
+  select(matches("all_(del|ins)")) |>
   head(2)
 ```
 
 This function can also be used for character strings such as the chains column. In this example we are creating a new column in the meta.data containing the unique chains for each cell.
 
 ```{r}
-res <- so %>%
+res <- so |>
   summarize_vdj(
     data_cols = "chains",
     fn        = ~ paste0(unique(.x), collapse = "_"),
     col_names = "unique_chains"
   )
 
-res@meta.data %>%
-  filter(n_chains > 2) %>%
-  select(chains, unique_chains) %>%
+res |>
+  slot("meta.data") |>
+  filter(n_chains > 2) |>
+  select(chains, unique_chains) |>
   head(2)
 ```
 
@@ -135,13 +126,14 @@ Another way to modify V(D)J data present in the object is with the `mutate_vdj()
 In this example we are calculating the sum of all insertions and deletions for each cell and storing this information in a new column called 'total_indels'.
 
 ```{r}
-res <- so %>%
+res <- so |>
   mutate_vdj(
     total_indels = sum(all_ins, all_del)
   )
 
-res@meta.data %>%
-  select(all_ins, all_del, total_indels) %>%
+res |>
+  slot("meta.data") |>
+  select(all_ins, all_del, total_indels) |>
   head()
 ```
 
