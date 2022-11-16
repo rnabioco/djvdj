@@ -389,7 +389,7 @@ summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL, chain_
         empty_val = NA
       )
 
-      # Add prefix to data_cols so temporary columns are usedvdj |> hea
+      # Add prefix to data_cols so temporary columns are used
       data_cols <- paste0(prfx, data_cols)
 
       # Set col_names so prefix is removed from columns

@@ -119,13 +119,7 @@ filter_vdj <- function(input, filt, data_cols = NULL,
     keep_rows <- unlist(keep_rows)
     vdj_cols  <- vdj_cols[vdj_cols != CELL_COL]
 
-    vdj <- meta |>
-      mutate(across(all_of(vdj_cols), ~ {
-        x <- .x
-        typ <- typeof(x)
-        x[!keep_rows] <- as(NA, typ)
-        x
-      }))
+    vdj <- mutate(meta, across(all_of(vdj_cols), .add_na, !keep_rows))
 
     res <- .add_meta(input, vdj)
 
@@ -158,19 +152,24 @@ filter_vdj <- function(input, filt, data_cols = NULL,
   other_cols <- vdj_cols[!vdj_cols %in% sep_cols]
   na_rows    <- purrr::map_lgl(keep_rows, ~ !any(.x))
 
-  vdj <- vdj |>
-    mutate(across(all_of(other_cols), ~ {
-      x <- .x
-      typ <- typeof(x)
-      x[na_rows] <- as(NA, typ)
-      x
-    }))
+  vdj <- mutate(vdj, across(all_of(other_cols), .add_na, na_rows))
 
   # Format results
   res <- .add_meta(input, vdj)
 
   res
 }
+
+#' Insert NAs based on logical index
+#' @noRd
+.add_na <- function(x, lgl_idx) {
+  typ <- typeof(x)
+
+  x[lgl_idx] <- as(NA, typ)
+
+  x
+}
+
 
 
 
