@@ -167,15 +167,15 @@ test_all_args(
 
 # Check all plot_clonal_abundance arguments for line plot
 arg_lst <- list(
-  input         = list(vdj_so, vdj_sce),
-  clonotype_col = "cdr3_nt",
-  cluster_col   = list(NULL, "seurat_clusters"),
-  method        = "line",
-  units         = c("percent", "frequency"),
-  plot_colors   = list(NULL, test_cols),
-  plot_lvls     = list(NULL, test_lvls),
-  label_aes     = list(list(), list(size = 2)),
-  n_clones        = c(0, 5)
+  input       = list(vdj_so, vdj_sce),
+  data_col    = "cdr3_nt",
+  cluster_col = list(NULL, "seurat_clusters"),
+  method      = "line",
+  units       = c("percent", "frequency"),
+  plot_colors = list(NULL, test_cols),
+  plot_lvls   = list(NULL, test_lvls),
+  label_aes   = list(list(), list(size = 2)),
+  n_clones    = c(0, 5)
 )
 
 test_all_args(
@@ -198,17 +198,16 @@ test_all_args(
 
 # Check plot_clonal_abundance axis labels
 arg_lst <- list(
-  input         = list(vdj_so, vdj_sce),
-  clonotype_col = "cdr3_nt",
-  units         = "percent",
-  method          = c("bar", "line")
+  input  = list(vdj_so, vdj_sce),
+  units  = "percent",
+  method = c("bar", "line")
 )
 
 test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_clonal_abundance,
   desc    = "plot_clonal_abundance axis labels",
-  chk     = expr(expect_true(.res$label$y == "percent"))
+  chk     = expr(expect_true(.res$labels$y == "% of cells"))
 )
 
 arg_lst$units <- "frequency"
@@ -217,7 +216,7 @@ test_all_args(
   arg_lst = arg_lst,
   .fn     = plot_clonal_abundance,
   desc    = "plot_clonal_abundance axis labels",
-  chk     = expr(expect_true(.res$label$y == "frequency"))
+  chk     = expr(expect_true(.res$label$y == "number of cells"))
 )
 
 # Check plot_clonal_abundance bad units

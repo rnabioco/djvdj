@@ -288,8 +288,8 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 #' )
 #'
 #' @export
-plot_clonal_abundance <- function(input, cluster_col = NULL,
-                                  data_col = "clonotype_id",
+plot_clonal_abundance <- function(input, data_col = "clonotype_id",
+                                  cluster_col = NULL,
                                   method = "bar", units = "percent",
                                   plot_colors = NULL,
                                   plot_lvls = names(plot_colors),
@@ -418,7 +418,7 @@ plot_clonal_abundance <- function(input, cluster_col = NULL,
 
   res <- ggplot2::ggplot(plt_dat, plt_aes) +
     ggplot2::geom_line(clr_aes, ...) +
-    ggplot2::labs(y = units) +
+    ggplot2::labs(y = y_lab) +
     djvdj_theme()
 
   if (!is.null(plot_colors)) {

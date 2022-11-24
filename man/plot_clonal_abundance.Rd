@@ -6,8 +6,8 @@
 \usage{
 plot_clonal_abundance(
   input,
-  cluster_col = NULL,
   data_col = "clonotype_id",
+  cluster_col = NULL,
   method = "bar",
   units = "percent",
   plot_colors = NULL,
@@ -23,12 +23,12 @@ plot_clonal_abundance(
 \item{input}{Single cell object or data.frame containing V(D)J data. If a
 data.frame is provided, the cell barcodes should be stored as row names.}
 
+\item{data_col}{meta.data column containing clonotype IDs to use for
+calculating clonotype abundance}
+
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells when calculating clonotype abundance. Clonotypes will be
 plotted separately for each cluster.}
-
-\item{data_col}{meta.data column containing clonotype IDs to use for
-calculating clonotype abundance}
 
 \item{method}{Method to use for plotting, 'bar' will generate a bargraph,
 'line' will generate a rank-abundance plot.}
