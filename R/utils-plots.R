@@ -472,10 +472,6 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
                          trans = "identity", y_ttl = y, ang = 45, hjst = 1,
                          ...) {
 
-  # Reverse bar order... WHY???
-  # lvls  <- rev(levels(pull(df_in, x)))
-  # df_in <- .set_lvls(df_in, x, lvls)
-
   # Set aesthetics and geom_col arguments
   gg_aes <- aes(!!sym(x), !!sym(y))
 

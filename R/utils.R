@@ -31,7 +31,8 @@ CELL_COL <- ".cell_id"
 #' @param arg_lst Named list of arguments to test
 #' @param .fn Function to test
 #' @param desc Description to pass to test_that
-#' @param chk Function or expression to use for testing
+#' @param chk Function or expression to use for testing. If an expression is
+#' passed, results from .fn can be referred to with .res.
 #' @param dryrun Do not run tests, just return table of arguments that will be
 #' tested
 #' @return Output from test_that
@@ -55,7 +56,6 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
     test_that(paste(desc, n), {
 
       if (is.call(chk)) {
-
         .res <- purrr::lift_dl(.fn)(test_args)
 
         return(eval(chk))
