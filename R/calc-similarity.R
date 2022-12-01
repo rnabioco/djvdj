@@ -230,6 +230,8 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' @param chain_col meta.data column containing chains for each cell
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters
+#' @param rotate_labels Should labels on circos plot be rotated to reduce
+#' overlapping text
 #' @param cluster_heatmap If FALSE, rows and columns of heatmap will not be
 #' clustered.
 #' @param remove_upper_triangle If TRUE, upper triangle for heatmap will not
@@ -280,7 +282,7 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
                             method = abdiv::jaccard, chain = NULL,
                             chain_col = "chains", plot_colors = NULL,
                             plot_lvls = names(plot_colors),
-                            cluster_heatmap = TRUE,
+                            rotate_labels = FALSE, cluster_heatmap = TRUE,
                             remove_upper_triangle = FALSE,
                             remove_diagonal = remove_upper_triangle, sep = ";",
                             ...) {
@@ -322,9 +324,10 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 
     .create_circos(
       plt_dat,
-      clrs = plot_colors,
-      lvls = plot_lvls,
-      grps = grps,
+      clrs          = plot_colors,
+      lvls          = plot_lvls,
+      grps          = grps,
+      rotate_labels = rotate_labels,
       ...
     )
 

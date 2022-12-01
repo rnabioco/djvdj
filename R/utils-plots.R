@@ -306,6 +306,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param na_color Color to use for missing values
 #' @param lvls Vector specifying level order
 #' @param grps Named vector specifying group for each column/row
+#' @param rotate_labels Should labels be rotated to reduce overlapping text
 #' @param plt_ttl Plot title
 #' @param ... Additional arguments to pass to circlize::chordDiagram()
 #' @importFrom scales hue_pal
@@ -313,7 +314,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @importFrom graphics title
 #' @noRd
 .create_circos <- function(mat_in, clrs = NULL, na_color = "grey90",
-                           lvls = NULL, grps = NULL, plt_ttl = NULL, ...) {
+                           lvls = NULL, grps = NULL, rotate_labels = FALSE,
+                           plt_ttl = NULL, ...) {
 
   # Check matrix, must have at least one link
   vals <- as.numeric(mat_in)
@@ -362,8 +364,18 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   plt_args$group      <- plt_args$group %||% grps
 
   # Exclude default axis track
+  if (rotate_labels) {
+    ann_trk <- "grid"
+
+    plt_args$preAllocateTracks <- plt_args$preAllocateTracks %||%
+      list(track.height = max(strwidth(unlist(dimnames(mat_in)))))
+
+  } else {
+    ann_trk <- c("name", "grid")
+  }
+
   adj_axis <- is.null(plt_args[["annotationTrack"]])
-  ann_trk  <- c("name", "grid")
+
   plt_args[["annotationTrack"]] <- plt_args[["annotationTrack"]] %||% ann_trk
 
   # Create circos plot
@@ -389,10 +401,20 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
       circlize::circos.axis(minor.ticks = 0, labels.cex = 0.5)
     }
 
+    circlize::circos.track(track.index = 2, bg.border = NA, panel.fun = pan_fun)
+  }
+
+  # Add rotated labels
+  if (rotate_labels) {
     circlize::circos.track(
-      track.index = 2,
-      bg.border   = NA,
-      panel.fun   = pan_fun
+      track.index = 1, bg.border = NA,
+      panel.fun = function(x, y) {
+        circlize::circos.text(
+          circlize::CELL_META$xcenter, circlize::CELL_META$ylim[1],
+          circlize::CELL_META$sector.index, facing = "clockwise",
+          niceFacing = TRUE, adj = c(-0.3, 0.5)
+        )
+      }
     )
   }
 
@@ -526,9 +548,10 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_boxes <- function(df_in, x = NULL, y, grp = NULL, .color = NULL, .fill = NULL,
-                          clrs = NULL, method = "boxplot", trans = "identity",
-                          nrow = NULL, scales = "fixed", ...) {
+.create_boxes <- function(df_in, x = NULL, y, grp = NULL, .color = NULL,
+                          .fill = NULL, clrs = NULL, method = "boxplot",
+                          trans = "identity", nrow = NULL, scales = "fixed",
+                          ...) {
 
   # Check input
   typs <- c("boxplot", "violin")
@@ -572,7 +595,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   if (identical(method, "violin")) {
     res <- res +
       ggplot2::geom_violin(...) +
-      ggplot2::stat_summary(geom = "point", fun = stats::median, color = "black")
+      ggplot2::stat_summary(
+        geom = "point", fun = stats::median, color = "black"
+      )
 
     return(res)
   }

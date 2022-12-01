@@ -17,8 +17,8 @@ calc_frequency(
 data.frame is provided, the cell barcodes should be stored as row names.}
 
 \item{data_col}{meta.data column containing cell labels to use for
-calculating abundance. To calculate clonotype abundance, provide the column
-containing clonotype IDs, to calculate isotype abundance provide the column
+calculating frequency. To calculate clonotype frequencies, provide the column
+containing clonotype IDs, to calculate isotype frequencies provide the column
 containing cell isotypes. By default the clonotype_id is used for
 calculations.}
 

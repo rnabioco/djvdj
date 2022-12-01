@@ -7,8 +7,8 @@
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param data_col meta.data column containing cell labels to use for
-#' calculating abundance. To calculate clonotype abundance, provide the column
-#' containing clonotype IDs, to calculate isotype abundance provide the column
+#' calculating frequency. To calculate clonotype frequencies, provide the column
+#' containing clonotype IDs, to calculate isotype frequencies provide the column
 #' containing cell isotypes. By default the clonotype_id is used for
 #' calculations.
 #' @param cluster_col meta.data column containing cluster IDs to use for

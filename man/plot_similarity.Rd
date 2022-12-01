@@ -14,6 +14,7 @@ plot_similarity(
   chain_col = "chains",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
+  rotate_labels = FALSE,
   cluster_heatmap = TRUE,
   remove_upper_triangle = FALSE,
   remove_diagonal = remove_upper_triangle,
@@ -53,6 +54,9 @@ all chains.}
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
+
+\item{rotate_labels}{Should labels on circos plot be rotated to reduce
+overlapping text}
 
 \item{cluster_heatmap}{If FALSE, rows and columns of heatmap will not be
 clustered.}

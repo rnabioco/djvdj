@@ -195,6 +195,8 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 #' 'log10'. By default values are not transformed, refer to
 #' [ggplot2::continuous_scale()] for more options.
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
+#' @param rotate_labels Should labels on circos plot be rotated to reduce
+#' overlapping text
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to plotting function,
 #' [ggplot2::geom_col()] for bargraph, [ggplot2::geom_tile()] for heatmap,
@@ -286,8 +288,8 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
                             group_col = NULL, chain = NULL, method = NULL,
                             plot_colors = NULL, vdj_genes = NULL, n_genes = 20,
                             plot_lvls = names(plot_colors), trans = "identity",
-                            units = "percent", chain_col = "chains", sep = ";",
-                            ...) {
+                            units = "percent", chain_col = "chains",
+                            rotate_labels = FALSE, sep = ";", ...) {
 
   # Check inputs
   paired <- length(data_cols) == 2

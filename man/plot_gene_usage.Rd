@@ -18,6 +18,7 @@ plot_gene_usage(
   trans = "identity",
   units = "percent",
   chain_col = "chains",
+  rotate_labels = FALSE,
   sep = ";",
   ...
 )
@@ -67,6 +68,9 @@ provided, top genes will be identified for each cluster.}
 \item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
 \item{chain_col}{meta.data column containing chains for each cell}
+
+\item{rotate_labels}{Should labels on circos plot be rotated to reduce
+overlapping text}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
