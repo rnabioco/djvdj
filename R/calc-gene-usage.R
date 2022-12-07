@@ -127,7 +127,7 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
     res <- tidyr::pivot_wider(
       res,
       names_from  = all_of(clst_nm),
-      values_from = .data$freq,
+      values_from = "freq",
       values_fill = 0
     )
 
@@ -197,6 +197,10 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param rotate_labels Should labels on circos plot be rotated to reduce
 #' overlapping text
+#' @param panel_nrow The number of rows to use for arranging plots when
+#' return_list is FALSE
+#' @param return_list Should a list of plots be returned, if FALSE plots will be
+#' combined and arranged into panels
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to plotting function,
 #' [ggplot2::geom_col()] for bargraph, [ggplot2::geom_tile()] for heatmap,
@@ -287,9 +291,10 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
                             group_col = NULL, chain = NULL, method = NULL,
                             plot_colors = NULL, vdj_genes = NULL, n_genes = 20,
-                            plot_lvls = names(plot_colors), trans = "identity",
+                            plot_lvls = NULL, trans = "identity",
                             units = "percent", chain_col = "chains",
-                            rotate_labels = FALSE, sep = ";", ...) {
+                            rotate_labels = FALSE, panel_nrow = NULL,
+                            return_list = FALSE, sep = ";", ...) {
 
   # Check inputs
   paired <- length(data_cols) == 2
@@ -353,10 +358,6 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     )
   }
 
-  # Order clusters based on plot_lvls
-  lvl_col <- group_col %||% cluster_col
-  plt_dat <- .set_lvls(plt_dat, lvl_col, plot_lvls)
-
   # Plot gene usage
   plt_args <- list(
     df_in    = plt_dat,
@@ -365,15 +366,22 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     clst_col = cluster_col,
     typ      = method,
     clrs     = plot_colors,
+    lvls     = plot_lvls,
     trans    = trans,
     ax_ttl   = units,
     ...
   )
 
-  usage_fn <- .plot_paired_usage
+  if (paired) {
+    usage_fn <- .plot_paired_usage
 
-  if (!paired) {
-    usage_fn         <- .plot_single_usage
+    plt_args$rotate_labels <- rotate_labels
+    plt_args$return_list   <- return_list
+    plt_args$n_row         <- panel_nrow
+
+  } else {
+    usage_fn <- .plot_single_usage
+
     plt_args$grp_col <- group_col
   }
 
@@ -389,14 +397,19 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' @param grp_col Column with IDs to use for grouping clusters
 #' @param typ Plot type
 #' @param clrs Plot colors
+#' @param lvls Levels for ordering clusters
 #' @param trans Method to use for transforming data
 #' @param ax_ttl Y-axis title
 #' @param order Should genes be ordered based on usage
 #' @param ... Additional parameters to pass to plotting function
 #' @noRd
 .plot_single_usage <- function(df_in, gn_col, dat_col, typ, clst_col = NULL,
-                               grp_col = NULL, clrs = NULL, trans = "identity",
-                               ax_ttl, order = TRUE, ...) {
+                               grp_col = NULL, clrs = NULL, lvls = NULL,
+                               trans = "identity", ax_ttl, order = TRUE, ...) {
+
+  # Order clusters based on plot_lvls
+  lvl_col <- grp_col %||% clst_col
+  df_in   <- .set_lvls(df_in, lvl_col, lvls)
 
   # Order plot levels
   if (order) {
@@ -471,28 +484,30 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' @param clst_col Column containing clusters
 #' @param typ Plot type
 #' @param clrs Plot colors
+#' @param lvls Levels for ordering clusters
 #' @param trans Method to use for transforming data
 #' @param ax_ttl Y-axis title
 #' @param order Should genes be ordered based on usage
+#' @param return_list Should a list of plot be returned, if FALSE plots will be
+#' combined
+#' @param n_row Number of rows to use for arranging plots
 #' @param ... Additional parameters to pass to plotting function
 #' @noRd
 .plot_paired_usage <- function(df_in, gn_col, dat_col, clst_col = NULL,
-                               typ, clrs = NULL, trans = "identity", ax_ttl,
-                               order = TRUE, ...) {
+                               typ, clrs = NULL, lvls = NULL,
+                               trans = "identity", ax_ttl, order = TRUE,
+                               rotate_labels = FALSE, return_list = FALSE,
+                               n_row = NULL, ...) {
 
-  # Create plot when two columns are passed to gene_col
-  # group_split will order list based on the sorted column
-  grps <- NULL
+  # Split input data into clusters and order based on lvls
+  res <- list(df_in)
 
   if (!is.null(clst_col)) {
-    df_in <- dplyr::group_by(df_in, !!sym(clst_col))
+    res <- .set_lvls(df_in, clst_col, lvls)
+    res <- split(res, df_in[[clst_col]])
 
-    grps <- df_in[[clst_col]]
-    grps <- sort(unique(grps))
+    if (!is.null(lvls)) res <- res[unique(lvls)]
   }
-
-  res <- dplyr::group_split(df_in)
-  names(res) <- grps
 
   # Format data for plotting
   # sort level order, ascending order for y
@@ -520,6 +535,14 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   plt_args <- list(clrs = clrs, ...)
   add_ttl  <- !is.null(names(res))
 
+  # Set number of rows/columns for plots
+  nplts <- length(res)
+  sq    <- sqrt(nplts)
+  nr    <- floor(sq)
+
+  n_row <- n_row %||% nr
+  n_col <- ceiling(nplts / n_row)
+
   # Create heatmap
   if (identical(typ, "heatmap")) {
     plt_args$x       <- gn_col[1]
@@ -537,15 +560,41 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     })
 
     if (length(res) == 1) return(res[[1]])
+    if (return_list)      return(res)
 
-    return(res)
+    # Arrange multiple plots
+    wd <- 1 / n_col
+    ht <- 1 / n_row
+
+    plot.new()
+
+    purrr::iwalk(unname(res), ~ {
+      x <- (.y - 1) %% n_col + 1
+      x <- x / n_col - (wd / 2)
+      y <- n_row - (ceiling(.y / n_col))
+      y <- y / n_row + (ht / 2)
+
+      plt_vp <- grid::viewport(
+        height = unit(ht, "npc"),
+        width = unit(wd, "npc"),
+        x = unit(x, "npc"),
+        y = unit(y, "npc")
+      )
+
+      print(.x, vp = plt_vp)
+    })
+
+    return(invisible())
   }
 
   # Create circos plot
   # use purrr::lift_dl to pass dots into walk
   plt_args$symmetric <- FALSE
+  plt_args$rotate_labels <- rotate_labels
 
-  iwalk(res, ~ {
+  if (!return_list) par(mfrow = c(n_row, n_col))
+
+  purrr::iwalk(res, ~ {
     d <- tidyr::pivot_wider(
       .x,
       names_from  = gn_col[1],
