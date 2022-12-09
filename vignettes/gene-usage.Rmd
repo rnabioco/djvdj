@@ -114,14 +114,12 @@ so |>
 If two columns are passed to the `data_cols` argument, a heatmap will be generated summarizing the usage of segment pairs. If a column is provided to the `cluster_col` argument, a separate heatmap will be generated for each cluster.
 
 ```{r, fig.height = 2.5}
-ggs <- so |>
+so |>
   plot_gene_usage(
     data_cols   = c("v_gene", "j_gene"),
     cluster_col = "orig.ident",
     n_genes     = 15
   )
-
-Reduce(`+`, ggs)
 ```
 
 Plot colors can be adjusted using the `plot_colors` argument. In addition, `plot_gene_usage()` returns a ggplot object that can be modified with ggplot2 functions such as `ggplot2::theme()`. Plots can be further adjusted by passing aesthetic parameters directly to ggplot2, e.g. `alpha`, `linetype`, `color`, etc.
@@ -145,14 +143,15 @@ so |>
 
 A circos plot can be created by setting the `method` argument to 'circos'. This plot will summarize the number of cells containing the different segment pairs. The number of cells is shown as the axis labels for each sample.
 
-In this example, we are summarizing the segment usage for the entire dataset (BL6 and MD4 cells combined). The `cluster_col` argument can be used to create a separate plot for each sample.
+In this example, we are summarizing the segment usage for the entire dataset (BL6 and MD4 cells combined). The `cluster_col` argument can be used to create a separate plot for each sample. Labels can be rotated to eliminate overlapping text using the `rotate_labels` argument.
 
 ```{r, fig.width = 6, fig.height = 5}
 so |>
   plot_gene_usage(
-    data_cols = c("v_gene", "j_gene"),
-    method    = "circos",
-    n_genes   = 6
+    data_cols     = c("v_gene", "j_gene"),
+    method        = "circos",
+    n_genes       = 6,
+    rotate_labels = TRUE
   )
 ```
 
@@ -163,10 +162,24 @@ so |>
   plot_gene_usage(
     data_cols   = c("v_gene", "j_gene"),
     method      = "circos",
-    n_genes     = 10,
+    n_genes     = 8,
     plot_colors = brewer.pal(10, "Spectral"),
     
     link.border = "black",  # parameters to pass to chordDiagram()
+    scale       = TRUE
+  )
+```
+
+Gene segment usage can be plotted separately for cell clusters (or samples) using the `cluster_col` argument. The number of rows used to arrange plots can be modified using the `panel_nrow` argument.
+
+```{r, fig.width = 7, fig.height = 5}
+so |>
+  plot_gene_usage(
+    data_cols   = c("v_gene", "j_gene"),
+    method      = "circos",
+    cluster_col = "sample",
+    n_genes     = 5,
+    panel_nrow  = 2,
     scale       = TRUE
   )
 ```

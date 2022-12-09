@@ -135,15 +135,16 @@ so |>
 
 A circos plot can be created by setting the `method` argument to 'circos'. This plot will summarize the number of clonotypes overlapping between samples. The `group_col` argument can be used to split the graph into distinct sections based on a grouping variable.
 
-The number of overlapping clonotypes is shown as the axis labels for each sample. The width of each link reflects the number of clonotypes overlapping the samples.
+The number of overlapping clonotypes is shown as the axis labels for each sample. The width of each link reflects the number of clonotypes shared between the samples. Labels can be rotated to eliminate overlapping text using the `rotate_labels` argument.
 
 ```{r}
 so |>
   plot_similarity(
-    data_col    = "clonotype_id",
-    cluster_col = "sample",
-    group_col   = "orig.ident",
-    method      = "circos"
+    data_col      = "clonotype_id",
+    cluster_col   = "sample",
+    group_col     = "orig.ident",
+    method        = "circos",
+    rotate_labels = TRUE
   )
 ```
 
