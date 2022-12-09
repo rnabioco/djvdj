@@ -165,7 +165,7 @@ test_all_args(
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check all plot_clonal_abundance arguments for line plot
+# Check all plot_clone_frequency arguments for line plot
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
   data_col    = "cdr3_nt",
@@ -180,23 +180,23 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_clonal_abundance,
-  desc    = "plot_clonal_abundance line args",
+  .fn     = plot_clone_frequency,
+  desc    = "plot_clone_frequency line args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check all plot_clonal_abundance arguments for bar plot
+# Check all plot_clone_frequency arguments for bar plot
 arg_lst$method <- "bar"
 arg_lst$n_clones <- 5
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_clonal_abundance,
-  desc    = "plot_clonal_abundance bar args",
+  .fn     = plot_clone_frequency,
+  desc    = "plot_clone_frequency bar args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check plot_clonal_abundance axis labels
+# Check plot_clone_frequency axis labels
 arg_lst <- list(
   input  = list(vdj_so, vdj_sce),
   units  = "percent",
@@ -205,8 +205,8 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_clonal_abundance,
-  desc    = "plot_clonal_abundance axis labels",
+  .fn     = plot_clone_frequency,
+  desc    = "plot_clone_frequency axis labels",
   chk     = expr(expect_true(.res$labels$y == "% of cells"))
 )
 
@@ -214,16 +214,16 @@ arg_lst$units <- "frequency"
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_clonal_abundance,
-  desc    = "plot_clonal_abundance axis labels",
+  .fn     = plot_clone_frequency,
+  desc    = "plot_clone_frequency axis labels",
   chk     = expr(expect_true(.res$label$y == "number of cells"))
 )
 
-# Check plot_clonal_abundance bad units
-test_that("plot_clonal_abundance bad units", {
+# Check plot_clone_frequency bad units
+test_that("plot_clone_frequency bad units", {
   expect_error(
     vdj_so |>
-      plot_clonal_abundance(
+      plot_clone_frequency(
         method          = "line",
         clonotype_col = "cdr3_nt",
         units         = "BAD"
@@ -231,22 +231,22 @@ test_that("plot_clonal_abundance bad units", {
   )
 })
 
-# Check plot_clonal_abundance bad method
-test_that("plot_clonal_abundance bad method", {
+# Check plot_clone_frequency bad method
+test_that("plot_clone_frequency bad method", {
   expect_error(
     vdj_so |>
-      plot_clonal_abundance(
+      plot_clone_frequency(
         method          = "BAD",
         clonotype_col = "cdr3_nt"
       )
   )
 })
 
-# Check plot_clonal_abundance bad n_clonotypes
-test_that("plot_clonal_abundance bad n_clonotypes", {
+# Check plot_clone_frequency bad n_clonotypes
+test_that("plot_clone_frequency bad n_clonotypes", {
   expect_error(
     vdj_so |>
-      plot_clonal_abundance(
+      plot_clone_frequency(
         method          = "bar",
         clonotype_col = "cdr3_nt",
         n_clones  = 0
@@ -264,7 +264,7 @@ arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
   data_col    = "cdr3_nt",
   cluster_col = list(NULL, "seurat_clusters"),
-  method      = append(mets, list(mets)),
+  method      = list(mets),
   chain       = list(NULL, "IGH"),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls)
@@ -309,7 +309,7 @@ arg_lst <- list(
   data_col    = "cdr3_nt",
   cluster_col = "seurat_clusters",
   chain       = list(NULL, "IGH"),
-  method      = c(mets, "count"),
+  # method      = list(list("METHOD" = abdiv::jaccard), "count"),
   plot_colors = list(NULL, test_cols, "blue")
 )
 
@@ -503,4 +503,3 @@ test_all_args(
   desc    = ".set_lvls bad lvls",
   chk     = expect_error
 )
-

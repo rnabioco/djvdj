@@ -16,7 +16,7 @@ arg_lst <- list(
   chain       = list(NULL, "IGH"),
   cluster_col = list(NULL, "seurat_clusters"),
   downsample  = c(TRUE, FALSE),
-  method      = list(mets, abdiv::simpson),
+  method      = list(mets, list(simpson = abdiv::simpson)),
   return_df   = FALSE
 )
 
