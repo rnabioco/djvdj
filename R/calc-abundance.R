@@ -313,7 +313,7 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   if (identical(method, "line") && n_clones < 0) stop("n_clones must be >=0.")
 
   abun_col <- switch(units, frequency = ".freq", percent = ".pct")
-  y_lab <- switch(units, frequency = "number of cells", percent = "% of cells")
+  y_lab    <- .get_axis_label(units)
 
   # Calculate clonotype abundance
   plt_dat <- calc_frequency(

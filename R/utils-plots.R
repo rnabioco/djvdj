@@ -18,8 +18,8 @@ NULL
 #' @param ln_col Color of axis lines
 #' @return ggplot theme
 #' @export
-djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5, txt_col = "black",
-                        ln_col = "grey85") {
+djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
+                        txt_col = "black", ln_col = "grey85") {
 
   res <- ggplot2::theme(
     strip.background  = ggplot2::element_blank(),
@@ -311,7 +311,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param ... Additional arguments to pass to circlize::chordDiagram()
 #' @importFrom scales hue_pal
 #' @importFrom circlize chordDiagram circos.clear circos.axis circos.track mm_h
-#' @importFrom graphics title
+#' @importFrom graphics title strwidth
 #' @noRd
 .create_circos <- function(mat_in, clrs = NULL, na_color = "grey90",
                            lvls = NULL, grps = NULL, rotate_labels = FALSE,
@@ -363,16 +363,10 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   plt_args$order      <- lvls
   plt_args$group      <- plt_args$group %||% grps
 
-  # Exclude default axis track
-  if (rotate_labels) {
-    ann_trk <- "grid"
+  # If rotating labels need to exclude default axis track
+  ann_trk <- "grid"
 
-    plt_args$preAllocateTracks <- plt_args$preAllocateTracks %||%
-      list(track.height = max(strwidth(unlist(dimnames(mat_in)))))
-
-  } else {
-    ann_trk <- c("name", "grid")
-  }
+  if (!rotate_labels) ann_trk <- c("name", ann_trk)
 
   adj_axis <- is.null(plt_args[["annotationTrack"]])
 
@@ -380,20 +374,44 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   # Create circos plot
   # circlize::mm_h must be used within chordDiagram
+  # strwidth must be used within chordDiagram to avoid
+  # 'plot.new() has not been called yet' error
   circlize::circos.clear()
 
-  if (is.null(plt_args$annotationTrackHeight)) {
-    circos_fun <- function(...) {
-      circlize::chordDiagram(
-        annotationTrackHeight = circlize::mm_h(c(3, 4)), ...
-      )
+  pre_all  <- is.null(plt_args$preAllocateTracks) && rotate_labels
+  track_ht <- is.null(plt_args$annotationTrackHeight)
+
+  if (pre_all) {
+    if (track_ht) {
+      circos_fun <- function(...) {
+        circlize::chordDiagram(
+          preAllocateTracks = list(track.height = max(graphics::strwidth(unlist(dimnames(mat_in))))),
+          annotationTrackHeight = circlize::mm_h(c(3, 4)),
+          ...
+        )
+      }
+    } else {
+      circos_fun <- function(...) {
+        circlize::chordDiagram(
+          preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(mat_in))))),
+          ...
+        )
+      }
     }
-
-    purrr::lift_dl(circos_fun)(plt_args)
-
   } else {
-    purrr::lift_dl(circlize::chordDiagram)(plt_args)
+    if (track_ht) {
+      circos_fun <- function(...) {
+        circlize::chordDiagram(
+          annotationTrackHeight = circlize::mm_h(c(3, 4)),
+          ...
+        )
+      }
+    } else {
+      circos_fun <- function(...) circlize::chordDiagram(...)
+    }
   }
+
+  purrr::lift_dl(circos_fun)(plt_args)
 
   # Add axis track
   if (adj_axis) {
@@ -412,7 +430,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
         circlize::circos.text(
           circlize::CELL_META$xcenter, circlize::CELL_META$ylim[1],
           circlize::CELL_META$sector.index, facing = "clockwise",
-          niceFacing = TRUE, adj = c(-0.3, 0.5)
+          niceFacing = TRUE, adj = c(-0.3, 0.5), cex = 0.8
         )
       }
     )
@@ -438,11 +456,12 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   if (is.null(names(clrs))) {
     if (n_clrs >= length(all_nms)) {
-      clrs        <- clrs[seq_along(all_nms)]
-      names(clrs) <- all_nms
-      c_clrs      <- clrs[c_nms]
+      clrs   <- clrs[seq_along(all_nms)]
+      clrs   <- purrr::set_names(clrs, all_nms)
+      c_clrs <- clrs[c_nms]
 
-    } else if (n_clrs == length(c_nms)) {
+    } else if (n_clrs >= length(c_nms)) {
+      clrs   <- clrs[seq_along(c_nms)]
       c_clrs <- purrr::set_names(clrs, c_nms)
       r_clrs <- purrr::set_names(rep(na_color, length(r_nms)), r_nms)
 
@@ -632,8 +651,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @noRd
 .create_hist <- function(df_in, x, grp, .color = NULL, .fill = NULL,
                          clrs = NULL, method = "histogram",
-                         units = "frequency", trans = "identity", nrow = NULL,
-                         scales = "fixed", ...) {
+                         units = "frequency", y_ttl = units, trans = "identity",
+                         nrow = NULL, scales = "fixed", ...) {
 
   # Check inputs
   typs <- c("histogram", "density")
@@ -693,7 +712,24 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   # Return histogram
   res <- res +
     ggplot2::geom_histogram(...) +
-    ggplot2::labs(y = units)
+    ggplot2::labs(y = y_ttl)
+
+  res
+}
+
+
+#' Get axis label based on axis units
+#'
+#' @param units Units for axis
+#' @param sffx Suffix to include in label
+#' @return Axis label
+#' @noRd
+.get_axis_label <- function(units, sfx = "cells") {
+  res <- switch(
+    units,
+    frequency = paste0("number of ", sfx),
+    percent   = paste0("% of ", sfx)
+  )
 
   res
 }

@@ -107,19 +107,19 @@ filter_vdj <- function(input, filt, data_cols = NULL,
     vdj <- dplyr::mutate(vdj, .KEEP = list({{filt}}))
     vdj <- dplyr::ungroup(vdj)
 
-    length_one <- map_lgl(vdj$.KEEP, ~ length(.x) == 1)
+    length_one <- purrr::map_lgl(vdj$.KEEP, ~ length(.x) == 1)
     length_one <- all(length_one)
   }
 
   keep_rows <- vdj$.KEEP
-  vdj       <- dplyr::select(vdj, -.data$.KEEP)
+  vdj       <- dplyr::select(vdj, -".KEEP")
 
   # If vectors in keep_rows are all length 1, filter cells
   if (length_one) {
     keep_rows <- unlist(keep_rows)
     vdj_cols  <- vdj_cols[vdj_cols != CELL_COL]
 
-    vdj <- mutate(meta, across(all_of(vdj_cols), .add_na, !keep_rows))
+    vdj <- dplyr::mutate(meta, across(all_of(vdj_cols), .add_na, !keep_rows))
 
     res <- .add_meta(input, vdj)
 
@@ -152,7 +152,7 @@ filter_vdj <- function(input, filt, data_cols = NULL,
   other_cols <- vdj_cols[!vdj_cols %in% sep_cols]
   na_rows    <- purrr::map_lgl(keep_rows, ~ !any(.x))
 
-  vdj <- mutate(vdj, across(all_of(other_cols), .add_na, na_rows))
+  vdj <- dplyr::mutate(vdj, dplyr::across(all_of(other_cols), .add_na, na_rows))
 
   # Format results
   res <- .add_meta(input, vdj)
@@ -161,11 +161,12 @@ filter_vdj <- function(input, filt, data_cols = NULL,
 }
 
 #' Insert NAs based on logical index
+#' @importFrom methods as
 #' @noRd
 .add_na <- function(x, lgl_idx) {
   typ <- typeof(x)
 
-  x[lgl_idx] <- as(NA, typ)
+  x[lgl_idx] <- methods::as(NA, typ)
 
   x
 }

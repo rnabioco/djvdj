@@ -189,10 +189,10 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
   div_cols <- "diversity"
 
   if (n_boots > 1) div_cols <- c(div_cols, "stderr")
-  else             div <- dplyr::select(div, -.data$stderr)
+  else             div <- dplyr::select(div, -"stderr")
 
   div <- tidyr::pivot_longer(div, all_of(div_cols))
-  div <- tidyr::unite(div, "name", .data$met, .data$name)
+  div <- tidyr::unite(div, "name", "met", "name")
   div <- tidyr::pivot_wider(div)
 
   # Format results

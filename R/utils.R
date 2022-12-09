@@ -38,7 +38,6 @@ CELL_COL <- ".cell_id"
 #' @return Output from test_that
 #' @noRd
 test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
-
   arg_lst    <- expand.grid(arg_lst, stringsAsFactors = FALSE)
   arg_lst$.n <- seq_len(nrow(arg_lst))
 
@@ -54,7 +53,6 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
     test_args$.n <- NULL
 
     test_that(paste(desc, n), {
-
       if (is.call(chk)) {
         .res <- purrr::lift_dl(.fn)(test_args)
 

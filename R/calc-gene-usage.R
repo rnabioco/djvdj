@@ -298,15 +298,15 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
   # Check inputs
   paired <- length(data_cols) == 2
+  method <- method %||% ifelse(paired, "heatmap", "bar")
 
-  if (is.null(method))             method <- ifelse(paired, "heatmap", "bar")
   if (identical(method, "circos")) units  <- "frequency"
 
   .chk_usage_args(method, data_cols, group_col, units, paired)
   .chk_group_cols(cluster_col, group_col, input)
 
   # Set y-axis
-  usage_col <- ifelse(identical(units, "frequency"), "freq", "pct")
+  usage_col <- switch(units, frequency = "freq", percent   = "pct")
 
   # Calculate gene usage
   plt_dat <- calc_gene_usage(
@@ -368,7 +368,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     clrs     = plot_colors,
     lvls     = plot_lvls,
     trans    = trans,
-    ax_ttl   = units,
+    ax_ttl   = .get_axis_label(units),
     ...
   )
 
@@ -413,7 +413,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
   # Order plot levels
   if (order) {
-    decr  <- !is.null(grp_col)
+    decr  <- !is.null(grp_col) || identical(typ, "bar")
     g_col <- sym(gn_col)
 
     df_in <- dplyr::mutate(
@@ -492,6 +492,8 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' combined
 #' @param n_row Number of rows to use for arranging plots
 #' @param ... Additional parameters to pass to plotting function
+#' @importFrom grid unit viewport
+#' @importFrom graphics par plot.new
 #' @noRd
 .plot_paired_usage <- function(df_in, gn_col, dat_col, clst_col = NULL,
                                typ, clrs = NULL, lvls = NULL,
@@ -566,7 +568,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     wd <- 1 / n_col
     ht <- 1 / n_row
 
-    plot.new()
+    graphics::plot.new()
 
     purrr::iwalk(unname(res), ~ {
       x <- (.y - 1) %% n_col + 1
@@ -575,10 +577,10 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
       y <- y / n_row + (ht / 2)
 
       plt_vp <- grid::viewport(
-        height = unit(ht, "npc"),
-        width = unit(wd, "npc"),
-        x = unit(x, "npc"),
-        y = unit(y, "npc")
+        height = grid::unit(ht, "npc"),
+        width  = grid::unit(wd, "npc"),
+        x      = grid::unit(x, "npc"),
+        y      = grid::unit(y, "npc")
       )
 
       print(.x, vp = plt_vp)
@@ -592,7 +594,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   plt_args$symmetric <- FALSE
   plt_args$rotate_labels <- rotate_labels
 
-  if (!return_list) par(mfrow = c(n_row, n_col))
+  if (!return_list) graphics::par(mfrow = c(n_row, n_col))
 
   purrr::iwalk(res, ~ {
     d <- tidyr::pivot_wider(

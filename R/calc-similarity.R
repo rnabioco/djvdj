@@ -128,7 +128,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
   vdj <- tidyr::pivot_wider(
     vdj,
     names_from  = all_of(cluster_col),
-    values_from = .data$n,
+    values_from = "n",
     values_fill = 0
   )
 
@@ -158,7 +158,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
   })
 
   # Combine with inverse combinations
-  res_i <- dplyr::rename(res, Var1 = .data$Var2, Var2 = .data$Var1)
+  res_i <- dplyr::rename(res, Var1 = "Var2", Var2 = "Var1")
   res   <- dplyr::bind_rows(res, res_i, res_s)
 
   # Format data.frame
@@ -167,8 +167,8 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 
   res <- tidyr::pivot_wider(
     res,
-    names_from  = .data$Var1,
-    values_from = .data$sim
+    names_from  = "Var1",
+    values_from = "sim"
   )
 
   res <- dplyr::select(res, !!sym(cluster_col) := .data$Var2, all_of(clmns))
