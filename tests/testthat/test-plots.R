@@ -265,7 +265,7 @@ arg_lst <- list(
   data_col    = "cdr3_nt",
   cluster_col = list(NULL, "seurat_clusters"),
   method      = list(mets),
-  chain       = list(NULL, "IGH"),
+  chain       = list(NULL, "IGK"),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls)
 )
@@ -383,6 +383,7 @@ arg_lst$method      <- "heatmap"
 arg_lst$plot_colors <- list(NULL, rep(test_cols, 3))
 arg_lst$plot_lvls   <- list(NULL, test_lvls)
 arg_lst$trans       <- c("identity", "log1p")
+arg_lst$return_list <- TRUE
 
 test_all_args(
   arg_lst = arg_lst,
@@ -503,3 +504,4 @@ test_all_args(
   desc    = ".set_lvls bad lvls",
   chk     = expect_error
 )
+

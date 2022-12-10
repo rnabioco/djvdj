@@ -5,7 +5,7 @@
 \alias{tiny_so}
 \title{A tiny Seurat object}
 \format{
-A Seurat object with 200 features, 204 cells, and 1 assay
+A Seurat object with 200 features, 200 cells, and 1 assay
 }
 \usage{
 tiny_so
