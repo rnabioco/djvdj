@@ -56,7 +56,7 @@ meta.data.
 # by default the mean will be calculated for numeric columns
 res <- summarize_vdj(
   vdj_so,
-  data_cols = c("n_deletion", "n_insertion")
+  data_cols = c("all_del", "all_ins")
 )
 
 head(res@meta.data, 3)
@@ -66,7 +66,7 @@ head(res@meta.data, 3)
 # cell
 res <- summarize_vdj(
   vdj_sce,
-  data_cols = c("n_deletion", "n_insertion"),
+  data_cols = c("all_del", "all_ins"),
   fn = stats::median
 )
 
@@ -75,7 +75,7 @@ head(res@colData, 3)
 # Summarize values for a specific chain
 res <- summarize_vdj(
   vdj_so,
-  data_cols = c("n_deletion", "n_insertion"),
+  data_cols = c("all_del", "all_ins"),
   chain = "IGK"
 )
 
@@ -85,7 +85,7 @@ head(res@meta.data, 3)
 # use {.col} to refer to the original column name
 res <- summarize_vdj(
   vdj_sce,
-  data_cols = c("n_deletion", "n_insertion"),
+  data_cols = c("all_del", "all_ins"),
   fn = stats::median,
   col_names = "median_{.col}"
 )
@@ -95,7 +95,7 @@ head(res@colData, 1)
 # Return a data.frame instead of adding the results to the input object
 res <- summarize_vdj(
   vdj_so,
-  data_cols = c("n_deletion", "n_insertion"),
+  data_cols = c("all_del", "all_ins"),
   return_df = TRUE
 )
 
@@ -118,7 +118,7 @@ head(res@colData, 3)
 # the V(D)J data can be filtered based on this new column
 res <- summarize_vdj(
   vdj_so,
-  data_cols = "n_insertion",
+  data_cols = "all_ins",
   fn = ~ all(.x == 0),
   col_names = "no_insertions"
 )

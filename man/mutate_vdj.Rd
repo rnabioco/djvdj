@@ -63,7 +63,7 @@ head(res@meta.data, 3)
 # each chain
 res <- mutate_vdj(
   vdj_sce,
-  indels = list(n_insertion + n_deletion)
+  indels = list(all_ins + all_del)
 )
 
 head(res@colData, 3)
