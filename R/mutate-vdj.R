@@ -32,7 +32,7 @@
 #' # per-cell data will be returned for all other columns
 #' fetch_vdj(
 #'   vdj_sce,
-#'   data_cols = c("chains", "n_insertion")
+#'   data_cols = c("chains", "reads")
 #' )
 #'
 #' # Only include cells that have V(D)J data
@@ -168,8 +168,8 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
 #' head(res@meta.data, 3)
 #'
 #' @export
-mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", data_cols = NULL,
-                       return_df = FALSE, sep = ";") {
+mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
+                       data_cols = NULL, return_df = FALSE, sep = ";") {
 
   # Format input data
   meta <- .get_meta(input)
@@ -326,8 +326,9 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", data_cols = N
 #' head(res@meta.data, 3)
 #'
 #' @export
-summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL, chain_col = "chains",
-                          sep = ";", col_names = "{.col}", return_df = FALSE) {
+summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
+                          chain_col = "chains", sep = ";", col_names = "{.col}",
+                          return_df = FALSE) {
 
   # Names of new columns
   new_cols <- gsub("\\{.col\\}", "{data_cols}", col_names)
