@@ -17,7 +17,7 @@
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.
 #' @return Single cell object or data.frame with clonotype abundance metrics
-#' @seealso [plot_frequency()], [plot_clonal_abundance()]
+#' @seealso [plot_frequency()], [plot_clone_frequency()]
 #'
 #' @examples
 #' # Calculate clonotype abundance using all cells
@@ -242,47 +242,47 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 #'
 #' @examples
 #' # Plot clonotype abundance using all cells
-#' plot_clonal_abundance(
+#' plot_clone_frequency(
 #'   vdj_so,
 #'   data_col = "clonotype_id"
 #' )
 #'
 #' # Plot clonotype abundance separately for each cell cluster
-#' plot_clonal_abundance(
+#' plot_clone_frequency(
 #'   vdj_sce,
 #'   cluster_col = "orig.ident"
 #' )
 #'
 #' # Plot the frequency of each clonotype instead of percentage
-#' plot_clonal_abundance(
+#' plot_clone_frequency(
 #'   vdj_sce,
 #'   cluster_col = "orig.ident",
 #'   units = "frequency"
 #' )
 #'
 #' # Specify colors to use for each cell cluster
-#' plot_clonal_abundance(
+#' plot_clone_frequency(
 #'   vdj_so,
 #'   cluster_col = "orig.ident",
 #'   plot_colors = c(avid_1 = "blue", avid_2 = "red")
 #' )
 #'
 #' # Specify order to use for plotting cell clusters
-#' plot_clonal_abundance(
+#' plot_clone_frequency(
 #'   vdj_sce,
 #'   cluster_col = "orig.ident",
 #'   plot_lvls = c("avid_2", "avid_1")
 #' )
 #'
 #' # Specify the number of top clonotypes to plot
-#' plot_clonal_abundance(
+#' plot_clone_frequency(
 #'   vdj_so,
 #'   n_clones = 5
 #' )
 #'
 #' #' # Create line graph
 #' # use n_clones to set the number of clonotypes to label
-#' plot_clonal_abundance(
+#' plot_clone_frequency(
 #'   vdj_so,
 #'   cluster_col = "orig.ident",
 #'   method = "line",
@@ -481,7 +481,7 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
-#' @seealso [calc_frequency()], [plot_clonal_abundance()]
+#' @seealso [calc_frequency()], [plot_clone_frequency()]
 #' @export
 plot_frequency <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, units = "percent", stack = TRUE,
