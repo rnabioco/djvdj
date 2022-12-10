@@ -16,8 +16,8 @@
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="apple-touch-icon-60x60.png">
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.1.3/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.1.3/bootstrap.bundle.min.js"></script><link href="deps/Source_Sans_Pro-0.4.2/font.css" rel="stylesheet">
-<link href="deps/Source_Code_Pro-0.4.2/font.css" rel="stylesheet">
+<script src="deps/bootstrap-5.1.3/bootstrap.bundle.min.js"></script><link href="deps/Source_Sans_Pro-0.4.4/font.css" rel="stylesheet">
+<link href="deps/Source_Code_Pro-0.4.4/font.css" rel="stylesheet">
 <!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- bootstrap-toc --><script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
@@ -58,10 +58,10 @@
     <a class="dropdown-item" href="articles/mutate.html">Data Manipulation</a>
     <div class="dropdown-divider"></div>
     <h6 class="dropdown-header" data-toc-skip>VDJ analysis</h6>
-    <a class="dropdown-item" href="articles/gene-usage.html">Gene Usage</a>
-    <a class="dropdown-item" href="articles/abundance.html">Clonal Abundance</a>
+    <a class="dropdown-item" href="articles/frequency.html">Clonotype Frequencies</a>
     <a class="dropdown-item" href="articles/diversity.html">Repertoire Diversity</a>
     <a class="dropdown-item" href="articles/similarity.html">Repertoire Similarity</a>
+    <a class="dropdown-item" href="articles/gene-usage.html">Gene Usage</a>
     <a class="dropdown-item" href="articles/clustering.html">CDR3 Clustering</a>
     <div class="dropdown-divider"></div>
     <h6 class="dropdown-header" data-toc-skip>Visualization</h6>
@@ -111,21 +111,19 @@
 </h2>
 <p>With djvdj you can import V(D)J sequencing results from <a href="https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/using/vdj#header" class="external-link">Cell Ranger</a> and add these data to a <a href="https://satijalab.org/seurat/" class="external-link">Seurat</a> or <a href="https://www.bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html" class="external-link">SingleCellExperiment</a> object using <code><a href="reference/import_vdj.html">import_vdj()</a></code>. Additional functions are provided to filter and modify (<code><a href="reference/filter_vdj.html">filter_vdj()</a></code>, <code><a href="reference/mutate_vdj.html">mutate_vdj()</a></code>, <code><a href="reference/summarize_vdj.html">summarize_vdj()</a></code>) the object based on V(D)J metrics including chains, clonotypes, and CDR3 sequences.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Import VDJ data</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rnabioco.github.io/djvdj/">djvdj</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Import VDJ data</span></span>
 <span><span class="co"># A vector of paths can be provided to load multiple datasets</span></span>
 <span><span class="co"># If prefixes were added to the cell barcodes when the object was generated,</span></span>
 <span><span class="co"># include these as the vector names</span></span>
-<span><span class="va">paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  BL6 <span class="op">=</span> <span class="st">"splenocytes/BL6_BCR"</span>,</span>
-<span>  MD4 <span class="op">=</span> <span class="st">"splenocytes/MD4_BCR"</span></span>
+<span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/BL6_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span>,</span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/MD4_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Add V(D)J data to object</span></span>
-<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/import_vdj.html">import_vdj</a></span><span class="op">(</span></span>
-<span>  input         <span class="op">=</span> <span class="va">so</span>,      <span class="co"># Seurat or SingleCellExperiment object</span></span>
-<span>  vdj_dir       <span class="op">=</span> <span class="va">paths</span>,   <span class="co"># Cellranger output directories</span></span>
-<span>  filter_paired <span class="op">=</span> <span class="cn">FALSE</span>    <span class="co"># Keep clonotypes without paired chains</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/import_vdj.html">import_vdj</a></span><span class="op">(</span><span class="va">splen_so</span>, vdj_dir <span class="op">=</span> <span class="va">vdj_dirs</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="calculate">Calculate<a class="anchor" aria-label="anchor" href="#calculate"></a>
@@ -145,15 +143,13 @@
 <p>For each ‘calc’ function, djvdj also provides a corresponding ‘plot’ function to summarize the results.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Compare the usage of different V and J genes</span></span>
-<span><span class="va">ggs</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
+<span><span class="fu"><a href="reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
 <span>  input       <span class="op">=</span> <span class="va">so</span>,                     <span class="co"># Seurat object</span></span>
 <span>  data_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,  <span class="co"># Column(s) containing V(D)J genes to plot</span></span>
 <span>  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,           <span class="co"># Column containing cell clusters to compare</span></span>
 <span>  chain       <span class="op">=</span> <span class="st">"IGK"</span>,                  <span class="co"># Chain to plot</span></span>
 <span>  plot_colors <span class="op">=</span> <span class="st">"#6A51A3"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/funprog.html" class="external-link">Reduce</a></span><span class="op">(</span><span class="va">`+`</span>, <span class="va">ggs</span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-usage-1.png"><!-- --></p>
 </div>
 </div>

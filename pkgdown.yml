@@ -2,15 +2,15 @@ pandoc: 2.19.2
 pkgdown: 2.0.6
 pkgdown_sha: ~
 articles:
-  abundance: abundance.html
   clustering: clustering.html
   diversity: diversity.html
+  frequency: frequency.html
   gene-usage: gene-usage.html
   import_vdj: import_vdj.html
   mutate: mutate.html
   plotting: plotting.html
   similarity: similarity.html
-last_built: 2022-11-16T01:50Z
+last_built: 2022-12-10T15:50Z
 urls:
   reference: https://rnabioco.github.io/djvdj/reference
   article: https://rnabioco.github.io/djvdj/articles
