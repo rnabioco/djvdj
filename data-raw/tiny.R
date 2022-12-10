@@ -228,8 +228,9 @@ names(tcr_bam) %>%
 # Add V(D)J data to Seurat object
 vdj_so <- tiny_so %>%
   import_vdj(
-    vdj_dir       = bcr_path,
-    filter_chains = TRUE
+    vdj_dir           = bcr_path,
+    filter_chains     = TRUE,
+    include_mutations = TRUE
   )
 
 # Create tiny SingleCellExperiment object
@@ -240,8 +241,9 @@ tiny_sce <- SingleCellExperiment(
 
 vdj_sce <- tiny_sce %>%
   import_vdj(
-    vdj_dir       = bcr_path,
-    filter_chains = TRUE
+    vdj_dir           = bcr_path,
+    filter_chains     = TRUE,
+    include_mutations = TRUE
   )
 
 # Save objects

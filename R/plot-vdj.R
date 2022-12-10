@@ -282,7 +282,7 @@ plot_vdj_feature <- function(input, ...) {
 #' # log10-transforms the result
 #' plot_vdj_feature(
 #'   vdj_so,
-#'   data_col = "n_deletion",
+#'   data_col = "all_del",
 #'   summary_fn = ~ log10(mean(.x) + 1)
 #' )
 #'
