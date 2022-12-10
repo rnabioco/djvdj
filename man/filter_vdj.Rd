@@ -53,7 +53,7 @@ res <- filter_vdj(vdj_so, productive)
 res <- filter_vdj(vdj_sce, paired)
 
 # Only include V(D)J data for cells with at least one heavy and one light
-chain
+# chain
 res <- filter_vdj(
   vdj_so,
   "IGH" \%in\% chains && any(c("IGK", "IGL") \%in\% chains)
