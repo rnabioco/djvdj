@@ -182,7 +182,7 @@ plot_vdj_feature(
 # Plot median number of insertions for each cell
 plot_vdj_feature(
   vdj_sce,
-  data_col = "n_insertion",
+  data_col = "all_ins",
   summary_fn = stats::median
 )
 
