@@ -32,7 +32,7 @@
 #' # per-cell data will be returned for all other columns
 #' fetch_vdj(
 #'   vdj_sce,
-#'   data_cols = c("chains", "n_insertion")
+#'   data_cols = c("chains", "reads")
 #' )
 #'
 #' # Only include cells that have V(D)J data
@@ -138,7 +138,7 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
 #' # each chain
 #' res <- mutate_vdj(
 #'   vdj_sce,
-#'   indels = list(n_insertion + n_deletion)
+#'   indels = list(all_ins + all_del)
 #' )
 #'
 #' head(res@colData, 3)
@@ -168,8 +168,8 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
 #' head(res@meta.data, 3)
 #'
 #' @export
-mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", data_cols = NULL,
-                       return_df = FALSE, sep = ";") {
+mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
+                       data_cols = NULL, return_df = FALSE, sep = ";") {
 
   # Format input data
   meta <- .get_meta(input)
@@ -251,7 +251,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", data_cols = N
 #' # by default the mean will be calculated for numeric columns
 #' res <- summarize_vdj(
 #'   vdj_so,
-#'   data_cols = c("n_deletion", "n_insertion")
+#'   data_cols = c("all_del", "all_ins")
 #' )
 #'
 #' head(res@meta.data, 3)
@@ -261,7 +261,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", data_cols = N
 #' # cell
 #' res <- summarize_vdj(
 #'   vdj_sce,
-#'   data_cols = c("n_deletion", "n_insertion"),
+#'   data_cols = c("all_del", "all_ins"),
 #'   fn = stats::median
 #' )
 #'
@@ -270,7 +270,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", data_cols = N
 #' # Summarize values for a specific chain
 #' res <- summarize_vdj(
 #'   vdj_so,
-#'   data_cols = c("n_deletion", "n_insertion"),
+#'   data_cols = c("all_del", "all_ins"),
 #'   chain = "IGK"
 #' )
 #'
@@ -280,7 +280,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", data_cols = N
 #' # use {.col} to refer to the original column name
 #' res <- summarize_vdj(
 #'   vdj_sce,
-#'   data_cols = c("n_deletion", "n_insertion"),
+#'   data_cols = c("all_del", "all_ins"),
 #'   fn = stats::median,
 #'   col_names = "median_{.col}"
 #' )
@@ -290,7 +290,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", data_cols = N
 #' # Return a data.frame instead of adding the results to the input object
 #' res <- summarize_vdj(
 #'   vdj_so,
-#'   data_cols = c("n_deletion", "n_insertion"),
+#'   data_cols = c("all_del", "all_ins"),
 #'   return_df = TRUE
 #' )
 #'
@@ -313,7 +313,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", data_cols = N
 #' # the V(D)J data can be filtered based on this new column
 #' res <- summarize_vdj(
 #'   vdj_so,
-#'   data_cols = "n_insertion",
+#'   data_cols = "all_ins",
 #'   fn = ~ all(.x == 0),
 #'   col_names = "no_insertions"
 #' )
@@ -326,8 +326,9 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id", data_cols = N
 #' head(res@meta.data, 3)
 #'
 #' @export
-summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL, chain_col = "chains",
-                          sep = ";", col_names = "{.col}", return_df = FALSE) {
+summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
+                          chain_col = "chains", sep = ";", col_names = "{.col}",
+                          return_df = FALSE) {
 
   # Names of new columns
   new_cols <- gsub("\\{.col\\}", "{data_cols}", col_names)

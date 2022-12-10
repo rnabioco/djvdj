@@ -49,20 +49,15 @@ condition
 # Only include V(D)J data for productive chains
 res <- filter_vdj(vdj_so, productive)
 
-head(res@meta.data, 1)
-
 # Only include V(D)J data for cells with paired chains
 res <- filter_vdj(vdj_sce, paired)
 
-head(res@colData, 3)
-
-# Only include V(D)J data for cells with at least one heavy and one light chain
+# Only include V(D)J data for cells with at least one heavy and one light
+# chain
 res <- filter_vdj(
   vdj_so,
   "IGH" \%in\% chains && any(c("IGK", "IGL") \%in\% chains)
 )
-
-head(res@meta.data, 3)
 
 # Only include V(D)J data for cells that have an IGH, IGK, and IGL chain
 res <- filter_vdj(
@@ -70,21 +65,13 @@ res <- filter_vdj(
   all(c("IGH", "IGK", "IGL") \%in\% chains)
 )
 
-head(res@colData, 1)
-
 # Only include V(D)J data for heavy chains
 res <- filter_vdj(vdj_so, chains == "IGH")
-
-head(res@meta.data, 3)
 
 # Remove chains that only have 1 UMI for support
 res <- filter_vdj(vdj_sce, umis > 1)
 
-head(res@colData, 1)
-
 # Filter based on cell barcode
-res <- filter_vdj(vdj_so, .cell_id == "1_AAACCTGAGTAGGTGC-1")
-
-head(res@meta.data, 3)
+res <- filter_vdj(vdj_so, .cell_id == "1_ACGGAGACATGCTGGC-1")
 
 }

@@ -272,7 +272,7 @@ plot_vdj_feature <- function(input, ...) {
 #' # Plot median number of insertions for each cell
 #' plot_vdj_feature(
 #'   vdj_sce,
-#'   data_col = "n_insertion",
+#'   data_col = "all_ins",
 #'   summary_fn = stats::median
 #' )
 #'
@@ -282,7 +282,7 @@ plot_vdj_feature <- function(input, ...) {
 #' # log10-transforms the result
 #' plot_vdj_feature(
 #'   vdj_so,
-#'   data_col = "n_deletion",
+#'   data_col = "all_del",
 #'   summary_fn = ~ log10(mean(.x) + 1)
 #' )
 #'
@@ -405,6 +405,7 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
 #' @param units Units to use for y-axis when method is set to 'histogram'. Use
 #' 'frequency' to show number of values or 'percent' to show the percentage of
 #' total values.
+#'
 #' @param plot_colors Character vector specifying colors to use for cell
 #' clusters specified by cluster_col. When cluster_col is NULL, plot colors can
 #' be directly modified with the ggplot2 parameters color and fill,
@@ -518,11 +519,11 @@ NULL
 #' @export
 plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
                      cluster_col = NULL, group_col = NULL, chain = NULL,
-                     method = "histogram",
-                     units = "frequency", plot_colors = NULL,
-                     plot_lvls = names(plot_colors), trans = "identity",
-                     panel_nrow = NULL, panel_scales = "free_x",
-                     chain_col = "chains", sep = ";", ...) {
+                     method = "histogram", units = "frequency",
+                     plot_colors = NULL, plot_lvls = names(plot_colors),
+                     trans = "identity", panel_nrow = NULL,
+                     panel_scales = "free_x", chain_col = "chains", sep = ";",
+                     ...) {
 
   # Format input data
   if (per_cell) {
@@ -553,10 +554,7 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
     }
   }
 
-  plt_dat <- dplyr::filter(
-    plt_dat,
-    if_all(all_of(data_col), ~ !is.na(.x))
-  )
+  plt_dat <- dplyr::filter(plt_dat, if_all(all_of(data_col), ~ !is.na(.x)))
 
   # Create plots
   res <- .plot_vdj(
@@ -571,29 +569,11 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
     trans        = trans,
     panel_nrow   = panel_nrow,
     panel_scales = panel_scales,
+    per_cell     = per_cell,
     ...
   )
 
   res
-
-  # fn <- function(clmn) {
-  #   .plot_vdj(
-  #     plt_dat,
-  #     data_col    = clmn,
-  #     cluster_col = cluster_col,
-  #     method      = method,
-  #     units       = units,
-  #     plot_colors = plot_colors,
-  #     plot_lvls   = plot_lvls,
-  #     trans       = trans,
-  #     ...
-  #   )
-  # }
-  #
-  # res <- purrr::map(data_cols, fn)
-  #
-  # # Combine plots
-  # res <- purrr::reduce(res, `+`)
 }
 
 #' @rdname plot_vdj
@@ -603,7 +583,7 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
                       method = "boxplot", units = "frequency",
                       plot_colors = NULL, plot_lvls = names(plot_colors),
                       trans = "identity", panel_nrow = NULL,
-                      panel_scales = "fixed", ...) {
+                      panel_scales = "fixed", per_cell = FALSE, ...) {
 
   # Order clusters based on plot_lvls
   df_in <- .set_lvls(df_in, cluster_col, plot_lvls)
@@ -629,6 +609,10 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
   # Create histogram
   if (method %in% c("histogram", "density")) {
     gg_args$units <- units
+
+    gg_args$y_ttl <- .get_axis_label(
+      units, sfx = ifelse(per_cell, "cells", "chains")
+    )
 
     res <- purrr::lift_dl(.create_hist)(gg_args)
 

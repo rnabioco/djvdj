@@ -23,8 +23,8 @@ test_all_args(
 test_that("Check Seurat output", {
   res <- vdj_so |>
     calc_frequency(
-      data_col = "cdr3",
-      return_df     = FALSE
+      data_col  = "cdr3",
+      return_df = FALSE
     )
 
   expect_s4_class(res, "Seurat")
@@ -35,8 +35,8 @@ test_that("Check Seurat output", {
 test_that("calc_frequency df out", {
   res <- vdj_so |>
     calc_frequency(
-      data_col = "cdr3",
-      return_df     = TRUE
+      data_col  = "cdr3",
+      return_df = TRUE
     )
 
   expect_s3_class(res, "data.frame")

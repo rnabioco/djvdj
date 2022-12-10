@@ -13,10 +13,10 @@ names(mets) <- abdiv::alpha_diversities
 arg_lst <- list(
   input       = list(vdj_so),
   data_col    = "cdr3",
-  chain       = list(NULL, "IGH"),
+  chain       = list(NULL, "IGK"),
   cluster_col = list(NULL, "seurat_clusters"),
   downsample  = c(TRUE, FALSE),
-  method      = list(mets, abdiv::simpson),
+  method      = list(mets, list(simpson = abdiv::simpson)),
   return_df   = FALSE
 )
 

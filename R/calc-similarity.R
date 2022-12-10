@@ -128,7 +128,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
   vdj <- tidyr::pivot_wider(
     vdj,
     names_from  = all_of(cluster_col),
-    values_from = .data$n,
+    values_from = "n",
     values_fill = 0
   )
 
@@ -158,7 +158,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
   })
 
   # Combine with inverse combinations
-  res_i <- dplyr::rename(res, Var1 = .data$Var2, Var2 = .data$Var1)
+  res_i <- dplyr::rename(res, Var1 = "Var2", Var2 = "Var1")
   res   <- dplyr::bind_rows(res, res_i, res_s)
 
   # Format data.frame
@@ -167,11 +167,11 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 
   res <- tidyr::pivot_wider(
     res,
-    names_from  = .data$Var1,
-    values_from = .data$sim
+    names_from  = "Var1",
+    values_from = "sim"
   )
 
-  res <- dplyr::select(res, !!sym(cluster_col) := .data$Var2, all_of(clmns))
+  res <- dplyr::select(res, !!sym(cluster_col) := "Var2", all_of(clmns))
 
   # Return matrix
   if (return_mat) {
@@ -230,6 +230,8 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' @param chain_col meta.data column containing chains for each cell
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters
+#' @param rotate_labels Should labels on circos plot be rotated to reduce
+#' overlapping text
 #' @param cluster_heatmap If FALSE, rows and columns of heatmap will not be
 #' clustered.
 #' @param remove_upper_triangle If TRUE, upper triangle for heatmap will not
@@ -280,7 +282,7 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
                             method = abdiv::jaccard, chain = NULL,
                             chain_col = "chains", plot_colors = NULL,
                             plot_lvls = names(plot_colors),
-                            cluster_heatmap = TRUE,
+                            rotate_labels = FALSE, cluster_heatmap = TRUE,
                             remove_upper_triangle = FALSE,
                             remove_diagonal = remove_upper_triangle, sep = ";",
                             ...) {
@@ -290,7 +292,7 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 
   if (is_circ) method <- "count"
 
-  .chk_group_cols(cluster_col, group_col)
+  .chk_group_cols(cluster_col, group_col, input)
 
   # Calculate similarity
   plt_dat <- calc_similarity(
@@ -322,9 +324,10 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 
     .create_circos(
       plt_dat,
-      clrs = plot_colors,
-      lvls = plot_lvls,
-      grps = grps,
+      clrs          = plot_colors,
+      lvls          = plot_lvls,
+      grps          = grps,
+      rotate_labels = rotate_labels,
       ...
     )
 

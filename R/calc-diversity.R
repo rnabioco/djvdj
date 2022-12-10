@@ -189,10 +189,10 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
   div_cols <- "diversity"
 
   if (n_boots > 1) div_cols <- c(div_cols, "stderr")
-  else             div <- dplyr::select(div, -.data$stderr)
+  else             div <- dplyr::select(div, -"stderr")
 
   div <- tidyr::pivot_longer(div, all_of(div_cols))
-  div <- tidyr::unite(div, "name", .data$met, .data$name)
+  div <- tidyr::unite(div, "name", "met", "name")
   div <- tidyr::pivot_wider(div)
 
   # Format results
@@ -401,13 +401,11 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
   plt_dat <- tidyr::pivot_wider(
     plt_dat,
-    names_from  = .data$type,
-    values_from = .data$value
+    names_from  = "type", values_from = "value"
   )
 
   # Set plot levels
-  lvls_col <- group_col
-  lvls_col <- lvls_col %||% cluster_col
+  lvls_col <- group_col %||% cluster_col
 
   plt_dat <- .set_lvls(plt_dat, lvls_col, plot_lvls)
   plt_dat <- .set_lvls(plt_dat, "met", names(method))

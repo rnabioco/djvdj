@@ -31,14 +31,15 @@ CELL_COL <- ".cell_id"
 #' @param arg_lst Named list of arguments to test
 #' @param .fn Function to test
 #' @param desc Description to pass to test_that
-#' @param chk Function or expression to using for testing
+#' @param chk Function or expression to use for testing. If an expression is
+#' passed, results from .fn can be referred to with .res.
 #' @param dryrun Do not run tests, just return table of arguments that will be
 #' tested
 #' @return Output from test_that
 #' @noRd
 test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
-
-  arg_lst <- expand.grid(arg_lst, stringsAsFactors = FALSE)
+  arg_lst    <- expand.grid(arg_lst, stringsAsFactors = FALSE)
+  arg_lst$.n <- seq_len(nrow(arg_lst))
 
   if (dryrun) {
     arg_lst <- tibble::as_tibble(arg_lst)
@@ -46,21 +47,20 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
     return(arg_lst)
   }
 
-  n <- 1
-
   purrr::pwalk(arg_lst, ~ {
-    test_that(paste(desc, n), {
+    test_args    <- list(...)
+    n            <- test_args$.n
+    test_args$.n <- NULL
 
+    test_that(paste(desc, n), {
       if (is.call(chk)) {
-        .res <- .fn(...)
+        .res <- purrr::lift_dl(.fn)(test_args)
 
         return(eval(chk))
       }
 
-      chk(.fn(...))
+      chk(purrr::lift_dl(.fn)(test_args))
     })
-
-    n <<- n + 1
   })
 }
 

@@ -14,10 +14,13 @@ plot_gene_usage(
   plot_colors = NULL,
   vdj_genes = NULL,
   n_genes = 20,
-  plot_lvls = names(plot_colors),
+  plot_lvls = NULL,
   trans = "identity",
   units = "percent",
   chain_col = "chains",
+  rotate_labels = FALSE,
+  panel_nrow = NULL,
+  return_list = FALSE,
   sep = ";",
   ...
 )
@@ -67,6 +70,15 @@ provided, top genes will be identified for each cluster.}
 \item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
 \item{chain_col}{meta.data column containing chains for each cell}
+
+\item{rotate_labels}{Should labels on circos plot be rotated to reduce
+overlapping text}
+
+\item{panel_nrow}{The number of rows to use for arranging plots when
+return_list is FALSE}
+
+\item{return_list}{Should a list of plots be returned, if FALSE plots will be
+combined and arranged into panels}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 

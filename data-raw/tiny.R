@@ -10,16 +10,16 @@ dat_dir <- "~/Projects/Smith_AVIDseq"
 out_dir <- "inst/extdata/"
 
 mat_path <- c(
-  str_c(dat_dir, "/results/JH179_GEX-JH181_ADT_JH181_HTO/outs/filtered_feature_bc_matrix"),
-  str_c(dat_dir, "/results/JH179_GEX-JH181_ADT_JH181_HTO/outs/filtered_feature_bc_matrix")
+  str_c(dat_dir, "/results/2020-01-18/JH179_GEX-JH181_ADT_JH181_HTO/outs/filtered_feature_bc_matrix"),
+  str_c(dat_dir, "/results/2020-01-18/JH179_GEX-JH181_ADT_JH181_HTO/outs/filtered_feature_bc_matrix")
 )
 
 bcr_path <- c(
-  str_c(dat_dir, "/results/JH180_BCR/outs/"),
-  str_c(dat_dir, "/results/JH180_BCR/outs/")
+  str_c(dat_dir, "/results/2020-01-18/JH180_BCR/outs/"),
+  str_c(dat_dir, "/results/2020-01-18/JH180_BCR/outs/")
 )
 
-tcr_path <- str_c(dat_dir, "/results/JH180_TCR/outs/")
+tcr_path <- str_c(dat_dir, "/results/2020-01-18/JH180_TCR/outs/")
 
 
 
@@ -132,7 +132,10 @@ filt_fn <- function(x) {
 filt_rules <- FilterRules(list(rname = filt_fn))
 
 bcr_bam %>%
-  imap(filterBam, filter = filt_rules)
+  walk(indexBam)
+
+bcr_bam %>%
+  iwalk(filterBam, filter = filt_rules)
 
 names(bcr_bam) %>%
   str_c(".bai") %>%
@@ -171,7 +174,10 @@ bad_bam <- set_names(
 )
 
 bad_bam %>%
-  imap(filterBam, filter = filt_rules)
+  walk(indexBam)
+
+bad_bam %>%
+  iwalk(filterBam, filter = filt_rules)
 
 names(bad_bam) %>%
   str_c(".bai") %>%
@@ -204,7 +210,10 @@ tcr_bam <- set_names(
 )
 
 tcr_bam %>%
-  imap(filterBam, filter = filt_rules)
+  walk(indexBam)
+
+tcr_bam %>%
+  iwalk(filterBam, filter = filt_rules)
 
 names(tcr_bam) %>%
   str_c(".bai") %>%
@@ -219,8 +228,9 @@ names(tcr_bam) %>%
 # Add V(D)J data to Seurat object
 vdj_so <- tiny_so %>%
   import_vdj(
-    vdj_dir       = bcr_path,
-    filter_chains = TRUE
+    vdj_dir           = bcr_path,
+    filter_chains     = TRUE,
+    include_mutations = TRUE
   )
 
 # Create tiny SingleCellExperiment object
@@ -231,8 +241,9 @@ tiny_sce <- SingleCellExperiment(
 
 vdj_sce <- tiny_sce %>%
   import_vdj(
-    vdj_dir       = bcr_path,
-    filter_chains = TRUE
+    vdj_dir           = bcr_path,
+    filter_chains     = TRUE,
+    include_mutations = TRUE
   )
 
 # Save objects

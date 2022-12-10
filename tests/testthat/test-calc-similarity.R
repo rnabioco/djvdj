@@ -11,6 +11,7 @@ test_clsts <- df_1 |>
 
 # Check all calc_similarity arguments
 mets <- abdiv::beta_diversities |>
+  purrr::set_names() |>
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 arg_lst <- list(
@@ -18,7 +19,8 @@ arg_lst <- list(
   data_col    = "cdr3",
   cluster_col = "seurat_clusters",
   method      = mets,
-  return_mat  = c(TRUE, FALSE)
+  return_mat  = c(TRUE, FALSE),
+  prefix      = "TEST_"
 )
 
 test_all_args(

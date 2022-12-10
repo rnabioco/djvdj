@@ -56,7 +56,7 @@ fetch_vdj(vdj_so)
 # per-cell data will be returned for all other columns
 fetch_vdj(
   vdj_sce,
-  data_cols = c("chains", "n_insertion")
+  data_cols = c("chains", "reads")
 )
 
 # Only include cells that have V(D)J data
