@@ -17,10 +17,10 @@ articles:
 - title: VDJ analysis
   navbar: VDJ analysis
   contents:
-  - gene-usage
-  - abundance
+  - frequency
   - diversity
   - similarity
+  - gene-usage
   - clustering
 
 - title: Visualization
@@ -34,10 +34,9 @@ reference:
   - import_vdj
   - define_clonotypes
 
-- title: Clonal Abundance
+- title: Clone Frequency
   contents:
   - ends_with("_frequency")
-  - plot_clonal_abundance
 
 - title: Repertoire Diversity
   contents:
