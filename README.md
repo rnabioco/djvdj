@@ -34,21 +34,19 @@ object based on V(D)J metrics including chains, clonotypes, and CDR3
 sequences.
 
 ``` r
+library(djvdj)
+
 # Import VDJ data
 # A vector of paths can be provided to load multiple datasets
 # If prefixes were added to the cell barcodes when the object was generated,
 # include these as the vector names
-paths <- c(
-  BL6 = "splenocytes/BL6_BCR",
-  MD4 = "splenocytes/MD4_BCR"
+vdj_dirs <- c(
+  BL6 = system.file("extdata/splen/BL6_BCR", package = "djvdj"),
+  MD4 = system.file("extdata/splen/MD4_BCR", package = "djvdj")
 )
 
 # Add V(D)J data to object
-so <- import_vdj(
-  input         = so,      # Seurat or SingleCellExperiment object
-  vdj_dir       = paths,   # Cellranger output directories
-  filter_paired = FALSE    # Keep clonotypes without paired chains
-)
+so <- import_vdj(splen_so, vdj_dir = vdj_dirs)
 ```
 
 ## Calculate
@@ -80,15 +78,13 @@ function to summarize the results.
 
 ``` r
 # Compare the usage of different V and J genes
-ggs <- plot_gene_usage(
+plot_gene_usage(
   input       = so,                     # Seurat object
   data_cols   = c("v_gene", "j_gene"),  # Column(s) containing V(D)J genes to plot
   cluster_col = "orig.ident",           # Column containing cell clusters to compare
   chain       = "IGK",                  # Chain to plot
   plot_colors = "#6A51A3"
 )
-
-Reduce(`+`, ggs)
 ```
 
 ![](man/figures/README-usage-1.png)<!-- -->
