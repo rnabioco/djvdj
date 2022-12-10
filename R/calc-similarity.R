@@ -171,7 +171,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
     values_from = "sim"
   )
 
-  res <- dplyr::select(res, !!sym(cluster_col) := .data$Var2, all_of(clmns))
+  res <- dplyr::select(res, !!sym(cluster_col) := "Var2", all_of(clmns))
 
   # Return matrix
   if (return_mat) {

@@ -800,7 +800,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     )
   }
 
-  res <- dplyr::select(res, -.data$pct)
+  res <- dplyr::select(res, -"pct")
 
   res
 }

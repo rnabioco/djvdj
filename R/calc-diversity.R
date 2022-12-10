@@ -401,8 +401,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
   plt_dat <- tidyr::pivot_wider(
     plt_dat,
-    names_from  = .data$type,
-    values_from = .data$value
+    names_from  = "type", values_from = "value"
   )
 
   # Set plot levels
