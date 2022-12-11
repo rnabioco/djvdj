@@ -23,7 +23,7 @@
 "vdj_sce"
 
 #' A small Seurat object containing downsampled splenocyte data
-#' 
+#'
 #' A small Seurat object containing downsampled splenocyte data
-#' @format A Seurat object with 10701 features, 500 cells, and 1 assay
+#' @format A Seurat object with 1000 features, 500 cells, and 1 assay
 "splen_so"
