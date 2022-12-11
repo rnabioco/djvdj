@@ -183,3 +183,11 @@ so |>
     scale       = TRUE
   )
 ```
+
+<br>
+
+## Session info
+
+```{r, echo = FALSE}
+sessionInfo()
+```

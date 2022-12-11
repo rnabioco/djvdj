@@ -103,7 +103,7 @@ so_vdj <- so |>
 
 Clustering results can be visualized on a UMAP projection using the generic plotting function `plot_features()`. Colors can be adjusted using the `plot_colors` argument.
 
-This function will often generate a warning saying that rows with missing values were removed, this is expected since some cells do not have V(D)J data.
+This function will often generate a warning saying that rows with missing values were removed, this is expected since some cells do not have V(D)J data and will not have UMAP coordinates.
 
 ```{r}
 clrs <- setNames(brewer.pal(11, "Paired"), 1:11)
@@ -128,7 +128,7 @@ so_vdj |>
   )
 ```
 
-```{r, eval = FALSE}
+```{r, echo = FALSE, eval = FALSE}
 so_vdj |>
   plot_vdj(
     data_col    = "cdr3_length",
@@ -137,7 +137,7 @@ so_vdj |>
   facet_wrap(~ cdr3_cluster_0.4, scales = "free_y")
 ```
 
-```{r, eval = FALSE}
+```{r, echo = FALSE, eval = FALSE}
 so_vdj |>
   plot_vdj_feature(
     data_col = "cdr3_length",
@@ -198,4 +198,12 @@ so_vdj |>
     axis.text.x  = element_blank(),
     axis.ticks.x = element_blank()
   )
+```
+
+<br>
+
+## Session info
+
+```{r, echo = FALSE}
+sessionInfo()
 ```
