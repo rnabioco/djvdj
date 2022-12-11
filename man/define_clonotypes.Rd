@@ -42,7 +42,7 @@ res <- define_clonotypes(
   data_cols = "cdr3_nt"
 )
 
-head(res@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
 # Define clonotypes based on the combination of the CDR3 nucleotide sequence
 # and the V and J genes
@@ -51,7 +51,7 @@ res <- define_clonotypes(
   data_cols = c("cdr3_nt", "v_gene", "j_gene")
 )
 
-head(res@colData, 1)
+head(slot(res, "colData"), 1)
 
 # Modify the name of the column used to store clonotype IDs
 res <- define_clonotypes(
@@ -60,7 +60,7 @@ res <- define_clonotypes(
   clonotype_col = "NEW_clonotype_id"
 )
 
-head(res@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
 # When defining clonotypes only use chains that are productive
 res <- define_clonotypes(
@@ -69,6 +69,6 @@ res <- define_clonotypes(
   filter_chains = "productive"
 )
 
-head(res@colData, 1)
+head(slot(res, "colData"), 1)
 
 }

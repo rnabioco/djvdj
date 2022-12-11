@@ -1,4 +1,4 @@
-#' Calculate frequency of groups present in object
+#' Calculate frequency of cell groups present in object
 #'
 #' Calculate the frequency of each cell label present in the provided meta.data
 #' column. This is useful for comparing the proportion of cells belonging to
@@ -26,7 +26,7 @@
 #'   data_col = "clonotype_id"
 #' )
 #'
-#' head(res@meta.data, 1)
+#' head(slot(res, "meta.data"), 1)
 #'
 #' # Group cells based on meta.data column before calculating abundance
 #' res <- calc_frequency(
@@ -35,7 +35,7 @@
 #'   cluster_col = "orig.ident"
 #' )
 #'
-#' head(res@colData, 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # Add a prefix to the new columns
 #' # this is useful if multiple abundance calculations are stored in the
@@ -46,7 +46,7 @@
 #'   prefix = "bcr_"
 #' )
 #'
-#' head(res@meta.data, 1)
+#' head(slot(res, "meta.data"), 1)
 #'
 #' # Return a data.frame instead of adding the results to the input object
 #' res <- calc_frequency(
@@ -182,13 +182,14 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
   uniq_x <- sort(uniq_x)
 
   # Divide into groups
-  labs <- tibble(
+  labs <- tibble::tibble(
     x   = uniq_x,
-    grp = ntile(uniq_x, n_grps)
+    grp = dplyr::ntile(uniq_x, n_grps)
   )
 
   # Format labels
   labs <- dplyr::group_by(labs, .data$grp)
+
   labs <- dplyr::mutate(
     labs,
     lab = paste0(unique(range(x)), collapse = "-")
@@ -449,12 +450,11 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   res
 }
 
-#' Plot frequency of cell labels present in column from object meta.data
+#' Plot frequency of cell groups present in object
 #'
 #' Plot the frequency of each cell label present in the provided meta.data
 #' column. This is useful for comparing the proportion of cells belonging to
-#' different samples, cell types, isotypes, etc. To compare clonotype
-#' frequency, use the plot_clone_frequency() function.
+#' different samples, cell types, clonotypes, isotypes, etc.
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.

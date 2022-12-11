@@ -1,4 +1,4 @@
-#' Calculate cluster similarity
+#' Calculate repertoire similarity
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
@@ -33,7 +33,7 @@
 #'   method      = abdiv::jaccard
 #' )
 #'
-#' head(res@meta.data, 1)
+#' head(slot(res, "meta.data"), 1)
 #'
 #' # Add a prefix to the new columns
 #' # this is useful if multiple calculations are stored in the meta.data
@@ -44,7 +44,7 @@
 #'   prefix      = "bcr_"
 #' )
 #'
-#' head(res@colData, 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # Return a matrix instead of adding the results to the input object
 #' calc_similarity(
@@ -205,7 +205,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
   res
 }
 
-#' Plot cluster similarity
+#' Plot repertoire similarity
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.

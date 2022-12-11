@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc-frequency.R
 \name{calc_frequency}
 \alias{calc_frequency}
-\title{Calculate frequency of groups present in object}
+\title{Calculate frequency of cell groups present in object}
 \usage{
 calc_frequency(
   input,
@@ -45,7 +45,7 @@ res <- calc_frequency(
   data_col = "clonotype_id"
 )
 
-head(res@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
 # Group cells based on meta.data column before calculating abundance
 res <- calc_frequency(
@@ -54,7 +54,7 @@ res <- calc_frequency(
   cluster_col = "orig.ident"
 )
 
-head(res@colData, 1)
+head(slot(res, "colData"), 1)
 
 # Add a prefix to the new columns
 # this is useful if multiple abundance calculations are stored in the
@@ -65,7 +65,7 @@ res <- calc_frequency(
   prefix = "bcr_"
 )
 
-head(res@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
 # Return a data.frame instead of adding the results to the input object
 res <- calc_frequency(

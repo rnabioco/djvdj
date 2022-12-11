@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc-similarity.R
 \name{plot_similarity}
 \alias{plot_similarity}
-\title{Plot cluster similarity}
+\title{Plot repertoire similarity}
 \usage{
 plot_similarity(
   input,
@@ -73,7 +73,7 @@ be shown.}
 circos plot}
 }
 \description{
-Plot cluster similarity
+Plot repertoire similarity
 }
 \examples{
 # Plot repertoire overlap

@@ -32,7 +32,7 @@ res <- mutate_meta(
   NEW = nCount_RNA + nFeature_RNA
 )
 
-head(res@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
 # Pass a purrr-style lambda
 # this produces the same result as the previous example
@@ -41,7 +41,7 @@ res <- mutate_meta(
   ~ dplyr::mutate(.x, NEW = nCount_RNA + nFeature_RNA)
 )
 
-head(res@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
 # Modify multiple meta.data columns
 res <- mutate_meta(
@@ -51,7 +51,7 @@ res <- mutate_meta(
   NEW_2 = stringr::str_c(orig.ident, seurat_clusters)
 )
 
-head(res@colData, 1)
+head(slot(res, "colData"), 1)
 
 # Remove meta.data columns
 # any function can be passed to mutate_meta(), in this example
@@ -62,7 +62,7 @@ res <- mutate_meta(
   -UMAP_1
 )
 
-head(res@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
 # Perform grouped operations using dplyr
 # multi-line commands can be passed using brackets, just refer to the
@@ -75,6 +75,6 @@ res <- mutate_meta(tiny_sce, ~ {
   y
 })
 
-head(res@colData, 1)
+head(slot(res, "colData"), 1)
 
 }

@@ -59,7 +59,7 @@ res <- summarize_vdj(
   data_cols = c("all_del", "all_ins")
 )
 
-head(res@meta.data, 3)
+head(slot(res, "meta.data"), 3)
 
 # Specifying a different summary function
 # this calculates the median number of insertions and deletions for each
@@ -70,7 +70,7 @@ res <- summarize_vdj(
   fn = stats::median
 )
 
-head(res@colData, 3)
+head(slot(res, "colData"), 3)
 
 # Summarize values for a specific chain
 res <- summarize_vdj(
@@ -79,7 +79,7 @@ res <- summarize_vdj(
   chain = "IGK"
 )
 
-head(res@meta.data, 3)
+head(slot(res, "meta.data"), 3)
 
 # Specifying new names for summarized columns
 # use {.col} to refer to the original column name
@@ -90,7 +90,7 @@ res <- summarize_vdj(
   col_names = "median_{.col}"
 )
 
-head(res@colData, 1)
+head(slot(res, "colData"), 1)
 
 # Return a data.frame instead of adding the results to the input object
 res <- summarize_vdj(
@@ -111,7 +111,7 @@ res <- summarize_vdj(
   col_names = "unique_chains"
 )
 
-head(res@colData, 3)
+head(slot(res, "colData"), 3)
 
 # Creating an index column to use for filtering/plotting
 # this creates a column indicating which cells have no insertions
@@ -128,6 +128,6 @@ res <- filter_vdj(
   filt = no_insertions
 )
 
-head(res@meta.data, 3)
+head(slot(res, "meta.data"), 3)
 
 }

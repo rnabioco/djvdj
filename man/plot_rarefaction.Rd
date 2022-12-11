@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc-diversity.R
 \name{plot_rarefaction}
 \alias{plot_rarefaction}
-\title{Create rarefaction curve}
+\title{Plot rarefaction curve}
 \usage{
 plot_rarefaction(
   input,
@@ -62,7 +62,7 @@ linetype, etc.}
 ggplot object
 }
 \description{
-Create rarefaction curve
+Plot rarefaction curve
 }
 \seealso{
 \code{\link[=calc_diversity]{calc_diversity()}}, \code{\link[=plot_diversity]{plot_diversity()}}

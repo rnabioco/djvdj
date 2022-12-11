@@ -57,7 +57,7 @@
 #'
 #' vdj_so <- import_vdj(tiny_so, vdj_dir, include_mutations = FALSE)
 #'
-#' head(vdj_so@meta.data, 1)
+#' head(slot(vdj_so, "meta.data"), 1)
 #'
 #' # Specifying cell prefixes
 #' # if cell prefixes are not specified when loading multiple datasets,
@@ -69,7 +69,7 @@
 #'   include_mutations = FALSE
 #' )
 #'
-#' head(vdj_so@meta.data, 1)
+#' head(slot(vdj_so, "meta.data"), 1)
 #'
 #' # Specifying cell prefixes using vector names
 #' # if a named vector is passed, the names will be used as the cell prefixes
@@ -80,7 +80,7 @@
 #'
 #' vdj_so <- import_vdj(tiny_so, vdj_dir, include_mutations = FALSE)
 #'
-#' head(vdj_so@meta.data, 1)
+#' head(slot(vdj_so, "meta.data"), 1)
 #'
 #' # Only include V(D)J data for productive full length chains
 #' vdj_so <- import_vdj(
@@ -90,7 +90,7 @@
 #'   include_mutations = FALSE
 #' )
 #'
-#' head(vdj_so@meta.data, 1)
+#' head(slot(vdj_so, "meta.data"), 1)
 #'
 #' # Only include V(D)J data for cells with paired chains
 #' vdj_so <- import_vdj(
@@ -100,7 +100,7 @@
 #'   include_mutations = FALSE
 #' )
 #'
-#' head(vdj_so@meta.data, 1)
+#' head(slot(vdj_so, "meta.data"), 1)
 #'
 #' # Defining clonotypes
 #' # this is useful if the original clonotype IDs are not consistent across
@@ -112,7 +112,7 @@
 #'   include_mutations = FALSE
 #' )
 #'
-#' head(vdj_so@meta.data, 1)
+#' head(slot(vdj_so, "meta.data"), 1)
 #'
 #' # Include mutation information for each chain
 #' # this information will be included if the file concat_ref.bam is present
@@ -123,14 +123,14 @@
 #'   include_mutations = TRUE
 #' )
 #'
-#' head(vdj_so@meta.data, 1)
+#' head(slot(vdj_so, "meta.data"), 1)
 #'
 #' # Using import_vdj outside of Seurat
 #' # SingleCellExperiment objects are also compatible, or if an input object is
 #' # omitted, a data.frame containing the V(D)J data will be returned
 #' vdj_sce <- import_vdj(tiny_sce, vdj_dir)
 #'
-#' head(vdj_sce@colData, 1)
+#' head(slot(vdj_sce, "colData"), 1)
 #'
 #' vdj_df <- import_vdj(vdj_dir = vdj_dir, include_mutations = FALSE)
 #'
@@ -1319,7 +1319,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #'   data_cols = "cdr3_nt"
 #' )
 #'
-#' head(res@meta.data, 1)
+#' head(slot(res, "meta.data"), 1)
 #'
 #' # Define clonotypes based on the combination of the CDR3 nucleotide sequence
 #' # and the V and J genes
@@ -1328,7 +1328,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #'   data_cols = c("cdr3_nt", "v_gene", "j_gene")
 #' )
 #'
-#' head(res@colData, 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # Modify the name of the column used to store clonotype IDs
 #' res <- define_clonotypes(
@@ -1337,7 +1337,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #'   clonotype_col = "NEW_clonotype_id"
 #' )
 #'
-#' head(res@meta.data, 1)
+#' head(slot(res, "meta.data"), 1)
 #'
 #' # When defining clonotypes only use chains that are productive
 #' res <- define_clonotypes(
@@ -1346,7 +1346,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #'   filter_chains = "productive"
 #' )
 #'
-#' head(res@colData, 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' @export
 define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",

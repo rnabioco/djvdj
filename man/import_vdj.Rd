@@ -88,7 +88,7 @@ vdj_dir <- c(
 
 vdj_so <- import_vdj(tiny_so, vdj_dir, include_mutations = FALSE)
 
-head(vdj_so@meta.data, 1)
+head(slot(vdj_so, "meta.data"), 1)
 
 # Specifying cell prefixes
 # if cell prefixes are not specified when loading multiple datasets,
@@ -100,7 +100,7 @@ vdj_so <- import_vdj(
   include_mutations = FALSE
 )
 
-head(vdj_so@meta.data, 1)
+head(slot(vdj_so, "meta.data"), 1)
 
 # Specifying cell prefixes using vector names
 # if a named vector is passed, the names will be used as the cell prefixes
@@ -111,7 +111,7 @@ vdj_dir <- c(
 
 vdj_so <- import_vdj(tiny_so, vdj_dir, include_mutations = FALSE)
 
-head(vdj_so@meta.data, 1)
+head(slot(vdj_so, "meta.data"), 1)
 
 # Only include V(D)J data for productive full length chains
 vdj_so <- import_vdj(
@@ -121,7 +121,7 @@ vdj_so <- import_vdj(
   include_mutations = FALSE
 )
 
-head(vdj_so@meta.data, 1)
+head(slot(vdj_so, "meta.data"), 1)
 
 # Only include V(D)J data for cells with paired chains
 vdj_so <- import_vdj(
@@ -131,7 +131,7 @@ vdj_so <- import_vdj(
   include_mutations = FALSE
 )
 
-head(vdj_so@meta.data, 1)
+head(slot(vdj_so, "meta.data"), 1)
 
 # Defining clonotypes
 # this is useful if the original clonotype IDs are not consistent across
@@ -143,7 +143,7 @@ vdj_so <- import_vdj(
   include_mutations = FALSE
 )
 
-head(vdj_so@meta.data, 1)
+head(slot(vdj_so, "meta.data"), 1)
 
 # Include mutation information for each chain
 # this information will be included if the file concat_ref.bam is present
@@ -154,14 +154,14 @@ vdj_so <- import_vdj(
   include_mutations = TRUE
 )
 
-head(vdj_so@meta.data, 1)
+head(slot(vdj_so, "meta.data"), 1)
 
 # Using import_vdj outside of Seurat
 # SingleCellExperiment objects are also compatible, or if an input object is
 # omitted, a data.frame containing the V(D)J data will be returned
 vdj_sce <- import_vdj(tiny_sce, vdj_dir)
 
-head(vdj_sce@colData, 1)
+head(slot(vdj_sce, "colData"), 1)
 
 vdj_df <- import_vdj(vdj_dir = vdj_dir, include_mutations = FALSE)
 

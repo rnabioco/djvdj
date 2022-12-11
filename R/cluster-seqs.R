@@ -97,7 +97,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 
   make_adj_df <- function(mat) {
     res <- tibble::as_tibble(mat, rownames = "Var1")
-    res <- tidyr::pivot_longer(res, -.data$Var1, values_to = "Var2")
+    res <- tidyr::pivot_longer(res, -"Var1", values_to = "Var2")
     res
   }
 
@@ -164,7 +164,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
   res
 }
 
-#' Create sequence logos for clusters
+#' Plot CDR3 sequence motifs
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.

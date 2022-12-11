@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster-seqs.R
 \name{plot_motifs}
 \alias{plot_motifs}
-\title{Create sequence logos for clusters}
+\title{Plot CDR3 sequence motifs}
 \usage{
 plot_motifs(
   input,
@@ -53,7 +53,7 @@ align sequences at the 5' or 3' end when plotting.}
 \item{...}{Additional parameters to pass to \code{\link[ggseqlogo:geom_logo]{ggseqlogo::geom_logo()}}}
 }
 \description{
-Create sequence logos for clusters
+Plot CDR3 sequence motifs
 }
 \seealso{
 \code{\link[=cluster_sequences]{cluster_sequences()}}

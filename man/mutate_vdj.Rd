@@ -56,7 +56,7 @@ res <- mutate_vdj(
   mean_reads = mean(reads)
 )
 
-head(res@meta.data, 3)
+head(slot(res, "meta.data"), 3)
 
 # Calculate the total number of insertions + deletions for each chain
 # we have to wrap our expression in list() since a value is returned for
@@ -66,7 +66,7 @@ res <- mutate_vdj(
   indels = list(all_ins + all_del)
 )
 
-head(res@colData, 3)
+head(slot(res, "colData"), 3)
 
 # Create a new column showing the unique chains for each cell
 res <- mutate_vdj(
@@ -74,7 +74,7 @@ res <- mutate_vdj(
   unique_chains = stringr::str_c(unique(chains), collapse = "_")
 )
 
-head(res@meta.data, 3)
+head(slot(res, "meta.data"), 3)
 
 # Determine which cells have both an IGK and IGL chain
 res <- mutate_vdj(
@@ -82,7 +82,7 @@ res <- mutate_vdj(
   both_light = all(c("IGK", "IGL") \%in\% chains)
 )
 
-head(res@colData, 1)
+head(slot(res, "colData"), 1)
 
 # Determine which cells have multiple light chains
 res <- mutate_vdj(
@@ -90,6 +90,6 @@ res <- mutate_vdj(
   multi_light = sum(chains \%in\% c("IGK", "IGL")) > 1
 )
 
-head(res@meta.data, 3)
+head(slot(res, "meta.data"), 3)
 
 }

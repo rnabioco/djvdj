@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc-frequency.R
 \name{plot_frequency}
 \alias{plot_frequency}
-\title{Plot frequency of cell labels present in column from object meta.data}
+\title{Plot frequency of cell groups present in object}
 \usage{
 plot_frequency(
   input,
@@ -62,8 +62,7 @@ ggplot object
 \description{
 Plot the frequency of each cell label present in the provided meta.data
 column. This is useful for comparing the proportion of cells belonging to
-different samples, cell types, isotypes, etc. To compare clonotype
-frequency, use the plot_clone_frequency() function.
+different samples, cell types, clonotypes, isotypes, etc.
 }
 \seealso{
 \code{\link[=calc_frequency]{calc_frequency()}}, \code{\link[=plot_clone_frequency]{plot_clone_frequency()}}
