@@ -7,7 +7,11 @@ library(stringr)
 library(SingleCellExperiment)
 library(djvdj)
 
+data(vdj_so, vdj_sce, tiny_so, tiny_sce)
+
 test_check("djvdj")
+
+
 
 
 
