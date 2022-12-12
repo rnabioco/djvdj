@@ -186,6 +186,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' @param panel_nrow The number of rows to use for arranging plot panels
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional parameters to pass to [ggseqlogo::geom_logo()]
+#' @return ggplot object
 #' @importFrom stringr str_trunc
 #' @seealso [cluster_sequences()]
 #' @export

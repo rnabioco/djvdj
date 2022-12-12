@@ -860,7 +860,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
     if (n_missing > 10) {
       sfx <- "..."
-      missing <- missing[1:10]
+      missing <- missing[seq_len(10)]
     }
 
     missing <- paste0(missing, collapse = ", ")

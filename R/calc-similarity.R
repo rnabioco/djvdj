@@ -241,6 +241,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' @param ... Additional arguments to pass to plotting function,
 #' [ComplexHeatmap::Heatmap()] for heatmap, [circlize::chordDiagram()] for
 #' circos plot
+#' @return heatmap or circos plot
 #' @importFrom abdiv jaccard
 #' @seealso [calc_similarity()], [calc_mds()], [plot_mds()]
 #'
@@ -377,7 +378,8 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with MDS coordinates
 #' @importFrom MASS isoMDS
-#' @seealso [plot_mds()], [calc_similarity()], [plot_similarity()], [MASS::isoMDS()]
+#' @seealso [plot_mds()], [calc_similarity()], [plot_similarity()],
+#' [MASS::isoMDS()]
 #' @export
 calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
                      chain = NULL, chain_col = "chains", prefix = "",
@@ -494,7 +496,9 @@ calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
 #' @param label_points Label points on plot
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to [ggplot2::geom_point()]
-#' @seealso [calc_mds()], [calc_similarity()], [plot_similarity()], [MASS::isoMDS()]
+#' @return ggplot object
+#' @seealso [calc_mds()], [calc_similarity()], [plot_similarity()],
+#' [MASS::isoMDS()]
 #' @export
 plot_mds <- function(input, data_col, cluster_col,
                      method = abdiv::jaccard, chain = NULL,

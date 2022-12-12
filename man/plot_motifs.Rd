@@ -52,6 +52,9 @@ align sequences at the 5' or 3' end when plotting.}
 
 \item{...}{Additional parameters to pass to \code{\link[ggseqlogo:geom_logo]{ggseqlogo::geom_logo()}}}
 }
+\value{
+ggplot object
+}
 \description{
 Plot CDR3 sequence motifs
 }

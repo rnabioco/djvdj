@@ -51,9 +51,13 @@ all chains.}
 
 \item{...}{Additional arguments to pass to \code{\link[ggplot2:geom_point]{ggplot2::geom_point()}}}
 }
+\value{
+ggplot object
+}
 \description{
 Perform multidimensional scaling and plot results
 }
 \seealso{
-\code{\link[=calc_mds]{calc_mds()}}, \code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[=plot_similarity]{plot_similarity()}}, \code{\link[MASS:isoMDS]{MASS::isoMDS()}}
+\code{\link[=calc_mds]{calc_mds()}}, \code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[=plot_similarity]{plot_similarity()}},
+\code{\link[MASS:isoMDS]{MASS::isoMDS()}}
 }

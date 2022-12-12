@@ -16,7 +16,7 @@
 #' @param prefix Prefix to add to new columns
 #' @param return_df Return results as a data.frame. If set to FALSE, results
 #' will be added to the input object.
-#' @return Single cell object or data.frame with clonotype abundance metrics
+#' @return Single cell object or data.frame with clonotype frequencies
 #' @seealso [plot_frequency()], [plot_clone_frequency()]
 #'
 #' @examples
@@ -535,7 +535,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   n_top <- n_top %||% ifelse(n_dat > 50, 10, 20)
 
   if (n_top < n_dat && !is.null(other_label)) {
-    keep_dat <- rnk[1:n_top]
+    keep_dat <- rnk[seq_len(n_top)]
 
     plt_dat <- dplyr::mutate(plt_dat, !!sym(data_col) := ifelse(
       !!sym(data_col) %in% keep_dat,

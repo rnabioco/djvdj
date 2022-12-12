@@ -31,7 +31,7 @@ grouping cells when calculating clonotype abundance}
 will be added to the input object.}
 }
 \value{
-Single cell object or data.frame with clonotype abundance metrics
+Single cell object or data.frame with clonotype frequencies
 }
 \description{
 Calculate the frequency of each cell label present in the provided meta.data
