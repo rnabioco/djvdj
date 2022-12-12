@@ -39,6 +39,8 @@ vdj_dirs <- c(
   MD4 = system.file("extdata/splen/MD4_BCR", package = "djvdj")
 )
 
+data(splen_so)
+
 so <- splen_so |>
   import_vdj(vdj_dirs, define_clonotypes = "cdr3_gene")
 ```
