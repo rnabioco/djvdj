@@ -54,6 +54,8 @@ Single cell object or data.frame with similarity values
 Calculate repertoire similarity
 }
 \examples{
+data(vdj_so, vdj_sce)
+
 # Calculate repertoire overlap
 res <- calc_similarity(
   vdj_so,

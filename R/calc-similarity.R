@@ -26,6 +26,8 @@
 #' @seealso [plot_similarity()], [calc_mds()], [plot_mds()]
 #'
 #' @examples
+#' data(vdj_so, vdj_sce)
+#'
 #' # Calculate repertoire overlap
 #' res <- calc_similarity(
 #'   vdj_so,
