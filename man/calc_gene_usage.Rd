@@ -38,6 +38,8 @@ data.frame containing gene usage summary
 Calculate V(D)J segment usage
 }
 \examples{
+data(vdj_so, vdj_sce)
+
 # Calculate V(D)J segment usage for all cells
 calc_gene_usage(
   vdj_so,

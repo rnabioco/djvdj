@@ -49,6 +49,8 @@ Modify per-chain V(D)J data for each cell. This function offers greater
 flexibility than \code{\link[=summarize_vdj]{summarize_vdj()}}, but is less user-friendly.
 }
 \examples{
+data(vdj_so, vdj_sce)
+
 # Calculate mean reads and UMIs per cell
 res <- mutate_vdj(
   vdj_so,

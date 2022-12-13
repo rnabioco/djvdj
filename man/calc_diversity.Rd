@@ -39,8 +39,9 @@ diversity metrics}
 \item{n_boots}{Number of bootstrap replicates for calculating standard error,
 if n_boots is 0 this will be skipped.}
 
-\item{chain}{Chain to use for calculating diversity. Set to NULL to include
-all chains.}
+\item{chain}{Chain to use for calculating diversity. To calculate diversity
+for a single chain, the column passed to the data_col argument must contain
+per-chain data such as CDR3 sequences. Set to NULL to include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
@@ -58,6 +59,8 @@ Single cell object or data.frame with diversity metrics
 Calculate repertoire diversity
 }
 \examples{
+data(vdj_so, vdj_sce)
+
 # Calculate diversity using all cells
 res <- calc_diversity(
   vdj_so,

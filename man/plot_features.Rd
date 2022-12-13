@@ -157,6 +157,8 @@ plot_vdj_feature() allows per-chain V(D)J data to be summarized
 and plotted for each cell.
 }
 \examples{
+data(tiny_so, tiny_sce)
+
 # Create UMAP with cells colored based on sample name
 plot_features(
   tiny_so,
@@ -170,6 +172,8 @@ plot_features(
   x = "nFeature_RNA",
   y = "nCount_RNA"
 )
+
+data(vdj_so, vdj_sce)
 
 # Plot average CDR3 length for each cell for light chains
 plot_vdj_feature(

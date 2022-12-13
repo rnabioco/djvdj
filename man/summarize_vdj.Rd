@@ -52,6 +52,8 @@ lambda. This is useful for plotting or filtering cells based on the V(D)J
 meta.data.
 }
 \examples{
+data(vdj_so, vdj_sce)
+
 # Summarize numeric columns
 # by default the mean will be calculated for numeric columns
 res <- summarize_vdj(

@@ -24,6 +24,8 @@
 #' @return Object with filtered meta.data
 #'
 #' @examples
+#' data(vdj_so, vdj_sce)
+#'
 #' # Only include V(D)J data for productive chains
 #' res <- filter_vdj(vdj_so, productive)
 #'
@@ -157,35 +159,3 @@ filter_vdj <- function(input, filt, data_cols = NULL,
 
   x
 }
-
-
-
-
-# vdj <- dplyr::mutate(
-#   vdj,
-#   across(all_of(other_cols), ~ {
-#     ifelse(
-#       if_all(all_of(sep_cols), is.na),
-#       NA,
-#       .x
-#     )
-#   })
-# )
-
-# for (clmn in vdj_cols) {
-#   x <- vdj[[clmn]]
-#
-#   # Collapse sep_cols
-#   if (!purrr::is_empty(sep_cols) && clmn %in% sep_cols) {
-#     x <- purrr::map2_chr(x, keep_rows, ~ {
-#       ifelse(
-#         all(is.na(.x)) | !.y,
-#         as.character(NA),
-#         paste0(.x, collapse = sep)
-#       )
-#     })
-#
-#   } else x <- ifelse(keep_rows, x, NA)
-#
-#   vdj <- dplyr::mutate(vdj, !!sym(clmn) := x)
-# }

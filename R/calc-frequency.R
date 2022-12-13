@@ -20,6 +20,8 @@
 #' @seealso [plot_frequency()], [plot_clone_frequency()]
 #'
 #' @examples
+#' data(vdj_so, vdj_sce)
+#'
 #' # Calculate clonotype abundance using all cells
 #' res <- calc_frequency(
 #'   vdj_so,
@@ -242,6 +244,8 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 #' @seealso [calc_frequency()], [plot_frequency()]
 #'
 #' @examples
+#' data(vdj_so, vdj_sce)
+#'
 #' # Plot clonotype abundance using all cells
 #' plot_clone_frequency(
 #'   vdj_so,
@@ -482,6 +486,39 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
 #' linetype, etc.
 #' @return ggplot object
 #' @seealso [calc_frequency()], [plot_clone_frequency()]
+#'
+#' @examples
+#' data(vdj_so, vdj_sce)
+#'
+#' # Plot frequency of different isotypes
+#' plot_frequency(
+#'   vdj_so,
+#'   data_col = "isotype"
+#' )
+#'
+#' # Plot frequency separately for cell clusters
+#' plot_frequency(
+#'   vdj_sce,
+#'   data_col    = "isotype",
+#'   cluster_col = "orig.ident"
+#' )
+#'
+#' # Create grouped bar graphs
+#' plot_frequency(
+#'   vdj_sce,
+#'   data_col    = "isotype",
+#'   cluster_col = "orig.ident",
+#'   stack       = FALSE
+#' )
+#'
+#' # Plot number of cells on the y-axis
+#' plot_frequency(
+#'   vdj_so,
+#'   data_col    = "seurat_clusters",
+#'   cluster_col = "orig.ident",
+#'   units       = "frequency"
+#' )
+#'
 #' @export
 plot_frequency <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, units = "percent", stack = TRUE,

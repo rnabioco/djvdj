@@ -64,6 +64,39 @@ Plot the frequency of each cell label present in the provided meta.data
 column. This is useful for comparing the proportion of cells belonging to
 different samples, cell types, clonotypes, isotypes, etc.
 }
+\examples{
+data(vdj_so, vdj_sce)
+
+# Plot frequency of different isotypes
+plot_frequency(
+  vdj_so,
+  data_col = "isotype"
+)
+
+# Plot frequency separately for cell clusters
+plot_frequency(
+  vdj_sce,
+  data_col    = "isotype",
+  cluster_col = "orig.ident"
+)
+
+# Create grouped bar graphs
+plot_frequency(
+  vdj_sce,
+  data_col    = "isotype",
+  cluster_col = "orig.ident",
+  stack       = FALSE
+)
+
+# Plot number of cells on the y-axis
+plot_frequency(
+  vdj_so,
+  data_col    = "seurat_clusters",
+  cluster_col = "orig.ident",
+  units       = "frequency"
+)
+
+}
 \seealso{
 \code{\link[=calc_frequency]{calc_frequency()}}, \code{\link[=plot_clone_frequency]{plot_clone_frequency()}}
 }

@@ -80,6 +80,8 @@ Single cell object or data.frame with added V(D)J data
 Import V(D)J data
 }
 \examples{
+data(tiny_so, tiny_sce)
+
 # Loading multiple datasets
 vdj_dir <- c(
   system.file("extdata/bcr_1/outs", package = "djvdj"),

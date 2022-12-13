@@ -93,6 +93,8 @@ ggplot object
 Plot V(D)J segment usage
 }
 \examples{
+data(vdj_so, vdj_sce)
+
 # Plot V(D)J segment usage for all cells
 plot_gene_usage(
   vdj_so,

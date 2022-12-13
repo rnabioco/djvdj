@@ -15,7 +15,7 @@ License: MIT + file LICENSE
 URL: https://rnabioco.github.io/djvdj/, https://github.com/rnabioco/djvdj/
 BugReports: https://github.com/rnabioco/djvdj/issues
 Depends: 
-    R (>= 4.2.0)
+    R (>= 4.0.0)
 Imports: 
     abdiv,
     Biostrings,

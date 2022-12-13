@@ -23,6 +23,8 @@ Object with mutated meta.data
 Modify object meta.data
 }
 \examples{
+data(vdj_so, vdj_sce)
+
 # Sum two meta.data columns
 # all additional arguments provided to mutate_meta() are passed directly to
 # the function (in this case, dplyr::mutate())

@@ -49,6 +49,8 @@
 #' @return Single cell object or data.frame with added V(D)J data
 #'
 #' @examples
+#' data(tiny_so, tiny_sce)
+#'
 #' # Loading multiple datasets
 #' vdj_dir <- c(
 #'   system.file("extdata/bcr_1/outs", package = "djvdj"),
@@ -1313,6 +1315,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @return Single cell object or data.frame with added clonotype IDs
 #'
 #' @examples
+#' data(vdj_so, vdj_sce)
+#'
 #' # Define clonotypes using the CDR3 nucleotide sequence
 #' res <- define_clonotypes(
 #'   vdj_so,

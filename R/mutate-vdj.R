@@ -124,6 +124,8 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
 #' @return Object with modified meta.data
 #'
 #' @examples
+#' data(vdj_so, vdj_sce)
+#'
 #' # Calculate mean reads and UMIs per cell
 #' res <- mutate_vdj(
 #'   vdj_so,
@@ -247,6 +249,8 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
 #' @importFrom glue glue
 #'
 #' @examples
+#' data(vdj_so, vdj_sce)
+#'
 #' # Summarize numeric columns
 #' # by default the mean will be calculated for numeric columns
 #' res <- summarize_vdj(
@@ -491,6 +495,8 @@ summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
 #' @return Object with mutated meta.data
 #'
 #' @examples
+#' data(vdj_so, vdj_sce)
+#'
 #' # Sum two meta.data columns
 #' # all additional arguments provided to mutate_meta() are passed directly to
 #' # the function (in this case, dplyr::mutate())

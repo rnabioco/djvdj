@@ -46,8 +46,9 @@ this will generate a heatmap.
 \item 'circos', create a circos plot summarizing the overlap between clusters
 }}
 
-\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
-all chains.}
+\item{chain}{Chain to use for comparing clusters. To perform calculations
+using a single chain, the column passed to the data_col argument must contain
+per-chain data such as CDR3 sequences. Set to NULL to include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
@@ -79,6 +80,8 @@ heatmap or circos plot
 Plot repertoire similarity
 }
 \examples{
+data(vdj_so, vdj_sce)
+
 # Plot repertoire overlap
 # use clonotype IDs present in 'clonotype_id' column for calculations
 plot_similarity(

@@ -36,6 +36,8 @@ This will assign new clonotype IDs based on the combination of values
 present in the provided columns
 }
 \examples{
+data(vdj_so, vdj_sce)
+
 # Define clonotypes using the CDR3 nucleotide sequence
 res <- define_clonotypes(
   vdj_so,

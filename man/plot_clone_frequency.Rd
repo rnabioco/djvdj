@@ -68,6 +68,8 @@ ggplot object
 Plot clonotype frequency
 }
 \examples{
+data(vdj_so, vdj_sce)
+
 # Plot clonotype abundance using all cells
 plot_clone_frequency(
   vdj_so,

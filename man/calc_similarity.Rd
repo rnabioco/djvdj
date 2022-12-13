@@ -34,8 +34,9 @@ unique value in the column provided to the data_col column, e.g.
 \code{\link[abdiv:jaccard]{abdiv::jaccard()}}
 }}
 
-\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
-all chains.}
+\item{chain}{Chain to use for comparing clusters. To perform calculations
+using a single chain, the column passed to the data_col argument must contain
+per-chain data such as CDR3 sequences. Set to NULL to include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 

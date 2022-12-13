@@ -58,6 +58,22 @@ ggplot object
 \description{
 Plot CDR3 sequence motifs
 }
+\examples{
+data(vdj_so, vdj_sce)
+
+# Cluster cells based on CDR3 amino acid sequences and plot sequence motifs
+res <- cluster_sequences(
+  vdj_so,
+  data_col = "cdr3"
+)
+
+plot_motifs(
+  res,
+  data_col    = "cdr3",
+  cluster_col = "cdr3_cluster_0.5"
+)
+
+}
 \seealso{
 \code{\link[=cluster_sequences]{cluster_sequences()}}
 }

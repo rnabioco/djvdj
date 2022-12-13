@@ -46,8 +46,9 @@ diversity metrics}
 \item{n_boots}{Number of bootstrap replicates for calculating standard error,
 if n_boots is 0 this will be skipped.}
 
-\item{chain}{Chain to use for calculating diversity. Set to NULL to include
-all chains.}
+\item{chain}{Chain to use for calculating diversity. To calculate diversity
+for a single chain, the column passed to the data_col argument must contain
+per-chain data such as CDR3 sequences. Set to NULL to include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
@@ -73,6 +74,8 @@ ggplot object
 Plot repertoire diversity
 }
 \examples{
+data(vdj_so, vdj_sce)
+
 # Plot diversity using all cells
 plot_diversity(
   vdj_so,
@@ -94,11 +97,16 @@ plot_diversity(
 )
 
 # Plot multiple diversity metrics
+mets <- list(
+  simpson = abdiv::simpson,
+  shannon = abdiv::shannon
+)
+
 plot_diversity(
   vdj_sce,
   data_col    = "clonotype_id",
   cluster_col = "orig.ident",
-  method      = list(simpson = abdiv::simpson, shannon = abdiv::shannon)
+  method      = mets
 )
 
 # Specify colors to use for each cell cluster
@@ -117,13 +125,7 @@ plot_diversity(
   plot_lvls   = c("avid_2", "avid_1")
 )
 
-# Specify how to organize facets when plotting multiple metrics
-
-mets <- list(
-  simpson = abdiv::simpson,
-  shannon = abdiv::shannon
-)
-
+# Specify how to organize panels when plotting multiple metrics
 plot_diversity(
   vdj_so,
   data_col   = "clonotype_id",

@@ -28,7 +28,8 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 Levenshtein distance.}
 
 \item{chain}{Chain to use for clustering sequences. Cells with more than one
-of the provided chain will be excluded from the analysis.}
+of the provided chain will be excluded from the analysis. If NULL, sequences
+for cells with multiple chains will be concatenated.}
 
 \item{method}{Method to use for clustering, possible values are:
 \itemize{
@@ -73,6 +74,51 @@ Single cell object or data.frame with clustering results
 }
 \description{
 Cluster cells based on CDR3 sequences
+}
+\examples{
+data(vdj_so, vdj_sce)
+
+# Cluster cells based on CDR3 amino acid sequences and plot results
+res <- cluster_sequences(
+  vdj_so,
+  data_col = "cdr3"
+)
+
+plot_features(
+  res,
+  x = "cdr3_UMAP_1",
+  y = "cdr3_UMAP_2",
+  feature = "cdr3_cluster_0.5"
+)
+
+# Cluster cells based on sequences for a specific chain
+res <- cluster_sequences(
+  vdj_sce,
+  data_col = "cdr3",
+  chain    = "IGK"
+)
+
+# Use Levenschtein distance for clustering
+res <- cluster_sequences(
+  vdj_so,
+  data_col    = "cdr3",
+  dist_method = "levenshtein"
+)
+
+# Cluster cells using the Leiden algorithm
+res <- cluster_sequences(
+  vdj_so,
+  data_col = "cdr3",
+  method   = "leiden"
+)
+
+# Adjust clustering resolution
+res <- cluster_sequences(
+  vdj_so,
+  data_col   = "cdr3",
+  resolution = c(0.5, 1)
+)
+
 }
 \seealso{
 \code{\link[=plot_motifs]{plot_motifs()}}
