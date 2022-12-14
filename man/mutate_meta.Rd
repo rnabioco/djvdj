@@ -23,8 +23,6 @@ Object with mutated meta.data
 Modify object meta.data
 }
 \examples{
-data(vdj_so, vdj_sce)
-
 # Sum two meta.data columns
 # all additional arguments provided to mutate_meta() are passed directly to
 # the function (in this case, dplyr::mutate())
@@ -68,7 +66,7 @@ head(slot(res, "meta.data"), 1)
 
 # Perform grouped operations using dplyr
 # multi-line commands can be passed using brackets, just refer to the
-# meta.data with ".x"
+# meta.data with '.x'
 # this calculates the mean number of features for each group in the
 # orig.ident meta.data column
 res <- mutate_meta(tiny_sce, ~ {

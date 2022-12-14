@@ -44,8 +44,6 @@
 #' @seealso [plot_motifs()]
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Cluster cells based on CDR3 amino acid sequences and plot results
 #' res <- cluster_sequences(
 #'   vdj_so,
@@ -173,7 +171,8 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
     clst_method <- igraph::cluster_leiden
     rsln_arg    <- "resolution_parameter"
 
-    clst_args$objective_function <- clst_args$objective_function %||% "modularity"
+    clst_args$objective_function <- clst_args$objective_function %||%
+      "modularity"
   }
 
   # Cluster sequences
@@ -218,8 +217,8 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' @param data_col meta.data column containing sequences to use for plotting.
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells.
-#' @param chain Chain to use for clustering CDR3 sequences. Cells with more
-#' than one of the provided chain will be excluded from the analysis.
+#' @param chain Chain to use for plotting sequences. Cells with more than one
+#' of the provided chain will be excluded from the analysis.
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param chain_col meta.data column containing chains for each cell.
@@ -238,8 +237,6 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' @seealso [cluster_sequences()]
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Cluster cells based on CDR3 amino acid sequences and plot sequence motifs
 #' res <- cluster_sequences(
 #'   vdj_so,
@@ -249,7 +246,8 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' plot_motifs(
 #'   res,
 #'   data_col    = "cdr3",
-#'   cluster_col = "cdr3_cluster_0.5"
+#'   cluster_col = "cdr3_cluster_0.5",
+#'   chain       = "IGK"
 #' )
 #'
 #' @export
@@ -309,7 +307,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
     pct <- 1 - (plt_n_seqs / n_seqs)
     pct <- round(pct * 100, 1)
 
-    warning(
+    message(
       n_seqs - plt_n_seqs, " (", pct, "%) sequences are shorter than the ",
       "width cutoff and were removed.",
       call. = FALSE
@@ -345,7 +343,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 #' @noRd
 .fetch_seqs <- function(input, seq_col, chain, chain_col, sep = ";") {
 
-  per_cell <- ifelse(is.null(chain), TRUE, FALSE)
+  per_cell <- is.null(chain)
 
   res <- fetch_vdj(
     input,

@@ -29,8 +29,6 @@
 #' @seealso [plot_diversity()]
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Calculate diversity using all cells
 #' res <- calc_diversity(
 #'   vdj_so,
@@ -281,8 +279,6 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' @seealso [calc_diversity()], [plot_rarefaction()]
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Plot diversity using all cells
 #' plot_diversity(
 #'   vdj_so,
@@ -543,8 +539,6 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 #' @seealso [calc_diversity()], [plot_diversity()]
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Plot rarefaction curve using all cells
 #' plot_rarefaction(
 #'   vdj_so,

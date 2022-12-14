@@ -80,8 +80,6 @@ heatmap or circos plot
 Plot repertoire similarity
 }
 \examples{
-data(vdj_so, vdj_sce)
-
 # Plot repertoire overlap
 # use clonotype IDs present in 'clonotype_id' column for calculations
 plot_similarity(

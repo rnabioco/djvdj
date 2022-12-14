@@ -5,7 +5,8 @@
 \alias{tiny_sce}
 \title{A tiny SingleCellExperiment object}
 \format{
-A SingleCellExperiment object with 200 features, 200 cells, and 1 assay
+A SingleCellExperiment object with 200 features, 200 cells, and 1
+assay
 }
 \usage{
 tiny_sce

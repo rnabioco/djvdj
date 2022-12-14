@@ -6,21 +6,23 @@ NULL
 
 #' purrr imports
 #'
-#' @importFrom purrr map imap map_dfr imap_dfr map_lgl map_chr map2_int map_dbl map_int iwalk pwalk
-#' @importFrom purrr reduce keep is_empty is_function is_formula as_mapper
+#' @importFrom purrr map imap map_dfr imap_dfr map_lgl map_chr map2_int map_dbl
+#' @importFrom purrr map_int iwalk pwalk reduce keep is_empty is_function
+#' @importFrom purrr is_formula as_mapper
 #' @noRd
 NULL
 
 #' stats imports
 #'
-#' @importFrom stats median complete.cases as.formula as.dist hclust cutree na.omit
+#' @importFrom stats median complete.cases as.formula as.dist hclust cutree
+#' @importFrom stats na.omit
 #' @noRd
 NULL
 
 
 #' Global variables
 #'
-#' - CELL_COL is the column name to use for storing cell barcodes
+#' CELL_COL is the column name to use for storing cell barcodes
 #'
 #' @noRd
 CELL_COL <- ".cell_id"
@@ -450,7 +452,10 @@ NULL
     stop("Provide a single value for clonotype column.")
   }
 
-  if (is.null(cols_in) && !is.null(clone_col) && !clone_col %in% colnames(df_in)) {
+  no_clone_col <- is.null(cols_in) && !is.null(clone_col) &&
+    !clone_col %in% colnames(df_in)
+
+  if (no_clone_col) {
     clone_col <- NULL
 
     warning(

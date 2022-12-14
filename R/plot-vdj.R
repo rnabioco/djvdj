@@ -33,8 +33,6 @@ plot_features <- function(input, ...) {
 #' @return ggplot object
 #'
 #' @examples
-#' data(tiny_so, tiny_sce)
-#'
 #' # Create UMAP with cells colored based on sample name
 #' plot_features(
 #'   tiny_so,
@@ -263,8 +261,6 @@ plot_vdj_feature <- function(input, ...) {
 #' summarized for each cell
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Plot average CDR3 length for each cell for light chains
 #' plot_vdj_feature(
 #'   vdj_so,
@@ -443,8 +439,6 @@ NULL
 #' summarized for each cell
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Create histogram
 #' plot_vdj(
 #'   vdj_sce,

@@ -39,8 +39,6 @@ column. This is useful for comparing the proportion of cells belonging to
 different samples, cell types, clonotypes, isotypes, etc.
 }
 \examples{
-data(vdj_so, vdj_sce)
-
 # Calculate clonotype abundance using all cells
 res <- calc_frequency(
   vdj_so,

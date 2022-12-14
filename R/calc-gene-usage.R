@@ -15,8 +15,6 @@
 #' @seealso [plot_gene_usage()]
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Calculate V(D)J segment usage for all cells
 #' calc_gene_usage(
 #'   vdj_so,
@@ -211,8 +209,6 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 #' @return ggplot object
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Plot V(D)J segment usage for all cells
 #' plot_gene_usage(
 #'   vdj_so,

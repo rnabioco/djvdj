@@ -76,8 +76,6 @@ Single cell object or data.frame with clustering results
 Cluster cells based on CDR3 sequences
 }
 \examples{
-data(vdj_so, vdj_sce)
-
 # Cluster cells based on CDR3 amino acid sequences and plot results
 res <- cluster_sequences(
   vdj_so,

@@ -9,8 +9,11 @@ Authors@R: c(
     person("Kent", "Riemondy", , "kent.riemondy@ucdenver.edu", role = "ctb"),
     person("RNA Bioscience Initiative", role = "fnd")
   )
-Description: djvdj provides a range of tools to analyze single-cell V(D)J
-    data.
+Description: A single-cell V(D)J analysis workflow that integrates with
+    popular single-cell data structures. This includes the ability to cluster
+    CDR3 sequences and to visualize repertoire diversity, repertoire similarity,
+    and gene segment usage.
+biocViews: Software, SingleCell, SingleCellWorkflow, Sequencing, RNASeq
 License: MIT + file LICENSE
 URL: https://rnabioco.github.io/djvdj/, https://github.com/rnabioco/djvdj/
 BugReports: https://github.com/rnabioco/djvdj/issues
@@ -63,6 +66,6 @@ VignetteBuilder:
     knitr
 Config/Needs/website: pkgdown, rnabioco/rbitemplate
 Encoding: UTF-8
-LazyData: false
+LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1

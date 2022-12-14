@@ -20,8 +20,6 @@
 #' @seealso [plot_frequency()], [plot_clone_frequency()]
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Calculate clonotype abundance using all cells
 #' res <- calc_frequency(
 #'   vdj_so,
@@ -244,8 +242,6 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 #' @seealso [calc_frequency()], [plot_frequency()]
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Plot clonotype abundance using all cells
 #' plot_clone_frequency(
 #'   vdj_so,
@@ -488,8 +484,6 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
 #' @seealso [calc_frequency()], [plot_clone_frequency()]
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Plot frequency of different isotypes
 #' plot_frequency(
 #'   vdj_so,

@@ -5,7 +5,8 @@
 \alias{vdj_sce}
 \title{A tiny SingleCellExperiment object with V(D)J data}
 \format{
-A SingleCellExperiment object with 200 features, 200 cells, and 1 assay
+A SingleCellExperiment object with 200 features, 200 cells, and 1
+assay
 }
 \usage{
 vdj_sce

@@ -29,3 +29,9 @@ ggplot theme
 \description{
 Theme for djvdj plotting functions
 }
+\examples{
+
+plot_features(vdj_so, feature = "seurat_clusters") +
+  djvdj_theme()
+
+}

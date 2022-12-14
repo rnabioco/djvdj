@@ -26,8 +26,6 @@
 #' @seealso [plot_similarity()], [calc_mds()], [plot_mds()]
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Calculate repertoire overlap
 #' res <- calc_similarity(
 #'   vdj_so,
@@ -58,8 +56,9 @@
 #' )
 #'
 #' @export
-calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccard,
-                            chain = NULL, chain_col = "chains", prefix = NULL,
+calc_similarity <- function(input, data_col, cluster_col,
+                            method = abdiv::jaccard, chain = NULL,
+                            chain_col = "chains", prefix = NULL,
                             return_mat = FALSE, sep = ";") {
 
   # Check inputs
@@ -250,8 +249,6 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' @seealso [calc_similarity()], [calc_mds()], [plot_mds()]
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Plot repertoire overlap
 #' # use clonotype IDs present in 'clonotype_id' column for calculations
 #' plot_similarity(
@@ -391,8 +388,6 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 #' [MASS::isoMDS()]
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Calculate MDS coordinates
 #' res <- calc_mds(
 #'   vdj_so,
@@ -538,8 +533,6 @@ calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
 #' [MASS::isoMDS()]
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Calculate MDS coordinates
 #' plot_mds(
 #'   vdj_so,

@@ -49,8 +49,6 @@
 #' @return Single cell object or data.frame with added V(D)J data
 #'
 #' @examples
-#' data(tiny_so, tiny_sce)
-#'
 #' # Loading multiple datasets
 #' vdj_dir <- c(
 #'   system.file("extdata/bcr_1/outs", package = "djvdj"),
@@ -359,7 +357,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   # Check for 'exact_subclonotype_id' columns, not included in all versions of
   # cellranger
-  if (identical(vdj_class, "BCR") && "exact_subclonotype_id" %in% colnames(contigs)) {
+  ex_sub_cols <- identical(vdj_class, "BCR") &&
+    "exact_subclonotype_id" %in% colnames(contigs)
+
+  if (ex_sub_cols) {
     cell_cols <- c(cell_cols, "exact_subclonotype_id")
     vdj_cols  <- c(vdj_cols, "exact_subclonotype_id")
   }
@@ -1315,8 +1316,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @return Single cell object or data.frame with added clonotype IDs
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Define clonotypes using the CDR3 nucleotide sequence
 #' res <- define_clonotypes(
 #'   vdj_so,

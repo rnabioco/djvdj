@@ -54,8 +54,6 @@ Single cell object or data.frame with MDS coordinates
 Calculate MDS coordinates based on a beta diversity metric.
 }
 \examples{
-data(vdj_so, vdj_sce)
-
 # Calculate MDS coordinates
 res <- calc_mds(
   vdj_so,

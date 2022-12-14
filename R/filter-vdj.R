@@ -24,8 +24,6 @@
 #' @return Object with filtered meta.data
 #'
 #' @examples
-#' data(vdj_so, vdj_sce)
-#'
 #' # Only include V(D)J data for productive chains
 #' res <- filter_vdj(vdj_so, productive)
 #'

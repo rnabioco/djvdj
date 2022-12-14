@@ -65,8 +65,6 @@ column. This is useful for comparing the proportion of cells belonging to
 different samples, cell types, clonotypes, isotypes, etc.
 }
 \examples{
-data(vdj_so, vdj_sce)
-
 # Plot frequency of different isotypes
 plot_frequency(
   vdj_so,

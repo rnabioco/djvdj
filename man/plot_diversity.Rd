@@ -74,8 +74,6 @@ ggplot object
 Plot repertoire diversity
 }
 \examples{
-data(vdj_so, vdj_sce)
-
 # Plot diversity using all cells
 plot_diversity(
   vdj_so,

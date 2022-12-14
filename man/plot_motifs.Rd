@@ -28,8 +28,8 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells.}
 
-\item{chain}{Chain to use for clustering CDR3 sequences. Cells with more
-than one of the provided chain will be excluded from the analysis.}
+\item{chain}{Chain to use for plotting sequences. Cells with more than one
+of the provided chain will be excluded from the analysis.}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
@@ -59,8 +59,6 @@ ggplot object
 Plot CDR3 sequence motifs
 }
 \examples{
-data(vdj_so, vdj_sce)
-
 # Cluster cells based on CDR3 amino acid sequences and plot sequence motifs
 res <- cluster_sequences(
   vdj_so,
@@ -70,7 +68,8 @@ res <- cluster_sequences(
 plot_motifs(
   res,
   data_col    = "cdr3",
-  cluster_col = "cdr3_cluster_0.5"
+  cluster_col = "cdr3_cluster_0.5",
+  chain       = "IGK"
 )
 
 }

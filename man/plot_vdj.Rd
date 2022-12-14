@@ -93,8 +93,6 @@ ggplot object
 Plot continuous V(D)J data
 }
 \examples{
-data(vdj_so, vdj_sce)
-
 # Create histogram
 plot_vdj(
   vdj_sce,

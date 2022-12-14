@@ -59,8 +59,6 @@ Single cell object or data.frame with diversity metrics
 Calculate repertoire diversity
 }
 \examples{
-data(vdj_so, vdj_sce)
-
 # Calculate diversity using all cells
 res <- calc_diversity(
   vdj_so,

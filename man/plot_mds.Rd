@@ -59,8 +59,6 @@ ggplot object
 Calculate MDS coordinates based on a beta diversity metric and plot results.
 }
 \examples{
-data(vdj_so, vdj_sce)
-
 # Calculate MDS coordinates
 plot_mds(
   vdj_so,

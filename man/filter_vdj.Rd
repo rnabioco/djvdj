@@ -46,8 +46,6 @@ Remove V(D)J data for chains/cells that do not satisfy the provided
 condition
 }
 \examples{
-data(vdj_so, vdj_sce)
-
 # Only include V(D)J data for productive chains
 res <- filter_vdj(vdj_so, productive)
 
