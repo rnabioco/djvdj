@@ -34,7 +34,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     strip.text        = ggplot2::element_text(size = ttl_size),
 
     panel.border      = ggplot2::element_rect(
-      fill = NA, color = ln_col, size = ln_size
+      fill = NA, color = ln_col, linewidth = ln_size
     ),
 
     panel.background  = ggplot2::element_blank(),
@@ -43,7 +43,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     legend.key        = ggplot2::element_blank(),
     legend.text       = ggplot2::element_text(size = txt_size, color = txt_col),
     axis.line         = ggplot2::element_blank(),
-    axis.ticks        = ggplot2::element_line(size = ln_size,  color = ln_col),
+    axis.ticks        = ggplot2::element_line(linewidth = ln_size,  color = ln_col),
     axis.text         = ggplot2::element_text(size = txt_size, color = txt_col),
     axis.title        = ggplot2::element_text(size = ttl_size, color = txt_col)
   )

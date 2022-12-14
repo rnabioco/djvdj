@@ -8,7 +8,7 @@
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-A single-cell V(D)J analysis workflow that integrates with popular single-cell data structures. This includes the ability to cluster CDR3 sequences and to visualize repertoire diversity, repertoire similarity, and gene segment usage.
+djvdj provides a single-cell V(D)J analysis workflow that integrates with popular single-cell data structures. This includes the ability to cluster CDR3 sequences and to quantify repertoire diversity, repertoire similarity, and gene segment usage. A variety of visualization methods are also provided including rarefaction curves, circos plots and UMAP projections.
 }
 \seealso{
 Useful links:
