@@ -137,3 +137,10 @@ res |>
   head()
 ```
 
+<br>
+
+## Session info
+
+```{r, echo = FALSE}
+sessionInfo()
+```

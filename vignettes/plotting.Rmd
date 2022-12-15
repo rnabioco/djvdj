@@ -106,7 +106,7 @@ so |>
 
 To plot V(D)J information on UMAP projections, the `plot_vdj_feature()` can be used. A summary function to use for summarizing per-chain values for each cell must be specified using the `summary_fn` argument. In this example we are plotting the mean number of mutations for each cell.
 
-```{r, fig.width = 7, fig.height = 6}
+```{r, fig.width = 5, fig.height = 4}
 so |>
   plot_vdj_feature(
     data_col   = "all_mis",
@@ -116,7 +116,7 @@ so |>
 
 Instead of summarizing the per-chain values for each cell, we can also specify a specific chain to use for plotting. In this example we are plotting the CDR3 length for IGK chains. If a cell does not have an IGK chain or has multiple IGK chains, it will be plotted as an `NA`.
 
-```{r, fig.width = 7, fig.height = 6}
+```{r, fig.width = 5.5, fig.height = 4}
 so |>
   plot_vdj_feature(
     data_col = "cdr3_length",
@@ -126,18 +126,19 @@ so |>
 
 Like `plot_vdj()`, the scale can also be transformed using the `trans` argument.
 
-```{r, fig.width = 7, fig.height = 6}
+```{r, fig.width = 5.25, fig.height = 4}
 so |>
   plot_vdj_feature(
-    data_col = "umis",
-    trans    = "log10"
+    data_col    = "umis",
+    trans       = "log10",
+    plot_colors = c("#fd8d3c", "black")
   )
 ```
 
+<br>
 
+## Session info
 
-
-
-
-
-
+```{r, echo = FALSE}
+sessionInfo()
+```

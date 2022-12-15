@@ -72,6 +72,10 @@ preprocess_so <- function(so_in) {
       )
     )
 
+  # Only include variable genes in object
+  res <- res %>%
+    subset(features = VariableFeatures(res))
+
   res
 }
 
@@ -112,16 +116,24 @@ write_mtx <- function(mtx, bcs, old_rna = NULL, old_vdj = NULL, new_rna = NULL,
   if (!is.null(old_rna) && !is.null(new_rna)) {
     dir.create(new_rna, mode = "0750", recursive = TRUE)
 
-    here(old_rna, "features.tsv.gz") %>%
+    feats <- here(old_rna, "features.tsv.gz") %>%
       read_tsv(col_names = FALSE) %>%
-      filter(X3 == "Gene Expression") %>%
+      filter(
+        X3 == "Gene Expression",
+        X2 %in% rownames(mtx)
+      ) %>%
+      group_by(X2) %>%
+      dplyr::slice(1) %>%
+      ungroup()
+
+    feats %>%
       write_tsv(here(new_rna, "features.tsv.gz"), col_names = FALSE)
 
     bcs %>%
       as.data.frame() %>%
       write_tsv(here(new_rna, "barcodes.tsv.gz"), col_names = FALSE)
 
-    mtx[, bcs] %>%
+    mtx[feats$X2, bcs] %>%
       writeMM(here(new_rna, "matrix.mtx.gz"))
   }
 
@@ -144,10 +156,14 @@ write_mtx <- function(mtx, bcs, old_rna = NULL, old_vdj = NULL, new_rna = NULL,
 
     # Set bam filtering rules
     filt_fn <- function(x) {
+
       clns <- x$rname %>%
         str_remove("_concat_ref_[0-9]+$")
 
-      clns %in% clones
+      cells <- x$qname %>%
+        str_remove("_contig_[0-9]+$")
+
+      clns %in% clones & (cells %in% bcs | grepl("^clonotype", cells))
     }
 
     filt_rules <- FilterRules(list(rname = filt_fn))
@@ -235,7 +251,6 @@ write_mtxs <- function(so_in, dat_dir, write_dir) {
 
 # Write Seurat object
 write_so <- function(dat_dir, write_dir, file, n_grps = 5) {
-
   rna_dirs <- c(
     BL6 = here(dat_dir, "BL6_GEX/filtered_feature_bc_matrix"),
     MD4 = here(dat_dir, "MD4_GEX/filtered_feature_bc_matrix")
@@ -257,7 +272,6 @@ write_so <- function(dat_dir, write_dir, file, n_grps = 5) {
     })
 
   # Save Seurat object
-  # save(splen_so, file = file.path(write_dir, str_c(file, ".rda")))
   usethis::use_data(splen_so, compress = "xz")
 }
 

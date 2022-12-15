@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster-seqs.R
 \name{plot_motifs}
 \alias{plot_motifs}
-\title{Create sequence logos for clusters}
+\title{Plot CDR3 sequence motifs}
 \usage{
 plot_motifs(
   input,
@@ -28,8 +28,8 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 grouping cells.}
 
-\item{chain}{Chain to use for clustering CDR3 sequences. Cells with more
-than one of the provided chain will be excluded from the analysis.}
+\item{chain}{Chain to use for plotting sequences. Cells with more than one
+of the provided chain will be excluded from the analysis.}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
@@ -52,8 +52,26 @@ align sequences at the 5' or 3' end when plotting.}
 
 \item{...}{Additional parameters to pass to \code{\link[ggseqlogo:geom_logo]{ggseqlogo::geom_logo()}}}
 }
+\value{
+ggplot object
+}
 \description{
-Create sequence logos for clusters
+Plot CDR3 sequence motifs
+}
+\examples{
+# Cluster cells based on CDR3 amino acid sequences and plot sequence motifs
+res <- cluster_sequences(
+  vdj_so,
+  data_col = "cdr3"
+)
+
+plot_motifs(
+  res,
+  data_col    = "cdr3",
+  cluster_col = "cdr3_cluster_0.5",
+  chain       = "IGK"
+)
+
 }
 \seealso{
 \code{\link[=cluster_sequences]{cluster_sequences()}}

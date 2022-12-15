@@ -25,6 +25,8 @@ knitr::opts_chunk$set(
 
 This vignette provides detailed examples for loading gene expression and V(D)J data into a single object. For the examples shown below, we use data for splenocytes from BL6 and MD4 mice collected using the 10X Genomics scRNA-seq platform. MD4 B cells are monoclonal and specifically bind hen egg lysozyme.
 
+<br>
+
 ## Basic usage
 
 To load and parse V(D)J data, FASTQ files must first be processed using [Cell Ranger](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/what-is-cell-ranger). The data used for this vignette was processed using Cell Ranger v7.0. Cell Ranger generates several files that djvdj uses for the downstream analysis. This includes the outs/filtered_contig_annotations.csv file, which contains basic information about each chain and is required for the `import_vdj()` function.
@@ -252,4 +254,12 @@ vdj_dirs <- c(
 
 # This will load V(D)J data and return a data.frame
 df_vdj <- import_vdj(vdj_dir = vdj_dirs)
+```
+
+<br>
+
+## Session info
+
+```{r, echo = FALSE}
+sessionInfo()
 ```

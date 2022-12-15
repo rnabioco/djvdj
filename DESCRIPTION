@@ -9,13 +9,16 @@ Authors@R: c(
     person("Kent", "Riemondy", , "kent.riemondy@ucdenver.edu", role = "ctb"),
     person("RNA Bioscience Initiative", role = "fnd")
   )
-Description: djvdj provides a range of tools to analyze single-cell V(D)J
-    data.
+Description: djvdj provides a single-cell V(D)J analysis workflow that integrates with
+    popular single-cell data structures. This includes the ability to cluster
+    CDR3 sequences and to quantify repertoire diversity, repertoire similarity,
+    and gene segment usage. A variety of visualization methods are also provided including rarefaction curves, circos plots and UMAP projections. 
+biocViews: Software, SingleCell, Sequencing, RNASeq
 License: MIT + file LICENSE
 URL: https://rnabioco.github.io/djvdj/, https://github.com/rnabioco/djvdj/
 BugReports: https://github.com/rnabioco/djvdj/issues
 Depends: 
-    R (>= 4.0.0)
+    R (>= 4.2.0)
 Imports: 
     abdiv,
     Biostrings,
@@ -25,7 +28,7 @@ Imports:
     ComplexHeatmap,
     dbscan,
     dplyr,
-    ggplot2,
+    ggplot2 (>= 3.4.0),
     ggrepel,
     ggseqlogo,
     glue,
@@ -47,6 +50,7 @@ Imports:
     stringr,
     tibble,
     tidyr,
+    utils,
     uwot
 Suggests: 
     covr,
@@ -60,8 +64,6 @@ Suggests:
     testthat
 VignetteBuilder: 
     knitr
-Remotes:
-    tidyverse/magrittr
 Config/Needs/website: pkgdown, rnabioco/rbitemplate
 Encoding: UTF-8
 LazyData: true

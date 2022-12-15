@@ -1,10 +1,12 @@
 #' ggplot2 imports
 #'
-#' @importFrom ggplot2 ggplot aes geom_point geom_line geom_histogram geom_density geom_tile geom_boxplot geom_violin geom_col
-#' @importFrom ggplot2 scale_x_discrete scale_y_continuous scale_x_continuous position_dodge
-#' @importFrom ggplot2 scale_color_manual scale_fill_manual scale_color_gradientn scale_fill_gradientn
-#' @importFrom ggplot2 stat_summary facet_wrap guides guide_legend labs
-#' @importFrom ggplot2 theme element_blank element_text element_line
+#' @importFrom ggplot2 ggplot aes geom_point geom_line geom_histogram
+#' @importFrom ggplot2 geom_density geom_tile geom_boxplot geom_violin geom_col
+#' @importFrom ggplot2 scale_x_discrete scale_y_continuous scale_x_continuous
+#' @importFrom ggplot2 position_dodge scale_color_manual scale_fill_manual
+#' @importFrom ggplot2 scale_color_gradientn scale_fill_gradientn stat_summary
+#' @importFrom ggplot2 facet_wrap guides guide_legend labs theme element_blank
+#' @importFrom ggplot2 element_text element_line
 #' @noRd
 NULL
 
@@ -17,6 +19,12 @@ NULL
 #' @param txt_col Color of axis text
 #' @param ln_col Color of axis lines
 #' @return ggplot theme
+#'
+#' @examples
+#'
+#' plot_features(vdj_so, feature = "seurat_clusters") +
+#'   djvdj_theme()
+#'
 #' @export
 djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
                         txt_col = "black", ln_col = "grey85") {
@@ -25,18 +33,17 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     strip.background  = ggplot2::element_blank(),
     strip.text        = ggplot2::element_text(size = ttl_size),
 
-    panel.border      = ggplot2::element_rect(fill = NA, color = ln_col, size = ln_size),
+    panel.border      = ggplot2::element_rect(
+      fill = NA, color = ln_col, linewidth = ln_size
+    ),
 
     panel.background  = ggplot2::element_blank(),
     legend.background = ggplot2::element_blank(),
     legend.title      = ggplot2::element_text(size = ttl_size),
     legend.key        = ggplot2::element_blank(),
     legend.text       = ggplot2::element_text(size = txt_size, color = txt_col),
-
     axis.line         = ggplot2::element_blank(),
-    # axis.line         = ggplot2::element_line(size = ln_size,  color = ln_col),
-
-    axis.ticks        = ggplot2::element_line(size = ln_size,  color = ln_col),
+    axis.ticks        = ggplot2::element_line(linewidth = ln_size,  color = ln_col),
     axis.text         = ggplot2::element_text(size = txt_size, color = txt_col),
     axis.title        = ggplot2::element_text(size = ttl_size, color = txt_col)
   )
@@ -228,10 +235,15 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     title         = plt_args$name %||% lgd_ttl
   )
 
-  plt_args$matrix                      <- mat_in
-  plt_args$heatmap_legend_param        <- plt_args$heatmap_legend_param %||% lgd_params
-  plt_args$clustering_distance_rows    <- plt_args$clustering_distance_rows %||% dist_fn
-  plt_args$clustering_distance_columns <- plt_args$clustering_distance_columns %||% dist_fn
+  plt_args$matrix <- mat_in
+
+  plt_args$heatmap_legend_param <- plt_args$heatmap_legend_param %||% lgd_params
+
+  plt_args$clustering_distance_rows <-
+    plt_args$clustering_distance_rows %||% dist_fn
+
+  plt_args$clustering_distance_columns <-
+    plt_args$clustering_distance_columns %||% dist_fn
 
   # Create heatmap
   res <- purrr::lift_dl(ComplexHeatmap::Heatmap)(plt_args)
@@ -385,7 +397,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     if (track_ht) {
       circos_fun <- function(...) {
         circlize::chordDiagram(
-          preAllocateTracks = list(track.height = max(graphics::strwidth(unlist(dimnames(mat_in))))),
+          preAllocateTracks = list(
+            track.height = max(graphics::strwidth(unlist(dimnames(mat_in))))
+          ),
           annotationTrackHeight = circlize::mm_h(c(3, 4)),
           ...
         )
@@ -393,7 +407,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     } else {
       circos_fun <- function(...) {
         circlize::chordDiagram(
-          preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(mat_in))))),
+          preAllocateTracks = list(
+            track.height = max(strwidth(unlist(dimnames(mat_in))))
+          ),
           ...
         )
       }
@@ -845,7 +861,10 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   dat <- df_in[[clmn]]
 
   if (!is.character(dat) && !is.factor(dat)) {
-    warning("Plot levels were not modified, levels are only modified for characters and factors")
+    warning(
+      "Plot levels were not modified, ",
+      "levels are only modified for characters and factors"
+    )
     return(df_in)
   }
 
@@ -860,7 +879,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
     if (n_missing > 10) {
       sfx <- "..."
-      missing <- missing[1:10]
+      missing <- missing[seq_len(10)]
     }
 
     missing <- paste0(missing, collapse = ", ")

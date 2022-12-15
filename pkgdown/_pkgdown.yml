@@ -11,7 +11,7 @@ articles:
 - title: ~
   navbar: Data import and manipulation
   contents:
-  - import_vdj
+  - import
   - mutate
 
 - title: VDJ analysis

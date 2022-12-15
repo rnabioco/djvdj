@@ -180,7 +180,7 @@ so_vdj <- so |>
 
 The `plot_mds()` function will create an MDS plot with labels added for each sample.
 
-```{r}
+```{r, fig.width = 7}
 so |>
   plot_mds(
     data_col = "clonotype_id",
@@ -204,7 +204,7 @@ so |>
 
 To remove sample labels, set `label_points` to `FALSE`.
 
-```{r}
+```{r, fig.width = 7}
 so |>
   plot_mds(
     data_col     = "clonotype_id",
@@ -213,5 +213,11 @@ so |>
   )
 ```
 
+<br>
 
+## Session info
+
+```{r, echo = FALSE}
+sessionInfo()
+```
 

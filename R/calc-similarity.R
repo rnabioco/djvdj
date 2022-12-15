@@ -1,4 +1,4 @@
-#' Calculate cluster similarity
+#' Calculate repertoire similarity
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
@@ -13,8 +13,9 @@
 #' unique value in the column provided to the data_col column, e.g.
 #' [abdiv::jaccard()]
 #'
-#' @param chain Chain to use for calculating gene usage. Set to NULL to include
-#' all chains.
+#' @param chain Chain to use for comparing clusters. To perform calculations
+#' using a single chain, the column passed to the data_col argument must contain
+#' per-chain data such as CDR3 sequences. Set to NULL to include all chains.
 #' @param chain_col meta.data column containing chains for each cell
 #' @param prefix Prefix to add to new columns
 #' @param return_mat Return a matrix with similarity values. If set to
@@ -33,7 +34,7 @@
 #'   method      = abdiv::jaccard
 #' )
 #'
-#' head(res@meta.data, 1)
+#' head(slot(res, "meta.data"), 1)
 #'
 #' # Add a prefix to the new columns
 #' # this is useful if multiple calculations are stored in the meta.data
@@ -44,7 +45,7 @@
 #'   prefix      = "bcr_"
 #' )
 #'
-#' head(res@colData, 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # Return a matrix instead of adding the results to the input object
 #' calc_similarity(
@@ -55,8 +56,9 @@
 #' )
 #'
 #' @export
-calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccard,
-                            chain = NULL, chain_col = "chains", prefix = NULL,
+calc_similarity <- function(input, data_col, cluster_col,
+                            method = abdiv::jaccard, chain = NULL,
+                            chain_col = "chains", prefix = NULL,
                             return_mat = FALSE, sep = ";") {
 
   # Check inputs
@@ -205,7 +207,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
   res
 }
 
-#' Plot cluster similarity
+#' Plot repertoire similarity
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
@@ -225,8 +227,9 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' this will generate a heatmap.
 #' - 'circos', create a circos plot summarizing the overlap between clusters
 #'
-#' @param chain Chain to use for calculating gene usage. Set to NULL to include
-#' all chains.
+#' @param chain Chain to use for comparing clusters. To perform calculations
+#' using a single chain, the column passed to the data_col argument must contain
+#' per-chain data such as CDR3 sequences. Set to NULL to include all chains.
 #' @param chain_col meta.data column containing chains for each cell
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters
@@ -241,6 +244,7 @@ calc_similarity <- function(input, data_col, cluster_col, method = abdiv::jaccar
 #' @param ... Additional arguments to pass to plotting function,
 #' [ComplexHeatmap::Heatmap()] for heatmap, [circlize::chordDiagram()] for
 #' circos plot
+#' @return heatmap or circos plot
 #' @importFrom abdiv jaccard
 #' @seealso [calc_similarity()], [calc_mds()], [plot_mds()]
 #'
@@ -355,6 +359,8 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 
 #' Perform multidimensional scaling
 #'
+#' Calculate MDS coordinates based on a beta diversity metric.
+#'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
 #' @param data_col meta.data column containing values to use for
@@ -368,8 +374,9 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 #' - 'horn_morisita', Horn-Morisita index implemented with
 #' [abdiv::horn_morisita()]
 #'
-#' @param chain Chain to use for calculating gene usage. Set to NULL to include
-#' all chains.
+#' @param chain Chain to use for comparing clusters. To perform calculations
+#' using a single chain, the column passed to the data_col argument must contain
+#' per-chain data such as CDR3 sequences. Set to NULL to include all chains.
 #' @param chain_col meta.data column containing chains for each cell
 #' @param prefix Prefix to add to new columns
 #' @param return_df Return results as a data.frame. If set to FALSE, results
@@ -377,7 +384,33 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with MDS coordinates
 #' @importFrom MASS isoMDS
-#' @seealso [plot_mds()], [calc_similarity()], [plot_similarity()], [MASS::isoMDS()]
+#' @seealso [plot_mds()], [calc_similarity()], [plot_similarity()],
+#' [MASS::isoMDS()]
+#'
+#' @examples
+#' # Calculate MDS coordinates
+#' res <- calc_mds(
+#'   vdj_so,
+#'   data_col = "clonotype_id",
+#'   cluster_col = "isotype"
+#' )
+#'
+#' # Calculate MDS coordinates based on IGK CDR3 sequences
+#' res <- calc_mds(
+#'   vdj_sce,
+#'   data_col    = "cdr3",
+#'   cluster_col = "isotype",
+#'   chain       = "IGK"
+#' )
+#'
+#' # Change the method used for calculating repertoire similarity
+#' res <- calc_mds(
+#'   vdj_sce,
+#'   data_col    = "clonotype_id",
+#'   cluster_col = "isotype",
+#'   method      = "horn_morisita"
+#' )
+#'
 #' @export
 calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
                      chain = NULL, chain_col = "chains", prefix = "",
@@ -471,7 +504,7 @@ calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
 
 #' Create MDS plot
 #'
-#' Perform multidimensional scaling and plot results
+#' Calculate MDS coordinates based on a beta diversity metric and plot results.
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
@@ -486,15 +519,43 @@ calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
 #' - 'horn_morisita', Horn-Morisita index implemented with
 #' [abdiv::horn_morisita()]
 #'
-#' @param chain Chain to use for calculating gene usage. Set to NULL to include
-#' all chains.
+#' @param chain Chain to use for comparing clusters. To perform calculations
+#' using a single chain, the column passed to the data_col argument must contain
+#' per-chain data such as CDR3 sequences. Set to NULL to include all chains.
 #' @param chain_col meta.data column containing chains for each cell
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters
 #' @param label_points Label points on plot
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to [ggplot2::geom_point()]
-#' @seealso [calc_mds()], [calc_similarity()], [plot_similarity()], [MASS::isoMDS()]
+#' @return ggplot object
+#' @seealso [calc_mds()], [calc_similarity()], [plot_similarity()],
+#' [MASS::isoMDS()]
+#'
+#' @examples
+#' # Calculate MDS coordinates
+#' plot_mds(
+#'   vdj_so,
+#'   data_col = "clonotype_id",
+#'   cluster_col = "isotype"
+#' )
+#'
+#' # Calculate MDS coordinates based on IGK CDR3 sequences
+#' plot_mds(
+#'   vdj_sce,
+#'   data_col    = "cdr3",
+#'   cluster_col = "isotype",
+#'   chain       = "IGK"
+#' )
+#'
+#' # Calculate repertoire similarity using the Horn-Morisita index
+#' plot_mds(
+#'   vdj_so,
+#'   data_col    = "clonotype_id",
+#'   cluster_col = "isotype",
+#'   method      = "horn_morisita"
+#' )
+#'
 #' @export
 plot_mds <- function(input, data_col, cluster_col,
                      method = abdiv::jaccard, chain = NULL,

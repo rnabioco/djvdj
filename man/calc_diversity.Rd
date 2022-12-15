@@ -39,8 +39,9 @@ diversity metrics}
 \item{n_boots}{Number of bootstrap replicates for calculating standard error,
 if n_boots is 0 this will be skipped.}
 
-\item{chain}{Chain to use for calculating diversity. Set to NULL to include
-all chains.}
+\item{chain}{Chain to use for calculating diversity. To calculate diversity
+for a single chain, the column passed to the data_col argument must contain
+per-chain data such as CDR3 sequences. Set to NULL to include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
@@ -65,7 +66,7 @@ res <- calc_diversity(
   method   = abdiv::simpson
 )
 
-head(res@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
 # Group cells based on meta.data column before calculating diversity
 res <- calc_diversity(
@@ -74,7 +75,7 @@ res <- calc_diversity(
   cluster_col = "orig.ident"
 )
 
-head(res@colData, 1)
+head(slot(res, "colData"), 1)
 
 # Add a prefix to the new columns
 # this is useful if multiple diversity calculations are stored in the
@@ -85,7 +86,7 @@ res <- calc_diversity(
   prefix   = "bcr_"
 )
 
-head(res@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
 # Calculate multiple metrics
 res <- calc_diversity(
@@ -97,7 +98,7 @@ res <- calc_diversity(
   )
 )
 
-head(res@colData, 1)
+head(slot(res, "colData"), 1)
 
 # Return a data.frame instead of adding the results to the input object
 res <- calc_diversity(

@@ -5,7 +5,8 @@
 #' @param data_col meta.data column containing sequences to use for calculating
 #' Levenshtein distance.
 #' @param chain Chain to use for clustering sequences. Cells with more than one
-#' of the provided chain will be excluded from the analysis.
+#' of the provided chain will be excluded from the analysis. If NULL, sequences
+#' for cells with multiple chains will be concatenated.
 #' @param method Method to use for clustering, possible values are:
 #'
 #' - 'louvain', multi-level optimization of modality implemented with
@@ -37,9 +38,53 @@
 #' @return Single cell object or data.frame with clustering results
 #' @importFrom uwot umap
 #' @importFrom dbscan kNN
-#' @importFrom igraph graph_from_data_frame cluster_louvain cluster_leiden membership
+#' @importFrom igraph graph_from_data_frame cluster_louvain cluster_leiden
+#' membership
 #' @importFrom Biostrings stringDist
 #' @seealso [plot_motifs()]
+#'
+#' @examples
+#' # Cluster cells based on CDR3 amino acid sequences and plot results
+#' res <- cluster_sequences(
+#'   vdj_so,
+#'   data_col = "cdr3"
+#' )
+#'
+#' plot_features(
+#'   res,
+#'   x = "cdr3_UMAP_1",
+#'   y = "cdr3_UMAP_2",
+#'   feature = "cdr3_cluster_0.5"
+#' )
+#'
+#' # Cluster cells based on sequences for a specific chain
+#' res <- cluster_sequences(
+#'   vdj_sce,
+#'   data_col = "cdr3",
+#'   chain    = "IGK"
+#' )
+#'
+#' # Use Levenschtein distance for clustering
+#' res <- cluster_sequences(
+#'   vdj_so,
+#'   data_col    = "cdr3",
+#'   dist_method = "levenshtein"
+#' )
+#'
+#' # Cluster cells using the Leiden algorithm
+#' res <- cluster_sequences(
+#'   vdj_so,
+#'   data_col = "cdr3",
+#'   method   = "leiden"
+#' )
+#'
+#' # Adjust clustering resolution
+#' res <- cluster_sequences(
+#'   vdj_so,
+#'   data_col   = "cdr3",
+#'   resolution = c(0.5, 1)
+#' )
+#'
 #' @export
 cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
                               method = "louvain", resolution = 0.5, k = 10,
@@ -97,7 +142,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 
   make_adj_df <- function(mat) {
     res <- tibble::as_tibble(mat, rownames = "Var1")
-    res <- tidyr::pivot_longer(res, -.data$Var1, values_to = "Var2")
+    res <- tidyr::pivot_longer(res, -"Var1", values_to = "Var2")
     res
   }
 
@@ -126,7 +171,8 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
     clst_method <- igraph::cluster_leiden
     rsln_arg    <- "resolution_parameter"
 
-    clst_args$objective_function <- clst_args$objective_function %||% "modularity"
+    clst_args$objective_function <- clst_args$objective_function %||%
+      "modularity"
   }
 
   # Cluster sequences
@@ -164,15 +210,15 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
   res
 }
 
-#' Create sequence logos for clusters
+#' Plot CDR3 sequence motifs
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
 #' data.frame is provided, the cell barcodes should be stored as row names.
 #' @param data_col meta.data column containing sequences to use for plotting.
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells.
-#' @param chain Chain to use for clustering CDR3 sequences. Cells with more
-#' than one of the provided chain will be excluded from the analysis.
+#' @param chain Chain to use for plotting sequences. Cells with more than one
+#' of the provided chain will be excluded from the analysis.
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param chain_col meta.data column containing chains for each cell.
@@ -186,8 +232,24 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' @param panel_nrow The number of rows to use for arranging plot panels
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional parameters to pass to [ggseqlogo::geom_logo()]
+#' @return ggplot object
 #' @importFrom stringr str_trunc
 #' @seealso [cluster_sequences()]
+#'
+#' @examples
+#' # Cluster cells based on CDR3 amino acid sequences and plot sequence motifs
+#' res <- cluster_sequences(
+#'   vdj_so,
+#'   data_col = "cdr3"
+#' )
+#'
+#' plot_motifs(
+#'   res,
+#'   data_col    = "cdr3",
+#'   cluster_col = "cdr3_cluster_0.5",
+#'   chain       = "IGK"
+#' )
+#'
 #' @export
 plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
                         chain, plot_colors = NULL,
@@ -245,7 +307,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
     pct <- 1 - (plt_n_seqs / n_seqs)
     pct <- round(pct * 100, 1)
 
-    warning(
+    message(
       n_seqs - plt_n_seqs, " (", pct, "%) sequences are shorter than the ",
       "width cutoff and were removed.",
       call. = FALSE
@@ -281,7 +343,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 #' @noRd
 .fetch_seqs <- function(input, seq_col, chain, chain_col, sep = ";") {
 
-  per_cell <- ifelse(is.null(chain), TRUE, FALSE)
+  per_cell <- is.null(chain)
 
   res <- fetch_vdj(
     input,

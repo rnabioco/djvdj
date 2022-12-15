@@ -36,8 +36,9 @@ coordinates, available methods include:
 \code{\link[abdiv:morisita]{abdiv::horn_morisita()}}
 }}
 
-\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
-all chains.}
+\item{chain}{Chain to use for comparing clusters. To perform calculations
+using a single chain, the column passed to the data_col argument must contain
+per-chain data such as CDR3 sequences. Set to NULL to include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
@@ -51,9 +52,38 @@ all chains.}
 
 \item{...}{Additional arguments to pass to \code{\link[ggplot2:geom_point]{ggplot2::geom_point()}}}
 }
+\value{
+ggplot object
+}
 \description{
-Perform multidimensional scaling and plot results
+Calculate MDS coordinates based on a beta diversity metric and plot results.
+}
+\examples{
+# Calculate MDS coordinates
+plot_mds(
+  vdj_so,
+  data_col = "clonotype_id",
+  cluster_col = "isotype"
+)
+
+# Calculate MDS coordinates based on IGK CDR3 sequences
+plot_mds(
+  vdj_sce,
+  data_col    = "cdr3",
+  cluster_col = "isotype",
+  chain       = "IGK"
+)
+
+# Calculate repertoire similarity using the Horn-Morisita index
+plot_mds(
+  vdj_so,
+  data_col    = "clonotype_id",
+  cluster_col = "isotype",
+  method      = "horn_morisita"
+)
+
 }
 \seealso{
-\code{\link[=calc_mds]{calc_mds()}}, \code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[=plot_similarity]{plot_similarity()}}, \code{\link[MASS:isoMDS]{MASS::isoMDS()}}
+\code{\link[=calc_mds]{calc_mds()}}, \code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[=plot_similarity]{plot_similarity()}},
+\code{\link[MASS:isoMDS]{MASS::isoMDS()}}
 }

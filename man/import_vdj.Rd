@@ -81,90 +81,61 @@ Import V(D)J data
 }
 \examples{
 # Loading multiple datasets
-vdj_dir <- c(
-  system.file("extdata/bcr_1/outs", package = "djvdj"),
-  system.file("extdata/bcr_2/outs", package = "djvdj")
+# to ensure cell barcodes for the V(D)J data match those in the object
+# load the datasets in the same order as the gene expression data
+data_dir <- system.file("extdata/splen", package = "djvdj")
+
+vdj_dirs <- c(
+  file.path(data_dir, "BL6_BCR"),
+  file.path(data_dir, "MD4_BCR")
 )
 
-vdj_so <- import_vdj(tiny_so, vdj_dir, include_mutations = FALSE)
+res <- splen_so |>
+  import_vdj(vdj_dir = vdj_dirs)
 
-head(vdj_so@meta.data, 1)
-
-# Specifying cell prefixes
-# if cell prefixes are not specified when loading multiple datasets,
-# prefixes will be automatically generated in a similar manner as
-# Seurat::Read10X
-vdj_so <- import_vdj(
-  tiny_so,
-  vdj_dir = vdj_dir,
-  include_mutations = FALSE
-)
-
-head(vdj_so@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
 # Specifying cell prefixes using vector names
-# if a named vector is passed, the names will be used as the cell prefixes
-vdj_dir <- c(
-  "1" = system.file("extdata/bcr_1/outs", package = "djvdj"),
-  "2" = system.file("extdata/bcr_2/outs", package = "djvdj")
+# cell barcode prefixes can also be specified by passing a named vector
+vdj_dirs <- c(
+  BL6 = file.path(data_dir, "BL6_BCR"),
+  MD4 = file.path(data_dir, "MD4_BCR")
 )
 
-vdj_so <- import_vdj(tiny_so, vdj_dir, include_mutations = FALSE)
+res <- splen_so |>
+  import_vdj(vdj_dir = vdj_dirs)
 
-head(vdj_so@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
-# Only include V(D)J data for productive full length chains
-vdj_so <- import_vdj(
-  tiny_so,
-  vdj_dir = vdj_dir,
-  filter_chains = TRUE,
-  include_mutations = FALSE
-)
+# Only include V(D)J data for paired chains
+res <- splen_so |>
+  import_vdj(
+    vdj_dir = vdj_dirs,
+    filter_paired = TRUE
+  )
 
-head(vdj_so@meta.data, 1)
-
-# Only include V(D)J data for cells with paired chains
-vdj_so <- import_vdj(
-  tiny_so,
-  vdj_dir = vdj_dir,
-  filter_paired = TRUE,
-  include_mutations = FALSE
-)
-
-head(vdj_so@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
 # Defining clonotypes
 # this is useful if the original clonotype IDs are not consistent across
 # datasets, i.e. clonotype1 is not the same for all samples
-vdj_so <- import_vdj(
-  tiny_so,
-  vdj_dir = vdj_dir,
-  define_clonotypes = "cdr3_gene",
-  include_mutations = FALSE
-)
+res <- splen_so |>
+  import_vdj(
+    vdj_dir = vdj_dirs,
+    define_clonotypes = "cdr3_gene"
+  )
 
-head(vdj_so@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
 # Include mutation information for each chain
 # this information will be included if the file concat_ref.bam is present
 # including mutation information will cause data import to be slower
-vdj_so <- import_vdj(
-  tiny_so,
-  vdj_dir = vdj_dir,
-  include_mutations = TRUE
-)
+res <- splen_so |>
+  import_vdj(
+    vdj_dir = vdj_dirs,
+    include_mutations = TRUE
+  )
 
-head(vdj_so@meta.data, 1)
-
-# Using import_vdj outside of Seurat
-# SingleCellExperiment objects are also compatible, or if an input object is
-# omitted, a data.frame containing the V(D)J data will be returned
-vdj_sce <- import_vdj(tiny_sce, vdj_dir)
-
-head(vdj_sce@colData, 1)
-
-vdj_df <- import_vdj(vdj_dir = vdj_dir, include_mutations = FALSE)
-
-head(vdj_df, 1)
+head(slot(res, "meta.data"), 1)
 
 }

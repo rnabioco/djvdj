@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc-similarity.R
 \name{calc_similarity}
 \alias{calc_similarity}
-\title{Calculate cluster similarity}
+\title{Calculate repertoire similarity}
 \usage{
 calc_similarity(
   input,
@@ -34,8 +34,9 @@ unique value in the column provided to the data_col column, e.g.
 \code{\link[abdiv:jaccard]{abdiv::jaccard()}}
 }}
 
-\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
-all chains.}
+\item{chain}{Chain to use for comparing clusters. To perform calculations
+using a single chain, the column passed to the data_col argument must contain
+per-chain data such as CDR3 sequences. Set to NULL to include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
@@ -50,7 +51,7 @@ FALSE, results will be added to the input object.}
 Single cell object or data.frame with similarity values
 }
 \description{
-Calculate cluster similarity
+Calculate repertoire similarity
 }
 \examples{
 # Calculate repertoire overlap
@@ -61,7 +62,7 @@ res <- calc_similarity(
   method      = abdiv::jaccard
 )
 
-head(res@meta.data, 1)
+head(slot(res, "meta.data"), 1)
 
 # Add a prefix to the new columns
 # this is useful if multiple calculations are stored in the meta.data
@@ -72,7 +73,7 @@ res <- calc_similarity(
   prefix      = "bcr_"
 )
 
-head(res@colData, 1)
+head(slot(res, "colData"), 1)
 
 # Return a matrix instead of adding the results to the input object
 calc_similarity(
