@@ -271,6 +271,9 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param panel_scales Should scales for plot panels be fixed or free. This
 #' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
+#' @param n_label Include a label showing the number of cells plotted
+#' @param label_params Named list providing additional parameters to modify
+#' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.

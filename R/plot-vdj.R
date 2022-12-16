@@ -28,7 +28,7 @@ plot_features <- function(input, ...) {
 #' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' @param na_color Color to use for missing values
-#' @param n_label Include a label showing the number of cells plotted
+#' @param n_label Include a label showing the number of values plotted
 #' @param label_params Named list providing additional parameters to modify
 #' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to [ggplot2::geom_point()], e.g.
@@ -443,7 +443,7 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
 #' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' @param chain_col meta.data column containing chains for each cell
-#' @param n_label Include a label showing the number of cells plotted
+#' @param n_label Include a label showing the number of values plotted
 #' @param label_params Named list providing additional parameters to modify
 #' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
