@@ -6,7 +6,7 @@
 #' @importFrom ggplot2 position_dodge scale_color_manual scale_fill_manual
 #' @importFrom ggplot2 scale_color_gradientn scale_fill_gradientn stat_summary
 #' @importFrom ggplot2 facet_wrap guides guide_legend labs theme element_blank
-#' @importFrom ggplot2 element_text element_line
+#' @importFrom ggplot2 element_text element_line expansion after_stat
 #' @noRd
 NULL
 
@@ -518,6 +518,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param .fill Variable to use for fill color
 #' @param clrs Vector of colors for plotting
 #' @param trans Method to use for transforming data
+#' @param y_exp Specification to pass to [ggplot2::expansion()]
 #' @param y_ttl Title for y-axis
 #' @param ang Angle of x-axis text
 #' @param hjst Horizontal justification for x-axis text
@@ -526,8 +527,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @return ggplot object
 #' @noRd
 .create_bars <- function(df_in, x, y, .fill = NULL, clrs = NULL,
-                         trans = "identity", y_ttl = y, ang = 45, hjst = 1,
-                         ...) {
+                         trans = "identity", y_ttl = y, y_exp = c(0.05, 0.05),
+                         ang = 45, hjst = 1, ...) {
 
   # Set aesthetics and geom_col arguments
   gg_aes <- aes(!!sym(x), !!sym(y))
@@ -542,9 +543,11 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   }
 
   # Create bar graph
+  y_args <- list(trans = trans, expand = ggplot2::expansion(y_exp))
+
   res <- ggplot2::ggplot(df_in, gg_aes) +
     purrr::lift_dl(geom_col)(gg_args) +
-    ggplot2::scale_y_continuous(trans = trans)
+    purrr::lift_dl(ggplot2::scale_y_continuous)(y_args)
 
   # Set plot colors
   if (!is.null(.fill) && !is.null(clrs)) {
@@ -577,6 +580,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param method Method to use for plotting, either 'boxplot' or 'violin'
 #' @param trans Transformation to use for plotting data, e.g. 'log10', refer
 #' to [ggplot2::continuous_scale()] for more options.
+#' @param y_exp Specification to pass to [ggplot2::expansion()]
 #' @param nrow Number of rows for facets
 #' @param scales scales specification for facet_wrap
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
@@ -585,8 +589,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @noRd
 .create_boxes <- function(df_in, x = NULL, y, grp = NULL, .color = NULL,
                           .fill = NULL, clrs = NULL, method = "boxplot",
-                          trans = "identity", nrow = NULL, scales = "fixed",
-                          ...) {
+                          trans = "identity", y_exp = c(0.05, 0.05),
+                          nrow = NULL, scales = "fixed", ...) {
 
   # Check input
   typs <- c("boxplot", "violin")
@@ -609,7 +613,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
       legend.position = "none",
       axis.title.x    = ggplot2::element_blank()
     ) +
-    ggplot2::scale_y_continuous(trans = trans)
+    ggplot2::scale_y_continuous(
+      trans = trans, expand = ggplot2::expansion(y_exp)
+    )
 
   if (!is.null(grp)) {
     res <- res +
@@ -659,6 +665,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' the percentage of total values.
 #' @param trans Transformation to use for plotting data, e.g. 'log10', refer
 #' to [ggplot2::continuous_scale()] for more options.
+#' @param y_exp Specification to pass to [ggplot2::expansion()]
 #' @param nrow Number of rows for facets
 #' @param scales scales specification for facet_wrap
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
@@ -668,7 +675,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 .create_hist <- function(df_in, x, grp, .color = NULL, .fill = NULL,
                          clrs = NULL, method = "histogram",
                          units = "frequency", y_ttl = units, trans = "identity",
-                         nrow = NULL, scales = "fixed", ...) {
+                         y_exp = c(0.05, 0.1), nrow = NULL, scales = "fixed",
+                         ...) {
 
   # Check inputs
   typs <- c("histogram", "density")
@@ -688,7 +696,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   # Only plot percent for histogram
   if (identical(units, "percent") && identical(method, "histogram")) {
-    plt_aes <- ggplot2::aes(y = .data$..count.. / sum(.data$..count..) * 100)
+    plt_aes <- ggplot2::aes(y = ggplot2::after_stat((count / max(count)) * 100))
   }
 
   plt_aes$x <- sym(x)
@@ -700,7 +708,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res <- ggplot2::ggplot(df_in, plt_aes) +
     djvdj_theme() +
     ggplot2::theme(legend.position = "top") +
-    ggplot2::scale_x_continuous(trans = trans)
+    ggplot2::scale_x_continuous(trans = trans) +
+    ggplot2::scale_y_continuous(expand = ggplot2::expansion(y_exp))
 
   if (!is.null(grp)) {
     res <- res +
@@ -751,26 +760,27 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 }
 
 
-#' Add list of aes params to ggplot object
+#' Add n label to plot
 #'
-#' @param gg_in ggplot object
-#' @param add_aes List of aes params to add or override
-#' @param lay Layer number to modify
-#' @return ggplot object
+#' @param gg_in ggplot2 object
+#' @param n n to use for label
+#' @param lab_args named list with aesthetic parameters to used for modifying
+#' n label
 #' @noRd
-.add_aes <- function(gg_in, add_aes, lay) {
+.add_n_label <- function(gg_in, lab_args, n = NULL) {
+  lab_args$geom  <- "text"
+  lab_args$x     <- lab_args$x %||% Inf
+  lab_args$y     <- lab_args$y %||% Inf
+  lab_args$hjust <- lab_args$hjust %||% 1.2
+  lab_args$vjust <- lab_args$vjust %||% 1.5
 
-  # Need to use colour instead of color
-  aes_names      <- names(add_aes)
-  names(add_aes) <- replace(aes_names, aes_names == "color", "colour")
+  lab_args$label <- lab_args$label %||%
+    paste0("n = ", scales::label_comma()(n))
 
-  # Add aes params
-  curr_aes <- gg_in$layers[[lay]]$aes_params
+  res <- gg_in +
+    purrr::lift_dl(ggplot2::annotate)(lab_args)
 
-  curr_aes[names(add_aes)]       <- add_aes
-  gg_in$layers[[lay]]$aes_params <- curr_aes
-
-  gg_in
+  res
 }
 
 

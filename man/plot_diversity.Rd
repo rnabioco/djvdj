@@ -18,6 +18,8 @@ plot_diversity(
   plot_lvls = names(plot_colors),
   panel_nrow = NULL,
   panel_scales = "free",
+  n_label = TRUE,
+  label_params = list(),
   sep = ";",
   ...
 )

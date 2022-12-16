@@ -14,9 +14,10 @@ plot_clone_frequency(
   plot_lvls = names(plot_colors),
   trans = "identity",
   n_clones = NULL,
-  label_aes = list(),
   panel_nrow = NULL,
   panel_scales = "free_x",
+  n_label = TRUE,
+  label_params = list(),
   ...
 )
 }
@@ -31,8 +32,11 @@ calculating clonotype abundance}
 grouping cells when calculating clonotype abundance. Clonotypes will be
 plotted separately for each cluster.}
 
-\item{method}{Method to use for plotting, 'bar' will generate a bargraph,
-'line' will generate a rank-abundance plot.}
+\item{method}{Method to use for plotting, possible values include:
+\itemize{
+\item 'bar', create a bargraph
+\item 'line', create a rank-abundance plot
+}}
 
 \item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
@@ -47,9 +51,6 @@ default values are not transformed, refer to \code{\link[ggplot2:continuous_scal
 is set to 'line', this will specify the number of clonotypes to label
 (default is 3).}
 
-\item{label_aes}{Named list providing additional aesthetics (color, size,
-etc.) for clonotype labels when creating line graph}
-
 \item{panel_nrow}{The number of rows to use for arranging plot panels, use
 this when separate bar graphs are created for each cell cluster}
 
@@ -57,6 +58,11 @@ this when separate bar graphs are created for each cell cluster}
 passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 Use this when separate bar graphs are created for each cell cluster.}
+
+\item{n_label}{Include a label showing the number of cells plotted}
+
+\item{label_params}{Named list providing additional parameters to modify
+clonotype and n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}

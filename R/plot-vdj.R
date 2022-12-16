@@ -28,6 +28,9 @@ plot_features <- function(input, ...) {
 #' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' @param na_color Color to use for missing values
+#' @param n_label Include a label showing the number of cells plotted
+#' @param label_params Named list providing additional parameters to modify
+#' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to [ggplot2::geom_point()], e.g.
 #' color, fill, size, linetype, etc.
 #' @return ggplot object
@@ -56,40 +59,15 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
                                   trans = "identity", min_q = NULL,
                                   max_q = NULL, panel_nrow = NULL,
                                   panel_scales = "fixed", na_color = "grey80",
-                                  ...) {
-
-  .create_scatter <- function(dat, x, y, feat = feature,
-                              grp = group_col, p_nrow = panel_nrow,
-                              p_scales = panel_scales, pt_args) {
-
-    # If don't use lift_dl() to set plt_aes, will get a warning when
-    # manually adjusting colors: "Scale for 'colour' is already present..."
-    plt_aes <- list(x = sym(x), y = sym(y))
-
-    if (!is.null(feat)) plt_aes$color <- sym(feat)
-
-    plt_aes <- purrr::lift_dl(ggplot2::aes)(plt_aes)
-
-    res <- ggplot2::ggplot(dat, plt_aes) +
-      purrr::lift_dl(ggplot2::geom_point)(pt_args) +
-      djvdj_theme()
-
-    if (!is.null(grp)) {
-      res <- res +
-        ggplot2::facet_wrap(
-          stats::as.formula(paste("~", grp)),
-          nrow   = p_nrow,
-          scales = p_scales
-        )
-    }
-
-    res
-  }
+                                  n_label = TRUE, label_params = list(), ...) {
 
   # Check arguments
   if (identical(x, y)) stop("'x' and 'y' must be different")
 
   plt_dat <- .get_meta(input)
+
+  # Calculate number of cells for label
+  .n <- nrow(plt_dat)
 
   plt_vars  <- c(x, y, feature)
   miss_vars <- plt_vars[!plt_vars %in% colnames(plt_dat)]
@@ -98,13 +76,25 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
     stop(paste(miss_vars, collapse = ", "), " not found in object")
   }
 
-  gg_args <- list(...)
+  gg_args <- list(
+    x          = x,
+    y          = y,
+    feat       = feature,
+    grp        = group_col,
+    pt_args    = list(...),
+    p_nrow     = panel_nrow,
+    p_scales   = panel_scales,
+    n_lab      = n_label,
+    lab_params = label_params
+  )
 
   # If no feature provided, return scatter plot
   if (is.null(feature)) {
-    gg_args$color <- gg_args$color %||% plot_colors
+    gg_args$dat <- plt_dat
 
-    res <- .create_scatter(plt_dat, x, y, pt_args = gg_args)
+    gg_args$pt_args$color <- gg_args$pt_args$color %||% plot_colors
+
+    res <- purrr::lift_dl(.create_scatter)(gg_args)
 
     return(res)
   }
@@ -144,7 +134,9 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   # res <- arrange(plt_dat, !!sym(feature))
   plt_dat <- plt_dat[order(plt_dat[[feature]], na.last = FALSE), ]
 
-  res <- .create_scatter(plt_dat, x, y, pt_args = gg_args)
+  gg_args$dat <- plt_dat
+
+  res <- purrr::lift_dl(.create_scatter)(gg_args)
 
   # Set feature colors, use ggplot2 defaults if plot_colors is NULL
   if (is_num) {
@@ -152,7 +144,7 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
 
     res <- res +
       ggplot2::scale_color_gradientn(
-        colors   = plot_colors,
+        colors = plot_colors,
         na.value = na_color,
         trans    = trans
       )
@@ -179,6 +171,41 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
       ggplot2::guides(
         color = ggplot2::guide_legend(override.aes = list(size = 3))
       )
+  }
+
+  res
+}
+
+.create_scatter <- function(dat, x, y, feat = feature,
+                            grp = group_col, p_nrow = panel_nrow,
+                            p_scales = panel_scales, pt_args,
+                            n_lab = TRUE, lab_params = list()) {
+
+  # If don't use lift_dl() to set plt_aes, will get a warning when
+  # manually adjusting colors: "Scale for 'colour' is already present..."
+  plt_aes <- list(x = sym(x), y = sym(y))
+
+  if (!is.null(feat)) plt_aes$color <- sym(feat)
+
+  plt_aes <- purrr::lift_dl(ggplot2::aes)(plt_aes)
+
+  res <- ggplot2::ggplot(dat, plt_aes) +
+    purrr::lift_dl(ggplot2::geom_point)(pt_args) +
+    djvdj_theme()
+
+  if (!is.null(grp)) {
+    res <- res +
+      ggplot2::facet_wrap(
+        stats::as.formula(paste("~", grp)),
+        nrow = p_nrow, scales = p_scales
+      )
+  }
+
+  if (n_lab) {
+    res <- res +
+      ggplot2::scale_y_continuous(expand = ggplot2::expansion(c(0.05, 0.1)))
+
+    res <- .add_n_label(res, lab_params, nrow(dat))
   }
 
   res
@@ -232,7 +259,6 @@ plot_features.Seurat <- function(input, feature = NULL, x = "UMAP_1",
 
   res
 }
-
 
 #' @rdname plot_features
 #' @export
@@ -395,7 +421,7 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
 #' cluster_col
 #' @param chain Chain(s) to use for filtering data before plotting. If NULL
 #' data will not be filtered based on chain.
-#' @param method Method to use for plotting, possible values are:
+#' @param method Method to use for plotting, possible values include:
 #'
 #' - 'histogram'
 #' - 'density'
@@ -417,6 +443,9 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
 #' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' @param chain_col meta.data column containing chains for each cell
+#' @param n_label Include a label showing the number of cells plotted
+#' @param label_params Named list providing additional parameters to modify
+#' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
@@ -522,8 +551,8 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
                      method = "histogram", units = "frequency",
                      plot_colors = NULL, plot_lvls = names(plot_colors),
                      trans = "identity", panel_nrow = NULL,
-                     panel_scales = "free_x", chain_col = "chains", sep = ";",
-                     ...) {
+                     panel_scales = "free_x", chain_col = "chains",
+                     n_label = TRUE, label_params = list(), sep = ";", ...) {
 
   # Format input data
   if (per_cell) {
@@ -554,11 +583,13 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
     }
   }
 
-  plt_dat <- dplyr::filter(plt_dat, if_all(all_of(data_col), ~ !is.na(.x)))
+  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
+
+  .n <- nrow(plt_dat)
 
   # Create plots
-  res <- .plot_vdj(
-    plt_dat,
+  gg_args <- list(
+    df_in        = plt_dat,
     data_col     = data_col,
     cluster_col  = cluster_col,
     group_col    = group_col,
@@ -573,6 +604,13 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
     ...
   )
 
+  if (n_label) gg_args$y_exp <- c(0.05, 0.1)
+
+  res <- purrr::lift_dl(.plot_vdj)(gg_args)
+
+  # Add n label
+  if (n_label) res <- .add_n_label(res, label_params, .n)
+
   res
 }
 
@@ -582,8 +620,9 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
 .plot_vdj <- function(df_in, data_col, cluster_col = NULL, group_col = NULL,
                       method = "boxplot", units = "frequency",
                       plot_colors = NULL, plot_lvls = names(plot_colors),
-                      trans = "identity", panel_nrow = NULL,
-                      panel_scales = "fixed", per_cell = FALSE, ...) {
+                      trans = "identity", y_exp = c(0.05, 0.05),
+                      panel_nrow = NULL, panel_scales = "fixed",
+                      per_cell = FALSE, ...) {
 
   # Order clusters based on plot_lvls
   df_in <- .set_lvls(df_in, cluster_col, plot_lvls)
@@ -598,6 +637,7 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
     clrs   = plot_colors,
     method = method,
     trans  = trans,
+    y_exp  = y_exp,
     nrow   = panel_nrow,
     scales = panel_scales,
     ...

@@ -217,8 +217,11 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance. Clonotypes will be
 #' plotted separately for each cluster.
-#' @param method Method to use for plotting, 'bar' will generate a bargraph,
-#' 'line' will generate a rank-abundance plot.
+#' @param method Method to use for plotting, possible values include:
+#'
+#' - 'bar', create a bargraph
+#' - 'line', create a rank-abundance plot
+#'
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters
@@ -227,18 +230,20 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 #' @param n_clones Number of top clonotypes to plot (default is 10). If method
 #' is set to 'line', this will specify the number of clonotypes to label
 #' (default is 3).
-#' @param label_aes Named list providing additional aesthetics (color, size,
-#' etc.) for clonotype labels when creating line graph
 #' @param panel_nrow The number of rows to use for arranging plot panels, use
 #' this when separate bar graphs are created for each cell cluster
 #' @param panel_scales Should scales for plot panels be fixed or free. This
 #' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' Use this when separate bar graphs are created for each cell cluster.
+#' @param n_label Include a label showing the number of cells plotted
+#' @param label_params Named list providing additional parameters to modify
+#' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
 #' @importFrom ggrepel geom_text_repel
+#' @importFrom methods formalArgs
 #' @seealso [calc_frequency()], [plot_frequency()]
 #'
 #' @examples
@@ -297,8 +302,8 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
                                  plot_colors = NULL,
                                  plot_lvls = names(plot_colors),
                                  trans = "identity", n_clones = NULL,
-                                 label_aes = list(), panel_nrow = NULL,
-                                 panel_scales = "free_x", ...) {
+                                 panel_nrow = NULL, panel_scales = "free_x",
+                                 n_label = TRUE, label_params = list(), ...) {
 
   n_clones <- n_clones %||% switch(method, bar = 10, line = 3)
 
@@ -328,6 +333,9 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   plt_dat <- tibble::as_tibble(plt_dat, rownames = CELL_COL)
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
+  # Calculate number of cells for label
+  .n <- nrow(plt_dat)
+
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
@@ -350,8 +358,7 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   }
 
   plt_dat <- dplyr::mutate(
-    plt_dat,
-    rank = dplyr::row_number(dplyr::desc(!!sym(abun_col)))
+    plt_dat, rank = dplyr::row_number(dplyr::desc(!!sym(abun_col)))
   )
 
   # Identify top clonotypes
@@ -365,12 +372,31 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   plt_dat    <- dplyr::ungroup(plt_dat)
   top_clones <- dplyr::ungroup(top_clones)
 
-  # Create bar graph
-  if (identical(method, "bar")) {
-    plt_labs <- purrr::set_names(
-      top_clones$.lab,
-      top_clones[[data_col]]
+  # Identify arguments unique for ggplot2::annotate and ggrepel::geom_text_repel
+  # This is important for making sure label_params arguments are used for the
+  # correct plot labels
+  .get_unique_args(
+    n_args = c(
+      formalArgs(ggplot2::annotate),
+      formalArgs(ggplot2::geom_text),
+      names(ggplot2::GeomText$default_aes)
+    ),
+    clone_args = c(
+      formalArgs(ggrepel::geom_text_repel),
+      names(ggrepel::GeomTextRepel$default_aes)
     )
+  )
+
+  names(label_params) <- stringr::str_replace(names(label_params), "color", "colour")
+  lab_args <- label_params
+
+  # Create bar graph
+  y_exp <- c(0.05, 0.05)
+
+  if (n_label) y_exp <- c(0.05, 0.1)
+
+  if (identical(method, "bar")) {
+    plt_labs <- purrr::set_names(top_clones$.lab, top_clones[[data_col]])
 
     top_clones <- dplyr::arrange(top_clones, desc(!!sym(abun_col)))
 
@@ -387,6 +413,7 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
       x     = data_col,
       y     = abun_col,
       y_ttl = y_lab,
+      y_exp = y_exp,
       .fill = cluster_col,
       clrs  = plot_colors,
       ang   = 45,
@@ -408,47 +435,68 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
         )
     }
 
-    return(res)
+  } else {
+    # Plot abundance vs rank
+    plt_aes <- ggplot2::aes(rank, !!sym(abun_col))
+
+    clr_aes <- plt_aes
+
+    if (!is.null(cluster_col)) clr_aes$colour <- sym(cluster_col)
+
+    res <- ggplot2::ggplot(plt_dat, plt_aes) +
+      ggplot2::geom_line(clr_aes, ...) +
+      ggplot2::scale_y_continuous(
+        trans = trans, expand = ggplot2::expansion(y_exp)
+      ) +
+      ggplot2::labs(y = y_lab) +
+      djvdj_theme()
+
+    if (!is.null(plot_colors)) {
+      res <- res +
+        ggplot2::scale_color_manual(values = plot_colors)
+    }
+
+    # Add clonotype labels
+    if (n_clones > 0) {
+      if (n_label) lab_args <- label_params[!names(label_params) %in% n_lab_args]
+
+      lab_args$mapping <- ggplot2::aes(label = .data$.lab)
+      lab_args$data    <- top_clones
+
+      lab_args$size          <- lab_args$size %||% 3
+      lab_args$nudge_x       <- lab_args$nudge_x %||% 500
+      lab_args$direction     <- lab_args$direction %||% "y"
+      lab_args$segment.size  <- lab_args$segment.size %||% 0.2
+      lab_args$segment.alpha <- lab_args$segment.alpha %||% 0.2
+
+      res <- res +
+        purrr::lift_dl(ggrepel::geom_text_repel)(lab_args)
+    }
   }
 
-  # Plot abundance vs rank
-  plt_aes <- ggplot2::aes(rank, !!sym(abun_col))
+  # Add n label
+  if (n_label) {
+    clone_lab <- identical(method, "line") && n_clones > 0
 
-  clr_aes <- plt_aes
+    if (clone_lab) lab_args <- label_params[!names(label_params) %in% clone_lab_args]
 
-  if (!is.null(cluster_col)) {
-    clr_aes$colour <- sym(cluster_col)
-  }
-
-  res <- ggplot2::ggplot(plt_dat, plt_aes) +
-    ggplot2::geom_line(clr_aes, ...) +
-    ggplot2::scale_y_continuous(trans = trans) +
-    ggplot2::labs(y = y_lab) +
-    djvdj_theme()
-
-  if (!is.null(plot_colors)) {
-    res <- res +
-      ggplot2::scale_color_manual(values = plot_colors)
-  }
-
-  # Add labels
-  if (n_clones > 0) {
-    res <- res +
-      ggrepel::geom_text_repel(
-        ggplot2::aes(label = .data$.lab),
-        data          = top_clones,
-        nudge_x       = 500,
-        direction     = "y",
-        segment.size  = 0.2,
-        segment.alpha = 0.2,
-        size          = 3
-      )
-
-    res <- .add_aes(res, label_aes, 2)
+    res <- .add_n_label(res, lab_args, .n)
   }
 
   res
 }
+
+#' Get unique arguments
+#' @noRd
+.get_unique_args <- function(...) {
+  args        <- list(...)
+  args        <- purrr::map(args, unique)
+  shared_args <- purrr::reduce(args, dplyr::intersect)
+  args        <- purrr::map(args, ~ .x[!.x %in% shared_args])
+
+  args
+}
+
 
 #' Plot frequency of cell groups present in object
 #'
@@ -478,6 +526,9 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
 #' this will be automatically selected.
 #' @param other_label Label to use for 'other' cells, if `NULL` all cell labels
 #' present in data_col will be displayed on the plot.
+#' @param n_label Include a label showing the number of cells plotted
+#' @param label_params Named list providing additional parameters to modify
+#' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
@@ -518,7 +569,8 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, units = "percent", stack = TRUE,
                            plot_colors = NULL, plot_lvls = NULL,
                            trans = "identity", n_top = NULL,
-                           other_label = "other", ...) {
+                           other_label = "other", n_label = TRUE,
+                           label_params = list(), ...) {
 
   .chk_group_cols(cluster_col, group_col, input)
 
@@ -531,7 +583,8 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   }
 
   abun_col <- switch(units, frequency = ".freq", percent = ".pct")
-  y_lab <- switch(units, frequency = "number of cells", percent = "% of cells")
+
+  y_lab <- .get_axis_label(units)
 
   # Calculate clonotype abundance
   plt_dat <- calc_frequency(
@@ -545,6 +598,9 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   # Format plot data
   plt_dat <- tibble::as_tibble(plt_dat, rownames = CELL_COL)
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
+
+  # Calculate number of cells for label
+  .n <- nrow(plt_dat)
 
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
@@ -595,6 +651,8 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   # Plot arguments
   gg_args <- list(y = abun_col, clrs = plot_colors, trans = trans, ...)
 
+  if (n_label) gg_args$y_exp <- c(0.05, 0.1)
+
   # Create grouped boxplot
   if (!is.null(group_col)) {
     plot_lvls <- plot_lvls %||% names(plot_colors)
@@ -619,35 +677,36 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
       labs(y = y_lab) +
       theme(legend.position = "right")
 
-    return(res)
-  }
-
   # Create bar graph
-  x_col <- cluster_col %||% data_col
+  } else {
+    x_col <- cluster_col %||% data_col
 
-  plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
+    plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
 
-  more_args <- list(
-    df_in = plt_dat,
-    x     = x_col,
-    y_ttl = y_lab,
-    .fill = data_col,
-    ang   = 45,
-    hjst  = 1
-  )
+    more_args <- list(
+      df_in = plt_dat,
+      x     = x_col,
+      y_ttl = y_lab,
+      .fill = data_col,
+      ang   = 45,
+      hjst  = 1
+    )
 
-  gg_args <- append(gg_args, more_args)
+    gg_args <- append(gg_args, more_args)
 
-  # When cluster_col is provided set default position to dodge
-  if (!is.null(cluster_col)) {
-    gg_pos <- ggplot2::position_dodge(preserve = "single")
+    # When cluster_col is provided set default position to dodge
+    if (!is.null(cluster_col)) {
+      gg_pos <- ggplot2::position_dodge(preserve = "single")
 
-    if (stack) gg_pos <- ggplot2::position_stack()
+      if (stack) gg_pos <- ggplot2::position_stack()
 
-    gg_args$position <- gg_args$position %||% gg_pos
+      gg_args$position <- gg_args$position %||% gg_pos
+    }
+
+    res <- purrr::lift_dl(.create_bars)(gg_args)
   }
 
-  res <- purrr::lift_dl(.create_bars)(gg_args)
+  if (n_label) res <- .add_n_label(res, label_params, .n)
 
   res
 }

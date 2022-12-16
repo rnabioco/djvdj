@@ -20,6 +20,8 @@ plot_vdj(
   panel_nrow = NULL,
   panel_scales = "free_x",
   chain_col = "chains",
+  n_label = TRUE,
+  label_params = list(),
   sep = ";",
   ...
 )
@@ -49,7 +51,7 @@ cluster_col}
 \item{chain}{Chain(s) to use for filtering data before plotting. If NULL
 data will not be filtered based on chain.}
 
-\item{method}{Method to use for plotting, possible values are:
+\item{method}{Method to use for plotting, possible values include:
 \itemize{
 \item 'histogram'
 \item 'density'
@@ -80,6 +82,11 @@ passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
+
+\item{n_label}{Include a label showing the number of cells plotted}
+
+\item{label_params}{Named list providing additional parameters to modify
+clonotype and n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 

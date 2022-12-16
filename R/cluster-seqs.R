@@ -7,7 +7,7 @@
 #' @param chain Chain to use for clustering sequences. Cells with more than one
 #' of the provided chain will be excluded from the analysis. If NULL, sequences
 #' for cells with multiple chains will be concatenated.
-#' @param method Method to use for clustering, possible values are:
+#' @param method Method to use for clustering, possible values include:
 #'
 #' - 'louvain', multi-level optimization of modality implemented with
 #' [igraph::cluster_louvain()]

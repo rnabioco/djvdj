@@ -31,7 +31,7 @@ Levenshtein distance.}
 of the provided chain will be excluded from the analysis. If NULL, sequences
 for cells with multiple chains will be concatenated.}
 
-\item{method}{Method to use for clustering, possible values are:
+\item{method}{Method to use for clustering, possible values include:
 \itemize{
 \item 'louvain', multi-level optimization of modality implemented with
 \code{\link[igraph:cluster_louvain]{igraph::cluster_louvain()}}

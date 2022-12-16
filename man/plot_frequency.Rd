@@ -16,6 +16,8 @@ plot_frequency(
   trans = "identity",
   n_top = NULL,
   other_label = "other",
+  n_label = TRUE,
+  label_params = list(),
   ...
 )
 }
@@ -52,6 +54,11 @@ this will be automatically selected.}
 
 \item{other_label}{Label to use for 'other' cells, if \code{NULL} all cell labels
 present in data_col will be displayed on the plot.}
+
+\item{n_label}{Include a label showing the number of cells plotted}
+
+\item{label_params}{Named list providing additional parameters to modify
+clonotype and n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}

@@ -167,15 +167,15 @@ test_all_args(
 
 # Check all plot_clone_frequency arguments for line plot
 arg_lst <- list(
-  input       = list(vdj_so, vdj_sce),
-  data_col    = "cdr3_nt",
-  cluster_col = list(NULL, "seurat_clusters"),
-  method      = "line",
-  units       = c("percent", "frequency"),
-  plot_colors = list(NULL, test_cols),
-  plot_lvls   = list(NULL, test_lvls),
-  label_aes   = list(list(), list(size = 2)),
-  n_clones    = c(0, 5)
+  input        = list(vdj_so, vdj_sce),
+  data_col     = "cdr3_nt",
+  cluster_col  = list(NULL, "seurat_clusters"),
+  method       = "line",
+  units        = c("percent", "frequency"),
+  plot_colors  = list(NULL, test_cols),
+  plot_lvls    = list(NULL, test_lvls),
+  label_params = list(list(), list(size = 2)),
+  n_clones     = c(0, 5)
 )
 
 test_all_args(

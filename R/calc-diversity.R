@@ -342,7 +342,8 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
                            downsample = FALSE, n_boots = 0, chain = NULL,
                            chain_col = "chains", plot_colors = NULL,
                            plot_lvls = names(plot_colors), panel_nrow = NULL,
-                           panel_scales = "free", sep = ";", ...) {
+                           panel_scales = "free", n_label = TRUE,
+                           label_params = list(), sep = ";", ...) {
 
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if providing a list of methods.")
@@ -390,6 +391,9 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   # Format data for plotting
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
+  # Calculate number of cells for label
+  .n <- nrow(plt_dat)
+
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
@@ -418,6 +422,8 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   # Plot arguments
   gg_args <- list(df_in = plt_dat, y = "diversity", clrs = plot_colors, ...)
 
+  if (n_label) gg_args$y_exp <- c(0.05, 0.1)
+
   # Create grouped boxplot
   if (!is.null(group_col) && !is.null(cluster_col)) {
     gg_args$alpha         <- gg_args$alpha %||% 0.5
@@ -444,54 +450,55 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
         ggplot2::labs(y = names(method))
     }
 
-    return(res)
-  }
-
   # Create bar graphs
   # only add error bars if n_boots > 1
-  if (is.null(gg_args$position)) {
-    gg_args$position <- ggplot2::position_identity()
-  }
-
-  more_args <- list(x = cluster_col, .fill = cluster_col)
-
-  gg_args <- append(gg_args, more_args)
-
-  res <- purrr::lift_dl(.create_bars)(gg_args)
-
-  if (n_boots > 1) {
-    res <- res +
-      ggplot2::geom_linerange(
-        aes(
-          !!sym(cluster_col),
-          ymin = .data$diversity - .data$stderr,
-          ymax = .data$diversity + .data$stderr
-        )
-      )
-  }
-
-  # Create facets
-  if (length(method) > 1) {
-    res <- res +
-      ggplot2::facet_wrap(~ met, nrow = panel_nrow, scales = "free") +
-      ggplot2::theme(axis.title.y = ggplot2::element_blank())
-
   } else {
+    if (is.null(gg_args$position)) {
+      gg_args$position <- ggplot2::position_identity()
+    }
+
+    more_args <- list(x = cluster_col, .fill = cluster_col)
+
+    gg_args <- append(gg_args, more_args)
+
+    res <- purrr::lift_dl(.create_bars)(gg_args)
+
+    if (n_boots > 1) {
+      res <- res +
+        ggplot2::geom_linerange(
+          aes(
+            !!sym(cluster_col),
+            ymin = .data$diversity - .data$stderr,
+            ymax = .data$diversity + .data$stderr
+          )
+        )
+    }
+
+    # Create facets
+    if (length(method) > 1) {
+      res <- res +
+        ggplot2::facet_wrap(~ met, nrow = panel_nrow, scales = "free") +
+        ggplot2::theme(axis.title.y = ggplot2::element_blank())
+
+    } else {
+      res <- res +
+        ggplot2::labs(y = names(method))
+    }
+
+    # Set theme
     res <- res +
-      ggplot2::labs(y = names(method))
+      ggplot2::theme(legend.position = "none")
+
+    if (!include_x_labs) {
+      res <- res +
+        ggplot2::theme(
+          axis.text.x  = ggplot2::element_blank(),
+          axis.ticks.x = ggplot2::element_blank()
+        )
+    }
   }
 
-  # Set theme
-  res <- res +
-    ggplot2::theme(legend.position = "none")
-
-  if (!include_x_labs) {
-    res <- res +
-      ggplot2::theme(
-        axis.text.x  = ggplot2::element_blank(),
-        axis.ticks.x = ggplot2::element_blank()
-      )
-  }
+  if (n_label) res <- .add_n_label(res, label_params, .n)
 
   res
 }

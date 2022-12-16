@@ -6,12 +6,11 @@
 #' calculating pairwise similarity between clusters, e.g. 'clonotype_id'
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating repertoire overlap
-#' @param method Method to use for comparing clusters, possible values are:
+#' @param method Method to use for comparing clusters, possible values include:
 #'
 #' - 'count', count the number of clonotypes overlapping between each cluster
 #' - A function that takes two numeric vectors containing counts for each
-#' unique value in the column provided to the data_col column, e.g.
-#' [abdiv::jaccard()]
+#' unique value in data_col, e.g. [abdiv::jaccard()]
 #'
 #' @param chain Chain to use for comparing clusters. To perform calculations
 #' using a single chain, the column passed to the data_col argument must contain

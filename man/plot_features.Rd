@@ -25,6 +25,8 @@ plot_features(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
+  n_label = TRUE,
+  label_params = list(),
   ...
 )
 
@@ -125,6 +127,11 @@ passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.}
 
 \item{na_color}{Color to use for missing values}
+
+\item{n_label}{Include a label showing the number of cells plotted}
+
+\item{label_params}{Named list providing additional parameters to modify
+clonotype and n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{data_slot}{Slot in the Seurat object to pull data}
 

@@ -705,6 +705,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @param df_in data.frame
 #' @param clmns Columns to replace 'None' and convert to logical
 #' @return data.frame
+#' @importFrom stringr str_replace
 #' @noRd
 .replace_none <- function(df_in, clmns) {
 
