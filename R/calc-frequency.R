@@ -375,7 +375,7 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   # Identify arguments unique for ggplot2::annotate and ggrepel::geom_text_repel
   # This is important for making sure label_params arguments are used for the
   # correct plot labels
-  .get_unique_args(
+  uniq_args <- .get_unique_args(
     n_args = c(
       formalArgs(ggplot2::annotate),
       formalArgs(ggplot2::geom_text),
@@ -387,7 +387,10 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
     )
   )
 
-  names(label_params) <- stringr::str_replace(names(label_params), "color", "colour")
+  names(label_params) <- stringr::str_replace(
+    names(label_params), "color", "colour"
+  )
+
   lab_args <- label_params
 
   # Create bar graph
@@ -458,7 +461,7 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
 
     # Add clonotype labels
     if (n_clones > 0) {
-      if (n_label) lab_args <- label_params[!names(label_params) %in% n_lab_args]
+      if (n_label) lab_args <- label_params[!names(label_params) %in% uniq_args$n_args]
 
       lab_args$mapping <- ggplot2::aes(label = .data$.lab)
       lab_args$data    <- top_clones
@@ -478,7 +481,7 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   if (n_label) {
     clone_lab <- identical(method, "line") && n_clones > 0
 
-    if (clone_lab) lab_args <- label_params[!names(label_params) %in% clone_lab_args]
+    if (clone_lab) lab_args <- label_params[!names(label_params) %in% uniq_args$clone_args]
 
     res <- .add_n_label(res, lab_args, .n)
   }
