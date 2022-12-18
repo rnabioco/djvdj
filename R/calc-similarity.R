@@ -60,17 +60,20 @@ calc_similarity <- function(input, data_col, cluster_col,
                             chain_col = "chains", prefix = NULL,
                             return_mat = FALSE, sep = ";") {
 
-  # Check inputs
-  is_counts <- identical(method, "count")
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_col, cluster_col, chain = chain, chain_col = chain_col
+  )
 
-  if (!is.function(method) && !is_counts) {
-    stop(
-      "method must be 'count' or a function to use for comparing ",
-      "clusters, e.g. method = abdiv::jaccard."
-    )
-  }
+  # Check input classes
+  ARG_CLASSES$method <- list(
+    arg = "method", Class = list(c("character", "function"))
+  )
 
-  if (is_counts) {
+  .check_args(ARG_CLASSES, environment())
+
+  # Check input values
+  if (identical(method, "count")) {
     method <- function(x, y) length(x[x > 0 & y > 0])
     prefix <- prefix %||% "count_"
   }
@@ -290,7 +293,20 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
                             remove_diagonal = remove_upper_triangle, sep = ";",
                             ...) {
 
-  # Check inputs
+  # Check that columns are present in object
+  .check_obj_cols(
+    input,
+    data_col, cluster_col, group_col, chain = chain, chain_col = chain_col
+  )
+
+  # Check input classes
+  ARG_CLASSES$method <- list(
+    arg = "method", Class = list(c("character", "function"))
+  )
+
+  .check_args(ARG_CLASSES, environment())
+
+  # Check input values
   is_circ <- identical(method, "circos")
 
   if (is_circ) method <- "count"
@@ -411,35 +427,30 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 #' )
 #'
 #' @export
-calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
+calc_mds <- function(input, data_col, cluster_col, method = "jaccard",
                      chain = NULL, chain_col = "chains", prefix = "",
                      return_df = FALSE, sep = ";") {
 
-  # Check inputs
-  if (length(method) != 1) stop("method must be a single value.")
-
-  mets <- c(
-    "jaccard" = abdiv::jaccard,
-    "horn_morisita" = abdiv::horn_morisita
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_col, cluster_col, chain = chain, chain_col = chain_col
   )
 
-  if (is.character(method)) {
-    if (!method %in% names(mets)) {
-      stop("method must be 'jaccard' or 'horn_morisita'.")
-    }
+  # Check input classes
+  .check_args(ARG_CLASSES, environment())
 
-    method <- mets[[method]]
+  # Check input values
+  mets <- c(
+    "jaccard" = abdiv::jaccard, "horn_morisita" = abdiv::horn_morisita
+  )
 
-  } else if (is.function(method)) {
-    good <- purrr::map_lgl(mets, ~ identical(method, .x))
-    good <- any(good)
-
-    if (!good) stop("method must be abdiv::jaccard or abdiv::horn_morisita.")
-
-  } else {
-    stop("method must be abdiv::jaccard or abdiv::horn_morisita.")
+  if (!method %in% names(mets)) {
+    stop("method must be 'jaccard' or 'horn_morisita'.")
   }
 
+  method <- mets[[method]]
+
+  # Calculate similarity
   res <- calc_similarity(
     input,
     data_col    = data_col,
@@ -557,39 +568,47 @@ calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
 #'
 #' @export
 plot_mds <- function(input, data_col, cluster_col,
-                     method = abdiv::jaccard, chain = NULL,
+                     method = "jaccard", chain = NULL,
                      chain_col = "chains", plot_colors = NULL,
                      plot_lvls = names(plot_colors), label_points = TRUE,
                      sep = ";", ...) {
 
-    # Calculate MDS
-    plt_dat <- calc_mds(
-      input       = input,
-      data_col    = data_col,
-      cluster_col = cluster_col,
-      method      = method,
-      chain       = chain,
-      chain_col   = chain_col,
-      prefix      = "",
-      return_df  = TRUE,
-      sep         = sep
-    )
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_col, cluster_col, chain = chain, chain_col = chain_col
+  )
 
-    # Create MDS plot
-    res <- plot_features(
-      plt_dat,
-      x = "MDS_1",
-      y = "MDS_2",
-      feature     = cluster_col,
-      plot_colors = plot_colors,
-      plot_lvls   = plot_lvls,
-      ...
-    )
+  # Check input classes
+  .check_args(ARG_CLASSES, environment())
 
-    if (label_points) {
-      res <- res +
-        ggrepel::geom_text_repel(ggplot2::aes(label = !!sym(cluster_col)))
-    }
+  # Calculate MDS
+  plt_dat <- calc_mds(
+    input       = input,
+    data_col    = data_col,
+    cluster_col = cluster_col,
+    method      = method,
+    chain       = chain,
+    chain_col   = chain_col,
+    prefix      = "",
+    return_df  = TRUE,
+    sep         = sep
+  )
 
-    res
+  # Create MDS plot
+  res <- plot_features(
+    plt_dat,
+    x = "MDS_1",
+    y = "MDS_2",
+    feature     = cluster_col,
+    plot_colors = plot_colors,
+    plot_lvls   = plot_lvls,
+    ...
+  )
+
+  if (label_points) {
+    res <- res +
+      ggrepel::geom_text_repel(ggplot2::aes(label = !!sym(cluster_col)))
   }
+
+  res
+}

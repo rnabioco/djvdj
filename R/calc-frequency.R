@@ -61,14 +61,17 @@
 calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
                            (data_col, "_"), return_df = FALSE) {
 
+  # Check that columns are present in object
+  .check_obj_cols(input, data_col, cluster_col)
+
+  # Check arguments
+  .check_args(ARG_CLASSES, environment())
+
   # Format input data
   meta <- .get_meta(input)
   vdj  <- dplyr::filter(meta, !is.na(!!sym(data_col)))
 
-  vdj <- dplyr::select(
-    vdj,
-    all_of(c(CELL_COL, data_col, cluster_col))
-  )
+  vdj <- dplyr::select(vdj, all_of(c(CELL_COL, data_col, cluster_col)))
 
   # Calculate clonotype abundance
   vdj <- .calc_freq(
@@ -305,6 +308,13 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
                                  panel_nrow = NULL, panel_scales = "free_x",
                                  n_label = TRUE, label_params = list(), ...) {
 
+  # Check that columns are present in object
+  .check_obj_cols(input, data_col, cluster_col)
+
+  # Check input classes
+  .check_args(ARG_CLASSES, environment())
+
+  # Check input values
   n_clones <- n_clones %||% switch(method, bar = 10, line = 3)
 
   if (!units %in% c("frequency", "percent")) {
@@ -575,6 +585,13 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
                            other_label = "other", n_label = TRUE,
                            label_params = list(), ...) {
 
+  # Check that columns are present in object
+  .check_obj_cols(input, data_col, cluster_col)
+
+  # Check input classes
+  .check_args(ARG_CLASSES, environment())
+
+  # Check input values
   .chk_group_cols(cluster_col, group_col, input)
 
   if (!units %in% c("frequency", "percent")) {

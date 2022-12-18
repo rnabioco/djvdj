@@ -188,7 +188,11 @@ test_that("calc_diversity df in", {
 # Check bad method list
 test_that("calc_diversity bad method list", {
   expect_error(
-    vdj_so |> calc_diversity(method = list(abdiv::simpson, abdiv::mcintosh_d)),
+    vdj_so |>
+      calc_diversity(
+        data_col = "clonotype_id",
+        method = list(abdiv::simpson, abdiv::mcintosh_d)
+      ),
     "Must include names if using a list of methods"
   )
 

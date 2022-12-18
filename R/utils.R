@@ -22,7 +22,7 @@ NULL
 
 #' Global variables
 #'
-#' CELL_COL is the column name to use for storing cell barcodes
+#' - CELL_COL, the column name to use for storing cell barcodes
 #'
 #' @noRd
 CELL_COL <- ".cell_id"
@@ -430,6 +430,7 @@ NULL
   res
 }
 
+
 #' Identify columns with V(D)J data
 #'
 #' @param df_in data.frame
@@ -516,3 +517,171 @@ NULL
   res
 }
 
+
+#' Check that columns are present in object
+#'
+#' @param input input object
+#' @param ... Columns to check for in input
+#' @param chain Chain
+#' @param chain_col Column containing chains=
+#' @return Error when column(s) are missing
+#' @noRd
+.check_obj_cols <- function(input, ..., chain = NULL, chain_col = "chains") {
+  dat <- .get_meta(input, row_col = CELL_COL)
+  dat <- colnames(dat)
+
+  cols <- c(...)
+
+  if (!is.null(chain)) {
+    if (is.null(chain_col)) {
+      stop("chain_col must be provided when chain is provided.")
+    }
+
+    cols <- c(cols, chain_col)
+  }
+
+  chk <- cols %in% dat
+
+  if (!all(chk)) {
+    bad <- cols[!chk]
+
+    stop(
+      "Some columns are not present in input: ",
+      paste0(bad, collapse = ", ")
+    )
+  }
+}
+
+
+#' Check type and length of argument
+#'
+#' @param arg Name of argument to check
+#' @param Class Must be one of the specified classes, if arg is a list, each
+#' item will get checked for the provided classes. To only check that arg is a
+#' list, just set Class to 'list'.
+#' @param len_one Should argument be length 1
+#' @param allow_null Can argument be NULL
+#' @param envir Environment to use
+#' @return Error when argument is not expected class and length
+#' @noRd
+.check_arg <- function(arg, Class = "character", len_one = TRUE,
+                       allow_null = FALSE, envir) {
+
+  val <- eval(sym(arg), envir = envir)
+  len <- length(val)
+
+  if (!allow_null && is.null(val)) stop(arg, " cannot be NULL.", call. = FALSE)
+
+  if (is.null(val)) return(invisible())
+
+  if (len_one && len != 1) stop(arg, " must be length 1.", call. = FALSE)
+
+  if (is.list(val) && identical(Class, "list")) return(invisible())
+
+  # Check each item of list
+  if (!is.list(val)) val <- list(val)
+
+  purrr::walk(val, ~ {
+    val <- .x
+
+    # val must be one of the classes specified to Class
+    chk <- purrr::map_lgl(Class, ~ methods::is(val, .x))
+
+    clsss <- paste0(Class, collapse = ", ")
+
+    if (!any(chk)) stop(arg, " must be one of: ", clsss, call. = FALSE)
+  })
+}
+
+.check_args <- function(args, envir) {
+  arg_nms <- purrr::map_chr(args, ~ .x$arg)
+  args    <- args[arg_nms %in% ls(envir = envir)]
+
+  purrr::walk(args, ~ purrr::pmap(.x, .check_arg, envir = envir))
+}
+
+ARG_CLASSES <- list(
+  list(arg = "data_col"),
+  list(arg = "cluster_col", allow_null = TRUE),
+  list(arg = "group_col", allow_null = TRUE),
+  list(arg = "chain_col"),
+  list(arg = "downsample", Class = "logical"),
+  list(arg = "n_boots", Class = "numeric"),
+  list(arg = "chain", len_one = FALSE, allow_null = TRUE),
+  list(arg = "prefix", allow_null = TRUE),
+  list(arg = "return_df", Class = "logical"),
+  list(arg = "sep", allow_null = TRUE),
+  list(arg = "plot_colors", len_one = FALSE, allow_null = TRUE),
+  list(arg = "plot_lvls", Class = list(c("character", "factor")), len_one = FALSE, allow_null = TRUE),
+  list(arg = "panel_nrow", Class = "numeric", allow_null = TRUE),
+  list(arg = "panel_scales"),
+  list(arg = "n_label", Class = "logical"),
+  list(arg = "label_params", Class = "list", len_one = FALSE),
+  list(arg = "units"),
+  list(arg = "trans"),
+  list(arg = "per_cell", Class = "logical"),
+
+  # plot_rarefaction
+  list(arg = "ci_alpha", Class = "numeric"),
+
+  # plot_clone_frequency
+  list(arg = "n_clones", Class = "numeric", allow_null = TRUE),
+
+  # plot_frequency
+  list(arg = "n_top", Class = "numeric", allow_null = TRUE),
+  list(arg = "other_label"),
+  list(arg = "stack", Class = "logical"),
+
+  # plot_gene_usage
+  list(arg = "vdj_genes", len_one = FALSE, allow_null = TRUE),
+  list(arg = "n_genes", Class = "numeric"),
+  list(arg = "rotate_labels", Class = "logical"),
+  list(arg = "return_list", Class = "logical"),
+
+  # calc_similarity
+  list(arg = "return_mat", Class = "logical"),
+
+  # plot_similarity
+  list(arg = "cluster_heatmap", Class = "logical"),
+  list(arg = "remove_upper_triangle", Class = "logical"),
+  list(arg = "remove_diagonal", Class = "logical"),
+
+  # cluster_sequences
+  list(arg = "resolution", Class = "numeric", len_one = FALSE),
+  list(arg = "k", Class = "numeric"),
+  list(arg = "dist_method", allow_null = TRUE),
+  list(arg = "run_umap", Class = "logical"),
+
+  # plot_motifs
+  list(arg = "width", Class = "numeric"),
+  list(arg = "align_end"),
+
+  # import_vdj
+  list(arg = "vdj_dir", len_one = FALSE, allow_null = TRUE),
+  list(arg = "filter_paired", Class = "logical"),
+  list(arg = "define_clonotypes", allow_null = TRUE),
+  list(arg = "include_mutations", Class = "logical"),
+  list(arg = "aggr_dir", allow_null = TRUE),
+
+  # fetch_vdj
+  list(arg = "filter_cells", Class = "logical"),
+  list(arg = "unnest", Class = "logical"),
+
+  # summarize_vdj
+  list(arg = "col_names", allow_null = TRUE),
+
+  # plot_features
+  list(arg = "feature", allow_null = TRUE),
+  list(arg = "x"),
+  list(arg = "y"),
+  list(arg = "min_q", Class = "numeric", allow_null = TRUE),
+  list(arg = "max_q", Class = "numeric", allow_null = TRUE),
+  list(arg = "na_color"),
+  list(arg = "data_slot"),
+
+  # Arguments that vary
+  clonotype_col = list(arg = "clonotype_col", allow_null = TRUE),
+  data_cols     = list(arg = "data_cols", len_one = FALSE),
+  method        = list(arg = "method"),
+  filter_chains = list(arg = "filter_chains", Class = "logical")
+)

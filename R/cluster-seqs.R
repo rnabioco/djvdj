@@ -93,7 +93,15 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
                               prefix = paste0(data_col, "_"),
                               return_df = FALSE, sep = ";", ...) {
 
-  # Check inputs
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_col, chain = chain, chain_col = chain_col
+  )
+
+  # Check input classes
+  .check_args(ARG_CLASSES, environment())
+
+  # Check input values
   if (!method %in% c("louvain", "leiden")) {
     stop("method must be either 'louvain' or 'leiden'.")
   }
@@ -257,11 +265,18 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
                         width = 0.75, align_end = "5", panel_nrow = NULL,
                         sep = ";", ...) {
 
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_col, cluster_col, chain = chain, chain_col = chain_col
+  )
+
+  # Check input classes
+  .check_args(ARG_CLASSES, environment())
+
+  # Check input values
   if (width <= 0) {
     stop("The provided width cutoff must be >0.", call. = FALSE)
   }
-
-  if (!is.character(chain)) stop("chain must be a character string.")
 
   # Fetch sequences
   seqs <- .fetch_seqs(

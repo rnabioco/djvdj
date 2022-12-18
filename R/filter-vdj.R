@@ -57,9 +57,19 @@ filter_vdj <- function(input, filt, data_cols = NULL,
                        clonotype_col = "clonotype_id", sep = ";",
                        per_cell = FALSE) {
 
-  if (per_cell) sep <- NULL
+  # Check that columns are present in object
+  .check_obj_cols(input, data_cols, clonotype_col)
+
+  # Check input classes
+  ARG_CLASSES$data_cols <- list(
+    arg = "data_cols", len_one = FALSE, allow_null = TRUE
+  )
+
+  .check_args(ARG_CLASSES, environment())
 
   # Format input data
+  if (per_cell) sep <- NULL
+
   meta <- vdj <- .get_meta(input)
 
   # Identify columns with V(D)J data

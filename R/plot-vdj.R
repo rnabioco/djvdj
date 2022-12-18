@@ -61,7 +61,13 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
                                   panel_scales = "fixed", na_color = "grey80",
                                   n_label = TRUE, label_params = list(), ...) {
 
-  # Check arguments
+  # Check that columns are present in object
+  .check_obj_cols(input, x, y, feature, group_col)
+
+  # Check input classes
+  .check_args(ARG_CLASSES, environment())
+
+  # Check input values
   if (identical(x, y)) stop("'x' and 'y' must be different")
 
   plt_dat <- .get_meta(input)
@@ -70,11 +76,6 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   .n <- nrow(plt_dat)
 
   plt_vars  <- c(x, y, feature)
-  miss_vars <- plt_vars[!plt_vars %in% colnames(plt_dat)]
-
-  if (length(miss_vars) > 0) {
-    stop(paste(miss_vars, collapse = ", "), " not found in object")
-  }
 
   gg_args <- list(
     x          = x,
@@ -224,6 +225,9 @@ plot_features.Seurat <- function(input, feature = NULL, x = "UMAP_1",
                                  max_q = NULL, panel_nrow = NULL,
                                  panel_scales = "fixed", na_color = "grey80",
                                  ...) {
+
+  # Check input classes
+  .check_args(ARG_CLASSES, environment())
 
   # Fetch variables and add to meta.data
   # want input data to include meta.data and any features from FetchData
@@ -553,6 +557,9 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
                      trans = "identity", panel_nrow = NULL,
                      panel_scales = "free_x", chain_col = "chains",
                      n_label = TRUE, label_params = list(), sep = ";", ...) {
+
+  # Check input classes
+  .check_args(ARG_CLASSES, environment())
 
   # Format input data
   if (per_cell) {

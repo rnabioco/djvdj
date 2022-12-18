@@ -113,7 +113,15 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
                        filter_paired = FALSE, define_clonotypes = NULL,
                        include_mutations = FALSE, aggr_dir = NULL, sep = ";") {
 
-  # Check that vdj_dir or aggr_dir is provided
+  # Check input classes
+  ARG_CLASSES$data_cols <- list(
+    arg = "data_cols", len_one = FALSE, allow_null = TRUE
+  )
+
+  .check_args(ARG_CLASSES, environment())
+
+  # Check input values
+  # vdj_dir or aggr_dir must be provided
   load_aggr <- !is.null(aggr_dir)
 
   if (is.null(vdj_dir) && !load_aggr) {
@@ -1327,6 +1335,18 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
                               filter_chains = c("productive", "full_length"),
                               sep = ";") {
+
+  # Check that columns are present in object
+  .check_obj_cols(input, data_cols, clonotype_col)
+
+  # Check input classes
+  ARG_CLASSES$filter_chains <- list(
+    arg = "filter_chains", Class = "character", len_one = FALSE
+  )
+
+  ARG_CLASSES$clonotype_col <- list(arg = "clonotype_col")
+
+  .check_args(ARG_CLASSES, environment())
 
   # Get meta.data
   # overwrite exising clonotype_col if it has the same name

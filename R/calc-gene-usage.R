@@ -45,6 +45,14 @@
 calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
                             chain_col = "chains", sep = ";") {
 
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_cols, cluster_col, chain = chain, chain_col = chain_col
+  )
+
+  # Check input classes
+  .check_args(ARG_CLASSES, environment())
+
   # Format input data
   sep_cols <- data_cols
 
@@ -296,7 +304,18 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
                             rotate_labels = FALSE, panel_nrow = NULL,
                             return_list = FALSE, sep = ";", ...) {
 
-  # Check inputs
+  # Check that columns are present in object
+  .check_obj_cols(
+    input,
+    data_cols, cluster_col, group_col, chain = chain, chain_col = chain_col
+  )
+
+  # Check input classes
+  ARG_CLASSES$method <- list(arg = "method", allow_null = TRUE)
+
+  .check_args(ARG_CLASSES, environment())
+
+  # Check input values
   paired <- length(data_cols) == 2
   method <- method %||% ifelse(paired, "heatmap", "bar")
 

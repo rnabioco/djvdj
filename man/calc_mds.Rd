@@ -8,7 +8,7 @@ calc_mds(
   input,
   data_col,
   cluster_col,
-  method = abdiv::jaccard,
+  method = "jaccard",
   chain = NULL,
   chain_col = "chains",
   prefix = "",

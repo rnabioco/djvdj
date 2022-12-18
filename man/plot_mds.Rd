@@ -8,7 +8,7 @@ plot_mds(
   input,
   data_col,
   cluster_col,
-  method = abdiv::jaccard,
+  method = "jaccard",
   chain = NULL,
   chain_col = "chains",
   plot_colors = NULL,

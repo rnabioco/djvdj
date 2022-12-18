@@ -48,6 +48,16 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
                       filter_cells = FALSE, per_cell = FALSE, unnest = TRUE,
                       sep = ";") {
 
+  # Check that columns are present in object
+  .check_obj_cols(input, data_cols, clonotype_col)
+
+  # Check input classes
+  ARG_CLASSES$data_cols <- list(
+    arg = "data_cols", len_one = FALSE, allow_null = TRUE
+  )
+
+  .check_args(ARG_CLASSES, environment())
+
   # Format input data
   meta <- .get_meta(input)
 
@@ -170,6 +180,15 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
 #' @export
 mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
                        data_cols = NULL, return_df = FALSE, sep = ";") {
+
+  # Check that columns are present in object
+  .check_obj_cols(input, data_cols, clonotype_col)
+
+  ARG_CLASSES$data_cols <- list(
+    arg = "data_cols", len_one = FALSE, allow_null = TRUE
+  )
+
+  .check_args(ARG_CLASSES, environment())
 
   # Format input data
   meta <- .get_meta(input)
@@ -329,6 +348,12 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
 summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
                           chain_col = "chains", sep = ";", col_names = "{.col}",
                           return_df = FALSE) {
+
+  # Check that columns are present in object
+  .check_obj_cols(input, data_cols, chain = chain, chain_col = chain_col)
+
+  # Check input classes
+  .check_args(ARG_CLASSES, environment())
 
   # Names of new columns
   new_cols <- gsub("\\{.col\\}", "{data_cols}", col_names)

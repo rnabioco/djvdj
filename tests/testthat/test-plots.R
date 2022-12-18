@@ -90,12 +90,12 @@ test_that("plot_fetures bad feature", {
 
   expect_error(
     expect_warning(fn(vdj_so), "requested variables were not found"),
-    "not found in object"
+    "not present in input"
   )
 
-  expect_error(fn(vdj_sce), "not found in object")
-  expect_error(fn(df_1), "not found in object")
-  expect_error(fn(df_2), "not found in object")
+  expect_error(fn(vdj_sce), "not present in input")
+  expect_error(fn(df_1), "not present in input")
+  expect_error(fn(df_2), "not present in input")
 })
 
 # Check all plot_vdj_feature arguments

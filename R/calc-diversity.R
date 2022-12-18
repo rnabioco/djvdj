@@ -86,6 +86,18 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
                            prefix = paste0(data_col, "_"), return_df = FALSE,
                            sep = ";") {
 
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_col, cluster_col, chain = chain, chain_col = chain_col
+  )
+
+  # Check input classes
+  ARG_CLASSES$method <- list(
+    arg = "method", Class = "function", len_one = FALSE
+  )
+
+  .check_args(ARG_CLASSES, environment())
+
   # Check input values
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if using a list of methods.")
@@ -96,10 +108,6 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
     nm <- last(nm)
 
     method <- purrr::set_names(list(method), nm)
-  }
-
-  if (length(n_boots) != 1 || n_boots < 0) {
-    stop("n_boots must be a single value >= 0.")
   }
 
   # Format input data
@@ -348,6 +356,20 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
                            panel_scales = "free", n_label = TRUE,
                            label_params = list(), sep = ";", ...) {
 
+  # Check that columns are present in object
+  .check_obj_cols(
+    input,
+    data_col, cluster_col, group_col, chain = chain, chain_col = chain_col
+  )
+
+  # Check input classes
+  ARG_CLASSES$method <- list(
+    arg = "method", Class = "function", len_one = FALSE
+  )
+
+  .check_args(ARG_CLASSES, environment())
+
+  # Check input values
   if (length(method) > 1 && is.null(names(method))) {
     stop("Must include names if providing a list of methods.")
   }
@@ -594,7 +616,18 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
                              panel_scales = "free", ci_alpha = 0.15, sep = ";",
                              ...) {
 
-  # Set method
+  # Check that columns are present in object
+  .check_obj_cols(
+    input,
+    data_col, cluster_col, chain = chain, chain_col = chain_col
+  )
+
+  # Check input classes
+  ARG_CLASSES$method <- list(arg = "method", len_one = FALSE)
+
+  .check_args(ARG_CLASSES, environment())
+
+  # Check input values
   mets <- c("richness" = 0, "shannon" = 1, "invsimpson" = 2)
 
   if (!all(method %in% names(mets))) {
