@@ -534,7 +534,7 @@ NULL
 
   if (!is.null(chain)) {
     if (is.null(chain_col)) {
-      stop("chain_col must be provided when chain is provided.")
+      stop("chain_col must be provided when chain is provided.", call. = FALSE)
     }
 
     cols <- c(cols, chain_col)
@@ -547,7 +547,8 @@ NULL
 
     stop(
       "Some columns are not present in input: ",
-      paste0(bad, collapse = ", ")
+      paste0(bad, collapse = ", "),
+      call. = FALSE
     )
   }
 }
