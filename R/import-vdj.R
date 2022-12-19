@@ -1337,14 +1337,12 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
                               sep = ";") {
 
   # Check that columns are present in object
-  .check_obj_cols(input, data_cols, clonotype_col)
+  .check_obj_cols(input, data_cols, filter_chains)
 
   # Check input classes
   ARG_CLASSES$filter_chains <- list(
     arg = "filter_chains", Class = "character", len_one = FALSE
   )
-
-  ARG_CLASSES$clonotype_col <- list(arg = "clonotype_col")
 
   .check_args(ARG_CLASSES, environment())
 

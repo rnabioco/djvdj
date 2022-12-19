@@ -131,10 +131,9 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
   # Function to check/filter chains
   .map_fn <- function(x, chns) {
-
     if (length(x) != length(chns)) {
       stop(
-        "Values in ", chain_col,  " are not the same length as data_cols, ",
+        "Values in ", chain_col, " are not the same length as data_cols, ",
         "are you using the correct chain_col?"
       )
     }
@@ -520,6 +519,8 @@ NULL
 
 #' Check that columns are present in object
 #'
+#' This also checks that the provided chain is found in chain_col
+#'
 #' @param input input object
 #' @param ... Columns to check for in input
 #' @param chain Chain
@@ -535,6 +536,16 @@ NULL
   if (!is.null(chain)) {
     if (is.null(chain_col)) {
       stop("chain_col must be provided when chain is provided.", call. = FALSE)
+    }
+
+    chns <- dat[[chain_col]]
+    chns <- chns[!is.na(chns)]
+    chns <- any(grepl(chain, chns))
+
+    if (!chns) {
+      stop(
+        "The specified chain (", chain, ") is not present in ", chain_col, "."
+      )
     }
 
     cols <- c(cols, chain_col)
@@ -605,6 +616,7 @@ ARG_CLASSES <- list(
   list(arg = "data_col"),
   list(arg = "cluster_col", allow_null = TRUE),
   list(arg = "group_col", allow_null = TRUE),
+  list(arg = "clonotype_col", allow_null = TRUE),
   list(arg = "chain_col"),
   list(arg = "downsample", Class = "logical"),
   list(arg = "n_boots", Class = "numeric"),
@@ -681,7 +693,6 @@ ARG_CLASSES <- list(
   list(arg = "data_slot"),
 
   # Arguments that vary
-  clonotype_col = list(arg = "clonotype_col", allow_null = TRUE),
   data_cols     = list(arg = "data_cols", len_one = FALSE),
   method        = list(arg = "method"),
   filter_chains = list(arg = "filter_chains", Class = "logical")
