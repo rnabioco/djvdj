@@ -528,8 +528,8 @@ NULL
 #' @return Error when column(s) are missing
 #' @noRd
 .check_obj_cols <- function(input, ..., chain = NULL, chain_col = "chains") {
-  dat <- .get_meta(input, row_col = CELL_COL)
-  dat <- colnames(dat)
+  dat      <- .get_meta(input, row_col = CELL_COL)
+  dat_cols <- colnames(dat)
 
   cols <- c(...)
 
@@ -538,20 +538,22 @@ NULL
       stop("chain_col must be provided when chain is provided.", call. = FALSE)
     }
 
-    chns <- dat[[chain_col]]
-    chns <- chns[!is.na(chns)]
-    chns <- any(grepl(chain, chns))
+    if (chain_col %in% dat_cols) {
+      chns <- dat[[chain_col]]
+      chns <- chns[!is.na(chns)]
+      chns <- any(grepl(chain, chns))
 
-    if (!chns) {
-      stop(
-        "The specified chain (", chain, ") is not present in ", chain_col, "."
-      )
+      if (!chns) {
+        stop(
+          "The specified chain (", chain, ") is not present in ", chain_col, "."
+        )
+      }
     }
 
     cols <- c(cols, chain_col)
   }
 
-  chk <- cols %in% dat
+  chk <- cols %in% dat_cols
 
   if (!all(chk)) {
     bad <- cols[!chk]

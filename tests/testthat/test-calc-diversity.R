@@ -17,7 +17,8 @@ arg_lst <- list(
   cluster_col = list(NULL, "seurat_clusters"),
   downsample  = c(TRUE, FALSE),
   method      = list(mets, list(simpson = abdiv::simpson)),
-  return_df   = FALSE
+  return_df   = FALSE,
+  n_boots     = c(0, 2)
 )
 
 test_all_args(

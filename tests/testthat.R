@@ -7,6 +7,15 @@ library(stringr)
 library(SingleCellExperiment)
 library(djvdj)
 
+# Larger test object
+vdj_dirs <- c(
+  BL6 = system.file("extdata/splen/BL6_BCR", package = "djvdj"),
+  MD4 = system.file("extdata/splen/MD4_BCR", package = "djvdj")
+)
+
+test_so <- splen_so |>
+  import_vdj(vdj_dirs, define_clonotypes = "cdr3_gene")
+
 test_check("djvdj")
 
 

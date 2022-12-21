@@ -10,6 +10,9 @@ test_lvls <- unique(vdj_so$seurat_clusters) |>
   as.character() |>
   rev()
 
+test_lvls_2 <- unique(test_so$sample) |>
+  rev()
+
 df_1 <- vdj_so@meta.data
 
 df_2 <- vdj_so@meta.data |>
@@ -224,9 +227,9 @@ test_that("plot_clone_frequency bad units", {
   expect_error(
     vdj_so |>
       plot_clone_frequency(
-        method          = "line",
-        clonotype_col = "cdr3_nt",
-        units         = "BAD"
+        method   = "line",
+        data_col = "cdr3_nt",
+        units    = "BAD"
       )
   )
 })
@@ -237,7 +240,7 @@ test_that("plot_clone_frequency bad method", {
     vdj_so |>
       plot_clone_frequency(
         method          = "BAD",
-        clonotype_col = "cdr3_nt"
+        data_col = "cdr3_nt"
       )
   )
 })
@@ -248,7 +251,7 @@ test_that("plot_clone_frequency bad n_clonotypes", {
     vdj_so |>
       plot_clone_frequency(
         method          = "bar",
-        clonotype_col = "cdr3_nt",
+        data_col = "cdr3_nt",
         n_clones  = 0
       )
   )
@@ -285,9 +288,79 @@ test_that("plot_diversity bad names", {
   expect_error(
     vdj_so |>
       plot_diversity(
-        clonotype_col = "cdr3_nt",
-        method        = mets
-      )
+        data_col = "cdr3_nt",
+        method   = unname(mets)
+      ),
+    "Must include names"
+  )
+})
+
+# Check all plot_rarefaction arguments
+arg_lst <- list(
+  input        = list(vdj_so, vdj_sce),
+  data_col     = "cdr3_nt",
+  cluster_col  = list(NULL, "seurat_clusters"),
+  method       = c("richness", "shannon", "invsimpson"),
+  chain        = list(NULL, "IGK"),
+  plot_colors  = list(NULL, test_cols),
+  plot_lvls    = list(NULL, test_lvls),
+  panel_nrow   = list(NULL, 2),
+  panel_scales = c("free", "fixed"),
+  ci_alpha     = 0.5,
+  n_boots      = 0
+)
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_rarefaction,
+  desc    = "plot_rarefaction args",
+  chk     = expr(expect_s3_class(.res, "ggplot"))
+)
+
+# Check all plot_frequency arguments
+arg_lst <- list(
+  input       = list(test_so),
+  data_col    = "cell_type",
+  cluster_col = list(NULL, "sample"),
+  units       = c("percent", "frequency"),
+  stack       = c(TRUE, FALSE),
+  plot_colors = list(NULL, test_cols),
+  plot_lvls   = list(NULL, test_lvls_2),
+  n_top       = list(NULL, 4),
+  n_label     = c(TRUE, FALSE),
+  label_params = list(list(size = 4), list())
+)
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_frequency,
+  desc    = "plot_frequency args",
+  chk     = expr(expect_s3_class(.res, "ggplot"))
+)
+
+arg_lst$group_col   <- "orig.ident"
+arg_lst$cluster_col <- "sample"
+arg_lst$plot_lvls   <- list(NULL, c("BL6", "MD4"))
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_frequency,
+  desc    = "plot_frequency args 2",
+  chk     = expr(expect_s3_class(.res, "ggplot"))
+)
+
+# Check plot_diversity bad method names
+mets <- abdiv::alpha_diversities |>
+  map(~ eval(parse(text = paste0("abdiv::", .x))))
+
+test_that("plot_diversity bad names", {
+  expect_error(
+    vdj_so |>
+      plot_diversity(
+        data_col = "cdr3_nt",
+        method   = unname(mets)
+      ),
+    "Must include names"
   )
 })
 
@@ -331,7 +404,7 @@ test_all_args(
   chk     = expect_silent
 )
 
-# Check plot_similarity bad clonotype_col
+# Check plot_similarity bad data_col
 test_that("plot_similarity bad clonotype col", {
   expect_error(
     vdj_so |>
@@ -352,6 +425,42 @@ test_that("plot_similarity bad cluster col", {
       )
   )
 })
+
+# Check calc_mds
+arg_lst <- list(
+  input       = list(test_so),
+  data_col    = "cdr3_nt",
+  cluster_col = "sample",
+  method      = c("jaccard", "horn_morisita"),
+  chain       = list(NULL, "IGK"),
+  prefix      = c("", "TEST")
+)
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = calc_mds,
+  desc    = "calc_mds Seurat args",
+  chk     = expr(expect_s4_class(.res, "Seurat"))
+)
+
+# Check plot_mds
+arg_lst <- list(
+  input       = list(test_so),
+  data_col    = "cdr3_nt",
+  cluster_col = "sample",
+  method      = c("jaccard", "horn_morisita"),
+  chain       = list(NULL, "IGK"),
+  plot_colors = list(NULL, c("red1", "red2", "red3", "blue1", "blue2", "blue3")),
+  label_points = c(TRUE, FALSE),
+  plot_lvls    = list(NULL, test_lvls_2)
+)
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_mds,
+  desc    = "plot_mds Seurat args",
+  chk     = expr(expect_s3_class(.res, "ggplot"))
+)
 
 # Check all plot_gene_usage arguments for one gene
 arg_lst <- list(
