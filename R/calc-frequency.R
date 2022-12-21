@@ -489,9 +489,9 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
 
   # Add n label
   if (n_label) {
-    clone_lab <- identical(method, "line") && n_clones > 0
-
-    if (clone_lab) lab_args <- label_params[!names(label_params) %in% uniq_args$clone_args]
+    if (identical(method, "line") && n_clones > 0) {
+      lab_args <- label_params[!names(label_params) %in% uniq_args$clone_args]
+    }
 
     res <- .add_n_label(res, lab_args, .n)
   }
