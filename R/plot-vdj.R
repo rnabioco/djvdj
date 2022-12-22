@@ -95,7 +95,7 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
 
     gg_args$pt_args$color <- gg_args$pt_args$color %||% plot_colors
 
-    res <- purrr::lift_dl(.create_scatter)(gg_args)
+    res <- lift(.create_scatter)(gg_args)
 
     return(res)
   }
@@ -137,7 +137,7 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
 
   gg_args$dat <- plt_dat
 
-  res <- purrr::lift_dl(.create_scatter)(gg_args)
+  res <- lift(.create_scatter)(gg_args)
 
   # Set feature colors, use ggplot2 defaults if plot_colors is NULL
   if (is_num) {
@@ -186,10 +186,10 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
 
   if (!is.null(feat)) plt_aes$color <- sym(feat)
 
-  plt_aes <- purrr::lift_dl(ggplot2::aes)(plt_aes)
+  plt_aes <- lift(ggplot2::aes)(plt_aes)
 
   res <- ggplot2::ggplot(dat, plt_aes) +
-    purrr::lift_dl(ggplot2::geom_point)(pt_args) +
+    lift(ggplot2::geom_point)(pt_args) +
     djvdj_theme()
 
   if (!is.null(grp)) {
@@ -611,7 +611,7 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
 
   if (n_label) gg_args$y_exp <- c(0.05, 0.1)
 
-  res <- purrr::lift_dl(.plot_vdj)(gg_args)
+  res <- lift(.plot_vdj)(gg_args)
 
   # Add n label
   if (n_label) res <- .add_n_label(res, label_params, .n)
@@ -659,7 +659,7 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
       units, sfx = ifelse(per_cell, "cells", "chains")
     )
 
-    res <- purrr::lift_dl(.create_hist)(gg_args)
+    res <- lift(.create_hist)(gg_args)
 
     return(res)
   }
@@ -668,7 +668,7 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
   gg_args$x <- cluster_col
   gg_args$y <- data_col
 
-  res <- purrr::lift_dl(.create_boxes)(gg_args)
+  res <- lift(.create_boxes)(gg_args)
 
   res
 }

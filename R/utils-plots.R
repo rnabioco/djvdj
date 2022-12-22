@@ -246,7 +246,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     plt_args$clustering_distance_columns %||% dist_fn
 
   # Create heatmap
-  res <- purrr::lift_dl(ComplexHeatmap::Heatmap)(plt_args)
+  res <- lift(ComplexHeatmap::Heatmap)(plt_args)
 
   res
 }
@@ -427,7 +427,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     }
   }
 
-  purrr::lift_dl(circos_fun)(plt_args)
+  lift(circos_fun)(plt_args)
 
   # Add axis track
   if (adj_axis) {
@@ -546,8 +546,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   y_args <- list(trans = trans, expand = ggplot2::expansion(y_exp))
 
   res <- ggplot2::ggplot(df_in, gg_aes) +
-    purrr::lift_dl(geom_col)(gg_args) +
-    purrr::lift_dl(ggplot2::scale_y_continuous)(y_args)
+    lift(geom_col)(gg_args) +
+    lift(ggplot2::scale_y_continuous)(y_args)
 
   # Set plot colors
   if (!is.null(.fill) && !is.null(clrs)) {
@@ -778,7 +778,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     paste0("n = ", scales::label_comma()(n))
 
   res <- gg_in +
-    purrr::lift_dl(ggplot2::annotate)(lab_args)
+    lift(ggplot2::annotate)(lab_args)
 
   res
 }

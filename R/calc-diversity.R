@@ -458,7 +458,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
     gg_args <- append(gg_args, more_args)
 
-    res <- purrr::lift_dl(.create_boxes)(gg_args) +
+    res <- lift(.create_boxes)(gg_args) +
       ggplot2::geom_jitter(
         position = ggplot2::position_jitterdodge(jitter.width = 0.05)
       ) +
@@ -486,7 +486,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
     gg_args <- append(gg_args, more_args)
 
-    res <- purrr::lift_dl(.create_bars)(gg_args)
+    res <- lift(.create_bars)(gg_args)
 
     if (n_boots > 1) {
       res <- res +
@@ -722,7 +722,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
   gg_args$mapping <- gg_aes
 
   res <- res +
-    purrr::lift_dl(ggplot2::geom_line)(gg_args) +
+    lift(ggplot2::geom_line)(gg_args) +
     ggplot2::scale_linetype_manual(values = c(1, 2)) +
     djvdj_theme() +
     labs(x = "sample size")

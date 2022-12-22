@@ -404,7 +404,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     plt_args$grp_col <- group_col
   }
 
-  purrr::lift_dl(usage_fn)(plt_args)
+  lift(usage_fn)(plt_args)
 }
 
 #' Plot usage for single gene column
@@ -456,7 +456,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     plt_args$outlier.color <- plt_args$outlier.color %||% NA
     plt_args$alpha         <- plt_args$alpha %||% 0.5
 
-    res <- purrr::lift_dl(.create_boxes)(plt_args)
+    res <- lift(.create_boxes)(plt_args)
 
     res <- res +
       ggplot2::geom_jitter(
@@ -478,7 +478,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     plt_args$.fill <- clst_col
     plt_args$y_ttl <- ax_ttl
 
-    res <- purrr::lift_dl(.create_bars)(plt_args)
+    res <- lift(.create_bars)(plt_args)
 
     return(res)
   }
@@ -490,7 +490,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   plt_args$.fill   <- dat_col
   plt_args$lgd_ttl <- ax_ttl
 
-  res <- purrr::lift_dl(.create_gg_heatmap)(plt_args)
+  res <- lift(.create_gg_heatmap)(plt_args)
 
   res
 }
@@ -577,7 +577,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
       if (add_ttl) plt_args$plt_ttl <- .y
 
-      purrr::lift_dl(.create_gg_heatmap)(plt_args)
+      lift(.create_gg_heatmap)(plt_args)
     })
 
     if (length(res) == 1) return(res[[1]])
@@ -609,7 +609,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   }
 
   # Create circos plot
-  # use purrr::lift_dl to pass dots into walk
+  # use lift to pass dots into walk
   plt_args$symmetric <- FALSE
   plt_args$rotate_labels <- rotate_labels
 
@@ -629,7 +629,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
     if (add_ttl) plt_args$plt_ttl <- .y
 
-    purrr::lift_dl(.create_circos)(plt_args)
+    lift(.create_circos)(plt_args)
   })
 }
 
@@ -652,7 +652,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
   # Filter for single gene column
   if (length(gn_col) == 1) {
-    top <- purrr::lift_dl(.get_top_genes)(gn_args)
+    top <- lift(.get_top_genes)(gn_args)
     res <- dplyr::filter(df_in, !!sym(gn_col) %in% top)
 
     return(res)
@@ -665,7 +665,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
   top_genes <- purrr::map(gn_col, ~ {
     gn_args$gn_col <- .x
-    purrr::lift_dl(.get_top_genes)(gn_args)
+    lift(.get_top_genes)(gn_args)
   })
 
   gn_1  <- sym(gn_col[1])

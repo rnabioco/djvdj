@@ -483,7 +483,7 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
       lab_args$segment.alpha <- lab_args$segment.alpha %||% 0.2
 
       res <- res +
-        purrr::lift_dl(ggrepel::geom_text_repel)(lab_args)
+        lift(ggrepel::geom_text_repel)(lab_args)
     }
   }
 
@@ -690,7 +690,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
     gg_args <- append(gg_args, more_args)
 
-    res <- purrr::lift_dl(.create_boxes)(gg_args) +
+    res <- lift(.create_boxes)(gg_args) +
       ggplot2::geom_jitter(
         position = ggplot2::position_jitterdodge(jitter.width = 0.05)
       ) +
@@ -723,7 +723,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
       gg_args$position <- gg_args$position %||% gg_pos
     }
 
-    res <- purrr::lift_dl(.create_bars)(gg_args)
+    res <- lift(.create_bars)(gg_args)
   }
 
   if (n_label) res <- .add_n_label(res, label_params, .n)

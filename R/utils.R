@@ -56,14 +56,38 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
     test_that(paste(desc, n), {
       if (is.call(chk)) {
-        .res <- purrr::lift_dl(.fn)(test_args)
+        .res <- lift(.fn)(test_args)
 
         return(eval(chk))
       }
 
-      chk(purrr::lift_dl(.fn)(test_args))
+      chk(lift(.fn)(test_args))
     })
   })
+}
+
+
+#' Lift the domain of a function
+#'
+#' To replace `purrr::lift_dl()`, which is deprecated in purrr v1.0.0
+#'
+#' @param ..f A function to lift.
+#' @param ... Default arguments for `..f`. These will be
+#' evaluated only once, when the lifting factory is called.
+#' @param .unnamed This prevents matching of arguments by name, arguments will
+#' be be matched by position instead.
+#' @return A function.
+#' @noRd
+lift <- function(..f, ..., .unnamed = FALSE) {
+  force(..f)
+
+  defaults <- list(...)
+
+  function(.x = list(), ...) {
+    if (.unnamed) .x <- unname(.x)
+
+    do.call("..f", c(.x, defaults, list(...)))
+  }
 }
 
 
