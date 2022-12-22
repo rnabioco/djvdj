@@ -177,9 +177,7 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   res
 }
 
-.create_scatter <- function(dat, x, y, feat = feature,
-                            grp = group_col, p_nrow = panel_nrow,
-                            p_scales = panel_scales, pt_args,
+.create_scatter <- function(dat, x, y, feat, grp, p_nrow, p_scales, pt_args,
                             n_lab = TRUE, lab_params = list()) {
 
   # If don't use lift_dl() to set plt_aes, will get a warning when

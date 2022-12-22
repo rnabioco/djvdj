@@ -541,11 +541,12 @@ NULL
     if (chain_col %in% dat_cols) {
       chns <- dat[[chain_col]]
       chns <- chns[!is.na(chns)]
-      chns <- any(grepl(chain, chns))
+      chns <- any(grepl(paste0(chain, collapse = "|"), chns))
 
       if (!chns) {
         stop(
-          "The specified chain (", chain, ") is not present in ", chain_col, "."
+          "The specified chain (", paste0(chain, collapse = ", "),
+          ") is not present in ", chain_col, "."
         )
       }
     }

@@ -685,7 +685,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
   )
 
   if (!is.null(cluster_col)) {
-    plt_dat <- dplyr::rename(plt_dat, !!sym(cluster_col) := .data$Assemblage)
+    plt_dat <- dplyr::rename(plt_dat, !!sym(cluster_col) := "Assemblage")
   }
 
   plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
