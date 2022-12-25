@@ -125,16 +125,16 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   load_aggr <- !is.null(aggr_dir)
 
   if (is.null(vdj_dir) && !load_aggr) {
-    stop("Must provide 'vdj_dir' or 'aggr_dir'")
+    cli::cli_abort("`vdj_dir` or `aggr_dir` must be provided")
   }
 
   # Check that vdj_dir is also provided when loading mutation data for
   # aggr results
   if (load_aggr && is.null(vdj_dir) && include_mutations) {
-    warning(
-      "To include V(D)J mutation data when loading cellranger aggr results,",
-      " paths to the original cellranger vdj output directories must be",
-      " provided to the vdj_dir argument."
+    cli::cli_warn(
+      "To include V(D)J mutation data when loading cellranger aggr results,
+       paths to the original cellranger vdj output directories must be
+       provided to the `vdj_dir` argument"
     )
 
     include_mutations <- FALSE
@@ -144,9 +144,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   if (!filter_chains && include_mutations) {
     filter_chains <- TRUE
 
-    warning(
-      "When include_mutations is TRUE, filter_chains is also automatically ",
-      "set TRUE since mutation data is only available for productive chains."
+    cli::cli_warn(
+      "When `include_mutations` is `TRUE`, `filter_chains` is also
+       automatically set `TRUE` since mutation data is only available for
+       productive chains"
     )
   }
 
@@ -196,23 +197,20 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     sfxs  <- prfx_df$sfx
 
     if (!is.null(names(vdj_dir))) {
-      names(vdj_dir) <- paste0(names(vdj_dir), "_")
-
-      obj_prfxs <- paste0(prfxs, collapse = ", ")
-      vdj_prfxs <- paste0(names(vdj_dir), collapse = ", ")
+      vdj_prfxs <- names(vdj_dir) <- paste0(names(vdj_dir), "_")
 
       if (any(duplicated(prfxs))) {
-        stop(
-          "To match the provided cell prefixes (", vdj_prfxs, ") with those",
-          " in the object (", obj_prfxs, "), the cell prefixes in the object",
-          " cannot be duplicated."
+        cli::cli_abort(
+          "To match the provided cell prefixes ({vdj_prfxs}) with those
+           in the object ({prfxs}), the cell prefixes in the object
+           cannot be duplicated"
         )
       }
 
       if (!all(names(vdj_dir) %in% prfxs)) {
-        stop(
-          "Provided cell barcode prefixes (", vdj_prfxs, ") do not match ",
-          "those in input object (", obj_prfxs, ")."
+        cli::cli_abort(
+          "The provided cell prefixes ({vdj_prfxs}) do not match
+           those in the input object ({prfxs})"
         )
       }
 
@@ -280,9 +278,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     indels <- .load_muts(vdj_dir, prfxs, sfxs)
 
     if (!is.null(indels)) {
-      if (!is.null(aggr_dir)) {
-        indels <- list(dplyr::bind_rows(indels))
-      }
+      if (!is.null(aggr_dir)) indels <- list(dplyr::bind_rows(indels))
 
       indel_cols <- names(indels[[1]])
       indel_cols <- indel_cols[indel_cols != "contig_id"]
@@ -291,19 +287,14 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       # SHOULD CHECK BARCODE OVERLAP HERE!!!
       # IF BARCODES DO NOT OVERLAP HERE, WILL RETURN ALL 0s
       indel_ctigs <- purrr::map2(
-        contigs, indels,
-        dplyr::left_join,
-        by = "contig_id"
+        contigs, indels, dplyr::left_join, by = "contig_id"
       )
 
       # Replace NAs with 0
       # contigs that did not have any mutations will have NAs
       indel_ctigs <- purrr::map(
         indel_ctigs,
-        ~ mutate(
-          .x,
-          dplyr::across(all_of(indel_cols), tidyr::replace_na, 0)
-        )
+        ~ mutate(.x, dplyr::across(all_of(indel_cols), tidyr::replace_na, 0))
       )
 
       contigs    <- indel_ctigs
@@ -318,13 +309,11 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   vdj_class <- unique(vdj_class)
 
   if (length(vdj_class) > 1) {
-    bad_class <- paste0(vdj_class, collapse = ", ")
-
-    stop(
-      "Multiple data types detected (", bad_class, "), provided data must be ",
-      "either TCR or BCR. To add both TCR and BCR data to the same object, ",
-      "run import_vdj separately for each and use the 'prefix' argument to ",
-      "add distinct column names."
+    cli::cli_abort(
+      "Multiple data types detected ({vdj_class}), provided data must be
+       either TCR or BCR. To add both TCR and BCR data to the same object,
+       run {.fn import_vdj} separately for each and use the `prefix` argument to
+       add distinct column names."
     )
   }
 
@@ -349,8 +338,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   contigs <- dplyr::mutate(
     contigs,
     across(
-      all_of(seq_cols),
-      ~ ifelse(.x == "None", 0, nchar(.x)),
+      all_of(seq_cols), ~ ifelse(.x == "None", 0, nchar(.x)),
       .names = "{.col}_length"
     )
   )
@@ -364,9 +352,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   n_remove <- length(n_remove)
 
   if (n_remove > 0) {
-    warning(
-      n_remove, " contig(s) do not have an assigned clonotype_id, ",
-      "these contigs will be removed."
+    cli::cli_warn(
+      "{n_remove} contig{?s} do not have an assigned clonotype_id,
+       these contigs will be removed"
     )
 
     contigs <- dplyr::filter(contigs, !is.na(.data$clonotype_id))
@@ -377,24 +365,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # some columns could be duplicated if also provided to data_cols argument
   vdj_cols <- unique(vdj_cols)
 
-  missing_cols <- vdj_cols[!vdj_cols %in% colnames(contigs)]
-
-  if (!is_empty(missing_cols)) {
-    missing_cols <- paste0(missing_cols, collapse = ", ")
-    avail_cols <- paste0(colnames(contigs), collapse = ", ")
-
-    stop(
-      "Some of the columns provided to data_cols were not found in ",
-      "filtered_contig_annotations.csv: ", missing_cols, ". ",
-      "Available columns include: ", avail_cols, "."
-    )
-  }
+  .check_obj_cols(contigs, vdj_cols, list_avail = TRUE)
 
   contigs <- dplyr::select(contigs, all_of(vdj_cols))
 
   # Check for NAs in data, additional NAs would indicate malformed input
   if (!all(stats::complete.cases(contigs))) {
-    stop("Malformed input data, NAs are present, check input files.")
+    cli::cli_abort("Malformed input data, `NA`s are present, check input files")
   }
 
   # Check if sep is already present in sep_cols
@@ -408,9 +385,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   contigs  <- dplyr::group_by(contigs, !!!syms(grp_cols))
 
   contigs <- dplyr::summarize(
-    contigs,
-    across(all_of(count_cols), sum),
-    .groups = "drop"
+    contigs, across(all_of(count_cols), sum), .groups = "drop"
   )
 
   # Determine which clonotypes are paired
@@ -464,9 +439,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   # Check for duplicated cell barcodes
   if (any(duplicated(meta$barcode))) {
-    stop(
-      "Malformed input data, multiple clonotype_ids ",
-      "are associated with the same cell barcode."
+    cli::cli_abort(
+      "Malformed input data, multiple clonotype_ids
+       are associated with the same cell barcode"
     )
   }
 
@@ -481,9 +456,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     )
 
     if (!define_clonotypes %in% names(clone_cols)) {
-      stop(
-        "define_clonotypes must be one of ",
-        paste0(names(clone_cols), collapse = ", "), "."
+      cli::cli_abort(
+        "`define_clonotypes` must be {.or {names(clone_cols)}}"
       )
     }
 
@@ -505,7 +479,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   res <- dplyr::filter(res, .data$clonotype_id != "None")
 
   if (nrow(res) == 0) {
-    warning("No valid clonotypes present, check input data.")
+    cli::cli_warn("No valid clonotypes present, check input data")
   }
 
   # Add prefix to V(D)J columns
@@ -651,9 +625,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   new <- dplyr::distinct(prfx_df, .data$prfx, .data$sfx)
 
   if (nrow(new) != length(cell_prfxs)) {
-    stop(
-      "The number of provided cell prefixes does not match the number of ",
-      "unique prefixes present on barcodes."
+    cli::cli_abort(
+      "The number of provided cell prefixes does not match the number of
+       unique prefixes present on barcodes"
     )
   }
 
@@ -762,10 +736,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   any_missing <- any(purrr::map_lgl(file_paths, ~ any(is.na(.x))))
 
   if (any_missing) {
-    warning(
-      "To add mutation data to object, ", bam_file, " and ", airr_file,
-      " must be present for all samples, check that these files are in the",
-      " provided directory paths, mutation data not added to object."
+    cli::cli_warn(
+      "To add mutation data to object {bam_file} and {airr_file}
+       must be present for all samples, check that these files are in the
+       provided directory paths, mutation data not added to object"
     )
 
     return(NULL)
@@ -892,7 +866,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     dplyr::matches(coord_cols_re, perl = TRUE)
   )
 
-  if (ncol(res) == 1) stop("V(D)J coordinates not found, check ", airr_file)
+  if (ncol(res) == 1) {
+    cli::cli_abort("V(D)J coordinates not found, check {.file airr_file}")
+  }
 
   res <- tidyr::pivot_longer(res, -"contig_id")
   res <- dplyr::filter(res, !is.na(.data$value))
@@ -1074,11 +1050,16 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   if (!file.exists(path)) path <- NA
 
   if (is.na(path)) {
-    fun <- stop
+    fn <- cli::cli_abort
 
-    if (warn) fun <- warning
+    if (warn) fn <- cli::cli_warn
 
-    fun(file, " not found in ", vdj_dir, ".")
+    if (!file.exists(vdj_dir)) {
+      fn("{.file {vdj_dir}} does not exist")
+
+    } else {
+      fn("{file} not found in {.file {vdj_dir}}")
+    }
   }
 
   path
@@ -1094,7 +1075,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 .check_sep <- function(df_in, sep_cols, sep) {
   if (is.null(sep_cols))  sep_cols <- colnames(df_in)
   if (is.null(sep))       return(sep)
-  if (!is.character(sep)) stop("'sep' must be a character.")
+  if (!is.character(sep)) cli::cli_abort("`sep` must be a character")
 
   # Strip whitespace from sep
   sep <- gsub("[[:space:]]", "", sep)
@@ -1102,9 +1083,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   has_sep <- grepl(sep, df_in[, sep_cols, drop = FALSE], fixed = TRUE)
 
   if (any(has_sep)) {
-    stop(
-      "The string '", sep, "' is already present in the input data, ",
-      "select a different value for 'sep'."
+    cli::cli_abort(
+      "The string '{sep}' is already present in the input data,
+       select a different value for `sep`"
     )
   }
 
@@ -1137,12 +1118,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # Error if no chains match
   if (is_empty(n_chains)) {
     chains <- unlist(chains, use.names = FALSE)
-    chains <- paste0(chains, collapse = ", ")
 
-    stop(
-      "None of the expected chains (", chains, ") were found in '",
-      chain_col, "', unable to determine whether TCR or BCR data were ",
-      "provided."
+    cli::cli_abort(
+      "None of the expected chains ({.or {chains}}) were found,
+       unable to determine whether TCR or BCR data were provided"
     )
   }
 
@@ -1152,11 +1131,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   res <- names(res[res > 0.5])
 
   if (purrr::is_empty(res)) {
-    res <- "Multi"
+    res   <- "Multi"
+    n_bcr <- n_chains[["BCR"]]
+    n_tcr <- n_chains[["TCR"]]
 
-    warning(
-      "Equal number of BCR (", n_chains[["BCR"]], ") and TCR (",
-      n_chains[["TCR"]], ") chains detected, unable to determine data type."
+    cli::cli_warn(
+      "Equal number of BCR ({n_bcr}) and TCR ({n_tcr}) chains detected, unable
+       to determine data type"
     )
   }
 
@@ -1182,7 +1163,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   n_overlap   <- length(obj_cells[obj_cells %in% met_cells])
   pct_overlap <- round(n_overlap / length(met_cells), 2) * 100
 
-  if (nm != "") nm <- paste0("'", nm, "' ")
+  if (nm != "") nm <- paste0("'", nm, "'")
 
   sgst_msg <- paste0(
     "are you using the correct cell barcode prefixes? If loading results ",
@@ -1192,13 +1173,15 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   )
 
   if (identical(n_overlap, 0L)) {
-    stop(nm, "cell barcodes do not match those in the object, ", sgst_msg)
+    cli::cli_abort(
+      "Cell barcodes from sample {nm} do not match those in the object, {sgst_msg}"
+    )
   }
 
   if (pct_overlap < pct_min) {
-    warning(
-      "Only ", pct_overlap, "% (", n_overlap, ") of ", nm,
-      "cell barcodes overlap with the provided object, ", sgst_msg
+    cli::cli_warn(
+      "Only {pct_overlap}% ({n_overlap}) of {nm} cell barcodes overlap with
+       the provided object, {sgst_msg}"
     )
   }
 
@@ -1353,13 +1336,6 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
   meta <- dplyr::select(meta, -any_of(clonotype_col))
 
   all_cols <- c(data_cols, filter_chains)
-
-  if (!all(all_cols %in% colnames(meta))) {
-    stop(
-      "Not all columns (", paste0(all_cols, collapse = ", "),
-      ") are present in meta.data."
-    )
-  }
 
   # Remove cells with NAs for any data_cols
   vdj <- dplyr::filter(

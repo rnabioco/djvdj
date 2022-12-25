@@ -100,7 +100,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 
   # Check input values
   if (length(method) > 1 && is.null(names(method))) {
-    stop("Must include names if using a list of methods.")
+    cli::cli_abort("Names must be included when `method` is a list")
   }
 
   if (length(method) == 1 && is.null(names(method))) {
@@ -114,10 +114,6 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
   names(method) <- paste0(prefix, names(method))
 
   meta <- vdj <- .get_meta(input)
-
-  if (!is.null(cluster_col) && is.null(meta[[cluster_col]])) {
-    stop(cluster_col, " not found in object, provide a different cluster_col")
-  }
 
   # Add column containing original data_col values to use when merging back
   # with meta.data. This is important since data_col will be modified when
@@ -164,11 +160,11 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
     sam_sz <- sam_sz[sam_sz >= sam_rng[1]]
 
     if (purrr::is_empty(sam_sz)) {
-      stop(
-        "To calculate diversity metrics using cluster_col, at least one ",
-        "cluster must have at least ", sam_rng[1], " cells. Rerun with ",
-        "cluster_col set to NULL to calculate diversity metrics for the ",
-        "entire population."
+      cli::cli_abort(
+        "When `cluster_col` is provided, at least one
+         cluster must have at least {sam_rng[1]} cell{?s}. Rerun with
+         `cluster_col` set to `NULL` to calculate diversity metrics for the
+         entire population"
       )
     }
 
@@ -232,10 +228,9 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
     res <- met(table(x[i]))
 
     if (is.na(res)) {
-      stop(
-        "The diversity metric returned NA. Some metrics will return NA if a ",
-        "cluster is composed entirely of a single clonotype, ",
-        "check your clusters and rerun."
+      cli::cli_abort(
+        "The provided diversity function returned `NA`, this may occur if a
+         cluster is composed entirely of a single clonotype"
       )
     }
 
@@ -371,7 +366,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
   # Check input values
   if (length(method) > 1 && is.null(names(method))) {
-    stop("Must include names if providing a list of methods.")
+    cli::cli_abort("Names must be included when `method` is a list")
   }
 
   .chk_group_cols(cluster_col, group_col, input)
@@ -631,9 +626,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
   mets <- c("richness" = 0, "shannon" = 1, "invsimpson" = 2)
 
   if (!all(method %in% names(mets))) {
-    mets <- paste0(names(mets), collapse = ", ")
-
-    stop("method must be one of: ", mets, ".")
+    cli::cli_abort("`method` must be {.or {names(mets)}}")
   }
 
   method <- mets[method]

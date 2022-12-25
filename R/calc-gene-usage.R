@@ -350,19 +350,16 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     absent <- top_genes[!top_genes %in% absent]
 
     if (identical(absent, top_genes)) {
-      stop("None of the provided genes were found")
+      cli::cli_abort("None of the provided genes were found")
 
     } else if (!purrr::is_empty(absent)) {
-      absent <- paste0(absent, collapse = ", ")
-
-      warning("Some genes not found: ", absent)
+      cli::cli_warn("The following genes were not found: {absent}")
     }
 
     # if vdj_genes are provided and two data_cols are provided, gene pairs
     # containing at least one of the specified genes will be included
     plt_dat <- dplyr::filter(plt_dat, dplyr::if_any(
-      dplyr::all_of(data_cols),
-      ~ .x %in% top_genes
+      dplyr::all_of(data_cols), ~ .x %in% top_genes
     ))
 
   # If vdj_genes not provided, identify top n_genes for each cluster based on
@@ -764,35 +761,38 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   typs <- c("heatmap", "bar", "circos")
 
   if (!typ %in% typs) {
-    stop("type must be one of the following: ", paste(typs, collapse = ", "))
+    cli::cli_abort("`type` must be {.or {typs}}")
   }
 
-  if (paired && !typ %in% c("heatmap", "circos")) {
-    stop(
-      "type must be 'heatmap' or 'circos' when two columns ",
-      "are passed to the data_cols argument."
+  typs <- c("heatmap", "circos")
+
+  if (paired && !typ %in% typs) {
+    cli::cli_abort(
+      "`type` must be {.or {typs}} when two columns are passed to `data_cols`"
     )
   }
 
   if (identical(typ, "circos") && !paired) {
-    stop(
-      "A circos plot can only be generated when two columns ",
-      "are passed to the data_cols argument."
+    cli::cli_abort(
+      "A circos plot can only be generated when two columns
+       are passed to `data_cols`"
     )
   }
 
   if (length(gn_cols) > 2) {
-    stop("Cannot specify more than two values for data_cols")
+    cli::cli_abort("Cannot specify more than two values for `data_cols`")
   }
 
-  if (!axis %in% c("percent", "frequency")) {
-    stop("units must be either 'percent' or 'frequency'")
+  units <- c("percent", "frequency")
+
+  if (!axis %in% units) {
+    cli::cli_abort("`units` must be {.or {units}}")
   }
 
   if (paired && !is.null(grp_col)) {
-    stop(
-      "The group_col argument can only be used when a single column ",
-      "is passed to the data_cols argument."
+    cli::cli_abort(
+      "`group_col` can only be used when a single column
+       is passed to `data_cols`"
     )
   }
 }

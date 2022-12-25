@@ -122,7 +122,7 @@ test_that("filter_vdj bad length", {
   expect_error(
     vdj_so |>
       filter_vdj(c("IGH", "IGK") %in% chains),
-    "Filtering condition must return TRUE/FALSE for each chain"
+    "Filtering condition must return `TRUE`/`FALSE` for each chain"
   )
 })
 

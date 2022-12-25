@@ -317,16 +317,25 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   # Check input values
   n_clones <- n_clones %||% switch(method, bar = 10, line = 3)
 
-  if (!units %in% c("frequency", "percent")) {
-    stop("units must be either 'frequency' or 'percent'.")
+  psbl_units <- c("frequency", "percent")
+
+  if (!units %in% psbl_units) {
+    cli::cli_abort("`units` must be {.or {psbl_units}}")
   }
 
-  if (!method %in% c("bar", "line")) {
-    stop("method must be either 'bar' or 'line'.")
+  psbl_mets <- c("bar", "line")
+
+  if (!method %in% psbl_mets) {
+    cli::cli_abort("`method` must be {.or {psbl_mets}}")
   }
 
-  if (identical(method, "bar") && n_clones <= 0) stop("n_clones must be >0.")
-  if (identical(method, "line") && n_clones < 0) stop("n_clones must be >=0.")
+  if (identical(method, "bar") && n_clones <= 0) {
+    cli::cli_abort("`n_clones` must be >0")
+  }
+
+  if (identical(method, "line") && n_clones < 0) {
+    cli::cli_abort("`n_clones` must be >=0")
+  }
 
   abun_col <- switch(units, frequency = ".freq", percent = ".pct")
   y_lab    <- .get_axis_label(units)
@@ -594,12 +603,14 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   # Check input values
   .chk_group_cols(cluster_col, group_col, input)
 
-  if (!units %in% c("frequency", "percent")) {
-    stop("units must be either 'frequency' or 'percent'.")
+  psbl_units <- c("frequency", "percent")
+
+  if (!units %in% psbl_units) {
+    cli::cli_abort("`units` must be {.or {psbl_units}}")
   }
 
   if (stack && !identical(trans, "identity")) {
-    stop("Values can only be transformed when stack is FALSE")
+    cli::cli_abort("Values can only be transformed when `stack` is `FALSE`")
   }
 
   abun_col <- switch(units, frequency = ".freq", percent = ".pct")

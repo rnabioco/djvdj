@@ -194,7 +194,7 @@ test_that("calc_diversity bad method list", {
         data_col = "clonotype_id",
         method = list(abdiv::simpson, abdiv::mcintosh_d)
       ),
-    "Must include names if using a list of methods"
+    "Names must be included"
   )
 
   res <- vdj_so |>

@@ -102,9 +102,9 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
   .check_args(ARG_CLASSES, environment())
 
   # Check input values
-  if (!method %in% c("louvain", "leiden")) {
-    stop("method must be either 'louvain' or 'leiden'.")
-  }
+  mets <- c("louvain", "leiden")
+
+  if (!method %in% mets) cli::cli_abort("`method` must be {.or {mets}}")
 
   # Fetch data
   vdj <- .fetch_seqs(
@@ -274,9 +274,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
   .check_args(ARG_CLASSES, environment())
 
   # Check input values
-  if (width <= 0) {
-    stop("The provided width cutoff must be >0.", call. = FALSE)
-  }
+  if (width <= 0) cli::cli_abort("`width` must be >0")
 
   # Fetch sequences
   seqs <- .fetch_seqs(
@@ -311,10 +309,9 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 
   # Check number of removed sequences
   if (plt_n_seqs == 0) {
-    stop(
-      "There are no sequences longer than the width cutoff, ",
-      "try selecting a shorter sequence width for plotting.",
-      call. = FALSE
+    cli::cli_abort(
+      "There are no sequences longer than `width`,
+       try selecting a shorter cutoff for `width`"
     )
   }
 
@@ -322,10 +319,10 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
     pct <- 1 - (plt_n_seqs / n_seqs)
     pct <- round(pct * 100, 1)
 
-    message(
-      n_seqs - plt_n_seqs, " (", pct, "%) sequences are shorter than the ",
-      "width cutoff and were removed.",
-      call. = FALSE
+    cli::cli_alert(
+      "{n_seqs - plt_n_seqs} sequences ({pct}%) are shorter than `width`
+       and were removed",
+      wrap = TRUE
     )
   }
 
@@ -371,7 +368,9 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
   )
 
   if (per_cell) {
-    if (is.null(sep)) stop("Must provide sep if per_cell is TRUE")
+    if (is.null(sep)) {
+      cli::cli_abort("`sep` must be provided if `per_cell` is`TRUE`")
+    }
 
     res <- dplyr::mutate(
       res,
@@ -423,10 +422,8 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
   res <- seqs[lens >= width]
 
   if (purrr::is_empty(res)) {
-    warning(
-      "There are no sequences present in the cluster at least ", width,
-      " residues long.",
-      call. = FALSE
+    cli::cli_warn(
+      "There are no sequences present that are >{width} residues long"
     )
 
     return(NULL)
@@ -444,14 +441,9 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 #' @param n Number of sequences to check
 #' @noRd
 .detect_seq_type <- function(seqs, n = 100) {
-
-  dna <- c("A", "T", "G", "C")
-  rna <- c("A", "U", "G", "C")
-
-  aa  <- c(
-    "A", "R", "N", "D", "C", "Q", "E", "G", "H", "I",
-    "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"
-  )
+  dna <- Biostrings::DNA_BASES
+  rna <- Biostrings::RNA_BASES
+  aa  <- Biostrings::AA_STANDARD
 
   # Take first n sequences and split into residues
   seqs <- na.omit(seqs)
@@ -462,7 +454,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
   # Check intersection with known characters
   int <- intersect(nts, c(dna, rna, aa))
 
-  if (length(int) == 0) stop("Could not determine sequence type")
+  if (length(int) == 0) cli::cli_abort("Could not determine sequence type")
 
   # Check if any characters overlap with aa and not dna, rna
   int <- setdiff(intersect(nts, aa), c(dna, rna))

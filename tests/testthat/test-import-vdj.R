@@ -155,7 +155,7 @@ test_that("import_vdj bad path", {
       import_vdj(vdj_dir = "BAD_PATH")
   }
 
-  expect_error(fn(), "filtered_contig_annotations.csv not found in BAD_PATH")
+  expect_error(fn(), "does not exist")
 })
 
 # Check column prefix
@@ -193,7 +193,7 @@ test_that("import_vdj filter_chains", {
       )
   }
 
-  expect_warning(fn(), "When include_mutations is TRUE, filter_chains is also automatically set TRUE")
+  expect_warning(fn(), "When `include_mutations` is `TRUE`")
 })
 
 # Check filter_paired
@@ -264,7 +264,7 @@ test_that("import_vdj bad define_clonotypes", {
         define_clonotypes = "BAD",
         include_mutations = FALSE
       ),
-    "define_clonotypes must be one of"
+    "`define_clonotypes` must be"
   )
 })
 
@@ -284,7 +284,7 @@ test_that("import_vdj bad prefixes", {
       import_vdj(vdj_dir = dat)
   }
 
-  expect_error(fn(), "do not match those in input object")
+  expect_error(fn(), "do not match those in the input")
 })
 
 # # Check low overlap warning
@@ -353,14 +353,14 @@ test_that(".classify_vdj", {
     dat |>
       mutate(chains = paste0("A", chains)) |>
       .classify_vdj(),
-    "None of the expected chains.+were found"
+    "None of the expected chains"
   )
 
   expect_error(
     dat |>
       mutate(chains = paste0(chains, "A")) |>
       .classify_vdj(),
-    "None of the expected chains.+were found"
+    "None of the expected chains"
   )
 
   expect_warning(

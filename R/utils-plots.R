@@ -168,9 +168,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     n_vals <- .get_unique_values(mat_rm)
 
     if (n_vals == 1) {
-      warning(
-        "Cannot remove diagonal since there ",
-        "will only be one unique value remaining."
+      cli::cli_warn(
+        "Cannot remove diagonal since there will only be one unique value
+         remaining"
       )
     } else {
       mat_in <- mat_rm
@@ -263,8 +263,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   if (!rm_upper && !rm_diag) return(mat_in)
 
   if (!isSymmetric(mat_in)) {
-    stop(
-      "Matrix must be symmetrical to remove upper triangle and/or diagonal."
+    cli::cli_abort(
+      "Matrix must be symmetrical to remove upper triangle and/or diagonal"
     )
   }
 
@@ -337,9 +337,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   }
 
   if (!any(vals > 0, na.rm = TRUE)) {
-    stop(
-      "To create a circos plot there must be at least one overlap ",
-      "between the clusters."
+    cli::cli_abort(
+      "To create a circos plot there must be at least one overlap
+       between the clusters."
     )
   }
 
@@ -347,12 +347,14 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   all_nms <- union(colnames(mat_in), rownames(mat_in))
 
   if (!is.null(lvls) && !all(all_nms %in% lvls)) {
-    stop("plot_levels must include all rows and columns in the matrix")
+    cli::cli_abort(
+      "`plot_levels` must include all rows and columns in the matrix"
+    )
   }
 
   if (!is.null(grps)) {
     if (!all(all_nms %in% names(grps))) {
-      stop("Groups must be provided for all clusters.")
+      cli::cli_abort("Groups must be provided for all clusters")
     }
 
     grps <- grps[lvls]
@@ -488,17 +490,17 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
       c_clrs <- clrs
 
     } else {
-      stop(
-        "Not enough colors provided (", n_clrs, "), provide exactly one ",
-        "color, one color for each column in the matrix (", length(c_nms),
-        "), or one color for each unique row and column in the matrix (",
-        length(all_nms), ")."
+      cli::cli_abort(
+        "Not enough colors provided ({n_clrs}), provide exactly one
+         color, one color for each column in the matrix ({length(c_nms)}),
+         or one color for each unique row and column in the matrix
+         ({length(all_nms)})"
       )
     }
 
   } else {
     if (!all(all_nms %in% names(clrs))) {
-      stop("A color must be provided for each group being plotted")
+      cli::cli_abort("A color must be provided for each group being plotted")
     }
 
     c_clrs <- clrs[c_nms]
@@ -595,9 +597,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   # Check input
   typs <- c("boxplot", "violin")
 
-  if (!method %in% typs) {
-    stop("method must be one of ", paste0(typs, collapse = ", "))
-  }
+  if (!method %in% typs) cli::cli_abort("`method` must be {.or {typs}}")
 
   # Set aesthetics
   plt_aes <- ggplot2::aes(y, !!sym(y))
@@ -681,15 +681,11 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   # Check inputs
   typs <- c("histogram", "density")
 
-  if (!method %in% typs) {
-    stop("method must be one of ", paste0(typs, collapse = ", "))
-  }
+  if (!method %in% typs) cli::cli_abort("`method` must {.or {typs}}")
 
   axs <- c("frequency", "percent")
 
-  if (!units %in% axs) {
-    stop("units must be one of ", paste0(axs, collapse = ", "))
-  }
+  if (!units %in% axs) cli::cli_abort("`units` must {.or {axs}}")
 
   # Set aesthetics
   plt_aes <- ggplot2::aes()
@@ -795,11 +791,11 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 .set_lims <- function(df_in, ft, mn = NULL, mx = NULL) {
 
   if (!is.numeric(df_in[[ft]])) {
-    stop(ft, " is not numeric")
+    cli::cli_abort("The {ft} column is not numeric")
   }
 
   if (is.null(mn) && is.null(mx)) {
-    stop("mn or mx must be provided")
+    cli::cli_abort("`mn` or `mx` must be provided")
   }
 
   ft <- sym(ft)
@@ -871,9 +867,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   dat <- df_in[[clmn]]
 
   if (!is.character(dat) && !is.factor(dat)) {
-    warning(
-      "Plot levels were not modified, ",
-      "levels are only modified for characters and factors"
+    cli::cli_warn(
+      "Plot levels can only be modified for characters and factors, levels
+       were not modified"
     )
     return(df_in)
   }
@@ -895,7 +891,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     missing <- paste0(missing, collapse = ", ")
     missing <- paste0(missing, sfx)
 
-    stop("Not all labels in ", clmn, " are included in plot_lvls: ", missing)
+    cli::cli_abort("Some labels in {clmn} are not in `plot_lvls`: {missing}")
   }
 
   df_in[clmn] <- factor(df_in[[clmn]], unique(lvls), exclude = NULL)
@@ -908,11 +904,15 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @noRd
 .chk_group_cols <- function(cluster_col, group_col, input = NULL) {
   if (!is.null(group_col) && is.null(cluster_col)) {
-    stop("cluster_col must be provided when group_col is specified.")
+    cli::cli_abort(
+      "`cluster_col` must be provided when `group_col` is specified"
+    )
   }
 
   if (!is.null(group_col) && identical(group_col, cluster_col)) {
-    stop("group_col and cluster_col must specify different columns.")
+    cli::cli_abort(
+      "`cluster_col` and `group_col` must specify different columns"
+    )
   }
 
   if (!is.null(cluster_col) && !is.null(group_col) && !is.null(input)) {
@@ -921,17 +921,19 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     chk <- .chk_matching_vals(dat[[cluster_col]], dat[[group_col]])
 
     if (!chk) {
-      stop(
-        "There must be a single group label for each cluster, ",
-        "i.e. each cluster can only belong to one group. ",
-        "Check the values in group_col and cluster_col."
+      cli::cli_abort(
+        "There must be a single group label for each cluster,
+         i.e. each cluster can only belong to one group,
+         check the values in `cluster_col` and `group_col`"
       )
     }
   }
 }
 
 .chk_matching_vals <- function(x, y) {
-  if (length(x) != length(y)) stop("x and y must be the same length.")
+  if (length(x) != length(y)) {
+    cli::cli_abort("`x` and `y` must be the same length")
+  }
 
   res <- paste0(x, y)
 

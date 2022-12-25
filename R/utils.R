@@ -19,6 +19,12 @@ NULL
 #' @noRd
 NULL
 
+#' cli imports
+#'
+#' @importFrom cli cli_abort cli_warn cli_alert
+#' @noRd
+NULL
+
 
 #' Global variables
 #'
@@ -145,20 +151,21 @@ lift <- function(..f, ..., .unnamed = FALSE) {
     return(res)
 
   } else if (!all(is_lst)) {
-    bad_cols <- paste0(names(is_lst[!is_lst]), collapse = ", ")
+    bad_cols <- names(is_lst[!is_lst])
 
-    stop(
-      "To filter based on chain, all columns must contain per-chain data. ",
-      "The following columns do not contain per-chain data: ", bad_cols, "."
+    cli::cli_abort(
+      "Some columns do not contain per-chain V(D)J data, can only filter
+       based on `chain` if all `data_cols` contain per-chain data: {bad_cols}"
     )
   }
 
   # Function to check/filter chains
   .map_fn <- function(x, chns) {
     if (length(x) != length(chns)) {
-      stop(
-        "Values in ", chain_col, " are not the same length as data_cols, ",
-        "are you using the correct chain_col?"
+      cli::cli_abort(
+        "The number of chains per cell present in the {chain_col} column differs
+         from the number of per-chain values present in `data_cols`, are you
+         using the correct `chain_col`?"
       )
     }
 
@@ -212,7 +219,7 @@ NULL
 
 .add_meta.default <- function(input, meta, row_col = CELL_COL) {
   if (!is.data.frame(meta)) {
-    stop("meta.data must be a data.frame.")
+    cli::cli_abort("meta.data must be a data.frame")
   }
 
   tibble::column_to_rownames(meta, row_col)
@@ -244,19 +251,19 @@ NULL
 .prepare_meta <- function(input, meta, row_col = CELL_COL) {
 
   if (!is.data.frame(meta)) {
-    stop("meta.data must be a data.frame.")
+    cli::cli_abort("meta.data must be a data.frame")
   }
 
   is_lst <- purrr::map_lgl(meta, is.list)
 
   if (any(is_lst)) {
-    stop("meta.data cannot include list-cols.")
+    cli::cli_abort("meta.data cannot include list-cols")
   }
 
   if (!is.null(input) && !identical(colnames(input), meta[[row_col]])) {
-    stop(
-      "To add meta.data to an object, the meta.data must contain the same ",
-      "cells as the target object."
+    cli::cli_abort(
+      "meta.data does not contain the same cells as the object, check your cell
+       barcodes"
     )
   }
 
@@ -472,19 +479,15 @@ NULL
                           cell_col = CELL_COL) {
 
   # Check clone_col
-  if (length(clone_col) > 1) {
-    stop("Provide a single value for clonotype column.")
-  }
-
   no_clone_col <- is.null(cols_in) && !is.null(clone_col) &&
     !clone_col %in% colnames(df_in)
 
   if (no_clone_col) {
     clone_col <- NULL
 
-    warning(
-      "The provided clonotype column is not present in input data, provide a ",
-      "column containing clonotype IDs to increase performance."
+    cli::cli_warn(
+      "The {clone_col} column is not present in the input data, provide a
+       column containing clonotype IDs to increase performance"
     )
   }
 
@@ -548,10 +551,12 @@ NULL
 #' @param input input object
 #' @param ... Columns to check for in input
 #' @param chain Chain
-#' @param chain_col Column containing chains=
+#' @param chain_col Column containing chains
+#' @param list_avail List available columns in error message
 #' @return Error when column(s) are missing
 #' @noRd
-.check_obj_cols <- function(input, ..., chain = NULL, chain_col = "chains") {
+.check_obj_cols <- function(input, ..., chain = NULL, chain_col = "chains",
+                            list_avail = FALSE) {
   dat      <- .get_meta(input, row_col = CELL_COL)
   dat_cols <- colnames(dat)
 
@@ -559,7 +564,7 @@ NULL
 
   if (!is.null(chain)) {
     if (is.null(chain_col)) {
-      stop("chain_col must be provided when chain is provided.", call. = FALSE)
+      cli::cli_abort("`chain_col` must be provided when `chain` is specified")
     }
 
     if (chain_col %in% dat_cols) {
@@ -568,9 +573,8 @@ NULL
       chns <- any(grepl(paste0(chain, collapse = "|"), chns))
 
       if (!chns) {
-        stop(
-          "The specified chain (", paste0(chain, collapse = ", "),
-          ") is not present in ", chain_col, "."
+        cli::cli_abort(
+          "The specified chain ({chain}) is not present in {chain_col}"
         )
       }
     }
@@ -578,16 +582,24 @@ NULL
     cols <- c(cols, chain_col)
   }
 
-  chk <- cols %in% dat_cols
+  cols <- unique(cols)
+  chk  <- cols %in% dat_cols
 
   if (!all(chk)) {
     bad <- cols[!chk]
 
-    stop(
-      "Some columns are not present in input: ",
-      paste0(bad, collapse = ", "),
-      call. = FALSE
-    )
+    msg <- "Some columns are not present in input data: {bad}"
+
+    if (list_avail) {
+      dat_cols <- paste0(dat_cols, collapse = ", ")
+
+      msg <- c(
+        "!" = msg,
+        "i" = "Available columns include: {dat_cols}"
+      )
+    }
+
+    cli::cli_abort(msg)
   }
 }
 
@@ -609,11 +621,11 @@ NULL
   val <- eval(sym(arg), envir = envir)
   len <- length(val)
 
-  if (!allow_null && is.null(val)) stop(arg, " cannot be NULL.", call. = FALSE)
+  if (!allow_null && is.null(val)) cli::cli_abort("`{arg}` cannot be `NULL`")
 
   if (is.null(val)) return(invisible())
 
-  if (len_one && len != 1) stop(arg, " must be length 1.", call. = FALSE)
+  if (len_one && len != 1) cli::cli_abort("`{arg}` must be length 1")
 
   if (is.list(val) && identical(Class, "list")) return(invisible())
 
@@ -626,9 +638,7 @@ NULL
     # val must be one of the classes specified to Class
     chk <- purrr::map_lgl(Class, ~ methods::is(val, .x))
 
-    clsss <- paste0(Class, collapse = ", ")
-
-    if (!any(chk)) stop(arg, " must be one of: ", clsss, call. = FALSE)
+    if (!any(chk)) cli::cli_abort("`{arg}` must be class {.or {Class}}")
   })
 }
 

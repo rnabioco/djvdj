@@ -116,7 +116,7 @@ calc_similarity <- function(input, data_col, cluster_col,
   n_clsts <- dplyr::n_distinct(vdj[[cluster_col]])
 
   if (n_clsts < 2) {
-    stop("cluster_col must contain at least two unique groups.")
+    cli::cli_abort("`cluster_col` must contain at least two unique clusters")
   }
 
   # Count number of occurrences of each value in data_col
@@ -445,7 +445,7 @@ calc_mds <- function(input, data_col, cluster_col, method = "jaccard",
   )
 
   if (!method %in% names(mets)) {
-    stop("method must be 'jaccard' or 'horn_morisita'.")
+    cli::cli_abort("`method` must be {.or {names(mets)}}")
   }
 
   method <- mets[[method]]
@@ -464,7 +464,7 @@ calc_mds <- function(input, data_col, cluster_col, method = "jaccard",
 
   # Must have at least 3 clusters
   if (nrow(res) < 3) {
-    stop("cluster_col must contain at least three unique groups.")
+    cli::cli_abort("`cluster_col` must contain at least three unique clusters")
   }
 
   # Calculate MDS

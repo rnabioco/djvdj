@@ -64,7 +64,10 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
   # Filter cells
   if (filter_cells) {
     if (is.null(clonotype_col)) {
-      stop("clonotype_col must be provided to determine which cells to filter.")
+      cli::cli_abort(
+        "When `filter_cells` is `TRUE`, `clonotype_col` must be provided to
+         determine which cells have V(D)J data"
+      )
     }
 
     meta <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
@@ -84,10 +87,7 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
   sep_cols <- col_list$sep
 
   if (purrr::is_empty(sep_cols)) {
-    warning(
-      "The separator '", sep, "' was not identified in any columns specified ",
-      "by data_cols."
-    )
+    cli::cli_warn("`sep` ('{sep}') was not found in {.or {data_cols}}")
 
     return(meta)
   }
@@ -207,7 +207,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
 
   # Allow sep to be NULL so user can skip .unnest_vdj
   if (!is.null(sep) && purrr::is_empty(sep_cols)) {
-    warning("The separator '", sep, "' is not present in the data")
+    cli::cli_warn("`sep` ('{sep}') is not present in the data")
   }
 
   # Create list-cols for V(D)J columns that contain sep
@@ -388,9 +388,7 @@ summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
     fn <- mean
 
     if (!is_num) {
-      if (is.null(chain)) {
-        return(input)
-      }
+      if (is.null(chain)) return(input)
 
       fn <- ~ paste0(.x, collapse = sep)
     }
@@ -426,11 +424,9 @@ summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
       )
 
     } else {
-      not_lst <- paste0(not_lst, collapse = ", ")
-
-      warning(
-        not_lst, " does not contain per-chain V(D)J data, can only filter ",
-        "based on chain if all data_cols contain per-chain data."
+      cli::cli_warn(
+        "Some columns do not contain per-chain V(D)J data, can only filter
+         based on `chain` if all `data_cols` contain per-chain data: {not_lst}"
       )
     }
   }
@@ -573,8 +569,10 @@ summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
 #' @export
 mutate_meta <- function(input, fn, ...) {
 
+  psbl_fns <- c("function", "formula")
+
   if (!purrr::is_function(fn) && !purrr::is_formula(fn)) {
-    stop("fn must be either a function or a formula")
+    cli::cli_abort("`fn` must be a {.or {psbl_fns}}")
   }
 
   meta <- .get_meta(input)

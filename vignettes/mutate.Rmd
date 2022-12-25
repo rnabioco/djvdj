@@ -95,7 +95,7 @@ res <- so |>
 
 res |>
   slot("meta.data") |>
-  filter(n_chains > 1) %>%
+  filter(n_chains > 1) |>
   select(matches("all_(del|ins)")) |>
   head(2)
 ```

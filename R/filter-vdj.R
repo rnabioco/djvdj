@@ -84,7 +84,7 @@ filter_vdj <- function(input, filt, data_cols = NULL,
   sep_cols <- col_list$sep
 
   if (!is.null(sep) && purrr::is_empty(sep_cols)) {
-    warning("The separator '", sep, "' is not present in the data")
+    cli::cli_warn("`sep` ({sep}) is not present in the data")
   }
 
   # Create list-cols for V(D)J columns that contain sep
@@ -129,9 +129,9 @@ filter_vdj <- function(input, filt, data_cols = NULL,
 
     x <- purrr::map2_chr(x, keep_rows, ~ {
       if (!all(is.na(.x)) && length(.x) != length(.y)) {
-        stop(
-          "Filtering condition must return TRUE/FALSE for each chain, ",
-          "or a single TRUE/FALSE for each cell."
+        cli::cli_abort(
+          "Filtering condition must return `TRUE`/`FALSE` for each chain,
+           or a single `TRUE`/`FALSE` for each cell."
         )
       }
 

@@ -68,7 +68,7 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   .check_args(ARG_CLASSES, environment())
 
   # Check input values
-  if (identical(x, y)) stop("'x' and 'y' must be different")
+  if (identical(x, y)) cli::cli_abort("`x` and `y` must be different")
 
   plt_dat <- .get_meta(input)
 
