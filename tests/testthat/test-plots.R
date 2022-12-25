@@ -81,7 +81,7 @@ test_that("plot_features error same x y", {
         feature   = "nCount_RNA",
         plot_lvls = test_lvls
       ),
-    "'x' and 'y' must be different"
+    "`x` and `y` must be different"
   )
 })
 
@@ -144,7 +144,7 @@ test_that("plot_vdj_feature bad chain filtering", {
         data_col = "nCount_RNA",
         chain = "IGK"
       ),
-    "does not contain per-chain V\\(D\\)J data"
+    "Some columns do not contain per-chain"
   )
 })
 
@@ -291,7 +291,7 @@ test_that("plot_diversity bad names", {
         data_col = "cdr3_nt",
         method   = unname(mets)
       ),
-    "Must include names"
+    "Names must be included"
   )
 })
 
@@ -360,7 +360,7 @@ test_that("plot_diversity bad names", {
         data_col = "cdr3_nt",
         method   = unname(mets)
       ),
-    "Must include names"
+    "Names must be included"
   )
 })
 
@@ -549,7 +549,7 @@ test_that("plot_gene_usage bad plot_genes", {
 
   expect_warning(
     plot_gene_usage(vdj_so, data_cols = "v_gene", vdj_genes = c(test_genes, "BAD")),
-    "Some genes not found: "
+    "The following genes were not found"
   )
 })
 

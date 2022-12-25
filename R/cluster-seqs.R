@@ -310,7 +310,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
   # Check number of removed sequences
   if (plt_n_seqs == 0) {
     cli::cli_abort(
-      "There are no sequences longer than `width`,
+      "There are no sequences longer than {width} residues,
        try selecting a shorter cutoff for `width`"
     )
   }
@@ -319,9 +319,9 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
     pct <- 1 - (plt_n_seqs / n_seqs)
     pct <- round(pct * 100, 1)
 
-    cli::cli_alert(
-      "{n_seqs - plt_n_seqs} sequences ({pct}%) are shorter than `width`
-       and were removed",
+    cli::cli_alert_info(
+      "{n_seqs - plt_n_seqs} sequences ({pct}%) are shorter
+       than {width} residues and were removed",
       wrap = TRUE
     )
   }
