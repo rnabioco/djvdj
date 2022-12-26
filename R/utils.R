@@ -639,14 +639,14 @@ NULL
 .check_args <- function(envir, ...) {
   arg_cls <- djvdj_global$arg_classes
 
+  new_cls <- list(...)
+
+  arg_cls[names(new_cls)] <- new_cls
+
   arg_cls <- purrr::imap(arg_cls, ~ {
     .x$arg <- .y
     .x
   })
-
-  new_cls <- list(...)
-
-  arg_cls[names(new_cls)] <- new_cls
 
   arg_cls <- arg_cls[names(arg_cls) %in% ls(envir = envir)]
 
