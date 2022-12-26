@@ -18,7 +18,7 @@ arg_lst <- list(
   downsample  = c(TRUE, FALSE),
   method      = list(mets, list(simpson = abdiv::simpson)),
   return_df   = FALSE,
-  n_boots     = c(0, 2)
+  n_boots     = 0
 )
 
 test_all_args(
@@ -54,6 +54,18 @@ test_all_args(
   .fn     = calc_diversity,
   desc    = "calc_diversity return_df",
   chk     = expr(expect_true(is.data.frame(.res)))
+)
+
+# Test n_boots
+arg_lst$input     <- list(test_so)
+arg_lst$n_boots   <- 10
+arg_lst$return_df <- FALSE
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = calc_diversity,
+  desc    = "calc_diversity n_boots",
+  chk     = expr(expect_s4_class(.res, "Seurat"))
 )
 
 # Check diversity column prefix
