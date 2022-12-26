@@ -26,14 +26,6 @@ NULL
 NULL
 
 
-#' Global variables
-#'
-#' - CELL_COL, the column name to use for storing cell barcodes
-#'
-#' @noRd
-CELL_COL <- ".cell_id"
-
-
 #' Helper to test all combinations of provided arguments
 #'
 #' @param arg_lst Named list of arguments to test
@@ -217,7 +209,7 @@ NULL
   UseMethod(".add_meta", input)
 }
 
-.add_meta.default <- function(input, meta, row_col = CELL_COL) {
+.add_meta.default <- function(input, meta, row_col = djvdj_global$cell_col) {
   if (!is.data.frame(meta)) {
     cli::cli_abort("meta.data must be a data.frame")
   }
@@ -225,7 +217,7 @@ NULL
   tibble::column_to_rownames(meta, row_col)
 }
 
-.add_meta.Seurat <- function(input, meta, row_col = CELL_COL) {
+.add_meta.Seurat <- function(input, meta, row_col = djvdj_global$cell_col) {
   meta <- .prepare_meta(input, meta, row_col)
 
   input@meta.data <- meta
@@ -233,7 +225,8 @@ NULL
   input
 }
 
-.add_meta.SingleCellExperiment <- function(input, meta, row_col = CELL_COL) {
+.add_meta.SingleCellExperiment <- function(input, meta,
+                                           row_col = djvdj_global$cell_col) {
   meta <- .prepare_meta(input, meta, row_col)
 
   input@colData <- S4Vectors::DataFrame(meta)
@@ -248,7 +241,7 @@ NULL
 #'
 #' @rdname .add_meta
 #' @noRd
-.prepare_meta <- function(input, meta, row_col = CELL_COL) {
+.prepare_meta <- function(input, meta, row_col = djvdj_global$cell_col) {
 
   if (!is.data.frame(meta)) {
     cli::cli_abort("meta.data must be a data.frame")
@@ -285,17 +278,18 @@ NULL
   UseMethod(".get_meta", input)
 }
 
-.get_meta.default <- function(input, row_col = CELL_COL) {
+.get_meta.default <- function(input, row_col = djvdj_global$cell_col) {
 
   .to_tibble(input, row_col)
 }
 
-.get_meta.Seurat <- function(input, row_col = CELL_COL) {
+.get_meta.Seurat <- function(input, row_col = djvdj_global$cell_col) {
 
   .get_meta(input@meta.data, row_col)
 }
 
-.get_meta.SingleCellExperiment <- function(input, row_col = CELL_COL) {
+.get_meta.SingleCellExperiment <- function(input,
+                                           row_col = djvdj_global$cell_col) {
   dat <- SingleCellExperiment::colData(input)
   dat <- as.data.frame(dat)
 
@@ -333,7 +327,7 @@ NULL
 #' @param by Columns to use for merging
 #' @return Object with added meta.data
 #' @noRd
-.merge_meta <- function(input, meta, by = CELL_COL) {
+.merge_meta <- function(input, meta, by = djvdj_global$cell_col) {
 
   if (is.null(input)) return(meta)
 
@@ -476,7 +470,7 @@ NULL
 #' the other containing columns where separator has been detected.
 #' @noRd
 .get_vdj_cols <- function(df_in, clone_col, cols_in, sep,
-                          cell_col = CELL_COL) {
+                          cell_col = djvdj_global$cell_col) {
 
   # Check clone_col
   no_clone_col <- is.null(cols_in) && !is.null(clone_col) &&
@@ -557,7 +551,7 @@ NULL
 #' @noRd
 .check_obj_cols <- function(input, ..., chain = NULL, chain_col = "chains",
                             list_avail = FALSE) {
-  dat      <- .get_meta(input, row_col = CELL_COL)
+  dat      <- .get_meta(input, row_col = djvdj_global$cell_col)
   dat_cols <- colnames(dat)
 
   cols <- c(...)
@@ -642,95 +636,14 @@ NULL
   })
 }
 
-.check_args <- function(args, envir) {
-  arg_nms <- purrr::map_chr(args, ~ .x$arg)
-  args    <- args[arg_nms %in% ls(envir = envir)]
+.check_args <- function(envir, ...) {
+  new_cls <- list(...)
+  arg_cls <- djvdj_global$arg_classes
+  arg_cls <- arg_cls[!names(arg_cls) %in% names(new_cls)]
 
-  purrr::walk(args, ~ purrr::pmap(.x, .check_arg, envir = envir))
+  arg_cls <- append(arg_cls, new_cls)
+  arg_nms <- purrr::map_chr(arg_cls, ~ .x$arg)
+  arg_cls <- arg_cls[arg_nms %in% ls(envir = envir)]
+
+  purrr::walk(arg_cls, ~ purrr::pmap(.x, .check_arg, envir = envir))
 }
-
-ARG_CLASSES <- list(
-  list(arg = "data_col"),
-  list(arg = "cluster_col", allow_null = TRUE),
-  list(arg = "group_col", allow_null = TRUE),
-  list(arg = "clonotype_col", allow_null = TRUE),
-  list(arg = "chain_col"),
-  list(arg = "downsample", Class = "logical"),
-  list(arg = "n_boots", Class = "numeric"),
-  list(arg = "chain", len_one = FALSE, allow_null = TRUE),
-  list(arg = "prefix", allow_null = TRUE),
-  list(arg = "return_df", Class = "logical"),
-  list(arg = "sep", allow_null = TRUE),
-  list(arg = "plot_colors", len_one = FALSE, allow_null = TRUE),
-  list(arg = "plot_lvls", Class = list(c("character", "factor")), len_one = FALSE, allow_null = TRUE),
-  list(arg = "panel_nrow", Class = "numeric", allow_null = TRUE),
-  list(arg = "panel_scales"),
-  list(arg = "n_label", Class = "logical"),
-  list(arg = "label_params", Class = "list", len_one = FALSE),
-  list(arg = "units"),
-  list(arg = "trans"),
-  list(arg = "per_cell", Class = "logical"),
-
-  # plot_rarefaction
-  list(arg = "ci_alpha", Class = "numeric"),
-
-  # plot_clone_frequency
-  list(arg = "n_clones", Class = "numeric", allow_null = TRUE),
-
-  # plot_frequency
-  list(arg = "n_top", Class = "numeric", allow_null = TRUE),
-  list(arg = "other_label"),
-  list(arg = "stack", Class = "logical"),
-
-  # plot_gene_usage
-  list(arg = "vdj_genes", len_one = FALSE, allow_null = TRUE),
-  list(arg = "n_genes", Class = "numeric"),
-  list(arg = "rotate_labels", Class = "logical"),
-  list(arg = "return_list", Class = "logical"),
-
-  # calc_similarity
-  list(arg = "return_mat", Class = "logical"),
-
-  # plot_similarity
-  list(arg = "cluster_heatmap", Class = "logical"),
-  list(arg = "remove_upper_triangle", Class = "logical"),
-  list(arg = "remove_diagonal", Class = "logical"),
-
-  # cluster_sequences
-  list(arg = "resolution", Class = "numeric", len_one = FALSE),
-  list(arg = "k", Class = "numeric"),
-  list(arg = "dist_method", allow_null = TRUE),
-  list(arg = "run_umap", Class = "logical"),
-
-  # plot_motifs
-  list(arg = "width", Class = "numeric"),
-  list(arg = "align_end"),
-
-  # import_vdj
-  list(arg = "vdj_dir", len_one = FALSE, allow_null = TRUE),
-  list(arg = "filter_paired", Class = "logical"),
-  list(arg = "define_clonotypes", allow_null = TRUE),
-  list(arg = "include_mutations", Class = "logical"),
-  list(arg = "aggr_dir", allow_null = TRUE),
-
-  # fetch_vdj
-  list(arg = "filter_cells", Class = "logical"),
-  list(arg = "unnest", Class = "logical"),
-
-  # summarize_vdj
-  list(arg = "col_names", allow_null = TRUE),
-
-  # plot_features
-  list(arg = "feature", allow_null = TRUE),
-  list(arg = "x"),
-  list(arg = "y"),
-  list(arg = "min_q", Class = "numeric", allow_null = TRUE),
-  list(arg = "max_q", Class = "numeric", allow_null = TRUE),
-  list(arg = "na_color"),
-  list(arg = "data_slot"),
-
-  # Arguments that vary
-  data_cols     = list(arg = "data_cols", len_one = FALSE),
-  method        = list(arg = "method"),
-  filter_chains = list(arg = "filter_chains", Class = "logical")
-)

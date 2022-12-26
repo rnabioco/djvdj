@@ -45,6 +45,7 @@
 #' the same order as the samples were specified in the cellranger aggr config
 #' file.
 #'
+#' @param quiet If `TRUE` progress updates will not be displayed
 #' @param sep Separator to use for storing per cell V(D)J data
 #' @return Single cell object or data.frame with added V(D)J data
 #'
@@ -111,14 +112,17 @@
 import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
                        data_cols = NULL, filter_chains = TRUE,
                        filter_paired = FALSE, define_clonotypes = NULL,
-                       include_mutations = FALSE, aggr_dir = NULL, sep = ";") {
+                       include_mutations = FALSE, aggr_dir = NULL,
+                       quiet = FALSE, sep = ";") {
+
+  djvdj_global$quiet_import <- quiet
+  djvdj_global$import_envir <- environment()
 
   # Check input classes
-  ARG_CLASSES$data_cols <- list(
-    arg = "data_cols", len_one = FALSE, allow_null = TRUE
+  .check_args(
+    envir = environment(),
+    data_cols = list(arg = "data_cols", len_one = FALSE, allow_null = TRUE)
   )
-
-  .check_args(ARG_CLASSES, environment())
 
   # Check input values
   # vdj_dir or aggr_dir must be provided
@@ -187,8 +191,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   # Set cell barcode prefixes
   # if input object is provided, must match barcodes
+  .import_progress_step("Loading V(D)J data")
+
   if (!is.null(input)) {
-    bcs <- .get_meta(input)[[CELL_COL]]
+    bcs <- .get_meta(input)[[djvdj_global$cell_col]]
 
     prfx_df <- .extract_cell_prefix(bcs, strip_bcs = FALSE)
     prfx_df <- dplyr::distinct(prfx_df, .data$prfx, .data$sfx)
@@ -226,9 +232,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     if (is.null(prfxs)) {
       prfxs <- ""
 
-      if (length(vdj_dir) > 1) {
-        prfxs <- paste0(seq_along(vdj_dir), "_")
-      }
+      if (length(vdj_dir) > 1) prfxs <- paste0(seq_along(vdj_dir), "_")
     }
 
     sfxs <- rep("-1", length(vdj_dir))
@@ -264,15 +268,19 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # if indel data is included, always filter for productive contigs since most
   # non-productive contigs are missing indel data
   if (include_mutations) {
+    .import_progress_step("Calculating mutation frequencies")
 
     # Fix contig_ids in contigs
-    contigs <- purrr::map(
-      contigs,
-      mutate,
-      contig_sfx = unlist(.str_extract_all(.data$contig_id, "_contig_[0-9]+$")),
-      contig_id  = paste0(.data$barcode, .data$contig_sfx),
-      contig_sfx = NULL
-    )
+    contigs <- purrr::map(contigs, ~ {
+      .import_progress_update()
+
+      mutate(
+        .x,
+        contig_sfx = unlist(.str_extract_all(.data$contig_id, "_contig_[0-9]+$")),
+        contig_id  = paste0(.data$barcode, .data$contig_sfx),
+        contig_sfx = NULL
+      )
+    })
 
     # Load mutation data
     indels <- .load_muts(vdj_dir, prfxs, sfxs)
@@ -305,6 +313,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   }
 
   # Classify input data as TCR or BCR
+  .import_progress_step("Formatting results")
+
   vdj_class <- purrr::map_chr(contigs, .classify_vdj)
   vdj_class <- unique(vdj_class)
 
@@ -449,6 +459,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   res <- tibble::column_to_rownames(meta, "barcode")
 
   if (!is.null(define_clonotypes)) {
+    .import_progress_step("Defining clonotypes")
+
     clone_cols <- list(
       cdr3aa    = "cdr3",
       cdr3nt    = "cdr3_nt",
@@ -461,6 +473,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       )
     }
 
+    .import_progress_update()
+
     clone_cols <- clone_cols[[define_clonotypes]]
 
     filt_chains <- NULL
@@ -472,6 +486,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       data_cols     = clone_cols,
       filter_chains = filt_chains
     )
+
+    .import_progress_update()
   }
 
   # Filter to only include cells with valid clonotype_id
@@ -479,7 +495,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   res <- dplyr::filter(res, .data$clonotype_id != "None")
 
   if (nrow(res) == 0) {
-    cli::cli_warn("No valid clonotypes present, check input data")
+    cli::cli_abort("No valid clonotypes present, check input data")
   }
 
   # Add prefix to V(D)J columns
@@ -520,16 +536,21 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   res <- purrr::map_chr(vdj_dir, .get_vdj_path, file = contig_file)
 
   # Load data
-  res <- purrr::map(
-    res,
-    readr::read_csv,
-    col_types = col_spec,
-    progress  = FALSE,
-    show_col_types = FALSE
-  )
+  res <- purrr::map(res, ~ {
+    .import_progress_update()
+
+    readr::read_csv(
+      .x,
+      col_types      = col_spec,
+      progress       = FALSE,
+      show_col_types = FALSE
+    )
+  })
 
   # Replace 'None' in productive with FALSE
-  res <- purrr::imap(res, ~ {
+  res <- purrr::map(res, ~ {
+    .import_progress_update()
+
     d <- dplyr::filter(.x, is_cell)
 
     d <- .replace_none(d, chk_none)
@@ -550,7 +571,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     cell_sfxs  = cell_sfxs
   )
 
-  res <- purrr::pmap(prfx_args, .format_cell_prefixes, bc_col = "barcode")
+  res <- purrr::pmap(prfx_args, ~ {
+    .import_progress_update()
+    .format_cell_prefixes(..., bc_col = "barcode")
+  })
 
   res
 }
@@ -581,8 +605,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # Load data
   res <- readr::read_csv(
     res,
-    col_types = col_spec,
-    progress  = FALSE,
+    col_types      = col_spec,
+    progress       = FALSE,
     show_col_types = FALSE
   )
 
@@ -601,6 +625,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     cell_prfxs = cell_prfxs,
     cell_sfxs  = cell_sfxs
   )
+
+  .import_progress_update()
 
   res
 }
@@ -646,6 +672,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   df_in[[bc_col]] <- prfx_df$bc
 
+  .import_progress_update()
+
   df_in
 }
 
@@ -671,6 +699,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       bc = stringr::str_remove(.data$bc, paste0(.data$sfx, "$"))
     )
   }
+
+  .import_progress_update()
 
   res
 }
@@ -702,6 +732,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     })
   )
 
+  .import_progress_update()
+
   res
 }
 
@@ -718,7 +750,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @importFrom Rsamtools scanBam
 #' @noRd
 .load_muts <- function(vdj_dir, cell_prfxs, cell_sfxs,
-                       bam_file = "concat_ref.bam",
+                       bam_file  = "concat_ref.bam",
                        airr_file = "airr_rearrangement.tsv") {
 
   # Retrieve bam and airr file paths
@@ -727,10 +759,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   file_paths <- purrr::map(file_paths, ~ {
     fl <- .x
 
-    purrr::map_chr(
-      vdj_dir, .get_vdj_path,
-      file = fl, warn = TRUE
-    )
+    purrr::map_chr(vdj_dir, .get_vdj_path, file = fl, warn = TRUE)
   })
 
   any_missing <- any(purrr::map_lgl(file_paths, ~ any(is.na(.x))))
@@ -825,6 +854,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     all_of(c("contig_id", "len", "start", "end", "type", "n"))
   )
 
+  .import_progress_update()
+
   res
 }
 
@@ -851,8 +882,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   airr <- readr::read_tsv(
     airr_file,
-    col_types = col_spec,
-    progress  = FALSE,
+    col_types      = col_spec,
+    progress       = FALSE,
     show_col_types = FALSE
   )
 
@@ -870,6 +901,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     cli::cli_abort("V(D)J coordinates not found, check {.file airr_file}")
   }
 
+  .import_progress_update()
+
   res <- tidyr::pivot_longer(res, -"contig_id")
   res <- dplyr::filter(res, !is.na(.data$value))
   res <- tidyr::extract(res, "name", c("seg", "pos"), coord_cols_re)
@@ -883,6 +916,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     res,
     all_of(c("contig_id", "len", "start", "end", "seg"))
   )
+
+  .import_progress_update()
 
   res
 }
@@ -1031,6 +1066,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   res <- res[, c("contig_id", mut_cols)]
 
+  .import_progress_update()
+
   res
 }
 
@@ -1089,6 +1126,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     )
   }
 
+  .import_progress_update()
+
   sep
 }
 
@@ -1141,6 +1180,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     )
   }
 
+  .import_progress_update()
+
   res
 }
 
@@ -1157,7 +1198,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   if (is.null(input)) return(meta)
 
   obj_meta  <- .get_meta(input)
-  obj_cells <- obj_meta[[CELL_COL]]
+  obj_cells <- obj_meta[[djvdj_global$cell_col]]
   met_cells <- unique(meta$barcode)
 
   n_overlap   <- length(obj_cells[obj_cells %in% met_cells])
@@ -1174,7 +1215,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   if (identical(n_overlap, 0L)) {
     cli::cli_abort(
-      "Cell barcodes from sample {nm} do not match those in the object, {sgst_msg}"
+      "Cell barcodes from sample {nm} do not match those in the object,
+       {sgst_msg}"
     )
   }
 
@@ -1184,6 +1226,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
        the provided object, {sgst_msg}"
     )
   }
+
+  .import_progress_update()
 
   meta
 }
@@ -1205,6 +1249,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   )
 
   res <- dplyr::ungroup(res)
+
+  .import_progress_update()
 
   res
 }
@@ -1258,7 +1304,34 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     isotype = tidyr::replace_na(.data$isotype, "None")
   )
 
+  .import_progress_update()
+
   res
+}
+
+#' Add import_vdj() progress step
+#'
+#' @param msg Message for progress step
+#' @param spinner Include spinner
+#' @param quiet If `TRUE` do nothing, if `FALSE` add progress step
+#' @param envir Environment to set progress step
+#' @noRd
+.import_progress_step <- function(msg, spinner = TRUE,
+                                  quiet = djvdj_global$quiet_import,
+                                  envir = djvdj_global$import_envir) {
+
+  if (!quiet) cli::cli_progress_step(msg, spinner = spinner, .envir = envir)
+}
+
+#' Update import_vdj() progress spinner
+#'
+#' @param quiet If `TRUE` do nothing, if `FALSE` update
+#' @param envir Environment containing progress bar
+#' @noRd
+.import_progress_update <- function(quiet = djvdj_global$quiet_import,
+                                    envir = djvdj_global$import_envir) {
+
+  if (!quiet) cli::cli_progress_update(.envir = envir)
 }
 
 #' Define clonotypes based on V(D)J data
@@ -1323,11 +1396,12 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
   .check_obj_cols(input, data_cols, filter_chains)
 
   # Check input classes
-  ARG_CLASSES$filter_chains <- list(
-    arg = "filter_chains", Class = "character", len_one = FALSE
+  .check_args(
+    envir = environment(),
+    filter_chains = list(
+      arg = "filter_chains", Class = "character", len_one = FALSE
+    )
   )
-
-  .check_args(ARG_CLASSES, environment())
 
   # Get meta.data
   # overwrite exising clonotype_col if it has the same name
@@ -1343,7 +1417,7 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
     dplyr::if_all(dplyr::all_of(all_cols), ~ !is.na(.x))
   )
 
-  vdj <- dplyr::select(vdj, all_of(c(CELL_COL, all_cols)))
+  vdj <- dplyr::select(vdj, all_of(c(djvdj_global$cell_col, all_cols)))
 
   # Only use values in data_cols that are TRUE for all filter_chains columns
   # first identify contigs TRUE for all filter_chains columns
@@ -1351,7 +1425,7 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
   if (!is.null(filter_chains)) {
     clmns <- syms(filter_chains)
 
-    vdj <- tibble::column_to_rownames(vdj, CELL_COL)
+    vdj <- tibble::column_to_rownames(vdj, djvdj_global$cell_col)
 
     vdj <- mutate_vdj(
       vdj,
@@ -1384,8 +1458,8 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
   )
 
   # Add new clonotype IDs to meta.data
-  vdj  <- dplyr::select(vdj, all_of(c(CELL_COL, clonotype_col)))
-  meta <- dplyr::left_join(meta, vdj, by = CELL_COL)
+  vdj  <- dplyr::select(vdj, all_of(c(djvdj_global$cell_col, clonotype_col)))
+  meta <- dplyr::left_join(meta, vdj, by = djvdj_global$cell_col)
 
   res <- .add_meta(input, meta)
 
