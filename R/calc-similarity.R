@@ -67,8 +67,7 @@ calc_similarity <- function(input, data_col, cluster_col,
 
   # Check input classes
   .check_args(
-    envir = environment(),
-    method = list(arg = "method", Class = list(c("character", "function")))
+    environment(), method = list(Class = list(c("character", "function")))
   )
 
   # Check input values
@@ -300,8 +299,7 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 
   # Check input classes
   .check_args(
-    envir = environment(),
-    method = list(arg = "method", Class = list(c("character", "function")))
+    environment(), method = list(Class = list(c("character", "function")))
   )
 
   # Check input values

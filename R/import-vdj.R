@@ -120,8 +120,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   # Check input classes
   .check_args(
-    envir = environment(),
-    data_cols = list(arg = "data_cols", len_one = FALSE, allow_null = TRUE)
+    environment(), data_cols = list(len_one = FALSE, allow_null = TRUE)
   )
 
   # Check input values
@@ -1397,10 +1396,7 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
 
   # Check input classes
   .check_args(
-    envir = environment(),
-    filter_chains = list(
-      arg = "filter_chains", Class = "character", len_one = FALSE
-    )
+    environment(), filter_chains = list(Class = "character", len_one = FALSE)
   )
 
   # Get meta.data

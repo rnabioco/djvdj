@@ -92,10 +92,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
   )
 
   # Check input classes
-  .check_args(
-    envir = environment(),
-    method = list(arg = "method", Class = "function", len_one = FALSE)
-  )
+  .check_args(environment(), method = list(Class = "function", len_one = FALSE))
 
   # Check input values
   if (length(method) > 1 && is.null(names(method))) {
@@ -357,10 +354,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   )
 
   # Check input classes
-  .check_args(
-    envir = environment(),
-    method = list(arg = "method", Class = "function", len_one = FALSE)
-  )
+  .check_args(environment(), method = list(Class = "function", len_one = FALSE))
 
   # Check input values
   if (length(method) > 1 && is.null(names(method))) {
@@ -616,10 +610,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
   )
 
   # Check input classes
-  .check_args(
-    envir = environment(),
-    method = list(arg = "method", len_one = FALSE)
-  )
+  .check_args(environment(), method = list(len_one = FALSE))
 
   # Check input values
   mets <- c("richness" = 0, "shannon" = 1, "invsimpson" = 2)

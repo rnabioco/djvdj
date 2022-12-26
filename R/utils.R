@@ -637,13 +637,18 @@ NULL
 }
 
 .check_args <- function(envir, ...) {
-  new_cls <- list(...)
   arg_cls <- djvdj_global$arg_classes
-  arg_cls <- arg_cls[!names(arg_cls) %in% names(new_cls)]
 
-  arg_cls <- append(arg_cls, new_cls)
-  arg_nms <- purrr::map_chr(arg_cls, ~ .x$arg)
-  arg_cls <- arg_cls[arg_nms %in% ls(envir = envir)]
+  arg_cls <- purrr::imap(arg_cls, ~ {
+    .x$arg <- .y
+    .x
+  })
+
+  new_cls <- list(...)
+
+  arg_cls[names(new_cls)] <- new_cls
+
+  arg_cls <- arg_cls[names(arg_cls) %in% ls(envir = envir)]
 
   purrr::walk(arg_cls, ~ purrr::pmap(.x, .check_arg, envir = envir))
 }

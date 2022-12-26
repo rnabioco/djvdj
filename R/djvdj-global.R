@@ -6,87 +6,89 @@ djvdj_global$cell_col <- ".cell_id"
 
 # Default argument classes to use with .check_args()
 djvdj_global$arg_classes <- list(
-  list(arg = "data_col"),
-  list(arg = "cluster_col", allow_null = TRUE),
-  list(arg = "group_col", allow_null = TRUE),
-  list(arg = "clonotype_col", allow_null = TRUE),
-  list(arg = "chain_col"),
-  list(arg = "downsample", Class = "logical"),
-  list(arg = "n_boots", Class = "numeric"),
-  list(arg = "chain", len_one = FALSE, allow_null = TRUE),
-  list(arg = "prefix", allow_null = TRUE),
-  list(arg = "return_df", Class = "logical"),
-  list(arg = "sep", allow_null = TRUE),
-  list(arg = "plot_colors", len_one = FALSE, allow_null = TRUE),
-  list(arg = "plot_lvls", Class = list(c("character", "factor")), len_one = FALSE, allow_null = TRUE),
-  list(arg = "panel_nrow", Class = "numeric", allow_null = TRUE),
-  list(arg = "panel_scales"),
-  list(arg = "n_label", Class = "logical"),
-  list(arg = "label_params", Class = "list", len_one = FALSE),
-  list(arg = "units"),
-  list(arg = "trans"),
-  list(arg = "per_cell", Class = "logical"),
+  data_col      = list(),
+  cluster_col   = list(allow_null = TRUE),
+  group_col     = list(allow_null = TRUE),
+  clonotype_col = list(allow_null = TRUE),
+  chain_col     = list(),
+  downsample    = list(Class = "logical"),
+  n_boots       = list(Class = "numeric"),
+  chain         = list(len_one = FALSE, allow_null = TRUE),
+  prefix        = list(allow_null = TRUE),
+  return_df     = list(Class = "logical"),
+  sep           = list(allow_null = TRUE),
+  plot_colors   = list(len_one = FALSE, allow_null = TRUE),
+  plot_lvls     = list(
+    Class = list(c("character", "factor")), len_one = FALSE, allow_null = TRUE
+  ),
+  panel_nrow    = list(Class = "numeric", allow_null = TRUE),
+  panel_scales  = list(),
+  n_label       = list(Class = "logical"),
+  label_params  = list(Class = "list", len_one = FALSE),
+  units         = list(),
+  trans         = list(),
+  per_cell      = list(Class = "logical"),
 
   # plot_rarefaction
-  list(arg = "ci_alpha", Class = "numeric"),
+  ci_alpha = list(Class = "numeric"),
 
   # plot_clone_frequency
-  list(arg = "n_clones", Class = "numeric", allow_null = TRUE),
+  n_clones = list(Class = "numeric", allow_null = TRUE),
 
   # plot_frequency
-  list(arg = "n_top", Class = "numeric", allow_null = TRUE),
-  list(arg = "other_label"),
-  list(arg = "stack", Class = "logical"),
+  n_top       = list(Class = "numeric", allow_null = TRUE),
+  other_label = list(),
+  stack       = list(Class = "logical"),
 
   # plot_gene_usage
-  list(arg = "vdj_genes", len_one = FALSE, allow_null = TRUE),
-  list(arg = "n_genes", Class = "numeric"),
-  list(arg = "rotate_labels", Class = "logical"),
-  list(arg = "return_list", Class = "logical"),
+  vdj_genes     = list(len_one = FALSE, allow_null = TRUE),
+  n_genes       = list(Class = "numeric"),
+  rotate_labels = list(Class = "logical"),
+  return_list   = list(Class = "logical"),
 
   # calc_similarity
-  list(arg = "return_mat", Class = "logical"),
+  return_mat = list(Class = "logical"),
 
   # plot_similarity
-  list(arg = "cluster_heatmap", Class = "logical"),
-  list(arg = "remove_upper_triangle", Class = "logical"),
-  list(arg = "remove_diagonal", Class = "logical"),
+  cluster_heatmap       = list(Class = "logical"),
+  remove_upper_triangle = list(Class = "logical"),
+  remove_diagonal       = list(Class = "logical"),
 
   # cluster_sequences
-  list(arg = "resolution", Class = "numeric", len_one = FALSE),
-  list(arg = "k", Class = "numeric"),
-  list(arg = "dist_method", allow_null = TRUE),
-  list(arg = "run_umap", Class = "logical"),
+  resolution  = list(Class = "numeric", len_one = FALSE),
+  k           = list(Class = "numeric"),
+  dist_method = list(allow_null = TRUE),
+  run_umap    = list(Class = "logical"),
 
   # plot_motifs
-  list(arg = "width", Class = "numeric"),
-  list(arg = "align_end"),
+  width     = list(Class = "numeric"),
+  align_end = list(),
 
   # import_vdj
-  list(arg = "vdj_dir", len_one = FALSE, allow_null = TRUE),
-  list(arg = "filter_paired", Class = "logical"),
-  list(arg = "define_clonotypes", allow_null = TRUE),
-  list(arg = "include_mutations", Class = "logical"),
-  list(arg = "aggr_dir", allow_null = TRUE),
+  vdj_dir           = list(len_one = FALSE, allow_null = TRUE),
+  filter_paired     = list(Class = "logical"),
+  define_clonotypes = list(allow_null = TRUE),
+  include_mutations = list(Class = "logical"),
+  aggr_dir          = list(allow_null = TRUE),
 
   # fetch_vdj
-  list(arg = "filter_cells", Class = "logical"),
-  list(arg = "unnest", Class = "logical"),
+  filtrer_cells = list(Class = "logical"),
+  unnest        = list(Class = "logical"),
 
   # summarize_vdj
-  list(arg = "col_names", allow_null = TRUE),
+  col_names = list(allow_null = TRUE),
 
   # plot_features
-  list(arg = "feature", allow_null = TRUE),
-  list(arg = "x"),
-  list(arg = "y"),
-  list(arg = "min_q", Class = "numeric", allow_null = TRUE),
-  list(arg = "max_q", Class = "numeric", allow_null = TRUE),
-  list(arg = "na_color"),
-  list(arg = "data_slot"),
+  feature   = list(allow_null = TRUE),
+  x         = list(),
+  y         = list(),
+  min_q     = list(Class = "numeric", allow_null = TRUE),
+  max_q     = list(Class = "numeric", allow_null = TRUE),
+  na_color  = list(),
+  data_slot = list(),
 
   # Arguments that vary
-  data_cols     = list(arg = "data_cols", len_one = FALSE),
-  method        = list(arg = "method"),
-  filter_chains = list(arg = "filter_chains", Class = "logical")
+  data_cols     = list(len_one = FALSE),
+  method        = list(),
+  filter_chains = list(Class = "logical")
 )

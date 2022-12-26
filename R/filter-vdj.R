@@ -62,8 +62,7 @@ filter_vdj <- function(input, filt, data_cols = NULL,
 
   # Check input classes
   .check_args(
-    envir = environment(),
-    data_cols = list(arg = "data_cols", len_one = FALSE, allow_null = TRUE)
+    environment(), data_cols = list(len_one = FALSE, allow_null = TRUE)
   )
 
   # Format input data

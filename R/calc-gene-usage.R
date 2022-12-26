@@ -311,10 +311,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   )
 
   # Check input classes
-  .check_args(
-    envir = environment(),
-    method = list(arg = "method", allow_null = TRUE)
-  )
+  .check_args(environment(), method = list(allow_null = TRUE))
 
   # Check input values
   paired <- length(data_cols) == 2

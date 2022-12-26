@@ -53,8 +53,7 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
 
   # Check input classes
   .check_args(
-    envir = environment(),
-    data_cols = list(arg = "data_cols", len_one = FALSE, allow_null = TRUE)
+    environment(), data_cols = list(len_one = FALSE, allow_null = TRUE)
   )
 
   # Format input data
@@ -185,8 +184,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
 
   # Check input classes
   .check_args(
-    envir = environment(),
-    data_cols = list(arg = "data_cols", len_one = FALSE, allow_null = TRUE)
+    environment(), data_cols = list(len_one = FALSE, allow_null = TRUE)
   )
 
   # Format input data
