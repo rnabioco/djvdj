@@ -66,11 +66,10 @@ calc_similarity <- function(input, data_col, cluster_col,
   )
 
   # Check input classes
-  ARG_CLASSES$method <- list(
-    arg = "method", Class = list(c("character", "function"))
+  .check_args(
+    envir = environment(),
+    method = list(arg = "method", Class = list(c("character", "function")))
   )
-
-  .check_args(ARG_CLASSES, environment())
 
   # Check input values
   if (identical(method, "count")) {
@@ -300,11 +299,10 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
   )
 
   # Check input classes
-  ARG_CLASSES$method <- list(
-    arg = "method", Class = list(c("character", "function"))
+  .check_args(
+    envir = environment(),
+    method = list(arg = "method", Class = list(c("character", "function")))
   )
-
-  .check_args(ARG_CLASSES, environment())
 
   # Check input values
   is_circ <- identical(method, "circos")
@@ -437,7 +435,7 @@ calc_mds <- function(input, data_col, cluster_col, method = "jaccard",
   )
 
   # Check input classes
-  .check_args(ARG_CLASSES, environment())
+  .check_args(environment())
 
   # Check input values
   mets <- c(
@@ -579,7 +577,7 @@ plot_mds <- function(input, data_col, cluster_col,
   )
 
   # Check input classes
-  .check_args(ARG_CLASSES, environment())
+  .check_args(environment())
 
   # Calculate MDS
   plt_dat <- calc_mds(

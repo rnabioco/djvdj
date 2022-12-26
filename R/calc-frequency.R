@@ -65,7 +65,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
   .check_obj_cols(input, data_col, cluster_col)
 
   # Check arguments
-  .check_args(ARG_CLASSES, environment())
+  .check_args(environment())
 
   # Format input data
   meta <- .get_meta(input)
@@ -312,7 +312,7 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   .check_obj_cols(input, data_col, cluster_col)
 
   # Check input classes
-  .check_args(ARG_CLASSES, environment())
+  .check_args(environment())
 
   # Check input values
   n_clones <- n_clones %||% switch(method, bar = 10, line = 3)
@@ -598,7 +598,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   .check_obj_cols(input, data_col, cluster_col)
 
   # Check input classes
-  .check_args(ARG_CLASSES, environment())
+  .check_args(environment())
 
   # Check input values
   .chk_group_cols(cluster_col, group_col, input)

@@ -99,7 +99,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
   )
 
   # Check input classes
-  .check_args(ARG_CLASSES, environment())
+  .check_args(environment())
 
   # Check input values
   mets <- c("louvain", "leiden")
@@ -271,7 +271,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
   )
 
   # Check input classes
-  .check_args(ARG_CLASSES, environment())
+  .check_args(environment())
 
   # Check input values
   if (width <= 0) cli::cli_abort("`width` must be >0")

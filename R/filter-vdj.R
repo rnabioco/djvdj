@@ -61,11 +61,10 @@ filter_vdj <- function(input, filt, data_cols = NULL,
   .check_obj_cols(input, data_cols, clonotype_col)
 
   # Check input classes
-  ARG_CLASSES$data_cols <- list(
-    arg = "data_cols", len_one = FALSE, allow_null = TRUE
+  .check_args(
+    envir = environment(),
+    data_cols = list(arg = "data_cols", len_one = FALSE, allow_null = TRUE)
   )
-
-  .check_args(ARG_CLASSES, environment())
 
   # Format input data
   if (per_cell) sep <- NULL
