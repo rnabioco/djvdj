@@ -1,5 +1,5 @@
 # Environment that holds global variables
-djvdj_global <- new.env(parent = emptyenv())
+djvdj_global <- new.env()
 
 # Column name to use for storing cell barcodes
 djvdj_global$cell_col <- ".cell_id"

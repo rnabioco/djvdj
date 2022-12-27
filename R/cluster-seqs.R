@@ -115,7 +115,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
     sep       = sep
   )
 
-  vdj  <- dplyr::distinct(vdj, !!!syms(c(CELL_COL, data_col)))
+  vdj  <- dplyr::distinct(vdj, !!!syms(c(djvdj_global$cell_col, data_col)))
   seqs <- vdj[[data_col]]
   seqs <- unique(sort(seqs))
 
@@ -209,7 +209,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 
   # Format results
   meta <- .get_meta(input)
-  res  <- dplyr::left_join(meta, res, by = CELL_COL)
+  res  <- dplyr::left_join(meta, res, by = djvdj_global$cell_col)
 
   if (return_df) input <- meta
 
@@ -285,7 +285,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
     sep       = sep
   )
 
-  vdj_cols <- c(CELL_COL, data_col, cluster_col)
+  vdj_cols <- c(djvdj_global$cell_col, data_col, cluster_col)
   seqs     <- dplyr::select(seqs, all_of(vdj_cols))
 
   n_seqs <- nrow(seqs)

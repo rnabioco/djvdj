@@ -58,7 +58,7 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 
   if (!is.null(chain)) sep_cols <- c(sep_cols, chain_col)
 
-  vdj_cols <- c(CELL_COL, cluster_col, sep_cols)
+  vdj_cols <- c(djvdj_global$cell_col, cluster_col, sep_cols)
 
 
 
@@ -119,8 +119,8 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 
   res <- dplyr::summarize(
     res,
-    n_cells = dplyr::n_distinct(meta[[CELL_COL]]),
-    freq    = dplyr::n_distinct(!!sym(CELL_COL)),
+    n_cells = dplyr::n_distinct(meta[[djvdj_global$cell_col]]),
+    freq    = dplyr::n_distinct(!!sym(djvdj_global$cell_col)),
     .groups = "drop"
   )
 

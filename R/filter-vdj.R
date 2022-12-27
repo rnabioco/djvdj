@@ -112,7 +112,7 @@ filter_vdj <- function(input, filt, data_cols = NULL,
   # If vectors in keep_rows are all length 1, filter cells
   if (length_one) {
     keep_rows <- unlist(keep_rows)
-    vdj_cols  <- vdj_cols[vdj_cols != CELL_COL]
+    vdj_cols  <- vdj_cols[vdj_cols != djvdj_global$cell_col]
 
     vdj <- dplyr::mutate(meta, across(all_of(vdj_cols), .add_na, !keep_rows))
 

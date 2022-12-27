@@ -109,7 +109,7 @@ calc_similarity <- function(input, data_col, cluster_col,
 
   # Check number of clusters after filtering
   vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
-  vdj <- dplyr::select(vdj, all_of(c(CELL_COL, data_col, cluster_col)))
+  vdj <- dplyr::select(vdj, all_of(c(djvdj_global$cell_col, data_col, cluster_col)))
 
   n_clsts <- dplyr::n_distinct(vdj[[cluster_col]])
 
@@ -122,7 +122,7 @@ calc_similarity <- function(input, data_col, cluster_col,
 
   vdj <- dplyr::summarize(
     vdj,
-    n = dplyr::n_distinct(!!sym(CELL_COL)), .groups = "drop"
+    n = dplyr::n_distinct(!!sym(djvdj_global$cell_col)), .groups = "drop"
   )
 
   clsts <- unique(vdj[[cluster_col]])
