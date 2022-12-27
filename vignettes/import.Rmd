@@ -36,6 +36,7 @@ The simplest use case for `import_vdj()` involves creating an object using data 
 ```{r}
 library(djvdj)
 library(Seurat)
+library(dplyr)
 
 data_dir <- system.file("extdata/splen", package = "djvdj")
 
@@ -54,6 +55,7 @@ so_vdj <- so |>
 ```{r}
 so_vdj |>
   slot("meta.data") |>
+  filter(n_chains > 1) |>
   head(2)
 ```
 
@@ -189,6 +191,7 @@ The additional columns added to the meta.data will include the number of inserti
 ```{r}
 so_vdj |>
   slot("meta.data") |>
+  filter(n_chains > 1) |>
   head(2)
 ```
 
