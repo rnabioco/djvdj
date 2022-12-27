@@ -1178,7 +1178,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @noRd
 .calc_overlap <- function(input, meta, nm, pct_min = 25) {
 
-  met_dat <- dplyr::distinct(meta, barcode, paired)
+  met_dat <- dplyr::distinct(meta, .data$barcode, .data$paired)
 
   met_cells   <- met_dat$barcode
   n_met_cells <- length(met_cells)
