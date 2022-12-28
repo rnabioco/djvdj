@@ -204,8 +204,8 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
     res <- res +
       ggplot2::scale_y_continuous(expand = ggplot2::expansion(c(0.05, 0.1)))
 
-    n_dat <- .calc_n(dat, grp)
-    res   <- .add_n_label(res, n_dat, lab_params)
+    n_lab_dat <- .calc_n(dat, grp)
+    res   <- .add_n_label(res, n_lab_dat, lab_params)
   }
 
   res
@@ -599,7 +599,7 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
 
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
-  n_dat <- .calc_n(plt_dat, group_col)
+  n_lab_dat <- .calc_n(plt_dat, group_col)
 
   # Create plots
   gg_args <- list(
@@ -623,7 +623,7 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
   res <- lift(.plot_vdj)(gg_args)
 
   # Add n label
-  if (n_label) res <- .add_n_label(res, n_dat, label_params)
+  if (n_label) res <- .add_n_label(res, n_lab_dat, label_params)
 
   res
 }

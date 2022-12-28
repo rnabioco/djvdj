@@ -356,7 +356,7 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   if (identical(method, "line")) n_grp <- NULL
   else                           n_grp <- cluster_col
 
-  n_dat <- .calc_n(plt_dat, cluster_col)
+  n_dat <- .calc_n(plt_dat, n_grp)
 
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
@@ -631,7 +631,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
   # Calculate number of cells for label
-  n_dat <- .calc_n(plt_dat)
+  n_lab_dat <- .calc_n(plt_dat)
 
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
@@ -737,7 +737,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     res <- lift(.create_bars)(gg_args)
   }
 
-  if (n_label) res <- .add_n_label(res, n_dat, label_params)
+  if (n_label) res <- .add_n_label(res, n_lab_dat, label_params)
 
   res
 }
