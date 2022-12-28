@@ -765,18 +765,25 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @noRd
 .add_n_label <- function(gg_in, dat, lab_args) {
 
+  # Base justification
+  # individual characters are generally taller than they are wide
+  # need to account for this to get even spacing from border
+  just <- 0.5
+  char_h_w <- 1.5
+
   dat <- dplyr::mutate(
     dat,
-    label = lab_args$label %||% label
+    label = lab_args$label %||% label,
+    hjust = nchar(label),
+    hjust = 1 + (1 / hjust * (just * char_h_w))
   )
 
-  lab_args$mapping     <- ggplot2::aes(label = label)
+  lab_args$mapping     <- ggplot2::aes(label = label, hjust = hjust)
   lab_args$data        <- dat
   lab_args$inherit.aes <- FALSE
   lab_args$x           <- lab_args$x %||% Inf
   lab_args$y           <- lab_args$y %||% Inf
-  lab_args$hjust       <- lab_args$hjust %||% 1.2
-  lab_args$vjust       <- lab_args$vjust %||% 1.5
+  lab_args$vjust       <- lab_args$vjust %||% 1 + just
 
   res <- gg_in +
     lift(ggplot2::geom_text)(lab_args)
@@ -798,6 +805,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   res
 }
+
 
 #' Set min and max values for column
 #'

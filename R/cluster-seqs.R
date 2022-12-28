@@ -238,6 +238,14 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' @param align_end End to use for aligning sequences, specify '5' or '3' to
 #' align sequences at the 5' or 3' end when plotting.
 #' @param panel_nrow The number of rows to use for arranging plot panels
+#' @param panel_scales Should scales for plot panels be fixed or free. This
+#' passes a scales specification to `ggplot2::facet_wrap()`, can be 'fixed', 'free',
+#' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
+#' Use this when separate bar graphs are created for each cell cluster.
+#' @param n_label Include a label showing the number of cells plotted
+#' @param label_params Named list providing additional parameters to modify
+#' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
+#' @param quiet If `TRUE` messages will not be displayed
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional parameters to pass to [ggseqlogo::geom_logo()]
 #' @return ggplot object
@@ -263,7 +271,8 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
                         chain, plot_colors = NULL,
                         plot_lvls = names(plot_colors), chain_col = "chains",
                         width = 0.75, align_end = "5", panel_nrow = NULL,
-                        sep = ";", ...) {
+                        panel_scales = "free", n_label = TRUE,
+                        label_params = list(), quiet = FALSE, sep = ";", ...) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -303,7 +312,6 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 
   } else {
     seqs <- trim_fn(seqs)
-
     plt_n_seqs <- length(seqs)
   }
 
@@ -315,22 +323,46 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
     )
   }
 
-  if (plt_n_seqs < n_seqs) {
+  if (plt_n_seqs < n_seqs && !quiet) {
     pct <- 1 - (plt_n_seqs / n_seqs)
     pct <- round(pct * 100, 1)
 
     cli::cli_alert_info(
       "{n_seqs - plt_n_seqs} sequences ({pct}%) are shorter
-       than {width} residues and were removed",
+       than `width` and were removed",
       wrap = TRUE
     )
   }
 
+  # Calculate number of cells for label
+  if (!is.list(seqs)) seqs <-list(seqs)
+
+  n_lab_dat <- tibble::tibble(
+    seq_group = names(seqs),
+    label     = purrr::map_dbl(seqs, length)
+  )
+
+  n_lab_dat <- dplyr::mutate(
+    n_lab_dat,
+    label = paste0("n = ", scales::label_comma()(label))
+  )
+
   # Create logos
   res <- ggplot() +
     ggseqlogo::geom_logo(seqs, ...) +
-    ggplot2::facet_wrap(~ seq_group, scales = "free", nrow = panel_nrow) +
     djvdj_theme()
+
+  if (n_label) {
+    res <- .add_n_label(res, n_lab_dat, label_params)
+
+    res <- res +
+      scale_y_continuous(expand = ggplot2::expansion(c(0.05, 0.1)))
+  }
+
+  if (!is.null(cluster_col)) {
+    res <- res +
+      ggplot2::facet_wrap(~ seq_group, scales = panel_scales, nrow = panel_nrow)
+  }
 
   if (!is.null(plot_colors)) {
     suppressMessages({

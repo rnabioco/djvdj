@@ -413,9 +413,8 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   lab_args <- label_params
 
   # Create bar graph
-  y_exp <- c(0.05, 0.05)
-
   if (n_label) y_exp <- c(0.05, 0.1)
+  else         y_exp <- c(0.05, 0.05)
 
   if (identical(method, "bar")) {
     plt_labs <- purrr::set_names(top_clones$.lab, top_clones[[data_col]])
