@@ -67,7 +67,7 @@ passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 \item{n_label}{Include a label showing the number of cells plotted}
 
 \item{label_params}{Named list providing additional parameters to modify
-clonotype and n label aesthetics, e.g. list(size = 4, color = "red")}
+n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 

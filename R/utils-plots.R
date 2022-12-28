@@ -759,26 +759,45 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' Add n label to plot
 #'
 #' @param gg_in ggplot2 object
-#' @param n n to use for label
 #' @param lab_args named list with aesthetic parameters to used for modifying
 #' n label
+#' @param dat data.frame containing n label to add
 #' @noRd
-.add_n_label <- function(gg_in, lab_args, n = NULL) {
-  lab_args$geom  <- "text"
-  lab_args$x     <- lab_args$x %||% Inf
-  lab_args$y     <- lab_args$y %||% Inf
-  lab_args$hjust <- lab_args$hjust %||% 1.2
-  lab_args$vjust <- lab_args$vjust %||% 1.5
+.add_n_label <- function(gg_in, dat, lab_args) {
 
-  lab_args$label <- lab_args$label %||%
-    paste0("n = ", scales::label_comma()(n))
+  dat <- dplyr::mutate(
+    dat,
+    label = lab_args$label %||% label
+  )
+
+  lab_args$mapping     <- ggplot2::aes(label = label)
+  lab_args$data        <- dat
+  lab_args$inherit.aes <- FALSE
+  lab_args$x           <- lab_args$x %||% Inf
+  lab_args$y           <- lab_args$y %||% Inf
+  lab_args$hjust       <- lab_args$hjust %||% 1.2
+  lab_args$vjust       <- lab_args$vjust %||% 1.5
 
   res <- gg_in +
-    lift(ggplot2::annotate)(lab_args)
+    lift(ggplot2::geom_text)(lab_args)
 
   res
 }
 
+.calc_n <- function(df_in, grp = NULL) {
+  res <- df_in
+
+  if (!is.null(grp)) res <- dplyr::group_by(res, !!sym(grp))
+
+  res <- dplyr::summarize(
+    res,
+    label   = scales::label_comma()(n()),
+    label   = paste0("n = ", label),
+    .groups = "drop"
+  )
+
+  res
+}
 
 #' Set min and max values for column
 #'

@@ -353,17 +353,17 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
   # Calculate number of cells for label
-  .n <- nrow(plt_dat)
+  if (identical(method, "line")) n_grp <- NULL
+  else                           n_grp <- cluster_col
+
+  n_dat <- .calc_n(plt_dat, cluster_col)
 
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
 
   # Add and format label column for plotting
-  plt_dat <- dplyr::mutate(
-    plt_dat,
-    .lab = trim_lab(!!sym(data_col))
-  )
+  plt_dat <- dplyr::mutate(plt_dat, .lab = trim_lab(!!sym(data_col)))
 
   # Rank by abundance
   if (!is.null(cluster_col)) {
@@ -457,8 +457,8 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
         )
     }
 
+  # Plot abundance vs rank
   } else {
-    # Plot abundance vs rank
     plt_aes <- ggplot2::aes(rank, !!sym(abun_col))
 
     clr_aes <- plt_aes
@@ -502,7 +502,7 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
       lab_args <- label_params[!names(label_params) %in% uniq_args$clone_args]
     }
 
-    res <- .add_n_label(res, lab_args, .n)
+    res <- .add_n_label(res, n_dat, lab_args)
   }
 
   res
@@ -544,13 +544,13 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
 #' default values are not transformed, refer to [ggplot2::continuous_scale()]
 #' for more options. Values can only be transformed when stack is `FALSE`
 #' @param n_top Number of top cell labels present in data_col to show on plot,
-#' other cells will be labeled based on the other_label argument. If `NULL`,
+#' other cells will be labeled based on the `other_label` argument. If `NULL`,
 #' this will be automatically selected.
 #' @param other_label Label to use for 'other' cells, if `NULL` all cell labels
 #' present in data_col will be displayed on the plot.
 #' @param n_label Include a label showing the number of cells plotted
 #' @param label_params Named list providing additional parameters to modify
-#' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
+#' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
@@ -631,7 +631,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
   # Calculate number of cells for label
-  .n <- nrow(plt_dat)
+  n_dat <- .calc_n(plt_dat)
 
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
@@ -737,7 +737,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     res <- lift(.create_bars)(gg_args)
   }
 
-  if (n_label) res <- .add_n_label(res, label_params, .n)
+  if (n_label) res <- .add_n_label(res, n_dat, label_params)
 
   res
 }

@@ -45,6 +45,8 @@ plot_features(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
+  n_label = TRUE,
+  label_params = list(),
   ...
 )
 
@@ -58,6 +60,7 @@ plot_vdj_feature(input, ...)
   group_col = NULL,
   summary_fn = NULL,
   chain = NULL,
+  chain_col = "chains",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
@@ -66,7 +69,8 @@ plot_vdj_feature(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
-  chain_col = "chains",
+  n_label = TRUE,
+  label_params = list(),
   sep = ";",
   ...
 )
@@ -80,6 +84,7 @@ plot_vdj_feature(input, ...)
   data_slot = "data",
   summary_fn = NULL,
   chain = NULL,
+  chain_col = "chains",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
@@ -88,7 +93,8 @@ plot_vdj_feature(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
-  chain_col = "chains",
+  n_label = TRUE,
+  label_params = list(),
   sep = ";",
   ...
 )
@@ -131,7 +137,7 @@ passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 \item{n_label}{Include a label showing the number of values plotted}
 
 \item{label_params}{Named list providing additional parameters to modify
-clonotype and n label aesthetics, e.g. list(size = 4, color = "red")}
+n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{data_slot}{Slot in the Seurat object to pull data}
 

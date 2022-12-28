@@ -30,7 +30,7 @@ plot_features <- function(input, ...) {
 #' @param na_color Color to use for missing values
 #' @param n_label Include a label showing the number of values plotted
 #' @param label_params Named list providing additional parameters to modify
-#' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
+#' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to [ggplot2::geom_point()], e.g.
 #' color, fill, size, linetype, etc.
 #' @return ggplot object
@@ -204,7 +204,8 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
     res <- res +
       ggplot2::scale_y_continuous(expand = ggplot2::expansion(c(0.05, 0.1)))
 
-    res <- .add_n_label(res, lab_params, nrow(dat))
+    n_dat <- .calc_n(dat, grp)
+    res   <- .add_n_label(res, n_dat, lab_params)
   }
 
   res
@@ -222,7 +223,7 @@ plot_features.Seurat <- function(input, feature = NULL, x = "UMAP_1",
                                  trans = "identity", min_q = NULL,
                                  max_q = NULL, panel_nrow = NULL,
                                  panel_scales = "fixed", na_color = "grey80",
-                                 ...) {
+                                 n_label = TRUE, label_params = list(), ...) {
 
   # Check input classes
   .check_args(environment())
@@ -256,6 +257,8 @@ plot_features.Seurat <- function(input, feature = NULL, x = "UMAP_1",
     panel_nrow   = panel_nrow,
     panel_scales = panel_scales,
     na_color     = na_color,
+    n_label      = n_label,
+    label_params = label_params,
     ...
   )
 
@@ -318,12 +321,14 @@ plot_vdj_feature <- function(input, ...) {
 plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
                                      y = "UMAP_2", group_col = NULL,
                                      summary_fn = NULL,
-                                     chain = NULL, plot_colors = NULL,
+                                     chain = NULL, chain_col = "chains",
+                                     plot_colors = NULL,
                                      plot_lvls = names(plot_colors),
                                      trans = "identity", min_q = NULL,
                                      max_q = NULL, panel_nrow = NULL,
                                      panel_scales = "fixed",
-                                     na_color = "grey80", chain_col = "chains",
+                                     na_color = "grey80", n_label = TRUE,
+                                     label_params = list(),
                                      sep = ";", ...) {
 
   plt_dat <- summarize_vdj(
@@ -344,12 +349,14 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
     group_col    = group_col,
     plot_colors  = plot_colors,
     plot_lvls    = plot_lvls,
+    trans        = trans,
     min_q        = min_q,
     max_q        = max_q,
     panel_nrow   = panel_nrow,
     panel_scales = panel_scales,
     na_color     = na_color,
-    trans        = trans,
+    n_label      = n_label,
+    label_params = label_params,
     ...
   )
 
@@ -363,12 +370,14 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
 plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
                                     y = "UMAP_2", group_col = NULL,
                                     data_slot = "data", summary_fn = NULL,
-                                    chain = NULL, plot_colors = NULL,
+                                    chain = NULL, chain_col = "chains",
+                                    plot_colors = NULL,
                                     plot_lvls = names(plot_colors),
                                     trans = "identity", min_q = NULL,
                                     max_q = NULL, panel_nrow = NULL,
                                     panel_scales = "fixed", na_color = "grey80",
-                                    chain_col = "chains", sep = ";", ...) {
+                                    n_label = TRUE, label_params = list(),
+                                    sep = ";", ...) {
 
   # Fetch variables and add to meta.data
   # want input data to include meta.data and any features from FetchData
@@ -423,6 +432,7 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
 #' cluster_col
 #' @param chain Chain(s) to use for filtering data before plotting. If NULL
 #' data will not be filtered based on chain.
+#' @param chain_col meta.data column containing chains for each cell
 #' @param method Method to use for plotting, possible values include:
 #'
 #' - 'histogram'
@@ -444,10 +454,9 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
 #' @param panel_scales Should scales for plot panels be fixed or free. This
 #' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
-#' @param chain_col meta.data column containing chains for each cell
 #' @param n_label Include a label showing the number of values plotted
 #' @param label_params Named list providing additional parameters to modify
-#' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
+#' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
@@ -550,11 +559,11 @@ NULL
 #' @export
 plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
                      cluster_col = NULL, group_col = NULL, chain = NULL,
-                     method = "histogram", units = "frequency",
-                     plot_colors = NULL, plot_lvls = names(plot_colors),
-                     trans = "identity", panel_nrow = NULL,
-                     panel_scales = "free_x", chain_col = "chains",
-                     n_label = TRUE, label_params = list(), sep = ";", ...) {
+                     chain_col = "chains", method = "histogram",
+                     units = "frequency", plot_colors = NULL,
+                     plot_lvls = names(plot_colors), trans = "identity",
+                     panel_nrow = NULL, panel_scales = "free_x", n_label = TRUE,
+                     label_params = list(), sep = ";", ...) {
 
   # Check input classes
   .check_args(environment())
@@ -590,7 +599,7 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
 
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
-  .n <- nrow(plt_dat)
+  n_dat <- .calc_n(plt_dat, group_col)
 
   # Create plots
   gg_args <- list(
@@ -614,7 +623,7 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
   res <- lift(.plot_vdj)(gg_args)
 
   # Add n label
-  if (n_label) res <- .add_n_label(res, label_params, .n)
+  if (n_label) res <- .add_n_label(res, n_dat, label_params)
 
   res
 }

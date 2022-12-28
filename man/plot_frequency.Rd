@@ -49,7 +49,7 @@ default values are not transformed, refer to \code{\link[ggplot2:continuous_scal
 for more options. Values can only be transformed when stack is \code{FALSE}}
 
 \item{n_top}{Number of top cell labels present in data_col to show on plot,
-other cells will be labeled based on the other_label argument. If \code{NULL},
+other cells will be labeled based on the \code{other_label} argument. If \code{NULL},
 this will be automatically selected.}
 
 \item{other_label}{Label to use for 'other' cells, if \code{NULL} all cell labels
@@ -58,7 +58,7 @@ present in data_col will be displayed on the plot.}
 \item{n_label}{Include a label showing the number of cells plotted}
 
 \item{label_params}{Named list providing additional parameters to modify
-clonotype and n label aesthetics, e.g. list(size = 4, color = "red")}
+n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}

@@ -272,7 +272,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' @param n_label Include a label showing the number of cells plotted
 #' @param label_params Named list providing additional parameters to modify
-#' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
+#' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
@@ -404,7 +404,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
   # Calculate number of cells for label
-  .n <- nrow(plt_dat)
+  n_dat <- .calc_n(plt_dat)
 
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
@@ -510,7 +510,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
     }
   }
 
-  if (n_label) res <- .add_n_label(res, label_params, .n)
+  if (n_label) res <- .add_n_label(res, n_dat, label_params)
 
   res
 }
