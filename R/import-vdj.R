@@ -1226,7 +1226,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   }))
 
   stats <- map(stats, ~ {
-    names(.x)[names(.x) == "Sample"] <- " "
+    names(.x)[names(.x) == "Sample"] <- "\u00a0"
     .x
   })
 
@@ -1240,8 +1240,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   # Format header
   header <- purrr::map2(nms, clmn_wdth[nms], .add_padding)
-  header <- paste0(header, collapse = " | ")
-  header <- paste0("\u00a0\u00a0", header, " |")
+  header <- paste0(header, collapse = "\u00a0|\u00a0")
+  header <- paste0("\u00a0\u00a0", header, "\u00a0|")
 
   cli::cli_rule()
   cli::cli_text(header)
