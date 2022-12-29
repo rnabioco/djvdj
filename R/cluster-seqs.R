@@ -346,7 +346,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 
   n_lab_dat <- dplyr::mutate(
     n_lab_dat,
-    label = paste0("n = ", scales::label_comma()(label))
+    label = paste0("n = ", scales::label_comma()(.data$label))
   )
 
   # Create logos

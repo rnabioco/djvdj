@@ -778,7 +778,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     hjust = 1 + (1 / .data$hjust * (just * char_h_w))
   )
 
-  lab_args$mapping     <- ggplot2::aes(label = label, hjust = hjust)
+  lab_args$mapping     <- ggplot2::aes(label = .data$label, hjust = .data$hjust)
   lab_args$data        <- dat
   lab_args$inherit.aes <- FALSE
   lab_args$x           <- lab_args$x %||% Inf
