@@ -346,8 +346,6 @@ test_that("import_vdj BCR and TCR", {
 
 # Check .classify_vdj
 test_that(".classify_vdj", {
-  djvdj_global$quiet_import <- TRUE
-
   dat <- vdj_so |>
     fetch_vdj(data_cols = "chains")
 

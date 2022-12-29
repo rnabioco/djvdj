@@ -773,9 +773,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   dat <- dplyr::mutate(
     dat,
-    label = lab_args$label %||% label,
-    hjust = nchar(label),
-    hjust = 1 + (1 / hjust * (just * char_h_w))
+    label = lab_args$label %||% .data$label,
+    hjust = nchar(.data$label),
+    hjust = 1 + (1 / .data$hjust * (just * char_h_w))
   )
 
   lab_args$mapping     <- ggplot2::aes(label = label, hjust = hjust)
@@ -799,7 +799,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res <- dplyr::summarize(
     res,
     label   = scales::label_comma()(n()),
-    label   = paste0("n = ", label),
+    label   = paste0("n = ", .data$label),
     .groups = "drop"
   )
 
