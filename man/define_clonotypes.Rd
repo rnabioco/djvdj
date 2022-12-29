@@ -9,7 +9,7 @@ define_clonotypes(
   data_cols,
   clonotype_col = "clonotype_id",
   filter_chains = c("productive", "full_length"),
-  sep = ";"
+  sep = global$sep
 )
 }
 \arguments{

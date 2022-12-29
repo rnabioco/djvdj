@@ -115,6 +115,11 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
                        include_mutations = FALSE, aggr_dir = NULL,
                        quiet = FALSE, sep = ";") {
 
+  # Set global variables based on prefix
+  global$chain_col     <- paste0(prefix, "chains")
+  global$clonotype_col <- paste0(prefix, "clonotype_id")
+  global$sep           <- sep
+
   # Check input classes
   .check_args(
     environment(), data_cols = list(len_one = FALSE, allow_null = TRUE)
@@ -191,7 +196,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   .add_progress_step("Loading V(D)J data", quiet = quiet)
 
   if (!is.null(input)) {
-    bcs <- .get_meta(input)[[djvdj_global$cell_col]]
+    bcs <- .get_meta(input)[[global$cell_col]]
 
     prfx_df <- .extract_cell_prefix(bcs, strip_bcs = FALSE)
     prfx_df <- dplyr::distinct(prfx_df, .data$prfx, .data$sfx)
@@ -488,9 +493,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     if (filter_chains) filt_chains <- qc_cols
 
     res <- define_clonotypes(
-      res,
-      data_cols     = clone_cols,
-      filter_chains = filt_chains
+      res, data_cols = clone_cols, filter_chains = filt_chains
     )
   }
 
@@ -1092,7 +1095,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' Check for separator in data.frame
 #'
 #' @param df_in data.frame
-#' @param sep_cols Names of columns to check for sep
+#' @param sep_cols Names of columns to check for sep, if `NULL` all columns
+#' will be checked
 #' @param sep Separator to use for storing V(D)J data
 #' @return Separator with white space stripped
 #' @noRd
@@ -1189,7 +1193,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   } else {
     obj_meta    <- .get_meta(input)
-    obj_cells   <- obj_meta[[djvdj_global$cell_col]]
+    obj_cells   <- obj_meta[[global$cell_col]]
     n_obj_cells <- length(obj_cells)
     n_overlap   <- length(obj_cells[obj_cells %in% met_cells])
     pct_overlap <- round(n_overlap / n_met_cells, 0) * 100
@@ -1430,7 +1434,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @export
 define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
                               filter_chains = c("productive", "full_length"),
-                              sep = ";") {
+                              sep = global$sep) {
 
   # Check that columns are present in object
   .check_obj_cols(input, data_cols, filter_chains)
@@ -1454,7 +1458,7 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
     dplyr::if_all(dplyr::all_of(all_cols), ~ !is.na(.x))
   )
 
-  vdj <- dplyr::select(vdj, all_of(c(djvdj_global$cell_col, all_cols)))
+  vdj <- dplyr::select(vdj, all_of(c(global$cell_col, all_cols)))
 
   # Only use values in data_cols that are TRUE for all filter_chains columns
   # first identify contigs TRUE for all filter_chains columns
@@ -1462,7 +1466,7 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
   if (!is.null(filter_chains)) {
     clmns <- syms(filter_chains)
 
-    vdj <- tibble::column_to_rownames(vdj, djvdj_global$cell_col)
+    vdj <- tibble::column_to_rownames(vdj, global$cell_col)
 
     vdj <- mutate_vdj(
       vdj,
@@ -1495,8 +1499,8 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
   )
 
   # Add new clonotype IDs to meta.data
-  vdj  <- dplyr::select(vdj, all_of(c(djvdj_global$cell_col, clonotype_col)))
-  meta <- dplyr::left_join(meta, vdj, by = djvdj_global$cell_col)
+  vdj  <- dplyr::select(vdj, all_of(c(global$cell_col, clonotype_col)))
+  meta <- dplyr::left_join(meta, vdj, by = global$cell_col)
 
   res <- .add_meta(input, meta)
 

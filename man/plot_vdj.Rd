@@ -12,7 +12,7 @@ plot_vdj(
   cluster_col = NULL,
   group_col = NULL,
   chain = NULL,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   method = "histogram",
   units = "frequency",
   plot_colors = NULL,
@@ -22,7 +22,7 @@ plot_vdj(
   panel_scales = "free_x",
   n_label = TRUE,
   label_params = list(),
-  sep = ";",
+  sep = global$sep,
   ...
 )
 }

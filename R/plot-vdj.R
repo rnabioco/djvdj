@@ -321,7 +321,7 @@ plot_vdj_feature <- function(input, ...) {
 plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
                                      y = "UMAP_2", group_col = NULL,
                                      summary_fn = NULL,
-                                     chain = NULL, chain_col = "chains",
+                                     chain = NULL, chain_col = global$chain_col,
                                      plot_colors = NULL,
                                      plot_lvls = names(plot_colors),
                                      trans = "identity", min_q = NULL,
@@ -329,7 +329,7 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
                                      panel_scales = "fixed",
                                      na_color = "grey80", n_label = TRUE,
                                      label_params = list(),
-                                     sep = ";", ...) {
+                                     sep = global$sep, ...) {
 
   plt_dat <- summarize_vdj(
     input,
@@ -370,14 +370,14 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
 plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
                                     y = "UMAP_2", group_col = NULL,
                                     data_slot = "data", summary_fn = NULL,
-                                    chain = NULL, chain_col = "chains",
+                                    chain = NULL, chain_col = global$chain_col,
                                     plot_colors = NULL,
                                     plot_lvls = names(plot_colors),
                                     trans = "identity", min_q = NULL,
                                     max_q = NULL, panel_nrow = NULL,
                                     panel_scales = "fixed", na_color = "grey80",
                                     n_label = TRUE, label_params = list(),
-                                    sep = ";", ...) {
+                                    sep = global$sep, ...) {
 
   # Fetch variables and add to meta.data
   # want input data to include meta.data and any features from FetchData
@@ -559,11 +559,11 @@ NULL
 #' @export
 plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
                      cluster_col = NULL, group_col = NULL, chain = NULL,
-                     chain_col = "chains", method = "histogram",
+                     chain_col = global$chain_col, method = "histogram",
                      units = "frequency", plot_colors = NULL,
                      plot_lvls = names(plot_colors), trans = "identity",
                      panel_nrow = NULL, panel_scales = "free_x", n_label = TRUE,
-                     label_params = list(), sep = ";", ...) {
+                     label_params = list(), sep = global$sep, ...) {
 
   # Check input classes
   .check_args(environment())

@@ -89,9 +89,9 @@
 cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
                               method = "louvain", resolution = 0.5, k = 10,
                               dist_method = NULL, run_umap = TRUE,
-                              chain_col = "chains",
+                              chain_col = global$chain_col,
                               prefix = paste0(data_col, "_"),
-                              return_df = FALSE, sep = ";", ...) {
+                              return_df = FALSE, sep = global$sep, ...) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -115,7 +115,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
     sep       = sep
   )
 
-  vdj  <- dplyr::distinct(vdj, !!!syms(c(djvdj_global$cell_col, data_col)))
+  vdj  <- dplyr::distinct(vdj, !!!syms(c(global$cell_col, data_col)))
   seqs <- vdj[[data_col]]
   seqs <- unique(sort(seqs))
 
@@ -209,7 +209,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 
   # Format results
   meta <- .get_meta(input)
-  res  <- dplyr::left_join(meta, res, by = djvdj_global$cell_col)
+  res  <- dplyr::left_join(meta, res, by = global$cell_col)
 
   if (return_df) input <- meta
 
@@ -269,10 +269,12 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' @export
 plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
                         chain, plot_colors = NULL,
-                        plot_lvls = names(plot_colors), chain_col = "chains",
-                        width = 0.75, align_end = "5", panel_nrow = NULL,
+                        plot_lvls = names(plot_colors),
+                        chain_col = global$chain_col, width = 0.75,
+                        align_end = "5", panel_nrow = NULL,
                         panel_scales = "free", n_label = TRUE,
-                        label_params = list(), quiet = FALSE, sep = ";", ...) {
+                        label_params = list(), quiet = FALSE, sep = global$sep,
+                        ...) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -294,7 +296,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
     sep       = sep
   )
 
-  vdj_cols <- c(djvdj_global$cell_col, data_col, cluster_col)
+  vdj_cols <- c(global$cell_col, data_col, cluster_col)
   seqs     <- dplyr::select(seqs, all_of(vdj_cols))
 
   n_seqs <- nrow(seqs)
@@ -385,7 +387,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 #' @param sep Separator used for storing per cell V(D)J data
 #' @importFrom stringr str_remove_all
 #' @noRd
-.fetch_seqs <- function(input, seq_col, chain, chain_col, sep = ";") {
+.fetch_seqs <- function(input, seq_col, chain, chain_col, sep = global$sep) {
 
   per_cell <- is.null(chain)
 

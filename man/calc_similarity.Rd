@@ -10,10 +10,10 @@ calc_similarity(
   cluster_col,
   method = abdiv::jaccard,
   chain = NULL,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   prefix = NULL,
   return_mat = FALSE,
-  sep = ";"
+  sep = global$sep
 )
 }
 \arguments{

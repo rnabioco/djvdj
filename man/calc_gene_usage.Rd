@@ -9,8 +9,8 @@ calc_gene_usage(
   data_cols,
   cluster_col = NULL,
   chain = NULL,
-  chain_col = "chains",
-  sep = ";"
+  chain_col = global$chain_col,
+  sep = global$sep
 )
 }
 \arguments{

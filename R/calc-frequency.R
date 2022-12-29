@@ -71,12 +71,12 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
   meta <- .get_meta(input)
   vdj  <- dplyr::filter(meta, !is.na(!!sym(data_col)))
 
-  vdj <- dplyr::select(vdj, all_of(c(djvdj_global$cell_col, data_col, cluster_col)))
+  vdj <- dplyr::select(vdj, all_of(c(global$cell_col, data_col, cluster_col)))
 
   # Calculate clonotype abundance
   vdj <- .calc_freq(
     df_in      = vdj,
-    cell_col   = djvdj_global$cell_col,
+    cell_col   = global$cell_col,
     dat_col    = data_col,
     clust_col  = cluster_col,
     out_prefix = prefix
@@ -93,7 +93,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
   )
 
   # Format results
-  res <- dplyr::left_join(meta, vdj, by = djvdj_global$cell_col)
+  res <- dplyr::left_join(meta, vdj, by = global$cell_col)
 
   if (return_df) {
     input <- meta
@@ -349,7 +349,7 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
     return_df   = TRUE
   )
 
-  plt_dat <- tibble::as_tibble(plt_dat, rownames = djvdj_global$cell_col)
+  plt_dat <- tibble::as_tibble(plt_dat, rownames = global$cell_col)
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
   # Calculate number of cells for label
@@ -626,7 +626,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   )
 
   # Format plot data
-  plt_dat <- tibble::as_tibble(plt_dat, rownames = djvdj_global$cell_col)
+  plt_dat <- tibble::as_tibble(plt_dat, rownames = global$cell_col)
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
   # Calculate number of cells for label

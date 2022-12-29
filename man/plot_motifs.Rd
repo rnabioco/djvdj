@@ -11,11 +11,15 @@ plot_motifs(
   chain,
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
-  chain_col = "chains",
+  chain_col = global$chain_col,
   width = 0.75,
   align_end = "5",
   panel_nrow = NULL,
-  sep = ";",
+  panel_scales = "free",
+  n_label = TRUE,
+  label_params = list(),
+  quiet = FALSE,
+  sep = global$sep,
   ...
 )
 }
@@ -47,6 +51,18 @@ select a width where at least 75\% of sequences are longer than the cutoff.}
 align sequences at the 5' or 3' end when plotting.}
 
 \item{panel_nrow}{The number of rows to use for arranging plot panels}
+
+\item{panel_scales}{Should scales for plot panels be fixed or free. This
+passes a scales specification to \code{ggplot2::facet_wrap()}, can be 'fixed', 'free',
+'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
+Use this when separate bar graphs are created for each cell cluster.}
+
+\item{n_label}{Include a label showing the number of cells plotted}
+
+\item{label_params}{Named list providing additional parameters to modify
+clonotype and n label aesthetics, e.g. list(size = 4, color = "red")}
+
+\item{quiet}{If \code{TRUE} messages will not be displayed}
 
 \item{sep}{Separator used for storing per cell V(D)J data}
 

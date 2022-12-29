@@ -11,13 +11,13 @@ plot_rarefaction(
   method = "richness",
   n_boots = 50,
   chain = NULL,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   panel_nrow = NULL,
   panel_scales = "free",
   ci_alpha = 0.15,
-  sep = ";",
+  sep = global$sep,
   ...
 )
 }

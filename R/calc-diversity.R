@@ -82,9 +82,10 @@
 #' @export
 calc_diversity <- function(input, data_col, cluster_col = NULL,
                            method = abdiv::simpson, downsample = FALSE,
-                           n_boots = 0, chain = NULL, chain_col = "chains",
+                           n_boots = 0, chain = NULL,
+                           chain_col = global$chain_col,
                            prefix = paste0(data_col, "_"), return_df = FALSE,
-                           sep = ";") {
+                           sep = global$sep) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -342,10 +343,10 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 plot_diversity <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, method = abdiv::simpson,
                            downsample = FALSE, n_boots = 0, chain = NULL,
-                           chain_col = "chains", plot_colors = NULL,
+                           chain_col = global$chain_col, plot_colors = NULL,
                            plot_lvls = names(plot_colors), panel_nrow = NULL,
                            panel_scales = "free", n_label = TRUE,
-                           label_params = list(), sep = ";", ...) {
+                           label_params = list(), sep = global$sep, ...) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -597,11 +598,10 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 #' @export
 plot_rarefaction <- function(input, data_col, cluster_col = NULL,
                              method = "richness", n_boots = 50,
-                             chain = NULL, chain_col = "chains",
-                             plot_colors = NULL,
-                             plot_lvls = names(plot_colors), panel_nrow = NULL,
-                             panel_scales = "free", ci_alpha = 0.15, sep = ";",
-                             ...) {
+                             chain = NULL, chain_col = global$chain_col,
+                             plot_colors = NULL, plot_lvls = names(plot_colors),
+                             panel_nrow = NULL, panel_scales = "free",
+                             ci_alpha = 0.15, sep = global$sep, ...) {
 
   # Check that columns are present in object
   .check_obj_cols(

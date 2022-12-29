@@ -43,7 +43,7 @@
 #'
 #' @export
 calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
-                            chain_col = "chains", sep = ";") {
+                            chain_col = global$chain_col, sep = global$sep) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -58,7 +58,7 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 
   if (!is.null(chain)) sep_cols <- c(sep_cols, chain_col)
 
-  vdj_cols <- c(djvdj_global$cell_col, cluster_col, sep_cols)
+  vdj_cols <- c(global$cell_col, cluster_col, sep_cols)
 
 
 
@@ -119,8 +119,8 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 
   res <- dplyr::summarize(
     res,
-    n_cells = dplyr::n_distinct(meta[[djvdj_global$cell_col]]),
-    freq    = dplyr::n_distinct(!!sym(djvdj_global$cell_col)),
+    n_cells = dplyr::n_distinct(meta[[global$cell_col]]),
+    freq    = dplyr::n_distinct(!!sym(global$cell_col)),
     .groups = "drop"
   )
 
@@ -297,12 +297,13 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 #'
 #' @export
 plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
-                            group_col = NULL, chain = NULL, method = NULL,
+                            group_col = NULL, chain = NULL,
+                            chain_col = global$chain_col, method = NULL,
                             plot_colors = NULL, vdj_genes = NULL, n_genes = 20,
                             plot_lvls = NULL, trans = "identity",
-                            units = "percent", chain_col = "chains",
-                            rotate_labels = FALSE, panel_nrow = NULL,
-                            return_list = FALSE, sep = ";", ...) {
+                            units = "percent", rotate_labels = FALSE,
+                            panel_nrow = NULL, return_list = FALSE,
+                            sep = global$sep, ...) {
 
   # Check that columns are present in object
   .check_obj_cols(

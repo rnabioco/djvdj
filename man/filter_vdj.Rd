@@ -9,7 +9,7 @@ filter_vdj(
   filt,
   data_cols = NULL,
   clonotype_col = "clonotype_id",
-  sep = ";",
+  sep = global$sep,
   per_cell = FALSE
 )
 }

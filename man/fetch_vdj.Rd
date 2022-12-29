@@ -11,7 +11,7 @@ fetch_vdj(
   filter_cells = FALSE,
   per_cell = FALSE,
   unnest = TRUE,
-  sep = ";"
+  sep = global$sep
 )
 }
 \arguments{

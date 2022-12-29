@@ -10,10 +10,10 @@ calc_mds(
   cluster_col,
   method = "jaccard",
   chain = NULL,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   prefix = "",
   return_df = FALSE,
-  sep = ";"
+  sep = global$sep
 )
 }
 \arguments{

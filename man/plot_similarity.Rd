@@ -11,14 +11,14 @@ plot_similarity(
   group_col = NULL,
   method = abdiv::jaccard,
   chain = NULL,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   rotate_labels = FALSE,
   cluster_heatmap = TRUE,
   remove_upper_triangle = FALSE,
   remove_diagonal = remove_upper_triangle,
-  sep = ";",
+  sep = global$sep,
   ...
 )
 }

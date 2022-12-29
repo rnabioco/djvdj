@@ -46,7 +46,7 @@
 #' @export
 fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
                       filter_cells = FALSE, per_cell = FALSE, unnest = TRUE,
-                      sep = ";") {
+                      sep = global$sep) {
 
   # Check that columns are present in object
   .check_obj_cols(input, data_cols, clonotype_col)
@@ -176,8 +176,8 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
 #' head(slot(res, "meta.data"), 3)
 #'
 #' @export
-mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
-                       data_cols = NULL, return_df = FALSE, sep = ";") {
+mutate_vdj <- function(input, ..., clonotype_col = global$clonotype_col,
+                       data_cols = NULL, return_df = FALSE, sep = global$sep) {
 
   # Check that columns are present in object
   .check_obj_cols(input, data_cols, clonotype_col)
@@ -226,9 +226,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
   # Re-nest list-cols
   res <- .nest_vdj(vdj, sep_cols = NULL, sep = sep)
 
-  if (return_df) {
-    input <- res
-  }
+  if (return_df) input <- res
 
   res <- .add_meta(input, meta = res)
 
@@ -343,8 +341,8 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
 #'
 #' @export
 summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
-                          chain_col = "chains", sep = ";", col_names = "{.col}",
-                          return_df = FALSE) {
+                          chain_col = global$chain_col, col_names = "{.col}",
+                          return_df = FALSE, sep = global$sep) {
 
   # Check that columns are present in object
   .check_obj_cols(input, data_cols, chain = chain, chain_col = chain_col)

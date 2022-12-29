@@ -60,7 +60,7 @@ plot_vdj_feature(input, ...)
   group_col = NULL,
   summary_fn = NULL,
   chain = NULL,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
@@ -71,7 +71,7 @@ plot_vdj_feature(input, ...)
   na_color = "grey80",
   n_label = TRUE,
   label_params = list(),
-  sep = ";",
+  sep = global$sep,
   ...
 )
 
@@ -84,7 +84,7 @@ plot_vdj_feature(input, ...)
   data_slot = "data",
   summary_fn = NULL,
   chain = NULL,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
@@ -95,7 +95,7 @@ plot_vdj_feature(input, ...)
   na_color = "grey80",
   n_label = TRUE,
   label_params = list(),
-  sep = ";",
+  sep = global$sep,
   ...
 )
 }

@@ -1,11 +1,20 @@
 # Environment that holds global variables
-djvdj_global <- new.env()
+global <- new.env()
 
 # Column name to use for storing cell barcodes
-djvdj_global$cell_col <- ".cell_id"
+global$cell_col <- ".cell_id"
+
+# Default chain column
+global$chain_col <- "chains"
+
+# Default clonotype column
+global$clonotype_col <- "clonotype_id"
+
+# Default chain separator
+global$sep <- ";"
 
 # Default argument classes to use with .check_args()
-djvdj_global$arg_classes <- list(
+global$arg_classes <- list(
   data_col      = list(),
   cluster_col   = list(allow_null = TRUE),
   group_col     = list(allow_null = TRUE),

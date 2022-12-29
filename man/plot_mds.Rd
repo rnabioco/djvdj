@@ -10,11 +10,11 @@ plot_mds(
   cluster_col,
   method = "jaccard",
   chain = NULL,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   label_points = TRUE,
-  sep = ";",
+  sep = global$sep,
   ...
 )
 }
@@ -37,8 +37,8 @@ coordinates, available methods include:
 }}
 
 \item{chain}{Chain to use for comparing clusters. To perform calculations
-using a single chain, the column passed to the data_col argument must contain
-per-chain data such as CDR3 sequences. Set to NULL to include all chains.}
+using a single chain, the column passed to \code{data_col} must contain
+per-chain data such as CDR3 sequences. Set to \code{NULL} to include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 

@@ -10,6 +10,7 @@ plot_gene_usage(
   cluster_col = NULL,
   group_col = NULL,
   chain = NULL,
+  chain_col = global$chain_col,
   method = NULL,
   plot_colors = NULL,
   vdj_genes = NULL,
@@ -17,11 +18,10 @@ plot_gene_usage(
   plot_lvls = NULL,
   trans = "identity",
   units = "percent",
-  chain_col = "chains",
   rotate_labels = FALSE,
   panel_nrow = NULL,
   return_list = FALSE,
-  sep = ";",
+  sep = global$sep,
   ...
 )
 }
@@ -41,6 +41,8 @@ for each treatment condition.}
 
 \item{chain}{Chain to use for calculating gene usage, set to NULL to include
 all chains}
+
+\item{chain_col}{meta.data column containing chains for each cell}
 
 \item{method}{Method to use for plotting, possible values are:
 \itemize{
@@ -68,8 +70,6 @@ provided, top genes will be identified for each cluster.}
 \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}} for more options.}
 
 \item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
-
-\item{chain_col}{meta.data column containing chains for each cell}
 
 \item{rotate_labels}{Should labels on circos plot be rotated to reduce
 overlapping text}

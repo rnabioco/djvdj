@@ -126,9 +126,9 @@ lift <- function(..f, ..., .unnamed = FALSE) {
 #' This filtering is only performed for list-cols.
 #' @return filtered data.frame
 #' @noRd
-.filter_chains <- function(df_in, data_cols, chain, chain_col = "chains",
-                           col_names = "{.col}", allow_dups = TRUE,
-                           empty_val = NA) {
+.filter_chains <- function(df_in, data_cols, chain,
+                           chain_col = global$chain_col, col_names = "{.col}",
+                           allow_dups = TRUE, empty_val = NA) {
 
   if (is.null(chain)) return(df_in)
 
@@ -152,7 +152,7 @@ lift <- function(..f, ..., .unnamed = FALSE) {
   }
 
   # Function to check/filter chains
-  .map_fn <- function(x, chns) {
+  .filt_fn <- function(x, chns) {
     if (length(x) != length(chns)) {
       cli::cli_abort(
         "The number of chains per cell present in the {chain_col} column differs
@@ -178,7 +178,7 @@ lift <- function(..f, ..., .unnamed = FALSE) {
     res,
     across(
       all_of(data_cols),
-      ~ .map_fn(.x, !!sym(chain_col)),
+      ~ .filt_fn(.x, !!sym(chain_col)),
       .names = col_names
     )
   )
@@ -209,7 +209,7 @@ NULL
   UseMethod(".add_meta", input)
 }
 
-.add_meta.default <- function(input, meta, row_col = djvdj_global$cell_col) {
+.add_meta.default <- function(input, meta, row_col = global$cell_col) {
   if (!is.data.frame(meta)) {
     cli::cli_abort("meta.data must be a data.frame")
   }
@@ -217,7 +217,7 @@ NULL
   tibble::column_to_rownames(meta, row_col)
 }
 
-.add_meta.Seurat <- function(input, meta, row_col = djvdj_global$cell_col) {
+.add_meta.Seurat <- function(input, meta, row_col = global$cell_col) {
   meta <- .prepare_meta(input, meta, row_col)
 
   input@meta.data <- meta
@@ -226,7 +226,7 @@ NULL
 }
 
 .add_meta.SingleCellExperiment <- function(input, meta,
-                                           row_col = djvdj_global$cell_col) {
+                                           row_col = global$cell_col) {
   meta <- .prepare_meta(input, meta, row_col)
 
   input@colData <- S4Vectors::DataFrame(meta)
@@ -241,7 +241,7 @@ NULL
 #'
 #' @rdname .add_meta
 #' @noRd
-.prepare_meta <- function(input, meta, row_col = djvdj_global$cell_col) {
+.prepare_meta <- function(input, meta, row_col = global$cell_col) {
 
   if (!is.data.frame(meta)) {
     cli::cli_abort("meta.data must be a data.frame")
@@ -278,18 +278,18 @@ NULL
   UseMethod(".get_meta", input)
 }
 
-.get_meta.default <- function(input, row_col = djvdj_global$cell_col) {
+.get_meta.default <- function(input, row_col = global$cell_col) {
 
   .to_tibble(input, row_col)
 }
 
-.get_meta.Seurat <- function(input, row_col = djvdj_global$cell_col) {
+.get_meta.Seurat <- function(input, row_col = global$cell_col) {
 
   .get_meta(input@meta.data, row_col)
 }
 
 .get_meta.SingleCellExperiment <- function(input,
-                                           row_col = djvdj_global$cell_col) {
+                                           row_col = global$cell_col) {
   dat <- SingleCellExperiment::colData(input)
   dat <- as.data.frame(dat)
 
@@ -327,7 +327,7 @@ NULL
 #' @param by Columns to use for merging
 #' @return Object with added meta.data
 #' @noRd
-.merge_meta <- function(input, meta, by = djvdj_global$cell_col) {
+.merge_meta <- function(input, meta, by = global$cell_col) {
 
   if (is.null(input)) return(meta)
 
@@ -357,7 +357,7 @@ NULL
 #' @param sep Separator to use for collapsing list-cols
 #' @return data.frame
 #' @noRd
-.nest_vdj <- function(df_in, sep_cols = NULL, sep = ";") {
+.nest_vdj <- function(df_in, sep_cols = NULL, sep = global$sep) {
 
   if (is.null(sep_cols)) {
     sep_cols <- colnames(df_in)
@@ -398,18 +398,40 @@ NULL
 #' @importFrom readr guess_parser
 #' @importFrom utils head
 #' @noRd
-.unnest_vdj <- function(df_in, sep_cols, unnest = TRUE, sep = ";") {
-
+.unnest_vdj <- function(df_in, sep_cols, unnest = TRUE, sep = global$sep) {
   df_in <- tibble::as_tibble(df_in)
 
-  # Get types to use for coercing columns
-  # use first 100 rows containing V(D)J data
+  # Check first 100 rows containing V(D)J data
   typs <- dplyr::select(df_in, all_of(sep_cols))
   typs <- dplyr::filter(typs, if_all(all_of(sep_cols), ~ !is.na(.x)))
   typs <- utils::head(typs, 100)
 
-  typs <- tidyr::separate_rows(typs, all_of(sep_cols), sep = sep)
+  # Check number of chains
+  if (length(sep_cols) > 1) {
+    chain_count <- purrr::map(typs, stringr::str_count, sep)
 
+    i1 <- chain_count[[1]]
+    rest <- chain_count[-1]
+
+    for (x in rest) {
+      if (!identical(i1, x)) {
+        cli::cli_abort(c(
+          "!" = "The provided columns ({sep_cols}) do not contain matching
+                 per-chain data, check that all columns contain data for the
+                 same set of chains. You may receive this error for several
+                 reasons:",
+          "*" = "The wrong `chain_col` was provided",
+          "*" = "The selected columns correspond to different V(D)J data types
+                 (i.e. BCR and TCR)",
+          "*" = "The per-chain data for one of the provided columns has been
+                 previously filtered"
+        ))
+      }
+    }
+  }
+
+  # Get types to use for coercing columns
+  typs <- tidyr::separate_rows(typs, all_of(sep_cols), sep = sep)
   typs <- purrr::map(typs, readr::guess_parser)
   typs <- purrr::map_chr(typs, ~ paste0("as.", .x))
 
@@ -470,7 +492,7 @@ NULL
 #' the other containing columns where separator has been detected.
 #' @noRd
 .get_vdj_cols <- function(df_in, clone_col, cols_in, sep,
-                          cell_col = djvdj_global$cell_col) {
+                          cell_col = global$cell_col) {
 
   # Check clone_col
   no_clone_col <- is.null(cols_in) && !is.null(clone_col) &&
@@ -549,9 +571,10 @@ NULL
 #' @param list_avail List available columns in error message
 #' @return Error when column(s) are missing
 #' @noRd
-.check_obj_cols <- function(input, ..., chain = NULL, chain_col = "chains",
-                            list_avail = FALSE) {
-  dat      <- .get_meta(input, row_col = djvdj_global$cell_col)
+.check_obj_cols <- function(input, ..., chain = NULL,
+                            chain_col = global$chain_col, list_avail = FALSE) {
+
+  dat      <- .get_meta(input, row_col = global$cell_col)
   dat_cols <- colnames(dat)
 
   cols <- c(...)
@@ -637,7 +660,7 @@ NULL
 }
 
 .check_args <- function(envir, ...) {
-  arg_cls <- djvdj_global$arg_classes
+  arg_cls <- global$arg_classes
 
   new_cls <- list(...)
 

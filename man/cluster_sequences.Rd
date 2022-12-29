@@ -13,10 +13,10 @@ cluster_sequences(
   k = 10,
   dist_method = NULL,
   run_umap = TRUE,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   prefix = paste0(data_col, "_"),
   return_df = FALSE,
-  sep = ";",
+  sep = global$sep,
   ...
 )
 }

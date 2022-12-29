@@ -13,14 +13,14 @@ plot_diversity(
   downsample = FALSE,
   n_boots = 0,
   chain = NULL,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   panel_nrow = NULL,
   panel_scales = "free",
   n_label = TRUE,
   label_params = list(),
-  sep = ";",
+  sep = global$sep,
   ...
 )
 }
