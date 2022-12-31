@@ -211,6 +211,33 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 }
 
 
+#' Fetch top clonotypes
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_cols meta.data column(s) to use for identifying top clonotypes
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' grouping cells.
+#' @param n_clones Number of top clonotypes to identify.
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#' @return data.frame containing information for top clonotypes
+#' @noRd
+fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
+                             n_clones = 10, sep = global$sep) {
+
+  # Check that columns are present in object
+  .check_obj_cols(input, data_cols, cluster_col)
+
+  # Check input classes
+  .check_args(environment())
+
+
+
+
+
+}
+
+
 #' Plot clonotype frequency
 #'
 #' @param input Single cell object or data.frame containing V(D)J data. If a
@@ -239,7 +266,16 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 #' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' Use this when separate bar graphs are created for each cell cluster.
-#' @param n_label Include a label showing the number of cells plotted
+#' @param n_label Location on plot where n label should be added, this can be
+#' any combination of the following:
+#'
+#' - 'corner', display the total number of cells plotted in the top right
+#'   corner, the position of the label can be modified by passing `x` and `y`
+#'   specifications with the `label_params` argument
+#' - 'legend', display the number of cells plotted for each group shown in the
+#'   plot legend
+#' - 'none', do not display the number of cells plotted
+#'
 #' @param label_params Named list providing additional parameters to modify
 #' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
@@ -299,14 +335,14 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 #' )
 #'
 #' @export
-plot_clone_frequency <- function(input, data_col = "clonotype_id",
+plot_clone_frequency <- function(input, data_col = global$clonotype_col,
                                  cluster_col = NULL,
                                  method = "bar", units = "percent",
                                  plot_colors = NULL,
                                  plot_lvls = names(plot_colors),
                                  trans = "identity", n_clones = NULL,
                                  panel_nrow = NULL, panel_scales = "free_x",
-                                 n_label = TRUE, label_params = list(), ...) {
+                                 n_label = "corner", label_params = list(), ...) {
 
   # Check that columns are present in object
   .check_obj_cols(input, data_col, cluster_col)
@@ -352,12 +388,10 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   plt_dat <- tibble::as_tibble(plt_dat, rownames = global$cell_col)
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
-  # Calculate number of cells for label
-  if (identical(method, "line")) n_grp <- NULL
-  else                           n_grp <- cluster_col
+  # Save data to use for n label
+  n_lab_dat <- plt_dat
 
-  n_dat <- .calc_n(plt_dat, n_grp)
-
+  # Identify data columns that the user should have access to
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
@@ -413,8 +447,8 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   lab_args <- label_params
 
   # Create bar graph
-  if (n_label) y_exp <- c(0.05, 0.1)
-  else         y_exp <- c(0.05, 0.05)
+  if ("corner" %in% n_label) y_exp <- c(0.05, 0.1)
+  else                       y_exp <- c(0.05, 0.05)
 
   if (identical(method, "bar")) {
     plt_labs <- purrr::set_names(top_clones$.lab, top_clones[[data_col]])
@@ -479,7 +513,9 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
 
     # Add clonotype labels
     if (n_clones > 0) {
-      if (n_label) lab_args <- label_params[!names(label_params) %in% uniq_args$n_args]
+      if (!identical(n_label, "none")) {
+        lab_args <- label_params[!names(label_params) %in% uniq_args$n_args]
+      }
 
       lab_args$mapping <- ggplot2::aes(label = .data$.lab)
       lab_args$data    <- top_clones
@@ -496,10 +532,14 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
   }
 
   # Add n label
-  if (n_label) {
+  res <- n_lab_fun(res)
+
+  if (!identical(n_label, "none")) {
     if (identical(method, "line") && n_clones > 0) {
       lab_args <- label_params[!names(label_params) %in% uniq_args$clone_args]
     }
+
+
 
     res <- .add_n_label(res, n_dat, lab_args)
   }
@@ -547,7 +587,18 @@ plot_clone_frequency <- function(input, data_col = "clonotype_id",
 #' this will be automatically selected.
 #' @param other_label Label to use for 'other' cells, if `NULL` all cell labels
 #' present in data_col will be displayed on the plot.
-#' @param n_label Include a label showing the number of cells plotted
+#' @param n_label Location on plot where n label should be added, this can be
+#' any combination of the following:
+#'
+#' - 'corner', display the total number of cells plotted in the top right
+#'   corner, the position of the label can be modified by passing `x` and `y`
+#'   specifications with the `label_params` argument
+#' - 'axis', display the number of cells plotted for each group shown on the
+#'   x-axis
+#' - 'legend', display the number of cells plotted for each group shown in the
+#'   plot legend
+#' - 'none', do not display the number of cells plotted
+#'
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
@@ -590,7 +641,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, units = "percent", stack = TRUE,
                            plot_colors = NULL, plot_lvls = NULL,
                            trans = "identity", n_top = NULL,
-                           other_label = "other", n_label = TRUE,
+                           other_label = "other", n_label = c("corner", "axis"),
                            label_params = list(), ...) {
 
   # Check that columns are present in object
@@ -616,6 +667,13 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
   y_lab <- .get_axis_label(units)
 
+  # Set plot variables
+  if (!is.null(group_col))        x_col <- data_col
+  else if (!is.null(cluster_col)) x_col <- cluster_col
+  else                            x_col <- data_col
+
+  clr_col <- group_col %||% data_col
+
   # Calculate clonotype abundance
   plt_dat <- calc_frequency(
     input       = input,
@@ -629,9 +687,19 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   plt_dat <- tibble::as_tibble(plt_dat, rownames = global$cell_col)
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
-  # Calculate number of cells for label
-  n_lab_dat <- .calc_n(plt_dat)
+  # Generate n label function based on user arguments
+  n_lab_fun <- .get_n_lab_fun(
+    plt_dat,
+    n_label   = n_label,
+    axis_col  = x_col,
+    lgnd_col  = clr_col,
+    lgnd_clrs = plot_colors,
+    lab_args  = label_params
+  )
 
+  if ("legend" %in% n_label) plot_colors <- NULL
+
+  # Identify data columns that the user should have access to
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
@@ -681,7 +749,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   # Plot arguments
   gg_args <- list(y = abun_col, clrs = plot_colors, trans = trans, ...)
 
-  if (n_label) gg_args$y_exp <- c(0.05, 0.1)
+  if ("corner" %in% n_label) gg_args$y_exp <- c(0.05, 0.1)
 
   # Create grouped boxplot
   if (!is.null(group_col)) {
@@ -693,9 +761,9 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
     more_args <- list(
       df_in  = plt_dat,
-      x      = data_col,
-      .color = group_col,
-      .fill  = group_col
+      x      = x_col,
+      .color = clr_col,
+      .fill  = clr_col
     )
 
     gg_args <- append(gg_args, more_args)
@@ -709,15 +777,13 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
   # Create bar graph
   } else {
-    x_col <- cluster_col %||% data_col
-
     plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
 
     more_args <- list(
       df_in = plt_dat,
       x     = x_col,
       y_ttl = y_lab,
-      .fill = data_col,
+      .fill = clr_col,
       ang   = 45,
       hjst  = 1
     )
@@ -736,7 +802,8 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     res <- lift(.create_bars)(gg_args)
   }
 
-  if (n_label) res <- .add_n_label(res, n_lab_dat, label_params)
+  # Add n label
+  res <- n_lab_fun(res)
 
   res
 }

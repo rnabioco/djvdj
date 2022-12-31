@@ -759,17 +759,78 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' Add n label to plot
 #'
 #' @param gg_in ggplot2 object
+#' @param df_in data.frame to use for counting number of values plotted
+#' @param grp Variable to use for grouping data when counting the number of
+#' values
+#' @param n_label Vector indicating where n labels should be added
+#' @param axis_col Column in `df_in` containing values that will be plotted on
+#' x-axis
+#' @param lgnd_col Column in `df_in` containing values that will be shown in
+#' the legend
 #' @param lab_args named list with aesthetic parameters to used for modifying
 #' n label
-#' @param dat data.frame containing n label to add
+#' @param lgnd_clrs Colors to pass to `ggplot2::scale_fill_manual()` and
+#' `ggplot2::scale_color_manual()` when label is added to legend.
+#' @param axis Should label be added to the x- or y-axis
+#' @param ... Absorbs unused arguments passed to label functions
+#' @param sep Separator to use when creating n label
+#' @return ggplot object with n labels added
 #' @noRd
-.add_n_label <- function(gg_in, dat, lab_args) {
+.add_n_lab <- function(df_in, n_label, axis_col = NULL, lgnd_col = NULL,
+                       lgnd_clrs = NULL, lab_args = list()) {
 
-  # Base justification
-  # individual characters are generally taller than they are wide
-  # need to account for this to get even spacing from border
+  # # Need to do this so the original value for each argument is used by the
+  # # returned lab_fn
+  # df_in     <- df_in
+  # n_label   <- n_label
+  # axis_col  <- axis_col
+  # lgnd_col  <- lgnd_col
+  # lgnd_clrs <- lgnd_clrs
+  # lab_args  <- lab_args
+
+  # Named list containing possible label functions and group columns
+  lab_fns <- list(
+    corner = list(.add_corner_label, NULL),
+    none   = list(.add_no_label, NULL)
+  )
+
+  if (!is.null(axis_col)) lab_fns$axis   <- list(.add_axis_label, axis_col)
+  if (!is.null(lgnd_col)) lab_fns$legend <- list(.add_legend_label, lgnd_col)
+
+  if (any(!n_label %in% names(lab_fns))) {
+    cli::cli_abort("`n_label` must be {.or {names(lab_fns)}}")
+  }
+
+  lab_fns <- lab_fns[unique(n_label)]
+
+  lab_fn <- function(gg_in) {
+    res <- gg_in
+
+    for (fn in lab_fns) {
+      f <- fn[[1]]
+      g <- fn[[2]]
+
+      dat <- .calc_n(df_in, grp = g)
+
+      res <- f(
+        res, dat,
+        grp       = g,
+        lgnd_clrs = lgnd_clrs,
+        lab_args  = lab_args
+      )
+    }
+
+    res
+  }
+
+  lab_fn
+}
+
+.add_corner_label <- function(gg_in, df_in, lab_args, ...) {
   just <- 0.5
   char_h_w <- 1.5
+
+  dat <- .format_n_label(df_in)
 
   dat <- dplyr::mutate(
     dat,
@@ -777,6 +838,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     hjust = nchar(.data$label),
     hjust = 1 + (1 / .data$hjust * (just * char_h_w))
   )
+
+  if (!is.null(lab_args$size)) lab_args$size <- lab_args$size / ggplot2::.pt
 
   lab_args$mapping     <- ggplot2::aes(label = .data$label, hjust = .data$hjust)
   lab_args$data        <- dat
@@ -791,17 +854,86 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res
 }
 
+.add_axis_label <- function(gg_in, df_in, grp, axis = "x", lab_args, ...) {
+
+  if (is.null(grp)) return(gg_in)
+
+  dat <- .format_n_label(df_in, grp)
+
+  dat_labs <- purrr::set_names(dat$label, dat[[grp]])
+
+  if (identical(axis, "x")) {
+    res <- gg_in +
+      ggplot2::scale_x_discrete(labels = dat_labs) +
+      ggplot2::theme(axis.text.x = lift(ggplot2::element_text)(lab_args))
+
+  } else if (identical(axis, "y")) {
+    res <- gg_in +
+      ggplot2::scale_y_discrete(labels = dat_labs) +
+      ggplot2::theme(axis.text.y = lift(ggplot2::element_text)(lab_args))
+
+  } else {
+    cli::cli_abort("`axis` must be x or y")
+  }
+
+  res
+}
+
+.add_legend_label <- function(gg_in, df_in, grp, lab_args, lgnd_clrs = NULL, ...) {
+
+  if (is.null(grp)) return(gg_in)
+
+  dat <- .format_n_label(df_in, grp)
+
+  dat_labs <- purrr::set_names(dat$label, dat[[grp]])
+
+  # Scale arguments
+  gg_args <- list(labels = dat_labs)
+
+  res <- gg_in +
+    ggplot2::theme(legend.text = lift(ggplot2::element_text)(lab_args))
+
+  if (!is.null(lgnd_clrs)) {
+    gg_args$values <- lgnd_clrs
+
+    res <- res +
+      lift(scale_color_manual)(gg_args) +
+      lift(scale_fill_manual)(gg_args)
+
+  } else {
+    res <- res +
+      lift(scale_color_discrete)(gg_args) +
+      lift(scale_fill_discrete)(gg_args)
+  }
+
+  res
+}
+
+.add_no_label <- function(gg_in, ...) gg_in
+
+.format_n_label <- function(df_in, grp = NULL, sep = "\n") {
+  res <- dplyr::mutate(
+    df_in,
+    label = scales::label_comma()(.data$.n),
+    label = paste0("n = ", .data$label)
+  )
+
+  if (!is.null(grp)) {
+    res <- dplyr::mutate(
+      res,
+      label = paste0(!!sym(grp), sep, .data$label)
+    )
+  }
+
+  res
+}
+
 .calc_n <- function(df_in, grp = NULL) {
   res <- df_in
 
   if (!is.null(grp)) res <- dplyr::group_by(res, !!sym(grp))
 
-  res <- dplyr::summarize(
-    res,
-    label   = scales::label_comma()(n()),
-    label   = paste0("n = ", .data$label),
-    .groups = "drop"
-  )
+  res <- dplyr::summarize(res, .n = n(), .groups = "drop")
 
   res
 }
@@ -903,21 +1035,10 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   if (any(is.na(dat)) && !any(is.na(lvls))) lvls <- c(NA, lvls)
 
-  u_dat     <- unique(dat)
-  missing   <- u_dat[!u_dat %in% lvls]
-  n_missing <- length(missing)
+  u_dat   <- unique(dat)
+  missing <- u_dat[!u_dat %in% lvls]
 
-  if (n_missing > 0) {
-    sfx <- ""
-
-    if (n_missing > 10) {
-      sfx <- "..."
-      missing <- missing[seq_len(10)]
-    }
-
-    missing <- paste0(missing, collapse = ", ")
-    missing <- paste0(missing, sfx)
-
+  if (!purrr::is_empty(missing)) {
     cli::cli_abort("Some labels in {clmn} are not in `plot_lvls`: {missing}")
   }
 
