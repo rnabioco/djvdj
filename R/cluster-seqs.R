@@ -242,9 +242,16 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' passes a scales specification to `ggplot2::facet_wrap()`, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' Use this when separate bar graphs are created for each cell cluster.
-#' @param n_label Include a label showing the number of cells plotted
+#' @param n_label Location on plot where n label should be added, this can be
+#' one of the following:
+#'
+#' - 'corner', display the total number of cells plotted in the top right
+#'   corner, the position of the label can be modified by passing `x` and `y`
+#'   specifications with the `label_params` argument
+#' - 'none', do not display the number of cells plotted
+#'
 #' @param label_params Named list providing additional parameters to modify
-#' clonotype and n label aesthetics, e.g. list(size = 4, color = "red")
+#' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param quiet If `TRUE` messages will not be displayed
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional parameters to pass to [ggseqlogo::geom_logo()]
@@ -267,7 +274,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' )
 #'
 #' @export
-plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
+plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
                         chain, plot_colors = NULL,
                         plot_lvls = names(plot_colors),
                         chain_col = global$chain_col, width = 0.75,
@@ -336,17 +343,12 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
     )
   }
 
-  # Calculate number of cells for label
-  if (!is.list(seqs)) seqs <-list(seqs)
+  # Set n label data
+  if (!is.list(seqs)) seqs <- list(seqs)
 
   n_lab_dat <- tibble::tibble(
     seq_group = names(seqs),
-    label     = purrr::map_dbl(seqs, length)
-  )
-
-  n_lab_dat <- dplyr::mutate(
-    n_lab_dat,
-    label = paste0("n = ", scales::label_comma()(.data$label))
+    .n        = purrr::map_dbl(seqs, length)
   )
 
   # Create logos
@@ -354,11 +356,14 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
     ggseqlogo::geom_logo(seqs, ...) +
     djvdj_theme()
 
-  if (n_label) {
-    res <- .add_n_label(res, n_lab_dat, label_params)
-
-    res <- res +
-      scale_y_continuous(expand = ggplot2::expansion(c(0.05, 0.1)))
+  if (!all(n_label == "none")) {
+    res <- .add_n_label(
+      res, n_lab_dat,
+      n_label  = n_label,
+      crnr_co  = "seq_group",
+      calc_n   = FALSE,
+      lab_args = label_params
+    )
   }
 
   if (!is.null(cluster_col)) {

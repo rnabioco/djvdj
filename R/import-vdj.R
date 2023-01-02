@@ -118,6 +118,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # Set global variables based on prefix
   global$chain_col     <- paste0(prefix, "chains")
   global$clonotype_col <- paste0(prefix, "clonotype_id")
+  global$cdr3_col      <- paste0(prefix, "cdr3")
   global$sep           <- sep
 
   # Check input classes

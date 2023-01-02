@@ -6,8 +6,9 @@
 \usage{
 plot_clone_frequency(
   input,
-  data_col = "clonotype_id",
+  data_col = global$clonotype_col,
   cluster_col = NULL,
+  group_col = NULL,
   method = "bar",
   units = "percent",
   plot_colors = NULL,
@@ -16,7 +17,7 @@ plot_clone_frequency(
   n_clones = NULL,
   panel_nrow = NULL,
   panel_scales = "free_x",
-  n_label = TRUE,
+  n_label = "corner",
   label_params = list(),
   ...
 )
@@ -29,8 +30,13 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 calculating clonotype abundance}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
-grouping cells when calculating clonotype abundance. Clonotypes will be
+grouping cells when calculating clonotype frequencies. Clonotypes will be
 plotted separately for each cluster.}
+
+\item{group_col}{meta.data column to use for grouping cluster IDs present in
+cluster_col. This is useful when there are multiple replicates or patients
+for each treatment condition. This is only applicable when \code{method} is
+'line'.}
 
 \item{method}{Method to use for plotting, possible values include:
 \itemize{
@@ -59,7 +65,16 @@ passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 Use this when separate bar graphs are created for each cell cluster.}
 
-\item{n_label}{Include a label showing the number of cells plotted}
+\item{n_label}{Location on plot where n label should be added, this can be
+any combination of the following:
+\itemize{
+\item 'corner', display the total number of cells plotted in the top right
+corner, the position of the label can be modified by passing \code{x} and \code{y}
+specifications with the \code{label_params} argument
+\item 'legend', display the number of cells plotted for each group shown in the
+plot legend
+\item 'none', do not display the number of cells plotted
+}}
 
 \item{label_params}{Named list providing additional parameters to modify
 clonotype and n label aesthetics, e.g. list(size = 4, color = "red")}

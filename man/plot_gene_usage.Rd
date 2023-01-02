@@ -20,6 +20,8 @@ plot_gene_usage(
   units = "percent",
   rotate_labels = FALSE,
   panel_nrow = NULL,
+  n_label = NULL,
+  label_params = list(),
   return_list = FALSE,
   sep = global$sep,
   ...
@@ -76,6 +78,21 @@ overlapping text}
 
 \item{panel_nrow}{The number of rows to use for arranging plots when
 return_list is FALSE}
+
+\item{n_label}{Location on plot where n label should be added, this is only
+applicable when \code{method} is 'bar' and can be any combination of the
+following:
+\itemize{
+\item 'corner', display the total number of cells plotted in the top right
+corner, the position of the label can be modified by passing \code{x} and \code{y}
+specifications with the \code{label_params} argument
+\item 'legend', display the number of cells plotted for each group shown in the
+plot legend
+\item 'none', do not display the number of cells plotted
+}}
+
+\item{label_params}{Named list providing additional parameters to modify
+n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{return_list}{Should a list of plots be returned, if FALSE plots will be
 combined and arranged into panels}

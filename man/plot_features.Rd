@@ -25,7 +25,7 @@ plot_features(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
-  n_label = TRUE,
+  n_label = "corner",
   label_params = list(),
   ...
 )
@@ -45,7 +45,7 @@ plot_features(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
-  n_label = TRUE,
+  n_label = "corner",
   label_params = list(),
   ...
 )
@@ -69,7 +69,7 @@ plot_vdj_feature(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
-  n_label = TRUE,
+  n_label = "corner",
   label_params = list(),
   sep = global$sep,
   ...
@@ -93,7 +93,7 @@ plot_vdj_feature(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
-  n_label = TRUE,
+  n_label = "corner",
   label_params = list(),
   sep = global$sep,
   ...
@@ -134,7 +134,16 @@ passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 
 \item{na_color}{Color to use for missing values}
 
-\item{n_label}{Include a label showing the number of values plotted}
+\item{n_label}{Location on plot where n label should be added, this can be
+any combination of the following:
+\itemize{
+\item 'corner', display the total number of cells plotted in the top right
+corner, the position of the label can be modified by passing \code{x} and \code{y}
+specifications with the \code{label_params} argument
+\item 'legend', display the number of cells plotted for each group shown in the
+plot legend
+\item 'none', do not display the number of cells plotted
+}}
 
 \item{label_params}{Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")}

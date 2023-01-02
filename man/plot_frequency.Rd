@@ -10,13 +10,13 @@ plot_frequency(
   cluster_col = NULL,
   group_col = NULL,
   units = "percent",
-  stack = TRUE,
+  stack = NULL,
   plot_colors = NULL,
   plot_lvls = NULL,
   trans = "identity",
   n_top = NULL,
   other_label = "other",
-  n_label = TRUE,
+  n_label = "axis",
   label_params = list(),
   ...
 )
@@ -38,7 +38,8 @@ for each treatment condition.}
 
 \item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
-\item{stack}{If TRUE, stacked bargraphs will be generated.}
+\item{stack}{If TRUE, stacked bargraphs will be generated, otherwise grouped
+bargraphs will be generated}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
@@ -55,7 +56,18 @@ this will be automatically selected.}
 \item{other_label}{Label to use for 'other' cells, if \code{NULL} all cell labels
 present in data_col will be displayed on the plot.}
 
-\item{n_label}{Include a label showing the number of cells plotted}
+\item{n_label}{Location on plot where n label should be added, this can be
+any combination of the following:
+\itemize{
+\item 'corner', display the total number of cells plotted in the top right
+corner, the position of the label can be modified by passing \code{x} and \code{y}
+specifications with the \code{label_params} argument
+\item 'axis', display the number of cells plotted for each group shown on the
+x-axis
+\item 'legend', display the number of cells plotted for each group shown in the
+plot legend
+\item 'none', do not display the number of cells plotted
+}}
 
 \item{label_params}{Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")}

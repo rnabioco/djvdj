@@ -28,7 +28,16 @@ plot_features <- function(input, ...) {
 #' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' @param na_color Color to use for missing values
-#' @param n_label Include a label showing the number of values plotted
+#' @param n_label Location on plot where n label should be added, this can be
+#' any combination of the following:
+#'
+#' - 'corner', display the total number of cells plotted in the top right
+#'   corner, the position of the label can be modified by passing `x` and `y`
+#'   specifications with the `label_params` argument
+#' - 'legend', display the number of cells plotted for each group shown in the
+#'   plot legend
+#' - 'none', do not display the number of cells plotted
+#'
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to [ggplot2::geom_point()], e.g.
@@ -59,7 +68,8 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
                                   trans = "identity", min_q = NULL,
                                   max_q = NULL, panel_nrow = NULL,
                                   panel_scales = "fixed", na_color = "grey80",
-                                  n_label = TRUE, label_params = list(), ...) {
+                                  n_label = "corner", label_params = list(),
+                                  ...) {
 
   # Check that columns are present in object
   .check_obj_cols(input, x, y, feature, group_col)
@@ -72,28 +82,31 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
 
   plt_dat <- .get_meta(input)
 
-  # Calculate number of cells for label
-  .n <- nrow(plt_dat)
+  # Set data for n label
+  n_lab_clrs <- plot_colors
+
+  if ("legend" %in% n_label) plot_colors <- NULL
 
   plt_vars  <- c(x, y, feature)
 
   gg_args <- list(
-    x          = x,
-    y          = y,
-    feat       = feature,
-    grp        = group_col,
-    pt_args    = list(...),
-    p_nrow     = panel_nrow,
-    p_scales   = panel_scales,
-    n_lab      = n_label,
-    lab_params = label_params
+    x        = x,
+    y        = y,
+    feat     = feature,
+    grp      = group_col,
+    plt_args = .standardize_aes(list(...)),
+    p_nrow   = panel_nrow,
+    p_scales = panel_scales,
+    trans    = trans,
+    n_lab    = n_label,
+    lab_args = label_params
   )
 
   # If no feature provided, return scatter plot
   if (is.null(feature)) {
-    gg_args$dat <- plt_dat
+    gg_args$df_in <- plt_dat
 
-    gg_args$pt_args$color <- gg_args$pt_args$color %||% plot_colors
+    gg_args$plt_args$color <- gg_args$plt_args$color %||% plot_colors
 
     res <- lift(.create_scatter)(gg_args)
 
@@ -103,54 +116,28 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   # Adjust values based on min_q and max_q
   is_num <- is.numeric(plt_dat[[feature]])
 
-  if ((!is.null(min_q) || !is.null(max_q)) && is_num) {
-    plt_dat <- .set_lims(
-      plt_dat,
-      ft = feature,
-      mn = min_q,
-      mx = max_q
-    )
+  if (is_num && (!is.null(min_q) || !is.null(max_q))) {
+    plt_dat <- .set_lims(plt_dat, feature, min_q, max_q)
   }
-
-  # Default continuous colors
-  if (is_num) plot_colors <- plot_colors %||% c("#132B43", "#56B1F7")
 
   # Convert logical to character
   if (is.logical(plt_dat[[feature]])) {
     plt_dat <- purrr::modify_at(plt_dat, feature, as.character)
+
+    plot_lvls <- plot_lvls %||% c("TRUE", "FALSE")
   }
 
-  # Set feature levels
-  # Add NA to plot_lvls so missing values are plotted on the bottom
-  if (is.null(plot_lvls) && !is_num) {
-    dat <- plt_dat[[feature]]
-
-    plot_lvls <- levels(dat) %||% sort(unique(dat))
-  }
-
-  plt_dat <- .set_lvls(plt_dat, feature, plot_lvls)
-
-  # Sort data so largest values are plotted on top
-  # Do not use arrange() since NAs always get sorted to bottom
-  # res <- arrange(plt_dat, !!sym(feature))
-  plt_dat <- plt_dat[order(plt_dat[[feature]], na.last = FALSE), ]
-
-  gg_args$dat <- plt_dat
-
-  res <- lift(.create_scatter)(gg_args)
-
-  # Set feature colors, use ggplot2 defaults if plot_colors is NULL
+  # Set feature colors and levels, use ggplot2 defaults if plot_colors is NULL
   if (is_num) {
     plot_colors <- plot_colors %||% c("#132B43", "#56B1F7")
 
-    res <- res +
-      ggplot2::scale_color_gradientn(
-        colors = plot_colors,
-        na.value = na_color,
-        trans    = trans
-      )
-
   } else {
+    if (is.null(plot_lvls)) {
+      dat <- plt_dat[[feature]]
+
+      plot_lvls <- levels(dat) %||% sort(unique(dat))
+    }
+
     plot_colors <- plot_colors %||% scales::hue_pal()(length(plot_lvls))
 
     # Set color names, need to do this so na_color is not overridden if the
@@ -163,50 +150,80 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
 
       names(plot_colors) <- lvls[seq_along(plot_colors)]
     }
-
-    res <- res +
-      ggplot2::scale_color_manual(
-        values   = plot_colors,
-        na.value = na_color
-      ) +
-      ggplot2::guides(
-        color = ggplot2::guide_legend(override.aes = list(size = 3))
-      )
   }
+
+  plt_dat <- .set_lvls(plt_dat, feature, plot_lvls)
+
+  # Sort data so largest values are plotted on top
+  # Do not use arrange() since NAs always get sorted to bottom
+  # res <- arrange(plt_dat, !!sym(feature))
+  plt_dat <- plt_dat[order(plt_dat[[feature]], na.last = FALSE), ]
+
+  gg_args$df_in    <- plt_dat
+  gg_args$plt_clrs <- plot_colors
+
+  res <- lift(.create_scatter)(gg_args)
 
   res
 }
 
-.create_scatter <- function(dat, x, y, feat, grp, p_nrow, p_scales, pt_args,
-                            n_lab = TRUE, lab_params = list()) {
+.create_scatter <- function(df_in, x, y, feat, grp, plt_clrs = NULL, plt_args,
+                            p_nrow, p_scales, n_lab = "corner",
+                            lab_args = list(), na_color = "grey80",
+                            trans = "identity") {
+
+  has_feat <- !is.null(feat)
+  is_num   <- has_feat && is.numeric(df_in[[feat]])
 
   # If don't use lift_dl() to set plt_aes, will get a warning when
   # manually adjusting colors: "Scale for 'colour' is already present..."
   plt_aes <- list(x = sym(x), y = sym(y))
 
-  if (!is.null(feat)) plt_aes$color <- sym(feat)
+  if (has_feat) plt_aes$color <- sym(feat)
 
   plt_aes <- lift(ggplot2::aes)(plt_aes)
 
-  res <- ggplot2::ggplot(dat, plt_aes) +
-    lift(ggplot2::geom_point)(pt_args) +
+  res <- ggplot2::ggplot(df_in, plt_aes) +
+    lift(ggplot2::geom_point)(plt_args) +
     djvdj_theme()
 
+  # Split plot into facets
   if (!is.null(grp)) {
     res <- res +
       ggplot2::facet_wrap(
-        stats::as.formula(paste("~", grp)),
+        stats::as.formula(paste0("~ ", grp)),
         nrow = p_nrow, scales = p_scales
       )
   }
 
-  if (n_lab) {
-    res <- res +
-      ggplot2::scale_y_continuous(expand = ggplot2::expansion(c(0.05, 0.1)))
+  # Add n label
+  n_lab_args <- list(
+    df_in    = df_in,
+    n_label  = n_lab,
+    crnr_col = grp,
+    lab_args = lab_args
+  )
 
-    n_lab_dat <- .calc_n(dat, grp)
-    res   <- .add_n_label(res, n_lab_dat, lab_params)
+  if (is_num) {
+    res <- res +
+      ggplot2::scale_color_gradientn(
+        colors   = plt_clrs,
+        na.value = na_color,
+        trans    = trans
+      )
+
+  } else {
+    res <- res +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(size = 3))
+      )
+
+    n_lab_args$lgnd_col  <- feat
+    n_lab_args$lgnd_clrs <- plt_clrs
+    n_lab_args$na_clr    <- na_color
   }
+
+  res <- lift(.add_n_label, gg_in = res)(n_lab_args)
 
   res
 }
@@ -223,7 +240,7 @@ plot_features.Seurat <- function(input, feature = NULL, x = "UMAP_1",
                                  trans = "identity", min_q = NULL,
                                  max_q = NULL, panel_nrow = NULL,
                                  panel_scales = "fixed", na_color = "grey80",
-                                 n_label = TRUE, label_params = list(), ...) {
+                                 n_label = "corner", label_params = list(), ...) {
 
   # Check input classes
   .check_args(environment())
@@ -327,7 +344,7 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
                                      trans = "identity", min_q = NULL,
                                      max_q = NULL, panel_nrow = NULL,
                                      panel_scales = "fixed",
-                                     na_color = "grey80", n_label = TRUE,
+                                     na_color = "grey80", n_label = "corner",
                                      label_params = list(),
                                      sep = global$sep, ...) {
 
@@ -376,7 +393,7 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
                                     trans = "identity", min_q = NULL,
                                     max_q = NULL, panel_nrow = NULL,
                                     panel_scales = "fixed", na_color = "grey80",
-                                    n_label = TRUE, label_params = list(),
+                                    n_label = "corner", label_params = list(),
                                     sep = global$sep, ...) {
 
   # Fetch variables and add to meta.data
@@ -403,6 +420,7 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
     group_col    = group_col,
     summary_fn   = summary_fn,
     chain        = chain,
+    chain_col    = chain_col,
     plot_colors  = plot_colors,
     plot_lvls    = plot_lvls,
     min_q        = min_q,
@@ -411,7 +429,8 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
     panel_scales = panel_scales,
     na_color     = na_color,
     trans        = trans,
-    chain_col    = chain_col,
+    n_label      = n_label,
+    label_params = label_params,
     sep          = sep,
     ...
   )

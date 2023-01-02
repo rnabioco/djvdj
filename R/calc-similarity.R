@@ -532,6 +532,16 @@ calc_mds <- function(input, data_col, cluster_col, method = "jaccard",
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters
 #' @param label_points Label points on plot
+#' @param n_label Location on plot where n label should be added, this can be
+#' any combination of the following:
+#'
+#' - 'corner', display the total number of points plotted in the top right
+#'   corner, the position of the label can be modified by passing `x` and `y`
+#'   specifications with the `label_params` argument
+#' - 'none', do not display the number of points plotted
+#'
+#' @param label_params Named list providing additional parameters to modify
+#' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to [ggplot2::geom_point()]
 #' @return ggplot object
@@ -567,6 +577,7 @@ plot_mds <- function(input, data_col, cluster_col,
                      method = "jaccard", chain = NULL,
                      chain_col = global$chain_col, plot_colors = NULL,
                      plot_lvls = names(plot_colors), label_points = TRUE,
+                     n_label = "none", label_params = list(),
                      sep = global$sep, ...) {
 
   # Check that columns are present in object
@@ -586,24 +597,34 @@ plot_mds <- function(input, data_col, cluster_col,
     chain       = chain,
     chain_col   = chain_col,
     prefix      = "",
-    return_df  = TRUE,
+    return_df   = TRUE,
     sep         = sep
   )
 
   # Create MDS plot
+  lab_args <- .get_uniq_text_args(label_params, "geom_text")
+
   res <- plot_features(
     plt_dat,
     x = "MDS_1",
     y = "MDS_2",
-    feature     = cluster_col,
-    plot_colors = plot_colors,
-    plot_lvls   = plot_lvls,
+    feature      = cluster_col,
+    plot_colors  = plot_colors,
+    plot_lvls    = plot_lvls,
+    n_label      = n_label,
+    label_params = lab_args,
     ...
   )
 
   if (label_points) {
+    lab_args <- .get_uniq_text_args(label_params, "geom_text_repel")
+
+    lab_args$mapping <- ggplot2::aes(label = !!sym(cluster_col))
+
+    if (!is.null(lab_args$size)) lab_args$size <- lab_args$size / ggplot2::.pt
+
     res <- res +
-      ggrepel::geom_text_repel(ggplot2::aes(label = !!sym(cluster_col)))
+      lift(ggrepel::geom_text_repel)(lab_args)
   }
 
   res

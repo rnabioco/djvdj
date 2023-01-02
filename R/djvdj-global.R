@@ -10,6 +10,9 @@ global$chain_col <- "chains"
 # Default clonotype column
 global$clonotype_col <- "clonotype_id"
 
+# Default CDR3 column
+global$cdr3_col <- "cdr3"
+
 # Default chain separator
 global$sep <- ";"
 
@@ -32,7 +35,7 @@ global$arg_classes <- list(
   ),
   panel_nrow    = list(Class = "numeric", allow_null = TRUE),
   panel_scales  = list(),
-  n_label       = list(Class = "logical"),
+  n_label       = list(len_one = FALSE),
   label_params  = list(Class = "list", len_one = FALSE),
   units         = list(),
   trans         = list(),
@@ -47,7 +50,7 @@ global$arg_classes <- list(
   # plot_frequency
   n_top       = list(Class = "numeric", allow_null = TRUE),
   other_label = list(),
-  stack       = list(Class = "logical"),
+  stack       = list(Class = "logical", allow_null = TRUE),
 
   # plot_gene_usage
   vdj_genes     = list(len_one = FALSE, allow_null = TRUE),

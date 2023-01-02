@@ -6,7 +6,7 @@
 \usage{
 plot_motifs(
   input,
-  data_col = "cdr3",
+  data_col = global$cdr3_col,
   cluster_col = NULL,
   chain,
   plot_colors = NULL,
@@ -57,10 +57,17 @@ passes a scales specification to \code{ggplot2::facet_wrap()}, can be 'fixed', '
 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 Use this when separate bar graphs are created for each cell cluster.}
 
-\item{n_label}{Include a label showing the number of cells plotted}
+\item{n_label}{Location on plot where n label should be added, this can be
+one of the following:
+\itemize{
+\item 'corner', display the total number of cells plotted in the top right
+corner, the position of the label can be modified by passing \code{x} and \code{y}
+specifications with the \code{label_params} argument
+\item 'none', do not display the number of cells plotted
+}}
 
 \item{label_params}{Named list providing additional parameters to modify
-clonotype and n label aesthetics, e.g. list(size = 4, color = "red")}
+n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{quiet}{If \code{TRUE} messages will not be displayed}
 

@@ -14,6 +14,8 @@ plot_mds(
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   label_points = TRUE,
+  n_label = "none",
+  label_params = list(),
   sep = global$sep,
   ...
 )
@@ -47,6 +49,18 @@ per-chain data such as CDR3 sequences. Set to \code{NULL} to include all chains.
 \item{plot_lvls}{Levels to use for ordering clusters}
 
 \item{label_points}{Label points on plot}
+
+\item{n_label}{Location on plot where n label should be added, this can be
+any combination of the following:
+\itemize{
+\item 'corner', display the total number of points plotted in the top right
+corner, the position of the label can be modified by passing \code{x} and \code{y}
+specifications with the \code{label_params} argument
+\item 'none', do not display the number of points plotted
+}}
+
+\item{label_params}{Named list providing additional parameters to modify
+n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 

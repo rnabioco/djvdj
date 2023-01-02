@@ -211,31 +211,6 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 }
 
 
-#' Fetch top clonotypes
-#'
-#' @param input Single cell object or data.frame containing V(D)J data. If a
-#' data.frame is provided, the cell barcodes should be stored as row names.
-#' @param data_cols meta.data column(s) to use for identifying top clonotypes
-#' @param cluster_col meta.data column containing cluster IDs to use for
-#' grouping cells.
-#' @param n_clones Number of top clonotypes to identify.
-#' @param sep Separator used for storing per-chain V(D)J data for each cell
-#' @return data.frame containing information for top clonotypes
-#' @noRd
-fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
-                             n_clones = 10, sep = global$sep) {
-
-  # Check that columns are present in object
-  .check_obj_cols(input, data_cols, cluster_col)
-
-  # Check input classes
-  .check_args(environment())
-
-
-
-
-
-}
 
 
 #' Plot clonotype frequency
@@ -245,8 +220,12 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 #' @param data_col meta.data column containing clonotype IDs to use for
 #' calculating clonotype abundance
 #' @param cluster_col meta.data column containing cluster IDs to use for
-#' grouping cells when calculating clonotype abundance. Clonotypes will be
+#' grouping cells when calculating clonotype frequencies. Clonotypes will be
 #' plotted separately for each cluster.
+#' @param group_col meta.data column to use for grouping cluster IDs present in
+#' cluster_col. This is useful when there are multiple replicates or patients
+#' for each treatment condition. This is only applicable when `method` is
+#' 'line'.
 #' @param method Method to use for plotting, possible values include:
 #'
 #' - 'bar', create a bargraph
@@ -336,7 +315,7 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 #'
 #' @export
 plot_clone_frequency <- function(input, data_col = global$clonotype_col,
-                                 cluster_col = NULL,
+                                 cluster_col = NULL, group_col = NULL,
                                  method = "bar", units = "percent",
                                  plot_colors = NULL,
                                  plot_lvls = names(plot_colors),
@@ -351,8 +330,6 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
   .check_args(environment())
 
   # Check input values
-  n_clones <- n_clones %||% switch(method, bar = 10, line = 3)
-
   psbl_units <- c("frequency", "percent")
 
   if (!units %in% psbl_units) {
@@ -365,6 +342,8 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     cli::cli_abort("`method` must be {.or {psbl_mets}}")
   }
 
+  n_clones <- n_clones %||% switch(method, bar = 10, line = 3)
+
   if (identical(method, "bar") && n_clones <= 0) {
     cli::cli_abort("`n_clones` must be >0")
   }
@@ -372,6 +351,15 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
   if (identical(method, "line") && n_clones < 0) {
     cli::cli_abort("`n_clones` must be >=0")
   }
+
+  # For bargraph allow user to facet plot using group_col when cluster_col is
+  # NULL
+  if (identical(method, "bar") && is.null(cluster_col)) {
+    cluster_col <- group_col
+    group_col   <- NULL
+  }
+
+  .chk_group_cols(cluster_col, group_col, input)
 
   abun_col <- switch(units, frequency = ".freq", percent = ".pct")
   y_lab    <- .get_axis_label(units)
@@ -388,8 +376,11 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
   plt_dat <- tibble::as_tibble(plt_dat, rownames = global$cell_col)
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
-  # Save data to use for n label
-  n_lab_dat <- plt_dat
+  # Save data for n label
+  n_lab_dat  <- plt_dat
+  n_lab_clrs <- plot_colors
+
+  if ("legend" %in% n_label) plot_colors <- NULL
 
   # Identify data columns that the user should have access to
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
@@ -428,27 +419,24 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
   # Identify arguments unique for ggplot2::annotate and ggrepel::geom_text_repel
   # This is important for making sure label_params arguments are used for the
   # correct plot labels
-  uniq_args <- .get_unique_args(
-    n_args = c(
-      formalArgs(ggplot2::annotate),
-      formalArgs(ggplot2::geom_text),
-      names(ggplot2::GeomText$default_aes)
-    ),
-    clone_args = c(
-      formalArgs(ggrepel::geom_text_repel),
-      names(ggrepel::GeomTextRepel$default_aes)
-    )
-  )
-
-  names(label_params) <- stringr::str_replace(
-    names(label_params), "color", "colour"
-  )
+  # uniq_args <- .get_unique_args(
+  #   n_args = c(
+  #     formalArgs(ggplot2::geom_text),
+  #     names(ggplot2::GeomText$default_aes)
+  #   ),
+  #   clone_args = c(
+  #     formalArgs(ggrepel::geom_text_repel),
+  #     names(ggrepel::GeomTextRepel$default_aes)
+  #   )
+  # )
 
   lab_args <- label_params
 
   # Create bar graph
-  if ("corner" %in% n_label) y_exp <- c(0.05, 0.1)
-  else                       y_exp <- c(0.05, 0.05)
+  gg_args <- .standardize_aes(list(...))
+
+  if ("corner" %in% n_label) y_exp <- .n_label_expansion
+  else                       y_exp <- NULL
 
   if (identical(method, "bar")) {
     plt_labs <- purrr::set_names(top_clones$.lab, top_clones[[data_col]])
@@ -463,7 +451,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
       lvls  = lvls
     )
 
-    res <- .create_bars(
+    more_args <- list(
       df_in = top_clones,
       x     = data_col,
       y     = abun_col,
@@ -473,9 +461,12 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
       clrs  = plot_colors,
       ang   = 45,
       hjst  = 1,
-      trans = trans,
-      ...
+      trans = trans
     )
+
+    gg_args <- append(gg_args, more_args)
+
+    res <- lift(.create_bars)(gg_args)
 
     # Format clonotype labels
     res <- res +
@@ -485,21 +476,22 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
       res <- res +
         ggplot2::facet_wrap(
           stats::as.formula(paste0("~ ", cluster_col)),
-          nrow   = panel_nrow,
-          scales = panel_scales
+          scales = panel_scales, nrow = panel_nrow
         )
     }
 
   # Plot abundance vs rank
   } else {
     plt_aes <- ggplot2::aes(rank, !!sym(abun_col))
-
     clr_aes <- plt_aes
 
     if (!is.null(cluster_col)) clr_aes$colour <- sym(cluster_col)
 
+    gg_args$mapping   <- clr_aes
+    gg_args$linewidth <- gg_args$linewidth %||% 1
+
     res <- ggplot2::ggplot(plt_dat, plt_aes) +
-      ggplot2::geom_line(clr_aes, ...) +
+      lift(ggplot2::geom_line)(gg_args) +
       ggplot2::scale_y_continuous(
         trans = trans, expand = ggplot2::expansion(y_exp)
       ) +
@@ -511,20 +503,29 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
         ggplot2::scale_color_manual(values = plot_colors)
     }
 
+    if (!is.null(group_col)) {
+      res <- res +
+        ggplot2::facet_wrap(
+          as.formula(paste0("~ ", group_col)),
+          scales = panel_scales, nrow = panel_nrow
+        )
+    }
+
     # Add clonotype labels
     if (n_clones > 0) {
-      if (!identical(n_label, "none")) {
-        lab_args <- label_params[!names(label_params) %in% uniq_args$n_args]
+      if (!all(n_label == "none")) {
+        lab_args <- .get_uniq_text_args(label_params, "geom_text_repel")
       }
 
       lab_args$mapping <- ggplot2::aes(label = .data$.lab)
       lab_args$data    <- top_clones
 
-      lab_args$size          <- lab_args$size %||% 3
       lab_args$nudge_x       <- lab_args$nudge_x %||% 500
       lab_args$direction     <- lab_args$direction %||% "y"
       lab_args$segment.size  <- lab_args$segment.size %||% 0.2
       lab_args$segment.alpha <- lab_args$segment.alpha %||% 0.2
+
+      if (!is.null(lab_args$size)) lab_args$size <- lab_args$size / ggplot2::.pt
 
       res <- res +
         lift(ggrepel::geom_text_repel)(lab_args)
@@ -532,30 +533,24 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
   }
 
   # Add n label
-  res <- n_lab_fun(res)
-
-  if (!identical(n_label, "none")) {
-    if (identical(method, "line") && n_clones > 0) {
-      lab_args <- label_params[!names(label_params) %in% uniq_args$clone_args]
-    }
-
-
-
-    res <- .add_n_label(res, n_dat, lab_args)
+  if (identical(method, "line") && n_clones > 0) {
+    lab_args <- .get_uniq_text_args(label_params, "geom_text")
   }
 
+  if (identical(method, "line")) panel_col <- group_col
+  else                           panel_col <- cluster_col
+
+  res <- .add_n_label(
+    res, n_lab_dat,
+    n_label   = n_label,
+    crnr_col  = panel_col,
+    lgnd_col  = cluster_col,
+    lgnd_clrs = n_lab_clrs,
+    y_exp     = NULL,
+    lab_args  = lab_args
+  )
+
   res
-}
-
-#' Get unique arguments
-#' @noRd
-.get_unique_args <- function(...) {
-  args        <- list(...)
-  args        <- purrr::map(args, unique)
-  shared_args <- purrr::reduce(args, dplyr::intersect)
-  args        <- purrr::map(args, ~ .x[!.x %in% shared_args])
-
-  args
 }
 
 
@@ -576,7 +571,8 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' cluster_col. This is useful when there are multiple replicates or patients
 #' for each treatment condition.
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
-#' @param stack If TRUE, stacked bargraphs will be generated.
+#' @param stack If TRUE, stacked bargraphs will be generated, otherwise grouped
+#' bargraphs will be generated
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters or groups
 #' @param trans Transformation to use for plotting data, e.g. 'log10'. By
@@ -638,10 +634,10 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #'
 #' @export
 plot_frequency <- function(input, data_col, cluster_col = NULL,
-                           group_col = NULL, units = "percent", stack = TRUE,
+                           group_col = NULL, units = "percent", stack = NULL,
                            plot_colors = NULL, plot_lvls = NULL,
                            trans = "identity", n_top = NULL,
-                           other_label = "other", n_label = c("corner", "axis"),
+                           other_label = "other", n_label = "axis",
                            label_params = list(), ...) {
 
   # Check that columns are present in object
@@ -658,6 +654,9 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   if (!units %in% psbl_units) {
     cli::cli_abort("`units` must be {.or {psbl_units}}")
   }
+
+  if (!identical(trans, "identity")) stack <- stack %||% FALSE
+  else                               stack <- stack %||% !is.null(cluster_col)
 
   if (stack && !identical(trans, "identity")) {
     cli::cli_abort("Values can only be transformed when `stack` is `FALSE`")
@@ -687,15 +686,9 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   plt_dat <- tibble::as_tibble(plt_dat, rownames = global$cell_col)
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
-  # Generate n label function based on user arguments
-  n_lab_fun <- .get_n_lab_fun(
-    plt_dat,
-    n_label   = n_label,
-    axis_col  = x_col,
-    lgnd_col  = clr_col,
-    lgnd_clrs = plot_colors,
-    lab_args  = label_params
-  )
+  # Set data for n label
+  n_lab_dat  <- plt_dat
+  n_lab_clrs <- plot_colors
 
   if ("legend" %in% n_label) plot_colors <- NULL
 
@@ -749,7 +742,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   # Plot arguments
   gg_args <- list(y = abun_col, clrs = plot_colors, trans = trans, ...)
 
-  if ("corner" %in% n_label) gg_args$y_exp <- c(0.05, 0.1)
+  if ("corner" %in% n_label) gg_args$y_exp <- .n_label_expansion
 
   # Create grouped boxplot
   if (!is.null(group_col)) {
@@ -803,7 +796,15 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   }
 
   # Add n label
-  res <- n_lab_fun(res)
+  res <- .add_n_label(
+    res, n_lab_dat,
+    n_label   = n_label,
+    axis_col  = x_col,
+    lgnd_col  = clr_col,
+    lgnd_clrs = n_lab_clrs,
+    y_exp     = NULL,
+    lab_args  = label_params
+  )
 
   res
 }

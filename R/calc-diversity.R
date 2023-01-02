@@ -271,7 +271,18 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param panel_scales Should scales for plot panels be fixed or free. This
 #' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
-#' @param n_label Include a label showing the number of cells plotted
+#' @param n_label Location on plot where n label should be added, this can be
+#' any combination of the following:
+#'
+#' - 'corner', display the total number of cells plotted in the top right
+#'   corner, the position of the label can be modified by passing `x` and `y`
+#'   specifications with the `label_params` argument
+#' - 'axis', display the number of cells plotted for each group shown on the
+#'   x-axis
+#' - 'legend', display the number of cells plotted for each group shown in the
+#'   plot legend
+#' - 'none', do not display the number of cells plotted
+#'
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
@@ -345,7 +356,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
                            downsample = FALSE, n_boots = 0, chain = NULL,
                            chain_col = global$chain_col, plot_colors = NULL,
                            plot_lvls = names(plot_colors), panel_nrow = NULL,
-                           panel_scales = "free", n_label = TRUE,
+                           panel_scales = "free", n_label = "axis",
                            label_params = list(), sep = global$sep, ...) {
 
   # Check that columns are present in object
@@ -382,6 +393,9 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
   if (n_boots > 1) all_div_cols <- c(all_div_cols, err_cols)
 
+  # Set plot variables
+  x_col <- clr_col <- group_col %||% cluster_col
+
   # Calculate diversity
   # remove any existing diversity columns from plt_dat
   plt_dat <- .get_meta(input)
@@ -404,9 +418,13 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   # Format data for plotting
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
-  # Calculate number of cells for label
-  n_lab_dat <- .calc_n(plt_dat)
+  # Set data for n label
+  n_lab_dat  <- plt_dat
+  n_lab_clrs <- plot_colors
 
+  if ("legend" %in% n_label) plot_colors <- NULL
+
+  # Identify data columns that the user should have access to
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
@@ -433,18 +451,22 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   if (!include_x_labs) cluster_col <- "met"
 
   # Plot arguments
-  gg_args <- list(df_in = plt_dat, y = "diversity", clrs = plot_colors, ...)
+  gg_args <- list(
+    df_in = plt_dat,
+    x     = x_col,
+    y     = "diversity",
+    .fill = clr_col,
+    clrs  = plot_colors,
+    ...
+  )
 
-  if (n_label) gg_args$y_exp <- c(0.05, 0.1)
+  if ("corner" %in% n_label) gg_args$y_exp <- .n_label_expansion
 
   # Create grouped boxplot
-  if (!is.null(group_col) && !is.null(cluster_col)) {
+  if (!is.null(group_col)) {
     gg_args$alpha         <- gg_args$alpha %||% 0.5
     gg_args$outlier.color <- gg_args$outlier.color %||% NA
-
-    more_args <- list(x = group_col, .color = group_col, .fill = group_col)
-
-    gg_args <- append(gg_args, more_args)
+    gg_args$.color        <- clr_col
 
     res <- lift(.create_boxes)(gg_args) +
       ggplot2::geom_jitter(
@@ -452,27 +474,12 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
       ) +
       theme(legend.position = "right")
 
-    # Create facets
-    if (length(method) > 1) {
-      res <- res +
-        ggplot2::facet_wrap(~ met, nrow = panel_nrow, scales = panel_scales) +
-        ggplot2::theme(axis.title.y = ggplot2::element_blank())
-
-    } else {
-      res <- res +
-        ggplot2::labs(y = names(method))
-    }
-
   # Create bar graphs
   # only add error bars if n_boots > 1
   } else {
     if (is.null(gg_args$position)) {
       gg_args$position <- ggplot2::position_identity()
     }
-
-    more_args <- list(x = cluster_col, .fill = cluster_col)
-
-    gg_args <- append(gg_args, more_args)
 
     res <- lift(.create_bars)(gg_args)
 
@@ -485,17 +492,6 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
             ymax = .data$diversity + .data$stderr
           )
         )
-    }
-
-    # Create facets
-    if (length(method) > 1) {
-      res <- res +
-        ggplot2::facet_wrap(~ met, nrow = panel_nrow, scales = "free") +
-        ggplot2::theme(axis.title.y = ggplot2::element_blank())
-
-    } else {
-      res <- res +
-        ggplot2::labs(y = names(method))
     }
 
     # Set theme
@@ -511,7 +507,27 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
     }
   }
 
-  if (n_label) res <- .add_n_label(res, n_lab_dat, label_params)
+  # Create facets
+  if (length(method) > 1) {
+    res <- res +
+      ggplot2::facet_wrap(~ met, nrow = panel_nrow, scales = panel_scales) +
+      ggplot2::theme(axis.title.y = ggplot2::element_blank())
+
+  } else {
+    res <- res +
+      ggplot2::labs(y = names(method))
+  }
+
+  # Add n label
+  res <- .add_n_label(
+    res, n_lab_dat,
+    n_label   = n_label,
+    axis_col  = x_col,
+    lgnd_col  = clr_col,
+    lgnd_clrs = n_lab_clrs,
+    y_exp     = NULL,
+    lab_args  = label_params
+  )
 
   res
 }
@@ -550,6 +566,18 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 #' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' @param ci_alpha Transparency to use when plotting 95% confidence interval
+#' @param n_label Location on plot where n label should be added, this can be
+#' any combination of the following:
+#'
+#' - 'corner', display the total number of cells plotted in the top right
+#'   corner, the position of the label can be modified by passing `x` and `y`
+#'   specifications with the `label_params` argument
+#' - 'legend', display the number of cells plotted for each group shown in the
+#'   plot legend
+#' - 'none', do not display the number of cells plotted
+#'
+#' @param label_params Named list providing additional parameters to modify
+#' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill,
 #' linetype, etc.
@@ -601,7 +629,8 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
                              chain = NULL, chain_col = global$chain_col,
                              plot_colors = NULL, plot_lvls = names(plot_colors),
                              panel_nrow = NULL, panel_scales = "free",
-                             ci_alpha = 0.15, sep = global$sep, ...) {
+                             ci_alpha = 0.15, n_label = "legend",
+                             label_params = list(), sep = global$sep, ...) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -622,6 +651,10 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
   method <- mets[method]
 
   met_labs <- purrr::set_names(names(method), as.character(unname(method)))
+
+  if (is.null(cluster_col)) {
+    n_label <- sub("legend", "none", n_label, fixed = TRUE)
+  }
 
   # Fetch data
   vdj <- .get_meta(input)
@@ -650,6 +683,12 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
 
   vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
 
+  # Set n label data
+  n_lab_dat  <- vdj
+  n_lab_clrs <- plot_colors
+
+  if ("legend" %in% n_label) plot_colors <- NULL
+
   # Split based on cluster_col
   if (!is.null(cluster_col)) vdj <- split(vdj, vdj[[cluster_col]])
   else                       vdj <- list(vdj)
@@ -676,31 +715,41 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
   plt_dat <- .set_lvls(plt_dat, "method", c("rarefaction", "extrapolation"))
 
   # Plot standard error
+  gg_args <- .standardize_aes(list(...))
+
   res <- ggplot2::ggplot(
     plt_dat,
     ggplot2::aes(.data$m, .data$qD, linetype = method)
   ) +
     ggplot2::guides(linetype = ggplot2::guide_legend(title = NULL))
 
+  # Set ribbon color to always match line color
   if (n_boots > 1) {
-    gg_aes <- ggplot2::aes(
+    rib_aes <- ggplot2::aes(
       x = .data$m, ymin = .data$qD.LCL, ymax = .data$qD.UCL
     )
 
-    if (!is.null(cluster_col))   gg_aes$fill <- sym(cluster_col)
-    else if (length(method) > 1) gg_aes$fill <- sym("Order.q")
+    if (!is.null(cluster_col))   rib_aes$fill <- sym(cluster_col)
+    else if (length(method) > 1) rib_aes$fill <- sym("Order.q")
+
+    rib_args <- list(
+      mapping = rib_aes,
+      alpha   = ci_alpha,
+      color   = NA
+    )
+
+    rib_args$fill <- gg_args$colour
 
     res <- res +
-      ggplot2::geom_ribbon(gg_aes, alpha = ci_alpha, color = NA)
+      lift(ggplot2::geom_ribbon)(rib_args)
   }
 
   # Add curves
   gg_aes  <- ggplot2::aes()
-  gg_args <- list(...)
 
   if (!is.null(cluster_col))   gg_aes$colour  <- sym(cluster_col)
   else if (length(method) > 1) gg_aes$colour  <- sym("Order.q")
-  else                         gg_args$colour <- gg_args$color %||% plot_colors
+  else                         gg_args$colour <- gg_args$colour %||% plot_colors
 
   gg_args$mapping <- gg_aes
 
@@ -730,6 +779,15 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
     res <- res +
       labs(y = names(method))
   }
+
+  # Add n label
+  res <- .add_n_label(
+    res, n_lab_dat,
+    n_label   = n_label,
+    lgnd_col  = cluster_col,
+    lgnd_clrs = n_lab_clrs,
+    lab_args  = label_params
+  )
 
   res
 }

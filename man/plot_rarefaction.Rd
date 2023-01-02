@@ -17,6 +17,8 @@ plot_rarefaction(
   panel_nrow = NULL,
   panel_scales = "free",
   ci_alpha = 0.15,
+  n_label = "legend",
+  label_params = list(),
   sep = global$sep,
   ...
 )
@@ -61,6 +63,20 @@ passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.}
 
 \item{ci_alpha}{Transparency to use when plotting 95\% confidence interval}
+
+\item{n_label}{Location on plot where n label should be added, this can be
+any combination of the following:
+\itemize{
+\item 'corner', display the total number of cells plotted in the top right
+corner, the position of the label can be modified by passing \code{x} and \code{y}
+specifications with the \code{label_params} argument
+\item 'legend', display the number of cells plotted for each group shown in the
+plot legend
+\item 'none', do not display the number of cells plotted
+}}
+
+\item{label_params}{Named list providing additional parameters to modify
+n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 

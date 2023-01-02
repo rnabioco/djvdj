@@ -529,13 +529,15 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @return ggplot object
 #' @noRd
 .create_bars <- function(df_in, x, y, .fill = NULL, clrs = NULL,
-                         trans = "identity", y_ttl = y, y_exp = c(0.05, 0.05),
+                         trans = "identity", y_ttl = y, y_exp = NULL,
                          ang = 45, hjst = 1, ...) {
+
+  y_exp <- y_exp %||% c(0.05, 0.05)
 
   # Set aesthetics and geom_col arguments
   gg_aes <- aes(!!sym(x), !!sym(y))
 
-  gg_args <- list(...)
+  gg_args <- .standardize_aes(list(...))
 
   if (!is.null(.fill)) gg_aes$fill  <- sym(.fill)
   else                 gg_args$fill <- clrs
@@ -591,8 +593,10 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @noRd
 .create_boxes <- function(df_in, x = NULL, y, grp = NULL, .color = NULL,
                           .fill = NULL, clrs = NULL, method = "boxplot",
-                          trans = "identity", y_exp = c(0.05, 0.05),
+                          trans = "identity", y_exp = NULL,
                           nrow = NULL, scales = "fixed", ...) {
+
+  y_exp <- y_exp %||% c(0.05, 0.05)
 
   # Check input
   typs <- c("boxplot", "violin")
@@ -675,8 +679,10 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 .create_hist <- function(df_in, x, grp, .color = NULL, .fill = NULL,
                          clrs = NULL, method = "histogram",
                          units = "frequency", y_ttl = units, trans = "identity",
-                         y_exp = c(0.05, 0.1), nrow = NULL, scales = "fixed",
+                         y_exp = NULL, nrow = NULL, scales = "fixed",
                          ...) {
+
+  y_exp <- y_exp %||% c(0.05, 0.1)
 
   # Check inputs
   typs <- c("histogram", "density")
@@ -763,70 +769,75 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param grp Variable to use for grouping data when counting the number of
 #' values
 #' @param n_label Vector indicating where n labels should be added
-#' @param axis_col Column in `df_in` containing values that will be plotted on
+#' @param crnr_col Column in `df_in` containing groups that will be shown for
+#' the corner label
+#' @param axis_col Column in `df_in` containing groups that will be shown on the
 #' x-axis
-#' @param lgnd_col Column in `df_in` containing values that will be shown in
+#' @param lgnd_col Column in `df_in` containing groups that will be shown in
 #' the legend
+#' @param lgnd_clrs Colors to pass to `ggplot2::scale_fill_manual()` and
+#' `ggplot2::scale_color_manual()`, only applicable when adding legend label
+#' @param na_clr Color to use for `NA` value, only applicable when adding legend
+#' label
+#' @param y_exp y-axis expansion, only applicable when adding corner label
+#' @param calc_n If `TRUE`, n will be calculated by counting the number of rows
+#' in `df_in`
 #' @param lab_args named list with aesthetic parameters to used for modifying
 #' n label
-#' @param lgnd_clrs Colors to pass to `ggplot2::scale_fill_manual()` and
-#' `ggplot2::scale_color_manual()` when label is added to legend.
-#' @param axis Should label be added to the x- or y-axis
+#' @param axis Should label be added to the x- or y-axis, only applicable when
+#' adding axis label
 #' @param ... Absorbs unused arguments passed to label functions
 #' @param sep Separator to use when creating n label
 #' @return ggplot object with n labels added
 #' @noRd
-.add_n_lab <- function(df_in, n_label, axis_col = NULL, lgnd_col = NULL,
-                       lgnd_clrs = NULL, lab_args = list()) {
+.add_n_label <- function(gg_in, df_in, n_label, crnr_col = NULL,
+                         axis_col = NULL, lgnd_col = NULL, lgnd_clrs = NULL,
+                         na_clr = "grey80", y_exp = .n_label_expansion,
+                         calc_n = TRUE, lab_args = list()) {
 
-  # # Need to do this so the original value for each argument is used by the
-  # # returned lab_fn
-  # df_in     <- df_in
-  # n_label   <- n_label
-  # axis_col  <- axis_col
-  # lgnd_col  <- lgnd_col
-  # lgnd_clrs <- lgnd_clrs
-  # lab_args  <- lab_args
+  n_label <- c("none", n_label)
+
+  lab_args <- .standardize_aes(lab_args)
 
   # Named list containing possible label functions and group columns
   lab_fns <- list(
-    corner = list(.add_corner_label, NULL),
-    none   = list(.add_no_label, NULL)
+    none   = list(.add_no_label, NULL),
+    corner = list(.add_corner_label, crnr_col)
   )
 
   if (!is.null(axis_col)) lab_fns$axis   <- list(.add_axis_label, axis_col)
   if (!is.null(lgnd_col)) lab_fns$legend <- list(.add_legend_label, lgnd_col)
 
   if (any(!n_label %in% names(lab_fns))) {
-    cli::cli_abort("`n_label` must be {.or {names(lab_fns)}}")
+    cli::cli_abort("`n_label` can be any combination of {names(lab_fns)}")
   }
 
   lab_fns <- lab_fns[unique(n_label)]
 
-  lab_fn <- function(gg_in) {
-    res <- gg_in
+  res <- gg_in
 
-    for (fn in lab_fns) {
-      f <- fn[[1]]
-      g <- fn[[2]]
+  for (fn in lab_fns) {
+    f <- fn[[1]]
+    g <- fn[[2]]
 
-      dat <- .calc_n(df_in, grp = g)
+    if (calc_n) dat <- .calc_n(df_in, grp = g)
+    else        dat <- df_in
 
-      res <- f(
-        res, dat,
-        grp       = g,
-        lgnd_clrs = lgnd_clrs,
-        lab_args  = lab_args
-      )
-    }
-
-    res
+    res <- f(
+      res, dat,
+      grp       = g,
+      lgnd_clrs = lgnd_clrs,
+      na_clr    = na_clr,
+      y_exp     = y_exp,
+      lab_args  = lab_args
+    )
   }
 
-  lab_fn
+  res
 }
 
-.add_corner_label <- function(gg_in, df_in, lab_args, ...) {
+.add_corner_label <- function(gg_in, df_in, lab_args,
+                              y_exp = .n_label_expansion, ...) {
   just <- 0.5
   char_h_w <- 1.5
 
@@ -850,6 +861,11 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   res <- gg_in +
     lift(ggplot2::geom_text)(lab_args)
+
+  if (!is.null(y_exp)) {
+    res <- res +
+      ggplot2::scale_y_continuous(expand = ggplot2::expansion(y_exp))
+  }
 
   res
 }
@@ -879,7 +895,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res
 }
 
-.add_legend_label <- function(gg_in, df_in, grp, lab_args, lgnd_clrs = NULL, ...) {
+.add_legend_label <- function(gg_in, df_in, grp, lab_args, lgnd_clrs = NULL,
+                              na_clr = "grey80", ...) {
 
   if (is.null(grp)) return(gg_in)
 
@@ -894,7 +911,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     ggplot2::theme(legend.text = lift(ggplot2::element_text)(lab_args))
 
   if (!is.null(lgnd_clrs)) {
-    gg_args$values <- lgnd_clrs
+    gg_args$values   <- lgnd_clrs
+    gg_args$na.value <- na_clr
 
     res <- res +
       lift(scale_color_manual)(gg_args) +
@@ -937,6 +955,60 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   res
 }
+
+.n_label_expansion <- c(0.05, 0.1)
+
+
+#' Get arguments used solely by provided text function
+#'
+#' This is important for making sure `label_params` arguments are used for the
+#' correct labels
+#' i.e. when passing arguments to geom_text, want to exclude any parameters used
+#' solely by geom_text_repel
+#'
+#' @param args_list List of arguments to filter based on `fn`
+#' @param fn Function to filter `args_list`
+#' @noRd
+.get_uniq_text_args <- function(args_list, fn) {
+
+  .get_unique_args <- function(...) {
+    args        <- .standardize_aes(list(...))
+    args        <- purrr::map(args, unique)
+    shared_args <- purrr::reduce(args, dplyr::intersect)
+    args        <- purrr::map(args, ~ .x[!.x %in% shared_args])
+
+    args
+  }
+
+  # Get args unique for each function
+  uniq_args <- .get_unique_args(
+    geom_text = c(
+      formalArgs(ggplot2::geom_text),
+      names(ggplot2::GeomText$default_aes)
+    ),
+    geom_text_repel = c(
+      formalArgs(ggrepel::geom_text_repel),
+      names(ggrepel::GeomTextRepel$default_aes)
+    )
+  )
+
+  if (!fn %in% names(uniq_args)) {
+    cli::cli_abort("`fn` must be {.or {names(uniq_args)}}", .internal = TRUE)
+  }
+
+  # Get args not used by fn
+  uniq_args <- uniq_args[names(uniq_args) != fn]
+  uniq_args <- purrr::reduce(uniq_args, c)
+
+  # Remove args from args_list that are used uniquely by other function
+  args <- names(args_list)
+  args <- args[!args %in% uniq_args]
+
+  res <- args_list[args]
+
+  res
+}
+
 
 
 #' Set min and max values for column
@@ -1101,5 +1173,16 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   mtch <- purrr::map_lgl(clmns, ~ .chk_matching_vals(clmn, .x))
 
   names(clmns[mtch])
+}
+
+
+#' Standardize aesthetics
+#'
+#' e.g. color and colour
+#' @noRd
+.standardize_aes <- function(aes_list) {
+  names(aes_list) <- sub("color", "colour", names(aes_list), fixed = TRUE)
+
+  aes_list
 }
 

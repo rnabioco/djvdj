@@ -51,7 +51,9 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
   )
 
   # Check input classes
-  .check_args(environment())
+  .check_args(
+    environment(), cluster_col = list(allow_null = TRUE, len_one = FALSE)
+  )
 
   # Format input data
   sep_cols <- data_cols
@@ -207,6 +209,19 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 #' overlapping text
 #' @param panel_nrow The number of rows to use for arranging plots when
 #' return_list is FALSE
+#' @param n_label Location on plot where n label should be added, this is only
+#' applicable when `method` is 'bar' and can be any combination of the
+#' following:
+#'
+#' - 'corner', display the total number of cells plotted in the top right
+#'   corner, the position of the label can be modified by passing `x` and `y`
+#'   specifications with the `label_params` argument
+#' - 'legend', display the number of cells plotted for each group shown in the
+#'   plot legend
+#' - 'none', do not display the number of cells plotted
+#'
+#' @param label_params Named list providing additional parameters to modify
+#' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param return_list Should a list of plots be returned, if FALSE plots will be
 #' combined and arranged into panels
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
@@ -302,7 +317,8 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
                             plot_colors = NULL, vdj_genes = NULL, n_genes = 20,
                             plot_lvls = NULL, trans = "identity",
                             units = "percent", rotate_labels = FALSE,
-                            panel_nrow = NULL, return_list = FALSE,
+                            panel_nrow = NULL, n_label = NULL,
+                            label_params = list(), return_list = FALSE,
                             sep = global$sep, ...) {
 
   # Check that columns are present in object
@@ -312,7 +328,11 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   )
 
   # Check input classes
-  .check_args(environment(), method = list(allow_null = TRUE))
+  .check_args(
+    environment(),
+    method  = list(allow_null = TRUE),
+    n_label = list(allow_null = TRUE, len_one = FALSE)
+  )
 
   # Check input values
   paired <- length(data_cols) == 2
@@ -337,9 +357,29 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   )
 
   plt_dat <- dplyr::filter(plt_dat, dplyr::if_all(
-    dplyr::all_of(data_cols),
-    ~ .x != "None"
+    dplyr::all_of(data_cols), ~ .x != "None"
   ))
+
+  # Set n label data
+  psbl_labs <- c("none", "corner", "axis", "legend")
+
+  if (!is.null(n_label) && !all(n_label %in% psbl_labs)) {
+    cli::cli_abort("`n_label` can be any combination of {psbl_labs}")
+  }
+
+  lab_cols   <- c(cluster_col, group_col, .n = "n_cells")
+  n_lab_dat  <- dplyr::distinct(plt_dat, !!!syms(lab_cols))
+  n_lab_clrs <- plot_colors
+
+  psbl_labs <- switch(method, heatmap = "axis", bar = c("corner", "legend"))
+  psbl_labs <- c("none", psbl_labs)
+
+  if (paired || identical(method, "circos")) psbl_labs <- "none"
+
+  n_label <- n_label %||% psbl_labs
+  n_label <- n_label[n_label %in% psbl_labs]
+
+  if ("legend" %in% n_label) plot_colors <- NULL
 
   # If vdj_genes provided check plt_dat
   top_genes <- unique(vdj_genes)
@@ -398,9 +438,49 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     usage_fn <- .plot_single_usage
 
     plt_args$grp_col <- group_col
+
+    if ("corner" %in% n_label) plt_args$y_exp <- .n_label_expansion
   }
 
-  lift(usage_fn)(plt_args)
+  res <- lift(usage_fn)(plt_args)
+
+  # Add n label
+  # Can't use .add_n_label() since n_lab_dat has to be modified depending on
+  # where n label is added
+  if ("corner" %in% n_label) {
+    lab_dat <- dplyr::summarize(n_lab_dat, .n = sum(.n))
+
+    res <- .add_corner_label(
+      res, lab_dat, y_exp = NULL, lab_args = label_params
+    )
+  }
+
+  if ("axis" %in% n_label) {
+    res <- .add_axis_label(
+      res, n_lab_dat,
+      grp      = cluster_col,
+      lab_args = label_params
+    )
+  }
+
+  if ("legend" %in% n_label) {
+    lab_dat <- n_lab_dat
+
+    if (!is.null(group_col)) {
+      lab_dat <- dplyr::group_by(lab_dat, !!sym(group_col))
+      lab_dat <- dplyr::summarize(lab_dat, .n = sum(.n), .groups = "drop")
+    }
+
+    res <- .add_legend_label(
+      res, lab_dat,
+      grp       = group_col %||% cluster_col,
+      lgnd_clrs = n_lab_clrs,
+      lab_args  = label_params
+    )
+  }
+
+
+  res
 }
 
 #' Plot usage for single gene column
@@ -420,7 +500,10 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' @noRd
 .plot_single_usage <- function(df_in, gn_col, dat_col, typ, clst_col = NULL,
                                grp_col = NULL, clrs = NULL, lvls = NULL,
-                               trans = "identity", ax_ttl, order = TRUE, ...) {
+                               y_exp = NULL, trans = "identity", ax_ttl,
+                               order = TRUE, ...) {
+
+  y_exp <- y_exp %||% c(0.05, 0.05)
 
   # Order clusters based on plot_lvls
   lvl_col <- grp_col %||% clst_col
@@ -441,8 +524,9 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   plt_args <- list(clrs = clrs, trans = trans, ...)
 
   if (identical(typ, "bar") || !is.null(grp_col)) {
-    plt_args$x <- gn_col
-    plt_args$y <- dat_col
+    plt_args$x     <- gn_col
+    plt_args$y     <- dat_col
+    plt_args$y_exp <- y_exp
   }
 
   # Create grouped boxplot
