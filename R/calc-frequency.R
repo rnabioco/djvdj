@@ -211,6 +211,31 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 }
 
 
+#' Fetch top clonotypes
+#'
+#' @param input Single cell object or data.frame containing V(D)J data. If a
+#' data.frame is provided, the cell barcodes should be stored as row names.
+#' @param data_cols meta.data column(s) to use for identifying top clonotypes
+#' @param cluster_col meta.data column containing cluster IDs to use for
+#' grouping cells.
+#' @param n_clones Number of top clonotypes to identify.
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#' @return data.frame containing information for top clonotypes
+#' @noRd
+fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
+                             n_clones = 10, sep = global$sep) {
+
+  # Check that columns are present in object
+  .check_obj_cols(input, data_cols, cluster_col)
+
+  # Check input classes
+  .check_args(environment())
+
+
+
+
+
+}
 
 
 #' Plot clonotype frequency
@@ -324,7 +349,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
                                  n_label = "corner", label_params = list(), ...) {
 
   # Check that columns are present in object
-  .check_obj_cols(input, data_col, cluster_col)
+  .check_obj_cols(input, data_col, cluster_col, group_col)
 
   # Check input classes
   .check_args(environment())
@@ -378,9 +403,6 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 
   # Save data for n label
   n_lab_dat  <- plt_dat
-  n_lab_clrs <- plot_colors
-
-  if ("legend" %in% n_label) plot_colors <- NULL
 
   # Identify data columns that the user should have access to
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
@@ -416,55 +438,33 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
   plt_dat    <- dplyr::ungroup(plt_dat)
   top_clones <- dplyr::ungroup(top_clones)
 
-  # Identify arguments unique for ggplot2::annotate and ggrepel::geom_text_repel
-  # This is important for making sure label_params arguments are used for the
-  # correct plot labels
-  # uniq_args <- .get_unique_args(
-  #   n_args = c(
-  #     formalArgs(ggplot2::geom_text),
-  #     names(ggplot2::GeomText$default_aes)
-  #   ),
-  #   clone_args = c(
-  #     formalArgs(ggrepel::geom_text_repel),
-  #     names(ggrepel::GeomTextRepel$default_aes)
-  #   )
-  # )
-
-  lab_args <- label_params
-
   # Create bar graph
   gg_args <- .standardize_aes(list(...))
 
-  if ("corner" %in% n_label) y_exp <- .n_label_expansion
-  else                       y_exp <- NULL
-
   if (identical(method, "bar")) {
-    plt_labs <- purrr::set_names(top_clones$.lab, top_clones[[data_col]])
+    n_label <- sub("axis", "none", n_label)
 
+    plt_labs   <- purrr::set_names(top_clones$.lab, top_clones[[data_col]])
     top_clones <- dplyr::arrange(top_clones, desc(!!sym(abun_col)))
+    lvls       <- unique(top_clones[[data_col]])
 
-    lvls <- unique(top_clones[[data_col]])
+    top_clones <- .set_lvls(top_clones, data_col, lvls)
 
-    top_clones <- .set_lvls(
-      df_in = top_clones,
-      clmn  = data_col,
-      lvls  = lvls
-    )
-
-    more_args <- list(
-      df_in = top_clones,
-      x     = data_col,
-      y     = abun_col,
-      y_ttl = y_lab,
-      y_exp = y_exp,
-      .fill = cluster_col,
-      clrs  = plot_colors,
-      ang   = 45,
-      hjst  = 1,
-      trans = trans
-    )
-
-    gg_args <- append(gg_args, more_args)
+    gg_args$df_in        <- top_clones
+    gg_args$x            <- data_col
+    gg_args$y            <- abun_col
+    gg_args$grp          <- cluster_col
+    gg_args$y_ttl        <- y_lab
+    gg_args$.fill        <- gg_args$.color <- cluster_col
+    gg_args$clrs         <- plot_colors
+    gg_args$ang          <- 45
+    gg_args$hjst         <- 1
+    gg_args$trans        <- trans
+    gg_args$nrow         <- panel_nrow
+    gg_args$scales       <- panel_scales
+    gg_args$n_label      <- n_label
+    gg_args$label_params <- label_params
+    gg_args$label_data   <- n_lab_dat
 
     res <- lift(.create_bars)(gg_args)
 
@@ -472,80 +472,71 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     res <- res +
       ggplot2::scale_x_discrete(labels = plt_labs)
 
-    if (!is.null(cluster_col)) {
-      res <- res +
-        ggplot2::facet_wrap(
-          stats::as.formula(paste0("~ ", cluster_col)),
-          scales = panel_scales, nrow = panel_nrow
-        )
-    }
+    return(res)
+  }
 
   # Plot abundance vs rank
-  } else {
-    plt_aes <- ggplot2::aes(rank, !!sym(abun_col))
-    clr_aes <- plt_aes
+  plt_aes <- ggplot2::aes(rank, !!sym(abun_col))
+  clr_aes <- plt_aes
 
-    if (!is.null(cluster_col)) clr_aes$colour <- sym(cluster_col)
+  if (!is.null(cluster_col)) clr_aes$colour <- sym(cluster_col)
 
-    gg_args$mapping   <- clr_aes
-    gg_args$linewidth <- gg_args$linewidth %||% 1
+  gg_args$mapping   <- clr_aes
+  gg_args$linewidth <- gg_args$linewidth %||% 1
 
-    res <- ggplot2::ggplot(plt_dat, plt_aes) +
-      lift(ggplot2::geom_line)(gg_args) +
-      ggplot2::scale_y_continuous(
-        trans = trans, expand = ggplot2::expansion(y_exp)
-      ) +
-      ggplot2::labs(y = y_lab) +
-      djvdj_theme()
+  y_args <- list(trans = trans)
 
-    if (!is.null(plot_colors)) {
-      res <- res +
-        ggplot2::scale_color_manual(values = plot_colors)
+  if ("corner" %in% n_label) y_args$expand <- .n_label_expansion
+
+  res <- ggplot2::ggplot(plt_dat, plt_aes) +
+    lift(ggplot2::geom_line)(gg_args) +
+    lift(ggplot2::scale_y_continuous)(y_args) +
+    ggplot2::labs(y = y_lab) +
+    djvdj_theme()
+
+  if (all(n_label == "none")) {
+    res <- res +
+      ggplot2::scale_color_manual(values = plot_colors)
+  }
+
+  if (!is.null(group_col)) {
+    res <- res +
+      ggplot2::facet_wrap(
+        as.formula(paste("~", group_col)),
+        scales = panel_scales, nrow = panel_nrow
+      )
+  }
+
+  # Add clonotype labels
+  lab_args <- label_params
+
+  if (n_clones > 0) {
+    if (!all(n_label == "none")) {
+      lab_args <- .get_uniq_text_args(label_params, "geom_text_repel")
     }
 
-    if (!is.null(group_col)) {
-      res <- res +
-        ggplot2::facet_wrap(
-          as.formula(paste0("~ ", group_col)),
-          scales = panel_scales, nrow = panel_nrow
-        )
-    }
+    lab_args$mapping       <- ggplot2::aes(label = .data$.lab)
+    lab_args$data          <- top_clones
+    lab_args$nudge_x       <- lab_args$nudge_x %||% 500
+    lab_args$direction     <- lab_args$direction %||% "y"
+    lab_args$segment.size  <- lab_args$segment.size %||% 0.2
+    lab_args$segment.alpha <- lab_args$segment.alpha %||% 0.2
 
-    # Add clonotype labels
-    if (n_clones > 0) {
-      if (!all(n_label == "none")) {
-        lab_args <- .get_uniq_text_args(label_params, "geom_text_repel")
-      }
+    if (!is.null(lab_args$size)) lab_args$size <- lab_args$size / ggplot2::.pt
 
-      lab_args$mapping <- ggplot2::aes(label = .data$.lab)
-      lab_args$data    <- top_clones
-
-      lab_args$nudge_x       <- lab_args$nudge_x %||% 500
-      lab_args$direction     <- lab_args$direction %||% "y"
-      lab_args$segment.size  <- lab_args$segment.size %||% 0.2
-      lab_args$segment.alpha <- lab_args$segment.alpha %||% 0.2
-
-      if (!is.null(lab_args$size)) lab_args$size <- lab_args$size / ggplot2::.pt
-
-      res <- res +
-        lift(ggrepel::geom_text_repel)(lab_args)
-    }
+    res <- res +
+      lift(ggrepel::geom_text_repel)(lab_args)
   }
 
   # Add n label
-  if (identical(method, "line") && n_clones > 0) {
-    lab_args <- .get_uniq_text_args(label_params, "geom_text")
-  }
-
-  if (identical(method, "line")) panel_col <- group_col
-  else                           panel_col <- cluster_col
+  if (n_clones > 0) lab_args <- .get_uniq_text_args(label_params, "geom_text")
 
   res <- .add_n_label(
     res, n_lab_dat,
     n_label   = n_label,
-    crnr_col  = panel_col,
+    crnr_col  = group_col,
     lgnd_col  = cluster_col,
-    lgnd_clrs = n_lab_clrs,
+    lgnd_clrs = plot_colors,
     y_exp     = NULL,
     lab_args  = lab_args
   )
@@ -688,9 +679,6 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
   # Set data for n label
   n_lab_dat  <- plt_dat
-  n_lab_clrs <- plot_colors
-
-  if ("legend" %in% n_label) plot_colors <- NULL
 
   # Identify data columns that the user should have access to
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
@@ -740,26 +728,21 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   plt_dat <- .set_lvls(plt_dat, data_col, rnk)
 
   # Plot arguments
-  gg_args <- list(y = abun_col, clrs = plot_colors, trans = trans, ...)
-
-  if ("corner" %in% n_label) gg_args$y_exp <- .n_label_expansion
+  gg_args <- list(
+    y = abun_col, clrs = plot_colors, trans = trans,
+    n_label = n_label, label_params = label_params, label_data = n_lab_dat, ...
+  )
 
   # Create grouped boxplot
   if (!is.null(group_col)) {
     plot_lvls <- plot_lvls %||% names(plot_colors)
     plt_dat   <- .set_lvls(plt_dat, group_col, plot_lvls)
 
+    gg_args$df_in         <- plt_dat
+    gg_args$x             <- x_col
+    gg_args$.fill         <- gg_args$.color <- clr_col
     gg_args$alpha         <- gg_args$alpha %||% 0.5
     gg_args$outlier.color <- gg_args$outlier.color %||% NA
-
-    more_args <- list(
-      df_in  = plt_dat,
-      x      = x_col,
-      .color = clr_col,
-      .fill  = clr_col
-    )
-
-    gg_args <- append(gg_args, more_args)
 
     res <- lift(.create_boxes)(gg_args) +
       ggplot2::geom_jitter(
@@ -772,16 +755,12 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   } else {
     plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
 
-    more_args <- list(
-      df_in = plt_dat,
-      x     = x_col,
-      y_ttl = y_lab,
-      .fill = clr_col,
-      ang   = 45,
-      hjst  = 1
-    )
-
-    gg_args <- append(gg_args, more_args)
+    gg_args$df_in <- plt_dat
+    gg_args$x     <- x_col
+    gg_args$y_ttl <- y_lab
+    gg_args$.fill <- gg_args$.color <- clr_col
+    gg_args$ang   <- 45
+    gg_args$hjst  <- 1
 
     # When cluster_col is provided set default position to dodge
     if (!is.null(cluster_col)) {
@@ -796,15 +775,15 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   }
 
   # Add n label
-  res <- .add_n_label(
-    res, n_lab_dat,
-    n_label   = n_label,
-    axis_col  = x_col,
-    lgnd_col  = clr_col,
-    lgnd_clrs = n_lab_clrs,
-    y_exp     = NULL,
-    lab_args  = label_params
-  )
+  # res <- .add_n_label(
+  #   res, n_lab_dat,
+  #   n_label   = n_label,
+  #   axis_col  = x_col,
+  #   lgnd_col  = clr_col,
+  #   lgnd_clrs = n_lab_clrs,
+  #   y_exp     = NULL,
+  #   lab_args  = label_params
+  # )
 
   res
 }

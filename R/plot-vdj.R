@@ -83,30 +83,30 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   plt_dat <- .get_meta(input)
 
   # Set data for n label
-  n_lab_clrs <- plot_colors
-
-  if ("legend" %in% n_label) plot_colors <- NULL
+  # n_lab_clrs <- plot_colors
+  # if ("legend" %in% n_label) plot_colors <- NULL
 
   plt_vars  <- c(x, y, feature)
 
   gg_args <- list(
-    x        = x,
-    y        = y,
-    feat     = feature,
-    grp      = group_col,
-    plt_args = .standardize_aes(list(...)),
-    p_nrow   = panel_nrow,
-    p_scales = panel_scales,
-    trans    = trans,
-    n_lab    = n_label,
-    lab_args = label_params
+    x            = x,
+    y            = y,
+    feat         = feature,
+    grp          = group_col,
+    nrow         = panel_nrow,
+    scales       = panel_scales,
+    trans        = trans,
+    n_label      = n_label,
+    label_params = label_params
   )
+
+  plt_args <- .standardize_aes(list(...))
+  gg_args  <- append(gg_args, plt_args)
 
   # If no feature provided, return scatter plot
   if (is.null(feature)) {
-    gg_args$df_in <- plt_dat
-
-    gg_args$plt_args$color <- gg_args$plt_args$color %||% plot_colors
+    gg_args$df_in  <- plt_dat
+    gg_args$colour <- gg_args$colour %||% plot_colors
 
     res <- lift(.create_scatter)(gg_args)
 
@@ -159,18 +159,18 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   # res <- arrange(plt_dat, !!sym(feature))
   plt_dat <- plt_dat[order(plt_dat[[feature]], na.last = FALSE), ]
 
-  gg_args$df_in    <- plt_dat
-  gg_args$plt_clrs <- plot_colors
+  gg_args$df_in <- plt_dat
+  gg_args$clrs  <- plot_colors
 
   res <- lift(.create_scatter)(gg_args)
 
   res
 }
 
-.create_scatter <- function(df_in, x, y, feat, grp, plt_clrs = NULL, plt_args,
-                            p_nrow, p_scales, n_lab = "corner",
-                            lab_args = list(), na_color = "grey80",
-                            trans = "identity") {
+.create_scatter <- function(df_in, x, y, feat, grp, clrs = NULL, nrow = NULL,
+                            scales = "fixed", n_label = "corner",
+                            label_params = list(), na_color = "grey80",
+                            trans = "identity", ...) {
 
   has_feat <- !is.null(feat)
   is_num   <- has_feat && is.numeric(df_in[[feat]])
@@ -184,30 +184,30 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   plt_aes <- lift(ggplot2::aes)(plt_aes)
 
   res <- ggplot2::ggplot(df_in, plt_aes) +
-    lift(ggplot2::geom_point)(plt_args) +
+    ggplot2::geom_point(...) +
     djvdj_theme()
 
   # Split plot into facets
   if (!is.null(grp)) {
     res <- res +
       ggplot2::facet_wrap(
-        stats::as.formula(paste0("~ ", grp)),
-        nrow = p_nrow, scales = p_scales
+        stats::as.formula(paste("~", grp)),
+        nrow = nrow, scales = scales
       )
   }
 
   # Add n label
   n_lab_args <- list(
     df_in    = df_in,
-    n_label  = n_lab,
+    n_label  = n_label,
     crnr_col = grp,
-    lab_args = lab_args
+    lab_args = label_params
   )
 
   if (is_num) {
     res <- res +
       ggplot2::scale_color_gradientn(
-        colors   = plt_clrs,
+        colors   = clrs,
         na.value = na_color,
         trans    = trans
       )
@@ -219,7 +219,7 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
       )
 
     n_lab_args$lgnd_col  <- feat
-    n_lab_args$lgnd_clrs <- plt_clrs
+    n_lab_args$lgnd_clrs <- clrs
     n_lab_args$na_clr    <- na_color
   }
 
@@ -473,7 +473,16 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
 #' @param panel_scales Should scales for plot panels be fixed or free. This
 #' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
-#' @param n_label Include a label showing the number of values plotted
+#' @param n_label Location on plot where n label should be added, this can be
+#' any combination of the following:
+#'
+#' - 'corner', display the total number of cells plotted in the top right
+#'   corner, the position of the label can be modified by passing `x` and `y`
+#'   specifications with the `label_params` argument
+#' - 'legend', display the number of cells plotted for each group shown in the
+#'   plot legend
+#' - 'none', do not display the number of cells plotted
+#'
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
@@ -581,11 +590,20 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
                      chain_col = global$chain_col, method = "histogram",
                      units = "frequency", plot_colors = NULL,
                      plot_lvls = names(plot_colors), trans = "identity",
-                     panel_nrow = NULL, panel_scales = "free_x", n_label = TRUE,
-                     label_params = list(), sep = global$sep, ...) {
+                     panel_nrow = NULL, panel_scales = "free_x",
+                     n_label = "corner", label_params = list(),
+                     sep = global$sep, ...) {
+
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_col, cluster_col, group_col,
+    chain = chain, chain_col = chain_col
+  )
 
   # Check input classes
   .check_args(environment())
+
+  .chk_group_cols(cluster_col, group_col, input)
 
   # Format input data
   if (per_cell) {
@@ -626,23 +644,20 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
     data_col     = data_col,
     cluster_col  = cluster_col,
     group_col    = group_col,
+    plot_lvls    = plot_lvls,
     method       = method,
     units        = units,
-    plot_colors  = plot_colors,
-    plot_lvls    = plot_lvls,
+    clrs         = plot_colors,
     trans        = trans,
-    panel_nrow   = panel_nrow,
-    panel_scales = panel_scales,
+    nrow         = panel_nrow,
+    scales       = panel_scales,
     per_cell     = per_cell,
+    n_label      = n_label,
+    label_params = label_params,
     ...
   )
 
-  if (n_label) gg_args$y_exp <- c(0.05, 0.1)
-
   res <- lift(.plot_vdj)(gg_args)
-
-  # Add n label
-  if (n_label) res <- .add_n_label(res, n_lab_dat, label_params)
 
   res
 }
@@ -651,11 +666,8 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
 #' @param df_in input data.frame
 #' @noRd
 .plot_vdj <- function(df_in, data_col, cluster_col = NULL, group_col = NULL,
-                      method = "boxplot", units = "frequency",
-                      plot_colors = NULL, plot_lvls = names(plot_colors),
-                      trans = "identity", y_exp = c(0.05, 0.05),
-                      panel_nrow = NULL, panel_scales = "fixed",
-                      per_cell = FALSE, ...) {
+                      plot_lvls = names(plot_colors), per_cell = FALSE,
+                      method = "boxplot", units = "frequency", ...) {
 
   # Order clusters based on plot_lvls
   df_in <- .set_lvls(df_in, cluster_col, plot_lvls)
@@ -667,12 +679,8 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
     grp    = group_col,
     .color = cluster_col,
     .fill  = cluster_col,
-    clrs   = plot_colors,
     method = method,
-    trans  = trans,
-    y_exp  = y_exp,
-    nrow   = panel_nrow,
-    scales = panel_scales,
+    units  = units,
     ...
   )
 
@@ -681,8 +689,6 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
 
   # Create histogram
   if (method %in% c("histogram", "density")) {
-    gg_args$units <- units
-
     gg_args$y_ttl <- .get_axis_label(
       units, sfx = ifelse(per_cell, "cells", "chains")
     )
@@ -693,8 +699,9 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
   }
 
   # Create boxplot plot
-  gg_args$x <- cluster_col
-  gg_args$y <- data_col
+  gg_args$x     <- cluster_col
+  gg_args$y     <- data_col
+  gg_args$units <- NULL
 
   res <- lift(.create_boxes)(gg_args)
 

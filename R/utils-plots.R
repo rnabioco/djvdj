@@ -528,35 +528,47 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' linetype, etc.
 #' @return ggplot object
 #' @noRd
-.create_bars <- function(df_in, x, y, .fill = NULL, clrs = NULL,
-                         trans = "identity", y_ttl = y, y_exp = NULL,
-                         ang = 45, hjst = 1, ...) {
-
-  y_exp <- y_exp %||% c(0.05, 0.05)
+.create_bars <- function(df_in, x, y, grp = NULL, .color = NULL, .fill = NULL,
+                         clrs = NULL, trans = "identity", y_ttl = y, ang = 45,
+                         hjst = 1, nrow = NULL, scales = "fixed",
+                         n_label = "none", label_params = list(),
+                         label_data = df_in, ...) {
 
   # Set aesthetics and geom_col arguments
-  gg_aes <- aes(!!sym(x), !!sym(y))
-
+  gg_aes  <- aes(!!sym(x), !!sym(y))
   gg_args <- .standardize_aes(list(...))
 
-  if (!is.null(.fill)) gg_aes$fill  <- sym(.fill)
-  else                 gg_args$fill <- clrs
+  if (!is.null(.fill))  gg_aes$fill   <- sym(.fill)
+  if (!is.null(.color)) gg_aes$colour <- sym(.color)
+  if (is.null(.fill) && is.null(.color)) gg_args$fill <- gg_args$colour <- clrs
 
   if (is.null(gg_args$position)) {
     gg_args$position <- ggplot2::position_dodge(preserve = "single")
   }
 
   # Create bar graph
-  y_args <- list(trans = trans, expand = ggplot2::expansion(y_exp))
+  y_args <- list(trans = trans)
+
+  if ("corner" %in% n_label) y_args$expand <- .n_label_expansion
 
   res <- ggplot2::ggplot(df_in, gg_aes) +
     lift(geom_col)(gg_args) +
     lift(ggplot2::scale_y_continuous)(y_args)
 
-  # Set plot colors
-  if (!is.null(.fill) && !is.null(clrs)) {
+  # Set colors
+  if (!is.null(clrs) && all(n_label == "none")) {
     res <- res +
-      ggplot2::scale_fill_manual(values = clrs)
+      ggplot2::scale_fill_manual(values = clrs) +
+      ggplot2::scale_color_manual(values = clrs)
+  }
+
+  # Create facets
+  if (!is.null(grp)) {
+    res <- res +
+      ggplot2::facet_wrap(
+        stats::as.formula(paste("~", grp)),
+        nrow = nrow, scales = scales
+      )
   }
 
   # Set theme
@@ -567,6 +579,18 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
       axis.title.x = ggplot2::element_blank(),
       axis.text.x  = ggplot2::element_text(angle = ang, hjust = hjst)
     )
+
+  # Add n label
+  res <- .add_n_label(
+    res, label_data,
+    n_label   = n_label,
+    crnr_col  = grp,
+    axis_col  = x,
+    lgnd_col  = .fill,
+    lgnd_clrs = clrs,
+    y_exp     = NULL,
+    lab_args  = label_params
+  )
 
   res
 }
@@ -593,15 +617,16 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @noRd
 .create_boxes <- function(df_in, x = NULL, y, grp = NULL, .color = NULL,
                           .fill = NULL, clrs = NULL, method = "boxplot",
-                          trans = "identity", y_exp = NULL,
-                          nrow = NULL, scales = "fixed", ...) {
-
-  y_exp <- y_exp %||% c(0.05, 0.05)
+                          trans = "identity", nrow = NULL, scales = "fixed",
+                          n_label = "none", label_params = list(),
+                          label_data = df_in, ...) {
 
   # Check input
-  typs <- c("boxplot", "violin")
+  psbl_typs <- c("boxplot", "violin")
 
-  if (!method %in% typs) cli::cli_abort("`method` must be {.or {typs}}")
+  if (!method %in% psbl_typs) {
+    cli::cli_abort("`method` must be {.or {psbl_typs}}")
+  }
 
   # Set aesthetics
   plt_aes <- ggplot2::aes(y, !!sym(y))
@@ -610,31 +635,40 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   if (!is.null(.fill))  plt_aes$fill   <- sym(.fill)
   if (!is.null(.color)) plt_aes$colour <- sym(.color)
 
-  # Adjust theme and transform axis
+  # Adjust theme
   res <- ggplot2::ggplot(df_in, plt_aes) +
     djvdj_theme() +
     ggplot2::theme(
       legend.position = "none",
       axis.title.x    = ggplot2::element_blank()
-    ) +
-    ggplot2::scale_y_continuous(
-      trans = trans, expand = ggplot2::expansion(y_exp)
     )
 
+  # Create facets
   if (!is.null(grp)) {
     res <- res +
       ggplot2::facet_wrap(
         stats::as.formula(paste("~", grp)),
-        nrow = nrow,
-        scales = scales
+        nrow = nrow, scales = scales
       )
   }
 
-  if (!is.null(clrs)) {
+  # Set colors
+  if (!is.null(clrs) && all(n_label == "none")) {
     res <- res +
-      ggplot2::scale_color_manual(values = clrs) +
-      ggplot2::scale_fill_manual(values = clrs)
+      ggplot2::scale_fill_manual(values = clrs) +
+      ggplot2::scale_color_manual(values = clrs)
   }
+
+  # Add n label
+  res <- .add_n_label(
+    res, label_data,
+    n_label   = n_label,
+    crnr_col  = grp,
+    axis_col  = x,
+    lgnd_col  = .fill %||% .color,
+    lgnd_clrs = clrs,
+    lab_args  = label_params
+  )
 
   # Return violins
   if (identical(method, "violin")) {
@@ -679,19 +713,24 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 .create_hist <- function(df_in, x, grp, .color = NULL, .fill = NULL,
                          clrs = NULL, method = "histogram",
                          units = "frequency", y_ttl = units, trans = "identity",
-                         y_exp = NULL, nrow = NULL, scales = "fixed",
-                         ...) {
-
-  y_exp <- y_exp %||% c(0.05, 0.1)
+                         nrow = NULL, scales = "fixed",
+                         n_label = "none", label_params = list(), ...) {
 
   # Check inputs
-  typs <- c("histogram", "density")
+  psbl_typs <- c("histogram", "density")
 
-  if (!method %in% typs) cli::cli_abort("`method` must {.or {typs}}")
+  if (!method %in% psbl_typs) cli::cli_abort("`method` must {.or {psbl_typs}}")
 
-  axs <- c("frequency", "percent")
+  psbl_axis <- c("frequency", "percent")
 
-  if (!units %in% axs) cli::cli_abort("`units` must {.or {axs}}")
+  if (!units %in% psbl_axis) cli::cli_abort("`units` must {.or {psbl_axis}}")
+
+  if (!is.null(.fill) && !is.null(.color) && !identical(.fill, .color)) {
+    cli::cli_abort(
+      "If both `.color` and `.fill` are provided,
+       they must refer to the same variable"
+    )
+  }
 
   # Set aesthetics
   plt_aes <- ggplot2::aes()
@@ -710,23 +749,31 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res <- ggplot2::ggplot(df_in, plt_aes) +
     djvdj_theme() +
     ggplot2::theme(legend.position = "top") +
-    ggplot2::scale_x_continuous(trans = trans) +
-    ggplot2::scale_y_continuous(expand = ggplot2::expansion(y_exp))
+    ggplot2::scale_x_continuous(trans = trans)
 
   if (!is.null(grp)) {
     res <- res +
       ggplot2::facet_wrap(
         stats::as.formula(paste("~", grp)),
-        nrow = nrow,
-        scales = scales
+        nrow = nrow, scales = scales
       )
   }
 
-  if (!is.null(clrs)) {
+  if (!is.null(clrs) && all(n_label == "none")) {
     res <- res +
       ggplot2::scale_color_manual(values = clrs) +
       ggplot2::scale_fill_manual(values = clrs)
   }
+
+  # Add n label
+  res <- .add_n_label(
+    res, df_in,
+    n_label   = n_label,
+    crnr_col  = grp,
+    lgnd_col  = .fill %||% .color,
+    lgnd_clrs = clrs,
+    lab_args  = label_params
+  )
 
   # Return density plot
   if (identical(method, "density")) {
@@ -864,7 +911,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   if (!is.null(y_exp)) {
     res <- res +
-      ggplot2::scale_y_continuous(expand = ggplot2::expansion(y_exp))
+      ggplot2::scale_y_continuous(expand = y_exp)
   }
 
   res
@@ -915,13 +962,13 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     gg_args$na.value <- na_clr
 
     res <- res +
-      lift(scale_color_manual)(gg_args) +
-      lift(scale_fill_manual)(gg_args)
+      lift(ggplot2::scale_color_manual)(gg_args) +
+      lift(ggplot2::scale_fill_manual)(gg_args)
 
   } else {
     res <- res +
-      lift(scale_color_discrete)(gg_args) +
-      lift(scale_fill_discrete)(gg_args)
+      lift(ggplot2::scale_color_discrete)(gg_args) +
+      lift(ggplot2::scale_fill_discrete)(gg_args)
   }
 
   res
@@ -956,7 +1003,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res
 }
 
-.n_label_expansion <- c(0.05, 0.1)
+.n_label_expansion <- ggplot2::expansion(c(0.05, 0.1))
 
 
 #' Get arguments used solely by provided text function
