@@ -477,7 +477,8 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
       gg_args$label_params <- .get_uniq_text_args(label_params, "geom_text")
     }
 
-    res <- lift(.create_plot)(gg_args)
+    res <- lift(.create_plot)(gg_args) +
+      labs(y = .get_axis_label(units))
 
     # Add clonotype labels
     lab_args <- label_params
@@ -487,12 +488,14 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
         label_params <- .get_uniq_text_args(label_params, "geom_text_repel")
       }
 
-      label_params$mapping       <- ggplot2::aes(label = .data$.lab)
-      label_params$data          <- top_clones
-      label_params$nudge_x       <- label_params$nudge_x %||% 500
-      label_params$direction     <- label_params$direction %||% "y"
-      label_params$segment.size  <- label_params$segment.size %||% 0.2
-      label_params$segment.alpha <- label_params$segment.alpha %||% 0.2
+      label_params$mapping        <- ggplot2::aes(label = .data$.lab)
+      label_params$data           <- top_clones
+      label_params$nudge_x        <- label_params$nudge_x %||% 500
+      label_params$direction      <- label_params$direction %||% "y"
+      label_params$segment.colour <- label_params$segment.colour %||% "black"
+      label_params$segment.size   <- label_params$segment.size %||% 0.2
+      label_params$segment.alpha  <- label_params$segment.alpha %||% 0.2
+      label_params$show.legend    <- label_params$show.legend %||% FALSE
 
       if (!is.null(label_params$size)) {
         label_params$size <- label_params$size / ggplot2::.pt
