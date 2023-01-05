@@ -52,21 +52,300 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 }
 
 
-#' Trim long labels
+#' Create ggplot
 #'
-#' @param x Character vector containing labels to trim
-#' @param max_len Maximum number of characters to allow
-#' @param ellipsis Ellipsis to add to indicate label has been trimmed
+#' @param df_in data.frame
+#' @param fn ggplot2 function to use for generating plot,
+#' e.g. `ggplot2::geom_point`
+#' @param x Variable to plot on x-axis
+#' @param y Variable to plot on y-axis
+#' @param grp Varible to use for `ggplot2::facet_wrap()`
+#' @param .color Variable to use for color
+#' @param .fill Variable to use for fill
+#' @param clrs Vector of colors for plotting
+#' @param na_clr Color to use for `NA` values
+#' @param trans_x Method to use for transforming x-axis
+#' @param trans_y Method to use for transforming y-axis
+#' @param tranx_clr Method to use for transforming color
+#' @param nrow Number of rows to use for arranging plot facets
+#' @param scales Specification controlling facet scales to pass to
+#' `ggplot2::facet_wrap()`
+#' @param n_label Vector indicating where n labels should be added
+#' @param label_params Named list providing additional parameters to modify
+#' n label aesthetics, e.g. list(size = 4, color = "red")
+#' @param label_data data.frame to use for generating n label
+#' @param ... Additional parameters to pass to `fn`
+#' @return ggplot object
 #' @noRd
-trim_lab <- function(x, max_len = 25, ellipsis = "...") {
-  len <- nchar(x)
+.create_plot <- function(df_in, fn, x = NULL, y = NULL, grp = NULL,
+                         .color = NULL,  .fill = NULL, clrs = NULL,
+                         na_clr = "grey80", trans_x = "identity",
+                         trans_y = "identity", trans_clr = "identity",
+                         nrow = NULL, scales = "fixed", n_label = "none",
+                         label_params = list(), label_data = df_in, ...) {
 
-  trim_me <- len > max_len
+  # Check inputs
+  if (!is.null(.fill) && !is.null(.color) && !identical(.fill, .color)) {
+    cli::cli_abort(
+      "If both `.color` and `.fill` are provided,
+       they must refer to the same variable"
+    )
+  }
 
-  x[trim_me] <- strtrim(x[trim_me], max_len)
-  x[trim_me] <- paste0(x[trim_me], ellipsis)
+  # Set aesthetics and geom arguments
+  scale_fill <- !is.null(.fill)
+  scale_clr  <- !is.null(.color)
+  is_num     <- scale_clr && is.numeric(df_in[[.color]])
 
-  x
+  gg_aes  <- ggplot2::aes()
+  gg_args <- .standardize_aes(list(...))
+
+  if (!is.null(x)) gg_aes$x <- sym(x)
+  else             gg_aes$x <- y
+
+  if (!is.null(y)) gg_aes$y      <- sym(y)
+  if (scale_fill)  gg_aes$fill   <- sym(.fill)
+  if (scale_clr)   gg_aes$colour <- sym(.color)
+
+  if (!scale_fill && !scale_clr) gg_args$fill <- gg_args$colour <- clrs
+
+  # Create plot
+  res <- ggplot2::ggplot(df_in, gg_aes) +
+    lift(fn)(gg_args) +
+    djvdj_theme()
+
+  # Transform x-axis
+  if (!identical(trans_x, "identity")) {
+    res <- res +
+      ggplot2::scale_x_continuous(trans = trans_x)
+  }
+
+  # Transform y-axis
+  y_args <- list()
+
+  if ("corner" %in% n_label)           y_args$expand <- .n_label_expansion
+  if (!identical(trans_y, "identity")) y_args$trans  <- trans_y
+
+  if (!purrr::is_empty(y_args)) {
+    res <- res +
+      lift(ggplot2::scale_y_continuous)(y_args)
+  }
+
+  # Set colors
+  if (is_num) {
+    clrs <- clrs %||% c("#132B43", "#56B1F7")
+
+    res <- res +
+      ggplot2::scale_color_gradientn(
+        colors   = clrs,
+        na.value = na_clr,
+        trans    = trans_clr
+      )
+
+  } else if (!is.null(clrs) && !"legend" %in% n_label) {
+    res <- res +
+      ggplot2::scale_fill_manual(values = clrs, na.value = na_clr) +
+      ggplot2::scale_color_manual(values = clrs, na.value = na_clr)
+  }
+
+  # Create facets
+  if (!is.null(grp)) {
+    res <- res +
+      ggplot2::facet_wrap(
+        stats::as.formula(paste("~", grp)),
+        nrow = nrow, scales = scales
+      )
+  }
+
+  # Add n label
+  .chk_num <- function(df_in, clmn) {
+    if (!is.null(clmn) && !is.numeric(df_in[[clmn]])) return(clmn)
+    else                                              return(NULL)
+  }
+
+  res <- .add_n_label(
+    res, label_data,
+    n_label   = n_label,
+    crnr_col  = grp,
+    axis_col  = .chk_num(df_in, x),
+    lgnd_col  = .chk_num(df_in, .fill %||% .color),
+    lgnd_clrs = clrs,
+    y_exp     = NULL,
+    lab_args  = label_params
+  )
+
+  res
+}
+
+
+#' Create ggplot bargraph
+#'
+#' @param df_in data.frame
+#' @param x Variable to plot on x-axis
+#' @param y Variable to plot on y-axis
+#' @param trans Method to use for transforming y-axis
+#' @param y_ttl Title for y-axis
+#' @param ang Angle of x-axis text
+#' @param hjst Horizontal justification for x-axis text
+#' @param n_label Vector indicating where n labels should be added
+#' @param ... Additional arguments to pass to `.create_plot()`
+#' @return ggplot object
+#' @noRd
+.create_bars <- function(df_in, x = NULL, y, trans = "identity", y_ttl = y,
+                         ang = 45, hjst = 1, n_label = NULL, ...) {
+
+  # Set n label
+  if (is.null(n_label)) {
+    if (!is.null(x)) n_label <- "axis"
+    else             n_label <- "corner"
+  }
+
+  # Create bar graph
+  gg_args <- list(
+    df_in   = df_in,
+    fn      = ggplot2::geom_col,
+    x       = x,
+    y       = y,
+    trans_y = trans,
+    n_label = n_label,
+    ...
+  )
+
+  if (is.null(gg_args$position)) {
+    gg_args$position <- ggplot2::position_dodge(preserve = "single")
+  }
+
+  res <- lift(.create_plot)(gg_args)
+
+  res <- res +
+    ggplot2::labs(y = y_ttl) +
+    ggplot2::theme(
+      axis.title.x = ggplot2::element_blank(),
+      axis.text.x  = ggplot2::element_text(angle = ang, hjust = hjst)
+    )
+
+  res
+}
+
+
+#' Create ggplot boxplot
+#'
+#' @param df_in data.frame
+#' @param x Variable to plot on x-axis
+#' @param y Variable to plot on y-axis
+#' @param method Method to use for plotting, can be 'boxplot' or 'violin'
+#' @param trans Method to use for transforming y-axis
+#' @param n_label Vector indicating where n labels should be added
+#' @param ... Additional arguments to pass to `.create_plot()`
+#' @return ggplot object
+#' @noRd
+.create_boxes <- function(df_in, x = NULL, y, method = "boxplot",
+                          trans = "identity", n_label = NULL, ...) {
+
+  # Set n label
+  if (is.null(n_label)) {
+    if (!is.null(x)) n_label <- "axis"
+    else             n_label <- "corner"
+  }
+
+  # Set plotting function
+  plt_fns <- list(
+    boxplot = ggplot2::geom_boxplot,
+    violin  = ggplot2::geom_violin
+  )
+
+  if (!method %in% names(plt_fns)) {
+    cli::cli_abort("`method` must be {.or {names(plt_fns)}}")
+  }
+
+  plt_fn <- plt_fns[[method]]
+
+  # Create boxplots
+  res <- .create_plot(
+    df_in, plt_fn, x, y,
+    trans_y = trans,
+    n_label = n_label,
+    ...
+  )
+
+  res <- res +
+    ggplot2::theme(
+      legend.position = "none",
+      axis.title.x    = ggplot2::element_blank()
+    )
+
+  if (identical(method, "violin")) {
+    res <- res +
+      ggplot2::stat_summary(
+        geom = "point", fun = stats::median, color = "black"
+      )
+  }
+
+  res
+}
+
+
+#' Create ggplot histogram
+#'
+#' @param df_in data.frame
+#' @param x Variable to plot on x-axis
+#' @param method Method to use for plotting, can be 'histogram' or 'density'
+#' @param units Units to use for y-axis when plotting histogram. Use
+#' 'frequency' to show the raw number of values or 'percent' to show
+#' the percentage of total values.
+#' @param trans Method to use for transforming x-axis
+#' @param y_ttl Title for y-axis
+#' @param n_label Vector indicating where n labels should be added
+#' @param ... Additional arguments to pass to `.create_plot()`
+#' @return ggplot object
+#' @noRd
+.create_hist <- function(df_in, x, method = "histogram", units = "frequency",
+                         trans = "identity", y_ttl = units, n_label = "none",
+                         ...) {
+
+  # Check inputs
+  .check_possible_values(units = c("frequency", "percent"))
+
+  # Set n label
+  n_label <- n_label %||% c("corner", "legend")
+
+  # Set plotting function
+  plt_fns <- list(
+    histogram = ggplot2::geom_histogram,
+    density   = ggplot2::geom_density
+  )
+
+  if (!method %in% names(plt_fns)) {
+    cli::cli_abort("`method` must be {.or {names(plt_fns)}}")
+  }
+
+  plt_fn <- plt_fns[[method]]
+
+  # Set aesthetics
+  # Only plot percent for histogram
+  gg_aes <- ggplot2::aes()
+
+  if (identical(units, "percent") && identical(method, "histogram")) {
+    gg_aes <- ggplot2::aes(y = ggplot2::after_stat((count / max(count)) * 100))
+  }
+
+  gg_aes$x <- sym(x)
+
+  # Create histogram
+  res <- .create_plot(
+    df_in, plt_fn,
+    mapping = gg_aes,
+    trans_x = trans,
+    n_label = n_label,
+    ...
+  )
+
+  if (identical(method, "histogram")) {
+    res <- res +
+      ggplot2::labs(y = y_ttl)
+  }
+
+  res
 }
 
 
@@ -96,11 +375,11 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   if (length(clrs) == 1) clrs <- c("white", clrs)
 
-  plt_aes <- ggplot2::aes("sample", !!sym(y), fill = !!sym(.fill))
+  gg_aes <- ggplot2::aes("sample", !!sym(y), fill = !!sym(.fill))
 
-  if (!is.null(x)) plt_aes$x <- sym(x)
+  if (!is.null(x)) gg_aes$x <- sym(x)
 
-  res <- ggplot2::ggplot(df_in, plt_aes) +
+  res <- ggplot2::ggplot(df_in, gg_aes) +
     ggplot2::geom_tile(...) +
     ggplot2::guides(fill = ggplot2::guide_colorbar(title = lgd_ttl)) +
     ggplot2::scale_fill_gradientn(
@@ -119,6 +398,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   res
 }
+
 
 #' Create ComplexHeatmap heatmap
 #'
@@ -512,303 +792,6 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 }
 
 
-#' Create ggplot bar graph
-#'
-#' @param df_in data.frame
-#' @param x Variable to plot on x-axis
-#' @param y Variable to plot on y-axis
-#' @param .fill Variable to use for fill color
-#' @param clrs Vector of colors for plotting
-#' @param trans Method to use for transforming data
-#' @param y_exp Specification to pass to [ggplot2::expansion()]
-#' @param y_ttl Title for y-axis
-#' @param ang Angle of x-axis text
-#' @param hjst Horizontal justification for x-axis text
-#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
-#' linetype, etc.
-#' @return ggplot object
-#' @noRd
-.create_bars <- function(df_in, x, y, grp = NULL, .color = NULL, .fill = NULL,
-                         clrs = NULL, trans = "identity", y_ttl = y, ang = 45,
-                         hjst = 1, nrow = NULL, scales = "fixed",
-                         n_label = "none", label_params = list(),
-                         label_data = df_in, ...) {
-
-  # Set aesthetics and geom_col arguments
-  gg_aes  <- aes(!!sym(x), !!sym(y))
-  gg_args <- .standardize_aes(list(...))
-
-  if (!is.null(.fill))  gg_aes$fill   <- sym(.fill)
-  if (!is.null(.color)) gg_aes$colour <- sym(.color)
-  if (is.null(.fill) && is.null(.color)) gg_args$fill <- gg_args$colour <- clrs
-
-  if (is.null(gg_args$position)) {
-    gg_args$position <- ggplot2::position_dodge(preserve = "single")
-  }
-
-  # Create bar graph
-  y_args <- list(trans = trans)
-
-  if ("corner" %in% n_label) y_args$expand <- .n_label_expansion
-
-  res <- ggplot2::ggplot(df_in, gg_aes) +
-    lift(geom_col)(gg_args) +
-    lift(ggplot2::scale_y_continuous)(y_args)
-
-  # Set colors
-  if (!is.null(clrs) && all(n_label == "none")) {
-    res <- res +
-      ggplot2::scale_fill_manual(values = clrs) +
-      ggplot2::scale_color_manual(values = clrs)
-  }
-
-  # Create facets
-  if (!is.null(grp)) {
-    res <- res +
-      ggplot2::facet_wrap(
-        stats::as.formula(paste("~", grp)),
-        nrow = nrow, scales = scales
-      )
-  }
-
-  # Set theme
-  res <- res +
-    ggplot2::labs(y = y_ttl) +
-    djvdj_theme() +
-    ggplot2::theme(
-      axis.title.x = ggplot2::element_blank(),
-      axis.text.x  = ggplot2::element_text(angle = ang, hjust = hjst)
-    )
-
-  # Add n label
-  res <- .add_n_label(
-    res, label_data,
-    n_label   = n_label,
-    crnr_col  = grp,
-    axis_col  = x,
-    lgnd_col  = .fill,
-    lgnd_clrs = clrs,
-    y_exp     = NULL,
-    lab_args  = label_params
-  )
-
-  res
-}
-
-
-#' Create ggplot boxplot
-#'
-#' @param df_in data.frame
-#' @param x Variable to plot on x-axis
-#' @param y Variable to plot on y-axis
-#' @param grp Variable to use for facet_wrap
-#' @param .color Variable to use for line color
-#' @param .fill Variable to use for fill color
-#' @param clrs Vector of colors for plotting
-#' @param method Method to use for plotting, either 'boxplot' or 'violin'
-#' @param trans Transformation to use for plotting data, e.g. 'log10', refer
-#' to [ggplot2::continuous_scale()] for more options.
-#' @param y_exp Specification to pass to [ggplot2::expansion()]
-#' @param nrow Number of rows for facets
-#' @param scales scales specification for facet_wrap
-#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
-#' linetype, etc.
-#' @return ggplot object
-#' @noRd
-.create_boxes <- function(df_in, x = NULL, y, grp = NULL, .color = NULL,
-                          .fill = NULL, clrs = NULL, method = "boxplot",
-                          trans = "identity", nrow = NULL, scales = "fixed",
-                          n_label = "none", label_params = list(),
-                          label_data = df_in, ...) {
-
-  # Check input
-  psbl_typs <- c("boxplot", "violin")
-
-  if (!method %in% psbl_typs) {
-    cli::cli_abort("`method` must be {.or {psbl_typs}}")
-  }
-
-  # Set aesthetics
-  plt_aes <- ggplot2::aes(y, !!sym(y))
-
-  if (!is.null(x))      plt_aes$x      <- sym(x)
-  if (!is.null(.fill))  plt_aes$fill   <- sym(.fill)
-  if (!is.null(.color)) plt_aes$colour <- sym(.color)
-
-  # Adjust theme
-  res <- ggplot2::ggplot(df_in, plt_aes) +
-    djvdj_theme() +
-    ggplot2::theme(
-      legend.position = "none",
-      axis.title.x    = ggplot2::element_blank()
-    )
-
-  # Create facets
-  if (!is.null(grp)) {
-    res <- res +
-      ggplot2::facet_wrap(
-        stats::as.formula(paste("~", grp)),
-        nrow = nrow, scales = scales
-      )
-  }
-
-  # Set colors
-  if (!is.null(clrs) && all(n_label == "none")) {
-    res <- res +
-      ggplot2::scale_fill_manual(values = clrs) +
-      ggplot2::scale_color_manual(values = clrs)
-  }
-
-  # Add n label
-  res <- .add_n_label(
-    res, label_data,
-    n_label   = n_label,
-    crnr_col  = grp,
-    axis_col  = x,
-    lgnd_col  = .fill %||% .color,
-    lgnd_clrs = clrs,
-    lab_args  = label_params
-  )
-
-  # Return violins
-  if (identical(method, "violin")) {
-    res <- res +
-      ggplot2::geom_violin(...) +
-      ggplot2::stat_summary(
-        geom = "point", fun = stats::median, color = "black"
-      )
-
-    return(res)
-  }
-
-  # Return boxes
-  res <- res +
-    ggplot2::geom_boxplot(...)
-
-  res
-}
-
-
-#' Create ggplot histogram
-#'
-#' @param df_in data.frame
-#' @param x Variable to plot on x-axis
-#' @param grp Variable to use for facet_wrap
-#' @param .color Variable to use for line color
-#' @param .fill Variable to use for fill color
-#' @param clrs Vector of colors for plotting
-#' @param method Method to use for plotting, either 'histogram' or 'density'
-#' @param units Units to use for y-axis when plotting histogram. Use
-#' 'frequency' to show the raw number of values or 'percent' to show
-#' the percentage of total values.
-#' @param trans Transformation to use for plotting data, e.g. 'log10', refer
-#' to [ggplot2::continuous_scale()] for more options.
-#' @param y_exp Specification to pass to [ggplot2::expansion()]
-#' @param nrow Number of rows for facets
-#' @param scales scales specification for facet_wrap
-#' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
-#' linetype, etc.
-#' @return ggplot object
-#' @noRd
-.create_hist <- function(df_in, x, grp, .color = NULL, .fill = NULL,
-                         clrs = NULL, method = "histogram",
-                         units = "frequency", y_ttl = units, trans = "identity",
-                         nrow = NULL, scales = "fixed",
-                         n_label = "none", label_params = list(), ...) {
-
-  # Check inputs
-  psbl_typs <- c("histogram", "density")
-
-  if (!method %in% psbl_typs) cli::cli_abort("`method` must {.or {psbl_typs}}")
-
-  psbl_axis <- c("frequency", "percent")
-
-  if (!units %in% psbl_axis) cli::cli_abort("`units` must {.or {psbl_axis}}")
-
-  if (!is.null(.fill) && !is.null(.color) && !identical(.fill, .color)) {
-    cli::cli_abort(
-      "If both `.color` and `.fill` are provided,
-       they must refer to the same variable"
-    )
-  }
-
-  # Set aesthetics
-  plt_aes <- ggplot2::aes()
-
-  # Only plot percent for histogram
-  if (identical(units, "percent") && identical(method, "histogram")) {
-    plt_aes <- ggplot2::aes(y = ggplot2::after_stat((count / max(count)) * 100))
-  }
-
-  plt_aes$x <- sym(x)
-
-  if (!is.null(.fill))  plt_aes$fill   <- sym(.fill)
-  if (!is.null(.color)) plt_aes$colour <- sym(.color)
-
-  # Adjust theme and transform axis
-  res <- ggplot2::ggplot(df_in, plt_aes) +
-    djvdj_theme() +
-    ggplot2::theme(legend.position = "top") +
-    ggplot2::scale_x_continuous(trans = trans)
-
-  if (!is.null(grp)) {
-    res <- res +
-      ggplot2::facet_wrap(
-        stats::as.formula(paste("~", grp)),
-        nrow = nrow, scales = scales
-      )
-  }
-
-  if (!is.null(clrs) && all(n_label == "none")) {
-    res <- res +
-      ggplot2::scale_color_manual(values = clrs) +
-      ggplot2::scale_fill_manual(values = clrs)
-  }
-
-  # Add n label
-  res <- .add_n_label(
-    res, df_in,
-    n_label   = n_label,
-    crnr_col  = grp,
-    lgnd_col  = .fill %||% .color,
-    lgnd_clrs = clrs,
-    lab_args  = label_params
-  )
-
-  # Return density plot
-  if (identical(method, "density")) {
-    res <- res +
-      ggplot2::geom_density(...)
-
-    return(res)
-  }
-
-  # Return histogram
-  res <- res +
-    ggplot2::geom_histogram(...) +
-    ggplot2::labs(y = y_ttl)
-
-  res
-}
-
-
-#' Get axis label based on axis units
-#'
-#' @param units Units for axis
-#' @param sffx Suffix to include in label
-#' @return Axis label
-#' @noRd
-.get_axis_label <- function(units, sfx = "cells") {
-  res <- switch(
-    units,
-    frequency = paste0("number of ", sfx),
-    percent   = paste0("% of ", sfx)
-  )
-
-  res
-}
-
-
 #' Add n label to plot
 #'
 #' @param gg_in ggplot2 object
@@ -1006,6 +989,41 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 .n_label_expansion <- ggplot2::expansion(c(0.05, 0.1))
 
 
+#' Get axis label based on axis units
+#'
+#' @param units Units for axis
+#' @param sffx Suffix to include in label
+#' @return Axis label
+#' @noRd
+.get_axis_label <- function(units, sfx = "cells") {
+  res <- switch(
+    units,
+    frequency = paste0("number of ", sfx),
+    percent   = paste0("% of ", sfx)
+  )
+
+  res
+}
+
+
+#' Trim long labels
+#'
+#' @param x Character vector containing labels to trim
+#' @param max_len Maximum number of characters to allow
+#' @param ellipsis Ellipsis to add to indicate label has been trimmed
+#' @noRd
+trim_lab <- function(x, max_len = 25, ellipsis = "...") {
+  len <- nchar(x)
+
+  trim_me <- len > max_len
+
+  x[trim_me] <- strtrim(x[trim_me], max_len)
+  x[trim_me] <- paste0(x[trim_me], ellipsis)
+
+  x
+}
+
+
 #' Get arguments used solely by provided text function
 #'
 #' This is important for making sure `label_params` arguments are used for the
@@ -1055,7 +1073,6 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   res
 }
-
 
 
 #' Set min and max values for column

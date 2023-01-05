@@ -675,3 +675,20 @@ NULL
 
   purrr::walk(arg_cls, ~ purrr::pmap(.x, .check_arg, envir = envir))
 }
+
+
+#' Check possible values for argument
+#'
+#' @param ... Name value pairs providing argument name and possible values
+#' @return Error if argument does not match one of the provided values
+#' @noRd
+.check_possible_values <- function(...) {
+  vals <- list(...)
+
+  purrr::iwalk(vals, ~ {
+    val <- eval(sym(.y))
+    if (!all(val %in% .x)) cli::cli_abort("`{.y}` must be {.or {.x}}")
+  })
+}
+
+

@@ -419,10 +419,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
 
   # Set data for n label
-  n_lab_dat  <- plt_dat
-  n_lab_clrs <- plot_colors
-
-  if ("legend" %in% n_label) plot_colors <- NULL
+  n_lab_dat <- plt_dat
 
   # Identify data columns that the user should have access to
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
@@ -436,8 +433,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   plt_dat <- tidyr::extract(plt_dat, .data$name, into = c("met", "type"), re)
 
   plt_dat <- tidyr::pivot_wider(
-    plt_dat,
-    names_from  = "type", values_from = "value"
+    plt_dat, names_from  = "type", values_from = "value"
   )
 
   # Set plot levels
@@ -452,15 +448,18 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
   # Plot arguments
   gg_args <- list(
-    df_in = plt_dat,
-    x     = x_col,
-    y     = "diversity",
-    .fill = clr_col,
-    clrs  = plot_colors,
+    df_in        = plt_dat,
+    x            = x_col,
+    y            = "diversity",
+    .fill        = clr_col,
+    clrs         = plot_colors,
+    nrow         = panel_nrow,
+    scales       = panel_scales,
+    n_label      = n_label,
+    label_params = label_params,
+    label_data   = n_lab_dat,
     ...
   )
-
-  if ("corner" %in% n_label) gg_args$y_exp <- .n_label_expansion
 
   # Create grouped boxplot
   if (!is.null(group_col)) {
@@ -471,8 +470,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
     res <- lift(.create_boxes)(gg_args) +
       ggplot2::geom_jitter(
         position = ggplot2::position_jitterdodge(jitter.width = 0.05)
-      ) +
-      theme(legend.position = "right")
+      )
 
   # Create bar graphs
   # only add error bars if n_boots > 1
@@ -494,10 +492,6 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
         )
     }
 
-    # Set theme
-    res <- res +
-      ggplot2::theme(legend.position = "none")
-
     if (!include_x_labs) {
       res <- res +
         ggplot2::theme(
@@ -507,27 +501,14 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
     }
   }
 
-  # Create facets
-  if (length(method) > 1) {
-    res <- res +
-      ggplot2::facet_wrap(~ met, nrow = panel_nrow, scales = panel_scales) +
-      ggplot2::theme(axis.title.y = ggplot2::element_blank())
-
-  } else {
+  # Set theme
+  if (length(method) == 1) {
     res <- res +
       ggplot2::labs(y = names(method))
   }
 
-  # Add n label
-  res <- .add_n_label(
-    res, n_lab_dat,
-    n_label   = n_label,
-    axis_col  = x_col,
-    lgnd_col  = clr_col,
-    lgnd_clrs = n_lab_clrs,
-    y_exp     = NULL,
-    lab_args  = label_params
-  )
+  res <- res +
+    ggplot2::theme(legend.position = "none")
 
   res
 }

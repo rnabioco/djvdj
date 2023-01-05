@@ -83,32 +83,25 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   plt_dat <- .get_meta(input)
 
   # Set data for n label
-  # n_lab_clrs <- plot_colors
-  # if ("legend" %in% n_label) plot_colors <- NULL
-
-  plt_vars  <- c(x, y, feature)
-
   gg_args <- list(
+    fn           = ggplot2::geom_point,
     x            = x,
     y            = y,
-    feat         = feature,
+    .color       = feature,
     grp          = group_col,
     nrow         = panel_nrow,
     scales       = panel_scales,
-    trans        = trans,
+    trans_clr    = trans,
     n_label      = n_label,
-    label_params = label_params
+    label_params = label_params,
+    ...
   )
-
-  plt_args <- .standardize_aes(list(...))
-  gg_args  <- append(gg_args, plt_args)
 
   # If no feature provided, return scatter plot
   if (is.null(feature)) {
-    gg_args$df_in  <- plt_dat
-    gg_args$colour <- gg_args$colour %||% plot_colors
+    gg_args$df_in <- plt_dat
 
-    res <- lift(.create_scatter)(gg_args)
+    res <- lift(.create_plot)(gg_args)
 
     return(res)
   }
@@ -162,68 +155,7 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   gg_args$df_in <- plt_dat
   gg_args$clrs  <- plot_colors
 
-  res <- lift(.create_scatter)(gg_args)
-
-  res
-}
-
-.create_scatter <- function(df_in, x, y, feat, grp, clrs = NULL, nrow = NULL,
-                            scales = "fixed", n_label = "corner",
-                            label_params = list(), na_color = "grey80",
-                            trans = "identity", ...) {
-
-  has_feat <- !is.null(feat)
-  is_num   <- has_feat && is.numeric(df_in[[feat]])
-
-  # If don't use lift_dl() to set plt_aes, will get a warning when
-  # manually adjusting colors: "Scale for 'colour' is already present..."
-  plt_aes <- list(x = sym(x), y = sym(y))
-
-  if (has_feat) plt_aes$color <- sym(feat)
-
-  plt_aes <- lift(ggplot2::aes)(plt_aes)
-
-  res <- ggplot2::ggplot(df_in, plt_aes) +
-    ggplot2::geom_point(...) +
-    djvdj_theme()
-
-  # Split plot into facets
-  if (!is.null(grp)) {
-    res <- res +
-      ggplot2::facet_wrap(
-        stats::as.formula(paste("~", grp)),
-        nrow = nrow, scales = scales
-      )
-  }
-
-  # Add n label
-  n_lab_args <- list(
-    df_in    = df_in,
-    n_label  = n_label,
-    crnr_col = grp,
-    lab_args = label_params
-  )
-
-  if (is_num) {
-    res <- res +
-      ggplot2::scale_color_gradientn(
-        colors   = clrs,
-        na.value = na_color,
-        trans    = trans
-      )
-
-  } else {
-    res <- res +
-      ggplot2::guides(
-        color = ggplot2::guide_legend(override.aes = list(size = 3))
-      )
-
-    n_lab_args$lgnd_col  <- feat
-    n_lab_args$lgnd_clrs <- clrs
-    n_lab_args$na_clr    <- na_color
-  }
-
-  res <- lift(.add_n_label, gg_in = res)(n_lab_args)
+  res <- lift(.create_plot)(gg_args)
 
   res
 }
@@ -603,7 +535,12 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
   # Check input classes
   .check_args(environment())
 
+  # Check input values
   .chk_group_cols(cluster_col, group_col, input)
+
+  .check_possible_values(
+    method = c("boxplot", "violin", "histogram", "density")
+  )
 
   # Format input data
   if (per_cell) {
@@ -635,8 +572,6 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
   }
 
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
-
-  n_lab_dat <- .calc_n(plt_dat, group_col)
 
   # Create plots
   gg_args <- list(

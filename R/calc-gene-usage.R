@@ -340,7 +340,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
   if (identical(method, "circos")) units  <- "frequency"
 
-  .chk_usage_args(method, data_cols, group_col, units, paired)
+  .check_usage_args(method, data_cols, group_col, units, paired)
   .chk_group_cols(cluster_col, group_col, input)
 
   # Set y-axis
@@ -361,12 +361,6 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   ))
 
   # Set n label data
-  psbl_labs <- c("none", "corner", "axis", "legend")
-
-  if (!is.null(n_label) && !all(n_label %in% psbl_labs)) {
-    cli::cli_abort("`n_label` can be any combination of {psbl_labs}")
-  }
-
   lab_cols   <- c(cluster_col, group_col, .n = "n_cells")
   n_lab_dat  <- dplyr::distinct(plt_dat, !!!syms(lab_cols))
   n_lab_clrs <- plot_colors
@@ -414,35 +408,35 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   }
 
   # Plot gene usage
-  plt_args <- list(
+  gg_args <- list(
     df_in    = plt_dat,
     gn_col   = data_cols,
     dat_col  = usage_col,
     clst_col = cluster_col,
-    typ      = method,
+    method   = method,
     clrs     = plot_colors,
     lvls     = plot_lvls,
     trans    = trans,
-    ax_ttl   = .get_axis_label(units),
+    ttl      = .get_axis_label(units),
     ...
   )
 
   if (paired) {
     usage_fn <- .plot_paired_usage
 
-    plt_args$rotate_labels <- rotate_labels
-    plt_args$return_list   <- return_list
-    plt_args$n_row         <- panel_nrow
+    gg_args$rotate_labels <- rotate_labels
+    gg_args$return_list   <- return_list
+    gg_args$n_row         <- panel_nrow
 
   } else {
     usage_fn <- .plot_single_usage
 
-    plt_args$grp_col <- group_col
+    gg_args$grp_col <- group_col
 
-    if ("corner" %in% n_label) plt_args$y_exp <- .n_label_expansion
+    if ("corner" %in% n_label) gg_args$y_exp <- .n_label_expansion
   }
 
-  res <- lift(usage_fn)(plt_args)
+  res <- lift(usage_fn)(gg_args)
 
   # Add n label
   # Can't use .add_n_label() since n_lab_dat has to be modified depending on
@@ -479,7 +473,6 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     )
   }
 
-
   res
 }
 
@@ -490,20 +483,20 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' @param dat_col Column containing gene usage metric
 #' @param clst_col Column containing clusters
 #' @param grp_col Column with IDs to use for grouping clusters
-#' @param typ Plot type
+#' @param method Method to use for generating plot
 #' @param clrs Plot colors
 #' @param lvls Levels for ordering clusters
 #' @param trans Method to use for transforming data
-#' @param ax_ttl Y-axis title
+#' @param ttl Title for y-axis or legend depending on type of graph
 #' @param order Should genes be ordered based on usage
 #' @param ... Additional parameters to pass to plotting function
 #' @noRd
-.plot_single_usage <- function(df_in, gn_col, dat_col, typ, clst_col = NULL,
+.plot_single_usage <- function(df_in, gn_col, dat_col, method, clst_col = NULL,
                                grp_col = NULL, clrs = NULL, lvls = NULL,
-                               y_exp = NULL, trans = "identity", ax_ttl,
+                               y_exp = NULL, trans = "identity", ttl = dat_col,
                                order = TRUE, ...) {
 
-  y_exp <- y_exp %||% c(0.05, 0.05)
+  y_exp <- y_exp %||% ggplot2::expansion(c(0.05, 0.05))
 
   # Order clusters based on plot_lvls
   lvl_col <- grp_col %||% clst_col
@@ -511,7 +504,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
   # Order plot levels
   if (order) {
-    decr  <- !is.null(grp_col) || identical(typ, "bar")
+    decr  <- !is.null(grp_col) || identical(method, "bar")
     g_col <- sym(gn_col)
 
     df_in <- dplyr::mutate(
@@ -521,28 +514,28 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   }
 
   # Set common arguments
-  plt_args <- list(clrs = clrs, trans = trans, ...)
+  gg_args <- list(clrs = clrs, ...)
 
-  if (identical(typ, "bar") || !is.null(grp_col)) {
-    plt_args$x     <- gn_col
-    plt_args$y     <- dat_col
-    plt_args$y_exp <- y_exp
+  if (identical(method, "bar") || !is.null(grp_col)) {
+    gg_args$x <- gn_col
+    gg_args$y <- dat_col
   }
 
   # Create grouped boxplot
   if (!is.null(grp_col)) {
-    plt_args$df_in         <- df_in
-    plt_args$.color        <- plt_args$.fill <- grp_col
-    plt_args$outlier.color <- plt_args$outlier.color %||% NA
-    plt_args$alpha         <- plt_args$alpha %||% 0.5
+    gg_args$df_in         <- df_in
+    gg_args$.color        <- gg_args$.fill <- grp_col
+    gg_args$outlier.color <- gg_args$outlier.color %||% NA
+    gg_args$alpha         <- gg_args$alpha %||% 0.5
 
-    res <- lift(.create_boxes)(plt_args)
+    res <- lift(.create_boxes)(gg_args)
 
     res <- res +
       ggplot2::geom_jitter(
         position = ggplot2::position_jitterdodge(jitter.width = 0.05)
       ) +
-      labs(y = ax_ttl) +
+      ggplot2::scale_y_continuous(trans = trans, expand = y_exp) +
+      labs(y = ttl) +
       theme(
         legend.position = "right",
         axis.text.x     = ggplot2::element_text(angle = 45, hjust = 1)
@@ -552,25 +545,30 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   }
 
   # Create bargraph
-  if (identical(typ, "bar")) {
-    df_in          <- dplyr::filter(df_in, !!sym(dat_col) > 0)
-    plt_args$df_in <- df_in
-    plt_args$.fill <- clst_col
-    plt_args$y_ttl <- ax_ttl
+  if (identical(method, "bar")) {
 
-    res <- lift(.create_bars)(plt_args)
+    # Remove zeros from data
+    df_in <- dplyr::filter(df_in, !!sym(dat_col) > 0)
+
+    gg_args$df_in <- df_in
+    gg_args$.fill <- clst_col
+    gg_args$y_ttl <- ttl
+
+    res <- lift(.create_bars)(gg_args) +
+      ggplot2::scale_y_continuous(trans = trans, expand = y_exp)
 
     return(res)
   }
 
   # Create heatmap
-  plt_args$df_in   <- df_in
-  plt_args$x       <- clst_col
-  plt_args$y       <- gn_col
-  plt_args$.fill   <- dat_col
-  plt_args$lgd_ttl <- ax_ttl
+  gg_args$df_in   <- df_in
+  gg_args$trans   <- trans
+  gg_args$x       <- clst_col
+  gg_args$y       <- gn_col
+  gg_args$.fill   <- dat_col
+  gg_args$lgd_ttl <- ttl
 
-  res <- lift(.create_gg_heatmap)(plt_args)
+  res <- lift(.create_gg_heatmap)(gg_args)
 
   res
 }
@@ -581,11 +579,11 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' @param gn_col Columns containing genes
 #' @param dat_col Column containing gene usage metric
 #' @param clst_col Column containing clusters
-#' @param typ Plot type
+#' @param method Method to use for generating plot
 #' @param clrs Plot colors
 #' @param lvls Levels for ordering clusters
 #' @param trans Method to use for transforming data
-#' @param ax_ttl Y-axis title
+#' @param ttl Legend title
 #' @param order Should genes be ordered based on usage
 #' @param return_list Should a list of plot be returned, if FALSE plots will be
 #' combined
@@ -595,8 +593,8 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' @importFrom graphics par plot.new
 #' @noRd
 .plot_paired_usage <- function(df_in, gn_col, dat_col, clst_col = NULL,
-                               typ, clrs = NULL, lvls = NULL,
-                               trans = "identity", ax_ttl, order = TRUE,
+                               method, clrs = NULL, lvls = NULL,
+                               trans = "identity", ttl = dat_col, order = TRUE,
                                rotate_labels = FALSE, return_list = FALSE,
                                n_row = NULL, ...) {
 
@@ -645,11 +643,11 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   n_col <- ceiling(nplts / n_row)
 
   # Create heatmap
-  if (identical(typ, "heatmap")) {
+  if (identical(method, "heatmap")) {
     plt_args$x       <- gn_col[1]
     plt_args$y       <- gn_col[2]
     plt_args$.fill   <- dat_col
-    plt_args$lgd_ttl <- ax_ttl
+    plt_args$lgd_ttl <- ttl
     plt_args$trans   <- trans
 
     res <- purrr::imap(res, ~ {
@@ -839,23 +837,22 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' @param axis units
 #' @param paired paired
 #' @noRd
-.chk_usage_args <- function(typ, gn_cols, grp_col, axis, paired) {
+.check_usage_args <- function(method, gn_cols, grp_col, units, paired) {
 
-  typs <- c("heatmap", "bar", "circos")
+  .check_possible_values(
+    method = c("heatmap", "bar", "circos"),
+    units  = c("percent", "frequency")
+  )
 
-  if (!typ %in% typs) {
-    cli::cli_abort("`type` must be {.or {typs}}")
-  }
+  mets <- c("heatmap", "circos")
 
-  typs <- c("heatmap", "circos")
-
-  if (paired && !typ %in% typs) {
+  if (paired && !method %in% mets) {
     cli::cli_abort(
-      "`type` must be {.or {typs}} when two columns are passed to `data_cols`"
+      "`method` must be {.or {typs}} when two columns are passed to `data_cols`"
     )
   }
 
-  if (identical(typ, "circos") && !paired) {
+  if (identical(method, "circos") && !paired) {
     cli::cli_abort(
       "A circos plot can only be generated when two columns
        are passed to `data_cols`"
@@ -864,12 +861,6 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
   if (length(gn_cols) > 2) {
     cli::cli_abort("Cannot specify more than two values for `data_cols`")
-  }
-
-  units <- c("percent", "frequency")
-
-  if (!axis %in% units) {
-    cli::cli_abort("`units` must be {.or {units}}")
   }
 
   if (paired && !is.null(grp_col)) {
