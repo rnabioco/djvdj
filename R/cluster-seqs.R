@@ -279,7 +279,7 @@ plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
                         plot_lvls = names(plot_colors),
                         chain_col = global$chain_col, width = 0.75,
                         align_end = "5", panel_nrow = NULL,
-                        panel_scales = "free", n_label = TRUE,
+                        panel_scales = "free", n_label = "corner",
                         label_params = list(), quiet = FALSE, sep = global$sep,
                         ...) {
 
