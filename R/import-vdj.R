@@ -122,9 +122,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   global$sep           <- sep
 
   # Check input classes
-  .check_args(
-    environment(), data_cols = list(len_one = FALSE, allow_null = TRUE)
-  )
+  .check_args(data_cols = list(len_one = FALSE, allow_null = TRUE))
 
   # Check input values
   # vdj_dir or aggr_dir must be provided
@@ -1441,9 +1439,7 @@ define_clonotypes <- function(input, data_cols, clonotype_col = "clonotype_id",
   .check_obj_cols(input, data_cols, filter_chains)
 
   # Check input classes
-  .check_args(
-    environment(), filter_chains = list(Class = "character", len_one = FALSE)
-  )
+  .check_args(filter_chains = list(Class = "character", len_one = FALSE))
 
   # Get meta.data
   # overwrite exising clonotype_col if it has the same name

@@ -65,7 +65,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
   .check_obj_cols(input, data_col, cluster_col)
 
   # Check arguments
-  .check_args(environment())
+  .check_args()
 
   # Format input data
   meta <- .get_meta(input)
@@ -231,7 +231,7 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
   .check_obj_cols(input, data_cols, cluster_col)
 
   # Check input classes
-  .check_args(environment())
+  .check_args()
 
 }
 
@@ -350,7 +350,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
   .check_obj_cols(input, data_col, cluster_col, group_col)
 
   # Check input classes
-  .check_args(environment())
+  .check_args()
 
   # Check input values
   .check_possible_values(
@@ -597,7 +597,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   .check_obj_cols(input, data_col, cluster_col)
 
   # Check input classes
-  .check_args(environment())
+  .check_args()
 
   # Check input values
   .check_group_cols(cluster_col, group_col, input)

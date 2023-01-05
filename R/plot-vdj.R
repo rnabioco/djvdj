@@ -75,7 +75,7 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   .check_obj_cols(input, x, y, feature, group_col)
 
   # Check input classes
-  .check_args(environment())
+  .check_args()
 
   # Check input values
   if (identical(x, y)) cli::cli_abort("`x` and `y` must be different")
@@ -175,7 +175,7 @@ plot_features.Seurat <- function(input, feature = NULL, x = "UMAP_1",
                                  n_label = "corner", label_params = list(), ...) {
 
   # Check input classes
-  .check_args(environment())
+  .check_args()
 
   # Fetch variables and add to meta.data
   # want input data to include meta.data and any features from FetchData
@@ -533,7 +533,7 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
   )
 
   # Check input classes
-  .check_args(environment())
+  .check_args()
 
   # Check input values
   .check_group_cols(cluster_col, group_col, input)

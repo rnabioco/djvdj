@@ -51,9 +51,7 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
   )
 
   # Check input classes
-  .check_args(
-    environment(), cluster_col = list(allow_null = TRUE, len_one = FALSE)
-  )
+  .check_args(cluster_col = list(allow_null = TRUE, len_one = FALSE))
 
   # Format input data
   sep_cols <- data_cols
@@ -329,7 +327,6 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
   # Check input classes
   .check_args(
-    environment(),
     method  = list(allow_null = TRUE),
     n_label = list(allow_null = TRUE, len_one = FALSE)
   )

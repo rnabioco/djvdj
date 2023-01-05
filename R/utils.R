@@ -659,9 +659,9 @@ NULL
   })
 }
 
-.check_args <- function(envir, ...) {
+.check_args <- function(...) {
+  envir   <- parent.frame()
   arg_cls <- global$arg_classes
-
   new_cls <- list(...)
 
   arg_cls[names(new_cls)] <- new_cls
@@ -683,12 +683,13 @@ NULL
 #' @return Error if argument does not match one of the provided values
 #' @noRd
 .check_possible_values <- function(...) {
-  vals <- list(...)
+  envir <- parent.frame()
+  vals  <- list(...)
 
   purrr::iwalk(vals, ~ {
-    val <- eval(sym(.y))
+    val <- eval(sym(.y), envir = envir)
+
     if (!all(val %in% .x)) cli::cli_abort("`{.y}` must be {.or {.x}}")
   })
 }
-
 

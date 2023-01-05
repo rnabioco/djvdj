@@ -52,9 +52,7 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
   .check_obj_cols(input, data_cols, clonotype_col)
 
   # Check input classes
-  .check_args(
-    environment(), data_cols = list(len_one = FALSE, allow_null = TRUE)
-  )
+  .check_args(data_cols = list(len_one = FALSE, allow_null = TRUE))
 
   # Format input data
   meta <- .get_meta(input)
@@ -183,9 +181,7 @@ mutate_vdj <- function(input, ..., clonotype_col = global$clonotype_col,
   .check_obj_cols(input, data_cols, clonotype_col)
 
   # Check input classes
-  .check_args(
-    environment(), data_cols = list(len_one = FALSE, allow_null = TRUE)
-  )
+  .check_args(data_cols = list(len_one = FALSE, allow_null = TRUE))
 
   # Format input data
   meta <- .get_meta(input)
@@ -348,7 +344,7 @@ summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
   .check_obj_cols(input, data_cols, chain = chain, chain_col = chain_col)
 
   # Check input classes
-  .check_args(environment())
+  .check_args()
 
   # Names of new columns
   new_cols <- gsub("\\{.col\\}", "{data_cols}", col_names)
