@@ -341,7 +341,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   if (identical(method, "circos")) units  <- "frequency"
 
   .check_usage_args(method, data_cols, group_col, units, paired)
-  .chk_group_cols(cluster_col, group_col, input)
+  .check_group_cols(cluster_col, group_col, input)
 
   # Set y-axis
   usage_col <- switch(units, frequency = "freq", percent   = "pct")

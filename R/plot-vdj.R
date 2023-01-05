@@ -536,7 +536,7 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
   .check_args(environment())
 
   # Check input values
-  .chk_group_cols(cluster_col, group_col, input)
+  .check_group_cols(cluster_col, group_col, input)
 
   .check_possible_values(
     method = c("boxplot", "violin", "histogram", "density")

@@ -1186,7 +1186,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
 #' Check cluster_col and group_col arguments
 #' @noRd
-.chk_group_cols <- function(cluster_col, group_col, input = NULL) {
+.check_group_cols <- function(cluster_col, group_col, input = NULL) {
   if (!is.null(group_col) && is.null(cluster_col)) {
     cli::cli_abort(
       "`cluster_col` must be provided when `group_col` is specified"
@@ -1202,7 +1202,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   if (!is.null(cluster_col) && !is.null(group_col) && !is.null(input)) {
     dat <- .get_meta(input)
 
-    chk <- .chk_matching_vals(dat[[cluster_col]], dat[[group_col]])
+    chk <- .check_matching_vals(dat[[cluster_col]], dat[[group_col]])
 
     if (!chk) {
       cli::cli_abort(
@@ -1214,7 +1214,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   }
 }
 
-.chk_matching_vals <- function(x, y) {
+.check_matching_vals <- function(x, y) {
   if (length(x) != length(y)) {
     cli::cli_abort("`x` and `y` must be the same length")
   }
@@ -1234,7 +1234,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   clmn <- dat[clmn]
   clmn <- purrr::reduce(clmn, paste0)
 
-  mtch <- purrr::map_lgl(clmns, ~ .chk_matching_vals(clmn, .x))
+  mtch <- purrr::map_lgl(clmns, ~ .check_matching_vals(clmn, .x))
 
   names(clmns[mtch])
 }

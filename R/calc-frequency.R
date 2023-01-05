@@ -375,7 +375,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     group_col   <- NULL
   }
 
-  .chk_group_cols(cluster_col, group_col, input)
+  .check_group_cols(cluster_col, group_col, input)
 
   abun_col <- switch(units, frequency = ".freq", percent = ".pct")
   y_lab    <- .get_axis_label(units)
@@ -600,7 +600,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   .check_args(environment())
 
   # Check input values
-  .chk_group_cols(cluster_col, group_col, input)
+  .check_group_cols(cluster_col, group_col, input)
 
   .check_possible_values(units = c("frequency", "percent"))
 

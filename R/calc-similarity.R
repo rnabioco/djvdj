@@ -307,7 +307,7 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 
   if (is_circ) method <- "count"
 
-  .chk_group_cols(cluster_col, group_col, input)
+  .check_group_cols(cluster_col, group_col, input)
 
   # Calculate similarity
   plt_dat <- calc_similarity(
