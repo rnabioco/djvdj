@@ -326,10 +326,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   )
 
   # Check input classes
-  .check_args(
-    method  = list(allow_null = TRUE),
-    n_label = list(allow_null = TRUE, len_one = FALSE)
-  )
+  .check_args(method = list(allow_null = TRUE))
 
   # Check input values
   paired <- length(data_cols) == 2
@@ -439,7 +436,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   # Can't use .add_n_label() since n_lab_dat has to be modified depending on
   # where n label is added
   if ("corner" %in% n_label) {
-    lab_dat <- dplyr::summarize(n_lab_dat, .n = sum(.n))
+    lab_dat <- dplyr::summarize(n_lab_dat, .n = sum(.data$.n))
 
     res <- .add_corner_label(
       res, lab_dat, y_exp = NULL, lab_args = label_params
@@ -459,7 +456,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
     if (!is.null(group_col)) {
       lab_dat <- dplyr::group_by(lab_dat, !!sym(group_col))
-      lab_dat <- dplyr::summarize(lab_dat, .n = sum(.n), .groups = "drop")
+      lab_dat <- dplyr::summarize(lab_dat, .n = sum(.data$.n), .groups = "drop")
     }
 
     res <- .add_legend_label(

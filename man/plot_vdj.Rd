@@ -20,7 +20,7 @@ plot_vdj(
   trans = "identity",
   panel_nrow = NULL,
   panel_scales = "free_x",
-  n_label = "corner",
+  n_label = NULL,
   label_params = list(),
   sep = global$sep,
   ...
@@ -62,8 +62,8 @@ data will not be filtered based on chain.}
 }}
 
 \item{units}{Units to use for y-axis when method is set to 'histogram'. Use
-'frequency' to show number of values or 'percent' to show the percentage of
-total values.}
+'frequency' to show the number of values or 'percent' to show the percentage
+of total values.}
 
 \item{plot_colors}{Character vector specifying colors to use for cell
 clusters specified by cluster_col. When cluster_col is NULL, plot colors can

@@ -659,21 +659,20 @@ NULL
   })
 }
 
-.check_args <- function(...) {
+.check_args <- function(..., arg_classes = global$arg_classes) {
   envir   <- parent.frame()
-  arg_cls <- global$arg_classes
   new_cls <- list(...)
 
-  arg_cls[names(new_cls)] <- new_cls
+  arg_classes[names(new_cls)] <- new_cls
 
-  arg_cls <- purrr::imap(arg_cls, ~ {
+  arg_classes <- purrr::imap(arg_classes, ~ {
     .x$arg <- .y
     .x
   })
 
-  arg_cls <- arg_cls[names(arg_cls) %in% ls(envir = envir)]
+  arg_classes <- arg_classes[names(arg_classes) %in% ls(envir = envir)]
 
-  purrr::walk(arg_cls, ~ purrr::pmap(.x, .check_arg, envir = envir))
+  purrr::walk(arg_classes, ~ purrr::pmap(.x, .check_arg, envir = envir))
 }
 
 

@@ -35,7 +35,7 @@ global$arg_classes <- list(
   ),
   panel_nrow    = list(Class = "numeric", allow_null = TRUE),
   panel_scales  = list(),
-  n_label       = list(len_one = FALSE),
+  n_label       = list(len_one = FALSE, allow_null = TRUE),
   label_params  = list(Class = "list", len_one = FALSE),
   units         = list(),
   trans         = list(),

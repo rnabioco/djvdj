@@ -25,7 +25,7 @@ plot_features(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
-  n_label = "corner",
+  n_label = NULL,
   label_params = list(),
   ...
 )
@@ -45,7 +45,7 @@ plot_features(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
-  n_label = "corner",
+  n_label = NULL,
   label_params = list(),
   ...
 )
@@ -69,7 +69,7 @@ plot_vdj_feature(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
-  n_label = "corner",
+  n_label = NULL,
   label_params = list(),
   sep = global$sep,
   ...
@@ -93,7 +93,7 @@ plot_vdj_feature(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
-  n_label = "corner",
+  n_label = NULL,
   label_params = list(),
   sep = global$sep,
   ...

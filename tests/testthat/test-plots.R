@@ -327,7 +327,7 @@ arg_lst <- list(
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls_2),
   n_top       = list(NULL, 4),
-  n_label     = c(TRUE, FALSE),
+  n_label     = list(NULL, "none"),
   label_params = list(list(size = 4), list())
 )
 

@@ -593,7 +593,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, units = "percent", stack = NULL,
                            plot_colors = NULL, plot_lvls = NULL,
                            trans = "identity", n_top = NULL,
-                           other_label = "other", n_label = "axis",
+                           other_label = "other", n_label = NULL,
                            label_params = list(), ...) {
 
   # Check that columns are present in object
@@ -619,8 +619,9 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   y_lab <- .get_axis_label(units)
 
   # Set plot variables
-  if (!is.null(group_col))        x_col <- data_col
+  if      (!is.null(group_col))   x_col <- data_col
   else if (!is.null(cluster_col)) x_col <- cluster_col
+  else if (stack)                 x_col <- NULL
   else                            x_col <- data_col
 
   clr_col <- group_col %||% data_col
@@ -690,9 +691,9 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
   # Plot arguments
   gg_args <- list(
-    y = abun_col, clrs = plot_colors, trans = trans,
-    n_label = n_label, label_params = label_params,
-    label_data = n_lab_dat, ...
+    x = x_col, y = abun_col, .color = clr_col, .fill = clr_col,
+    clrs = plot_colors, trans = trans, n_label = n_label,
+    label_params = label_params, label_data = n_lab_dat, ...
   )
 
   # Create grouped boxplot
@@ -701,8 +702,6 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     plt_dat   <- .set_lvls(plt_dat, group_col, plot_lvls)
 
     gg_args$df_in         <- plt_dat
-    gg_args$x             <- x_col
-    gg_args$.fill         <- gg_args$.color <- clr_col
     gg_args$alpha         <- gg_args$alpha %||% 0.5
     gg_args$outlier.color <- gg_args$outlier.color %||% NA
 
@@ -718,20 +717,15 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
 
     gg_args$df_in <- plt_dat
-    gg_args$x     <- x_col
     gg_args$y_ttl <- y_lab
-    gg_args$.fill <- gg_args$.color <- clr_col
     gg_args$ang   <- 45
     gg_args$hjst  <- 1
 
-    # When cluster_col is provided set default position to dodge
-    if (!is.null(cluster_col)) {
-      gg_pos <- ggplot2::position_dodge(preserve = "single")
+    # Set bar position
+    if (stack) gg_pos <- ggplot2::position_stack()
+    else       gg_pos <- ggplot2::position_dodge(preserve = "single")
 
-      if (stack) gg_pos <- ggplot2::position_stack()
-
-      gg_args$position <- gg_args$position %||% gg_pos
-    }
+    gg_args$position <- gg_args$position %||% gg_pos
 
     res <- lift(.create_bars)(gg_args)
   }

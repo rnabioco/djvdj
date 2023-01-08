@@ -16,7 +16,7 @@ plot_motifs(
   align_end = "5",
   panel_nrow = NULL,
   panel_scales = "free",
-  n_label = TRUE,
+  n_label = "corner",
   label_params = list(),
   quiet = FALSE,
   sep = global$sep,

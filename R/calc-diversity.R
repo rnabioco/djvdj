@@ -356,7 +356,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
                            downsample = FALSE, n_boots = 0, chain = NULL,
                            chain_col = global$chain_col, plot_colors = NULL,
                            plot_lvls = names(plot_colors), panel_nrow = NULL,
-                           panel_scales = "free", n_label = "axis",
+                           panel_scales = "free", n_label = NULL,
                            label_params = list(), sep = global$sep, ...) {
 
   # Check that columns are present in object

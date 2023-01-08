@@ -360,7 +360,7 @@ plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
     res <- .add_n_label(
       res, n_lab_dat,
       n_label  = n_label,
-      crnr_co  = "seq_group",
+      crnr_col = "seq_group",
       calc_n   = FALSE,
       lab_args = label_params
     )

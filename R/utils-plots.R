@@ -81,7 +81,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
                          .color = NULL,  .fill = NULL, clrs = NULL,
                          na_clr = "grey80", trans_x = "identity",
                          trans_y = "identity", trans_clr = "identity",
-                         nrow = NULL, scales = "fixed", n_label = "none",
+                         nrow = NULL, scales = "fixed", n_label = NULL,
                          label_params = list(), label_data = df_in, ...) {
 
   # Check inputs
@@ -100,8 +100,8 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   gg_aes  <- ggplot2::aes()
   gg_args <- .standardize_aes(list(...))
 
-  if (!is.null(x)) gg_aes$x <- sym(x)
-  else             gg_aes$x <- y
+  if (is.null(x)) gg_aes$x <- y
+  else            gg_aes$x <- sym(x)
 
   if (!is.null(y)) gg_aes$y      <- sym(y)
   if (scale_fill)  gg_aes$fill   <- sym(.fill)
@@ -174,6 +174,49 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     lab_args  = label_params
   )
 
+  # Adjust theme
+  if (is.null(x)) {
+    res <- res +
+      ggplot2::theme(
+        axis.text.x  = element_blank(),
+        axis.ticks.x = element_blank()
+      )
+  }
+
+  res
+}
+
+
+#' Create ggplot scatter plot
+#'
+#' @param x Variable to plot on x-axis
+#' @param y Variable to plot on y-axis
+#' @param .color Variable to use for color
+#' @param n_label Vector indicating where n labels should be added
+#' @param ... Additional arguments to pass to `.create_plot()`
+#' @return ggplot object
+#' @noRd
+.create_scatter <- function(df_in, x, y, .color = NULL, n_label = NULL, ...) {
+
+  # Check input values
+  if (identical(x, y)) cli::cli_abort("`x` and `y` must be different")
+
+  if (!is.numeric(df_in[[x]]) || !is.numeric(df_in[[y]])) {
+    cli::cli_abort("`x` and `y` must refer to numeric columns")
+  }
+
+  # Set n label
+  if (is.null(n_label)) {
+    n_label <- "corner"
+
+    if (!is.null(.color) && !is.numeric(df_in[[.color]])) {
+      n_label <- c(n_label, "legend")
+    }
+  }
+
+  # Create scatter plot
+  res <- .create_plot(df_in, x, y, .color = .color, n_label = n_label, ...)
+
   res
 }
 
@@ -194,10 +237,15 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 .create_bars <- function(df_in, x = NULL, y, trans = "identity", y_ttl = y,
                          ang = 45, hjst = 1, n_label = NULL, ...) {
 
+  # Check input values
+  if (!is.null(x) && is.numeric(df_in[[x]])) {
+    cli::cli_abort("`x` cannot refer to a numeric column")
+  }
+
   # Set n label
   if (is.null(n_label)) {
-    if (!is.null(x)) n_label <- "axis"
-    else             n_label <- "corner"
+    if (is.null(x)) n_label <- "corner"
+    else            n_label <- "axis"
   }
 
   # Create bar graph
@@ -217,12 +265,15 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 
   res <- lift(.create_plot)(gg_args)
 
+  # Adjust theme
   res <- res +
     ggplot2::labs(y = y_ttl) +
-    ggplot2::theme(
-      axis.title.x = ggplot2::element_blank(),
-      axis.text.x  = ggplot2::element_text(angle = ang, hjust = hjst)
-    )
+    ggplot2::theme(axis.title.x = ggplot2::element_blank())
+
+  if (!is.null(x)) {
+    res <- res +
+      theme(axis.text.x = ggplot2::element_text(angle = ang, hjust = hjst))
+  }
 
   res
 }
@@ -289,6 +340,8 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 #'
 #' @param df_in data.frame
 #' @param x Variable to plot on x-axis
+#' @param .color Variable to use for color
+#' @param .fill Variable to use for fill
 #' @param method Method to use for plotting, can be 'histogram' or 'density'
 #' @param units Units to use for y-axis when plotting histogram. Use
 #' 'frequency' to show the raw number of values or 'percent' to show
@@ -299,15 +352,24 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 #' @param ... Additional arguments to pass to `.create_plot()`
 #' @return ggplot object
 #' @noRd
-.create_hist <- function(df_in, x, method = "histogram", units = "frequency",
-                         trans = "identity", y_ttl = units, n_label = "none",
+.create_hist <- function(df_in, x, .color = NULL, .fill = NULL,
+                         method = "histogram", units = "frequency",
+                         trans = "identity", y_ttl = units, n_label = NULL,
                          ...) {
 
   # Check inputs
   .check_possible_values(units = c("frequency", "percent"))
 
   # Set n label
-  n_label <- n_label %||% c("corner", "legend")
+  if (is.null(n_label)) {
+    n_label <- "corner"
+
+    n_label <- dplyr::case_when(
+      !is.null(.color) && !is.numeric(df_in[[.color]]) ~ c(n_label, "legend"),
+      !is.null(.fill)  && !is.numeric(df_in[[.fill]])  ~ c(n_label, "legend"),
+      TRUE ~ n_label
+    )
+  }
 
   # Set plotting function
   plt_fns <- list(
@@ -326,7 +388,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   gg_aes <- ggplot2::aes()
 
   if (identical(units, "percent") && identical(method, "histogram")) {
-    gg_aes <- ggplot2::aes(y = ggplot2::after_stat((count / max(count)) * 100))
+    gg_aes <- ggplot2::aes(y = ggplot2::after_stat((count / nrow(df_in)) * 100))
   }
 
   gg_aes$x <- sym(x)
@@ -335,6 +397,9 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   res <- .create_plot(
     df_in, plt_fn,
     mapping = gg_aes,
+    x       = x,
+    .color  = .color,
+    .fill   = .fill,
     trans_x = trans,
     n_label = n_label,
     ...

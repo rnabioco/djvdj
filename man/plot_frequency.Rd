@@ -16,7 +16,7 @@ plot_frequency(
   trans = "identity",
   n_top = NULL,
   other_label = "other",
-  n_label = "axis",
+  n_label = NULL,
   label_params = list(),
   ...
 )

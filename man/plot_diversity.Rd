@@ -18,7 +18,7 @@ plot_diversity(
   plot_lvls = names(plot_colors),
   panel_nrow = NULL,
   panel_scales = "free",
-  n_label = "axis",
+  n_label = NULL,
   label_params = list(),
   sep = global$sep,
   ...

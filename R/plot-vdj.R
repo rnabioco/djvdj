@@ -68,7 +68,7 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
                                   trans = "identity", min_q = NULL,
                                   max_q = NULL, panel_nrow = NULL,
                                   panel_scales = "fixed", na_color = "grey80",
-                                  n_label = "corner", label_params = list(),
+                                  n_label = NULL, label_params = list(),
                                   ...) {
 
   # Check that columns are present in object
@@ -77,12 +77,9 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   # Check input classes
   .check_args()
 
-  # Check input values
-  if (identical(x, y)) cli::cli_abort("`x` and `y` must be different")
-
   plt_dat <- .get_meta(input)
 
-  # Set data for n label
+  # Set plot arguments
   gg_args <- list(
     fn           = ggplot2::geom_point,
     x            = x,
@@ -101,7 +98,7 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   if (is.null(feature)) {
     gg_args$df_in <- plt_dat
 
-    res <- lift(.create_plot)(gg_args)
+    res <- lift(.create_scatter)(gg_args)
 
     return(res)
   }
@@ -155,7 +152,15 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
   gg_args$df_in <- plt_dat
   gg_args$clrs  <- plot_colors
 
-  res <- lift(.create_plot)(gg_args)
+  res <- lift(.create_scatter)(gg_args)
+
+  # Adjust legend point size
+  if (!is_num) {
+    res <- res +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(size = 3))
+      )
+  }
 
   res
 }
@@ -172,7 +177,7 @@ plot_features.Seurat <- function(input, feature = NULL, x = "UMAP_1",
                                  trans = "identity", min_q = NULL,
                                  max_q = NULL, panel_nrow = NULL,
                                  panel_scales = "fixed", na_color = "grey80",
-                                 n_label = "corner", label_params = list(), ...) {
+                                 n_label = NULL, label_params = list(), ...) {
 
   # Check input classes
   .check_args()
@@ -276,7 +281,7 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
                                      trans = "identity", min_q = NULL,
                                      max_q = NULL, panel_nrow = NULL,
                                      panel_scales = "fixed",
-                                     na_color = "grey80", n_label = "corner",
+                                     na_color = "grey80", n_label = NULL,
                                      label_params = list(),
                                      sep = global$sep, ...) {
 
@@ -325,7 +330,7 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
                                     trans = "identity", min_q = NULL,
                                     max_q = NULL, panel_nrow = NULL,
                                     panel_scales = "fixed", na_color = "grey80",
-                                    n_label = "corner", label_params = list(),
+                                    n_label = NULL, label_params = list(),
                                     sep = global$sep, ...) {
 
   # Fetch variables and add to meta.data
@@ -392,9 +397,8 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
 #' - 'violin'
 #'
 #' @param units Units to use for y-axis when method is set to 'histogram'. Use
-#' 'frequency' to show number of values or 'percent' to show the percentage of
-#' total values.
-#'
+#' 'frequency' to show the number of values or 'percent' to show the percentage
+#' of total values.
 #' @param plot_colors Character vector specifying colors to use for cell
 #' clusters specified by cluster_col. When cluster_col is NULL, plot colors can
 #' be directly modified with the ggplot2 parameters color and fill,
@@ -523,7 +527,7 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
                      units = "frequency", plot_colors = NULL,
                      plot_lvls = names(plot_colors), trans = "identity",
                      panel_nrow = NULL, panel_scales = "free_x",
-                     n_label = "corner", label_params = list(),
+                     n_label = NULL, label_params = list(),
                      sep = global$sep, ...) {
 
   # Check that columns are present in object
@@ -601,8 +605,8 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
 #' @param df_in input data.frame
 #' @noRd
 .plot_vdj <- function(df_in, data_col, cluster_col = NULL, group_col = NULL,
-                      plot_lvls = names(plot_colors), per_cell = FALSE,
-                      method = "boxplot", units = "frequency", ...) {
+                      plot_lvls = NULL, per_cell = FALSE,
+                      method = "histogram", units = "frequency", ...) {
 
   # Order clusters based on plot_lvls
   df_in <- .set_lvls(df_in, cluster_col, plot_lvls)
