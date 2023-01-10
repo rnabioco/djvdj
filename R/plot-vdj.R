@@ -68,6 +68,7 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
                                   trans = "identity", min_q = NULL,
                                   max_q = NULL, panel_nrow = NULL,
                                   panel_scales = "fixed", na_color = "grey80",
+                                  n_top = NULL, other_label = "other",
                                   n_label = NULL, label_params = list(),
                                   ...) {
 
@@ -86,6 +87,7 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
     y            = y,
     .color       = feature,
     grp          = group_col,
+    na_clr       = na_color,
     nrow         = panel_nrow,
     scales       = panel_scales,
     trans_clr    = trans,
@@ -93,6 +95,10 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
     label_params = label_params,
     ...
   )
+
+  rev_lgnd <- FALSE
+
+  set_other_color <- !other_label %in% names(plot_colors)
 
   # If no feature provided, return scatter plot
   if (is.null(feature)) {
@@ -122,16 +128,32 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
     plot_colors <- plot_colors %||% c("#132B43", "#56B1F7")
 
   } else {
-    if (is.null(plot_lvls)) {
-      dat <- plt_dat[[feature]]
+    # Set other group
+    if (!is.null(n_top)) {
+      plt_dat <- .set_other_grps(
+        plt_dat, feature, n_top = n_top, other_label = other_label
+      )
 
+      if (is.null(plot_lvls)) {
+        rnk_lvls  <- levels(plt_dat[[feature]])
+        plot_lvls <- stats::na.omit(rev(rnk_lvls))
+        rev_lgnd  <- TRUE
+
+      } else {
+        plot_lvls <- c(other_label, plot_lvls)
+      }
+    }
+
+    # Set default levels if plot_lvls is NULL
+    if (is.null(plot_lvls)) {
+      dat       <- plt_dat[[feature]]
       plot_lvls <- levels(dat) %||% sort(unique(dat))
     }
 
-    plot_colors <- plot_colors %||% scales::hue_pal()(length(plot_lvls))
-
     # Set color names, need to do this so na_color is not overridden if the
     # user provides extra values for plot_colors
+    plot_colors <- plot_colors %||% scales::hue_pal()(length(plot_lvls))
+
     if (is.null(names(plot_colors))) {
       lvls <- stats::na.omit(plot_lvls)
 
@@ -140,6 +162,8 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
 
       names(plot_colors) <- lvls[seq_along(plot_colors)]
     }
+
+    if (set_other_color) plot_colors[[other_label]] <- "grey60"
   }
 
   plt_dat <- .set_lvls(plt_dat, feature, plot_lvls)
@@ -156,10 +180,12 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
 
   # Adjust legend point size
   if (!is_num) {
+    lgnd_args <- list(override.aes = list(size = 3))
+
+    if (rev_lgnd) lgnd_args$reverse <- TRUE
+
     res <- res +
-      ggplot2::guides(
-        color = ggplot2::guide_legend(override.aes = list(size = 3))
-      )
+      ggplot2::guides(color = lift(ggplot2::guide_legend)(lgnd_args))
   }
 
   res
@@ -285,15 +311,23 @@ plot_vdj_feature.default <- function(input, data_col, x = "UMAP_1",
                                      label_params = list(),
                                      sep = global$sep, ...) {
 
-  plt_dat <- summarize_vdj(
-    input,
-    data_cols = data_col,
-    fn        = summary_fn,
-    chain     = chain,
-    chain_col = chain_col,
-    sep       = sep,
-    return_df = TRUE
+  plt_dat <- .get_meta(input)
+
+  has_sep <- .detect_sep(
+    plt_dat, data_col, sep, n_rows = 1000, return_names = FALSE
   )
+
+  if (has_sep) {
+    plt_dat <- summarize_vdj(
+      plt_dat,
+      data_cols = data_col,
+      fn        = summary_fn,
+      chain     = chain,
+      chain_col = chain_col,
+      sep       = sep,
+      return_df = TRUE
+    )
+  }
 
   res <- plot_features(
     plt_dat,
@@ -546,33 +580,42 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
     method = c("boxplot", "violin", "histogram", "density")
   )
 
+  plt_dat <- .get_meta(input)
+
+  has_sep <- .detect_sep(
+    plt_dat, data_col, sep, n_rows = 1000, return_names = FALSE
+  )
+
   # Format input data
-  if (per_cell) {
-    plt_dat <- summarize_vdj(
-      input,
-      data_cols = data_col,
-      fn        = summary_fn,
-      chain     = chain,
-      chain_col = chain_col,
-      sep       = sep,
-      return_df = TRUE
-    )
+  if (has_sep) {
+    if (per_cell) {
+      plt_dat <- summarize_vdj(
+        input,
+        data_cols = data_col,
+        fn        = summary_fn,
+        chain     = chain,
+        chain_col = chain_col,
+        sep       = sep,
+        return_df = TRUE
+      )
 
-  } else {
-    fetch_cols <- data_col
+    } else {
+      if (is.null(chain)) fetch_cols <- data_col
+      else                fetch_cols <- c(data_col, chain_col)
 
-    if (!is.null(chain)) fetch_cols <- c(chain_col, fetch_cols)
+      plt_dat <- fetch_vdj(
+        input,
+        data_cols     = fetch_cols,
+        clonotype_col = NULL,
+        unnest        = TRUE
+      )
 
-    plt_dat <- fetch_vdj(
-      input,
-      data_cols     = fetch_cols,
-      clonotype_col = NULL,
-      unnest        = TRUE
-    )
-
-    if (!is.null(chain)) {
-      plt_dat <- dplyr::filter(plt_dat, !!sym(chain_col) %in% chain)
+      if (!is.null(chain)) {
+        plt_dat <- dplyr::filter(plt_dat, !!sym(chain_col) %in% chain)
+      }
     }
+  } else {
+    per_cell <- TRUE
   }
 
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))

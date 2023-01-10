@@ -1097,6 +1097,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @param sep_cols Names of columns to check for sep, if `NULL` all columns
 #' will be checked
 #' @param sep Separator to use for storing V(D)J data
+#' @param n_rows Number of rows to use for checking
+#' @param return_names Should the names of columns containing `sep` be returned,
+#' if `FALSE`, a logical vector will be returned
 #' @return Separator with white space stripped
 #' @noRd
 .check_sep <- function(df_in, sep_cols, sep) {
@@ -1107,9 +1110,11 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # Strip whitespace from sep
   sep <- gsub("[[:space:]]", "", sep)
 
-  has_sep <- grepl(sep, df_in[, sep_cols, drop = FALSE], fixed = TRUE)
+  if (identical(sep, "")) cli::cli_abort("`sep` cannot be a blank string")
 
-  if (any(has_sep)) {
+  sep_cols <- .detect_sep(df_in, sep_cols, sep)
+
+  if (!is.null(sep_cols)) {
     cli::cli_abort(
       "The string '{sep}' is already present in the input data,
        select a different value for `sep`"
@@ -1117,6 +1122,24 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   }
 
   sep
+}
+
+.detect_sep <- function(df_in, sep_cols, sep, n_rows = NULL,
+                        return_names = TRUE) {
+
+  df_in <- dplyr::select(df_in, all_of(sep_cols))
+  res   <- stats::na.omit(df_in)
+
+  if (!is.null(n_rows)) res <- head(res, n_rows)
+
+  res <- grepl(sep, res, fixed = TRUE)
+
+  if (return_names) {
+    if (any(res)) res <- colnames(df_in)[res]
+    else          res <- NULL
+  }
+
+  res
 }
 
 #' Determine whether TCR or BCR data were provided

@@ -514,14 +514,10 @@ NULL
   # If cols_in is NULL, identify columns with V(D)J data based on NAs in
   # clone_col
   if (is.null(cols_in)) {
-    cols_in <- dplyr::mutate(
-      df_in,
-      across(dplyr::everything(), is.na)
-    )
+    cols_in <- dplyr::mutate(df_in, across(dplyr::everything(), is.na))
 
     cols_in <- purrr::keep(
-      cols_in,
-      ~ identical(.x, dplyr::pull(cols_in, clone_col))
+      cols_in, ~ identical(.x, dplyr::pull(cols_in, clone_col))
     )
 
     cols_in <- colnames(cols_in)
@@ -536,19 +532,7 @@ NULL
   # ~ !is.null(detect(x, ~ grepl(sep, .x)))
   sep_cols <- NULL
 
-  if (!is.null(sep)) {
-    sep_cols <- dplyr::select(df_in, all_of(cols_in))
-
-    sep_cols <- purrr::keep(sep_cols, ~ {
-      x <- head(stats::na.omit(.x), 1000)
-
-      any(purrr::map_lgl(x, grepl, pattern = sep, fixed = TRUE))
-    })
-
-    sep_cols <- colnames(sep_cols)
-
-    if (purrr::is_empty(sep_cols)) sep_cols <- NULL
-  }
+  if (!is.null(sep)) sep_cols <- .detect_sep(df_in, cols_in, sep, n_rows = 1000)
 
   # Return list of vectors
   res <- list(

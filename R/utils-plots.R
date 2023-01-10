@@ -107,7 +107,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   if (scale_fill)  gg_aes$fill   <- sym(.fill)
   if (scale_clr)   gg_aes$colour <- sym(.color)
 
-  if (!scale_fill && !scale_clr) gg_args$fill <- gg_args$colour <- clrs
+  if (!scale_fill && !scale_clr) gg_args$colour <- gg_args$colour %||% clrs
 
   # Create plot
   res <- ggplot2::ggplot(df_in, gg_aes) +
@@ -170,6 +170,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     axis_col  = .chk_num(df_in, x),
     lgnd_col  = .chk_num(df_in, .fill %||% .color),
     lgnd_clrs = clrs,
+    na_clr    = na_clr,
     y_exp     = NULL,
     lab_args  = label_params
   )
@@ -1089,6 +1090,64 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 }
 
 
+#' Set other groups
+#'
+#' @param df_in
+#' @param data_col
+#' @param val_col
+#' @param method
+#' @param rev
+#' @param n_top
+#' @param other_label
+#' @noRd
+.rank_values <- function(df_in, data_col, val_col = NULL, method = "count",
+                         rev = FALSE) {
+
+  if (identical(method, "count")) method <- function(x) n()
+
+  res <- dplyr::group_by(df_in, !!sym(data_col))
+
+  if (!is.null(val_col)) {
+    res <- dplyr::summarize(res, met = method(!!sym(val_col)))
+
+  } else {
+    res <- dplyr::summarize(res, met = method())
+  }
+
+  if (rev) res <- dplyr::arrange(res, .data$met, !!sym(data_col))
+  else     res <- dplyr::arrange(res, dplyr::desc(.data$met), !!sym(data_col))
+
+  res <- dplyr::pull(res, data_col)
+  res <- stats::na.omit(res)
+  res
+}
+
+.set_other_grps <- function(df_in, data_col, val_col = NULL, n_top = NULL,
+                            other_label = "other", method = "count") {
+
+  rnk <- .rank_values(df_in, data_col, val_col, method = method)
+
+  res      <- df_in
+  n_grps   <- length(rnk)
+  n_top    <- n_top %||% ifelse(n_grps > 50, 10, 20)
+  top_grps <- head(rnk, n_top)
+
+  if (n_top < n_grps && !is.null(other_label)) {
+    res <- dplyr::mutate(df_in, !!sym(data_col) := ifelse(
+      !!sym(data_col) %in% top_grps | is.na(!!sym(data_col)),
+      !!sym(data_col),
+      other_label
+    ))
+
+    rnk <- c(top_grps, other_label)
+  }
+
+  res <- .set_lvls(res, data_col, rnk)
+
+  res
+}
+
+
 #' Get arguments used solely by provided text function
 #'
 #' This is important for making sure `label_params` arguments are used for the
@@ -1234,7 +1293,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     return(df_in)
   }
 
-  if (any(is.na(dat)) && !any(is.na(lvls))) lvls <- c(NA, lvls)
+  # is.na() will not detect NAs in factor
+  if (any(is.na(as.character(dat))) && !any(is.na(lvls))) lvls <- c(NA, lvls)
 
   u_dat   <- unique(dat)
   missing <- u_dat[!u_dat %in% lvls]

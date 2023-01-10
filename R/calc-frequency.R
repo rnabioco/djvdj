@@ -647,47 +647,69 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   keep_cols <- c(cluster_col, data_col, keep_cols)
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
 
+
+
+
+
   # Rank values in data_col
-  .rank_values <- function(df_in, dat_clmn, val_clmn) {
-    res <- dplyr::group_by(df_in, !!sym(dat_clmn))
-    res <- dplyr::summarize(res, mn = mean(!!sym(val_clmn)))
-    res <- dplyr::arrange(res, desc(.data$mn))
-    res <- pull(res, dat_clmn)
-    res
+  plt_dat <- .set_other_grps(
+    plt_dat, data_col, abun_col, n_top = n_top,
+    other_label = other_label, method = mean
+  )
+
+  keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
+  keep_cols <- c(cluster_col, data_col, keep_cols)
+
+  plt_dat <- dplyr::group_by(plt_dat, !!!syms(keep_cols))
+
+  plt_dat <- dplyr::summarize(
+    plt_dat, !!sym(abun_col) := sum(!!sym(abun_col))
+  )
+
+  if (!is.null(names(plot_colors)) && !other_label %in% names(plot_colors)) {
+    plot_colors[[other_label]] <- "grey60"
   }
 
-  rnk <- .rank_values(plt_dat, data_col, abun_col)
 
-  # Set other group based on top groups in data_col
-  n_dat <- length(rnk)
-  n_top <- n_top %||% ifelse(n_dat > 50, 10, 20)
 
-  if (n_top < n_dat && !is.null(other_label)) {
-    keep_dat <- rnk[seq_len(n_top)]
 
-    plt_dat <- dplyr::mutate(plt_dat, !!sym(data_col) := ifelse(
-      !!sym(data_col) %in% keep_dat,
-      !!sym(data_col),
-      other_label
-    ))
 
-    keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
-    keep_cols <- c(cluster_col, data_col, keep_cols)
+  # rnk <- .rank_values(plt_dat, data_col, abun_col, method = mean)
+  #
+  # # Set other group based on top groups in data_col
+  # n_dat <- length(rnk)
+  # n_top <- n_top %||% ifelse(n_dat > 50, 10, 20)
+  #
+  # if (n_top < n_dat && !is.null(other_label)) {
+  #   keep_dat <- rnk[seq_len(n_top)]
+  #
+  #   plt_dat <- dplyr::mutate(plt_dat, !!sym(data_col) := ifelse(
+  #     !!sym(data_col) %in% keep_dat,
+  #     !!sym(data_col),
+  #     other_label
+  #   ))
+  #
+  #   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
+  #   keep_cols <- c(cluster_col, data_col, keep_cols)
+  #
+  #   plt_dat <- dplyr::group_by(plt_dat, !!!syms(keep_cols))
+  #
+  #   plt_dat <- dplyr::summarize(
+  #     plt_dat, !!sym(abun_col) := sum(!!sym(abun_col))
+  #   )
+  #
+  #   rnk <- .rank_values(plt_dat, data_col, abun_col, method = mean)
+  #
+  #   if (!is.null(names(plot_colors)) && !other_label %in% names(plot_colors)) {
+  #     plot_colors[[other_label]] <- "grey80"
+  #   }
+  # }
+  #
+  # plt_dat <- .set_lvls(plt_dat, data_col, rnk)
 
-    plt_dat <- dplyr::group_by(plt_dat, !!!syms(keep_cols))
 
-    plt_dat <- dplyr::summarize(
-      plt_dat, !!sym(abun_col) := sum(!!sym(abun_col))
-    )
 
-    rnk <- .rank_values(plt_dat, data_col, abun_col)
 
-    if (!is.null(names(plot_colors)) && !other_label %in% names(plot_colors)) {
-      plot_colors[[other_label]] <- "grey80"
-    }
-  }
-
-  plt_dat <- .set_lvls(plt_dat, data_col, rnk)
 
   # Plot arguments
   gg_args <- list(

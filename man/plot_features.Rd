@@ -25,6 +25,8 @@ plot_features(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
+  n_top = NULL,
+  other_label = "other",
   n_label = NULL,
   label_params = list(),
   ...

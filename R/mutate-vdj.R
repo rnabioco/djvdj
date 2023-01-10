@@ -83,7 +83,7 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
   sep_cols <- col_list$sep
 
   if (purrr::is_empty(sep_cols)) {
-    cli::cli_warn("`sep` ('{sep}') was not found in {.or {data_cols}}")
+    cli::cli_warn("`sep` ({sep}) was not found in {.or {data_cols}}")
 
     return(meta)
   }
@@ -465,9 +465,7 @@ summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
       x[[j]] <- r
     }
 
-    if (length_one) {
-      x <- unlist(x)
-    }
+    if (length_one) x <- unlist(x)
 
     res[[new_clmn]] <- x
   }
