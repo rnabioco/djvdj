@@ -59,14 +59,16 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
 
   # Filter cells
   if (filter_cells) {
-    if (is.null(clonotype_col)) {
+    if (is.null(data_cols) && is.null(clonotype_col)) {
       cli::cli_abort(
-        "When `filter_cells` is `TRUE`, `clonotype_col` must be provided to
-         determine which cells have V(D)J data"
+        "When `filter_cells` is `TRUE`, `data_cols` or `clonotype_col` must be
+         provided to determine which cells to filter"
       )
     }
 
-    meta <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
+    filt_cols <- clonotype_col %||% data_cols
+
+    meta <- dplyr::filter(meta, dplyr::if_all(filt_cols, ~ !is.na(.x)))
   }
 
   # If NULL sep or per_cell, return meta.data
