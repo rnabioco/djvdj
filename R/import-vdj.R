@@ -1218,7 +1218,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     obj_cells   <- obj_meta[[global$cell_col]]
     n_obj_cells <- length(obj_cells)
     n_overlap   <- length(obj_cells[obj_cells %in% met_cells])
-    pct_overlap <- round(n_overlap / n_met_cells, 0) * 100
+    pct_overlap <- round(n_overlap / n_met_cells, 2) * 100
   }
 
   status <- dplyr::case_when(
