@@ -10,6 +10,8 @@ calc_gene_usage(
   cluster_col = NULL,
   chain = NULL,
   chain_col = global$chain_col,
+  prefix = paste0(data_cols[1], "_"),
+  return_df = FALSE,
   sep = global$sep
 )
 }
@@ -24,8 +26,8 @@ calculated.}
 \item{cluster_col}{meta.data column containing cell clusters to use when
 calculating gene usage}
 
-\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
-all chains.}
+\item{chain}{Chain(s) to use for calculating gene usage. Set to NULL to
+include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 

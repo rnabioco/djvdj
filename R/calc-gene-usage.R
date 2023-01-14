@@ -7,8 +7,8 @@
 #' calculated.
 #' @param cluster_col meta.data column containing cell clusters to use when
 #' calculating gene usage
-#' @param chain Chain to use for calculating gene usage. Set to NULL to include
-#' all chains.
+#' @param chain Chain(s) to use for calculating gene usage. Set to NULL to
+#' include all chains.
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame containing gene usage summary
@@ -43,6 +43,56 @@
 #'
 #' @export
 calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
+                            chain_col = global$chain_col,
+                            prefix = paste0(data_cols[1], "_"), return_df = FALSE,
+                            sep = global$sep) {
+
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_cols, cluster_col, chain = chain, chain_col = chain_col
+  )
+
+  # Check input classes
+  .check_args(cluster_col = list(allow_null = TRUE, len_one = FALSE))
+
+  # Format input data
+  sep_cols <- data_cols
+
+  if (!is.null(chain)) sep_cols <- c(sep_cols, chain_col)
+
+  vdj_cols <- c(global$cell_col, cluster_col, sep_cols)
+
+  meta <- .get_meta(input)
+  vdj  <- dplyr::select(meta, all_of(vdj_cols))
+
+  # Calculate frequency
+  if (length(data_cols) > 1) return_df <- TRUE
+  if (return_df)             prefix <- ""
+
+  vdj <- .calc_freq(
+    df_in       = vdj,
+    data_cols   = data_cols,
+    cluster_col = cluster_col,
+    chain       = chain,
+    chain_col   = chain_col,
+    per_cell    = FALSE,
+    return_df   = return_df,
+    prefix      = prefix,
+    sep         = sep
+  )
+
+  if (return_df) return(vdj)
+
+  # Format results
+  res <- dplyr::left_join(meta, vdj, by = global$cell_col)
+  res <- .add_meta(input, meta = res)
+
+  res
+}
+
+#' old version
+#' @export
+old_calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
                             chain_col = global$chain_col, sep = global$sep) {
 
   # Check that columns are present in object
@@ -63,6 +113,7 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 
 
   # >>> SHOULD THIS BE REPLACED WITH FETCH_VDJ CALL???
+  # Currently fetch_vdj() requires clonotype_col for filtering
   meta <- .get_meta(input)
   meta <- dplyr::select(meta, all_of(vdj_cols))
 
@@ -107,6 +158,10 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
     res <- dplyr::select(res, -all_of(chain_col))
   }
 
+  # Filter for unique rows, since any duplicated rows are cells with the same
+  # gene for multiple chains
+  # Do this since we want to calculate the fraction of cells with a given gene,
+  # NOT the fraction of chains
   res <- tidyr::unnest(res, cols = all_of(data_cols))
   res <- dplyr::distinct(res)
 
@@ -152,9 +207,11 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
     )
 
     # Add group columns
-    clst_key <- dplyr::distinct(clst_key, !!!syms(c(clst_nm, cluster_col)))
+    if (length(cluster_col) > 1) {
+      clst_key <- dplyr::distinct(clst_key, !!!syms(c(clst_nm, cluster_col)))
 
-    res <- dplyr::left_join(res, clst_key, by = clst_nm)
+      res <- dplyr::left_join(res, clst_key, by = clst_nm)
+    }
 
     res <- dplyr::select(
       res,

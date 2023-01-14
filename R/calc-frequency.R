@@ -13,8 +13,11 @@
 #' calculations.
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
+#' @param chain Chain(s) to use for calculating frequency. Set to `NULL` to
+#' include all chains.
+#' @param chain_col meta.data column(s) containing chains for each cell
 #' @param prefix Prefix to add to new columns
-#' @param return_df Return results as a data.frame. If set to FALSE, results
+#' @param return_df Return results as a data.frame. If set to `FALSE`, results
 #' will be added to the input object.
 #' @return Single cell object or data.frame with clonotype frequencies
 #' @seealso [plot_frequency()], [plot_clone_frequency()]
@@ -58,46 +61,52 @@
 #' head(res, 1)
 #'
 #' @export
-calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
-                           (data_col, "_"), return_df = FALSE) {
+calc_frequency <- function(input, data_col, cluster_col = NULL, chain = NULL,
+                           chain_col = global$chain_col,
+                           prefix = paste0(data_col, "_"), per_cell = TRUE,
+                           return_df = FALSE, sep = global$sep) {
 
   # Check that columns are present in object
-  .check_obj_cols(input, data_col, cluster_col)
+  .check_obj_cols(
+    input, data_col, cluster_col, chain = chain, chain_col = chain_col
+  )
 
   # Check arguments
   .check_args()
 
   # Format input data
+  vdj_cols <- c(global$cell_col, data_col, cluster_col)
+
+  if (!is.null(chain)) vdj_cols <- c(vdj_cols, chain_col)
+
   meta <- .get_meta(input)
-  vdj  <- dplyr::filter(meta, !is.na(!!sym(data_col)))
+  vdj  <- dplyr::select(meta, all_of(vdj_cols))
 
-  vdj <- dplyr::select(vdj, all_of(c(global$cell_col, data_col, cluster_col)))
-
-  # Calculate clonotype abundance
+  # Calculate frequency
   vdj <- .calc_freq(
-    df_in      = vdj,
-    cell_col   = global$cell_col,
-    dat_col    = data_col,
-    clust_col  = cluster_col,
-    out_prefix = prefix
+    df_in       = vdj,
+    data_cols   = data_col,
+    cluster_col = cluster_col,
+    chain       = chain,
+    chain_col   = chain_col,
+    per_cell    = per_cell,
+    prefix      = prefix,
+    sep         = sep
   )
-
-  vdj <- dplyr::select(vdj, -all_of(data_col))
 
   freq_clmn <- paste0(prefix, "freq")
   grp_clmn  <- paste0(prefix, "grp")
 
-  vdj <- dplyr::mutate(
-    vdj,
-    !!sym(grp_clmn) := .calc_freq_grp(!!sym(freq_clmn))
-  )
+  if (per_cell) {
+    vdj <- dplyr::mutate(
+      vdj, !!sym(grp_clmn) := .calc_freq_grp(!!sym(freq_clmn))
+    )
+  }
 
   # Format results
   res <- dplyr::left_join(meta, vdj, by = global$cell_col)
 
-  if (return_df) {
-    input <- meta
-  }
+  if (return_df) input <- meta
 
   res <- .add_meta(input, meta = res)
 
@@ -107,64 +116,163 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, prefix = paste0
 #' Calculate frequency of a cell label
 #'
 #' @param df_in Input data.frame
-#' @param cell_col Column containing cell IDs
-#' @param data_col Column containing data for calculating abundance
+#' @param data_cols Column containing data for calculating abundance
 #' (e.g. clonotype IDs)
-#' @param clust_col Column containing cluster IDs to use for grouping cells
-#' @param out_prefix Prefix to add to output columns
+#' @param cluster_col Column(s) containing cluster IDs to use for grouping cells
+#' @param chain Chain(s) to use for calculating frequency. Set to `NULL` to
+#' include all chains.
+#' @param chain_col meta.data column(s) containing chains for each cell
+#' @param prefix Prefix to add to output columns
+#' @param per_cell Calculate frequency for per-cell values
+#' @param return_df Return a summary data.frame where each row is a group, if
+#' `FALSE` each row will represent a cell
+#' @param sep Separator for storing per-chain data
 #' @return data.frame containing clonotype abundances
 #' @noRd
-.calc_freq <- function(df_in, cell_col, dat_col, clust_col = NULL,
-                       out_prefix = "") {
+.calc_freq <- function(df_in, data_cols, cluster_col = NULL, chain = NULL,
+                       chain_col = global$chain_col, prefix = "",
+                       per_cell = FALSE, return_df = FALSE, sep = global$sep) {
 
-  # Count number of cells in each group
-  if (!is.null(clust_col)) {
-    df_in <- dplyr::group_by(df_in, !!sym(clust_col))
+  # Format input data
+  cluster       <- !is.null(cluster_col)
+  multi_cluster <- cluster && length(cluster_col) > 1
+  include_zeros <- return_df && cluster
+  nest_results  <- !per_cell && !return_df
+  filt_chains   <- !is.null(chain) && !per_cell
+
+  if (filt_chains) vdj_cols <- c(data_cols, chain_col)
+  else             vdj_cols <- data_cols
+
+  res <- df_in <- dplyr::filter(df_in, dplyr::if_all(data_cols, ~ !is.na(.x)))
+
+  # Count total cells per cluster
+  if (cluster) {
+    clst_nm <- paste0(cluster_col, collapse = "_")
+
+    if (multi_cluster) {
+      res <- tidyr::unite(
+        res, !!sym(clst_nm), !!!syms(cluster_col), remove = FALSE
+      )
+    }
+
+    clst_key    <- dplyr::select(res, -all_of(data_cols))
+    clsts       <- pull(clst_key, clst_nm)
+    clst_key    <- dplyr::distinct(clst_key, !!!syms(c(clst_nm, cluster_col)))
+    clst_counts <- table(clsts)
+    clsts       <- unique(clsts)
   }
 
-  df_in <- dplyr::mutate(
-    df_in,
-    .n_cells = dplyr::n_distinct(!!sym(cell_col))
+  res <- fetch_vdj(
+    res,
+    data_cols    = vdj_cols,
+    filter_cells = FALSE,         # cells are already filtered
+    unnest       = !filt_chains,
+    per_cell     = per_cell,
+    sep          = sep
   )
 
-  # Calculate frequency
-  res <- dplyr::group_by(df_in, !!sym(dat_col), .add = TRUE)
+  # Filter by chain
+  if (filt_chains) {
+    res <- .filter_chains(
+      res,
+      data_cols  = data_cols,
+      chain      = chain,
+      chain_col  = chain_col,
+      col_names  = "{.col}",
+      allow_dups = TRUE,
+      empty_val  = "None"
+    )
+
+    res <- dplyr::select(res, -!!sym(chain_col))
+    res <- tidyr::unnest(res, data_cols)
+  }
+
+  # Filter for unique rows, any duplicated rows are cells with the same
+  # gene for multiple chains
+  # this is NOT essential for calculations, but good practice
+  res <- dplyr::distinct(res)
+
+  # Count genes used
+  grp_cols <- data_cols
+
+  if (cluster) grp_cols <- unique(c(grp_cols, clst_nm, cluster_col))
+
+  res <- dplyr::group_by(res, !!!syms(grp_cols))
 
   res <- dplyr::mutate(
     res,
-    .freq = dplyr::n_distinct(!!sym(cell_col)),
-    .pct  = (.data$.freq / .data$.n_cells) * 100
+    n_cells = dplyr::n_distinct(df_in[[global$cell_col]]),
+    freq    = dplyr::n_distinct(!!sym(global$cell_col))
   )
-
-  # Identify shared labels
-  if (!is.null(clust_col)) {
-    res <- dplyr::group_by(res, !!sym(dat_col))
-
-    res <- dplyr::mutate(
-      res,
-      .shared = dplyr::n_distinct(!!sym(clust_col)) > 1
-    )
-  }
 
   res <- dplyr::ungroup(res)
 
-  # Rename output columns
-  new_cols <- c("freq", "pct")
-
-  if (!is.null(clust_col)) {
-    new_cols <- c(new_cols, "shared")
+  # If returning summary data.frame remove cell ids
+  if (return_df) {
+    res <- dplyr::select(res, -global$cell_col)
+    res <- dplyr::distinct(res)
   }
 
-  new_cols <- purrr::set_names(
-    paste0(".", new_cols),
-    paste0(out_prefix, new_cols)
-  )
+  # Identify shared groups
+  if (cluster) {
+    res <- dplyr::group_by(res, !!!syms(data_cols))
+    res <- dplyr::mutate(res, shared = dplyr::n_distinct(!!sym(clst_nm)) > 1)
+    res <- dplyr::ungroup(res)
+  }
 
-  res <- dplyr::select(
-    res,
-    all_of(c(cell_col, dat_col)),
-    !!!syms(new_cols)
-  )
+  # Report zeros for missing groups
+  # Need to remove original cluster_col and then add back
+  if (include_zeros) {
+    res <- dplyr::select(res, -cluster_col, clst_nm)
+
+    res <- tidyr::pivot_wider(
+      res,
+      names_from  = all_of(clst_nm),
+      values_from = "freq",
+      values_fill = 0
+    )
+
+    res <- tidyr::pivot_longer(
+      res,
+      cols      = all_of(clsts),
+      names_to  = clst_nm,
+      values_to = "freq"
+    )
+
+    res <- dplyr::left_join(res, clst_key, by = clst_nm)
+  }
+
+  # Calculate percentage used
+  # Need to make sure clst_nm is present, when cluster_col is length 1 it
+  # is the same as clst_nm
+  if (cluster) {
+    res <- dplyr::mutate(
+      res, n_cells = as.numeric(clst_counts[!!sym(clst_nm)])
+    )
+  }
+
+  res <- dplyr::mutate(res, pct = (.data$freq / .data$n_cells) * 100)
+  res <- dplyr::arrange(res, desc(.data$pct), desc(.data$freq))
+
+  # Output columns
+  stat_cols <- c("freq", "pct")
+
+  if (cluster) stat_cols <- c(stat_cols, "shared")
+
+  # Nest per-chain data
+  # tidyr::chop() followed by .nest_vdj() is faster than dplyr::summarize()
+  if (nest_results) {
+    res <- tidyr::chop(res, dplyr::all_of(c(data_cols, stat_cols)))
+    res <- .nest_vdj(res, stat_cols)
+  }
+
+  # Columns to use for joining final results
+  if (return_df) final_cols <- c(data_cols, cluster_col, "n_cells")
+  else           final_cols <- global$cell_col
+
+  stat_cols <- purrr::set_names(stat_cols, paste0(prefix, stat_cols))
+
+  res <- dplyr::select(res, final_cols, stat_cols)
 
   res
 }
