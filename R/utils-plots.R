@@ -1090,15 +1090,24 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 }
 
 
-#' Set other groups
+#' Set 'other' groups
 #'
-#' @param df_in
-#' @param data_col
-#' @param val_col
-#' @param method
-#' @param rev
-#' @param n_top
-#' @param other_label
+#' Label groups that are not among the most frequent as 'other'
+#'
+#' @param df_in data.frame
+#' @param data_col Column containing groups/clusters to rank
+#' @param val_col Column containing values for ranking groups/clusters
+#' @param method Method to use for ranking groups, possible values include:
+#'
+#' - A function to use for ranking groups, this should take a single vector as
+#'   input and will be used to summarize the values in `val_col`
+#' - 'count', rank based on number of rows for each group
+#'
+#' @param rev If `TRUE` reverse order of ranked groups so smallest values are
+#' shown first
+#' @param n_top Number of top groups to include, other groups will be labeled as
+#' 'other'
+#' @param other_label Label to use for 'other' groups
 #' @noRd
 .rank_values <- function(df_in, data_col, val_col = NULL, method = "count",
                          rev = FALSE) {

@@ -399,6 +399,7 @@ NULL
 #' @importFrom utils head
 #' @noRd
 .unnest_vdj <- function(df_in, sep_cols, unnest = TRUE, sep = global$sep) {
+
   df_in <- tibble::as_tibble(df_in)
 
   # Check first 100 rows containing V(D)J data
@@ -433,44 +434,36 @@ NULL
   # Get types to use for coercing columns
   typs <- tidyr::separate_rows(typs, all_of(sep_cols), sep = sep)
   typs <- purrr::map(typs, readr::guess_parser)
+  typs <- typs[typs != "character"]
   typs <- purrr::map_chr(typs, ~ paste0("as.", .x))
+
+  typ_cols <- names(typs)
 
   # Split sep_cols and convert types
   # tidyr::separate_rows with convert = TRUE is slower than determining types
   # and then converting
   # strsplit is faster than str_split_n used by separate_rows
-  .str_split_convert <- function(x, pattern, fn) {
-    res <- map(x, ~ {
-      .x <- strsplit(.x, pattern, fixed = TRUE)
-      .x <- unlist(.x)
+  .str_convert      <- function(x, fn) do.call(fn, list(x = x))
+  .str_convert_list <- function(l, fn) map(l, .str_convert, fn = fn)
 
-      do.call(fn, list(x = .x))
-    })
-
-    res
-  }
+  res <- purrr::modify_at(
+    df_in, sep_cols,
+    ~ strsplit(as.character(.x), split = sep, fixed = TRUE)
+  )
 
   if (!unnest) {
     res <- dplyr::mutate(
-      df_in,
-      across(
-        all_of(sep_cols),
-        ~ .str_split_convert(.x, sep, typs[[cur_column()]])
-      )
+      res,
+      across(typ_cols, ~ .str_convert_list(.x, typs[[cur_column()]]))
     )
 
     return(res)
   }
 
-  res <- purrr::modify_at(df_in, sep_cols, strsplit, split = sep, fixed = TRUE)
   res <- tidyr::unchop(res, all_of(sep_cols))
 
   res <- mutate(
-    res,
-    across(
-      all_of(sep_cols),
-      ~ do.call(typs[[cur_column()]], list(x = .x))
-    )
+    res, across(typ_cols, ~ .str_convert(.x, typs[[cur_column()]]))
   )
 
   res
