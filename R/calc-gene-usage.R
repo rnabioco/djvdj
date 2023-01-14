@@ -7,7 +7,7 @@
 #' calculated.
 #' @param cluster_col meta.data column containing cell clusters to use when
 #' calculating gene usage
-#' @param chain Chain(s) to use for calculating gene usage. Set to NULL to
+#' @param chain Chain(s) to use for calculating gene usage. Set to `NULL` to
 #' include all chains.
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used for storing per cell V(D)J data
@@ -264,6 +264,8 @@ old_calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NU
 #' overlapping text
 #' @param panel_nrow The number of rows to use for arranging plots when
 #' return_list is FALSE
+#' @param show_points If `TRUE` data points will be shown on boxplots, the point
+#' size can be adjusted using the `point.size` parameter
 #' @param n_label Location on plot where n label should be added, this is only
 #' applicable when `method` is 'bar' and can be any combination of the
 #' following:
@@ -372,9 +374,9 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
                             plot_colors = NULL, vdj_genes = NULL, n_genes = 20,
                             plot_lvls = NULL, trans = "identity",
                             units = "percent", rotate_labels = FALSE,
-                            panel_nrow = NULL, n_label = NULL,
-                            label_params = list(), return_list = FALSE,
-                            sep = global$sep, ...) {
+                            panel_nrow = NULL, show_points = TRUE,
+                            n_label = NULL, label_params = list(),
+                            return_list = FALSE, sep = global$sep, ...) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -404,7 +406,8 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     cluster_col = c(cluster_col, group_col),
     chain       = chain,
     chain_col   = chain_col,
-    sep         = sep
+    sep         = sep,
+    return_df   = TRUE
   )
 
   plt_dat <- dplyr::filter(plt_dat, dplyr::if_all(
@@ -460,15 +463,16 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
   # Plot gene usage
   gg_args <- list(
-    df_in    = plt_dat,
-    gn_col   = data_cols,
-    dat_col  = usage_col,
-    clst_col = cluster_col,
-    method   = method,
-    clrs     = plot_colors,
-    lvls     = plot_lvls,
-    trans    = trans,
-    ttl      = .get_axis_label(units),
+    df_in       = plt_dat,
+    gn_col      = data_cols,
+    dat_col     = usage_col,
+    clst_col    = cluster_col,
+    method      = method,
+    clrs        = plot_colors,
+    lvls        = plot_lvls,
+    show_points = show_points,
+    trans       = trans,
+    ttl         = .get_axis_label(units),
     ...
   )
 
@@ -565,7 +569,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   }
 
   # Set common arguments
-  gg_args <- list(clrs = clrs, ...)
+  gg_args <- list(clrs = clrs, n_label = "none", ...)
 
   if (identical(method, "bar") || !is.null(grp_col)) {
     gg_args$x <- gn_col
@@ -574,17 +578,13 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
   # Create grouped boxplot
   if (!is.null(grp_col)) {
-    gg_args$df_in         <- df_in
-    gg_args$.color        <- gg_args$.fill <- grp_col
-    gg_args$outlier.color <- gg_args$outlier.color %||% NA
-    gg_args$alpha         <- gg_args$alpha %||% 0.5
+    gg_args$df_in  <- df_in
+    gg_args$.color <- gg_args$.fill <- grp_col
+    gg_args$alpha  <- gg_args$alpha %||% 0.5
 
     res <- lift(.create_boxes)(gg_args)
 
     res <- res +
-      ggplot2::geom_jitter(
-        position = ggplot2::position_jitterdodge(jitter.width = 0.05)
-      ) +
       ggplot2::scale_y_continuous(trans = trans, expand = y_exp) +
       labs(y = ttl) +
       theme(

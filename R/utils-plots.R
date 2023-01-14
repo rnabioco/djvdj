@@ -287,12 +287,15 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 #' @param y Variable to plot on y-axis
 #' @param method Method to use for plotting, can be 'boxplot' or 'violin'
 #' @param trans Method to use for transforming y-axis
+#' @param show_points If `TRUE` data points will be shown on boxplots, or a
+#' point indicating the median will be shown on violin plots
 #' @param n_label Vector indicating where n labels should be added
 #' @param ... Additional arguments to pass to `.create_plot()`
 #' @return ggplot object
 #' @noRd
 .create_boxes <- function(df_in, x = NULL, y, method = "boxplot",
-                          trans = "identity", n_label = NULL, ...) {
+                          trans = "identity", n_label = NULL,
+                          show_points = TRUE, ...) {
 
   # Set n label
   if (is.null(n_label)) {
@@ -306,32 +309,58 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     violin  = ggplot2::geom_violin
   )
 
-  if (!method %in% names(plt_fns)) {
-    cli::cli_abort("`method` must be {.or {names(plt_fns)}}")
-  }
+  .check_possible_values(method = names(plt_fns))
 
   plt_fn <- plt_fns[[method]]
 
-  # Create boxplots
-  res <- .create_plot(
-    df_in, plt_fn, x, y,
+  gg_args <- list(
+    df_in   = df_in,
+    fn      = plt_fn,
+    x       = x,
+    y       = y,
     trans_y = trans,
     n_label = n_label,
     ...
   )
 
+  # Create boxplots
+  # allow user to set point size and color
+  pt_size <- gg_args$point.size %||% 1
+  pt_clr  <- gg_args$point.color
+
+  gg_args$point.size <- gg_args$point.color <- NULL
+
+  if (show_points && identical(method, "boxplot")) gg_args$outlier.color <- NA
+
+  res <- lift(.create_plot)(gg_args)
+
+  # Add additional points
+  if (show_points) {
+    pt_args       <- list(size = pt_size)
+    pt_args$color <- pt_clr %||% gg_args$color
+
+    if (identical(method, "violin")) {
+      pt_args$geom <- "point"
+      pt_args$fun  <- stats::median
+      pt_args$size <- pt_size
+
+      res <- res +
+        lift(ggplot2::stat_summary)(pt_args)
+
+    } else {
+      pt_args$position <- ggplot2::position_jitterdodge(jitter.width = 0.05)
+
+      res <- res +
+        lift(ggplot2::geom_jitter)(pt_args)
+    }
+  }
+
+  # Adjust theme
   res <- res +
     ggplot2::theme(
       legend.position = "none",
       axis.title.x    = ggplot2::element_blank()
     )
-
-  if (identical(method, "violin")) {
-    res <- res +
-      ggplot2::stat_summary(
-        geom = "point", fun = stats::median, color = "black"
-      )
-  }
 
   res
 }

@@ -14,6 +14,7 @@ plot_frequency(
   plot_colors = NULL,
   plot_lvls = NULL,
   trans = "identity",
+  show_points = TRUE,
   n_top = NULL,
   other_label = "other",
   n_label = NULL,
@@ -31,6 +32,7 @@ plot_frequency(
   plot_colors = NULL,
   plot_lvls = NULL,
   trans = "identity",
+  show_points = TRUE,
   n_top = NULL,
   other_label = "other",
   n_label = NULL,
@@ -65,6 +67,9 @@ bargraphs will be generated}
 \item{trans}{Transformation to use for plotting data, e.g. 'log10'. By
 default values are not transformed, refer to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}}
 for more options. Values can only be transformed when stack is \code{FALSE}}
+
+\item{show_points}{If \code{TRUE} data points will be shown on boxplots, the point
+size can be adjusted using the \code{point.size} parameter}
 
 \item{n_top}{Number of top cell labels present in data_col to show on plot,
 other cells will be labeled based on the \code{other_label} argument. If \code{NULL},

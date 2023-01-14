@@ -7,10 +7,10 @@
 plot_vdj(
   input,
   data_col,
-  per_cell = FALSE,
-  summary_fn = mean,
   cluster_col = NULL,
   group_col = NULL,
+  per_cell = FALSE,
+  summary_fn = mean,
   chain = NULL,
   chain_col = global$chain_col,
   method = "histogram",
@@ -33,6 +33,12 @@ data.frame is provided, cell barcodes should be stored as row names.}
 \item{data_col}{meta.data column(s) containing continuous V(D)J data to
 plot}
 
+\item{cluster_col}{meta.data column containing cluster IDs to use for
+grouping cells for plotting}
+
+\item{group_col}{meta.dats column to use for grouping clusters present in
+cluster_col}
+
 \item{per_cell}{Should values be plotted per cell, i.e. each data point
 would represent one cell. If TRUE, values will be summarized for each cell
 using summary_fn. If FALSE, values will be plotted for each chain.}
@@ -41,12 +47,6 @@ using summary_fn. If FALSE, values will be plotted for each chain.}
 TRUE, possible values can be either a function, e.g. mean, or a purrr-style
 lambda, e.g. ~ mean(.x, na.rm = TRUE) where '.x' refers to the column. If
 NULL, the mean will be calculated.}
-
-\item{cluster_col}{meta.data column containing cluster IDs to use for
-grouping cells for plotting}
-
-\item{group_col}{meta.dats column to use for grouping clusters present in
-cluster_col}
 
 \item{chain}{Chain(s) to use for filtering data before plotting. If NULL
 data will not be filtered based on chain.}

@@ -20,6 +20,7 @@ plot_gene_usage(
   units = "percent",
   rotate_labels = FALSE,
   panel_nrow = NULL,
+  show_points = TRUE,
   n_label = NULL,
   label_params = list(),
   return_list = FALSE,
@@ -78,6 +79,9 @@ overlapping text}
 
 \item{panel_nrow}{The number of rows to use for arranging plots when
 return_list is FALSE}
+
+\item{show_points}{If \code{TRUE} data points will be shown on boxplots, the point
+size can be adjusted using the \code{point.size} parameter}
 
 \item{n_label}{Location on plot where n label should be added, this is only
 applicable when \code{method} is 'bar' and can be any combination of the

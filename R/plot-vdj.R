@@ -555,8 +555,8 @@ NULL
 #' )
 #'
 #' @export
-plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
-                     cluster_col = NULL, group_col = NULL, chain = NULL,
+plot_vdj <- function(input, data_col, cluster_col = NULL, group_col = NULL,
+                     per_cell = FALSE, summary_fn = mean, chain = NULL,
                      chain_col = global$chain_col, method = "histogram",
                      units = "frequency", plot_colors = NULL,
                      plot_lvls = names(plot_colors), trans = "identity",
@@ -681,9 +681,12 @@ plot_vdj <- function(input, data_col, per_cell = FALSE, summary_fn = mean,
   }
 
   # Create boxplot plot
-  gg_args$x     <- cluster_col
-  gg_args$y     <- data_col
-  gg_args$units <- NULL
+  gg_args$x          <- cluster_col
+  gg_args$y          <- data_col
+  gg_args$units      <- NULL
+  gg_args$point.size <- gg_args$point.size %||% 1
+
+  if (identical(method, "boxplot")) gg_args$show_points <- FALSE
 
   res <- lift(.create_boxes)(gg_args)
 

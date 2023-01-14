@@ -26,7 +26,7 @@ calculated.}
 \item{cluster_col}{meta.data column containing cell clusters to use when
 calculating gene usage}
 
-\item{chain}{Chain(s) to use for calculating gene usage. Set to NULL to
+\item{chain}{Chain(s) to use for calculating gene usage. Set to \code{NULL} to
 include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}

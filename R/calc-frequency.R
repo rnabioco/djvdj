@@ -642,6 +642,8 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' @param trans Transformation to use for plotting data, e.g. 'log10'. By
 #' default values are not transformed, refer to [ggplot2::continuous_scale()]
 #' for more options. Values can only be transformed when stack is `FALSE`
+#' @param show_points If `TRUE` data points will be shown on boxplots, the point
+#' size can be adjusted using the `point.size` parameter
 #' @param n_top Number of top cell labels present in data_col to show on plot,
 #' other cells will be labeled based on the `other_label` argument. If `NULL`,
 #' this will be automatically selected.
@@ -700,7 +702,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 plot_frequency <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, units = "percent", stack = NULL,
                            plot_colors = NULL, plot_lvls = NULL,
-                           trans = "identity", n_top = NULL,
+                           trans = "identity", show_points = TRUE, n_top = NULL,
                            other_label = "other", n_label = NULL,
                            label_params = list(), ...) {
 
@@ -755,10 +757,6 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   keep_cols <- c(cluster_col, data_col, keep_cols)
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
 
-
-
-
-
   # Rank values in data_col
   plt_dat <- .set_other_grps(
     plt_dat, data_col, abun_col, n_top = n_top,
@@ -778,52 +776,19 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     plot_colors[[other_label]] <- "grey60"
   }
 
-
-
-
-
-  # rnk <- .rank_values(plt_dat, data_col, abun_col, method = mean)
-  #
-  # # Set other group based on top groups in data_col
-  # n_dat <- length(rnk)
-  # n_top <- n_top %||% ifelse(n_dat > 50, 10, 20)
-  #
-  # if (n_top < n_dat && !is.null(other_label)) {
-  #   keep_dat <- rnk[seq_len(n_top)]
-  #
-  #   plt_dat <- dplyr::mutate(plt_dat, !!sym(data_col) := ifelse(
-  #     !!sym(data_col) %in% keep_dat,
-  #     !!sym(data_col),
-  #     other_label
-  #   ))
-  #
-  #   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
-  #   keep_cols <- c(cluster_col, data_col, keep_cols)
-  #
-  #   plt_dat <- dplyr::group_by(plt_dat, !!!syms(keep_cols))
-  #
-  #   plt_dat <- dplyr::summarize(
-  #     plt_dat, !!sym(abun_col) := sum(!!sym(abun_col))
-  #   )
-  #
-  #   rnk <- .rank_values(plt_dat, data_col, abun_col, method = mean)
-  #
-  #   if (!is.null(names(plot_colors)) && !other_label %in% names(plot_colors)) {
-  #     plot_colors[[other_label]] <- "grey80"
-  #   }
-  # }
-  #
-  # plt_dat <- .set_lvls(plt_dat, data_col, rnk)
-
-
-
-
-
   # Plot arguments
   gg_args <- list(
-    x = x_col, y = abun_col, .color = clr_col, .fill = clr_col,
-    clrs = plot_colors, trans = trans, n_label = n_label,
-    label_params = label_params, label_data = n_lab_dat, ...
+    x            = x_col,
+    y            = abun_col,
+    .color       = clr_col,
+    .fill        = clr_col,
+    clrs         = plot_colors,
+    trans        = trans,
+    show_points  = show_points,
+    n_label      = n_label,
+    label_params = label_params,
+    label_data   = n_lab_dat,
+    ...
   )
 
   # Create grouped boxplot
@@ -831,14 +796,10 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     plot_lvls <- plot_lvls %||% names(plot_colors)
     plt_dat   <- .set_lvls(plt_dat, group_col, plot_lvls)
 
-    gg_args$df_in         <- plt_dat
-    gg_args$alpha         <- gg_args$alpha %||% 0.5
-    gg_args$outlier.color <- gg_args$outlier.color %||% NA
+    gg_args$df_in <- plt_dat
+    gg_args$alpha <- gg_args$alpha %||% 0.5
 
     res <- lift(.create_boxes)(gg_args) +
-      ggplot2::geom_jitter(
-        position = ggplot2::position_jitterdodge(jitter.width = 0.05)
-      ) +
       labs(y = y_lab) +
       theme(legend.position = "right")
 
