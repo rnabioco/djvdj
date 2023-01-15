@@ -75,7 +75,7 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
     cluster_col = cluster_col,
     chain       = chain,
     chain_col   = chain_col,
-    per_cell    = FALSE,
+    per_chain   = TRUE,
     return_df   = return_df,
     prefix      = prefix,
     sep         = sep
@@ -237,6 +237,8 @@ old_calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NU
 #' @param group_col meta.data column to use for grouping cluster IDs present in
 #' cluster_col. This is useful when there are multiple replicates or patients
 #' for each treatment condition.
+#' @param genes An integer specifying the number of genes to plot, or
+#' a vector giving the names of genes to include.
 #' @param chain Chain to use for calculating gene usage, set to NULL to include
 #' all chains
 #' @param chain_col meta.data column containing chains for each cell
@@ -252,9 +254,6 @@ old_calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NU
 #' @param plot_colors Character vector containing colors to use for plot. If a
 #' bar graph is created this will specify how to color cell clusters. For a
 #' heatmap, these colors will be used to generate the color gradient.
-#' @param vdj_genes V(D)J genes to plot, if NULL the top genes will be shown
-#' @param n_genes Number of top genes to plot based on usage. If cluster_col is
-#' provided, top genes will be identified for each cluster.
 #' @param plot_lvls Levels to use for ordering clusters
 #' @param trans Transformation to use when plotting segment usage, e.g.
 #' 'log10'. By default values are not transformed, refer to
@@ -357,7 +356,7 @@ old_calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NU
 #' plot_gene_usage(
 #'   vdj_sce,
 #'   data_cols = "v_gene",
-#'   n_genes = 10
+#'   genes = 10
 #' )
 #'
 #' # Plot the frequency of each V(D)J segment instead of percent
@@ -369,10 +368,9 @@ old_calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NU
 #'
 #' @export
 plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
-                            group_col = NULL, chain = NULL,
-                            chain_col = global$chain_col, method = NULL,
-                            plot_colors = NULL, vdj_genes = NULL, n_genes = 20,
-                            plot_lvls = NULL, trans = "identity",
+                            group_col = NULL, genes = 20, method = NULL,
+                            plot_colors = NULL, plot_lvls = NULL, chain = NULL,
+                            chain_col = global$chain_col, trans = "identity",
                             units = "percent", rotate_labels = FALSE,
                             panel_nrow = NULL, show_points = TRUE,
                             n_label = NULL, label_params = list(),
@@ -430,13 +428,11 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   if ("legend" %in% n_label) plot_colors <- NULL
 
   # If vdj_genes provided check plt_dat
-  top_genes <- unique(vdj_genes)
-
-  if (!is.null(top_genes)) {
+  if (is.character(genes)) {
     absent <- unlist(plt_dat[, data_cols], use.names = FALSE)
-    absent <- top_genes[!top_genes %in% absent]
+    absent <- genes[!genes %in% absent]
 
-    if (identical(absent, top_genes)) {
+    if (identical(absent, genes)) {
       cli::cli_abort("None of the provided genes were found")
 
     } else if (!purrr::is_empty(absent)) {
@@ -446,10 +442,10 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     # if vdj_genes are provided and two data_cols are provided, gene pairs
     # containing at least one of the specified genes will be included
     plt_dat <- dplyr::filter(plt_dat, dplyr::if_any(
-      dplyr::all_of(data_cols), ~ .x %in% top_genes
+      dplyr::all_of(data_cols), ~ .x %in% genes
     ))
 
-  # If vdj_genes not provided, identify top n_genes for each cluster based on
+  # If vdj_genes not provided, identify top genes for each cluster based on
   # usage
   } else {
     plt_dat <- .filter_top_genes(
@@ -457,41 +453,43 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
       dat_col  = usage_col,
       gn_col   = data_cols,
       clst_col = cluster_col,
-      n        = n_genes
+      n        = genes
     )
   }
 
-  # Plot gene usage
+  # Plotting arguments
   gg_args <- list(
-    df_in       = plt_dat,
-    gn_col      = data_cols,
-    dat_col     = usage_col,
-    clst_col    = cluster_col,
-    method      = method,
-    clrs        = plot_colors,
-    lvls        = plot_lvls,
-    show_points = show_points,
-    trans       = trans,
-    ttl         = .get_axis_label(units),
+    df_in    = plt_dat,
+    gn_col   = data_cols,
+    dat_col  = usage_col,
+    clst_col = cluster_col,
+    method   = method,
+    clrs     = plot_colors,
+    lvls     = plot_lvls,
+    trans    = trans,
+    ttl      = .get_axis_label(units),
     ...
   )
 
+  # Create plot for paired usage
+  # heatmap and circos return invisibly
   if (paired) {
-    usage_fn <- .plot_paired_usage
-
     gg_args$rotate_labels <- rotate_labels
     gg_args$return_list   <- return_list
     gg_args$n_row         <- panel_nrow
 
-  } else {
-    usage_fn <- .plot_single_usage
+    res <- lift(.plot_paired_usage)(gg_args)
 
-    gg_args$grp_col <- group_col
-
-    if ("corner" %in% n_label) gg_args$y_exp <- .n_label_expansion
+    return(invisible())
   }
 
-  res <- lift(usage_fn)(gg_args)
+  # Create plot for single usage
+  gg_args$grp_col     <- group_col
+  gg_args$show_points <- show_points
+
+  if ("corner" %in% n_label) gg_args$y_exp <- .n_label_expansion
+
+  res <- lift(.plot_single_usage)(gg_args)
 
   # Add n label
   # Can't use .add_n_label() since n_lab_dat has to be modified depending on
@@ -548,8 +546,9 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' @noRd
 .plot_single_usage <- function(df_in, gn_col, dat_col, method, clst_col = NULL,
                                grp_col = NULL, clrs = NULL, lvls = NULL,
-                               y_exp = NULL, trans = "identity", ttl = dat_col,
-                               order = TRUE, ...) {
+                               show_points = TRUE, y_exp = NULL,
+                               trans = "identity", ttl = dat_col, order = TRUE,
+                               ...) {
 
   y_exp <- y_exp %||% ggplot2::expansion(c(0.05, 0.05))
 
@@ -578,9 +577,10 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
   # Create grouped boxplot
   if (!is.null(grp_col)) {
-    gg_args$df_in  <- df_in
-    gg_args$.color <- gg_args$.fill <- grp_col
-    gg_args$alpha  <- gg_args$alpha %||% 0.5
+    gg_args$df_in       <- df_in
+    gg_args$.color      <- gg_args$.fill <- grp_col
+    gg_args$alpha       <- gg_args$alpha %||% 0.5
+    gg_args$show_points <- show_points
 
     res <- lift(.create_boxes)(gg_args)
 
@@ -760,6 +760,8 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
     lift(.create_circos)(plt_args)
   })
+
+  return(invisible())
 }
 
 #' Filter genes based on top usage
@@ -875,7 +877,9 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     res <- split(res, res[[clst_col]])
     res <- purrr::map(res, .pull_gns, gn_col)
 
-  } else res <- .pull_gns(res, gn_col)
+  } else {
+    res <- .pull_gns(res, gn_col)
+  }
 
   res
 }

@@ -9,7 +9,7 @@ fetch_vdj(
   data_cols = NULL,
   clonotype_col = NULL,
   filter_cells = FALSE,
-  per_cell = FALSE,
+  per_chain = TRUE,
   unnest = TRUE,
   sep = global$sep
 )
@@ -29,10 +29,11 @@ and data_cols are NULL, all columns are included.}
 \item{filter_cells}{Remove cells that do not have V(D)J data, clonotype_col
 must be provided to determine which cells to filter.}
 
-\item{per_cell}{Return per-cell data instead of per-chain data.}
+\item{per_chain}{If \code{TRUE} return per-chain data, i.e. each row represents a
+chain.}
 
-\item{unnest}{If FALSE, a nested data.frame is returned where each row
-represents a cell and V(D)J data is stored as list-cols. If TRUE, columns
+\item{unnest}{If \code{FALSE}, a nested data.frame is returned where each row
+represents a cell and V(D)J data is stored as list-cols. If \code{TRUE}, columns
 are unnested so each row represents a single chain.}
 
 \item{sep}{Separator used for storing per cell V(D)J data. This is used to

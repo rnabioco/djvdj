@@ -39,22 +39,26 @@ global$arg_classes <- list(
   label_params  = list(Class = "list", len_one = FALSE),
   units         = list(),
   trans         = list(),
-  per_cell      = list(Class = "logical"),
 
   # plot_rarefaction
   ci_alpha = list(Class = "numeric"),
 
   # plot_clone_frequency
-  n_clones = list(Class = "numeric", allow_null = TRUE),
+  clones = list(
+    Class = list(c("numeric", "character")), len_one = FALSE, allow_null = TRUE
+  ),
 
   # plot_frequency
-  n_top       = list(Class = "numeric", allow_null = TRUE),
+  top = list(
+    Class = list(c("numeric", "character")), len_one = FALSE, allow_null = TRUE
+  ),
   other_label = list(),
   stack       = list(Class = "logical", allow_null = TRUE),
 
   # plot_gene_usage
-  vdj_genes     = list(len_one = FALSE, allow_null = TRUE),
-  n_genes       = list(Class = "numeric"),
+  genes = list(
+    Class = list(c("numeric", "character")), len_one = FALSE, allow_null = TRUE
+  ),
   rotate_labels = list(Class = "logical"),
   return_list   = list(Class = "logical"),
 

@@ -9,13 +9,14 @@ plot_frequency(
   data_col,
   cluster_col = NULL,
   group_col = NULL,
+  top = NULL,
+  per_chain = FALSE,
   units = "percent",
   stack = NULL,
   plot_colors = NULL,
   plot_lvls = NULL,
   trans = "identity",
   show_points = TRUE,
-  n_top = NULL,
   other_label = "other",
   n_label = NULL,
   label_params = list(),
@@ -27,13 +28,14 @@ plot_frequency(
   data_col,
   cluster_col = NULL,
   group_col = NULL,
+  top = NULL,
+  per_chain = FALSE,
   units = "percent",
   stack = NULL,
   plot_colors = NULL,
   plot_lvls = NULL,
   trans = "identity",
   show_points = TRUE,
-  n_top = NULL,
   other_label = "other",
   n_label = NULL,
   label_params = list(),
@@ -55,6 +57,19 @@ will be performed separately for each cluster.}
 cluster_col. This is useful when there are multiple replicates or patients
 for each treatment condition.}
 
+\item{top}{To only show the top cell groups present in \code{data_col}, provide
+one of the following, all other cells will be labeled using the value
+provided to the \code{other_label} argument. If \code{NULL} this will be automatically
+set.
+\itemize{
+\item Integer specifying the number of top groups to show
+\item Vector specifying the names of cell groups to show
+}}
+
+\item{per_chain}{If \code{TRUE} the frequency of each per-chain value will be
+calculated. If \code{FALSE} per-chain data will not be parsed and the values
+present in \code{data_col} will be used as is.}
+
 \item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
 \item{stack}{If TRUE, stacked bargraphs will be generated, otherwise grouped
@@ -71,12 +86,8 @@ for more options. Values can only be transformed when stack is \code{FALSE}}
 \item{show_points}{If \code{TRUE} data points will be shown on boxplots, the point
 size can be adjusted using the \code{point.size} parameter}
 
-\item{n_top}{Number of top cell labels present in data_col to show on plot,
-other cells will be labeled based on the \code{other_label} argument. If \code{NULL},
-this will be automatically selected.}
-
-\item{other_label}{Label to use for 'other' cells, if \code{NULL} all cell labels
-present in data_col will be displayed on the plot.}
+\item{other_label}{Label to use for 'other' cells when \code{top} is specified, if
+\code{NULL} all cell groups present in data_col will be displayed on the plot.}
 
 \item{n_label}{Location on plot where n label should be added, this can be
 any combination of the following:
@@ -96,6 +107,10 @@ n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
+
+\item{n_top}{Number of top cell labels present in data_col to show on plot,
+other cells will be labeled based on the \code{other_label} argument. If \code{NULL},
+this will be automatically selected.}
 }
 \value{
 ggplot object

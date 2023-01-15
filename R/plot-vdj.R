@@ -16,6 +16,14 @@ plot_features <- function(input, ...) {
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
 #' @param group_col meta.data column to use for splitting plot into panels
+#' @param top To only show the top cell groups, provide
+#' one of the following, all other cells will be labeled using the value
+#' provided to the `other_label` argument. If `NULL` this will be automatically
+#' set.
+#'
+#' - Integer specifying the number of top groups to show
+#' - Vector specifying the names of cell groups to show
+#'
 #' @param plot_colors Vector of colors to use for plotting
 #' @param plot_lvls Levels to use for ordering feature
 #' @param trans Transformation to use when coloring cells by a continuous
@@ -28,6 +36,8 @@ plot_features <- function(input, ...) {
 #' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 #' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 #' @param na_color Color to use for missing values
+#' @param other_label Label to use for 'other' cells when `top` is specified, if
+#' `NULL` all cell groups will be shown.
 #' @param n_label Location on plot where n label should be added, this can be
 #' any combination of the following:
 #'
@@ -63,12 +73,12 @@ plot_features <- function(input, ...) {
 #' @name plot_features
 plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
                                   y = "UMAP_2", group_col = NULL,
-                                  plot_colors = NULL,
+                                  top = NULL, plot_colors = NULL,
                                   plot_lvls = names(plot_colors),
                                   trans = "identity", min_q = NULL,
                                   max_q = NULL, panel_nrow = NULL,
                                   panel_scales = "fixed", na_color = "grey80",
-                                  n_top = NULL, other_label = "other",
+                                  other_label = "other",
                                   n_label = NULL, label_params = list(),
                                   ...) {
 
@@ -129,9 +139,9 @@ plot_features.default <- function(input, feature = NULL, x = "UMAP_1",
 
   } else {
     # Set other group
-    if (!is.null(n_top)) {
+    if (!is.null(top)) {
       plt_dat <- .set_other_grps(
-        plt_dat, feature, n_top = n_top, other_label = other_label
+        plt_dat, feature, top = top, other_label = other_label
       )
 
       if (is.null(plot_lvls)) {
@@ -463,13 +473,14 @@ plot_vdj_feature.Seurat <- function(input, data_col, x = "UMAP_1",
 NULL
 
 #' @rdname plot_vdj
-#' @param per_cell Should values be plotted per cell, i.e. each data point
-#' would represent one cell. If TRUE, values will be summarized for each cell
-#' using summary_fn. If FALSE, values will be plotted for each chain.
-#' @param summary_fn Function to use for summarizing values when per_cell is
-#' TRUE, possible values can be either a function, e.g. mean, or a purrr-style
-#' lambda, e.g. ~ mean(.x, na.rm = TRUE) where '.x' refers to the column. If
-#' NULL, the mean will be calculated.
+#' @param per_chain If `TRUE` values will be plotted for each chain, i.e. each
+#' data point represents a chain. If `FALSE` values will be summarized for each
+#' cell using `summary_fn` before plotting, i.e. each data point represents a
+#' cell.
+#' @param summary_fn Function to use for summarizing values when `per_chain` is
+#' `FALSE`, can be either a function, e.g. `mean`, or a purrr-style
+#' lambda, e.g. `~ mean(.x, na.rm = TRUE)` where `.x` refers to the column. If
+#' `NULL`, the mean will be calculated.
 #' @param trans Transformation to use for plotting data, e.g. 'log10'. By
 #' default values are not transformed, refer to [ggplot2::continuous_scale()]
 #' for more options.
@@ -533,7 +544,7 @@ NULL
 #' plot_vdj(
 #'   vdj_sce,
 #'   data_col = "reads",
-#'   per_cell = TRUE,
+#'   per_chain = FALSE,
 #'   summary_fn = stats::median
 #' )
 #'
@@ -556,7 +567,7 @@ NULL
 #'
 #' @export
 plot_vdj <- function(input, data_col, cluster_col = NULL, group_col = NULL,
-                     per_cell = FALSE, summary_fn = mean, chain = NULL,
+                     per_chain = TRUE, summary_fn = mean, chain = NULL,
                      chain_col = global$chain_col, method = "histogram",
                      units = "frequency", plot_colors = NULL,
                      plot_lvls = names(plot_colors), trans = "identity",
@@ -588,7 +599,7 @@ plot_vdj <- function(input, data_col, cluster_col = NULL, group_col = NULL,
 
   # Format input data
   if (has_sep) {
-    if (per_cell) {
+    if (!per_chain) {
       plt_dat <- summarize_vdj(
         input,
         data_cols = data_col,
@@ -615,7 +626,7 @@ plot_vdj <- function(input, data_col, cluster_col = NULL, group_col = NULL,
       }
     }
   } else {
-    per_cell <- TRUE
+    per_chain <- FALSE
   }
 
   plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
@@ -633,7 +644,7 @@ plot_vdj <- function(input, data_col, cluster_col = NULL, group_col = NULL,
     trans        = trans,
     nrow         = panel_nrow,
     scales       = panel_scales,
-    per_cell     = per_cell,
+    per_chain    = per_chain,
     n_label      = n_label,
     label_params = label_params,
     ...
@@ -648,7 +659,7 @@ plot_vdj <- function(input, data_col, cluster_col = NULL, group_col = NULL,
 #' @param df_in input data.frame
 #' @noRd
 .plot_vdj <- function(df_in, data_col, cluster_col = NULL, group_col = NULL,
-                      plot_lvls = NULL, per_cell = FALSE,
+                      plot_lvls = NULL, per_chain = TRUE,
                       method = "histogram", units = "frequency", ...) {
 
   # Order clusters based on plot_lvls
@@ -672,7 +683,7 @@ plot_vdj <- function(input, data_col, cluster_col = NULL, group_col = NULL,
   # Create histogram
   if (method %in% c("histogram", "density")) {
     gg_args$y_ttl <- .get_axis_label(
-      units, sfx = ifelse(per_cell, "cells", "chains")
+      units, sfx = ifelse(per_chain, "chains", "cells")
     )
 
     res <- lift(.create_hist)(gg_args)

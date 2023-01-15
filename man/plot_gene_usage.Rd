@@ -9,13 +9,12 @@ plot_gene_usage(
   data_cols,
   cluster_col = NULL,
   group_col = NULL,
-  chain = NULL,
-  chain_col = global$chain_col,
+  genes = 20,
   method = NULL,
   plot_colors = NULL,
-  vdj_genes = NULL,
-  n_genes = 20,
   plot_lvls = NULL,
+  chain = NULL,
+  chain_col = global$chain_col,
   trans = "identity",
   units = "percent",
   rotate_labels = FALSE,
@@ -42,10 +41,8 @@ calculating gene usage}
 cluster_col. This is useful when there are multiple replicates or patients
 for each treatment condition.}
 
-\item{chain}{Chain to use for calculating gene usage, set to NULL to include
-all chains}
-
-\item{chain_col}{meta.data column containing chains for each cell}
+\item{genes}{An integer specifying the number of genes to plot, or
+a vector giving the names of genes to include.}
 
 \item{method}{Method to use for plotting, possible values are:
 \itemize{
@@ -61,12 +58,12 @@ to the data_cols argument
 bar graph is created this will specify how to color cell clusters. For a
 heatmap, these colors will be used to generate the color gradient.}
 
-\item{vdj_genes}{V(D)J genes to plot, if NULL the top genes will be shown}
-
-\item{n_genes}{Number of top genes to plot based on usage. If cluster_col is
-provided, top genes will be identified for each cluster.}
-
 \item{plot_lvls}{Levels to use for ordering clusters}
+
+\item{chain}{Chain to use for calculating gene usage, set to NULL to include
+all chains}
+
+\item{chain_col}{meta.data column containing chains for each cell}
 
 \item{trans}{Transformation to use when plotting segment usage, e.g.
 'log10'. By default values are not transformed, refer to
@@ -182,7 +179,7 @@ plot_gene_usage(
 plot_gene_usage(
   vdj_sce,
   data_cols = "v_gene",
-  n_genes = 10
+  genes = 10
 )
 
 # Plot the frequency of each V(D)J segment instead of percent

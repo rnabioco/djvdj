@@ -152,7 +152,7 @@ test_that("plot_vdj_feature bad chain filtering", {
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce, df_1),
   data_col    = "umis",
-  per_cell    = c(FALSE, TRUE),
+  per_chain    = c(FALSE, TRUE),
   cluster_col = list(NULL, "seurat_clusters"),
   chain       = list(NULL, "IGH", c("IGH", "IGK")),
   method      = c("histogram", "density", "violin", "boxplot"),

@@ -17,10 +17,9 @@
 #' columns that have NAs in the same rows as clonotype_col.
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
 #' is used to determine which columns contain V(D)J data.
-#' @param per_cell If TRUE, per-chain data will not be parsed and values
-#' in each meta.data column will be filtered as is.
-#' @param sep Separator used for storing per cell V(D)J data. If NULL, per_cell
-#' will be set TRUE.
+#' @param per_chain If `TRUE` per-chain data will be parsed so values for
+#' individual chains can be filtered, if `FALSE` values will be filtered as is.
+#' @param sep Separator used for storing per cell V(D)J data.
 #' @return Object with filtered meta.data
 #'
 #' @examples
@@ -55,7 +54,7 @@
 #' @export
 filter_vdj <- function(input, filt, data_cols = NULL,
                        clonotype_col = "clonotype_id", sep = global$sep,
-                       per_cell = FALSE) {
+                       per_chain = TRUE) {
 
   # Check that columns are present in object
   .check_obj_cols(input, data_cols, clonotype_col)
@@ -64,7 +63,7 @@ filter_vdj <- function(input, filt, data_cols = NULL,
   .check_args(data_cols = list(len_one = FALSE, allow_null = TRUE))
 
   # Format input data
-  if (per_cell) sep <- NULL
+  if (!per_chain) sep <- NULL
 
   meta <- vdj <- .get_meta(input)
 

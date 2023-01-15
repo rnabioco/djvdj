@@ -155,6 +155,8 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
         stats::as.formula(paste("~", grp)),
         nrow = nrow, scales = scales
       )
+
+    label_data <- dplyr::filter(label_data, !!sym(grp) %in% df_in[[grp]])
   }
 
   # Add n label
@@ -295,7 +297,8 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 #' @noRd
 .create_boxes <- function(df_in, x = NULL, y, method = "boxplot",
                           trans = "identity", n_label = NULL,
-                          show_points = TRUE, ...) {
+                          show_points = TRUE, point.size = NULL,
+                          point.color = NULL, ...) {
 
   # Set n label
   if (is.null(n_label)) {
@@ -325,24 +328,19 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 
   # Create boxplots
   # allow user to set point size and color
-  pt_size <- gg_args$point.size %||% 1
-  pt_clr  <- gg_args$point.color
-
-  gg_args$point.size <- gg_args$point.color <- NULL
-
   if (show_points && identical(method, "boxplot")) gg_args$outlier.color <- NA
 
   res <- lift(.create_plot)(gg_args)
 
   # Add additional points
   if (show_points) {
-    pt_args       <- list(size = pt_size)
-    pt_args$color <- pt_clr %||% gg_args$color
+    pt_args       <- list()
+    pt_args$size  <- point.size %||% 1
+    pt_args$color <- point.color %||% gg_args$color
 
     if (identical(method, "violin")) {
       pt_args$geom <- "point"
       pt_args$fun  <- stats::median
-      pt_args$size <- pt_size
 
       res <- res +
         lift(ggplot2::stat_summary)(pt_args)
@@ -963,6 +961,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 
 .add_corner_label <- function(gg_in, df_in, lab_args,
                               y_exp = .n_label_expansion, ...) {
+
   just <- 0.5
   char_h_w <- 1.5
 
@@ -1134,8 +1133,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #'
 #' @param rev If `TRUE` reverse order of ranked groups so smallest values are
 #' shown first
-#' @param n_top Number of top groups to include, other groups will be labeled as
-#' 'other'
+#' @param top Top groups to include, other groups will be labeled as
+#' 'other'. Should be integer or character vector.
 #' @param other_label Label to use for 'other' groups
 #' @noRd
 .rank_values <- function(df_in, data_col, val_col = NULL, method = "count",
@@ -1160,15 +1159,27 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res
 }
 
-.set_other_grps <- function(df_in, data_col, val_col = NULL, n_top = NULL,
+.set_other_grps <- function(df_in, data_col, val_col = NULL, top = NULL,
                             other_label = "other", method = "count") {
 
-  rnk <- .rank_values(df_in, data_col, val_col, method = method)
+  if (is.character(top)) {
+    top_grps <- unique(top)
+    n_top    <- length(top_grps)
 
-  res      <- df_in
-  n_grps   <- length(rnk)
-  n_top    <- n_top %||% ifelse(n_grps > 50, 10, 20)
-  top_grps <- head(rnk, n_top)
+    rnk    <- sort(unique(df_in[[data_col]]))
+    rnk    <- c(top_grps, rnk[!rnk %in% top_grps])
+    n_grps <- length(rnk)
+
+  } else {
+    rnk    <- .rank_values(df_in, data_col, val_col, method = method)
+    n_grps <- length(rnk)
+
+    top      <- top[1]
+    n_top    <- top %||% ifelse(n_grps > 50, 10, 20)
+    top_grps <- head(rnk, n_top)
+  }
+
+  res <- df_in
 
   if (n_top < n_grps && !is.null(other_label)) {
     res <- dplyr::mutate(df_in, !!sym(data_col) := ifelse(

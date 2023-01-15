@@ -13,6 +13,9 @@
 #' calculations.
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
+#' @param per_chain If `TRUE` the frequency of each per-chain value will be
+#' calculated. If `FALSE` per-chain data will not be parsed and the values
+#' present in `data_col` will be used as is.
 #' @param chain Chain(s) to use for calculating frequency. Set to `NULL` to
 #' include all chains.
 #' @param chain_col meta.data column(s) containing chains for each cell
@@ -63,7 +66,7 @@
 #' @export
 calc_frequency <- function(input, data_col, cluster_col = NULL, chain = NULL,
                            chain_col = global$chain_col,
-                           prefix = paste0(data_col, "_"), per_cell = TRUE,
+                           prefix = paste0(data_col, "_"), per_chain = FALSE,
                            return_df = FALSE, sep = global$sep) {
 
   # Check that columns are present in object
@@ -89,7 +92,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, chain = NULL,
     cluster_col = cluster_col,
     chain       = chain,
     chain_col   = chain_col,
-    per_cell    = per_cell,
+    per_chain   = per_chain,
     prefix      = prefix,
     sep         = sep
   )
@@ -97,7 +100,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, chain = NULL,
   freq_clmn <- paste0(prefix, "freq")
   grp_clmn  <- paste0(prefix, "grp")
 
-  if (per_cell) {
+  if (!per_chain) {
     vdj <- dplyr::mutate(
       vdj, !!sym(grp_clmn) := .calc_freq_grp(!!sym(freq_clmn))
     )
@@ -123,7 +126,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, chain = NULL,
 #' include all chains.
 #' @param chain_col meta.data column(s) containing chains for each cell
 #' @param prefix Prefix to add to output columns
-#' @param per_cell Calculate frequency for per-cell values
+#' @param per_chain Calculate frequency for per-chain values
 #' @param return_df Return a summary data.frame where each row is a group, if
 #' `FALSE` each row will represent a cell
 #' @param sep Separator for storing per-chain data
@@ -131,14 +134,14 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, chain = NULL,
 #' @noRd
 .calc_freq <- function(df_in, data_cols, cluster_col = NULL, chain = NULL,
                        chain_col = global$chain_col, prefix = "",
-                       per_cell = FALSE, return_df = FALSE, sep = global$sep) {
+                       per_chain = FALSE, return_df = FALSE, sep = global$sep) {
 
   # Format input data
   cluster       <- !is.null(cluster_col)
   multi_cluster <- cluster && length(cluster_col) > 1
   include_zeros <- return_df && cluster
-  nest_results  <- !per_cell && !return_df
-  filt_chains   <- !is.null(chain) && !per_cell
+  nest_results  <- per_chain && !return_df
+  filt_chains   <- !is.null(chain)
 
   if (filt_chains) vdj_cols <- c(data_cols, chain_col)
   else             vdj_cols <- data_cols
@@ -167,7 +170,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, chain = NULL,
     data_cols    = vdj_cols,
     filter_cells = FALSE,         # cells are already filtered
     unnest       = !filt_chains,
-    per_cell     = per_cell,
+    per_chain    = per_chain,
     sep          = sep
   )
 
@@ -328,12 +331,12 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, chain = NULL,
 #' @param data_cols meta.data column(s) to use for identifying top clonotypes
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells.
-#' @param n_clones Number of top clonotypes to identify.
+#' @param clones Number of top clonotypes to identify.
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return data.frame containing information for top clonotypes
 #' @noRd
 fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
-                             n_clones = 10, sep = global$sep) {
+                             clones = 10, sep = global$sep) {
 
   # Check that columns are present in object
   .check_obj_cols(input, data_cols, cluster_col)
@@ -357,6 +360,9 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 #' cluster_col. This is useful when there are multiple replicates or patients
 #' for each treatment condition. This is only applicable when `method` is
 #' 'line'.
+#' @param clones An integer specifying the number of clonotypes to show, or
+#' a vector giving the names of clonotypes to include. If method
+#' is set to 'line', this will specify the clonotypes to label.
 #' @param method Method to use for plotting, possible values include:
 #'
 #' - 'bar', create a bargraph
@@ -367,9 +373,6 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 #' @param plot_lvls Levels to use for ordering clusters
 #' @param trans Transformation to use for plotting data, e.g. 'log10'. By
 #' default values are not transformed, refer to [ggplot2::continuous_scale()]
-#' @param n_clones Number of top clonotypes to plot (default is 10). If method
-#' is set to 'line', this will specify the number of clonotypes to label
-#' (default is 3).
 #' @param panel_nrow The number of rows to use for arranging plot panels, use
 #' this when separate bar graphs are created for each cell cluster
 #' @param panel_scales Should scales for plot panels be fixed or free. This
@@ -432,27 +435,27 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 #' # Specify the number of top clonotypes to plot
 #' plot_clone_frequency(
 #'   vdj_so,
-#'   n_clones = 5
+#'   clones = 5
 #' )
 #'
 #' #' # Create line graph
-#' # use n_clones to set the number of clonotypes to label
+#' # use clones to set the number of clonotypes to label
 #' plot_clone_frequency(
 #'   vdj_so,
 #'   cluster_col = "orig.ident",
 #'   method = "line",
-#'   n_clones = 3
+#'   clones = 3
 #' )
 #'
 #' @export
 plot_clone_frequency <- function(input, data_col = global$clonotype_col,
                                  cluster_col = NULL, group_col = NULL,
-                                 method = "bar", units = "percent",
-                                 plot_colors = NULL,
+                                 clones = NULL, method = "bar",
+                                 units = "percent", plot_colors = NULL,
                                  plot_lvls = names(plot_colors),
-                                 trans = "identity", n_clones = NULL,
-                                 panel_nrow = NULL, panel_scales = "free_x",
-                                 n_label = "corner", label_params = list(), ...) {
+                                 trans = "identity", panel_nrow = NULL,
+                                 panel_scales = "free_x", n_label = "corner",
+                                 label_params = list(), ...) {
 
   # Check that columns are present in object
   .check_obj_cols(input, data_col, cluster_col, group_col)
@@ -466,14 +469,14 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     units  = c("frequency", "percent")
   )
 
-  n_clones <- n_clones %||% switch(method, bar = 10, line = 3)
+  clones <- clones %||% switch(method, bar = 10, line = 3)
 
-  if (identical(method, "bar") && n_clones <= 0) {
-    cli::cli_abort("`n_clones` must be >0")
+  if (identical(method, "bar") && is.numeric(clones) && clones <= 0) {
+    cli::cli_abort("`clones` must be >0")
   }
 
-  if (identical(method, "line") && n_clones < 0) {
-    cli::cli_abort("`n_clones` must be >=0")
+  if (identical(method, "line") && is.numeric(clones) && clones < 0) {
+    cli::cli_abort("`clones` must be >=0")
   }
 
   # For bargraph allow user to facet plot using group_col when cluster_col is
@@ -518,6 +521,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 
     plt_dat <- dplyr::mutate(
       plt_dat,
+      orig_data        = !!sym(data_col),
       !!sym(data_col) := paste0(!!sym(cluster_col), "_", !!sym(data_col))
     )
   }
@@ -527,12 +531,18 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
   )
 
   # Identify top clonotypes
-  top_clones <- dplyr::slice_min(
-    plt_dat,
-    order_by  = rank,
-    n         = n_clones,
-    with_ties = FALSE
-  )
+  if (is.numeric(clones)) {
+    top_clones <- dplyr::slice_min(
+      plt_dat,
+      order_by  = rank,
+      n         = clones,
+      with_ties = FALSE
+    )
+
+  } else {
+    top_clones <- dplyr::filter(plt_dat, orig_data %in% clones)
+    clones     <- length(clones)
+  }
 
   plt_dat    <- dplyr::ungroup(plt_dat)
   top_clones <- dplyr::ungroup(top_clones)
@@ -581,7 +591,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     gg_args$trans_y   <- trans
     gg_args$linewidth <- gg_args$linewidth %||% 1
 
-    if (n_clones > 0) {
+    if (clones > 0) {
       gg_args$label_params <- .get_uniq_text_args(label_params, "geom_text")
     }
 
@@ -591,7 +601,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     # Add clonotype labels
     lab_args <- label_params
 
-    if (n_clones > 0) {
+    if (clones > 0) {
       if (!all(n_label == "none")) {
         label_params <- .get_uniq_text_args(label_params, "geom_text_repel")
       }
@@ -634,6 +644,17 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' @param group_col meta.data column to use for grouping cluster IDs present in
 #' cluster_col. This is useful when there are multiple replicates or patients
 #' for each treatment condition.
+#' @param top To only show the top cell groups present in `data_col`, provide
+#' one of the following, all other cells will be labeled using the value
+#' provided to the `other_label` argument. If `NULL` this will be automatically
+#' set.
+#'
+#' - Integer specifying the number of top groups to show
+#' - Vector specifying the names of cell groups to show
+#'
+#' @param per_chain If `TRUE` the frequency of each per-chain value will be
+#' calculated. If `FALSE` per-chain data will not be parsed and the values
+#' present in `data_col` will be used as is.
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param stack If TRUE, stacked bargraphs will be generated, otherwise grouped
 #' bargraphs will be generated
@@ -644,11 +665,8 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' for more options. Values can only be transformed when stack is `FALSE`
 #' @param show_points If `TRUE` data points will be shown on boxplots, the point
 #' size can be adjusted using the `point.size` parameter
-#' @param n_top Number of top cell labels present in data_col to show on plot,
-#' other cells will be labeled based on the `other_label` argument. If `NULL`,
-#' this will be automatically selected.
-#' @param other_label Label to use for 'other' cells, if `NULL` all cell labels
-#' present in data_col will be displayed on the plot.
+#' @param other_label Label to use for 'other' cells when `top` is specified, if
+#' `NULL` all cell groups present in data_col will be displayed on the plot.
 #' @param n_label Location on plot where n label should be added, this can be
 #' any combination of the following:
 #'
@@ -700,11 +718,11 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #'
 #' @export
 plot_frequency <- function(input, data_col, cluster_col = NULL,
-                           group_col = NULL, units = "percent", stack = NULL,
-                           plot_colors = NULL, plot_lvls = NULL,
-                           trans = "identity", show_points = TRUE, n_top = NULL,
-                           other_label = "other", n_label = NULL,
-                           label_params = list(), ...) {
+                           group_col = NULL, top = NULL, per_chain = FALSE,
+                           units = "percent", stack = NULL, plot_colors = NULL,
+                           plot_lvls = NULL, trans = "identity",
+                           show_points = TRUE, other_label = "other",
+                           n_label = NULL, label_params = list(), ...) {
 
   # Check that columns are present in object
   .check_obj_cols(input, data_col, cluster_col)
@@ -741,6 +759,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     input       = input,
     cluster_col = cluster_col,
     data_col    = data_col,
+    per_chain   = per_chain,
     prefix      = ".",
     return_df   = TRUE
   )
@@ -759,7 +778,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
   # Rank values in data_col
   plt_dat <- .set_other_grps(
-    plt_dat, data_col, abun_col, n_top = n_top,
+    plt_dat, data_col, abun_col, top = top,
     other_label = other_label, method = mean
   )
 
@@ -814,7 +833,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
     # Set bar position
     if (stack) gg_pos <- ggplot2::position_stack()
-    else       gg_pos <- ggplot2::position_dodge(preserve = "single")
+    else       gg_pos <- ggplot2::position_dodge2(preserve = "single")
 
     gg_args$position <- gg_args$position %||% gg_pos
 

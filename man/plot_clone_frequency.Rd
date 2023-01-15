@@ -9,12 +9,12 @@ plot_clone_frequency(
   data_col = global$clonotype_col,
   cluster_col = NULL,
   group_col = NULL,
+  clones = NULL,
   method = "bar",
   units = "percent",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
-  n_clones = NULL,
   panel_nrow = NULL,
   panel_scales = "free_x",
   n_label = "corner",
@@ -27,12 +27,12 @@ plot_clone_frequency(
   data_col = global$clonotype_col,
   cluster_col = NULL,
   group_col = NULL,
+  clones = NULL,
   method = "bar",
   units = "percent",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
-  n_clones = NULL,
   panel_nrow = NULL,
   panel_scales = "free_x",
   n_label = "corner",
@@ -56,6 +56,10 @@ cluster_col. This is useful when there are multiple replicates or patients
 for each treatment condition. This is only applicable when \code{method} is
 'line'.}
 
+\item{clones}{An integer specifying the number of clonotypes to show, or
+a vector giving the names of clonotypes to include. If method
+is set to 'line', this will specify the clonotypes to label.}
+
 \item{method}{Method to use for plotting, possible values include:
 \itemize{
 \item 'bar', create a bargraph
@@ -70,10 +74,6 @@ for each treatment condition. This is only applicable when \code{method} is
 
 \item{trans}{Transformation to use for plotting data, e.g. 'log10'. By
 default values are not transformed, refer to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}}}
-
-\item{n_clones}{Number of top clonotypes to plot (default is 10). If method
-is set to 'line', this will specify the number of clonotypes to label
-(default is 3).}
 
 \item{panel_nrow}{The number of rows to use for arranging plot panels, use
 this when separate bar graphs are created for each cell cluster}
@@ -99,6 +99,10 @@ clonotype and n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
+
+\item{n_clones}{Number of top clonotypes to plot (default is 10). If method
+is set to 'line', this will specify the number of clonotypes to label
+(default is 3).}
 }
 \value{
 ggplot object
@@ -195,16 +199,16 @@ plot_clone_frequency(
 # Specify the number of top clonotypes to plot
 plot_clone_frequency(
   vdj_so,
-  n_clones = 5
+  clones = 5
 )
 
 #' # Create line graph
-# use n_clones to set the number of clonotypes to label
+# use clones to set the number of clonotypes to label
 plot_clone_frequency(
   vdj_so,
   cluster_col = "orig.ident",
   method = "line",
-  n_clones = 3
+  clones = 3
 )
 
 }

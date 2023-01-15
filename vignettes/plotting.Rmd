@@ -95,7 +95,7 @@ so |>
     method      = "violin",
     trans       = "log10",
     
-    per_cell    = TRUE,
+    per_chain   = FALSE,
     summary_fn  = mean
   )
 ```

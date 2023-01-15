@@ -16,9 +16,10 @@
 #' and data_cols are NULL, all columns are included.
 #' @param filter_cells Remove cells that do not have V(D)J data, clonotype_col
 #' must be provided to determine which cells to filter.
-#' @param per_cell Return per-cell data instead of per-chain data.
-#' @param unnest If FALSE, a nested data.frame is returned where each row
-#' represents a cell and V(D)J data is stored as list-cols. If TRUE, columns
+#' @param per_chain If `TRUE` return per-chain data, i.e. each row represents a
+#' chain.
+#' @param unnest If `FALSE`, a nested data.frame is returned where each row
+#' represents a cell and V(D)J data is stored as list-cols. If `TRUE`, columns
 #' are unnested so each row represents a single chain.
 #' @param sep Separator used for storing per cell V(D)J data. This is used to
 #' identify columns containing per-chain data that can be unnested.
@@ -45,7 +46,7 @@
 #'
 #' @export
 fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
-                      filter_cells = FALSE, per_cell = FALSE, unnest = TRUE,
+                      filter_cells = FALSE, per_chain = TRUE, unnest = TRUE,
                       sep = global$sep) {
 
   # Check that columns are present in object
@@ -72,7 +73,7 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
   }
 
   # If NULL sep or per_cell, return meta.data
-  if (is.null(sep) || per_cell) return(meta)
+  if (is.null(sep) || !per_chain) return(meta)
 
   # Identify columns with V(D)J data
   col_list <- .get_vdj_cols(

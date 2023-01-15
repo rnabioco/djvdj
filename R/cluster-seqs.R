@@ -394,21 +394,21 @@ plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
 #' @noRd
 .fetch_seqs <- function(input, seq_col, chain, chain_col, sep = global$sep) {
 
-  per_cell <- is.null(chain)
+  per_chain <- !is.null(chain)
 
   res <- fetch_vdj(
     input,
     data_cols     = c(seq_col, chain_col),
     unnest        = FALSE,
     filter_cells  = TRUE,
-    per_cell      = per_cell,
+    per_chain     = per_chain,
     clonotype_col = seq_col,
     sep           = sep
   )
 
-  if (per_cell) {
+  if (!per_chain) {
     if (is.null(sep)) {
-      cli::cli_abort("`sep` must be provided if `per_cell` is`TRUE`")
+      cli::cli_abort("`sep` must be provided when `per_chain` is`FALSE`")
     }
 
     res <- dplyr::mutate(

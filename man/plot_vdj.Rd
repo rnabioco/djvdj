@@ -9,7 +9,7 @@ plot_vdj(
   data_col,
   cluster_col = NULL,
   group_col = NULL,
-  per_cell = FALSE,
+  per_chain = TRUE,
   summary_fn = mean,
   chain = NULL,
   chain_col = global$chain_col,
@@ -39,14 +39,15 @@ grouping cells for plotting}
 \item{group_col}{meta.dats column to use for grouping clusters present in
 cluster_col}
 
-\item{per_cell}{Should values be plotted per cell, i.e. each data point
-would represent one cell. If TRUE, values will be summarized for each cell
-using summary_fn. If FALSE, values will be plotted for each chain.}
+\item{per_chain}{If \code{TRUE} values will be plotted for each chain, i.e. each
+data point represents a chain. If \code{FALSE} values will be summarized for each
+cell using \code{summary_fn} before plotting, i.e. each data point represents a
+cell.}
 
-\item{summary_fn}{Function to use for summarizing values when per_cell is
-TRUE, possible values can be either a function, e.g. mean, or a purrr-style
-lambda, e.g. ~ mean(.x, na.rm = TRUE) where '.x' refers to the column. If
-NULL, the mean will be calculated.}
+\item{summary_fn}{Function to use for summarizing values when \code{per_chain} is
+\code{FALSE}, can be either a function, e.g. \code{mean}, or a purrr-style
+lambda, e.g. \code{~ mean(.x, na.rm = TRUE)} where \code{.x} refers to the column. If
+\code{NULL}, the mean will be calculated.}
 
 \item{chain}{Chain(s) to use for filtering data before plotting. If NULL
 data will not be filtered based on chain.}
@@ -165,7 +166,7 @@ plot_vdj(
 plot_vdj(
   vdj_sce,
   data_col = "reads",
-  per_cell = TRUE,
+  per_chain = FALSE,
   summary_fn = stats::median
 )
 

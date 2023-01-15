@@ -17,6 +17,7 @@ plot_features(input, ...)
   x = "UMAP_1",
   y = "UMAP_2",
   group_col = NULL,
+  top = NULL,
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
@@ -25,7 +26,6 @@ plot_features(input, ...)
   panel_nrow = NULL,
   panel_scales = "fixed",
   na_color = "grey80",
-  n_top = NULL,
   other_label = "other",
   n_label = NULL,
   label_params = list(),
@@ -116,6 +116,15 @@ linetype, etc.}
 
 \item{group_col}{meta.data column to use for splitting plot into panels}
 
+\item{top}{To only show the top cell groups, provide
+one of the following, all other cells will be labeled using the value
+provided to the \code{other_label} argument. If \code{NULL} this will be automatically
+set.
+\itemize{
+\item Integer specifying the number of top groups to show
+\item Vector specifying the names of cell groups to show
+}}
+
 \item{plot_colors}{Vector of colors to use for plotting}
 
 \item{plot_lvls}{Levels to use for ordering feature}
@@ -135,6 +144,9 @@ passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.}
 
 \item{na_color}{Color to use for missing values}
+
+\item{other_label}{Label to use for 'other' cells when \code{top} is specified, if
+\code{NULL} all cell groups will be shown.}
 
 \item{n_label}{Location on plot where n label should be added, this can be
 any combination of the following:
