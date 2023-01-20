@@ -412,21 +412,6 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     dplyr::all_of(data_cols), ~ .x != "None"
   ))
 
-  # Set n label data
-  lab_cols   <- c(cluster_col, group_col, .n = "n_cells")
-  n_lab_dat  <- dplyr::distinct(plt_dat, !!!syms(lab_cols))
-  n_lab_clrs <- plot_colors
-
-  psbl_labs <- switch(method, heatmap = "axis", bar = c("corner", "legend"))
-  psbl_labs <- c("none", psbl_labs)
-
-  if (paired || identical(method, "circos")) psbl_labs <- "none"
-
-  n_label <- n_label %||% psbl_labs
-  n_label <- n_label[n_label %in% psbl_labs]
-
-  if ("legend" %in% n_label) plot_colors <- NULL
-
   # If vdj_genes provided check plt_dat
   if (is.character(genes)) {
     absent <- unlist(plt_dat[, data_cols], use.names = FALSE)
@@ -468,6 +453,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     lvls     = plot_lvls,
     trans    = trans,
     ttl      = .get_axis_label(units),
+    n_row    = panel_nrow,
     ...
   )
 
@@ -476,7 +462,6 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   if (paired) {
     gg_args$rotate_labels <- rotate_labels
     gg_args$return_list   <- return_list
-    gg_args$n_row         <- panel_nrow
 
     res <- lift(.plot_paired_usage)(gg_args)
 
@@ -484,47 +469,12 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   }
 
   # Create plot for single usage
-  gg_args$grp_col     <- group_col
-  gg_args$show_points <- show_points
-
-  if ("corner" %in% n_label) gg_args$y_exp <- .n_label_expansion
+  gg_args$grp_col      <- group_col
+  gg_args$show_points  <- show_points
+  gg_args$n_label      <- n_label
+  gg_args$label_params <- label_params
 
   res <- lift(.plot_single_usage)(gg_args)
-
-  # Add n label
-  # Can't use .add_n_label() since n_lab_dat has to be modified depending on
-  # where n label is added
-  if ("corner" %in% n_label) {
-    lab_dat <- dplyr::summarize(n_lab_dat, .n = sum(.data$.n))
-
-    res <- .add_corner_label(
-      res, lab_dat, y_exp = NULL, lab_args = label_params
-    )
-  }
-
-  if ("axis" %in% n_label) {
-    res <- .add_axis_label(
-      res, n_lab_dat,
-      grp      = cluster_col,
-      lab_args = label_params
-    )
-  }
-
-  if ("legend" %in% n_label) {
-    lab_dat <- n_lab_dat
-
-    if (!is.null(group_col)) {
-      lab_dat <- dplyr::group_by(lab_dat, !!sym(group_col))
-      lab_dat <- dplyr::summarize(lab_dat, .n = sum(.data$.n), .groups = "drop")
-    }
-
-    res <- .add_legend_label(
-      res, lab_dat,
-      grp       = group_col %||% cluster_col,
-      lgnd_clrs = n_lab_clrs,
-      lab_args  = label_params
-    )
-  }
 
   res
 }
@@ -542,15 +492,13 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' @param trans Method to use for transforming data
 #' @param ttl Title for y-axis or legend depending on type of graph
 #' @param order Should genes be ordered based on usage
+#' @param n_row Number of rows to use for arranging plots
 #' @param ... Additional parameters to pass to plotting function
 #' @noRd
 .plot_single_usage <- function(df_in, gn_col, dat_col, method, clst_col = NULL,
-                               grp_col = NULL, clrs = NULL, lvls = NULL,
-                               show_points = TRUE, y_exp = NULL,
-                               trans = "identity", ttl = dat_col, order = TRUE,
-                               ...) {
-
-  y_exp <- y_exp %||% ggplot2::expansion(c(0.05, 0.05))
+                               grp_col = NULL, lvls = NULL, show_points = TRUE,
+                               n_label = NULL, n_row = 1, ttl = dat_col,
+                               order = TRUE, ...) {
 
   # Order clusters based on plot_lvls
   lvl_col <- grp_col %||% clst_col
@@ -558,7 +506,9 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 
   # Order plot levels
   if (order) {
-    decr  <- !is.null(grp_col) || identical(method, "bar")
+    decr <- (!is.null(grp_col) && !identical(method, "heatmap")) ||
+      identical(method, "bar")
+
     g_col <- sym(gn_col)
 
     df_in <- dplyr::mutate(
@@ -567,8 +517,31 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     )
   }
 
+  # Set n label parameters
+  psbl_labs <- switch(
+    method,
+    heatmap = c("none", "axis"),
+    bar     = c("none", "corner", "legend", "axis")
+  )
+
+  n_label   <- n_label %||% psbl_labs
+  n_label   <- n_label[n_label %in% psbl_labs]
+
+  # Set n label data
+  n_lab_dat <- list()
+
+  grp_cols  <- c(.n = "n_cells", clst_col, grp_col)
+
+  n_lab_dat$corner <- dplyr::distinct(df_in, !!!syms(grp_cols))
+
+  n_lab_dat$legend <- n_lab_dat$axis <- n_lab_dat$corner
+
+  if ((!is.null(grp_col) || !is.null(clst_col)) && identical(method, "bar")) {
+    n_lab_dat$axis <- dplyr::rename(df_in, .n = freq)
+  }
+
   # Set common arguments
-  gg_args <- list(clrs = clrs, n_label = "none", ...)
+  gg_args <- list(n_label = n_label, label_data = n_lab_dat, n_fn = sum, ...)
 
   if (identical(method, "bar") || !is.null(grp_col)) {
     gg_args$x <- gn_col
@@ -576,27 +549,22 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   }
 
   # Create grouped boxplot
-  if (!is.null(grp_col)) {
+  if (identical(method, "bar") && !is.null(grp_col)) {
     gg_args$df_in       <- df_in
     gg_args$.color      <- gg_args$.fill <- grp_col
     gg_args$alpha       <- gg_args$alpha %||% 0.5
     gg_args$show_points <- show_points
+    gg_args$y_ttl       <- ttl
 
     res <- lift(.create_boxes)(gg_args)
 
     res <- res +
-      ggplot2::scale_y_continuous(trans = trans, expand = y_exp) +
-      labs(y = ttl) +
-      theme(
-        legend.position = "right",
-        axis.text.x     = ggplot2::element_text(angle = 45, hjust = 1)
-      )
+      theme(legend.position = "right")
 
     return(res)
-  }
 
   # Create bargraph
-  if (identical(method, "bar")) {
+  } else if (identical(method, "bar")) {
 
     # Remove zeros from data
     df_in <- dplyr::filter(df_in, !!sym(dat_col) > 0)
@@ -605,19 +573,20 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     gg_args$.fill <- clst_col
     gg_args$y_ttl <- ttl
 
-    res <- lift(.create_bars)(gg_args) +
-      ggplot2::scale_y_continuous(trans = trans, expand = y_exp)
+    res <- lift(.create_bars)(gg_args)
 
     return(res)
   }
 
   # Create heatmap
   gg_args$df_in   <- df_in
-  gg_args$trans   <- trans
   gg_args$x       <- clst_col
   gg_args$y       <- gn_col
+  gg_args$grp     <- grp_col
   gg_args$.fill   <- dat_col
   gg_args$lgd_ttl <- ttl
+  gg_args$nrow    <- n_row
+  gg_args$scales  <- "free_x"
 
   res <- lift(.create_gg_heatmap)(gg_args)
 

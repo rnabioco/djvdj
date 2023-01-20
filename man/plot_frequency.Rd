@@ -11,15 +11,19 @@ plot_frequency(
   group_col = NULL,
   top = NULL,
   per_chain = FALSE,
+  chain = NULL,
+  chain_col = global$chain_col,
   units = "percent",
   stack = NULL,
   plot_colors = NULL,
   plot_lvls = NULL,
+  na_color = "grey80",
   trans = "identity",
   show_points = TRUE,
   other_label = "other",
   n_label = NULL,
   label_params = list(),
+  sep = global$sep,
   ...
 )
 
@@ -30,15 +34,19 @@ plot_frequency(
   group_col = NULL,
   top = NULL,
   per_chain = FALSE,
+  chain = NULL,
+  chain_col = global$chain_col,
   units = "percent",
   stack = NULL,
   plot_colors = NULL,
   plot_lvls = NULL,
+  na_color = "grey80",
   trans = "identity",
   show_points = TRUE,
   other_label = "other",
   n_label = NULL,
   label_params = list(),
+  sep = global$sep,
   ...
 )
 }
@@ -70,6 +78,11 @@ set.
 calculated. If \code{FALSE} per-chain data will not be parsed and the values
 present in \code{data_col} will be used as is.}
 
+\item{chain}{Chain(s) to use for calculating frequency. Set to \code{NULL} to
+include all chains.}
+
+\item{chain_col}{meta.data column(s) containing chains for each cell}
+
 \item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
 \item{stack}{If TRUE, stacked bargraphs will be generated, otherwise grouped
@@ -78,6 +91,8 @@ bargraphs will be generated}
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{plot_lvls}{Levels to use for ordering clusters or groups}
+
+\item{na_color}{Color to use for missing values}
 
 \item{trans}{Transformation to use for plotting data, e.g. 'log10'. By
 default values are not transformed, refer to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}}
@@ -104,6 +119,8 @@ plot legend
 
 \item{label_params}{Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")}
+
+\item{sep}{Separator for storing per-chain data}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}

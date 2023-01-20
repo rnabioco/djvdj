@@ -64,10 +64,11 @@
 #' head(res, 1)
 #'
 #' @export
-calc_frequency <- function(input, data_col, cluster_col = NULL, chain = NULL,
+calc_frequency <- function(input, data_col, cluster_col = NULL,
+                           per_chain = FALSE, chain = NULL,
                            chain_col = global$chain_col,
-                           prefix = paste0(data_col, "_"), per_chain = FALSE,
-                           return_df = FALSE, sep = global$sep) {
+                           prefix = paste0(data_col, "_"), return_df = FALSE,
+                           sep = global$sep) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -129,24 +130,32 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, chain = NULL,
 #' @param per_chain Calculate frequency for per-chain values
 #' @param return_df Return a summary data.frame where each row is a group, if
 #' `FALSE` each row will represent a cell
+#' @param nest When `return_df` is `FALSE` should per-chain results be
+#' concatenated using `sep`
 #' @param sep Separator for storing per-chain data
 #' @return data.frame containing clonotype abundances
 #' @noRd
 .calc_freq <- function(df_in, data_cols, cluster_col = NULL, chain = NULL,
                        chain_col = global$chain_col, prefix = "",
-                       per_chain = FALSE, return_df = FALSE, sep = global$sep) {
+                       per_chain = FALSE, return_df = FALSE, nest = TRUE,
+                       na_remove = TRUE, sep = global$sep) {
 
   # Format input data
   cluster       <- !is.null(cluster_col)
   multi_cluster <- cluster && length(cluster_col) > 1
   include_zeros <- return_df && cluster
-  nest_results  <- per_chain && !return_df
+  nest_results  <- per_chain && !return_df && nest
   filt_chains   <- !is.null(chain)
 
   if (filt_chains) vdj_cols <- c(data_cols, chain_col)
   else             vdj_cols <- data_cols
 
-  res <- df_in <- dplyr::filter(df_in, dplyr::if_all(data_cols, ~ !is.na(.x)))
+  # ADD na_remove ARGUMENT??
+  res <- df_in
+
+  if (na_remove) {
+    res <- df_in <- dplyr::filter(df_in, dplyr::if_all(data_cols, ~ !is.na(.x)))
+  }
 
   # Count total cells per cluster
   if (cluster) {
@@ -195,7 +204,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, chain = NULL,
   # this is NOT essential for calculations, but good practice
   res <- dplyr::distinct(res)
 
-  # Count genes used
+  # Count cells
   grp_cols <- data_cols
 
   if (cluster) grp_cols <- unique(c(grp_cols, clst_nm, cluster_col))
@@ -270,8 +279,9 @@ calc_frequency <- function(input, data_col, cluster_col = NULL, chain = NULL,
   }
 
   # Columns to use for joining final results
-  if (return_df) final_cols <- c(data_cols, cluster_col, "n_cells")
-  else           final_cols <- global$cell_col
+  if (return_df)                       final_cols <- c(data_cols, cluster_col, "n_cells")
+  else if (!nest_results && per_chain) final_cols <- c(global$cell_col, data_cols, "n_cells")
+  else                                 final_cols <- global$cell_col
 
   stat_cols <- purrr::set_names(stat_cols, paste0(prefix, stat_cols))
 
@@ -655,11 +665,15 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' @param per_chain If `TRUE` the frequency of each per-chain value will be
 #' calculated. If `FALSE` per-chain data will not be parsed and the values
 #' present in `data_col` will be used as is.
+#' @param chain Chain(s) to use for calculating frequency. Set to `NULL` to
+#' include all chains.
+#' @param chain_col meta.data column(s) containing chains for each cell
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param stack If TRUE, stacked bargraphs will be generated, otherwise grouped
 #' bargraphs will be generated
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters or groups
+#' @param na_color Color to use for missing values
 #' @param trans Transformation to use for plotting data, e.g. 'log10'. By
 #' default values are not transformed, refer to [ggplot2::continuous_scale()]
 #' for more options. Values can only be transformed when stack is `FALSE`
@@ -681,6 +695,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #'
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
+#' @param sep Separator for storing per-chain data
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
@@ -719,10 +734,12 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' @export
 plot_frequency <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, top = NULL, per_chain = FALSE,
+                           chain = NULL, chain_col = global$chain_col,
                            units = "percent", stack = NULL, plot_colors = NULL,
-                           plot_lvls = NULL, trans = "identity",
-                           show_points = TRUE, other_label = "other",
-                           n_label = NULL, label_params = list(), ...) {
+                           plot_lvls = NULL, na_color = "grey80",
+                           trans = "identity", show_points = TRUE,
+                           other_label = "other", n_label = NULL,
+                           label_params = list(), sep = global$sep, ...) {
 
   # Check that columns are present in object
   .check_obj_cols(input, data_col, cluster_col)
@@ -735,11 +752,19 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
   .check_possible_values(units = c("frequency", "percent"))
 
-  if (!identical(trans, "identity")) stack <- stack %||% FALSE
-  else                               stack <- stack %||% !is.null(cluster_col)
+  if (!identical(trans, "identity") || per_chain) stack <- stack %||% FALSE
+  else stack <- stack %||% !is.null(cluster_col)
 
   if (stack && !identical(trans, "identity")) {
     cli::cli_abort("Values can only be transformed when `stack` is `FALSE`")
+  }
+
+  if (stack && per_chain) {
+    cli::cli_warn(
+      "Stacked bargraphs can only be created when `per_chain` is `FALSE`"
+    )
+
+    stack <- FALSE
   }
 
   abun_col <- switch(units, frequency = ".freq", percent = ".pct")
@@ -754,22 +779,36 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
   clr_col <- group_col %||% data_col
 
-  # Calculate clonotype abundance
-  plt_dat <- calc_frequency(
-    input       = input,
+  # Calculate frequency
+  vdj_cols <- c(global$cell_col, data_col, cluster_col)
+
+  if (!is.null(chain)) vdj_cols <- c(vdj_cols, chain_col)
+
+  meta    <- .get_meta(input)
+  plt_dat <- dplyr::select(meta, all_of(vdj_cols))
+
+  plt_dat <- .calc_freq(
+    df_in       = plt_dat,
+    data_cols   = data_col,
     cluster_col = cluster_col,
-    data_col    = data_col,
+    chain       = chain,
+    chain_col   = chain_col,
     per_chain   = per_chain,
+    nest        = !per_chain,
+    na_remove   = FALSE,
     prefix      = ".",
-    return_df   = TRUE
+    sep         = sep
   )
 
-  # Format plot data
-  plt_dat <- tibble::as_tibble(plt_dat, rownames = global$cell_col)
-  plt_dat <- dplyr::filter(plt_dat, !is.na(!!sym(data_col)))
+  freq_cols <- c("n_cells", ".freq", ".pct", ".shared")
 
-  # Set data for n label
-  n_lab_dat  <- plt_dat
+  # Format plot data
+  # When per_chain, data_col is included in .calc_freq output
+  # This is because we need the unnested data_col values to determine keep_cols
+  if (per_chain) meta <- dplyr::select(meta, -all_of(data_col))
+
+  meta    <- dplyr::select(meta, -any_of(freq_cols))
+  plt_dat <- dplyr::left_join(meta, plt_dat, by = global$cell_col)
 
   # Identify data columns that the user should have access to
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
@@ -777,22 +816,40 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
 
   # Rank values in data_col
+  # Need to sum .freq so values for 'other' group are combined
   plt_dat <- .set_other_grps(
     plt_dat, data_col, abun_col, top = top,
-    other_label = other_label, method = mean
+    other_label = other_label, method = max
   )
 
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
+  keep_cols <- keep_cols[!keep_cols %in% freq_cols]
 
-  plt_dat <- dplyr::group_by(plt_dat, !!!syms(keep_cols))
+  plt_dat <- dplyr::group_by(plt_dat, n_cells, !!!syms(keep_cols))
 
   plt_dat <- dplyr::summarize(
-    plt_dat, !!sym(abun_col) := sum(!!sym(abun_col))
+    plt_dat, dplyr::across(all_of(c(".freq", ".pct")), sum),
+    .groups = "drop"
   )
 
-  if (!is.null(names(plot_colors)) && !other_label %in% names(plot_colors)) {
-    plot_colors[[other_label]] <- "grey60"
+  if (!is.null(names(plot_colors))) {
+    plot_colors[[other_label]] <- plot_colors[[other_label]] %||% "grey60"
+  }
+
+  # Set n label data
+  n_lab_dat <- list()
+
+  grp_cols  <- c(.n = "n_cells", cluster_col, group_col)
+
+  n_lab_dat$corner <- dplyr::distinct(plt_dat, !!!syms(grp_cols))
+  n_lab_dat$legend <- n_lab_dat$axis <- n_lab_dat$corner
+
+  if (!is.null(group_col)) {
+    n_lab_dat$axis <- dplyr::rename(plt_dat, .n = .freq)
+
+  } else if (!is.null(cluster_col)) {
+    n_lab_dat$legend <- dplyr::rename(plt_dat, .n = .freq)
   }
 
   # Plot arguments
@@ -802,11 +859,12 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     .color       = clr_col,
     .fill        = clr_col,
     clrs         = plot_colors,
+    na_clr       = na_color,
     trans        = trans,
-    show_points  = show_points,
     n_label      = n_label,
     label_params = label_params,
     label_data   = n_lab_dat,
+    n_fn         = sum,
     ...
   )
 
@@ -817,6 +875,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
     gg_args$df_in <- plt_dat
     gg_args$alpha <- gg_args$alpha %||% 0.5
+    gg_args$show_points <- show_points
 
     res <- lift(.create_boxes)(gg_args) +
       labs(y = y_lab) +
