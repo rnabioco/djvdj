@@ -203,6 +203,7 @@ NULL
 #' @rdname .add_meta
 #' @return Object with added meta.data
 #' @importFrom S4Vectors DataFrame
+#' @importFrom methods slot
 #' @noRd
 .add_meta <- function(input, meta, row_col) {
 
@@ -220,7 +221,7 @@ NULL
 .add_meta.Seurat <- function(input, meta, row_col = global$cell_col) {
   meta <- .prepare_meta(input, meta, row_col)
 
-  input@meta.data <- meta
+  methods::slot(input, "meta.data") <- meta
 
   input
 }
@@ -229,7 +230,7 @@ NULL
                                            row_col = global$cell_col) {
   meta <- .prepare_meta(input, meta, row_col)
 
-  input@colData <- S4Vectors::DataFrame(meta)
+  methods::slot(input, "colData") <- S4Vectors::DataFrame(meta)
 
   input
 }

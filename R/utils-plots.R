@@ -82,7 +82,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
                          na_clr = "grey80", trans_x = "identity",
                          trans_y = "identity", trans_clr = "identity",
                          nrow = NULL, scales = "fixed", n_label = NULL,
-                         label_params = list(), n_fn = dplyr::n(),
+                         label_params = list(), n_fn = dplyr::n,
                          label_data = df_in, ...) {
 
   # Check inputs
@@ -102,7 +102,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   gg_aes  <- ggplot2::aes()
   gg_args <- .standardize_aes(list(...))
 
-  if (is.null(x)) gg_aes$x <- y
+  if (is.null(x)) gg_aes$x <- y %||% "x"
   else            gg_aes$x <- sym(x)
 
   if (!is.null(y)) gg_aes$y      <- sym(y)
@@ -162,6 +162,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   }
 
   # Create facets
+  # Need to filter label data to only include labels for grps that are plotted
   if (!is.null(grp)) {
     res <- res +
       ggplot2::facet_wrap(
@@ -169,11 +170,14 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
         nrow = nrow, scales = scales
       )
 
-    if (is.data.frame(label_data)) label_data <- list(label_data)
+    if (!is.data.frame(label_data) && is.list(label_data)) {
+      label_data <- purrr::map(
+        label_data, dplyr::filter, !!sym(grp) %in% df_in[[grp]]
+      )
 
-    label_data <- purrr::map(
-      label_data, dplyr::filter, !!sym(grp) %in% df_in[[grp]]
-    )
+    } else {
+      label_data <- dplyr::filter(label_data, !!sym(grp) %in% df_in[[grp]])
+    }
   }
 
   # Add n label
@@ -355,9 +359,13 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     y        = y,
     trans_y  = trans,
     n_label  = n_label,
-    position = ggplot2::position_dodge2(preserve = "single"),
     ...
   )
+
+  if (identical(method, "violin")) pos <- ggplot2::position_dodge()
+  else pos <- ggplot2::position_dodge2(preserve = "single")
+
+  gg_args$position <- gg_args$position %||% pos
 
   # Create boxplots
   # allow user to set point size and color
@@ -368,6 +376,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   # Add additional points
   if (show_points) {
     pt_args       <- list()
+    pt_args$alpha <- 1
     pt_args$size  <- point.size %||% 1
     pt_args$color <- point.color %||% gg_args$color
 
@@ -429,8 +438,19 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
                          trans = "identity", y_ttl = units, n_label = NULL,
                          ...) {
 
+  # Set plotting function
+  plt_fns <- list(
+    histogram = ggplot2::geom_histogram,
+    density   = ggplot2::geom_density
+  )
+
   # Check inputs
-  .check_possible_values(units = c("frequency", "percent"))
+  .check_possible_values(
+    method = names(plt_fns),
+    units  = c("frequency", "percent")
+  )
+
+  plt_fn <- plt_fns[[method]]
 
   # Set n label
   if (is.null(n_label)) {
@@ -442,18 +462,6 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
       TRUE ~ n_label
     )
   }
-
-  # Set plotting function
-  plt_fns <- list(
-    histogram = ggplot2::geom_histogram,
-    density   = ggplot2::geom_density
-  )
-
-  if (!method %in% names(plt_fns)) {
-    cli::cli_abort("`method` must be {.or {names(plt_fns)}}")
-  }
-
-  plt_fn <- plt_fns[[method]]
 
   # Set aesthetics
   # Only plot percent for histogram
@@ -961,7 +969,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 #' label
 #' @param y_exp y-axis expansion, only applicable when adding corner label
 #' @param n_fn Function to use for calculating number of values plotted. By
-#' default this is `dplyr::n()` which will just count the number of rows for
+#' default this is `dplyr::n` which will just count the number of rows for
 #' each group. If another function is provided, it should take a vector as
 #' input. The function will be applied to the `n_col` column in `df_in`. e.g.
 #' `sum` will sum the values in `n_col` for each group, this is useful if the
@@ -1039,6 +1047,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 .add_corner_label <- function(gg_in, df_in, lab_args,
                               y_exp = .n_label_expansion, ...) {
 
+  # Automatically adjust label position based on length of string
   just <- 0.5
   char_h_w <- 1.5
 
