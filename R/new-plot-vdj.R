@@ -1,4 +1,8 @@
-#' Plot numerical data
+#' Plot numerical single-cell data
+#'
+#' Visualize numerical single-cell data by creating a histogram, density plot,
+#' violin plots, or boxplots. When plotting V(D)J data, values can be plotted
+#' separately for each chain or summarized and plotted for each cell.
 #'
 #' @param input Single cell object or data.frame, if a
 #' data.frame is provided, cell barcodes should be stored as row names.
@@ -7,23 +11,19 @@
 #' grouping cells for plotting
 #' @param group_col meta.data column to use for grouping clusters into separate
 #' panels
-#' @param method Method to use for plotting, possible values include:
-#'
-#' - 'histogram'
-#' - 'density'
-#' - 'boxplot'
-#' - 'violin'
+#' @param method Method to use for plotting, possible values include,
+#' 'histogram', 'density', 'boxplot', or 'violin'
 #'
 #' @param units Units to use for y-axis when method is 'histogram'. Use
 #' 'frequency' to show the number of values or 'percent' to show the percentage
 #' of total values.
 #'
-#' ## Plot aesthetics
+#' ## Aesthetics
 #'
 #' @param plot_colors Character vector specifying colors to use for cell
-#' clusters specified by cluster_col. When cluster_col is NULL, plot colors can
-#' be directly modified with the ggplot2 parameters color and fill,
-#' e.g. fill = "red", color = "black"
+#' clusters specified by cluster_col. When cluster_col is `NULL`, plot colors
+#' can be directly modified with the ggplot2 parameters `color` and `fill`,
+#' e.g. `fill = "red"`, `color = "black"`
 #' @param plot_lvls Character vector containing order to use for plotting cell
 #' clusters specified by cluster_col
 #' @param trans Transformation to use when plotting data, e.g. 'log10'. By
@@ -31,8 +31,9 @@
 #' for more options.
 #' @param panel_nrow The number of rows to use for arranging plot panels
 #' @param panel_scales Should scales for plot panels be fixed or free. This
-#' passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
-#' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
+#' passes a scales specification to [ggplot2::facet_wrap()], can be 'fixed',
+#' 'free', 'free_x', or 'free_y'. 'fixed' will cause panels to share the same
+#' scales.
 #' @param n_label Location on plot where n label should be added, this can be
 #' any combination of the following:
 #'
@@ -64,7 +65,6 @@
 #' lambda, e.g. `~ mean(.x, na.rm = TRUE)` where `.x` refers to the column. If
 #' `NULL`, the mean will be calculated.
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
-#'
 #' @seealso [summarize_vdj()] for more examples on how per-chain data can be
 #' summarized for each cell
 #' @return ggplot object
@@ -201,18 +201,89 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
   res
 }
 
-#' Create scatter plot
+
+#' Create 2D scatter plot
 #'
+#' Create a scatter plot with cells colored based on the provided feature.
+#' This can be used to create dimensional reduction plots (e.g. UMAP, tSNE, PCA)
+#' or to compare different cell attributes (e.g. CD4 vs CD8 expression).
+#' When plotting V(D)J data, per-chain values will be summarized for each cell.
+#'
+#' @param input Single cell object or data.frame, if a
+#' data.frame is provided, cell barcodes should be stored as row names.
+#' @param data_col Name of meta.data column or other variable (e.g. gene name)
+#' to use for coloring points
+#' @param x,y Name of meta.data column or other variable to plot on x and
+#' y-axis
+#' @param group_col meta.data column to use for splitting plot into panels
+#' @param top To only show the top cell groups, provide
+#' one of the following, all other cells will be labeled using the value
+#' provided to the `other_label` argument. If `NULL` this will be automatically
+#' set.
+#'
+#' - Integer specifying the number of top groups to show
+#' - Vector specifying the names of cell groups to show
+#'
+#' @param other_label Label to use for 'other' cells when `top` is specified, if
+#' `NULL` all cell groups will be shown.
+#'
+#' ## Aesthetics
+#'
+#' @param plot_colors Character vector specifying colors to use for cell
+#' clusters specified by cluster_col.
+#' @param plot_lvls Character vector containing order to use for plotting cell
+#' clusters specified by cluster_col.
+#' @param trans Transformation to use when plotting data, e.g. 'log10'. By
+#' default values are not transformed, refer to [ggplot2::continuous_scale()]
+#' for more options.
+#' @param panel_nrow The number of rows to use for arranging plot panels
+#' @param panel_scales Should scales for plot panels be fixed or free. This
+#' passes a scales specification to [ggplot2::facet_wrap()], can be 'fixed',
+#' 'free', 'free_x', or 'free_y'. 'fixed' will cause panels to share the same
+#' scales.
+#' @param min_q Minimum quantile cutoff for color scale.
+#' @param max_q Maximum quantile cutoff for color scale.
+#' @param na_color Color to use for missing values. If plotting V(D)J data,
+#' cells lacking data will be plotted as `NA`s.
+#' @param n_label Location on plot where n label should be added, this can be
+#' any combination of the following:
+#'
+#' - 'corner', display the total number of cells plotted in the top right
+#'   corner, the position of the label can be modified by passing `x` and `y`
+#'   specifications with the `label_params` argument
+#' - 'legend', display the number of cells plotted for each group shown in the
+#'   plot legend
+#' - 'none', do not display the number of cells plotted
+#'
+#' @param label_params Named list providing additional parameters to modify
+#' n label aesthetics, e.g. list(size = 4, color = "red")
+#' @param ... Additional arguments to pass to [ggplot2::geom_point()], e.g.
+#' color, size, etc.
+#'
+#' ## VDJ arguments
+#'
+#' @param chain Chain(s) to use for filtering data before plotting. If NULL
+#' data will not be filtered based on chain.
+#' @param chain_col meta.data column containing chains for each cell
+#' @param summary_fn Function to use for summarizing per-chain values for each
+#' cell, can be either a function, e.g. `mean`, or a purrr-style
+#' lambda, e.g. `~ mean(.x, na.rm = TRUE)` where `.x` refers to the column. If
+#' `NULL`, the mean will be calculated for numeric values, non-numeric columns
+#' will be combined into a single string.
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#' @seealso [summarize_vdj()] for more examples on how per-chain data can be
+#' summarized for each cell
+#' @return ggplot object
 #' @export
 plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
-                         group_col = NULL, summary_fn = NULL, chain = NULL,
-                         chain_col = global$chain_col, top = NULL,
+                         group_col = NULL, top = NULL, other_label = "other",
                          plot_colors = NULL, plot_lvls = names(plot_colors),
-                         trans = "identity", min_q = NULL, max_q = NULL,
-                         panel_nrow = NULL, panel_scales = "fixed",
-                         na_color = "grey80", other_label = "other",
-                         n_label = NULL, label_params = list(),
-                         sep = global$sep, ...) {
+                         trans = "identity", panel_nrow = NULL,
+                         panel_scales = "fixed", min_q = NULL, max_q = NULL,
+                         na_color = "grey80", n_label = NULL,
+                         label_params = list(), ..., chain = NULL,
+                         chain_col = global$chain_col, summary_fn = NULL,
+                         sep = global$sep) {
 
   # Check input classes
   .check_args()
@@ -319,6 +390,72 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
     if (set_other_color) plot_colors[[other_label]] <- "grey60"
   }
 
+
+
+
+
+  .set_colors <- function(df_in, data_col, plot_colors, plot_lvls) {
+
+    # If colors and names already set, return
+    if (!is.null(names(plot_colors))) {
+      return(plot_colors)
+
+    } else if (!is.null(plot_colors) && !is.null(plot_lvls)) {
+      plot_colors <- purrr::set_names(plot_colors, plot_lvls)
+
+      return(plot_colors)
+    }
+
+    # Return default numerical colors
+    dat <- df_in[[data_col]]
+
+    if (is.numeric(dat)) {
+      plot_colors <- plot_colors %||% c("#132B43", "#56B1F7")
+
+      return(plot_colors)
+    }
+
+    # Set default plot_lvls and plot_colors
+    if (is.null(plot_lvls)) {
+      plot_lvls <- levels(dat) %||% sort(unique(dat))
+    }
+
+    plot_colors <- plot_colors %||% scales::hue_pal()(length(plot_lvls))
+
+
+
+
+
+    if (!is.null(plot_colors)) {
+      if (!is.null(names(plot_colors))) return(plot_colors)
+
+    }
+
+
+    if (!is.null(plot_lvls)) {
+      lvls <- stats::na.omit(plot_lvls)
+      clrs <- stats::na.omit(plot_colors)
+
+      len <- min(length(lvls), length(clrs))
+
+      plot_colors <- purrr::set_names(
+        clrs[seq_len(len)], lvls[seq_len(len)]
+      )
+    }
+
+
+
+    if (!is.null(plot_colors) && !is.null(names(plot_colors))) {
+      return(plot_colors)
+    }
+
+
+
+  }
+
+
+
+
   plt_dat <- .set_lvls(plt_dat, data_col, plot_lvls)
 
   # Sort data so largest values are plotted on top
@@ -343,7 +480,6 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
 
   res
 }
-
 
 
 #' Format data for plotting

@@ -4,7 +4,7 @@
 \alias{plot_numerical}
 \alias{plot_histogram}
 \alias{plot_violin}
-\title{Plot numerical data}
+\title{Plot numerical single-cell data}
 \usage{
 plot_histogram(
   input,
@@ -61,24 +61,19 @@ grouping cells for plotting}
 \item{group_col}{meta.data column to use for grouping clusters into separate
 panels}
 
-\item{method}{Method to use for plotting, possible values include:
-\itemize{
-\item 'histogram'
-\item 'density'
-\item 'boxplot'
-\item 'violin'
-}}
+\item{method}{Method to use for plotting, possible values include,
+'histogram', 'density', 'boxplot', or 'violin'}
 
 \item{units}{Units to use for y-axis when method is 'histogram'. Use
 'frequency' to show the number of values or 'percent' to show the percentage
 of total values.
-\subsection{Plot aesthetics}{
+\subsection{Aesthetics}{
 }}
 
 \item{plot_colors}{Character vector specifying colors to use for cell
-clusters specified by cluster_col. When cluster_col is NULL, plot colors can
-be directly modified with the ggplot2 parameters color and fill,
-e.g. fill = "red", color = "black"}
+clusters specified by cluster_col. When cluster_col is \code{NULL}, plot colors
+can be directly modified with the ggplot2 parameters \code{color} and \code{fill},
+e.g. \code{fill = "red"}, \code{color = "black"}}
 
 \item{plot_lvls}{Character vector containing order to use for plotting cell
 clusters specified by cluster_col}
@@ -90,8 +85,9 @@ for more options.}
 \item{panel_nrow}{The number of rows to use for arranging plot panels}
 
 \item{panel_scales}{Should scales for plot panels be fixed or free. This
-passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
-'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.}
+passes a scales specification to \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}, can be 'fixed',
+'free', 'free_x', or 'free_y'. 'fixed' will cause panels to share the same
+scales.}
 
 \item{n_label}{Location on plot where n label should be added, this can be
 any combination of the following:
@@ -135,7 +131,9 @@ lambda, e.g. \code{~ mean(.x, na.rm = TRUE)} where \code{.x} refers to the colum
 ggplot object
 }
 \description{
-Plot numerical data
+Visualize numerical single-cell data by creating a histogram, density plot,
+violin plots, or boxplots. When plotting V(D)J data, values can be plotted
+separately for each chain or summarized and plotted for each cell.
 }
 \seealso{
 \code{\link[=summarize_vdj]{summarize_vdj()}} for more examples on how per-chain data can be
