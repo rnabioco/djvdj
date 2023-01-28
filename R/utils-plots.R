@@ -1434,6 +1434,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
       "Plot levels can only be modified for characters and factors, levels
        were not modified"
     )
+
     return(df_in)
   }
 
@@ -1452,6 +1453,54 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   df_in
 }
 
+#' Set default colors, add levels as names
+#'
+#' @param df_in data.frame
+#' @param data_col Data column
+#' @param plot_colors Colors
+#' @param plot_lvls Levels
+#' @return Vector of colors
+#' @noRd
+.set_colors <- function(df_in, data_col, plot_colors, plot_lvls) {
+
+  # If colors and names already set, return
+  if (!is.null(names(plot_colors))) {
+    return(plot_colors)
+
+  } else if (!is.null(plot_colors) && !is.null(plot_lvls)) {
+    plot_colors <- purrr::set_names(plot_colors, plot_lvls)
+
+    return(plot_colors)
+  }
+
+  # Return default numerical colors
+  dat <- df_in[[data_col]]
+
+  if (is.numeric(dat)) {
+    plot_colors <- plot_colors %||% c("#132B43", "#56B1F7")
+
+    return(plot_colors)
+  }
+
+  # Set default plot_lvls and plot_colors
+  if (is.null(plot_lvls)) {
+    plot_lvls <- levels(dat) %||% sort(unique(dat))
+  }
+
+  plot_colors <- plot_colors %||% scales::hue_pal()(length(plot_lvls))
+
+  # Set plot_lvls as names
+  lvls <- stats::na.omit(plot_lvls)
+  clrs <- stats::na.omit(plot_colors)
+
+  len <- min(length(lvls), length(clrs))
+
+  plot_colors <- purrr::set_names(
+    clrs[seq_len(len)], lvls[seq_len(len)]
+  )
+
+  plot_colors
+}
 
 #' Check cluster_col and group_col arguments
 #' @noRd
