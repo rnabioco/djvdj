@@ -181,6 +181,8 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   }
 
   # Add n label
+  if (is.null(x)) n_label <- n_label[n_label != "axis"]
+
   .chk_num <- function(df_in, clmn) {
     if (!is.null(clmn) && !is.numeric(df_in[[clmn]])) return(clmn)
     else                                              return(NULL)
@@ -1257,6 +1259,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 .set_other_grps <- function(df_in, data_col, val_col = NULL, top = NULL,
                             other_label = "other", method = "count") {
 
+  # Need to convert factor to character
+  df_in[data_col] <- as.character(df_in[[data_col]])
+
   if (is.character(top)) {
     top_grps <- unique(top)
     n_top    <- length(top_grps)
@@ -1464,8 +1469,11 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 .set_colors <- function(df_in, data_col, plot_colors, plot_lvls) {
 
   # If colors and names already set, return
-  if (!is.null(names(plot_colors))) {
+  if (!is.null(names(plot_colors)) && is.null(plot_lvls)) {
     return(plot_colors)
+
+  } else if (!is.null(names(plot_colors)) && !is.null(plot_lvls)) {
+    return(plot_colors[plot_lvls])
 
   } else if (!is.null(plot_colors) && !is.null(plot_lvls)) {
     plot_colors <- purrr::set_names(plot_colors, plot_lvls)
@@ -1534,7 +1542,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
 .check_matching_vals <- function(x, y) {
   if (length(x) != length(y)) {
-    cli::cli_abort("`x` and `y` must be the same length")
+    cli::cli_abort("`x` and `y` must be the same length", .internal = TRUE)
   }
 
   res <- paste0(x, y)
@@ -1544,8 +1552,12 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
 .get_matching_clmns <- function(df, clmn) {
   dat <- as.list(df)
-
   clmns <- names(dat)
+
+  if (any(!clmn %in% clmns)) {
+    cli::cli_abort("`clmn` is not present in `df`", .internal = TRUE)
+  }
+
   clmns <- clmns[!clmns %in% clmn]
   clmns <- dat[clmns]
 
