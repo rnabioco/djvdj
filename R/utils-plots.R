@@ -1256,8 +1256,9 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res
 }
 
-.set_other_grps <- function(df_in, data_col, val_col = NULL, top = NULL,
-                            other_label = "other", method = "count") {
+.set_other_grps <- function(df_in, data_col, val_col = NULL, plot_lvls = NULL,
+                            top = NULL, other_label = "other", rev = FALSE,
+                            method = "count") {
 
   # Need to convert factor to character
   df_in[data_col] <- as.character(df_in[[data_col]])
@@ -1291,7 +1292,16 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     rnk <- c(top_grps, other_label)
   }
 
-  res <- .set_lvls(res, data_col, rnk)
+  # Always order values in plot_lvls first
+  # if all levels are provided, use user provided ordering, do not reverse
+  # remove levels that do not appear in data
+  not_in    <- rnk[!rnk %in% plot_lvls]
+  plot_lvls <- plot_lvls[plot_lvls %in% rnk]
+  lvls      <- c(plot_lvls, not_in)
+
+  if (rev && !purrr::is_empty(not_in)) lvls <- rev(lvls)
+
+  res <- .set_lvls(res, data_col, lvls)
 
   res
 }
@@ -1468,46 +1478,65 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @noRd
 .set_colors <- function(df_in, data_col, plot_colors, plot_lvls) {
 
-  # If colors and names already set, return
-  if (!is.null(names(plot_colors)) && is.null(plot_lvls)) {
-    return(plot_colors)
-
-  } else if (!is.null(names(plot_colors)) && !is.null(plot_lvls)) {
-    return(plot_colors[plot_lvls])
-
-  } else if (!is.null(plot_colors) && !is.null(plot_lvls)) {
-    plot_colors <- purrr::set_names(plot_colors, plot_lvls)
-
-    return(plot_colors)
-  }
-
   # Return default numerical colors
   dat <- df_in[[data_col]]
 
   if (is.numeric(dat)) {
+
     plot_colors <- plot_colors %||% c("#132B43", "#56B1F7")
 
     return(plot_colors)
   }
+
+  # uniq_dat <- stats::na.omit(unique(dat))
+  #
+  # if (!all(uniq_dat) %in% names(plot_colors))
+
+  # If colors and names already set, return
+  # if (!is.null(names(plot_colors)) && is.null(plot_lvls)) {
+  #   return(plot_colors)
+  #
+  # } else if (!is.null(names(plot_colors)) && !is.null(plot_lvls)) {
+  #   return(plot_colors[plot_lvls])
+  #
+  # } else if (!is.null(plot_colors) && !is.null(plot_lvls)) {
+  #   plot_colors <- purrr::set_names(plot_colors, plot_lvls)
+  #
+  #   return(plot_colors)
+  # }
 
   # Set default plot_lvls and plot_colors
   if (is.null(plot_lvls)) {
     plot_lvls <- levels(dat) %||% sort(unique(dat))
   }
 
-  plot_colors <- plot_colors %||% scales::hue_pal()(length(plot_lvls))
+  clrs <- scales::hue_pal()(length(plot_lvls))
+
+  # # If unnamed plot_colors provided, replace default colors
+  # if (!is.null(plot_colors) && is.null(names(plot_colors))) {
+  #   clrs[seq_along(plot_colors)] <- plot_colors
+  # }
 
   # Set plot_lvls as names
   lvls <- stats::na.omit(plot_lvls)
-  clrs <- stats::na.omit(plot_colors)
+  len  <- min(length(lvls), length(clrs))
 
-  len <- min(length(lvls), length(clrs))
-
-  plot_colors <- purrr::set_names(
+  clrs <- purrr::set_names(
     clrs[seq_len(len)], lvls[seq_len(len)]
   )
 
-  plot_colors
+  # If plot_colors provided, replace default colors
+  if (!is.null(plot_colors)) {
+    if (is.null(names(plot_colors))) {
+      plot_colors <- purrr::set_names(
+        plot_colors, names(clrs)[seq_along(plot_colors)]
+      )
+    }
+
+    clrs[names(plot_colors)] <- plot_colors
+  }
+
+  clrs
 }
 
 #' Check cluster_col and group_col arguments

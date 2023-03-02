@@ -357,33 +357,33 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
   if (is.logical(plt_dat[[data_col]])) {
     plt_dat <- purrr::modify_at(plt_dat, data_col, as.character)
 
-    plot_lvls <- plot_lvls %||% c("TRUE", "FALSE")
+    # plot_lvls <- plot_lvls %||% c("TRUE", "FALSE")
   }
 
   # Set other group
-  if (!is_num && !is.null(top)) {
+  # if not all levels are specified with plot_lvls, levels will get set based
+  # on number of occurrences
+  if (!is_num) {
     plt_dat <- .set_other_grps(
-      plt_dat, data_col, top = top, other_label = other_label
+      plt_dat, data_col, plot_lvls = plot_lvls,
+      top = top, other_label = other_label, rev = TRUE
     )
 
-    if (is.null(plot_lvls)) {
-      rnk_lvls  <- levels(plt_dat[[data_col]])
-      plot_lvls <- stats::na.omit(rev(rnk_lvls))
-      rev_lgnd  <- TRUE
+    # If levels are automatically set, need to reverse legend so most frequent
+    # levels are displayed at the top of legend
+    rnk_lvls <- stats::na.omit(levels(plt_dat[[data_col]]))
 
-    } else {
-      plot_lvls <- c(other_label, plot_lvls)
-    }
+    if (!all(rnk_lvls %in% plot_lvls)) rev_lgnd <- TRUE
   }
 
   # Set default colors and levels
   # levels are also set with .format_plot_data, but need to set again since
   # they get modified
-  plot_colors <- .set_colors(plt_dat, data_col, plot_colors, plot_lvls)
+  plot_colors <- .set_colors(plt_dat, data_col, plot_colors, rev(rnk_lvls))
 
   if (set_other_color) plot_colors[[other_label]] <- "grey60"
 
-  plt_dat <- .set_lvls(plt_dat, data_col, names(plot_colors))
+  # plt_dat <- .set_lvls(plt_dat, data_col, names(plot_colors))
 
   # Sort data so largest values are plotted on top
   # Do not use arrange() since NAs always get sorted to bottom
@@ -407,60 +407,6 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
 
   res
 }
-
-
-
-
-
-
-
-
-# # Set data_col colors and levels, use ggplot2 defaults if plot_colors is NULL
-# if (is_num) {
-#   plot_colors <- plot_colors %||% c("#132B43", "#56B1F7")
-#
-# } else {
-#   # Set other group
-#   if (!is.null(top)) {
-#     plt_dat <- .set_other_grps(
-#       plt_dat, data_col, top = top, other_label = other_label
-#     )
-#
-#     if (is.null(plot_lvls)) {
-#       rnk_lvls  <- levels(plt_dat[[data_col]])
-#       plot_lvls <- stats::na.omit(rev(rnk_lvls))
-#       rev_lgnd  <- TRUE
-#
-#     } else {
-#       plot_lvls <- c(other_label, plot_lvls)
-#     }
-#   }
-#
-#   # Set default levels if plot_lvls is NULL
-#   if (is.null(plot_lvls)) {
-#     dat       <- plt_dat[[data_col]]
-#     plot_lvls <- levels(dat) %||% sort(unique(dat))
-#   }
-#
-#   # Set color names, need to do this so na_color is not overridden if the
-#   # user provides extra values for plot_colors
-#   plot_colors <- plot_colors %||% scales::hue_pal()(length(plot_lvls))
-#
-#   if (is.null(names(plot_colors))) {
-#     lvls <- stats::na.omit(plot_lvls)
-#
-#     plot_colors <- plot_colors[seq_along(lvls)]
-#     plot_colors <- stats::na.omit(plot_colors)
-#
-#     names(plot_colors) <- lvls[seq_along(plot_colors)]
-#   }
-#
-#   if (set_other_color) plot_colors[[other_label]] <- "grey60"
-# }
-
-
-
-
 
 
 #' Format data for plotting
