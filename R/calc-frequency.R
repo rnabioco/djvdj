@@ -150,7 +150,6 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
   if (filt_chains) vdj_cols <- c(data_cols, chain_col)
   else             vdj_cols <- data_cols
 
-  # ADD na_remove ARGUMENT??
   res <- df_in
 
   if (na_remove) {
@@ -279,9 +278,20 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
   }
 
   # Columns to use for joining final results
-  if (return_df)                       final_cols <- c(data_cols, cluster_col, "n_cells")
-  else if (!nest_results && per_chain) final_cols <- c(global$cell_col, data_cols, "n_cells")
-  else                                 final_cols <- global$cell_col
+  # used when final result to user is a summary table
+  if (return_df) {
+    final_cols <- c(data_cols, cluster_col, "n_cells")
+
+  # used when plotting results
+  } else if (!nest_results) {
+    final_cols <- c(global$cell_col, "n_cells")
+
+    if (per_chain) final_cols <- c(final_cols, data_cols)
+
+  # used when adding results to object
+  } else {
+    final_cols <- global$cell_col
+  }
 
   stat_cols <- purrr::set_names(stat_cols, paste0(prefix, stat_cols))
 
@@ -576,14 +586,14 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 
     top_clones <- .set_lvls(top_clones, data_col, lvls)
 
-    gg_args$df_in <- top_clones
-    gg_args$x     <- data_col
-    gg_args$y     <- abun_col
-    gg_args$y_ttl <- y_lab
-    gg_args$.fill <- gg_args$.color <- cluster_col
-    gg_args$ang   <- 45
-    gg_args$hjst  <- 1
-    gg_args$trans <- trans
+    gg_args$df_in  <- top_clones
+    gg_args$x      <- data_col
+    gg_args$y      <- abun_col
+    gg_args$y_ttl  <- y_lab
+    gg_args$.fill  <- gg_args$.color <- cluster_col
+    gg_args$x_ang  <- 45
+    gg_args$x_hjst <- 1
+    gg_args$trans  <- trans
 
     res <- lift(.create_bars)(gg_args)
 
@@ -818,7 +828,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   # Rank values in data_col
   # Need to sum .freq so values for 'other' group are combined
   plt_dat <- .set_other_grps(
-    plt_dat, data_col, abun_col, top = top,
+    plt_dat, data_col, abun_col, plot_lvls = plot_lvls, top = top,
     other_label = other_label, method = max
   )
 
@@ -833,14 +843,24 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     .groups = "drop"
   )
 
-  if (!is.null(names(plot_colors))) {
-    plot_colors[[other_label]] <- plot_colors[[other_label]] %||% "grey60"
-  }
+  # Set plot colors
+  plot_colors <- .set_colors(
+    plt_dat,
+    data_col    = clr_col,
+    plot_colors = plot_colors,
+    plot_lvls   = levels(plt_dat[[clr_col]]),
+    other_label = other_label
+  )
 
   # Set n label data
+  # if cluster_col is NULL use data_col to calculate n,
+  # use .freq for cell counts
   n_lab_dat <- list()
 
-  grp_cols  <- c(.n = "n_cells", cluster_col, group_col)
+  grp_cols <- cluster_col %||% data_col
+  n_col    <- ifelse(is.null(cluster_col), ".freq", "n_cells")
+
+  grp_cols <- c(.n = n_col, grp_cols, group_col)
 
   n_lab_dat$corner <- dplyr::distinct(plt_dat, !!!syms(grp_cols))
   n_lab_dat$legend <- n_lab_dat$axis <- n_lab_dat$corner
@@ -854,6 +874,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
   # Plot arguments
   gg_args <- list(
+    df_in        = plt_dat,
     x            = x_col,
     y            = abun_col,
     .color       = clr_col,
@@ -870,25 +891,18 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
   # Create grouped boxplot
   if (!is.null(group_col)) {
-    plot_lvls <- plot_lvls %||% names(plot_colors)
-    plt_dat   <- .set_lvls(plt_dat, group_col, plot_lvls)
-
-    gg_args$df_in <- plt_dat
     gg_args$alpha <- gg_args$alpha %||% 0.5
     gg_args$show_points <- show_points
 
     res <- lift(.create_boxes)(gg_args) +
-      labs(y = y_lab) +
-      theme(legend.position = "right")
+      ggplot2::labs(y = y_lab) +
+      ggplot2::theme(legend.position = "right")
 
   # Create bar graph
   } else {
-    plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
-
-    gg_args$df_in <- plt_dat
-    gg_args$y_ttl <- y_lab
-    gg_args$ang   <- 45
-    gg_args$hjst  <- 1
+    gg_args$y_ttl  <- y_lab
+    gg_args$x_ang  <- 45
+    gg_args$x_hjst <- 1
 
     # Set bar position
     if (stack) gg_pos <- ggplot2::position_stack()
