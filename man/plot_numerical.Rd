@@ -12,6 +12,8 @@ plot_histogram(
   cluster_col = NULL,
   group_col = NULL,
   method = "histogram",
+  top = NULL,
+  other_label = "other",
   units = "frequency",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
@@ -35,6 +37,8 @@ plot_violin(
   cluster_col = NULL,
   group_col = NULL,
   method = "violin",
+  top = NULL,
+  other_label = "other",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
@@ -66,11 +70,23 @@ panels}
 \item{method}{Method to use for plotting, possible values include,
 'histogram', 'density', 'boxplot', or 'violin'}
 
-\item{units}{Units to use for y-axis when method is 'histogram'. Use
-'frequency' to show the number of values or 'percent' to show the percentage
-of total values.
+\item{top}{To only show the top cell groups, provide
+one of the following, all other cells will be labeled using the value
+provided to the \code{other_label} argument. If \code{NULL} this will be automatically
+set.
+\itemize{
+\item Integer specifying the number of top groups to show
+\item Vector specifying the names of cell groups to show
+}}
+
+\item{other_label}{Label to use for 'other' cells when \code{top} is specified, if
+\code{NULL} all cell groups will be shown.
 \subsection{Aesthetics}{
 }}
+
+\item{units}{Units to use for y-axis when method is 'histogram'. Use
+'frequency' to show the number of values or 'percent' to show the percentage
+of total values.}
 
 \item{plot_colors}{Character vector specifying colors to use for cell
 clusters specified by cluster_col. When cluster_col is \code{NULL}, plot colors

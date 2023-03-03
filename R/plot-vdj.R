@@ -17,6 +17,16 @@
 #' @param units Units to use for y-axis when method is 'histogram'. Use
 #' 'frequency' to show the number of values or 'percent' to show the percentage
 #' of total values.
+#' @param top To only show the top cell groups, provide
+#' one of the following, all other cells will be labeled using the value
+#' provided to the `other_label` argument. If `NULL` this will be automatically
+#' set.
+#'
+#' - Integer specifying the number of top groups to show
+#' - Vector specifying the names of cell groups to show
+#'
+#' @param other_label Label to use for 'other' cells when `top` is specified, if
+#' `NULL` all cell groups will be shown.
 #'
 #' ## Aesthetics
 #'
@@ -77,6 +87,7 @@ NULL
 #' @export
 plot_histogram <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, method = "histogram",
+                           top = NULL, other_label = "other",
                            units = "frequency", plot_colors = NULL,
                            plot_lvls = names(plot_colors), trans = "identity",
                            panel_nrow = NULL, panel_scales = "fixed",
@@ -89,15 +100,15 @@ plot_histogram <- function(input, data_col, cluster_col = NULL,
   # Check input classes
   .check_args()
 
-  # Check input values
-  .check_group_cols(cluster_col, group_col, input)
-
   # Format plot data
   plt_dat <- .format_plot_data(
     input,
     data_col    = data_col,
     cluster_col = cluster_col,
+    group_col   = group_col,
     plot_lvls   = plot_lvls,
+    top         = top,
+    other_label = other_label,
     chain       = chain,
     chain_col   = chain_col,
     per_chain   = per_chain,
@@ -108,7 +119,8 @@ plot_histogram <- function(input, data_col, cluster_col = NULL,
     group_col
   )
 
-  plot_colors <- .set_colors(plt_dat, cluster_col, plot_colors, plot_lvls)
+  plot_colors <- .set_colors(plt_dat, cluster_col, plot_colors,
+                             other_label = other_label)
 
   # Check for sep
   # Need this info to set y-axis title
@@ -152,10 +164,10 @@ plot_histogram <- function(input, data_col, cluster_col = NULL,
 #' @rdname plot_numerical
 #' @export
 plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
-                        method = "violin", plot_colors = NULL,
-                        plot_lvls = names(plot_colors), trans = "identity",
-                        panel_nrow = NULL, panel_scales = "free_x",
-                        na_color = "grey80",
+                        method = "violin", top = NULL, other_label = "other",
+                        plot_colors = NULL, plot_lvls = names(plot_colors),
+                        trans = "identity", panel_nrow = NULL,
+                        panel_scales = "free_x", na_color = "grey80",
                         n_label = NULL, label_params = list(), ...,
                         per_chain = FALSE, chain = NULL,
                         chain_col = global$chain_col, summary_fn = mean,
@@ -164,15 +176,16 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
   # Check input classes
   .check_args()
 
-  # Check input values
-  .check_group_cols(cluster_col, group_col, input)
-
   # Format plot data
   plt_dat <- .format_plot_data(
     input,
     data_col    = data_col,
     cluster_col = cluster_col,
+    group_col   = group_col,
     plot_lvls   = plot_lvls,
+    top         = top,
+    other_label = other_label,
+    rank_method = "boxplot",
     chain       = chain,
     chain_col   = chain_col,
     per_chain   = per_chain,
@@ -183,7 +196,8 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
     group_col
   )
 
-  plot_colors <- .set_colors(plt_dat, cluster_col, plot_colors, plot_lvls)
+  plot_colors <- .set_colors(plt_dat, cluster_col, plot_colors,
+                             other_label = other_label)
 
   # Create violins
   gg_args <- list(
@@ -298,14 +312,18 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
                          sep = global$sep) {
 
   # Check input classes
-  .check_args()
+  .check_args(data_col = list(allow_null = TRUE))
 
   # Format plot data
   plt_dat <- .format_plot_data(
     input,
     data_col    = data_col,
-    cluster_col = group_col,
+    cluster_col = data_col,
+    group_col   = group_col,
     plot_lvls   = plot_lvls,
+    top         = top,
+    other_label = other_label,
+    rev_lvls    = TRUE,
     per_chain   = FALSE,
     chain       = chain,
     chain_col   = chain_col,
@@ -318,11 +336,13 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
 
   # Set plot arguments
   gg_args <- list(
+    df_in        = plt_dat,
     fn           = ggplot2::geom_point,
     x            = x,
     y            = y,
     .color       = data_col,
     grp          = group_col,
+    clrs         = plot_colors,
     trans_clr    = trans,
     nrow         = panel_nrow,
     scales       = panel_scales,
@@ -334,62 +354,32 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
 
   # If no data_col provided, return scatter plot
   if (is.null(data_col)) {
-    gg_args$df_in <- plt_dat
-
     res <- lift(.create_scatter)(gg_args)
 
     return(res)
   }
 
   # Is data_col numeric
-  rev_lgnd <- FALSE
-
   is_num <- is.numeric(plt_dat[[data_col]])
-
-  set_other_color <- !is_num && !other_label %in% names(plot_colors)
 
   # Adjust values based on min_q and max_q
   if (is_num && (!is.null(min_q) || !is.null(max_q))) {
     plt_dat <- .set_lims(plt_dat, data_col, min_q, max_q)
   }
 
-  # Convert logical to character
-  if (is.logical(plt_dat[[data_col]])) {
-    plt_dat <- purrr::modify_at(plt_dat, data_col, as.character)
+  # If not all levels are specified by plot_lvls, use ordering set by
+  # .format_plot_data, reverse legend so top ranked levels are listed first
+  lvls <- stats::na.omit(levels(plt_dat[[data_col]]))
 
-    # plot_lvls <- plot_lvls %||% c("TRUE", "FALSE")
-  }
+  rev_lgnd <- !all(lvls %in% plot_lvls) && !identical(data_col, group_col)
 
-  # Set other group
-  # if not all levels are specified with plot_lvls, levels will get set based
-  # on number of occurrences
-  if (!is_num) {
-    plt_dat <- .set_other_grps(
-      plt_dat, data_col, plot_lvls = plot_lvls,
-      top = top, other_label = other_label, rev = TRUE
-    )
+  if (!identical(data_col, group_col)) lvls <- rev(lvls)
 
-    # If levels are automatically set, need to reverse legend so most frequent
-    # levels are displayed at the top of legend
-    rnk_lvls <- stats::na.omit(levels(plt_dat[[data_col]]))
+  # Set default colors
+  plot_colors <- .set_colors(plt_dat, data_col, plot_colors, lvls,
+                             other_label = other_label)
 
-    if (!all(rnk_lvls %in% plot_lvls)) rev_lgnd <- TRUE
-  }
-
-  # Set default colors and levels
-  # levels are also set with .format_plot_data, but need to set again since
-  # they get modified
-  plot_colors <- .set_colors(plt_dat, data_col, plot_colors, rev(rnk_lvls))
-
-  if (set_other_color) plot_colors[[other_label]] <- "grey60"
-
-  # plt_dat <- .set_lvls(plt_dat, data_col, names(plot_colors))
-
-  # Sort data so largest values are plotted on top
-  # Do not use arrange() since NAs always get sorted to bottom
-  # res <- arrange(plt_dat, !!sym(data_col))
-  plt_dat <- plt_dat[order(plt_dat[[data_col]], na.last = FALSE), ]
-
+  # Create scatter plot
   gg_args$df_in <- plt_dat
   gg_args$clrs  <- plot_colors
 
@@ -442,7 +432,10 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
 }
 
 .format_plot_data.default <- function(input, data_col, ..., cluster_col = NULL,
-                                      plot_lvls = NULL, chain = NULL,
+                                      group_col = NULL, plot_lvls = NULL,
+                                      top = NULL, other_label = "other",
+                                      rank_method = n, rev_lvls = FALSE,
+                                      chain = NULL,
                                       chain_col = global$chain_col,
                                       per_chain = TRUE, summary_fn = mean,
                                       filter_cells = per_chain,
@@ -453,6 +446,8 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
 
   # Format plot data
   res <- .get_meta(input)
+
+  if (is.null(data_col)) return(res)
 
   has_sep <- .detect_sep(
     res, data_col, sep, n_rows = 1000, return_names = FALSE
@@ -492,15 +487,46 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
   # Remove cells with missing V(D)J data
   if (filter_cells) res <- dplyr::filter(res, !is.na(!!sym(data_col)))
 
-  # Order clusters based on plot_lvls
-  res <- .set_lvls(res, cluster_col, plot_lvls)
+  # Set column to use for ranking cluster_col and group_col
+  if (identical(rank_method, "boxplot")) val_col <- data_col
+  else                                   val_col <- NULL
+
+  # Set cluster_col levels
+  res <- .set_other_grps(
+    res, cluster_col, val_col = val_col, plot_lvls = plot_lvls, top = top,
+    other_label = other_label, method = rank_method, rev = rev_lvls
+  )
+
+  # Set group_col levels
+  # If group_col is not same as cluster_col, use levels from df_in for
+  # default ordering
+  # If not, re-set group_col levels, since these should never be reversed
+  # Only reverse levels when group_col and cluster_col are the same
+  if (!is.null(group_col) && !identical(cluster_col, group_col)) {
+    grp_lvls <- levels(res[[group_col]])
+
+  } else {
+    grp_lvls <- NULL
+  }
+
+  res <- .set_other_grps(
+    res, group_col, val_col = val_col, plot_lvls = grp_lvls,
+    method = rank_method
+  )
+
+  # Sort data so largest values are plotted on top
+  # Do not use arrange() since NAs always get sorted to bottom
+  # res <- arrange(plt_dat, !!sym(data_col))
+  res <- res[order(res[[data_col]], na.last = FALSE), ]
 
   res
 }
 
 .format_plot_data.Seurat <- function(input, data_col, ..., cluster_col = NULL,
-                                     plot_lvls = NULL, chain = NULL,
-                                     chain_col = global$chain_col,
+                                     group_col = NULL, plot_lvls = NULL,
+                                     top = NULL, other_label = "other",
+                                     rank_method = n, rev_lvls = FALSE,
+                                     chain = NULL, chain_col = global$chain_col,
                                      per_chain = TRUE, summary_fn = mean,
                                      filter_cells = per_chain,
                                      slot = "data", sep = global$sep) {
@@ -525,6 +551,10 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
     data_col     = data_col,
     cluster_col  = cluster_col,
     plot_lvls    = plot_lvls,
+    top          = top,
+    other_label  = other_label,
+    rank_method  = rank_method,
+    rev_lvls     = rev_lvls,
     chain        = chain,
     chain_col    = chain_col,
     per_chain    = per_chain,

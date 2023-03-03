@@ -1127,6 +1127,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 .detect_sep <- function(df_in, sep_cols, sep, n_rows = NULL,
                         return_names = TRUE) {
 
+  if (is.null(sep_cols)) return(FALSE)
+
   df_in <- dplyr::select(df_in, all_of(sep_cols))
   res   <- stats::na.omit(df_in)
 

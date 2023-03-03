@@ -1224,9 +1224,11 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param val_col Column containing values for ranking groups/clusters
 #' @param method Method to use for ranking groups, possible values include:
 #'
-#' - A function to use for ranking groups, this should take a single vector as
-#'   input and will be used to summarize the values in `val_col`
-#' - 'count', rank based on number of rows for each group
+#' - A function to use for ranking values in `data_col`, this should take a
+#'   single vector as input and will be used to summarize the values in
+#'   `val_col` (if `val_col` is not `NULL`)
+#' - 'boxplot', rank values in `data_col` based on boxplot stats calculated
+#'   for `val_col`
 #'
 #' @param rev If `TRUE` reverse order of ranked groups so smallest values are
 #' shown first
@@ -1234,10 +1236,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' 'other'. Should be integer or character vector.
 #' @param other_label Label to use for 'other' groups
 #' @noRd
-.rank_values <- function(df_in, data_col, val_col = NULL, method = "count",
+.rank_values <- function(df_in, data_col, val_col = NULL, method = n,
                          rev = FALSE) {
-
-  if (identical(method, "count")) method <- n
 
   res <- dplyr::group_by(df_in, !!sym(data_col))
 
@@ -1256,13 +1256,66 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res
 }
 
+.rank_boxplot <- function(df_in, data_col, val_col, rev = FALSE, ...) {
+
+  res <- dplyr::group_by(df_in, !!sym(data_col))
+
+  res <- dplyr::summarize(
+    res,
+    met = list(boxplot.stats(
+      stats::na.omit(!!sym(val_col)),
+      do.conf = FALSE, do.out = FALSE
+    )),
+    med = median(!!sym(val_col), na.rm = TRUE),
+    max = max(!!sym(val_col), na.rm = TRUE),
+    .groups = "drop"
+  )
+
+  res <- dplyr::mutate(
+    res,
+    q3 = map_dbl(.data$met, ~ .x$stats[4]),
+    q4 = map_dbl(.data$met, ~ .x$stats[5])
+  )
+
+  if (rev) {
+    res <- dplyr::arrange(
+      res,
+      .data$med, .data$q3, .data$q4, .data$max, !!sym(data_col)
+    )
+
+  } else {
+    res <- dplyr::arrange(
+      res,
+      dplyr::desc(.data$med), dplyr::desc(.data$q3),
+      dplyr::desc(.data$q4),  dplyr::desc(.data$max),
+      !!sym(data_col)
+    )
+  }
+
+  res <- dplyr::pull(res, data_col)
+  res <- stats::na.omit(res)
+  res
+}
+
 .set_other_grps <- function(df_in, data_col, val_col = NULL, plot_lvls = NULL,
                             top = NULL, other_label = "other", rev = FALSE,
-                            method = "count") {
+                            method = n) {
 
-  # Need to convert factor to character
-  df_in[data_col] <- as.character(df_in[[data_col]])
+  # Set ranking function
+  if (identical(method, "boxplot")) rank_fn <- .rank_boxplot
+  else                              rank_fn <- .rank_values
 
+  # If numeric or NULL, do nothing, return df_in
+  if (is.null(data_col) || is.numeric(df_in[[data_col]])) return(df_in)
+
+  # Convert logical or factor to character
+  dat <- df_in[[data_col]]
+
+  if (is.logical(dat) || is.factor(dat)) {
+    df_in <- purrr::modify_at(df_in, data_col, as.character)
+  }
+
+  # Rank data_col
   if (is.character(top)) {
     top_grps <- unique(top)
     n_top    <- length(top_grps)
@@ -1272,7 +1325,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     n_grps <- length(rnk)
 
   } else {
-    rnk    <- .rank_values(df_in, data_col, val_col, method = method)
+    rnk    <- rank_fn(df_in, data_col, val_col, method = method)
     n_grps <- length(rnk)
 
     top      <- top[1]
@@ -1293,11 +1346,15 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   }
 
   # Always order values in plot_lvls first
-  # if all levels are provided, use user provided ordering, do not reverse
+  # If all levels are provided, use user provided ordering, do not reverse
   # remove levels that do not appear in data
+  # If user provides NA in plot_levels, keep in order, otherwise always order
+  # NA last
   not_in    <- rnk[!rnk %in% plot_lvls]
-  plot_lvls <- plot_lvls[plot_lvls %in% rnk]
+  plot_lvls <- plot_lvls[plot_lvls %in% c(rnk, NA)]
   lvls      <- c(plot_lvls, not_in)
+
+  if (!NA %in% lvls) lvls <- c(lvls, NA)
 
   if (rev && !purrr::is_empty(not_in)) lvls <- rev(lvls)
 
@@ -1474,36 +1531,25 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @param data_col Data column
 #' @param plot_colors Colors
 #' @param plot_lvls Levels
+#' @param other_label Label to use for 'other' group
+#' @param other_color Color to use for 'other' group
 #' @return Vector of colors
 #' @noRd
-.set_colors <- function(df_in, data_col, plot_colors, plot_lvls) {
+.set_colors <- function(df_in, data_col, plot_colors, plot_lvls = NULL,
+                        other_label = "other", other_color = "grey60") {
+
+  if (is.null(data_col)) return(plot_colors)
 
   # Return default numerical colors
   dat <- df_in[[data_col]]
 
   if (is.numeric(dat)) {
-
     plot_colors <- plot_colors %||% c("#132B43", "#56B1F7")
 
     return(plot_colors)
   }
 
-  # uniq_dat <- stats::na.omit(unique(dat))
-  #
-  # if (!all(uniq_dat) %in% names(plot_colors))
-
-  # If colors and names already set, return
-  # if (!is.null(names(plot_colors)) && is.null(plot_lvls)) {
-  #   return(plot_colors)
-  #
-  # } else if (!is.null(names(plot_colors)) && !is.null(plot_lvls)) {
-  #   return(plot_colors[plot_lvls])
-  #
-  # } else if (!is.null(plot_colors) && !is.null(plot_lvls)) {
-  #   plot_colors <- purrr::set_names(plot_colors, plot_lvls)
-  #
-  #   return(plot_colors)
-  # }
+  set_other_color <- !other_label %in% names(plot_colors)
 
   # Set default plot_lvls and plot_colors
   if (is.null(plot_lvls)) {
@@ -1511,11 +1557,6 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   }
 
   clrs <- scales::hue_pal()(length(plot_lvls))
-
-  # # If unnamed plot_colors provided, replace default colors
-  # if (!is.null(plot_colors) && is.null(names(plot_colors))) {
-  #   clrs[seq_along(plot_colors)] <- plot_colors
-  # }
 
   # Set plot_lvls as names
   lvls <- stats::na.omit(plot_lvls)
@@ -1535,6 +1576,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
     clrs[names(plot_colors)] <- plot_colors
   }
+
+  if (set_other_color) clrs[[other_label]] <- other_color
 
   clrs
 }
