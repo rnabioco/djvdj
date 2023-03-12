@@ -76,7 +76,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
   )
 
   # Check arguments
-  .check_args()
+  # .check_args()
 
   # Format input data
   vdj_cols <- c(global$cell_col, data_col, cluster_col)
@@ -499,14 +499,13 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     cli::cli_abort("`clones` must be >=0")
   }
 
-  # For bargraph allow user to facet plot using group_col when cluster_col is
-  # NULL
-  if (identical(method, "bar") && is.null(cluster_col)) {
-    cluster_col <- group_col
+  # For bargraph allow user to facet plot using cluster_col or group_col
+  if (identical(method, "bar")) {
+    cluster_col <- cluster_col %||% group_col
     group_col   <- NULL
   }
 
-  .check_group_cols(cluster_col, group_col, input)
+  .check_group_cols(cluster_col, group_col, uniq = FALSE)
 
   abun_col <- switch(units, frequency = ".freq", percent = ".pct")
   y_lab    <- .get_axis_label(units)
@@ -514,7 +513,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
   # Calculate clonotype abundance
   plt_dat <- calc_frequency(
     input       = input,
-    cluster_col = cluster_col,
+    cluster_col = c(cluster_col, group_col),
     data_col    = data_col,
     prefix      = ".",
     return_df   = TRUE
@@ -527,8 +526,8 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
   n_lab_dat  <- plt_dat
 
   # Identify data columns that the user should have access to
-  keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
-  keep_cols <- c(cluster_col, data_col, keep_cols)
+  keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col, group_col))
+  keep_cols <- c(cluster_col, group_col, data_col, keep_cols)
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
 
   # Add and format label column for plotting
@@ -536,8 +535,12 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 
   # Rank by abundance
   if (!is.null(cluster_col)) {
+    rnk_cols <- cluster_col
+
+    if (identical(method, "line")) rnk_cols <- c(rnk_cols, group_col)
+
     plt_dat <- .set_lvls(plt_dat, cluster_col, plot_lvls)
-    plt_dat <- dplyr::group_by(plt_dat, !!sym(cluster_col))
+    plt_dat <- dplyr::group_by(plt_dat, !!!syms(rnk_cols))
 
     plt_dat <- dplyr::mutate(
       plt_dat,
@@ -626,14 +629,15 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
         label_params <- .get_uniq_text_args(label_params, "geom_text_repel")
       }
 
-      label_params$mapping        <- ggplot2::aes(label = .data$.lab)
-      label_params$data           <- top_clones
-      label_params$nudge_x        <- label_params$nudge_x %||% 500
-      label_params$direction      <- label_params$direction %||% "y"
-      label_params$segment.colour <- label_params$segment.colour %||% "black"
-      label_params$segment.size   <- label_params$segment.size %||% 0.2
-      label_params$segment.alpha  <- label_params$segment.alpha %||% 0.2
-      label_params$show.legend    <- label_params$show.legend %||% FALSE
+      label_params$mapping          <- ggplot2::aes(label = .data$.lab)
+      label_params$data             <- top_clones
+      label_params$nudge_x          <- label_params$nudge_x %||% 10
+      label_params$direction        <- label_params$direction %||% "y"
+      label_params$segment.colour   <- label_params$segment.colour %||% "black"
+      label_params$segment.size     <- label_params$segment.size %||% 0.2
+      label_params$segment.alpha    <- label_params$segment.alpha %||% 0.2
+      label_params$segment.linetype <- label_params$segment.linetype %||% 2
+      label_params$show.legend      <- label_params$show.legend %||% FALSE
 
       if (!is.null(label_params$size)) {
         label_params$size <- label_params$size / ggplot2::.pt

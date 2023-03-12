@@ -1119,19 +1119,16 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   # Scale arguments
   gg_args <- list(labels = dat_labs)
 
-  res <- gg_in +
-    ggplot2::theme(legend.text = lift(ggplot2::element_text)(lab_args))
-
   if (!is.null(lgnd_clrs)) {
     gg_args$values   <- lgnd_clrs
     gg_args$na.value <- na_clr
 
-    res <- res +
+    res <- gg_in +
       lift(ggplot2::scale_color_manual)(gg_args) +
       lift(ggplot2::scale_fill_manual)(gg_args)
 
   } else {
-    res <- res +
+    res <- gg_in +
       lift(ggplot2::scale_color_discrete)(gg_args) +
       lift(ggplot2::scale_fill_discrete)(gg_args)
   }
@@ -1584,14 +1581,16 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
 #' Check cluster_col and group_col arguments
 #' @noRd
-.check_group_cols <- function(cluster_col, group_col, input = NULL) {
+.check_group_cols <- function(cluster_col, group_col, input = NULL,
+                              uniq = TRUE) {
+
   if (!is.null(group_col) && is.null(cluster_col)) {
     cli::cli_abort(
       "`cluster_col` must be provided when `group_col` is specified"
     )
   }
 
-  if (!is.null(group_col) && identical(group_col, cluster_col)) {
+  if (uniq && !is.null(group_col) && identical(group_col, cluster_col)) {
     cli::cli_abort(
       "`cluster_col` and `group_col` must specify different columns"
     )
