@@ -22,7 +22,7 @@ NULL
 #'
 #' @examples
 #'
-#' plot_features(vdj_so, feature = "seurat_clusters") +
+#' plot_scatter(vdj_so, data_col = "seurat_clusters") +
 #'   djvdj_theme()
 #'
 #' @export

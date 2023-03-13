@@ -118,7 +118,7 @@ old_calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NU
   meta <- dplyr::select(meta, all_of(vdj_cols))
 
   meta <- dplyr::filter(meta, dplyr::if_all(
-    all_of(data_cols),
+    dplyr::all_of(data_cols),
     ~ !is.na(.x)
   ))
 
@@ -517,15 +517,19 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     )
   }
 
-  # Set n label parameters
+  # Set possible n label parameters
   psbl_labs <- switch(
     method,
     heatmap = c("none", "axis"),
-    bar     = c("none", "corner", "legend", "axis")
+    bar     = c("none", "corner")
   )
 
-  n_label   <- n_label %||% psbl_labs
-  n_label   <- n_label[n_label %in% psbl_labs]
+  if (identical(method, "bar") && !is.null(clst_col)) {
+    psbl_labs <- c(psbl_labs, "legend")
+  }
+
+  n_label <- n_label %||% psbl_labs
+  n_label <- n_label[n_label %in% psbl_labs]
 
   # Set n label data
   n_lab_dat <- list()

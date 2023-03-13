@@ -69,7 +69,7 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
 
     filt_cols <- clonotype_col %||% data_cols
 
-    meta <- dplyr::filter(meta, dplyr::if_all(filt_cols, ~ !is.na(.x)))
+    meta <- dplyr::filter(meta, dplyr::if_all(all_of(filt_cols), ~ !is.na(.x)))
   }
 
   # If NULL sep or per_cell, return meta.data

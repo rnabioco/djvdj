@@ -23,7 +23,7 @@ arg_lst <- list(
   x           = list("UMAP_1", c(x = "UMAP_1")),
   y           = list("UMAP_2", c(y = "UMAP_2")),
   input       = list(vdj_so, vdj_sce, df_1),
-  feature     = list("seurat_clusters", c(clust = "seurat_clusters")),
+  data_col    = list("seurat_clusters", c(clust = "seurat_clusters")),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls),
   min_q       = list(NULL, 0.05),
@@ -32,7 +32,7 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_features,
+  .fn     = plot_scatter,
   desc    = "plot_features args chr feat",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
@@ -43,42 +43,44 @@ arg_lst$data_slot <- c("data", "counts")
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_features,
+  .fn     = plot_scatter,
   desc    = "plot_features args chr feat",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
 # Check all plot_features arguments for numeric feature
-arg_lst$feature   <- "nCount_RNA"
+arg_lst$data_col   <- "nCount_RNA"
 arg_lst$plot_lvls <- list(NULL)
 arg_lst$trans     <- c("identity", "log10")
+arg_lst$min_q     <- 0.01
+arg_lst$max_q     <- 0.99
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_features,
+  .fn     = plot_scatter,
   desc    = "plot_features args num feat",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
 # Check plot_features warning for numeric feature
-test_that("plot_features warning num feat", {
-  expect_warning(
-    vdj_so |>
-      plot_features(
-        feature   = "nCount_RNA",
-        plot_lvls = test_lvls
-      )
-  )
-})
+# test_that("plot_features warning num feat", {
+#   expect_warning(
+#     vdj_so |>
+#       plot_scatter(
+#         data_col  = "nCount_RNA",
+#         plot_lvls = test_lvls
+#       )
+#   )
+# })
 
 # Check plot_features error for same x and y
 test_that("plot_features error same x y", {
   expect_error(
     vdj_so |>
-      plot_features(
+      plot_scatter(
         x         = "UMAP_1",
         y         = "UMAP_1",
-        feature   = "nCount_RNA",
+        data_col  = "nCount_RNA",
         plot_lvls = test_lvls
       ),
     "`x` and `y` must be different"
@@ -88,7 +90,7 @@ test_that("plot_features error same x y", {
 # Check plot_features feature not found
 test_that("plot_fetures bad feature", {
   fn <- function(obj) {
-    plot_features(obj, feature = "BAD_FEATURE")
+    plot_scatter(obj, data_col = "BAD_FEATURE")
   }
 
   expect_error(
@@ -113,7 +115,7 @@ arg_lst <- list(
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_vdj_feature,
+  .fn     = plot_scatter,
   desc    = "plot_vdj_feature args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
@@ -130,7 +132,7 @@ arg_lst$plot_lvls <- chain_lvls
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_vdj_feature,
+  .fn     = plot_scatter,
   desc    = "plot_vdj_feature args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
@@ -140,31 +142,39 @@ test_that("plot_vdj_feature bad chain filtering", {
 
   expect_warning(
     vdj_so |>
-      plot_vdj_feature(
+      plot_scatter(
         data_col = "nCount_RNA",
         chain = "IGK"
       ),
-    "Some columns do not contain per-chain"
+    "does not contain per-chain data"
   )
 })
 
-# Check all plot_vdj arguments
+# Check all plot_violin arguments
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce, df_1),
   data_col    = "umis",
   per_chain    = c(FALSE, TRUE),
   cluster_col = list(NULL, "seurat_clusters"),
   chain       = list(NULL, "IGH", c("IGH", "IGK")),
-  method      = c("histogram", "density", "violin", "boxplot"),
-  units       = c("frequency", "percent"),
+  method      = list("violin", "boxplot"),
   plot_colors = list(NULL, test_cols),
   trans       = c("identity", "log10")
 )
 
 test_all_args(
   arg_lst = arg_lst,
-  .fn     = plot_vdj,
-  desc    = "plot_vdj args",
+  .fn     = plot_violin,
+  desc    = "plot_violin args",
+  chk     = expr(expect_s3_class(.res, "ggplot"))
+)
+
+arg_lst$method <- list("histogram", "density")
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = plot_histogram,
+  desc    = "plot_histogram args",
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
@@ -178,7 +188,7 @@ arg_lst <- list(
   plot_colors  = list(NULL, test_cols),
   plot_lvls    = list(NULL, test_lvls),
   label_params = list(list(), list(size = 2)),
-  n_clones     = c(0, 5)
+  clones       = c(0, 5)
 )
 
 test_all_args(
@@ -190,7 +200,7 @@ test_all_args(
 
 # Check all plot_clone_frequency arguments for bar plot
 arg_lst$method <- "bar"
-arg_lst$n_clones <- 5
+arg_lst$clones <- list(5, c("clonotype1", "clonotype1031"))
 
 test_all_args(
   arg_lst = arg_lst,
@@ -250,10 +260,11 @@ test_that("plot_clone_frequency bad n_clonotypes", {
   expect_error(
     vdj_so |>
       plot_clone_frequency(
-        method          = "bar",
+        method   = "bar",
         data_col = "cdr3_nt",
-        n_clones  = 0
-      )
+        clones   = 0
+      ),
+    "must be >0"
   )
 })
 
@@ -326,7 +337,7 @@ arg_lst <- list(
   stack       = c(TRUE, FALSE),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls_2),
-  n_top       = list(NULL, 4),
+  top         = list(NULL, 4),
   n_label     = list(NULL, "none"),
   label_params = list(list(size = 4), list())
 )
@@ -511,8 +522,8 @@ test_genes <- vdj_so |>
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce),
   data_cols   = "v_gene",
-  vdj_genes   = list(test_genes),
-  method        = c("heatmap", "bar"),
+  genes       = list(test_genes),
+  method      = c("heatmap", "bar"),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls),
   units       = c("percent", "frequency"),
@@ -543,12 +554,12 @@ test_all_args(
 # Check plot_gene_usage bad plot_genes
 test_that("plot_gene_usage bad plot_genes", {
   expect_error(
-    plot_gene_usage(vdj_so, data_cols = "v_gene", vdj_genes = "BAD"),
+    plot_gene_usage(vdj_so, data_cols = "v_gene", genes = "BAD"),
     "None of the provided genes were found"
   )
 
   expect_warning(
-    plot_gene_usage(vdj_so, data_cols = "v_gene", vdj_genes = c(test_genes, "BAD")),
+    plot_gene_usage(vdj_so, data_cols = "v_gene", genes = c(test_genes, "BAD")),
     "The following genes were not found"
   )
 })

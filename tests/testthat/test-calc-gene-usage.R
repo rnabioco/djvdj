@@ -6,7 +6,7 @@ df_2 <- vdj_so@meta.data |>
 
 # Check all calc_gene_usage arguments
 arg_lst <- list(
-  input       = list(vdj_so, vdj_sce, df_1, df_2),
+  input       = list(df_1, df_2),
   data_cols   = list("v_gene", "j_gene", c("v_gene", "j_gene")),
   cluster_col = list(NULL, "seurat_clusters"),
   chain       = list(NULL, "IGH", "IGL", "IGK"),
@@ -17,7 +17,26 @@ test_all_args(
   arg_lst = arg_lst,
   .fn     = calc_gene_usage,
   desc    = "calc_usage args",
-  chk     = expr(expect_s3_class(.res, "tbl"))
+  chk     = expr(expect_s3_class(.res, "data.frame"))
+)
+
+arg_lst$input     <- list(vdj_so)
+arg_lst$data_cols <- "v_gene"
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = calc_gene_usage,
+  desc    = "calc_usage args",
+  chk     = expr(expect_s4_class(.res, "Seurat"))
+)
+
+arg_lst$input <- list(vdj_sce)
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = calc_gene_usage,
+  desc    = "calc_usage args",
+  chk     = expr(expect_s4_class(.res, "SingleCellExperiment"))
 )
 
 # Check calc_gene_usage calculations
@@ -27,7 +46,9 @@ test_all_args(
   res <- calc_gene_usage(
     input,
     data_cols = genes,
-    chain = chain
+    chain = chain,
+    prefix = "",
+    return_df = TRUE
   ) |>
     rowwise() |>
     mutate(nm = stringr::str_c(!!!syms(genes))) |>

@@ -455,7 +455,7 @@ NULL
   if (!unnest) {
     res <- dplyr::mutate(
       res,
-      across(typ_cols, ~ .str_convert_list(.x, typs[[cur_column()]]))
+      across(all_of(typ_cols), ~ .str_convert_list(.x, typs[[cur_column()]]))
     )
 
     return(res)
@@ -464,7 +464,7 @@ NULL
   res <- tidyr::unchop(res, all_of(sep_cols))
 
   res <- mutate(
-    res, across(typ_cols, ~ .str_convert(.x, typs[[cur_column()]]))
+    res, across(all_of(typ_cols), ~ .str_convert(.x, typs[[cur_column()]]))
   )
 
   res

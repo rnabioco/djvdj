@@ -600,11 +600,11 @@ plot_mds <- function(input, data_col, cluster_col,
   # Create MDS plot
   lab_args <- .get_uniq_text_args(label_params, "geom_text")
 
-  res <- plot_features(
+  res <- plot_scatter(
     plt_dat,
     x = "MDS_1",
     y = "MDS_2",
-    feature      = cluster_col,
+    data_col     = cluster_col,
     plot_colors  = plot_colors,
     plot_lvls    = plot_lvls,
     n_label      = n_label,

@@ -50,11 +50,11 @@
 #'   data_col = "cdr3"
 #' )
 #'
-#' plot_features(
+#' plot_scatter(
 #'   res,
 #'   x = "cdr3_UMAP_1",
 #'   y = "cdr3_UMAP_2",
-#'   feature = "cdr3_cluster_0.5"
+#'   data_col = "cdr3_cluster_0.5"
 #' )
 #'
 #' # Cluster cells based on sequences for a specific chain
@@ -361,7 +361,7 @@ plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
       res, n_lab_dat,
       n_label  = n_label,
       crnr_col = "seq_group",
-      calc_n   = FALSE,
+      n_fn     = sum,
       lab_args = label_params
     )
   }

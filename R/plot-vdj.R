@@ -242,6 +242,7 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
 #' @param x,y Name of meta.data column or other variable to plot on x and
 #' y-axis
 #' @param group_col meta.data column to use for splitting plot into panels
+#' @param data_slot Slot to pull data from when `input` is a Seurat object
 #' @param top To only show the top cell groups, provide
 #' one of the following, all other cells will be labeled using the value
 #' provided to the `other_label` argument. If `NULL` this will be automatically
@@ -302,14 +303,14 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
 #' @return ggplot object
 #' @export
 plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
-                         group_col = NULL, top = NULL, other_label = "other",
-                         plot_colors = NULL, plot_lvls = names(plot_colors),
-                         trans = "identity", panel_nrow = NULL,
-                         panel_scales = "fixed", min_q = NULL, max_q = NULL,
-                         na_color = "grey80", n_label = NULL,
-                         label_params = list(), ..., chain = NULL,
-                         chain_col = global$chain_col, summary_fn = NULL,
-                         sep = global$sep) {
+                         group_col = NULL, data_slot = "data", top = NULL,
+                         other_label = "other", plot_colors = NULL,
+                         plot_lvls = names(plot_colors), trans = "identity",
+                         panel_nrow = NULL, panel_scales = "fixed",
+                         min_q = NULL, max_q = NULL, na_color = "grey80",
+                         n_label = NULL, label_params = list(), ...,
+                         chain = NULL, chain_col = global$chain_col,
+                         summary_fn = NULL, sep = global$sep) {
 
   # Check input classes
   .check_args(data_col = list(allow_null = TRUE))
@@ -328,6 +329,7 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
     chain       = chain,
     chain_col   = chain_col,
     summary_fn  = summary_fn,
+    slot        = data_slot,
     sep         = sep,
 
     # additional variables to fetch from object
@@ -438,7 +440,7 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
                                       chain = NULL,
                                       chain_col = global$chain_col,
                                       per_chain = TRUE, summary_fn = mean,
-                                      filter_cells = per_chain,
+                                      filter_cells = per_chain, slot = "data",
                                       sep = global$sep) {
 
   # Check that columns are present in object
@@ -482,6 +484,10 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
         return_df = TRUE
       )
     }
+  } else if (!is.null(chain)) {
+    cli::cli_warn(
+      "`data_col` does not contain per-chain data, chains were not filtered."
+    )
   }
 
   # Remove cells with missing V(D)J data

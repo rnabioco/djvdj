@@ -153,7 +153,9 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
   res <- df_in
 
   if (na_remove) {
-    res <- df_in <- dplyr::filter(df_in, dplyr::if_all(data_cols, ~ !is.na(.x)))
+    res <- df_in <- dplyr::filter(df_in, dplyr::if_all(
+      dplyr::all_of(data_cols), ~ !is.na(.x)
+    ))
   }
 
   # Count total cells per cluster
@@ -295,7 +297,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
 
   stat_cols <- purrr::set_names(stat_cols, paste0(prefix, stat_cols))
 
-  res <- dplyr::select(res, final_cols, stat_cols)
+  res <- dplyr::select(res, dplyr::all_of(final_cols), dplyr::all_of(stat_cols))
 
   res
 }
@@ -563,7 +565,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     )
 
   } else {
-    top_clones <- dplyr::filter(plt_dat, orig_data %in% clones)
+    top_clones <- dplyr::filter(plt_dat, !!sym(data_col) %in% clones)
     clones     <- length(clones)
   }
 
