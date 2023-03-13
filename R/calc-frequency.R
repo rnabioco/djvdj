@@ -197,7 +197,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
     )
 
     res <- dplyr::select(res, -!!sym(chain_col))
-    res <- tidyr::unnest(res, data_cols)
+    res <- tidyr::unnest(res, dplyr::all_of(data_cols))
   }
 
   # Filter for unique rows, any duplicated rows are cells with the same
@@ -236,7 +236,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
   # Report zeros for missing groups
   # Need to remove original cluster_col and then add back
   if (include_zeros) {
-    res <- dplyr::select(res, -cluster_col, clst_nm)
+    res <- dplyr::select(res, -all_of(cluster_col), dplyr::all_of(clst_nm))
 
     res <- tidyr::pivot_wider(
       res,

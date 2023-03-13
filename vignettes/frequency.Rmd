@@ -116,14 +116,14 @@ so |>
 
 ## UMAP projections
 
-By default `calc_frequency()` will divide clonotypes into groups based on frequency and add a column to the meta.data containing these group labels. Clonotype frequencies can be summarized on a UMAP projection by plotting the added 'grp' column using the generic plotting function `plot_features()`.
+By default `calc_frequency()` will divide clonotypes into groups based on frequency and add a column to the meta.data containing these group labels. Clonotype frequencies can be summarized on a UMAP projection by plotting the added 'grp' column using the generic plotting function `plot_scatter()`.
 
 Cells that lack BCR data will be plotted as `NA`s, the color of these points can be adjusted using the `na_color` argument.
 
 ```{r, fig.width = 11}
 # Create UMAP summarizing samples
 mouse_gg <- so |>
-  plot_features(feature = "orig.ident")
+  plot_scatter(data_col = "orig.ident")
 
 # Create UMAP summarizing clonotype frequencies
 abun_gg <- so |>
@@ -131,24 +131,18 @@ abun_gg <- so |>
     data_col = "clonotype_id",
     cluster_col = "sample"
   ) |>
-  plot_features(feature = "clonotype_id_grp")
+  plot_scatter(data_col = "clonotype_id_grp")
 
 mouse_gg + abun_gg
 ```
 
-Highly abundant clonotypes can also be specifically labeled on a UMAP projection. To do this, add a new meta.data column with the desired label using the `mutate_vdj()` function. This function works in a similar manner as `dplyr::mutate()`, but will specifically modify the object meta.data and allows to the user to parse per-chain information for each cell.
+Highly abundant clonotypes can also be specifically labeled on a UMAP projection. To do this, pass a vector of top clonotypes to highlight to the `top` argument of `plot_scatter()`.
 
 ```{r, fig.width = 11}
 top_gg <- so |>
-  mutate_vdj(
-    top_clonotype = ifelse(
-      clonotype_id == "clonotype56",
-      clonotype_id,
-      "other"
-    )
-  ) |>
-  plot_features(
-    feature     = "top_clonotype",
+  plot_scatter(
+    data_col    = "clonotype_id",
+    top         = "clonotype56",
     plot_colors = c(other = "#fec44f", clonotype56 = "#3182bd")
   )
 

@@ -111,7 +111,9 @@ filter_vdj <- function(input, filt, data_cols = NULL,
     keep_rows <- unlist(keep_rows)
     vdj_cols  <- vdj_cols[vdj_cols != global$cell_col]
 
-    vdj <- dplyr::mutate(meta, across(all_of(vdj_cols), .add_na, !keep_rows))
+    vdj <- dplyr::mutate(meta, dplyr::across(
+      all_of(vdj_cols), ~ .add_na(.x, !keep_rows)
+    ))
 
     res <- .add_meta(input, vdj)
 
@@ -144,7 +146,9 @@ filter_vdj <- function(input, filt, data_cols = NULL,
   other_cols <- vdj_cols[!vdj_cols %in% sep_cols]
   na_rows    <- purrr::map_lgl(keep_rows, ~ !any(.x))
 
-  vdj <- dplyr::mutate(vdj, dplyr::across(all_of(other_cols), .add_na, na_rows))
+  vdj <- dplyr::mutate(vdj, dplyr::across(
+    all_of(other_cols), ~ .add_na(.x, na_rows)
+  ))
 
   # Format results
   res <- .add_meta(input, vdj)

@@ -257,7 +257,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # if a chain is missing a V(D)J segment, the gene name will be left empty
   # when read into R this results in an NA
   contigs <- purrr::map(contigs, ~ {
-    dplyr::mutate(.x, across(all_of(gene_cols), tidyr::replace_na, "None"))
+    dplyr::mutate(.x, dplyr::across(
+      all_of(gene_cols), ~ tidyr::replace_na(.x, "None")
+    ))
   })
 
   # Filter for productive full length chains

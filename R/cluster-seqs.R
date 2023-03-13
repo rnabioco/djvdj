@@ -344,7 +344,9 @@ plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
   }
 
   # Set n label data
-  if (!is.list(seqs)) seqs <- list(seqs)
+  # If cluster_col is provided, seqs will be named list with a vector for each
+  # cluster
+  if (!is.list(seqs)) seqs <- list(seq = seqs)
 
   n_lab_dat <- tibble::tibble(
     seq_group = names(seqs),

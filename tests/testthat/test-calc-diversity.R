@@ -61,6 +61,8 @@ arg_lst$input     <- list(test_so)
 arg_lst$n_boots   <- 10
 arg_lst$return_df <- FALSE
 
+set.seed(42)
+
 test_all_args(
   arg_lst = arg_lst,
   .fn     = calc_diversity,

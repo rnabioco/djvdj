@@ -396,6 +396,10 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   # Set plot variables
   x_col <- clr_col <- group_col %||% cluster_col
 
+  # If downsample, exclude n label since values will be incorrect
+  # NEED TO GET N AFTER DOWNSAMPLING
+  if (downsample) n_label <- "none"
+
   # Calculate diversity
   # remove any existing diversity columns from plt_dat
   plt_dat <- .get_meta(input)
@@ -501,12 +505,18 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
     }
   }
 
-  # Set theme
-  if (length(method) == 1) {
+  # Create facets
+  if (length(method) > 1) {
+    res <- res +
+      ggplot2::facet_wrap(~ met, nrow = panel_nrow, scales = "free") +
+      ggplot2::theme(axis.title.y = ggplot2::element_blank())
+
+  } else {
     res <- res +
       ggplot2::labs(y = names(method))
   }
 
+  # Set theme
   res <- res +
     ggplot2::theme(legend.position = "none")
 

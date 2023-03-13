@@ -109,7 +109,10 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   if (scale_fill)  gg_aes$fill   <- sym(.fill)
   if (scale_clr)   gg_aes$colour <- sym(.color)
 
-  if (!scale_fill && !scale_clr) gg_args$colour <- gg_args$colour %||% clrs
+  if (!scale_fill && !scale_clr) {
+    gg_args$colour <- gg_args$colour %||% clrs
+    gg_args$fill   <- gg_args$fill   %||% clrs
+  }
 
   # Create plot
   res <- ggplot2::ggplot(df_in, gg_aes) +
