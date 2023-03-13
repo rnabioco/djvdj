@@ -82,11 +82,11 @@ res <- cluster_sequences(
   data_col = "cdr3"
 )
 
-plot_features(
+plot_scatter(
   res,
   x = "cdr3_UMAP_1",
   y = "cdr3_UMAP_2",
-  feature = "cdr3_cluster_0.5"
+  data_col = "cdr3_cluster_0.5"
 )
 
 # Cluster cells based on sequences for a specific chain

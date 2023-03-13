@@ -10,6 +10,7 @@ plot_scatter(
   x = "UMAP_1",
   y = "UMAP_2",
   group_col = NULL,
+  data_slot = "data",
   top = NULL,
   other_label = "other",
   plot_colors = NULL,
@@ -40,6 +41,8 @@ to use for coloring points}
 y-axis}
 
 \item{group_col}{meta.data column to use for splitting plot into panels}
+
+\item{data_slot}{Slot to pull data from when \code{input} is a Seurat object}
 
 \item{top}{To only show the top cell groups, provide
 one of the following, all other cells will be labeled using the value
