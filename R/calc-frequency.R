@@ -572,7 +572,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
   plt_dat    <- dplyr::ungroup(plt_dat)
   top_clones <- dplyr::ungroup(top_clones)
 
-  # Create bar graph
+  # Set plot arguments
   gg_args <- list(
     grp          = cluster_col,
     clrs         = plot_colors,
@@ -584,6 +584,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     ...
   )
 
+  # Create bar graph
   if (identical(method, "bar")) {
     plt_labs   <- purrr::set_names(top_clones$.lab, top_clones[[data_col]])
     top_clones <- dplyr::arrange(top_clones, desc(!!sym(abun_col)))
@@ -612,6 +613,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     gg_args$x         <- "rank"
     gg_args$y         <- abun_col
     gg_args$.color    <- cluster_col
+    gg_args$.fill     <- FALSE        # fill is not accepted aes for geom_line
     gg_args$grp       <- group_col
     gg_args$trans_y   <- trans
     gg_args$linewidth <- gg_args$linewidth %||% 1

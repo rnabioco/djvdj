@@ -67,8 +67,9 @@ reference:
 
 - title: Plotting
   contents:
-  - ends_with("_features")
-  - plot_vdj
+  - plot_violin
+  - plot_histogram
+  - plot_scatter
   - djvdj_theme
 
 - title: Data

@@ -60,8 +60,10 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
 #' @param grp Varible to use for `ggplot2::facet_wrap()`
-#' @param .color Variable to use for color
-#' @param .fill Variable to use for fill
+#' @param .color Variable to use for color, or logical indicating whether `clrs`
+#' should be used to set color, if `NULL`, `clrs` will be used
+#' @param .fill Variable to use for fill, or logical indicating whether `clrs`
+#' should be used to set fill, if `NULL`, `clrs` will be used
 #' @param clrs Vector of colors for plotting
 #' @param na_clr Color to use for `NA` values
 #' @param trans_x Method to use for transforming x-axis
@@ -101,7 +103,10 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   if (n_rm > 0) cli::cli_warn("Removed {n_rm} rows containing missing values")
 
   # Check inputs
-  if (!is.null(.fill) && !is.null(.color) && !identical(.fill, .color)) {
+  scale_clr  <- is.character(.color)
+  scale_fill <- is.character(.fill)
+
+  if (scale_clr && scale_fill && !identical(.fill, .color)) {
     cli::cli_abort(
       "If both `.color` and `.fill` are provided,
        they must refer to the same variable", .internal = TRUE
@@ -109,8 +114,6 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   }
 
   # Set aesthetics and geom arguments
-  scale_fill <- !is.null(.fill)
-  scale_clr  <- !is.null(.color)
   num_clr    <- scale_clr && is.numeric(df_in[[.color]])
   num_fill   <- scale_fill && is.numeric(df_in[[.fill]])
 
@@ -125,8 +128,11 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   if (scale_clr)   gg_aes$colour <- sym(.color)
 
   if (!scale_fill && !scale_clr) {
-    gg_args$colour <- gg_args$colour %||% clrs
-    gg_args$fill   <- gg_args$fill   %||% clrs
+    .color <- is.null(.color) || (is.logical(.color) && .color)
+    .fill  <- is.null(.fill)  || (is.logical(.fill) && .fill)
+
+    if (.color) gg_args$colour <- gg_args$colour %||% clrs
+    if (.fill)  gg_args$fill   <- gg_args$fill   %||% clrs
   }
 
   # Create plot
@@ -206,12 +212,17 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     else                                              return(NULL)
   }
 
+  # can't use `%||%` here since .fill and .color can be logical
+  if (scale_fill)     lgnd_col <- .fill
+  else if (scale_clr) lgnd_col <- .color
+  else                lgnd_col <- NULL
+
   res <- .add_n_label(
     res, label_data,
     n_label   = n_label,
     crnr_col  = grp,
     axis_col  = .chk_num(df_in, x),
-    lgnd_col  = .chk_num(df_in, .fill %||% .color),
+    lgnd_col  = .chk_num(df_in, lgnd_col),
     lgnd_clrs = clrs,
     na_clr    = na_clr,
     n_fn      = n_fn,

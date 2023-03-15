@@ -153,10 +153,11 @@ test_that("plot_vdj_feature bad chain filtering", {
 # Check all plot_violin arguments
 arg_lst <- list(
   input       = list(vdj_so, vdj_sce, df_1),
-  data_col    = "umis",
+  data_col    = "nCount_RNA",
   per_chain    = c(FALSE, TRUE),
   cluster_col = list(NULL, "seurat_clusters"),
-  chain       = list(NULL, "IGH", c("IGH", "IGK")),
+  group_col   = list(NULL, "orig.ident"),
+  # chain       = list(NULL, "IGH", c("IGH", "IGK")),
   method      = list("violin", "boxplot"),
   plot_colors = list(NULL, test_cols),
   trans       = c("identity", "log10")
