@@ -48,24 +48,38 @@ so <- splen_so |>
 
 <br>
 
-## Plotting numerical data
+## Histograms
 
-The `plot_vdj()` function can be used to plot numerical V(D)J data present in the object. By default, this will plot the values present in the `data_col` column for every chain. The `trans` argument can be used to specify an axis transformation.
+The `plot_histogram()` function can be used to plot numerical V(D)J data present in the object. By default, this will plot the values present in the `data_col` column for every cell. If `data_col` contains per-chain data, the values will be summarized for each cell. By default the mean will be calculated. The `trans` argument can be used to specify an x-axis transformation.
+
+In the example below, the mean number of UMIs per cell is being plotted.
 
 ```{r}
 so |>
-  plot_vdj(
+  plot_histogram(
     data_col    = "umis",
     cluster_col = "orig.ident",
     trans       = "log10"
   )
 ```
 
-To only plot values for a specific chain, the `chain` argument can be used. In this example we are plotting of the number of UMIs for each IGK chain.
+The summary function can be changed using the `summary_fn` argument. The total number of UMIs per cell can be plotted by passing the `sum()` function.
 
 ```{r}
 so |>
-  plot_vdj(
+  plot_histogram(
+    data_col    = "umis",
+    cluster_col = "orig.ident",
+    summary_fn  = sum,
+    trans       = "log10"
+  )
+```
+
+To only plot values for a specific chain, the `chain` argument can be used. In this example the mean number of UMIs is shown for each IGK chain.
+
+```{r}
+so |>
+  plot_histogram(
     data_col    = "umis",
     cluster_col = "orig.ident",
     chain       = "IGK",
@@ -73,30 +87,40 @@ so |>
   )
 ```
 
-The `method` argument can be used to generate other types of plots including boxplots.
+The `method` argument can be used to create a density plot instead of a histogram.
 
 ```{r}
 so |>
-  plot_vdj(
+  plot_histogram(
     data_col    = "reads",
-    cluster_col = "sample",
-    method      = "boxplot",
+    cluster_col = "orig.ident",
+    method      = "density",
     trans       = "log10"
   )
 ```
 
-Instead of plotting values for each chain, per-chain values can be summarized and plotted for each cell. In this example we are plotting the mean number of reads for each cell.
+<br>
+
+## Violin plots
 
 ```{r}
 so |>
-  plot_vdj(
+  plot_violin(
     data_col    = "reads",
     cluster_col = "sample",
-    method      = "violin",
+    trans       = "log10"
+  )
+```
+
+Instead of summarizing per-chain values for each cell, values can be plotted for each chain.
+
+```{r}
+so |>
+  plot_violin(
+    data_col    = "reads",
+    cluster_col = "sample",
     trans       = "log10",
-    
-    per_chain   = FALSE,
-    summary_fn  = mean
+    per_chain   = TRUE
   )
 ```
 
@@ -104,21 +128,18 @@ so |>
 
 ## UMAP projections
 
-To plot V(D)J information on UMAP projections, the `plot_vdj_feature()` can be used. A summary function to use for summarizing per-chain values for each cell must be specified using the `summary_fn` argument. In this example we are plotting the mean number of mutations for each cell.
+To plot V(D)J information on UMAP projections, the `plot_scatter()` can be used. A summary function to use for summarizing per-chain values for each cell must be specified using the `summary_fn` argument. In this example we are plotting the mean number of mutations for each cell.
 
 ```{r, fig.width = 5, fig.height = 4}
 so |>
-  plot_vdj_feature(
-    data_col   = "all_mis",
-    summary_fn = mean
-  )
+  plot_scatter(data_col = "all_mis")
 ```
 
 Instead of summarizing the per-chain values for each cell, we can also specify a specific chain to use for plotting. In this example we are plotting the CDR3 length for IGK chains. If a cell does not have an IGK chain or has multiple IGK chains, it will be plotted as an `NA`.
 
 ```{r, fig.width = 5.5, fig.height = 4}
 so |>
-  plot_vdj_feature(
+  plot_scatter(
     data_col = "cdr3_length",
     chain    = "IGK"
   )
@@ -128,7 +149,7 @@ Like `plot_vdj()`, the scale can also be transformed using the `trans` argument.
 
 ```{r, fig.width = 5.25, fig.height = 4}
 so |>
-  plot_vdj_feature(
+  plot_scatter(
     data_col    = "umis",
     trans       = "log10",
     plot_colors = c("#fd8d3c", "black")

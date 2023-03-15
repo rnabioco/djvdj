@@ -85,6 +85,21 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
                          label_params = list(), n_fn = dplyr::n,
                          label_data = df_in, ...) {
 
+  # Remove rows with missing values
+  # Need to do this so n labels are correct
+  # Only remove NAs for numeric columns since character or factor NAs can be
+  # plotted
+  chk_na <- purrr::set_names(c(x, y))
+  chk_na <- map_lgl(chk_na, ~ is.numeric(df_in[[.x]]))
+  chk_na <- names(chk_na[chk_na])
+  n_orig <- nrow(df_in)
+
+  df_in <- dplyr::filter(df_in, dplyr::if_all(all_of(chk_na), ~ !is.na(.x)))
+
+  n_rm <- n_orig - nrow(df_in)
+
+  if (n_rm > 0) cli::cli_warn("Removed {n_rm} rows containing missing values")
+
   # Check inputs
   if (!is.null(.fill) && !is.null(.color) && !identical(.fill, .color)) {
     cli::cli_abort(
@@ -836,6 +851,8 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   pre_all  <- is.null(plt_args$preAllocateTracks) && rotate_labels
   track_ht <- is.null(plt_args$annotationTrackHeight)
 
+  circos_fun <- function(...) circlize::chordDiagram(...)
+
   if (pre_all) {
     if (track_ht) {
       circos_fun <- function(...) {
@@ -857,16 +874,12 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
         )
       }
     }
-  } else {
-    if (track_ht) {
-      circos_fun <- function(...) {
-        circlize::chordDiagram(
-          annotationTrackHeight = circlize::mm_h(c(3, 4)),
-          ...
-        )
-      }
-    } else {
-      circos_fun <- function(...) circlize::chordDiagram(...)
+  } else if (track_ht) {
+    circos_fun <- function(...) {
+      circlize::chordDiagram(
+        annotationTrackHeight = circlize::mm_h(c(3, 4)),
+        ...
+      )
     }
   }
 
