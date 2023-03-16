@@ -14,13 +14,13 @@ plot_diversity(
   n_boots = 0,
   chain = NULL,
   chain_col = global$chain_col,
+  sep = global$sep,
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   panel_nrow = NULL,
   panel_scales = "free",
   n_label = NULL,
   label_params = list(),
-  sep = global$sep,
   ...
 )
 }
@@ -54,6 +54,10 @@ per-chain data such as CDR3 sequences. Set to NULL to include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell
+\subsection{Aesthetics}{
+}}
+
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
@@ -79,8 +83,6 @@ plot legend
 
 \item{label_params}{Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")}
-
-\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}

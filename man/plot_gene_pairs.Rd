@@ -2,28 +2,24 @@
 % Please edit documentation in R/calc-gene-usage.R
 \name{plot_gene_pairs}
 \alias{plot_gene_pairs}
-\title{Plot usage of V(D)J gene pairs}
+\title{Plot paired usage of V(D)J segments between chains}
 \usage{
 plot_gene_pairs(
   input,
   data_col,
   chains,
   cluster_col = NULL,
-  group_col = NULL,
   genes = 20,
-  method = "heatmap",
-  plot_colors = NULL,
-  plot_lvls = NULL,
   chain_col = global$chain_col,
-  trans = "identity",
+  method = "heatmap",
   units = "percent",
-  rotate_labels = FALSE,
-  panel_nrow = NULL,
-  show_points = TRUE,
-  n_label = NULL,
-  label_params = list(),
   return_list = FALSE,
   sep = global$sep,
+  plot_colors = NULL,
+  plot_lvls = NULL,
+  trans = "identity",
+  rotate_labels = FALSE,
+  panel_nrow = NULL,
   ...
 )
 }
@@ -41,16 +37,56 @@ calculations, e.g. \code{c("IGH", "IGK")}.}
 \item{cluster_col}{meta.data column containing cell clusters to use when
 calculating gene usage}
 
+\item{genes}{An integer specifying the number of genes to plot, or
+a vector giving the names of genes to include.}
+
 \item{chain_col}{meta.data column containing chains for each cell}
 
-\item{sep}{Separator used for storing per cell V(D)J data}
+\item{method}{Method to use for plotting, possible values are:
+\itemize{
+\item 'heatmap', create a heatmap, this is the default when two columns are
+passed to the data_cols argument
+\item 'circos', create a circos plot, this requires two columns to be provided
+to the data_cols argument
+}}
+
+\item{units}{Units to show on scale, either 'frequency' or 'percent'}
+
+\item{return_list}{Should a list of plots be returned, if FALSE plots will be
+combined and arranged into panels}
+
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell
+\subsection{Aesthetics}{
+}}
+
+\item{plot_colors}{Character vector containing colors to use for plot. If a
+bar graph is created this will specify how to color cell clusters. For a
+heatmap, these colors will be used to generate the color gradient.}
+
+\item{plot_lvls}{Levels to use for ordering clusters}
+
+\item{trans}{Transformation to use when plotting segment usage, e.g.
+'log10'. By default values are not transformed, refer to
+\code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}} for more options.}
+
+\item{rotate_labels}{Should labels on circos plot be rotated to reduce
+overlapping text}
+
+\item{panel_nrow}{The number of rows to use for arranging plots when
+return_list is FALSE}
+
+\item{...}{Additional arguments to pass to plotting function,
+\code{\link[ggplot2:geom_tile]{ggplot2::geom_tile()}} for heatmap, \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for circos
+plot}
 }
 \value{
-data.frame containing gene pair summary
+ggplot object
 }
 \description{
-Plot usage of V(D)J gene pairs
+Plot paired usage of V(D)J segments between chains
 }
 \seealso{
+\code{\link[=calc_gene_pairs() calc_gene_usage]{calc_gene_pairs() calc_gene_usage()}}
+
 \code{\link[=calc_gene_usage(), calc_gene_pairs(), plot_gene_usage]{calc_gene_usage(), calc_gene_pairs(), plot_gene_usage()}}
 }

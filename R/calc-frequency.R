@@ -13,15 +13,19 @@
 #' calculations.
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' grouping cells when calculating clonotype abundance
+#' @param prefix Prefix to add to new columns
+#' @param return_df Return results as a data.frame. If set to `FALSE`, results
+#' will be added to the input object.
+#'
+#' ## VDJ arguments
+#'
 #' @param per_chain If `TRUE` the frequency of each per-chain value will be
 #' calculated. If `FALSE` per-chain data will not be parsed and the values
 #' present in `data_col` will be used as is.
 #' @param chain Chain(s) to use for calculating frequency. Set to `NULL` to
 #' include all chains.
 #' @param chain_col meta.data column(s) containing chains for each cell
-#' @param prefix Prefix to add to new columns
-#' @param return_df Return results as a data.frame. If set to `FALSE`, results
-#' will be added to the input object.
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with clonotype frequencies
 #' @seealso [plot_frequency()], [plot_clone_frequency()]
 #'
@@ -65,9 +69,11 @@
 #'
 #' @export
 calc_frequency <- function(input, data_col, cluster_col = NULL,
-                           per_chain = FALSE, chain = NULL,
-                           chain_col = global$chain_col,
                            prefix = paste0(data_col, "_"), return_df = FALSE,
+
+                           per_chain = FALSE,
+                           chain = NULL,
+                           chain_col = global$chain_col,
                            sep = global$sep) {
 
   # Check that columns are present in object
@@ -391,6 +397,9 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 #' - 'line', create a rank-abundance plot
 #'
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
+#'
+#' ## Aesthetics
+#'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters
 #' @param trans Transformation to use for plotting data, e.g. 'log10'. By
@@ -473,7 +482,8 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 plot_clone_frequency <- function(input, data_col = global$clonotype_col,
                                  cluster_col = NULL, group_col = NULL,
                                  clones = NULL, method = "bar",
-                                 units = "percent", plot_colors = NULL,
+                                 units = "percent",
+                                 plot_colors = NULL,
                                  plot_lvls = names(plot_colors),
                                  trans = "identity", panel_nrow = NULL,
                                  panel_scales = "free_x", n_label = "corner",
@@ -672,6 +682,9 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' @param group_col meta.data column to use for grouping cluster IDs present in
 #' cluster_col. This is useful when there are multiple replicates or patients
 #' for each treatment condition.
+#' @param stack If `TRUE`, stacked bargraphs will be generated, otherwise grouped
+#' bargraphs will be generated
+#' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param top To only show the top cell groups present in `data_col`, provide
 #' one of the following, all other cells will be labeled using the value
 #' provided to the `other_label` argument. If `NULL` this will be automatically
@@ -680,15 +693,11 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' - Integer specifying the number of top groups to show
 #' - Vector specifying the names of cell groups to show
 #'
-#' @param per_chain If `TRUE` the frequency of each per-chain value will be
-#' calculated. If `FALSE` per-chain data will not be parsed and the values
-#' present in `data_col` will be used as is.
-#' @param chain Chain(s) to use for calculating frequency. Set to `NULL` to
-#' include all chains.
-#' @param chain_col meta.data column(s) containing chains for each cell
-#' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
-#' @param stack If TRUE, stacked bargraphs will be generated, otherwise grouped
-#' bargraphs will be generated
+#' @param other_label Label to use for 'other' cells when `top` is specified, if
+#' `NULL` all cell groups present in data_col will be displayed on the plot.
+#'
+#' ## Aesthetics
+#'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters or groups
 #' @param na_color Color to use for missing values
@@ -697,8 +706,6 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' for more options. Values can only be transformed when stack is `FALSE`
 #' @param show_points If `TRUE` data points will be shown on boxplots, the point
 #' size can be adjusted using the `point.size` parameter
-#' @param other_label Label to use for 'other' cells when `top` is specified, if
-#' `NULL` all cell groups present in data_col will be displayed on the plot.
 #' @param n_label Location on plot where n label should be added, this can be
 #' any combination of the following:
 #'
@@ -713,9 +720,18 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #'
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
-#' @param sep Separator for storing per-chain data
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
+#'
+#' ## VDJ arguments
+#'
+#' @param per_chain If `TRUE` the frequency of each per-chain value will be
+#' calculated. If `FALSE` per-chain data will not be parsed and the values
+#' present in `data_col` will be used as is.
+#' @param chain Chain(s) to use for calculating frequency. Set to `NULL` to
+#' include all chains.
+#' @param chain_col meta.data column(s) containing chains for each cell
+#' @param sep Separator for storing per-chain data
 #' @return ggplot object
 #' @seealso [calc_frequency()], [plot_clone_frequency()]
 #'
@@ -751,13 +767,18 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #'
 #' @export
 plot_frequency <- function(input, data_col, cluster_col = NULL,
-                           group_col = NULL, top = NULL, per_chain = FALSE,
-                           chain = NULL, chain_col = global$chain_col,
-                           units = "percent", stack = NULL, plot_colors = NULL,
+                           group_col = NULL,
+                           stack = NULL, units = "percent",
+                           top = NULL, other_label = "other",
+                           plot_colors = NULL,
                            plot_lvls = NULL, na_color = "grey80",
                            trans = "identity", show_points = TRUE,
-                           other_label = "other", n_label = NULL,
-                           label_params = list(), sep = global$sep, ...) {
+                           n_label = NULL,
+                           label_params = list(),
+                           ...,
+                           per_chain = FALSE,
+                           chain = NULL,
+                           chain_col = global$chain_col, sep = global$sep) {
 
   # Check that columns are present in object
   .check_obj_cols(input, data_col, cluster_col)

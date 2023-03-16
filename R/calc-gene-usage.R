@@ -2,7 +2,7 @@
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
-#' @param data_cols meta.data column containing V(D)J genes identified for each
+#' @param data_cols meta.data column(s) containing V(D)J genes identified for each
 #' clonotype. If multiple columns are provided, paired usage of genes will be
 #' calculated.
 #' @param cluster_col meta.data column containing cell clusters to use when
@@ -12,7 +12,7 @@
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame containing gene usage summary
-#' @seealso [plot_gene_usage()]
+#' @seealso [plot_gene_usage()], [calc_gene_pairs()], [plot_gene_pairs()]
 #'
 #' @examples
 #' # Calculate V(D)J segment usage for all cells
@@ -90,7 +90,7 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
   res
 }
 
-#' Calculate usage of V(D)J gene pairs
+#' Calculate paired usage of V(D)J segments between chains
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
@@ -104,7 +104,7 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 #' @param chain_col meta.data column containing chains for each cell
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame containing gene pair summary
-#' @seealso [calc_gene_usage(), plot_gene_pairs(), plot_gene_usage()]
+#' @seealso [plot_gene_pairs()], [calc_gene_usage()], [plot_gene_usage()]
 #' @export
 calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
                             chain_col = global$chain_col, sep = global$sep) {
@@ -190,6 +190,13 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' - 'circos', create a circos plot, this requires two columns to be provided
 #' to the data_cols argument
 #'
+#' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
+#' @param return_list Should a list of plots be returned, if FALSE plots will be
+#' combined and arranged into panels
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#'
+#' ## Aesthetics
+#'
 #' @param plot_colors Character vector containing colors to use for plot. If a
 #' bar graph is created this will specify how to color cell clusters. For a
 #' heatmap, these colors will be used to generate the color gradient.
@@ -197,7 +204,6 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' @param trans Transformation to use when plotting segment usage, e.g.
 #' 'log10'. By default values are not transformed, refer to
 #' [ggplot2::continuous_scale()] for more options.
-#' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param rotate_labels Should labels on circos plot be rotated to reduce
 #' overlapping text
 #' @param panel_nrow The number of rows to use for arranging plots when
@@ -217,13 +223,10 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #'
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
-#' @param return_list Should a list of plots be returned, if FALSE plots will be
-#' combined and arranged into panels
-#' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to plotting function,
 #' [ggplot2::geom_col()] for bargraph, [ggplot2::geom_tile()] for heatmap,
 #' [circlize::chordDiagram()] for circos plot
-#' @seealso [calc_gene_usage()]
+#' @seealso [calc_gene_usage()], [calc_gene_pairs()], [plot_gene_pairs()]
 #' @return ggplot object
 #'
 #' @examples
@@ -308,12 +311,14 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' @export
 plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
                             group_col = NULL, genes = 20, method = NULL,
-                            plot_colors = NULL, plot_lvls = NULL, chain = NULL,
-                            chain_col = global$chain_col, trans = "identity",
-                            units = "percent", rotate_labels = FALSE,
+                            chain = NULL,
+                            chain_col = global$chain_col,
+                            units = "percent", return_list = FALSE,
+                            sep = global$sep,
+                            plot_colors = NULL, plot_lvls = NULL,
+                            trans = "identity", rotate_labels = FALSE,
                             panel_nrow = NULL, show_points = TRUE,
-                            n_label = NULL, label_params = list(),
-                            return_list = FALSE, sep = global$sep, ...) {
+                            n_label = NULL, label_params = list(), ...) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -418,7 +423,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   res
 }
 
-#' Plot usage of V(D)J gene pairs
+#' Plot paired usage of V(D)J segments between chains
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
@@ -429,24 +434,59 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' calculations, e.g. `c("IGH", "IGK")`.
 #' @param cluster_col meta.data column containing cell clusters to use when
 #' calculating gene usage
+#' @param genes An integer specifying the number of genes to plot, or
+#' a vector giving the names of genes to include.
 #' @param chain_col meta.data column containing chains for each cell
-#' @param sep Separator used for storing per cell V(D)J data
-#' @return data.frame containing gene pair summary
+#' @param method Method to use for plotting, possible values are:
+#'
+#' - 'heatmap', create a heatmap, this is the default when two columns are
+#' passed to the data_cols argument
+#' - 'circos', create a circos plot, this requires two columns to be provided
+#' to the data_cols argument
+#'
+#' @param units Units to show on scale, either 'frequency' or 'percent'
+#' @param return_list Should a list of plots be returned, if FALSE plots will be
+#' combined and arranged into panels
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#'
+#' ## Aesthetics
+#'
+#' @param plot_colors Character vector containing colors to use for plot. If a
+#' bar graph is created this will specify how to color cell clusters. For a
+#' heatmap, these colors will be used to generate the color gradient.
+#' @param plot_lvls Levels to use for ordering clusters
+#' @param trans Transformation to use when plotting segment usage, e.g.
+#' 'log10'. By default values are not transformed, refer to
+#' [ggplot2::continuous_scale()] for more options.
+#' @param rotate_labels Should labels on circos plot be rotated to reduce
+#' overlapping text
+#' @param panel_nrow The number of rows to use for arranging plots when
+#' return_list is FALSE
+#' @param ... Additional arguments to pass to plotting function,
+#' [ggplot2::geom_tile()] for heatmap, [circlize::chordDiagram()] for circos
+#' plot
+#' @seealso [calc_gene_pairs() calc_gene_usage()]
+#' @return ggplot object
+#'
+#'
 #' @seealso [calc_gene_usage(), calc_gene_pairs(), plot_gene_usage()]
 #' @export
 plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
-                            group_col = NULL, genes = 20, method = "heatmap",
+                            genes = 20,
+                            chain_col = global$chain_col,
+                            method = "heatmap",
+                            units = "percent",
+                            return_list = FALSE,
+                            sep = global$sep,
                             plot_colors = NULL, plot_lvls = NULL,
-                            chain_col = global$chain_col, trans = "identity",
-                            units = "percent", rotate_labels = FALSE,
-                            panel_nrow = NULL, show_points = TRUE,
-                            n_label = NULL, label_params = list(),
-                            return_list = FALSE, sep = global$sep, ...) {
+                            trans = "identity",
+                            rotate_labels = FALSE,
+                            panel_nrow = NULL, ...) {
 
   # Check that columns are present in object
   .check_obj_cols(
     input,
-    data_col, cluster_col, group_col, chain = chains, chain_col = chain_col
+    data_col, cluster_col, chain = chains, chain_col = chain_col
   )
 
   # Check input classes
@@ -455,8 +495,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
   # Check input values
   if (identical(method, "circos")) units  <- "frequency"
 
-  .check_usage_args(method, data_col, group_col, units, paired = TRUE)
-  .check_group_cols(cluster_col, group_col, input)
+  .check_usage_args(method, data_col, grp_col = NULL, units, paired = TRUE)
 
   # Set y-axis
   usage_col <- switch(units, frequency = "freq", percent   = "pct")
@@ -466,7 +505,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
     input       = input,
     data_col    = data_col,
     chains      = chains,
-    cluster_col = c(cluster_col, group_col),
+    cluster_col = cluster_col,
     chain_col   = chain_col,
     sep         = sep
   )

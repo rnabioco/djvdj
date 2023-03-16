@@ -227,8 +227,6 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' grouping cells.
 #' @param chain Chain to use for plotting sequences. Cells with more than one
 #' of the provided chain will be excluded from the analysis.
-#' @param plot_colors Character vector containing colors for plotting
-#' @param plot_lvls Character vector containing levels for ordering
 #' @param chain_col meta.data column containing chains for each cell.
 #' @param width Integer specifying how many residues to include, sequences
 #' longer than width will be get trimmed based on the align_end argument,
@@ -237,6 +235,13 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' select a width where at least 75% of sequences are longer than the cutoff.
 #' @param align_end End to use for aligning sequences, specify '5' or '3' to
 #' align sequences at the 5' or 3' end when plotting.
+#' @param quiet If `TRUE` messages will not be displayed
+#' @param sep Separator used for storing per cell V(D)J data
+#'
+#' ## Aesthetics
+#'
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_lvls Character vector containing levels for ordering
 #' @param panel_nrow The number of rows to use for arranging plot panels
 #' @param panel_scales Should scales for plot panels be fixed or free. This
 #' passes a scales specification to `ggplot2::facet_wrap()`, can be 'fixed', 'free',
@@ -252,8 +257,6 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #'
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
-#' @param quiet If `TRUE` messages will not be displayed
-#' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional parameters to pass to [ggseqlogo::geom_logo()]
 #' @return ggplot object
 #' @importFrom stringr str_trunc
@@ -275,13 +278,14 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #'
 #' @export
 plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
-                        chain, plot_colors = NULL,
+                        chain, chain_col = global$chain_col, width = 0.75,
+                        align_end = "5", quiet = FALSE, sep = global$sep,
+
+                        plot_colors = NULL,
                         plot_lvls = names(plot_colors),
-                        chain_col = global$chain_col, width = 0.75,
-                        align_end = "5", panel_nrow = NULL,
+                        panel_nrow = NULL,
                         panel_scales = "free", n_label = "corner",
-                        label_params = list(), quiet = FALSE, sep = global$sep,
-                        ...) {
+                        label_params = list(), ...) {
 
   # Check that columns are present in object
   .check_obj_cols(

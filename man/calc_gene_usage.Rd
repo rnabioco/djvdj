@@ -19,7 +19,7 @@ calc_gene_usage(
 \item{input}{Object containing V(D)J data. If a data.frame is provided, the
 cell barcodes should be stored as row names.}
 
-\item{data_cols}{meta.data column containing V(D)J genes identified for each
+\item{data_cols}{meta.data column(s) containing V(D)J genes identified for each
 clonotype. If multiple columns are provided, paired usage of genes will be
 calculated.}
 
@@ -68,5 +68,5 @@ calc_gene_usage(
 
 }
 \seealso{
-\code{\link[=plot_gene_usage]{plot_gene_usage()}}
+\code{\link[=plot_gene_usage]{plot_gene_usage()}}, \code{\link[=calc_gene_pairs]{calc_gene_pairs()}}, \code{\link[=plot_gene_pairs]{plot_gene_pairs()}}
 }

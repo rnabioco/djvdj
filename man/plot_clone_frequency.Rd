@@ -48,7 +48,9 @@ is set to 'line', this will specify the clonotypes to label.}
 \item 'line', create a rank-abundance plot
 }}
 
-\item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
+\item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'
+\subsection{Aesthetics}{
+}}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 

@@ -11,19 +11,19 @@ plot_gene_usage(
   group_col = NULL,
   genes = 20,
   method = NULL,
-  plot_colors = NULL,
-  plot_lvls = NULL,
   chain = NULL,
   chain_col = global$chain_col,
-  trans = "identity",
   units = "percent",
+  return_list = FALSE,
+  sep = global$sep,
+  plot_colors = NULL,
+  plot_lvls = NULL,
+  trans = "identity",
   rotate_labels = FALSE,
   panel_nrow = NULL,
   show_points = TRUE,
   n_label = NULL,
   label_params = list(),
-  return_list = FALSE,
-  sep = global$sep,
   ...
 )
 }
@@ -54,22 +54,29 @@ passed to the data_cols argument
 to the data_cols argument
 }}
 
+\item{chain}{Chain to use for calculating gene usage, set to NULL to include
+all chains}
+
+\item{chain_col}{meta.data column containing chains for each cell}
+
+\item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
+
+\item{return_list}{Should a list of plots be returned, if FALSE plots will be
+combined and arranged into panels}
+
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell
+\subsection{Aesthetics}{
+}}
+
 \item{plot_colors}{Character vector containing colors to use for plot. If a
 bar graph is created this will specify how to color cell clusters. For a
 heatmap, these colors will be used to generate the color gradient.}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
 
-\item{chain}{Chain to use for calculating gene usage, set to NULL to include
-all chains}
-
-\item{chain_col}{meta.data column containing chains for each cell}
-
 \item{trans}{Transformation to use when plotting segment usage, e.g.
 'log10'. By default values are not transformed, refer to
 \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}} for more options.}
-
-\item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
 \item{rotate_labels}{Should labels on circos plot be rotated to reduce
 overlapping text}
@@ -94,11 +101,6 @@ plot legend
 
 \item{label_params}{Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")}
-
-\item{return_list}{Should a list of plots be returned, if FALSE plots will be
-combined and arranged into panels}
-
-\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{...}{Additional arguments to pass to plotting function,
 \code{\link[ggplot2:geom_bar]{ggplot2::geom_col()}} for bargraph, \code{\link[ggplot2:geom_tile]{ggplot2::geom_tile()}} for heatmap,
@@ -191,5 +193,5 @@ plot_gene_usage(
 
 }
 \seealso{
-\code{\link[=calc_gene_usage]{calc_gene_usage()}}
+\code{\link[=calc_gene_usage]{calc_gene_usage()}}, \code{\link[=calc_gene_pairs]{calc_gene_pairs()}}, \code{\link[=plot_gene_pairs]{plot_gene_pairs()}}
 }

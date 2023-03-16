@@ -12,6 +12,7 @@ plot_rarefaction(
   n_boots = 50,
   chain = NULL,
   chain_col = global$chain_col,
+  sep = global$sep,
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   panel_nrow = NULL,
@@ -19,7 +20,6 @@ plot_rarefaction(
   ci_alpha = 0.15,
   n_label = "legend",
   label_params = list(),
-  sep = global$sep,
   ...
 )
 }
@@ -52,6 +52,10 @@ per-chain data such as CDR3 sequences. Set to NULL to include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell
+\subsection{Aesthetics}{
+}}
+
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{plot_lvls}{Character vector containing levels for ordering}
@@ -77,8 +81,6 @@ plot legend
 
 \item{label_params}{Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")}
-
-\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill,
 linetype, etc.}

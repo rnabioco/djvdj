@@ -9,17 +9,17 @@ plot_motifs(
   data_col = global$cdr3_col,
   cluster_col = NULL,
   chain,
-  plot_colors = NULL,
-  plot_lvls = names(plot_colors),
   chain_col = global$chain_col,
   width = 0.75,
   align_end = "5",
+  quiet = FALSE,
+  sep = global$sep,
+  plot_colors = NULL,
+  plot_lvls = names(plot_colors),
   panel_nrow = NULL,
   panel_scales = "free",
   n_label = "corner",
   label_params = list(),
-  quiet = FALSE,
-  sep = global$sep,
   ...
 )
 }
@@ -35,10 +35,6 @@ grouping cells.}
 \item{chain}{Chain to use for plotting sequences. Cells with more than one
 of the provided chain will be excluded from the analysis.}
 
-\item{plot_colors}{Character vector containing colors for plotting}
-
-\item{plot_lvls}{Character vector containing levels for ordering}
-
 \item{chain_col}{meta.data column containing chains for each cell.}
 
 \item{width}{Integer specifying how many residues to include, sequences
@@ -49,6 +45,16 @@ select a width where at least 75\% of sequences are longer than the cutoff.}
 
 \item{align_end}{End to use for aligning sequences, specify '5' or '3' to
 align sequences at the 5' or 3' end when plotting.}
+
+\item{quiet}{If \code{TRUE} messages will not be displayed}
+
+\item{sep}{Separator used for storing per cell V(D)J data
+\subsection{Aesthetics}{
+}}
+
+\item{plot_colors}{Character vector containing colors for plotting}
+
+\item{plot_lvls}{Character vector containing levels for ordering}
 
 \item{panel_nrow}{The number of rows to use for arranging plot panels}
 
@@ -68,10 +74,6 @@ specifications with the \code{label_params} argument
 
 \item{label_params}{Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")}
-
-\item{quiet}{If \code{TRUE} messages will not be displayed}
-
-\item{sep}{Separator used for storing per cell V(D)J data}
 
 \item{...}{Additional parameters to pass to \code{\link[ggseqlogo:geom_logo]{ggseqlogo::geom_logo()}}}
 }

@@ -265,6 +265,10 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' for a single chain, the column passed to the data_col argument must contain
 #' per-chain data such as CDR3 sequences. Set to NULL to include all chains.
 #' @param chain_col meta.data column containing chains for each cell
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#'
+#' ## Aesthetics
+#'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param panel_nrow The number of rows to use for arranging plot panels
@@ -285,7 +289,6 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
-#' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
@@ -354,10 +357,11 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 plot_diversity <- function(input, data_col, cluster_col = NULL,
                            group_col = NULL, method = abdiv::simpson,
                            downsample = FALSE, n_boots = 0, chain = NULL,
-                           chain_col = global$chain_col, plot_colors = NULL,
+                           chain_col = global$chain_col, sep = global$sep,
+                           plot_colors = NULL,
                            plot_lvls = names(plot_colors), panel_nrow = NULL,
                            panel_scales = "free", n_label = NULL,
-                           label_params = list(), sep = global$sep, ...) {
+                           label_params = list(), ...) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -550,6 +554,10 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 #' for a single chain, the column passed to the data_col argument must contain
 #' per-chain data such as CDR3 sequences. Set to NULL to include all chains.
 #' @param chain_col meta.data column containing chains for each cell
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#'
+#' ## Aesthetics
+#'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering
 #' @param panel_nrow The number of rows to use for arranging plot panels
@@ -569,7 +577,6 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 #'
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
-#' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill,
 #' linetype, etc.
 #' @return ggplot object
@@ -618,10 +625,11 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 plot_rarefaction <- function(input, data_col, cluster_col = NULL,
                              method = "richness", n_boots = 50,
                              chain = NULL, chain_col = global$chain_col,
+                             sep = global$sep,
                              plot_colors = NULL, plot_lvls = names(plot_colors),
                              panel_nrow = NULL, panel_scales = "free",
                              ci_alpha = 0.15, n_label = "legend",
-                             label_params = list(), sep = global$sep, ...) {
+                             label_params = list(), ...) {
 
   # Check that columns are present in object
   .check_obj_cols(
