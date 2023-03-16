@@ -201,22 +201,6 @@ so |>
 
 <br>
 
-## Plotting the top clusters
-
-
-
-```{r}
-so |>
-  plot_scatter(
-    data_col    = "seurat_clusters",
-    plot_colors = c("3" = "red"),
-    plot_lvls   = "3"
-  )
-
-```
-
-<br>
-
 ## Session info
 
 ```{r, echo = FALSE}

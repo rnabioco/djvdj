@@ -90,6 +90,80 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
   res
 }
 
+#' Calculate usage of V(D)J gene pairs
+#'
+#' @param input Object containing V(D)J data. If a data.frame is provided, the
+#' cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing V(D)J genes identified for each
+#' clonotype.
+#' @param chains Chains to use for calculating usage of different gene pairs.
+#' This should be a character vector containing the two chains to use for
+#' calculations, e.g. `c("IGH", "IGK")`.
+#' @param cluster_col meta.data column containing cell clusters to use when
+#' calculating gene usage
+#' @param chain_col meta.data column containing chains for each cell
+#' @param sep Separator used for storing per cell V(D)J data
+#' @return data.frame containing gene pair summary
+#' @seealso [calc_gene_usage(), plot_gene_pairs(), plot_gene_usage()]
+#' @export
+calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
+                            chain_col = global$chain_col, sep = global$sep) {
+
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_col, cluster_col, chain = chains, chain_col = chain_col
+  )
+
+  # Check input classes
+  .check_args(cluster_col = list(allow_null = TRUE, len_one = FALSE))
+
+  # Format input data
+  vdj_cols <- c(global$cell_col, data_col, cluster_col, chain_col)
+
+  res <- fetch_vdj(
+    input,
+    data_cols    = c(data_col, chain_col),
+    filter_cells = TRUE,
+    unnest       = FALSE,
+    per_chain    = TRUE,
+    sep          = sep
+  )
+
+  res  <- dplyr::select(res, all_of(vdj_cols))
+
+  res <- .filter_chains(
+    res,
+    data_cols  = c(data_col, chain_col),
+    chain      = chains,
+    chain_col  = chain_col,
+    col_names  = "{.col}",
+    allow_dups = FALSE
+  )
+
+  res <- dplyr::filter(res, !is.na(!!sym(data_col)))
+
+  res <- tidyr::pivot_wider(
+    res,
+    names_from  = !!sym(chain_col),
+    values_from = !!sym(data_col),
+    values_fill = "None"
+  )
+
+  # res <- dplyr::filter(res, dplyr::if_all(dplyr::all_of(chains), ~ !is.na(.x)))
+
+  # Calculate frequency
+  res <- .calc_freq(
+    df_in       = res,
+    data_cols   = chains,
+    cluster_col = cluster_col,
+    per_chain   = FALSE,
+    return_df   = TRUE,
+    sep         = sep
+  )
+
+  res
+}
+
 
 #' Plot V(D)J segment usage
 #'
@@ -342,6 +416,112 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   res <- lift(.plot_single_usage)(gg_args)
 
   res
+}
+
+#' Plot usage of V(D)J gene pairs
+#'
+#' @param input Object containing V(D)J data. If a data.frame is provided, the
+#' cell barcodes should be stored as row names.
+#' @param data_col meta.data column containing V(D)J genes identified for each
+#' clonotype.
+#' @param chains Chains to use for calculating usage of different gene pairs.
+#' This should be a character vector containing the two chains to use for
+#' calculations, e.g. `c("IGH", "IGK")`.
+#' @param cluster_col meta.data column containing cell clusters to use when
+#' calculating gene usage
+#' @param chain_col meta.data column containing chains for each cell
+#' @param sep Separator used for storing per cell V(D)J data
+#' @return data.frame containing gene pair summary
+#' @seealso [calc_gene_usage(), calc_gene_pairs(), plot_gene_usage()]
+#' @export
+plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
+                            group_col = NULL, genes = 20, method = "heatmap",
+                            plot_colors = NULL, plot_lvls = NULL,
+                            chain_col = global$chain_col, trans = "identity",
+                            units = "percent", rotate_labels = FALSE,
+                            panel_nrow = NULL, show_points = TRUE,
+                            n_label = NULL, label_params = list(),
+                            return_list = FALSE, sep = global$sep, ...) {
+
+  # Check that columns are present in object
+  .check_obj_cols(
+    input,
+    data_col, cluster_col, group_col, chain = chains, chain_col = chain_col
+  )
+
+  # Check input classes
+  .check_args(method = list(allow_null = TRUE))
+
+  # Check input values
+  if (identical(method, "circos")) units  <- "frequency"
+
+  .check_usage_args(method, data_col, group_col, units, paired = TRUE)
+  .check_group_cols(cluster_col, group_col, input)
+
+  # Set y-axis
+  usage_col <- switch(units, frequency = "freq", percent   = "pct")
+
+  # Calculate gene usage
+  plt_dat <- calc_gene_pairs(
+    input       = input,
+    data_col    = data_col,
+    chains      = chains,
+    cluster_col = c(cluster_col, group_col),
+    chain_col   = chain_col,
+    sep         = sep
+  )
+
+  # If vdj_genes provided check plt_dat
+  if (is.character(genes)) {
+    absent <- unlist(plt_dat[, chains], use.names = FALSE)
+    absent <- genes[!genes %in% absent]
+
+    if (identical(absent, genes)) {
+      cli::cli_abort("None of the provided genes were found")
+
+    } else if (!purrr::is_empty(absent)) {
+      cli::cli_warn("The following genes were not found: {absent}")
+    }
+
+    # if vdj_genes are provided and two data_cols are provided, gene pairs
+    # containing at least one of the specified genes will be included
+    plt_dat <- dplyr::filter(plt_dat, dplyr::if_any(
+      dplyr::all_of(chains), ~ .x %in% genes
+    ))
+
+  # If vdj_genes not provided, identify top genes for each cluster based on
+  # usage
+  } else {
+    plt_dat <- .filter_top_genes(
+      plt_dat,
+      dat_col  = usage_col,
+      gn_col   = chains,
+      clst_col = cluster_col,
+      n        = genes
+    )
+  }
+
+  # Plotting arguments
+  gg_args <- list(
+    df_in    = plt_dat,
+    gn_col   = chains,
+    dat_col  = usage_col,
+    clst_col = cluster_col,
+    method   = method,
+    clrs     = plot_colors,
+    lvls     = plot_lvls,
+    trans    = trans,
+    ttl      = .get_axis_label(units),
+    n_row    = panel_nrow,
+    ...
+  )
+
+  # Create plot for paired usage
+  # heatmap and circos return invisibly
+  gg_args$rotate_labels <- rotate_labels
+  gg_args$return_list   <- return_list
+
+  lift(.plot_paired_usage)(gg_args)
 }
 
 #' Plot usage for single gene column

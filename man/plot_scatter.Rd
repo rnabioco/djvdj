@@ -14,7 +14,7 @@ plot_scatter(
   top = NULL,
   other_label = "other",
   plot_colors = NULL,
-  plot_lvls = names(plot_colors),
+  plot_lvls = NULL,
   trans = "identity",
   panel_nrow = NULL,
   panel_scales = "fixed",
