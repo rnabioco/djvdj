@@ -47,9 +47,9 @@ test_that("fetch_vdj sep", {
 # Check filter_cells
 test_that("fetch_vdj filter_cells", {
   expect_error(
-    res <- vdj_so |>
+    vdj_so |>
       fetch_vdj(
-        data_cols     = c("umis", "reads"),
+        # data_cols     = c("umis", "reads"),
         filter_cells = TRUE
       ),
     "`clonotype_col` must be provided"
