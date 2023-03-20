@@ -371,9 +371,10 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
 
   # If not all levels are specified by plot_lvls, use ordering set by
   # .format_plot_data, reverse legend so top ranked levels are listed first
+  # ACTUALLY SHOULD ALWAYS REVERSE LEGEND
   lvls <- stats::na.omit(levels(plt_dat[[data_col]]))
 
-  rev_lgnd <- !all(lvls %in% plot_lvls) && !identical(data_col, group_col)
+  rev_lgnd <- !identical(data_col, group_col)
 
   if (!identical(data_col, group_col)) lvls <- rev(lvls)
 

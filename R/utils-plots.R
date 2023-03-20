@@ -1371,6 +1371,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   # Always order values in plot_lvls first
   # If all levels are provided, use user provided ordering, do not reverse
+  # ACTUALLY MAKES MORE SENSE TO ALWAYS REVERSE
   # remove levels that do not appear in data
   # If user provides NA in plot_levels, keep in order, otherwise always order
   # NA last
@@ -1380,7 +1381,8 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   if (!NA %in% lvls) lvls <- c(lvls, NA)
 
-  if (rev && !purrr::is_empty(not_in)) lvls <- rev(lvls)
+  # if (rev && !purrr::is_empty(not_in)) lvls <- rev(lvls)
+  if (rev) lvls <- rev(lvls)
 
   res <- .set_lvls(res, data_col, lvls)
 
