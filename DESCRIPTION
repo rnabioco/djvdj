@@ -31,6 +31,7 @@ Imports:
     dplyr,
     ggplot2 (>= 3.4.0),
     ggrepel,
+    ggtrace,
     glue,
     graphics,
     grDevices,

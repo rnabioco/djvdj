@@ -260,6 +260,8 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
 #' clusters specified by cluster_col.
 #' @param plot_lvls Character vector containing order to use for plotting cell
 #' clusters specified by cluster_col.
+#' @param outline Add an outline around each cluster, outline aesthetics can be
+#' modified by passing arguments directly to [ggtrace::geom_point_trace()]
 #' @param trans Transformation to use when plotting data, e.g. 'log10'. By
 #' default values are not transformed, refer to [ggplot2::continuous_scale()]
 #' for more options.
@@ -284,8 +286,8 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
 #'
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
-#' @param ... Additional arguments to pass to [ggplot2::geom_point()], e.g.
-#' color, size, etc.
+#' @param ... Additional arguments to pass to [ggplot2::geom_point()], or
+#' [ggtrace::geom_point_trace()] if `outline = TRUE`, e.g. color, size, etc.
 #'
 #' ## VDJ arguments
 #'
@@ -305,7 +307,7 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
 plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
                          group_col = NULL, data_slot = "data", top = NULL,
                          other_label = "other", plot_colors = NULL,
-                         plot_lvls = NULL, trans = "identity",
+                         plot_lvls = NULL, outline = FALSE, trans = "identity",
                          panel_nrow = NULL, panel_scales = "fixed",
                          min_q = NULL, max_q = NULL, na_color = "grey80",
                          n_label = NULL, label_params = list(), ...,
@@ -343,6 +345,7 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
     x            = x,
     y            = y,
     .color       = data_col,
+    .fill        = data_col,
     grp          = group_col,
     clrs         = plot_colors,
     trans_clr    = trans,
@@ -353,6 +356,14 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
     label_params = label_params,
     ...
   )
+
+  # Adjust plot arguments for geom_point_trace
+  if (outline) {
+    gg_args <- .standardize_aes(gg_args)
+
+    gg_args$fn     <- ggtrace::geom_point_trace
+    gg_args$colour <- gg_args$colour %||% "black"
+  }
 
   # If no data_col provided, return scatter plot
   if (is.null(data_col)) {

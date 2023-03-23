@@ -15,6 +15,7 @@ plot_scatter(
   other_label = "other",
   plot_colors = NULL,
   plot_lvls = NULL,
+  outline = FALSE,
   trans = "identity",
   panel_nrow = NULL,
   panel_scales = "fixed",
@@ -64,6 +65,9 @@ clusters specified by cluster_col.}
 \item{plot_lvls}{Character vector containing order to use for plotting cell
 clusters specified by cluster_col.}
 
+\item{outline}{Add an outline around each cluster, outline aesthetics can be
+modified by passing arguments directly to \code{\link[ggtrace:geom_point_trace]{ggtrace::geom_point_trace()}}}
+
 \item{trans}{Transformation to use when plotting data, e.g. 'log10'. By
 default values are not transformed, refer to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}}
 for more options.}
@@ -96,8 +100,8 @@ plot legend
 \item{label_params}{Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")}
 
-\item{...}{Additional arguments to pass to \code{\link[ggplot2:geom_point]{ggplot2::geom_point()}}, e.g.
-color, size, etc.
+\item{...}{Additional arguments to pass to \code{\link[ggplot2:geom_point]{ggplot2::geom_point()}}, or
+\code{\link[ggtrace:geom_point_trace]{ggtrace::geom_point_trace()}} if \code{outline = TRUE}, e.g. color, size, etc.
 \subsection{VDJ arguments}{
 }}
 

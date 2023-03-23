@@ -100,7 +100,9 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 
   n_rm <- n_orig - nrow(df_in)
 
-  if (n_rm > 0) cli::cli_warn("Removed {n_rm} rows containing missing values")
+  if (n_rm > 0) {
+    cli::cli_warn("Removed {n_rm} row{?s} containing missing value{?s}")
+  }
 
   # Check inputs
   scale_clr  <- is.character(.color)
@@ -1675,7 +1677,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' e.g. color and colour
 #' @noRd
 .standardize_aes <- function(aes_list) {
-  names(aes_list) <- sub("color", "colour", names(aes_list), fixed = TRUE)
+  names(aes_list) <- sub("^color$", "colour", names(aes_list))
 
   aes_list
 }
