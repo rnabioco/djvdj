@@ -580,7 +580,6 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill,
 #' linetype, etc.
 #' @return ggplot object
-#' @importFrom iNEXT iNEXT
 #' @importFrom stringr str_to_lower
 #' @seealso [calc_diversity()], [plot_diversity()]
 #'
@@ -630,6 +629,9 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
                              panel_nrow = NULL, panel_scales = "free",
                              ci_alpha = 0.15, n_label = "legend",
                              label_params = list(), ...) {
+
+  # Check for installed packages
+  .check_packages("iNEXT")
 
   # Check that columns are present in object
   .check_obj_cols(

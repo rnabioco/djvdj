@@ -79,6 +79,5 @@ res <- calc_mds(
 
 }
 \seealso{
-\code{\link[=plot_mds]{plot_mds()}}, \code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[=plot_similarity]{plot_similarity()}},
-\code{\link[MASS:isoMDS]{MASS::isoMDS()}}
+\code{\link[=plot_mds]{plot_mds()}}, \code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[=plot_similarity]{plot_similarity()}}
 }

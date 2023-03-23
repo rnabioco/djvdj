@@ -36,11 +36,6 @@
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional parameters to pass to clustering method
 #' @return Single cell object or data.frame with clustering results
-#' @importFrom uwot umap
-#' @importFrom dbscan kNN
-#' @importFrom igraph graph_from_data_frame cluster_louvain cluster_leiden
-#' membership
-#' @importFrom Biostrings stringDist
 #' @seealso [plot_motifs()]
 #'
 #' @examples
@@ -93,6 +88,9 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
                               prefix = paste0(data_col, "_"),
                               return_df = FALSE, sep = global$sep, ...) {
 
+  # Check for installed packages
+  .check_packages(c("dbscan", "Biostrings", "igraph (>= 1.3.0)"))
+
   # Check that columns are present in object
   .check_obj_cols(
     input, data_col, chain = chain, chain_col = chain_col
@@ -138,6 +136,8 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 
   # Calculate UMAP
   if (run_umap) {
+    .check_packages("uwot")
+
     umap_res <- uwot::umap(dist_mat)
 
     colnames(umap_res) <- paste0(prefix, c("UMAP_1", "UMAP_2"))
@@ -285,6 +285,9 @@ plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
                         panel_nrow = NULL,
                         panel_scales = "free", n_label = "corner",
                         label_params = list(), ...) {
+
+  # Check installed packages
+  .check_packages("ggseqlogo")
 
   # Check that columns are present in object
   .check_obj_cols(

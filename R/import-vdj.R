@@ -271,6 +271,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # if indel data is included, always filter for productive contigs since most
   # non-productive contigs are missing indel data
   if (include_mutations) {
+    .check_packages("Rsamtools")
+
     .add_progress_step("Calculating mutation frequencies", quiet = quiet)
 
     # Fix contig_ids in contigs
@@ -746,7 +748,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @param bam_file bam file from cellranger vdj containing alignment data
 #' comparing each contig with the germline reference
 #' @return List containing one data.frame for each path provided to vdj_dir
-#' @importFrom Rsamtools scanBam
 #' @noRd
 .load_muts <- function(vdj_dir, cell_prfxs, cell_sfxs,
                        bam_file  = "concat_ref.bam",

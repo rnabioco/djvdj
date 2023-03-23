@@ -670,3 +670,20 @@ NULL
   })
 }
 
+
+#' Check that package is installed
+#'
+#' @importFrom rlang is_installed
+#' @noRd
+.check_packages <- function(pkgs) {
+  chks <- purrr::map_lgl(pkgs, rlang::is_installed)
+  pkgs <- paste0("\'", pkgs, "\'")
+
+  missing <- pkgs[!chks]
+
+  if (any(!chks)) {
+    cli::cli_abort(
+      "Package{?s} {missing} must be installed to use this function."
+    )
+  }
+}

@@ -23,28 +23,21 @@ Depends:
     R (>= 4.2.0)
 Imports: 
     abdiv,
-    Biostrings,
     boot,
     broom,
     circlize,
     cli,
     ComplexHeatmap,
-    dbscan,
     dplyr,
     ggplot2 (>= 3.4.0),
     ggrepel,
-    ggseqlogo,
     glue,
     graphics,
     grid,
-    igraph (>= 1.3.0),
-    iNEXT,
-    MASS,
     methods,
     purrr,
     readr,
     rlang (>= 0.4.11),
-    Rsamtools,
     S4Vectors,
     scales,
     Seurat (>= 4.0.0),
@@ -53,16 +46,23 @@ Imports:
     stringr,
     tibble,
     tidyr,
-    utils,
-    uwot
+    utils
 Suggests: 
+    Biostrings,
     covr,
+    dbscan,
+    ggseqlogo,
     here,
+    igraph (>= 1.3.0),
+    iNEXT,
     knitr,
+    MASS,
     RColorBrewer,
     rmarkdown,
     roxygen2,
-    testthat
+    Rsamtools,
+    testthat,
+    uwot
 VignetteBuilder: 
     knitr
 Config/Needs/website: pkgdown, rnabioco/rbitemplate

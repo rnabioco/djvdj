@@ -397,9 +397,7 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 #' will be added to the input object.
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with MDS coordinates
-#' @importFrom MASS isoMDS
-#' @seealso [plot_mds()], [calc_similarity()], [plot_similarity()],
-#' [MASS::isoMDS()]
+#' @seealso [plot_mds()], [calc_similarity()], [plot_similarity()]
 #'
 #' @examples
 #' # Calculate MDS coordinates
@@ -429,6 +427,9 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 calc_mds <- function(input, data_col, cluster_col, method = "jaccard",
                      chain = NULL, chain_col = global$chain_col, prefix = "",
                      return_df = FALSE, sep = global$sep) {
+
+  # Check for installed packages
+  .check_packages("MASS")
 
   # Check that columns are present in object
   .check_obj_cols(
