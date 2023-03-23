@@ -114,8 +114,8 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   }
 
   # Set aesthetics and geom arguments
-  num_clr    <- scale_clr && is.numeric(df_in[[.color]])
-  num_fill   <- scale_fill && is.numeric(df_in[[.fill]])
+  num_clr  <- scale_clr && is.numeric(df_in[[.color]])
+  num_fill <- scale_fill && is.numeric(df_in[[.fill]])
 
   gg_aes  <- ggplot2::aes()
   gg_args <- .standardize_aes(list(...))
@@ -1286,7 +1286,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   res <- dplyr::summarize(
     res,
-    met = list(boxplot.stats(
+    met = list(grDevices::boxplot.stats(
       stats::na.omit(!!sym(val_col)),
       do.conf = FALSE, do.out = FALSE
     )),

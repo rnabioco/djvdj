@@ -52,7 +52,7 @@ test_that("fetch_vdj filter_cells", {
         # data_cols     = c("umis", "reads"),
         filter_cells = TRUE
       ),
-    "`clonotype_col` must be provided"
+    "`clonotype_col` must be.+provided"
   )
 
   res <- vdj_so |>

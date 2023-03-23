@@ -51,6 +51,7 @@ reference:
 - title: Gene Usage
   contents:
   - ends_with("_gene_usage")
+  - ends_with("_gene_pairs")
 
 - title: CDR3 Clustering
   contents:

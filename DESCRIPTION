@@ -33,6 +33,7 @@ Imports:
     ggrepel,
     glue,
     graphics,
+    grDevices,
     grid,
     methods,
     purrr,
