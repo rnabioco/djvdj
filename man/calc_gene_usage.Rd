@@ -31,6 +31,11 @@ include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
+\item{prefix}{Prefix to add to new columns}
+
+\item{return_df}{Return results as a data.frame. If \code{FALSE}, results will be
+added to the input object.}
+
 \item{sep}{Separator used for storing per cell V(D)J data}
 }
 \value{

@@ -280,7 +280,6 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
                         chain, chain_col = global$chain_col, width = 0.75,
                         align_end = "5", quiet = FALSE, sep = global$sep,
-
                         plot_colors = NULL,
                         plot_lvls = names(plot_colors),
                         panel_nrow = NULL,
@@ -512,4 +511,3 @@ plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
 
   res
 }
-

@@ -865,7 +865,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   keep_cols <- c(cluster_col, data_col, keep_cols)
   keep_cols <- keep_cols[!keep_cols %in% freq_cols]
 
-  plt_dat <- dplyr::group_by(plt_dat, n_cells, !!!syms(keep_cols))
+  plt_dat <- dplyr::group_by(plt_dat, .data$n_cells, !!!syms(keep_cols))
 
   plt_dat <- dplyr::summarize(
     plt_dat, dplyr::across(all_of(c(".freq", ".pct")), sum),
@@ -895,10 +895,10 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   n_lab_dat$legend <- n_lab_dat$axis <- n_lab_dat$corner
 
   if (!is.null(group_col)) {
-    n_lab_dat$axis <- dplyr::rename(plt_dat, .n = .freq)
+    n_lab_dat$axis <- dplyr::rename(plt_dat, .n = .data$.freq)
 
   } else if (!is.null(cluster_col)) {
-    n_lab_dat$legend <- dplyr::rename(plt_dat, .n = .freq)
+    n_lab_dat$legend <- dplyr::rename(plt_dat, .n = .data$.freq)
   }
 
   # Plot arguments

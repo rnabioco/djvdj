@@ -10,6 +10,9 @@
 #' @param chain Chain(s) to use for calculating gene usage. Set to `NULL` to
 #' include all chains.
 #' @param chain_col meta.data column containing chains for each cell
+#' @param prefix Prefix to add to new columns
+#' @param return_df Return results as a data.frame. If `FALSE`, results will be
+#' added to the input object.
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame containing gene usage summary
 #' @seealso [plot_gene_usage()], [calc_gene_pairs()], [plot_gene_pairs()]
@@ -44,8 +47,8 @@
 #' @export
 calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
                             chain_col = global$chain_col,
-                            prefix = paste0(data_cols[1], "_"), return_df = FALSE,
-                            sep = global$sep) {
+                            prefix = paste0(data_cols[1], "_"),
+                            return_df = FALSE, sep = global$sep) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -465,11 +468,8 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' @param ... Additional arguments to pass to plotting function,
 #' [ggplot2::geom_tile()] for heatmap, [circlize::chordDiagram()] for circos
 #' plot
-#' @seealso [calc_gene_pairs() calc_gene_usage()]
+#' @seealso [calc_gene_pairs()], [calc_gene_usage()], [plot_gene_usage()]
 #' @return ggplot object
-#'
-#'
-#' @seealso [calc_gene_usage(), calc_gene_pairs(), plot_gene_usage()]
 #' @export
 plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
                             genes = 20,
@@ -625,7 +625,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
   n_lab_dat$legend <- n_lab_dat$axis <- n_lab_dat$corner
 
   if ((!is.null(grp_col) || !is.null(clst_col)) && identical(method, "bar")) {
-    n_lab_dat$axis <- dplyr::rename(df_in, .n = freq)
+    n_lab_dat$axis <- dplyr::rename(df_in, .n = .data$freq)
   }
 
   # Set common arguments

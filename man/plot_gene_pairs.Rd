@@ -86,7 +86,5 @@ ggplot object
 Plot paired usage of V(D)J segments between chains
 }
 \seealso{
-\code{\link[=calc_gene_pairs() calc_gene_usage]{calc_gene_pairs() calc_gene_usage()}}
-
-\code{\link[=calc_gene_usage(), calc_gene_pairs(), plot_gene_usage]{calc_gene_usage(), calc_gene_pairs(), plot_gene_usage()}}
+\code{\link[=calc_gene_pairs]{calc_gene_pairs()}}, \code{\link[=calc_gene_usage]{calc_gene_usage()}}, \code{\link[=plot_gene_usage]{plot_gene_usage()}}
 }
