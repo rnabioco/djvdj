@@ -895,10 +895,10 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   n_lab_dat$legend <- n_lab_dat$axis <- n_lab_dat$corner
 
   if (!is.null(group_col)) {
-    n_lab_dat$axis <- dplyr::rename(plt_dat, .n = .freq)
+    n_lab_dat$axis <- dplyr::rename(plt_dat, .n = ".freq")
 
   } else if (!is.null(cluster_col)) {
-    n_lab_dat$legend <- dplyr::rename(plt_dat, .n = .freq)
+    n_lab_dat$legend <- dplyr::rename(plt_dat, .n = ".freq")
   }
 
   # Plot arguments

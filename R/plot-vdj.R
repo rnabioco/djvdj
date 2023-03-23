@@ -303,6 +303,7 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
 #' @seealso [summarize_vdj()] for more examples on how per-chain data can be
 #' summarized for each cell
 #' @return ggplot object
+#' @importFrom ggtrace geom_point_trace
 #' @export
 plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
                          group_col = NULL, data_slot = "data", top = NULL,
