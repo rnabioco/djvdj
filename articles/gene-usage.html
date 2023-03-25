@@ -14,9 +14,9 @@
 <link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.1.3/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.1.3/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.4/font.css" rel="stylesheet">
-<link href="../deps/Source_Code_Pro-0.4.4/font.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.5/font.css" rel="stylesheet">
+<link href="../deps/Source_Code_Pro-0.4.5/font.css" rel="stylesheet">
 <!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Gene Usage</h1>
             
-            <h4 data-toc-skip class="date">December 15 2022</h4>
+            <h4 data-toc-skip class="date">March 25 2023</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/rnabioco/djvdj/blob/HEAD/vignettes/gene-usage.Rmd" class="external-link"><code>vignettes/gene-usage.Rmd</code></a></small>
       <div class="d-none name"><code>gene-usage.Rmd</code></div>
@@ -130,11 +130,15 @@ egg lysozyme.</p>
 <p>The <code><a href="../reference/calc_gene_usage.html">calc_gene_usage()</a></code> function will calculate the number
 of cells (‘freq’) and percentage of cells (‘pct’) with each gene in the
 <code>data_cols</code> column(s). The ‘n_cells’ column shows the total
-number of cells used for calculating percentages. A data.frame is
-returned summarizing the results.</p>
+number of cells used for calculating percentages. By default these
+results are added to the object meta.data, to return a data.frame set
+<code>return_df</code> to <code>TRUE</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/calc_gene_usage.html">calc_gene_usage</a></span><span class="op">(</span>data_cols <span class="op">=</span> <span class="st">"v_gene"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="../reference/calc_gene_usage.html">calc_gene_usage</a></span><span class="op">(</span></span>
+<span>    data_cols <span class="op">=</span> <span class="st">"v_gene"</span>,</span>
+<span>    return_df <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 103 × 4</span></span></span>
 <span><span class="co">#&gt;    v_gene     n_cells  freq   pct</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
@@ -148,7 +152,7 @@ returned summarizing the results.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGKV1-135      329     6  1.82</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV19-93      329     6  1.82</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV3-4        329     6  1.82</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 93 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 93 more rows</span></span></span></code></pre></div>
 <p>To perform gene usage calculations separately for cell clusters (or
 samples), provide the meta.data column containing cluster labels to the
 <code>cluster_col</code> argument. Here we see that the MD4 samples
@@ -157,23 +161,24 @@ since MD4 B cells are monoclonal.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/calc_gene_usage.html">calc_gene_usage</a></span><span class="op">(</span></span>
-<span>    data_cols <span class="op">=</span> <span class="st">"v_gene"</span>,</span>
-<span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span></span>
+<span>    data_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,</span>
+<span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
+<span>    return_df   <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 618 × 5</span></span></span>
-<span><span class="co">#&gt;    v_gene     sample n_cells  freq    pct</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43   MD4-2       55    55 100   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV5-43   MD4-3       54    51  94.4 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV5-43   MD4-1       50    47  94   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGKV10-96  BL6-1       55     6  10.9 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGKV10-96  BL6-3       52     5   9.62</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> IGKV14-111 BL6-2       63     6   9.52</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> IGLV1      BL6-3       52     4   7.69</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGHV6-6    BL6-1       55     4   7.27</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV6-17   BL6-2       63     4   6.35</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV8-24   BL6-2       63     4   6.35</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 608 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 618 × 6</span></span></span>
+<span><span class="co">#&gt;    v_gene     sample n_cells  freq    pct shared</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43   MD4-2       55    55 100    TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV5-43   MD4-3       54    51  94.4  TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV5-43   MD4-1       50    47  94    TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGKV10-96  BL6-1       55     6  10.9  TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGKV10-96  BL6-3       52     5   9.62 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> IGKV14-111 BL6-2       63     6   9.52 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> IGLV1      BL6-3       52     4   7.69 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGHV6-6    BL6-1       55     4   7.27 FALSE </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV6-17   BL6-2       63     4   6.35 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV8-24   BL6-2       63     4   6.35 FALSE </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 608 more rows</span></span></span></code></pre></div>
 <p>To only perform calculations for a specific chain, use the
 <code>chain</code> argument. In this example we are only returning
 results for the IGK chain. Here we see some values in the ‘v_gene’
@@ -184,45 +189,47 @@ have a V gene segment identified.</p>
 <span>  <span class="fu"><a href="../reference/calc_gene_usage.html">calc_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
-<span>    chain       <span class="op">=</span> <span class="st">"IGK"</span></span>
+<span>    chain       <span class="op">=</span> <span class="st">"IGK"</span>,</span>
+<span>    return_df   <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 336 × 5</span></span></span>
-<span><span class="co">#&gt;    v_gene     sample n_cells  freq    pct</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43   MD4-2       55    55 100   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV5-43   MD4-3       54    51  94.4 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV5-43   MD4-1       50    47  94   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGKV10-96  BL6-1       55     6  10.9 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGKV10-96  BL6-3       52     5   9.62</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> None       BL6-3       52     5   9.62</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> IGKV14-111 BL6-2       63     6   9.52</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGKV6-17   BL6-2       63     4   6.35</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV8-24   BL6-2       63     4   6.35</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV3-4    BL6-3       52     3   5.77</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 326 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 336 × 6</span></span></span>
+<span><span class="co">#&gt;    v_gene     sample n_cells  freq    pct shared</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43   MD4-2       55    55 100    TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV5-43   MD4-3       54    51  94.4  TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV5-43   MD4-1       50    47  94    TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGKV10-96  BL6-1       55     6  10.9  TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGKV10-96  BL6-3       52     5   9.62 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> None       BL6-3       52     5   9.62 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> IGKV14-111 BL6-2       63     6   9.52 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGKV6-17   BL6-2       63     4   6.35 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV8-24   BL6-2       63     4   6.35 FALSE </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV3-4    BL6-3       52     3   5.77 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 326 more rows</span></span></span></code></pre></div>
 <p>If two columns are provided to the <code>data_cols</code> argument,
 the number of cells containing each combination of genes is
 returned.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/calc_gene_usage.html">calc_gene_usage</a></span><span class="op">(</span></span>
-<span>    data_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,</span>
-<span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span></span>
+<span>    data_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,</span>
+<span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
+<span>    return_df   <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,062 × 6</span></span></span>
-<span><span class="co">#&gt;    v_gene     j_gene sample n_cells  freq    pct</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43   IGKJ2  MD4-2       55    55 100   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV5-43   IGKJ2  MD4-3       54    51  94.4 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV5-43   IGKJ2  MD4-1       50    47  94   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGKV14-111 IGKJ2  BL6-2       63     4   6.35</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGKV10-96  IGKJ1  BL6-3       52     3   5.77</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> IGLV1      IGLJ1  BL6-3       52     3   5.77</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> IGKV10-96  IGKJ2  BL6-1       55     3   5.45</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGKV10-96  IGKJ1  BL6-2       63     3   4.76</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV1-135  IGKJ1  BL6-3       52     2   3.85</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV10-96  IGKJ2  BL6-3       52     2   3.85</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 1,052 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,062 × 7</span></span></span>
+<span><span class="co">#&gt;    v_gene     j_gene sample n_cells  freq    pct shared</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> IGKV5-43   IGKJ2  MD4-2       55    55 100    TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> IGKV5-43   IGKJ2  MD4-3       54    51  94.4  TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> IGKV5-43   IGKJ2  MD4-1       50    47  94    TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> IGKV14-111 IGKJ2  BL6-2       63     4   6.35 FALSE </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> IGKV10-96  IGKJ1  BL6-3       52     3   5.77 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> IGLV1      IGLJ1  BL6-3       52     3   5.77 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> IGKV10-96  IGKJ2  BL6-1       55     3   5.45 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> IGKV10-96  IGKJ1  BL6-2       63     3   4.76 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> IGKV6-15   IGKJ5  BL6-3       52     2   3.85 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> IGKV10-96  IGKJ2  BL6-3       52     2   3.85 TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,052 more rows</span></span></span></code></pre></div>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -232,15 +239,13 @@ returned.</p>
 frequency of each gene segment. By default if a single column is passed
 to the <code>data_cols</code> argument, a bargraph will be returned. The
 number of top genes to include in the plot can be specified with the
-<code>n_genes</code> argument. Alternatively, a vector of gene names can
-be passed to the <code>vdj_genes</code> argument to plot a set of
-desired genes.</p>
+<code>genes</code> argument.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
-<span>    n_genes     <span class="op">=</span> <span class="fl">20</span></span>
+<span>    genes       <span class="op">=</span> <span class="fl">20</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="gene-usage_files/figure-html/unnamed-chunk-6-1.png" width="768"></p>
 <p>By default, percentages are shown on the y-axis, to instead plot the
@@ -253,25 +258,13 @@ frequency, set the <code>units</code> argument to ‘frequency’.</p>
 <span>    units       <span class="op">=</span> <span class="st">"frequency"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="gene-usage_files/figure-html/unnamed-chunk-7-1.png" width="768"></p>
-<p>If two columns are passed to the <code>data_cols</code> argument, a
-heatmap will be generated summarizing the usage of segment pairs. If a
-column is provided to the <code>cluster_col</code> argument, a separate
-heatmap will be generated for each cluster.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
-<span>    data_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,</span>
-<span>    cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
-<span>    n_genes     <span class="op">=</span> <span class="fl">15</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="gene-usage_files/figure-html/unnamed-chunk-8-1.png" width="768"></p>
 <p>Plot colors can be adjusted using the <code>plot_colors</code>
 argument. In addition, <code><a href="../reference/plot_gene_usage.html">plot_gene_usage()</a></code> returns a ggplot
 object that can be modified with ggplot2 functions such as
 <code><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">ggplot2::theme()</a></code>. Plots can be further adjusted by passing
 aesthetic parameters directly to ggplot2, e.g. <code>alpha</code>,
 <code>linetype</code>, <code>color</code>, etc.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols   <span class="op">=</span> <span class="st">"v_gene"</span>,</span>
@@ -282,7 +275,35 @@ aesthetic parameters directly to ggplot2, e.g. <code>alpha</code>,
 <span>    alpha <span class="op">=</span> <span class="fl">0.7</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">90</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="gene-usage_files/figure-html/unnamed-chunk-8-1.png" width="768"></p>
+<p>If two columns are passed to the <code>data_cols</code> argument, a
+heatmap will be generated summarizing the usage of different pairs of
+segments. If a column is provided to the <code>cluster_col</code>
+argument, a separate heatmap will be generated for each cluster.</p>
+<p>In this example we are plotting the frequency that different heavy
+chain V and J segments appear together.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
+<span>    data_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,</span>
+<span>    cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
+<span>    chain       <span class="op">=</span> <span class="st">"IGH"</span>,</span>
+<span>    genes       <span class="op">=</span> <span class="fl">15</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="gene-usage_files/figure-html/unnamed-chunk-9-1.png" width="768"></p>
+<p>The paired gene usage for two chains can also be plotted using
+<code><a href="../reference/plot_gene_pairs.html">plot_gene_pairs()</a></code>. In this example we are plotting the
+frequency that different heavy and light chain V segments appear
+together.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/plot_gene_pairs.html">plot_gene_pairs</a></span><span class="op">(</span></span>
+<span>    data_col    <span class="op">=</span> <span class="st">"v_gene"</span>,</span>
+<span>    chains      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"IGH"</span>, <span class="st">"IGK"</span><span class="op">)</span>,</span>
+<span>    cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
+<span>    genes       <span class="op">=</span> <span class="fl">12</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<p><img src="gene-usage_files/figure-html/unnamed-chunk-10-1.png" width="768"></p>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -297,55 +318,55 @@ dataset (BL6 and MD4 cells combined). The <code>cluster_col</code>
 argument can be used to create a separate plot for each sample. Labels
 can be rotated to eliminate overlapping text using the
 <code>rotate_labels</code> argument.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,</span>
 <span>    method        <span class="op">=</span> <span class="st">"circos"</span>,</span>
-<span>    n_genes       <span class="op">=</span> <span class="fl">6</span>,</span>
+<span>    genes         <span class="op">=</span> <span class="fl">6</span>,</span>
 <span>    rotate_labels <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="gene-usage_files/figure-html/unnamed-chunk-10-1.png" width="576"></p>
+<p><img src="gene-usage_files/figure-html/unnamed-chunk-11-1.png" width="576"></p>
 <p>Plot colors can be modified using the <code>plot_colors</code>
 argument, additional parameters can be passed directly to
 <code><a href="https://rdrr.io/pkg/circlize/man/chordDiagram.html" class="external-link">circlize::chordDiagram()</a></code>. In this example we add a border
 around the links and scale the plot so each sample is the same
 width.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
-<span>    data_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,</span>
-<span>    method      <span class="op">=</span> <span class="st">"circos"</span>,</span>
-<span>    n_genes     <span class="op">=</span> <span class="fl">8</span>,</span>
-<span>    plot_colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/RColorBrewer/man/ColorBrewer.html" class="external-link">brewer.pal</a></span><span class="op">(</span><span class="fl">10</span>, <span class="st">"Spectral"</span><span class="op">)</span>,</span>
-<span>    </span>
-<span>    link.border <span class="op">=</span> <span class="st">"black"</span>,  <span class="co"># parameters to pass to chordDiagram()</span></span>
-<span>    scale       <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="gene-usage_files/figure-html/unnamed-chunk-11-1.png" width="576"></p>
-<p>Gene segment usage can be plotted separately for cell clusters (or
-samples) using the <code>cluster_col</code> argument. The number of rows
-used to arrange plots can be modified using the <code>panel_nrow</code>
-argument.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
 <span>    data_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,</span>
 <span>    method      <span class="op">=</span> <span class="st">"circos"</span>,</span>
+<span>    genes       <span class="op">=</span> <span class="fl">8</span>,</span>
+<span>    plot_colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/RColorBrewer/man/ColorBrewer.html" class="external-link">brewer.pal</a></span><span class="op">(</span><span class="fl">10</span>, <span class="st">"Spectral"</span><span class="op">)</span>,</span>
+<span>    </span>
+<span>    link.border <span class="op">=</span> <span class="st">"black"</span>,  <span class="co"># parameters to pass to chordDiagram()</span></span>
+<span>    scale       <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<p><img src="gene-usage_files/figure-html/unnamed-chunk-12-1.png" width="576"></p>
+<p>Gene segment usage can be plotted separately for cell clusters (or
+samples) using the <code>cluster_col</code> argument. The number of rows
+used to arrange plots can be modified using the <code>panel_nrow</code>
+argument.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/plot_gene_usage.html">plot_gene_usage</a></span><span class="op">(</span></span>
+<span>    data_cols   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v_gene"</span>, <span class="st">"j_gene"</span><span class="op">)</span>,</span>
+<span>    method      <span class="op">=</span> <span class="st">"circos"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
-<span>    n_genes     <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>    genes       <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>    panel_nrow  <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>    scale       <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="gene-usage_files/figure-html/unnamed-chunk-12-1.png" width="672"></p>
+<p><img src="gene-usage_files/figure-html/unnamed-chunk-13-1.png" width="672"></p>
 <p><br></p>
 </div>
 <div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<pre><code><span><span class="co">#&gt; R version 4.2.2 (2022-10-31)</span></span>
+<pre><code><span><span class="co">#&gt; R version 4.2.3 (2023-03-15)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu (64-bit)</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 22.04.1 LTS</span></span>
+<span><span class="co">#&gt; Running under: Ubuntu 22.04.2 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
 <span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3</span></span>
@@ -361,91 +382,89 @@ argument.</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] RColorBrewer_1.1-3 ggplot2_3.4.0      SeuratObject_4.1.3</span></span>
+<span><span class="co">#&gt; [1] RColorBrewer_1.1-3 ggplot2_3.4.1      SeuratObject_4.1.3</span></span>
 <span><span class="co">#&gt; [4] Seurat_4.3.0       djvdj_0.0.0.9000  </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] utf8_1.2.2                  spatstat.explore_3.0-5     </span></span>
-<span><span class="co">#&gt;   [3] reticulate_1.26             tidyselect_1.2.0           </span></span>
-<span><span class="co">#&gt;   [5] htmlwidgets_1.5.4           grid_4.2.2                 </span></span>
-<span><span class="co">#&gt;   [7] BiocParallel_1.30.4         Rtsne_0.16                 </span></span>
-<span><span class="co">#&gt;   [9] munsell_0.5.0               codetools_0.2-18           </span></span>
-<span><span class="co">#&gt;  [11] ragg_1.2.4                  ica_1.0-3                  </span></span>
-<span><span class="co">#&gt;  [13] future_1.29.0               miniUI_0.1.1.1             </span></span>
-<span><span class="co">#&gt;  [15] withr_2.5.0                 spatstat.random_3.0-1      </span></span>
-<span><span class="co">#&gt;  [17] colorspace_2.0-3            progressr_0.12.0           </span></span>
-<span><span class="co">#&gt;  [19] Biobase_2.56.0              highr_0.9                  </span></span>
-<span><span class="co">#&gt;  [21] knitr_1.41                  stats4_4.2.2               </span></span>
-<span><span class="co">#&gt;  [23] SingleCellExperiment_1.18.1 ROCR_1.0-11                </span></span>
-<span><span class="co">#&gt;  [25] tensor_1.5                  listenv_0.8.0              </span></span>
-<span><span class="co">#&gt;  [27] labeling_0.4.2              MatrixGenerics_1.8.1       </span></span>
-<span><span class="co">#&gt;  [29] GenomeInfoDbData_1.2.8      polyclip_1.10-4            </span></span>
-<span><span class="co">#&gt;  [31] farver_2.1.1                bit64_4.0.5                </span></span>
-<span><span class="co">#&gt;  [33] rprojroot_2.0.3             parallelly_1.32.1          </span></span>
-<span><span class="co">#&gt;  [35] vctrs_0.5.1                 generics_0.1.3             </span></span>
-<span><span class="co">#&gt;  [37] xfun_0.35                   R6_2.5.1                   </span></span>
-<span><span class="co">#&gt;  [39] doParallel_1.0.17           GenomeInfoDb_1.32.4        </span></span>
-<span><span class="co">#&gt;  [41] clue_0.3-63                 bitops_1.0-7               </span></span>
-<span><span class="co">#&gt;  [43] spatstat.utils_3.0-1        cachem_1.0.6               </span></span>
-<span><span class="co">#&gt;  [45] DelayedArray_0.22.0         promises_1.2.0.1           </span></span>
-<span><span class="co">#&gt;  [47] scales_1.2.1                vroom_1.6.0                </span></span>
-<span><span class="co">#&gt;  [49] gtable_0.3.1                abdiv_0.2.0                </span></span>
-<span><span class="co">#&gt;  [51] globals_0.16.2              goftest_1.2-3              </span></span>
-<span><span class="co">#&gt;  [53] rlang_1.0.6                 systemfonts_1.0.4          </span></span>
-<span><span class="co">#&gt;  [55] GlobalOptions_0.1.2         splines_4.2.2              </span></span>
-<span><span class="co">#&gt;  [57] lazyeval_0.2.2              spatstat.geom_3.0-3        </span></span>
-<span><span class="co">#&gt;  [59] broom_1.0.1                 yaml_2.3.6                 </span></span>
-<span><span class="co">#&gt;  [61] reshape2_1.4.4              abind_1.4-5                </span></span>
-<span><span class="co">#&gt;  [63] backports_1.4.1             httpuv_1.6.6               </span></span>
-<span><span class="co">#&gt;  [65] tools_4.2.2                 ellipsis_0.3.2             </span></span>
-<span><span class="co">#&gt;  [67] jquerylib_0.1.4             BiocGenerics_0.42.0        </span></span>
-<span><span class="co">#&gt;  [69] ggridges_0.5.4              Rcpp_1.0.9                 </span></span>
-<span><span class="co">#&gt;  [71] plyr_1.8.8                  zlibbioc_1.42.0            </span></span>
-<span><span class="co">#&gt;  [73] purrr_0.3.5                 RCurl_1.98-1.9             </span></span>
-<span><span class="co">#&gt;  [75] dbscan_1.1-11               deldir_1.0-6               </span></span>
-<span><span class="co">#&gt;  [77] pbapply_1.6-0               GetoptLong_1.0.5           </span></span>
-<span><span class="co">#&gt;  [79] cowplot_1.1.1               S4Vectors_0.34.0           </span></span>
-<span><span class="co">#&gt;  [81] zoo_1.8-11                  iNEXT_3.0.0                </span></span>
-<span><span class="co">#&gt;  [83] SummarizedExperiment_1.26.1 ggrepel_0.9.2              </span></span>
-<span><span class="co">#&gt;  [85] cluster_2.1.4               fs_1.5.2                   </span></span>
-<span><span class="co">#&gt;  [87] magrittr_2.0.3              data.table_1.14.6          </span></span>
-<span><span class="co">#&gt;  [89] scattermore_0.8             circlize_0.4.15            </span></span>
-<span><span class="co">#&gt;  [91] lmtest_0.9-40               RANN_2.6.1                 </span></span>
-<span><span class="co">#&gt;  [93] fitdistrplus_1.1-8          matrixStats_0.63.0         </span></span>
-<span><span class="co">#&gt;  [95] hms_1.1.2                   patchwork_1.1.2            </span></span>
-<span><span class="co">#&gt;  [97] mime_0.12                   evaluate_0.19              </span></span>
-<span><span class="co">#&gt;  [99] xtable_1.8-4                IRanges_2.30.1             </span></span>
-<span><span class="co">#&gt; [101] gridExtra_2.3               shape_1.4.6                </span></span>
-<span><span class="co">#&gt; [103] compiler_4.2.2              tibble_3.1.8               </span></span>
-<span><span class="co">#&gt; [105] KernSmooth_2.23-20          crayon_1.5.2               </span></span>
-<span><span class="co">#&gt; [107] htmltools_0.5.4             later_1.3.0                </span></span>
-<span><span class="co">#&gt; [109] tzdb_0.3.0                  tidyr_1.2.1                </span></span>
-<span><span class="co">#&gt; [111] ComplexHeatmap_2.12.1       MASS_7.3-58.1              </span></span>
-<span><span class="co">#&gt; [113] boot_1.3-28                 Matrix_1.5-1               </span></span>
-<span><span class="co">#&gt; [115] readr_2.1.3                 cli_3.4.1                  </span></span>
-<span><span class="co">#&gt; [117] parallel_4.2.2              igraph_1.3.5               </span></span>
-<span><span class="co">#&gt; [119] GenomicRanges_1.48.0        pkgconfig_2.0.3            </span></span>
-<span><span class="co">#&gt; [121] pkgdown_2.0.7               sp_1.5-1                   </span></span>
-<span><span class="co">#&gt; [123] plotly_4.10.1               spatstat.sparse_3.0-0      </span></span>
-<span><span class="co">#&gt; [125] foreach_1.5.2               bslib_0.4.1                </span></span>
-<span><span class="co">#&gt; [127] XVector_0.36.0              stringr_1.5.0              </span></span>
-<span><span class="co">#&gt; [129] digest_0.6.31               sctransform_0.3.5          </span></span>
-<span><span class="co">#&gt; [131] RcppAnnoy_0.0.20            spatstat.data_3.0-0        </span></span>
-<span><span class="co">#&gt; [133] Biostrings_2.64.1           rmarkdown_2.18             </span></span>
-<span><span class="co">#&gt; [135] leiden_0.4.3                uwot_0.1.14                </span></span>
-<span><span class="co">#&gt; [137] shiny_1.7.3                 Rsamtools_2.12.0           </span></span>
-<span><span class="co">#&gt; [139] rjson_0.2.21                lifecycle_1.0.3            </span></span>
-<span><span class="co">#&gt; [141] nlme_3.1-160                jsonlite_1.8.4             </span></span>
-<span><span class="co">#&gt; [143] desc_1.4.2                  viridisLite_0.4.1          </span></span>
-<span><span class="co">#&gt; [145] fansi_1.0.3                 pillar_1.8.1               </span></span>
-<span><span class="co">#&gt; [147] lattice_0.20-45             fastmap_1.1.0              </span></span>
-<span><span class="co">#&gt; [149] httr_1.4.4                  survival_3.4-0             </span></span>
-<span><span class="co">#&gt; [151] glue_1.6.2                  png_0.1-8                  </span></span>
-<span><span class="co">#&gt; [153] iterators_1.0.14            bit_4.0.5                  </span></span>
-<span><span class="co">#&gt; [155] stringi_1.7.8               sass_0.4.4                 </span></span>
-<span><span class="co">#&gt; [157] textshaping_0.3.6           memoise_2.0.1              </span></span>
-<span><span class="co">#&gt; [159] dplyr_1.0.10                irlba_2.3.5.1              </span></span>
-<span><span class="co">#&gt; [161] future.apply_1.10.0</span></span></code></pre>
+<span><span class="co">#&gt;   [1] backports_1.4.1             circlize_0.4.15            </span></span>
+<span><span class="co">#&gt;   [3] systemfonts_1.0.4           plyr_1.8.8                 </span></span>
+<span><span class="co">#&gt;   [5] igraph_1.4.1                lazyeval_0.2.2             </span></span>
+<span><span class="co">#&gt;   [7] sp_1.6-0                    splines_4.2.3              </span></span>
+<span><span class="co">#&gt;   [9] listenv_0.9.0               scattermore_0.8            </span></span>
+<span><span class="co">#&gt;  [11] GenomeInfoDb_1.34.9         digest_0.6.31              </span></span>
+<span><span class="co">#&gt;  [13] foreach_1.5.2               htmltools_0.5.5            </span></span>
+<span><span class="co">#&gt;  [15] fansi_1.0.4                 magrittr_2.0.3             </span></span>
+<span><span class="co">#&gt;  [17] memoise_2.0.1               tensor_1.5                 </span></span>
+<span><span class="co">#&gt;  [19] cluster_2.1.4               doParallel_1.0.17          </span></span>
+<span><span class="co">#&gt;  [21] ROCR_1.0-11                 tzdb_0.3.0                 </span></span>
+<span><span class="co">#&gt;  [23] ComplexHeatmap_2.14.0       globals_0.16.2             </span></span>
+<span><span class="co">#&gt;  [25] readr_2.1.4                 matrixStats_0.63.0         </span></span>
+<span><span class="co">#&gt;  [27] vroom_1.6.1                 spatstat.sparse_3.0-1      </span></span>
+<span><span class="co">#&gt;  [29] pkgdown_2.0.7               colorspace_2.1-0           </span></span>
+<span><span class="co">#&gt;  [31] ggrepel_0.9.3               textshaping_0.3.6          </span></span>
+<span><span class="co">#&gt;  [33] xfun_0.37                   dplyr_1.1.1                </span></span>
+<span><span class="co">#&gt;  [35] crayon_1.5.2                RCurl_1.98-1.10            </span></span>
+<span><span class="co">#&gt;  [37] jsonlite_1.8.4              spatstat.data_3.0-1        </span></span>
+<span><span class="co">#&gt;  [39] progressr_0.13.0            survival_3.5-3             </span></span>
+<span><span class="co">#&gt;  [41] zoo_1.8-11                  iterators_1.0.14           </span></span>
+<span><span class="co">#&gt;  [43] glue_1.6.2                  polyclip_1.10-4            </span></span>
+<span><span class="co">#&gt;  [45] gtable_0.3.3                zlibbioc_1.44.0            </span></span>
+<span><span class="co">#&gt;  [47] XVector_0.38.0              leiden_0.4.3               </span></span>
+<span><span class="co">#&gt;  [49] GetoptLong_1.0.5            DelayedArray_0.24.0        </span></span>
+<span><span class="co">#&gt;  [51] future.apply_1.10.0         shape_1.4.6                </span></span>
+<span><span class="co">#&gt;  [53] SingleCellExperiment_1.20.1 BiocGenerics_0.44.0        </span></span>
+<span><span class="co">#&gt;  [55] abind_1.4-5                 scales_1.2.1               </span></span>
+<span><span class="co">#&gt;  [57] spatstat.random_3.1-4       miniUI_0.1.1.1             </span></span>
+<span><span class="co">#&gt;  [59] Rcpp_1.0.10                 viridisLite_0.4.1          </span></span>
+<span><span class="co">#&gt;  [61] xtable_1.8-4                clue_0.3-64                </span></span>
+<span><span class="co">#&gt;  [63] reticulate_1.28             bit_4.0.5                  </span></span>
+<span><span class="co">#&gt;  [65] stats4_4.2.3                htmlwidgets_1.6.2          </span></span>
+<span><span class="co">#&gt;  [67] httr_1.4.5                  ellipsis_0.3.2             </span></span>
+<span><span class="co">#&gt;  [69] ica_1.0-3                   farver_2.1.1               </span></span>
+<span><span class="co">#&gt;  [71] pkgconfig_2.0.3             uwot_0.1.14                </span></span>
+<span><span class="co">#&gt;  [73] deldir_1.0-6                sass_0.4.5                 </span></span>
+<span><span class="co">#&gt;  [75] utf8_1.2.3                  labeling_0.4.2             </span></span>
+<span><span class="co">#&gt;  [77] tidyselect_1.2.0            rlang_1.1.0                </span></span>
+<span><span class="co">#&gt;  [79] reshape2_1.4.4              later_1.3.0                </span></span>
+<span><span class="co">#&gt;  [81] munsell_0.5.0               tools_4.2.3                </span></span>
+<span><span class="co">#&gt;  [83] cachem_1.0.7                cli_3.6.1                  </span></span>
+<span><span class="co">#&gt;  [85] generics_0.1.3              broom_1.0.4                </span></span>
+<span><span class="co">#&gt;  [87] ggridges_0.5.4              evaluate_0.20              </span></span>
+<span><span class="co">#&gt;  [89] stringr_1.5.0               fastmap_1.1.1              </span></span>
+<span><span class="co">#&gt;  [91] goftest_1.2-3               yaml_2.3.7                 </span></span>
+<span><span class="co">#&gt;  [93] ragg_1.2.5                  bit64_4.0.5                </span></span>
+<span><span class="co">#&gt;  [95] knitr_1.42                  fs_1.6.1                   </span></span>
+<span><span class="co">#&gt;  [97] fitdistrplus_1.1-8          purrr_1.0.1                </span></span>
+<span><span class="co">#&gt;  [99] RANN_2.6.1                  nlme_3.1-162               </span></span>
+<span><span class="co">#&gt; [101] pbapply_1.7-0               future_1.32.0              </span></span>
+<span><span class="co">#&gt; [103] mime_0.12                   compiler_4.2.3             </span></span>
+<span><span class="co">#&gt; [105] plotly_4.10.1               png_0.1-8                  </span></span>
+<span><span class="co">#&gt; [107] spatstat.utils_3.0-2        abdiv_0.2.0                </span></span>
+<span><span class="co">#&gt; [109] tibble_3.2.1                bslib_0.4.2                </span></span>
+<span><span class="co">#&gt; [111] stringi_1.7.12              highr_0.10                 </span></span>
+<span><span class="co">#&gt; [113] desc_1.4.2                  lattice_0.20-45            </span></span>
+<span><span class="co">#&gt; [115] Matrix_1.5-3                vctrs_0.6.1                </span></span>
+<span><span class="co">#&gt; [117] pillar_1.9.0                lifecycle_1.0.3            </span></span>
+<span><span class="co">#&gt; [119] spatstat.geom_3.1-0         lmtest_0.9-40              </span></span>
+<span><span class="co">#&gt; [121] jquerylib_0.1.4             GlobalOptions_0.1.2        </span></span>
+<span><span class="co">#&gt; [123] RcppAnnoy_0.0.20            data.table_1.14.8          </span></span>
+<span><span class="co">#&gt; [125] cowplot_1.1.1               bitops_1.0-7               </span></span>
+<span><span class="co">#&gt; [127] irlba_2.3.5.1               ggtrace_0.2.0              </span></span>
+<span><span class="co">#&gt; [129] httpuv_1.6.9                patchwork_1.1.2            </span></span>
+<span><span class="co">#&gt; [131] GenomicRanges_1.50.2        R6_2.5.1                   </span></span>
+<span><span class="co">#&gt; [133] promises_1.2.0.1            gridExtra_2.3              </span></span>
+<span><span class="co">#&gt; [135] KernSmooth_2.23-20          IRanges_2.32.0             </span></span>
+<span><span class="co">#&gt; [137] parallelly_1.35.0           codetools_0.2-19           </span></span>
+<span><span class="co">#&gt; [139] boot_1.3-28.1               MASS_7.3-58.2              </span></span>
+<span><span class="co">#&gt; [141] SummarizedExperiment_1.28.0 rprojroot_2.0.3            </span></span>
+<span><span class="co">#&gt; [143] rjson_0.2.21                withr_2.5.0                </span></span>
+<span><span class="co">#&gt; [145] sctransform_0.3.5           S4Vectors_0.36.2           </span></span>
+<span><span class="co">#&gt; [147] GenomeInfoDbData_1.2.9      parallel_4.2.3             </span></span>
+<span><span class="co">#&gt; [149] hms_1.1.3                   grid_4.2.3                 </span></span>
+<span><span class="co">#&gt; [151] tidyr_1.3.0                 rmarkdown_2.20             </span></span>
+<span><span class="co">#&gt; [153] MatrixGenerics_1.10.0       Rtsne_0.16                 </span></span>
+<span><span class="co">#&gt; [155] spatstat.explore_3.1-0      Biobase_2.58.0             </span></span>
+<span><span class="co">#&gt; [157] shiny_1.7.4</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

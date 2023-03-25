@@ -52,6 +52,9 @@
     <loc>https://rnabioco.github.io/djvdj/reference/calc_frequency.html</loc>
   </url>
   <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/calc_gene_pairs.html</loc>
+  </url>
+  <url>
     <loc>https://rnabioco.github.io/djvdj/reference/calc_gene_usage.html</loc>
   </url>
   <url>
@@ -97,10 +100,10 @@
     <loc>https://rnabioco.github.io/djvdj/reference/plot_diversity.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/plot_features.html</loc>
+    <loc>https://rnabioco.github.io/djvdj/reference/plot_frequency.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/plot_frequency.html</loc>
+    <loc>https://rnabioco.github.io/djvdj/reference/plot_gene_pairs.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/plot_gene_usage.html</loc>
@@ -112,13 +115,16 @@
     <loc>https://rnabioco.github.io/djvdj/reference/plot_motifs.html</loc>
   </url>
   <url>
+    <loc>https://rnabioco.github.io/djvdj/reference/plot_numerical.html</loc>
+  </url>
+  <url>
     <loc>https://rnabioco.github.io/djvdj/reference/plot_rarefaction.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/plot_similarity.html</loc>
+    <loc>https://rnabioco.github.io/djvdj/reference/plot_scatter.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/plot_vdj.html</loc>
+    <loc>https://rnabioco.github.io/djvdj/reference/plot_similarity.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/splen_so.html</loc>
