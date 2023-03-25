@@ -48,9 +48,7 @@ align sequences at the 5' or 3' end when plotting.}
 
 \item{quiet}{If \code{TRUE} messages will not be displayed}
 
-\item{sep}{Separator used for storing per cell V(D)J data
-\subsection{Aesthetics}{
-}}
+\item{sep}{Separator used for storing per cell V(D)J data}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 

@@ -54,9 +54,7 @@ per-chain data such as CDR3 sequences. Set to NULL to include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
-\item{sep}{Separator used for storing per-chain V(D)J data for each cell
-\subsection{Aesthetics}{
-}}
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 

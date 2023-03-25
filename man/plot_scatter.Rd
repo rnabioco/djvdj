@@ -55,9 +55,7 @@ set.
 }}
 
 \item{other_label}{Label to use for 'other' cells when \code{top} is specified, if
-\code{NULL} all cell groups will be shown.
-\subsection{Aesthetics}{
-}}
+\code{NULL} all cell groups will be shown.}
 
 \item{plot_colors}{Character vector specifying colors to use for cell
 clusters specified by cluster_col.}
@@ -101,9 +99,7 @@ plot legend
 n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{...}{Additional arguments to pass to \code{\link[ggplot2:geom_point]{ggplot2::geom_point()}}, or
-\code{\link[ggtrace:geom_point_trace]{ggtrace::geom_point_trace()}} if \code{outline = TRUE}, e.g. color, size, etc.
-\subsection{VDJ arguments}{
-}}
+\code{\link[ggtrace:geom_point_trace]{ggtrace::geom_point_trace()}} if \code{outline = TRUE}, e.g. color, size, etc.}
 
 \item{chain}{Chain(s) to use for filtering data before plotting. If NULL
 data will not be filtered based on chain.}
@@ -126,6 +122,17 @@ Create a scatter plot with cells colored based on the provided feature.
 This can be used to create dimensional reduction plots (e.g. UMAP, tSNE, PCA)
 or to compare different cell attributes (e.g. CD4 vs CD8 expression).
 When plotting V(D)J data, per-chain values will be summarized for each cell.
+}
+\examples{
+# Create scatter plot
+plot_scatter(
+  vdj_sce,
+  data_col = "reads",
+  x        = "UMAP_1",
+  y        = "UMAP_2",
+  trans    = "log10"
+)
+
 }
 \seealso{
 \code{\link[=summarize_vdj]{summarize_vdj()}} for more examples on how per-chain data can be

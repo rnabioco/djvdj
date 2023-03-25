@@ -17,7 +17,6 @@
 #' @param return_df Return results as a data.frame. If set to `FALSE`, results
 #' will be added to the input object.
 #'
-#' ## VDJ arguments
 #'
 #' @param per_chain If `TRUE` the frequency of each per-chain value will be
 #' calculated. If `FALSE` per-chain data will not be parsed and the values
@@ -398,7 +397,6 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 #'
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
 #'
-#' ## Aesthetics
 #'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters
@@ -696,7 +694,6 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' @param other_label Label to use for 'other' cells when `top` is specified, if
 #' `NULL` all cell groups present in data_col will be displayed on the plot.
 #'
-#' ## Aesthetics
 #'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters or groups
@@ -723,7 +720,6 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #'
-#' ## VDJ arguments
 #'
 #' @param per_chain If `TRUE` the frequency of each per-chain value will be
 #' calculated. If `FALSE` per-chain data will not be parsed and the values

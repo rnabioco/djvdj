@@ -19,9 +19,9 @@ calc_gene_usage(
 \item{input}{Object containing V(D)J data. If a data.frame is provided, the
 cell barcodes should be stored as row names.}
 
-\item{data_cols}{meta.data column(s) containing V(D)J genes identified for each
-clonotype. If multiple columns are provided, paired usage of genes will be
-calculated.}
+\item{data_cols}{meta.data column(s) containing V(D)J genes identified for
+each clonotype. If multiple columns are provided, paired usage of genes will
+be calculated.}
 
 \item{cluster_col}{meta.data column containing cell clusters to use when
 calculating gene usage}
@@ -42,7 +42,10 @@ added to the input object.}
 data.frame containing gene usage summary
 }
 \description{
-Calculate V(D)J segment usage
+Quantify the usage of different V(D)J segments for each cell cluster. The
+usage of two V(D)J segments can also be calculated for a single chain.
+For example, calc_gene_usage() can calculate the frequency that different
+heavy chain V and J segments appear together.
 }
 \examples{
 # Calculate V(D)J segment usage for all cells

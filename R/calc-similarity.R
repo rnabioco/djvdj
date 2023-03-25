@@ -233,7 +233,6 @@ calc_similarity <- function(input, data_col, cluster_col,
 #' clustered.
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #'
-#' ## Aesthetics
 #'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters

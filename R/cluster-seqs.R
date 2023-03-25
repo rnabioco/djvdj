@@ -89,7 +89,8 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
                               return_df = FALSE, sep = global$sep, ...) {
 
   # Check for installed packages
-  .check_packages(c("dbscan", "Biostrings", "igraph (>= 1.3.0)"))
+  .check_packages(c("dbscan", "igraph (>= 1.3.0)"))
+  .check_packages("Biostrings", db = "Bioconductor")
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -238,7 +239,6 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' @param quiet If `TRUE` messages will not be displayed
 #' @param sep Separator used for storing per cell V(D)J data
 #'
-#' ## Aesthetics
 #'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Character vector containing levels for ordering

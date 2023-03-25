@@ -64,9 +64,7 @@ all chains}
 \item{return_list}{Should a list of plots be returned, if FALSE plots will be
 combined and arranged into panels}
 
-\item{sep}{Separator used for storing per-chain V(D)J data for each cell
-\subsection{Aesthetics}{
-}}
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{plot_colors}{Character vector containing colors to use for plot. If a
 bar graph is created this will specify how to color cell clusters. For a
@@ -110,7 +108,8 @@ n label aesthetics, e.g. list(size = 4, color = "red")}
 ggplot object
 }
 \description{
-Plot V(D)J segment usage
+Plot the usage of different V(D)J segments for each cell cluster. The
+usage of two V(D)J segments can also be plotted for a single chain.
 }
 \examples{
 # Plot V(D)J segment usage for all cells

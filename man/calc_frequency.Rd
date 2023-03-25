@@ -32,9 +32,7 @@ grouping cells when calculating clonotype abundance}
 \item{prefix}{Prefix to add to new columns}
 
 \item{return_df}{Return results as a data.frame. If set to \code{FALSE}, results
-will be added to the input object.
-\subsection{VDJ arguments}{
-}}
+will be added to the input object.}
 
 \item{per_chain}{If \code{TRUE} the frequency of each per-chain value will be
 calculated. If \code{FALSE} per-chain data will not be parsed and the values

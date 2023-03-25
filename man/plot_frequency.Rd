@@ -57,9 +57,7 @@ set.
 }}
 
 \item{other_label}{Label to use for 'other' cells when \code{top} is specified, if
-\code{NULL} all cell groups present in data_col will be displayed on the plot.
-\subsection{Aesthetics}{
-}}
+\code{NULL} all cell groups present in data_col will be displayed on the plot.}
 
 \item{plot_colors}{Character vector containing colors for plotting}
 
@@ -91,9 +89,7 @@ plot legend
 n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
-linetype, etc.
-\subsection{VDJ arguments}{
-}}
+linetype, etc.}
 
 \item{per_chain}{If \code{TRUE} the frequency of each per-chain value will be
 calculated. If \code{FALSE} per-chain data will not be parsed and the values

@@ -675,15 +675,16 @@ NULL
 #'
 #' @importFrom rlang is_installed
 #' @noRd
-.check_packages <- function(pkgs) {
+.check_packages <- function(pkgs, db = "CRAN") {
   chks <- purrr::map_lgl(pkgs, rlang::is_installed)
   pkgs <- paste0("\'", pkgs, "\'")
 
   missing <- pkgs[!chks]
 
   if (any(!chks)) {
-    cli::cli_abort(
-      "Package{?s} {missing} must be installed to use this function."
-    )
+    cli::cli_abort(paste0(
+      "Package{?s} {cli::qty(missing)} must be installed to use this function.
+       Th{?is/ese} package{?s} {?is/are} available on ", db, "."
+    ))
   }
 }

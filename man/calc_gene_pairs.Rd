@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc-gene-usage.R
 \name{calc_gene_pairs}
 \alias{calc_gene_pairs}
-\title{Calculate paired usage of V(D)J segments between chains}
+\title{Calculate paired usage of V(D)J segments across chains}
 \usage{
 calc_gene_pairs(
   input,
@@ -35,7 +35,19 @@ calculating gene usage}
 data.frame containing gene pair summary
 }
 \description{
-Calculate paired usage of V(D)J segments between chains
+Quantify the paired usage of V(D)J segments across two chains. For example,
+calc_gene_pairs() can calculate the frequency that different TRA and TRB V
+segments appear together.
+}
+\examples{
+# Calculate the frequency of different V genes for IGH and IGK chains
+calc_gene_pairs(
+  vdj_sce,
+  data_col    = "v_gene",
+  chains      = c("IGH", "IGK"),
+  cluster_col = "orig.ident"
+)
+
 }
 \seealso{
 \code{\link[=plot_gene_pairs]{plot_gene_pairs()}}, \code{\link[=calc_gene_usage]{calc_gene_usage()}}, \code{\link[=plot_gene_usage]{plot_gene_usage()}}

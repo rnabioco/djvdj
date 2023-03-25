@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc-gene-usage.R
 \name{plot_gene_pairs}
 \alias{plot_gene_pairs}
-\title{Plot paired usage of V(D)J segments between chains}
+\title{Plot paired usage of V(D)J segments across chains}
 \usage{
 plot_gene_pairs(
   input,
@@ -55,9 +55,7 @@ to the data_cols argument
 \item{return_list}{Should a list of plots be returned, if FALSE plots will be
 combined and arranged into panels}
 
-\item{sep}{Separator used for storing per-chain V(D)J data for each cell
-\subsection{Aesthetics}{
-}}
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{plot_colors}{Character vector containing colors to use for plot. If a
 bar graph is created this will specify how to color cell clusters. For a
@@ -83,7 +81,19 @@ plot}
 ggplot object
 }
 \description{
-Plot paired usage of V(D)J segments between chains
+Plot the paired usage of V(D)J segments across two chains. For example,
+plot_gene_pairs() can be used to plot the frequency that different TRA and
+TRB V segments appear together.
+}
+\examples{
+# Plot the frequency of different V genes for IGH and IGK chains
+plot_gene_pairs(
+  vdj_sce,
+  data_col    = "v_gene",
+  chains      = c("IGH", "IGK"),
+  cluster_col = "orig.ident"
+)
+
 }
 \seealso{
 \code{\link[=calc_gene_pairs]{calc_gene_pairs()}}, \code{\link[=calc_gene_usage]{calc_gene_usage()}}, \code{\link[=plot_gene_usage]{plot_gene_usage()}}

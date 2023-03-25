@@ -791,12 +791,14 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 #' @param plt_ttl Plot title
 #' @param ... Additional arguments to pass to circlize::chordDiagram()
 #' @importFrom scales hue_pal
-#' @importFrom circlize chordDiagram circos.clear circos.axis circos.track mm_h
 #' @importFrom graphics title strwidth
 #' @noRd
 .create_circos <- function(mat_in, clrs = NULL, na_color = "grey90",
                            lvls = NULL, grps = NULL, rotate_labels = FALSE,
                            plt_ttl = NULL, ...) {
+
+  # Check installed packages
+  .check_packages("circlize")
 
   # Check matrix, must have at least one link
   vals <- as.numeric(mat_in)

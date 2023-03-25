@@ -1,10 +1,15 @@
 #' Calculate V(D)J segment usage
 #'
+#' Quantify the usage of different V(D)J segments for each cell cluster. The
+#' usage of two V(D)J segments can also be calculated for a single chain.
+#' For example, calc_gene_usage() can calculate the frequency that different
+#' heavy chain V and J segments appear together.
+#'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
-#' @param data_cols meta.data column(s) containing V(D)J genes identified for each
-#' clonotype. If multiple columns are provided, paired usage of genes will be
-#' calculated.
+#' @param data_cols meta.data column(s) containing V(D)J genes identified for
+#' each clonotype. If multiple columns are provided, paired usage of genes will
+#' be calculated.
 #' @param cluster_col meta.data column containing cell clusters to use when
 #' calculating gene usage
 #' @param chain Chain(s) to use for calculating gene usage. Set to `NULL` to
@@ -93,7 +98,11 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
   res
 }
 
-#' Calculate paired usage of V(D)J segments between chains
+#' Calculate paired usage of V(D)J segments across chains
+#'
+#' Quantify the paired usage of V(D)J segments across two chains. For example,
+#' calc_gene_pairs() can calculate the frequency that different TRA and TRB V
+#' segments appear together.
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
@@ -108,6 +117,16 @@ calc_gene_usage <- function(input, data_cols, cluster_col = NULL, chain = NULL,
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame containing gene pair summary
 #' @seealso [plot_gene_pairs()], [calc_gene_usage()], [plot_gene_usage()]
+#'
+#' @examples
+#' # Calculate the frequency of different V genes for IGH and IGK chains
+#' calc_gene_pairs(
+#'   vdj_sce,
+#'   data_col    = "v_gene",
+#'   chains      = c("IGH", "IGK"),
+#'   cluster_col = "orig.ident"
+#' )
+#'
 #' @export
 calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
                             chain_col = global$chain_col, sep = global$sep) {
@@ -170,6 +189,9 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 
 #' Plot V(D)J segment usage
 #'
+#' Plot the usage of different V(D)J segments for each cell cluster. The
+#' usage of two V(D)J segments can also be plotted for a single chain.
+#'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
 #' @param data_cols meta.data column containing genes for each clonotype,
@@ -198,7 +220,6 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' combined and arranged into panels
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #'
-#' ## Aesthetics
 #'
 #' @param plot_colors Character vector containing colors to use for plot. If a
 #' bar graph is created this will specify how to color cell clusters. For a
@@ -426,7 +447,11 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   res
 }
 
-#' Plot paired usage of V(D)J segments between chains
+#' Plot paired usage of V(D)J segments across chains
+#'
+#' Plot the paired usage of V(D)J segments across two chains. For example,
+#' plot_gene_pairs() can be used to plot the frequency that different TRA and
+#' TRB V segments appear together.
 #'
 #' @param input Object containing V(D)J data. If a data.frame is provided, the
 #' cell barcodes should be stored as row names.
@@ -452,7 +477,6 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' combined and arranged into panels
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #'
-#' ## Aesthetics
 #'
 #' @param plot_colors Character vector containing colors to use for plot. If a
 #' bar graph is created this will specify how to color cell clusters. For a
@@ -470,6 +494,16 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
 #' plot
 #' @seealso [calc_gene_pairs()], [calc_gene_usage()], [plot_gene_usage()]
 #' @return ggplot object
+#'
+#' @examples
+#' # Plot the frequency of different V genes for IGH and IGK chains
+#' plot_gene_pairs(
+#'   vdj_sce,
+#'   data_col    = "v_gene",
+#'   chains      = c("IGH", "IGK"),
+#'   cluster_col = "orig.ident"
+#' )
+#'
 #' @export
 plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
                             genes = 20,

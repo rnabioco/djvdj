@@ -80,9 +80,7 @@ set.
 }}
 
 \item{other_label}{Label to use for 'other' cells when \code{top} is specified, if
-\code{NULL} all cell groups will be shown.
-\subsection{Aesthetics}{
-}}
+\code{NULL} all cell groups will be shown.}
 
 \item{units}{Units to use for y-axis when method is 'histogram'. Use
 'frequency' to show the number of values or 'percent' to show the percentage
@@ -127,9 +125,7 @@ plot legend
 n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
-linetype, etc.
-\subsection{VDJ arguments}{
-}}
+linetype, etc.}
 
 \item{per_chain}{If \code{TRUE} values will be plotted for each chain, i.e. each
 data point represents a chain. If \code{FALSE} values will be summarized for each
@@ -155,6 +151,23 @@ ggplot object
 Visualize numerical single-cell data by creating a histogram, density plot,
 violin plots, or boxplots. When plotting V(D)J data, values can be plotted
 separately for each chain or summarized and plotted for each cell.
+}
+\examples{
+# Create histogram
+plot_histogram(
+  vdj_so,
+  data_col    = "reads",
+  cluster_col = "orig.ident",
+  trans       = "log10"
+)
+
+# Create violin plots
+plot_violin(
+  vdj_sce,
+  data_col    = "nFeature_RNA",
+  cluster_col = "orig.ident"
+)
+
 }
 \seealso{
 \code{\link[=summarize_vdj]{summarize_vdj()}} for more examples on how per-chain data can be

@@ -25,7 +25,6 @@ Imports:
     abdiv,
     boot,
     broom,
-    circlize,
     cli,
     ComplexHeatmap,
     dplyr,
@@ -51,6 +50,7 @@ Imports:
     utils
 Suggests: 
     Biostrings,
+    circlize,
     covr,
     dbscan,
     ggseqlogo,

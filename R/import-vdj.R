@@ -271,7 +271,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # if indel data is included, always filter for productive contigs since most
   # non-productive contigs are missing indel data
   if (include_mutations) {
-    .check_packages("Rsamtools")
+    .check_packages("Rsamtools", db = "Bioconductor")
 
     .add_progress_step("Calculating mutation frequencies", quiet = quiet)
 
