@@ -149,7 +149,6 @@ plotted.</p>
 <span>    trans    <span class="op">=</span> <span class="st">"log10"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="plotting_files/figure-html/unnamed-chunk-2-1.png" width="672"></p>
-<p><br></p>
 <p>To color cells based on an additional variable present in the object,
 specify the column name to the <code>cluster_col</code> argument.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -160,7 +159,6 @@ specify the column name to the <code>cluster_col</code> argument.</p>
 <span>    trans       <span class="op">=</span> <span class="st">"log10"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="plotting_files/figure-html/unnamed-chunk-3-1.png" width="672"></p>
-<p><br></p>
 <p>The function used to summarize per-chain values can be changed using
 the <code>summary_fn</code> argument. The per-chain values can also be
 plotted separately using the <code>per_chain</code> argument.</p>
@@ -174,7 +172,6 @@ plotted separately using the <code>per_chain</code> argument.</p>
 <span>    trans       <span class="op">=</span> <span class="st">"log10"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="plotting_files/figure-html/unnamed-chunk-4-1.png" width="672"></p>
-<p><br></p>
 <p>To only plot values for a specific chain, the <code>chain</code>
 argument can be used. In this example the mean number of UMIs is shown
 for each IGK chain.</p>
@@ -194,7 +191,7 @@ for each IGK chain.</p>
 </h2>
 <p>The <code><a href="../reference/plot_numerical.html">plot_violin()</a></code> function has similar functionality as
 <code><a href="../reference/plot_numerical.html">plot_histogram()</a></code> but will generate violin plots or
-boxplots. For all djvdj plotting functions, additional arguments can be
+boxplots. For all djvdj plotting functions additional arguments can be
 passed directly to ggplot2 to further modify plot aesthetics. By default
 clusters are arranged highest to lowest based on the values in
 <code>data_col</code>. This ordering can be modified using the
@@ -241,7 +238,6 @@ cell is shown.</p>
 <span>    na_color <span class="op">=</span> <span class="st">"lightgrey"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="plotting_files/figure-html/unnamed-chunk-7-1.png" width="480"></p>
-<p><br></p>
 <p>Instead of summarizing the per-chain values for each cell, we can
 also specify a chain to use for plotting. In this example we are
 plotting the CDR3 length for IGK chains. If a cell does not have an IGK
@@ -256,6 +252,58 @@ transformed using the <code>trans</code> argument.</p>
 <span>    trans    <span class="op">=</span> <span class="st">"log10"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="plotting_files/figure-html/unnamed-chunk-8-1.png" width="494.4"></p>
+<p>Cell clusters can be outlined by setting the <code>outline</code>
+argument, this can help visualize points that are lightly colored.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">u1</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/plot_scatter.html">plot_scatter</a></span><span class="op">(</span></span>
+<span>    data_col    <span class="op">=</span> <span class="st">"reads"</span>,</span>
+<span>    plot_colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"white"</span>, <span class="st">"lightblue"</span>, <span class="st">"red"</span><span class="op">)</span>,</span>
+<span>    trans       <span class="op">=</span> <span class="st">"log10"</span>,</span>
+<span>    size        <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>    outline     <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="va">u2</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/plot_scatter.html">plot_scatter</a></span><span class="op">(</span></span>
+<span>    data_col    <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
+<span>    plot_colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"orange"</span>, <span class="st">"lightyellow"</span><span class="op">)</span>,</span>
+<span>    size        <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>    outline     <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="va">u1</span> <span class="op">+</span> <span class="va">u2</span></span></code></pre></div>
+<p><img src="plotting_files/figure-html/unnamed-chunk-9-1.png" width="864"></p>
+</div>
+<div class="section level2">
+<h2 id="plotting-top-clusters">Plotting top clusters<a class="anchor" aria-label="anchor" href="#plotting-top-clusters"></a>
+</h2>
+<p>To only plot the top clusters, the number of clusters to include can
+be specified with the <code>top</code> argument. For
+<code><a href="../reference/plot_numerical.html">plot_violin()</a></code>, clusters are ranked based on values in the
+<code>data_col</code> column. For <code><a href="../reference/plot_scatter.html">plot_scatter()</a></code>, clusters
+are ranked based on number of cells. Clusters can also be specified by
+passing a vector of cluster names. The remaining cells are labeled using
+the <code>other_label</code> argument.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Show the top 3 clusters with highest values for nFeature_RNA</span></span>
+<span><span class="va">bx</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/plot_numerical.html">plot_violin</a></span><span class="op">(</span></span>
+<span>    data_col    <span class="op">=</span> <span class="st">"nFeature_RNA"</span>,</span>
+<span>    cluster_col <span class="op">=</span> <span class="st">"seurat_clusters"</span>,</span>
+<span>    method      <span class="op">=</span> <span class="st">"boxplot"</span>,</span>
+<span>    top         <span class="op">=</span> <span class="fl">3</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Select top clusters by passing a vector of names</span></span>
+<span><span class="va">u</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/plot_scatter.html">plot_scatter</a></span><span class="op">(</span></span>
+<span>    data_col <span class="op">=</span> <span class="st">"seurat_clusters"</span>,</span>
+<span>    top      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"4"</span>, <span class="st">"1"</span>, <span class="st">"3"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="va">bx</span> <span class="op">+</span> <span class="va">u</span></span></code></pre></div>
+<p><img src="plotting_files/figure-html/unnamed-chunk-10-1.png" width="768"></p>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -266,7 +314,7 @@ grouping variable using the <code>group_col</code> argument. The
 arrangement of plot panels and the axis scales used for each panel can
 be adjusted using the <code>panel_nrow</code> and
 <code>panel_scales</code> arguments.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_numerical.html">plot_histogram</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"reads"</span>,</span>
@@ -277,7 +325,7 @@ be adjusted using the <code>panel_nrow</code> and
 <span>    panel_nrow <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>    panel_scales <span class="op">=</span> <span class="st">"free_x"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="plotting_files/figure-html/unnamed-chunk-9-1.png" width="672"></p>
+<p><img src="plotting_files/figure-html/unnamed-chunk-11-1.png" width="672"></p>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -289,42 +337,40 @@ cluster name, a named vector can be passed. By default clusters are
 ordered with the most abundant clusters on top. To modify this ordering,
 a character vector can be passed to the <code>plot_lvls</code>
 argument.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_scatter.html">plot_scatter</a></span><span class="op">(</span></span>
-<span>    data_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
+<span>    data_col    <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
 <span>    plot_colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>MD4 <span class="op">=</span> <span class="st">"red"</span>, BL6 <span class="op">=</span> <span class="st">"lightblue"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="plotting_files/figure-html/unnamed-chunk-10-1.png" width="499.2"></p>
-<p><br></p>
+<p><img src="plotting_files/figure-html/unnamed-chunk-12-1.png" width="499.2"></p>
 <p>To only modify the color of a few clusters, a vector only containing
 the clusters of interest can be passed. The same is true for the
 <code>plot_lvls</code> argument, the name of a single cluster can be
 passed to plot it on top.</p>
 <p>In the example below we keep all the default colors except for
 clusters 3 and 4 and we specifically plot these clusters on top.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_scatter.html">plot_scatter</a></span><span class="op">(</span></span>
 <span>    data_col    <span class="op">=</span> <span class="st">"seurat_clusters"</span>,</span>
 <span>    plot_colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"4"</span> <span class="op">=</span> <span class="st">"darkred"</span>, <span class="st">"3"</span> <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span>,</span>
 <span>    plot_lvls   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"3"</span>, <span class="st">"4"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="plotting_files/figure-html/unnamed-chunk-11-1.png" width="528"></p>
-<p><br></p>
+<p><img src="plotting_files/figure-html/unnamed-chunk-13-1.png" width="528"></p>
 <p>By default the number of data points plotted will be shown in the top
 right corner, plot legend, and/or x-axis. The location of the label can
 be specified using the <code>n_label</code> argument. Label appearance
 can be modified by passing a named list of aesthetic parameters to the
 <code>label_params</code> argument.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_scatter.html">plot_scatter</a></span><span class="op">(</span></span>
-<span>    data_col <span class="op">=</span> <span class="st">"seurat_clusters"</span>,</span>
-<span>    n_label  <span class="op">=</span> <span class="st">"corner"</span>,</span>
+<span>    data_col     <span class="op">=</span> <span class="st">"seurat_clusters"</span>,</span>
+<span>    n_label      <span class="op">=</span> <span class="st">"corner"</span>,</span>
 <span>    label_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"darkred"</span>, fontface <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="plotting_files/figure-html/unnamed-chunk-12-1.png" width="528"></p>
+<p><img src="plotting_files/figure-html/unnamed-chunk-14-1.png" width="528"></p>
 </div>
 <div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>

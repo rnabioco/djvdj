@@ -161,7 +161,8 @@ from a specific chain.</p>
 <p>By default the Uniform Manifold Approximation and Projection (UMAP)
 dimensional reduction method will be performed and UMAP coordinates will
 be added to the object. To skip this step, set the <code>run_umap</code>
-argument to <code>FALSE</code>.</p>
+argument to <code>FALSE</code>. This requires the uwot package to be
+installed.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">so_vdj</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/cluster_sequences.html">cluster_sequences</a></span><span class="op">(</span></span>
