@@ -130,7 +130,7 @@ so_vdj |>
 
 ```{r, echo = FALSE, eval = FALSE}
 so_vdj |>
-  plot_vdj(
+  plot_histogram(
     data_col    = "cdr3_length",
     cluster_col = "cdr3_cluster_0.4"
   ) +
@@ -139,13 +139,13 @@ so_vdj |>
 
 ```{r, echo = FALSE, eval = FALSE}
 so_vdj |>
-  plot_vdj_feature(
+  plot_scatter(
     data_col = "cdr3_length",
     chain    = "IGK"
   )
 
 so_vdj |>
-  plot_vdj_feature(
+  plot_scatter(
     data_col = "cdr3_cluster_0.4",
     chain    = "IGK"
   )

@@ -118,17 +118,6 @@ so |>
   )
 ```
 
-If two columns are passed to the `data_cols` argument, a heatmap will be generated summarizing the usage of segment pairs. If a column is provided to the `cluster_col` argument, a separate heatmap will be generated for each cluster.
-
-```{r, fig.height = 2.5}
-so |>
-  plot_gene_usage(
-    data_cols   = c("v_gene", "j_gene"),
-    cluster_col = "orig.ident",
-    genes       = 15
-  )
-```
-
 Plot colors can be adjusted using the `plot_colors` argument. In addition, `plot_gene_usage()` returns a ggplot object that can be modified with ggplot2 functions such as `ggplot2::theme()`. Plots can be further adjusted by passing aesthetic parameters directly to ggplot2, e.g. `alpha`, `linetype`, `color`, etc.
 
 ```{r}
@@ -142,6 +131,32 @@ so |>
     alpha = 0.7
   ) +
   theme(axis.text.x = element_text(angle = 90))
+```
+
+If two columns are passed to the `data_cols` argument, a heatmap will be generated summarizing the usage of different pairs of segments. If a column is provided to the `cluster_col` argument, a separate heatmap will be generated for each cluster.
+
+In this example we are plotting the frequency that different heavy chain V and J segments appear together. 
+
+```{r, fig.height = 2.5}
+so |>
+  plot_gene_usage(
+    data_cols   = c("v_gene", "j_gene"),
+    cluster_col = "orig.ident",
+    chain       = "IGH",
+    genes       = 15
+  )
+```
+
+The paired gene usage for two chains can also be plotted using `plot_gene_pairs()`. In this example we are plotting the frequency that different heavy and light chain V segments appear together.
+
+```{r}
+so |>
+  plot_gene_pairs(
+    data_col    = "v_gene",
+    chains      = c("IGH", "IGK"),
+    cluster_col = "orig.ident",
+    genes       = 12
+  )
 ```
 
 <br>

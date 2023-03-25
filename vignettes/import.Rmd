@@ -59,7 +59,7 @@ so_vdj |>
   head(2)
 ```
 
-To modify/filter/plot per-chain data, djvdj provides a range of functions that make it easy to parse and visualize this information. For detailed examples refer to the vignettes and documentation for the following functions: `filter_vdj()`, `mutate_vdj()`, `summarize_vdj()`, `plot_vdj()`, `plot_vdj_feature()`.
+To modify/filter/plot per-chain data, djvdj provides a range of functions that make it easy to parse and visualize this information. For detailed examples refer to the vignettes and documentation for the following functions: `filter_vdj()`, `mutate_vdj()`, `summarize_vdj()`, `plot_histogram()`, `plot_scatter()`.
 
 <br>
 
