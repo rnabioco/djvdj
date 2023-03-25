@@ -170,7 +170,7 @@ so |>
   plot_frequency(
     data_col    = "cell_type",
     cluster_col = "sample",
-    plot_colors = c("#3182bd", "#fec44f", "#31a354")
+    plot_colors = c("#3182bd", "#fec44f")
   )
 ```
 

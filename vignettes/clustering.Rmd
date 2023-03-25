@@ -73,7 +73,7 @@ so_vdj <- so |>
   )
 ```
 
-By default the Uniform Manifold Approximation and Projection (UMAP) dimensional reduction method will be performed and UMAP coordinates will be added to the object. To skip this step, set the `run_umap` argument to `FALSE`.
+By default the Uniform Manifold Approximation and Projection (UMAP) dimensional reduction method will be performed and UMAP coordinates will be added to the object. To skip this step, set the `run_umap` argument to `FALSE`. This requires the uwot package to be installed.
 
 ```{r}
 so_vdj <- so |>
@@ -130,11 +130,22 @@ so_vdj |>
 
 ```{r, echo = FALSE, eval = FALSE}
 so_vdj |>
+  filter_vdj(n_chains <= 2) |>
   plot_histogram(
-    data_col    = "cdr3_length",
-    cluster_col = "cdr3_cluster_0.4"
-  ) +
-  facet_wrap(~ cdr3_cluster_0.4, scales = "free_y")
+    data_col     = "cdr3_length",
+    cluster_col  = "cdr3_cluster_0.4",
+    group_col    = "cdr3_cluster_0.4",
+    panel_scales = "free_y",
+    chain        = "IGK",
+    plot_colors  = clrs
+  )
+
+so_vdj |>
+  plot_scatter(
+    data_col = "cdr3_cluster_0.4",
+    group_col = "cdr3_cluster_0.4",
+    plot_colors = clrs
+  )
 ```
 
 ```{r, echo = FALSE, eval = FALSE}
