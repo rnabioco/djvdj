@@ -9,19 +9,21 @@ plot_gene_usage(
   data_cols,
   cluster_col = NULL,
   group_col = NULL,
-  chain = NULL,
+  genes = 20,
   method = NULL,
+  chain = NULL,
+  chain_col = global$chain_col,
+  units = "percent",
+  return_list = FALSE,
+  sep = global$sep,
   plot_colors = NULL,
-  vdj_genes = NULL,
-  n_genes = 20,
   plot_lvls = NULL,
   trans = "identity",
-  units = "percent",
-  chain_col = "chains",
   rotate_labels = FALSE,
   panel_nrow = NULL,
-  return_list = FALSE,
-  sep = ";",
+  show_points = TRUE,
+  n_label = NULL,
+  label_params = list(),
   ...
 )
 }
@@ -39,8 +41,8 @@ calculating gene usage}
 cluster_col. This is useful when there are multiple replicates or patients
 for each treatment condition.}
 
-\item{chain}{Chain to use for calculating gene usage, set to NULL to include
-all chains}
+\item{genes}{An integer specifying the number of genes to plot, or
+a vector giving the names of genes to include.}
 
 \item{method}{Method to use for plotting, possible values are:
 \itemize{
@@ -52,14 +54,21 @@ passed to the data_cols argument
 to the data_cols argument
 }}
 
+\item{chain}{Chain to use for calculating gene usage, set to NULL to include
+all chains}
+
+\item{chain_col}{meta.data column containing chains for each cell}
+
+\item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
+
+\item{return_list}{Should a list of plots be returned, if FALSE plots will be
+combined and arranged into panels}
+
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
+
 \item{plot_colors}{Character vector containing colors to use for plot. If a
 bar graph is created this will specify how to color cell clusters. For a
 heatmap, these colors will be used to generate the color gradient.}
-
-\item{vdj_genes}{V(D)J genes to plot, if NULL the top genes will be shown}
-
-\item{n_genes}{Number of top genes to plot based on usage. If cluster_col is
-provided, top genes will be identified for each cluster.}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
 
@@ -67,20 +76,29 @@ provided, top genes will be identified for each cluster.}
 'log10'. By default values are not transformed, refer to
 \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}} for more options.}
 
-\item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
-
-\item{chain_col}{meta.data column containing chains for each cell}
-
 \item{rotate_labels}{Should labels on circos plot be rotated to reduce
 overlapping text}
 
 \item{panel_nrow}{The number of rows to use for arranging plots when
 return_list is FALSE}
 
-\item{return_list}{Should a list of plots be returned, if FALSE plots will be
-combined and arranged into panels}
+\item{show_points}{If \code{TRUE} data points will be shown on boxplots, the point
+size can be adjusted using the \code{point.size} parameter}
 
-\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
+\item{n_label}{Location on plot where n label should be added, this is only
+applicable when \code{method} is 'bar' and can be any combination of the
+following:
+\itemize{
+\item 'corner', display the total number of cells plotted in the top right
+corner, the position of the label can be modified by passing \code{x} and \code{y}
+specifications with the \code{label_params} argument
+\item 'legend', display the number of cells plotted for each group shown in the
+plot legend
+\item 'none', do not display the number of cells plotted
+}}
+
+\item{label_params}{Named list providing additional parameters to modify
+n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{...}{Additional arguments to pass to plotting function,
 \code{\link[ggplot2:geom_bar]{ggplot2::geom_col()}} for bargraph, \code{\link[ggplot2:geom_tile]{ggplot2::geom_tile()}} for heatmap,
@@ -90,7 +108,8 @@ combined and arranged into panels}
 ggplot object
 }
 \description{
-Plot V(D)J segment usage
+Plot the usage of different V(D)J segments for each cell cluster. The
+usage of two V(D)J segments can also be plotted for a single chain.
 }
 \examples{
 # Plot V(D)J segment usage for all cells
@@ -161,7 +180,7 @@ plot_gene_usage(
 plot_gene_usage(
   vdj_sce,
   data_cols = "v_gene",
-  n_genes = 10
+  genes = 10
 )
 
 # Plot the frequency of each V(D)J segment instead of percent
@@ -173,5 +192,5 @@ plot_gene_usage(
 
 }
 \seealso{
-\code{\link[=calc_gene_usage]{calc_gene_usage()}}
+\code{\link[=calc_gene_usage]{calc_gene_usage()}}, \code{\link[=calc_gene_pairs]{calc_gene_pairs()}}, \code{\link[=plot_gene_pairs]{plot_gene_pairs()}}
 }

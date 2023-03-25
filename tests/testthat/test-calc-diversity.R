@@ -17,7 +17,8 @@ arg_lst <- list(
   cluster_col = list(NULL, "seurat_clusters"),
   downsample  = c(TRUE, FALSE),
   method      = list(mets, list(simpson = abdiv::simpson)),
-  return_df   = FALSE
+  return_df   = FALSE,
+  n_boots     = 0
 )
 
 test_all_args(
@@ -53,6 +54,20 @@ test_all_args(
   .fn     = calc_diversity,
   desc    = "calc_diversity return_df",
   chk     = expr(expect_true(is.data.frame(.res)))
+)
+
+# Test n_boots
+arg_lst$input     <- list(test_so)
+arg_lst$n_boots   <- 10
+arg_lst$return_df <- FALSE
+
+set.seed(42)
+
+test_all_args(
+  arg_lst = arg_lst,
+  .fn     = calc_diversity,
+  desc    = "calc_diversity n_boots",
+  chk     = expr(expect_s4_class(.res, "Seurat"))
 )
 
 # Check diversity column prefix
@@ -188,8 +203,12 @@ test_that("calc_diversity df in", {
 # Check bad method list
 test_that("calc_diversity bad method list", {
   expect_error(
-    vdj_so |> calc_diversity(method = list(abdiv::simpson, abdiv::mcintosh_d)),
-    "Must include names if using a list of methods"
+    vdj_so |>
+      calc_diversity(
+        data_col = "clonotype_id",
+        method = list(abdiv::simpson, abdiv::mcintosh_d)
+      ),
+    "Names must be included"
   )
 
   res <- vdj_so |>

@@ -9,7 +9,11 @@ calc_frequency(
   data_col,
   cluster_col = NULL,
   prefix = paste0(data_col, "_"),
-  return_df = FALSE
+  return_df = FALSE,
+  per_chain = FALSE,
+  chain = NULL,
+  chain_col = global$chain_col,
+  sep = global$sep
 )
 }
 \arguments{
@@ -27,8 +31,19 @@ grouping cells when calculating clonotype abundance}
 
 \item{prefix}{Prefix to add to new columns}
 
-\item{return_df}{Return results as a data.frame. If set to FALSE, results
+\item{return_df}{Return results as a data.frame. If set to \code{FALSE}, results
 will be added to the input object.}
+
+\item{per_chain}{If \code{TRUE} the frequency of each per-chain value will be
+calculated. If \code{FALSE} per-chain data will not be parsed and the values
+present in \code{data_col} will be used as is.}
+
+\item{chain}{Chain(s) to use for calculating frequency. Set to \code{NULL} to
+include all chains.}
+
+\item{chain_col}{meta.data column(s) containing chains for each cell}
+
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 }
 \value{
 Single cell object or data.frame with clonotype frequencies

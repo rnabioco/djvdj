@@ -12,10 +12,10 @@ calc_diversity(
   downsample = FALSE,
   n_boots = 0,
   chain = NULL,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   prefix = paste0(data_col, "_"),
   return_df = FALSE,
-  sep = ";"
+  sep = global$sep
 )
 }
 \arguments{

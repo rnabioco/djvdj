@@ -38,7 +38,7 @@ test_sim <- vdj_so@meta.data |>
   group_by(cdr3, seurat_clusters) |>
   summarize(n = n_distinct(.cell_id), .groups = "drop") |>
   tidyr::pivot_wider(names_from = "seurat_clusters", values_from = "n") |>
-  mutate(across(all_of(test_clsts), tidyr::replace_na, 0))
+  mutate(across(all_of(test_clsts), ~ tidyr::replace_na(.x, 0)))
 
 clst <- test_clsts[1]
 nm   <- paste0("x", clst)

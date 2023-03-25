@@ -27,26 +27,28 @@ test_that("mutate_meta column overwrite", {
 
 # Check mutate_meta bad function
 test_that("mutate_meta bad fn", {
+  err <- "`fn` must be a function or formula"
+
   expect_error(
     mutate_meta(tiny_so, "BAD_FUN"),
-    "fn must be either a function or a formula"
+    err
   )
 
   expect_error(
     mutate_meta(tiny_so, 0),
-    "fn must be either a function or a formula"
+    err
   )
 
   expect_error(
     mutate_meta(tiny_sce, as.factor("BAD_FUN")),
-    "fn must be either a function or a formula"
+    err
   )
 
   # Do not allow user to remove cells from meta.data
   expect_error(
     vdj_so |>
       mutate_meta(dplyr::filter, nCount_RNA == 1),
-    "meta.data must contain the same cells"
+    "does not contain the same cells"
   )
 })
 # Check Seurat output
@@ -314,7 +316,7 @@ test_that("summarize_vdj bad column chain filtering", {
         data_cols = "nCount_RNA",
         chain = "IGK"
       ),
-    "does not contain per-chain V\\(D\\)J data"
+    "columns do not contain per-chain"
   )
 
   expect_identical(res, vdj_so)
@@ -335,7 +337,7 @@ test_that(".prepare_meta", {
 
   expect_error(
     .prepare_meta(vdj_so, res, ".cell_id"),
-    "meta.data must contain the same cells"
+    "meta.data does not contain the same cells"
   )
 })
 

@@ -7,7 +7,7 @@
 #' @param chain Chain to use for clustering sequences. Cells with more than one
 #' of the provided chain will be excluded from the analysis. If NULL, sequences
 #' for cells with multiple chains will be concatenated.
-#' @param method Method to use for clustering, possible values are:
+#' @param method Method to use for clustering, possible values include:
 #'
 #' - 'louvain', multi-level optimization of modality implemented with
 #' [igraph::cluster_louvain()]
@@ -36,11 +36,6 @@
 #' @param sep Separator used for storing per cell V(D)J data
 #' @param ... Additional parameters to pass to clustering method
 #' @return Single cell object or data.frame with clustering results
-#' @importFrom uwot umap
-#' @importFrom dbscan kNN
-#' @importFrom igraph graph_from_data_frame cluster_louvain cluster_leiden
-#' membership
-#' @importFrom Biostrings stringDist
 #' @seealso [plot_motifs()]
 #'
 #' @examples
@@ -50,11 +45,11 @@
 #'   data_col = "cdr3"
 #' )
 #'
-#' plot_features(
+#' plot_scatter(
 #'   res,
 #'   x = "cdr3_UMAP_1",
 #'   y = "cdr3_UMAP_2",
-#'   feature = "cdr3_cluster_0.5"
+#'   data_col = "cdr3_cluster_0.5"
 #' )
 #'
 #' # Cluster cells based on sequences for a specific chain
@@ -89,14 +84,26 @@
 cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
                               method = "louvain", resolution = 0.5, k = 10,
                               dist_method = NULL, run_umap = TRUE,
-                              chain_col = "chains",
+                              chain_col = global$chain_col,
                               prefix = paste0(data_col, "_"),
-                              return_df = FALSE, sep = ";", ...) {
+                              return_df = FALSE, sep = global$sep, ...) {
 
-  # Check inputs
-  if (!method %in% c("louvain", "leiden")) {
-    stop("method must be either 'louvain' or 'leiden'.")
-  }
+  # Check for installed packages
+  .check_packages(c("dbscan", "igraph (>= 1.3.0)"))
+  .check_packages("Biostrings", db = "Bioconductor")
+
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_col, chain = chain, chain_col = chain_col
+  )
+
+  # Check input classes
+  .check_args()
+
+  # Check input values
+  mets <- c("louvain", "leiden")
+
+  if (!method %in% mets) cli::cli_abort("`method` must be {.or {mets}}")
 
   # Fetch data
   vdj <- .fetch_seqs(
@@ -107,7 +114,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
     sep       = sep
   )
 
-  vdj  <- dplyr::distinct(vdj, !!!syms(c(CELL_COL, data_col)))
+  vdj  <- dplyr::distinct(vdj, !!!syms(c(global$cell_col, data_col)))
   seqs <- vdj[[data_col]]
   seqs <- unique(sort(seqs))
 
@@ -126,10 +133,12 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 
   dist_args$method <- dist_method
 
-  dist_mat <- purrr::lift_dl(Biostrings::stringDist)(dist_args)
+  dist_mat <- lift(Biostrings::stringDist)(dist_args)
 
   # Calculate UMAP
   if (run_umap) {
+    .check_packages("uwot")
+
     umap_res <- uwot::umap(dist_mat)
 
     colnames(umap_res) <- paste0(prefix, c("UMAP_1", "UMAP_2"))
@@ -184,7 +193,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
   res <- purrr::imap_dfc(resolution, ~ {
     clst_args[rsln_arg] <- .x
 
-    clsts <- purrr::lift_dl(clst_method)(clst_args)
+    clsts <- lift(clst_method)(clst_args)
     clsts <- igraph::membership(clsts)
 
     tibble(!!sym(.y) := as.character(clsts))
@@ -201,7 +210,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 
   # Format results
   meta <- .get_meta(input)
-  res  <- dplyr::left_join(meta, res, by = CELL_COL)
+  res  <- dplyr::left_join(meta, res, by = global$cell_col)
 
   if (return_df) input <- meta
 
@@ -219,8 +228,6 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' grouping cells.
 #' @param chain Chain to use for plotting sequences. Cells with more than one
 #' of the provided chain will be excluded from the analysis.
-#' @param plot_colors Character vector containing colors for plotting
-#' @param plot_lvls Character vector containing levels for ordering
 #' @param chain_col meta.data column containing chains for each cell.
 #' @param width Integer specifying how many residues to include, sequences
 #' longer than width will be get trimmed based on the align_end argument,
@@ -229,8 +236,27 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' select a width where at least 75% of sequences are longer than the cutoff.
 #' @param align_end End to use for aligning sequences, specify '5' or '3' to
 #' align sequences at the 5' or 3' end when plotting.
-#' @param panel_nrow The number of rows to use for arranging plot panels
+#' @param quiet If `TRUE` messages will not be displayed
 #' @param sep Separator used for storing per cell V(D)J data
+#'
+#'
+#' @param plot_colors Character vector containing colors for plotting
+#' @param plot_lvls Character vector containing levels for ordering
+#' @param panel_nrow The number of rows to use for arranging plot panels
+#' @param panel_scales Should scales for plot panels be fixed or free. This
+#' passes a scales specification to `ggplot2::facet_wrap()`, can be 'fixed', 'free',
+#' 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
+#' Use this when separate bar graphs are created for each cell cluster.
+#' @param n_label Location on plot where n label should be added, this can be
+#' one of the following:
+#'
+#' - 'corner', display the total number of cells plotted in the top right
+#'   corner, the position of the label can be modified by passing `x` and `y`
+#'   specifications with the `label_params` argument
+#' - 'none', do not display the number of cells plotted
+#'
+#' @param label_params Named list providing additional parameters to modify
+#' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional parameters to pass to [ggseqlogo::geom_logo()]
 #' @return ggplot object
 #' @importFrom stringr str_trunc
@@ -251,17 +277,28 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' )
 #'
 #' @export
-plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
-                        chain, plot_colors = NULL,
-                        plot_lvls = names(plot_colors), chain_col = "chains",
-                        width = 0.75, align_end = "5", panel_nrow = NULL,
-                        sep = ";", ...) {
+plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
+                        chain, chain_col = global$chain_col, width = 0.75,
+                        align_end = "5", quiet = FALSE, sep = global$sep,
+                        plot_colors = NULL,
+                        plot_lvls = names(plot_colors),
+                        panel_nrow = NULL,
+                        panel_scales = "free", n_label = "corner",
+                        label_params = list(), ...) {
 
-  if (width <= 0) {
-    stop("The provided width cutoff must be >0.", call. = FALSE)
-  }
+  # Check installed packages
+  .check_packages("ggseqlogo")
 
-  if (!is.character(chain)) stop("chain must be a character string.")
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_col, cluster_col, chain = chain, chain_col = chain_col
+  )
+
+  # Check input classes
+  .check_args()
+
+  # Check input values
+  if (width <= 0) cli::cli_abort("`width` must be >0")
 
   # Fetch sequences
   seqs <- .fetch_seqs(
@@ -272,7 +309,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
     sep       = sep
   )
 
-  vdj_cols <- c(CELL_COL, data_col, cluster_col)
+  vdj_cols <- c(global$cell_col, data_col, cluster_col)
   seqs     <- dplyr::select(seqs, all_of(vdj_cols))
 
   n_seqs <- nrow(seqs)
@@ -290,35 +327,57 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 
   } else {
     seqs <- trim_fn(seqs)
-
     plt_n_seqs <- length(seqs)
   }
 
   # Check number of removed sequences
   if (plt_n_seqs == 0) {
-    stop(
-      "There are no sequences longer than the width cutoff, ",
-      "try selecting a shorter sequence width for plotting.",
-      call. = FALSE
+    cli::cli_abort(
+      "There are no sequences longer than {width} residues,
+       try selecting a shorter cutoff for `width`"
     )
   }
 
-  if (plt_n_seqs < n_seqs) {
+  if (plt_n_seqs < n_seqs && !quiet) {
     pct <- 1 - (plt_n_seqs / n_seqs)
     pct <- round(pct * 100, 1)
 
-    message(
-      n_seqs - plt_n_seqs, " (", pct, "%) sequences are shorter than the ",
-      "width cutoff and were removed.",
-      call. = FALSE
+    cli::cli_alert_info(
+      "{n_seqs - plt_n_seqs} sequences ({pct}%) are shorter
+       than `width` and were removed",
+      wrap = TRUE
     )
   }
+
+  # Set n label data
+  # If cluster_col is provided, seqs will be named list with a vector for each
+  # cluster
+  if (!is.list(seqs)) seqs <- list(seq = seqs)
+
+  n_lab_dat <- tibble::tibble(
+    seq_group = names(seqs),
+    .n        = purrr::map_dbl(seqs, length)
+  )
 
   # Create logos
   res <- ggplot() +
     ggseqlogo::geom_logo(seqs, ...) +
-    ggplot2::facet_wrap(~ seq_group, scales = "free", nrow = panel_nrow) +
     djvdj_theme()
+
+  if (!all(n_label == "none")) {
+    res <- .add_n_label(
+      res, n_lab_dat,
+      n_label  = n_label,
+      crnr_col = "seq_group",
+      n_fn     = sum,
+      lab_args = label_params
+    )
+  }
+
+  if (!is.null(cluster_col)) {
+    res <- res +
+      ggplot2::facet_wrap(~ seq_group, scales = panel_scales, nrow = panel_nrow)
+  }
 
   if (!is.null(plot_colors)) {
     suppressMessages({
@@ -341,22 +400,24 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 #' @param sep Separator used for storing per cell V(D)J data
 #' @importFrom stringr str_remove_all
 #' @noRd
-.fetch_seqs <- function(input, seq_col, chain, chain_col, sep = ";") {
+.fetch_seqs <- function(input, seq_col, chain, chain_col, sep = global$sep) {
 
-  per_cell <- is.null(chain)
+  per_chain <- !is.null(chain)
 
   res <- fetch_vdj(
     input,
     data_cols     = c(seq_col, chain_col),
     unnest        = FALSE,
     filter_cells  = TRUE,
-    per_cell      = per_cell,
+    per_chain     = per_chain,
     clonotype_col = seq_col,
     sep           = sep
   )
 
-  if (per_cell) {
-    if (is.null(sep)) stop("Must provide sep if per_cell is TRUE")
+  if (!per_chain) {
+    if (is.null(sep)) {
+      cli::cli_abort("`sep` must be provided when `per_chain` is`FALSE`")
+    }
 
     res <- dplyr::mutate(
       res,
@@ -408,10 +469,8 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
   res <- seqs[lens >= width]
 
   if (purrr::is_empty(res)) {
-    warning(
-      "There are no sequences present in the cluster at least ", width,
-      " residues long.",
-      call. = FALSE
+    cli::cli_warn(
+      "There are no sequences present that are >{width} residues long"
     )
 
     return(NULL)
@@ -429,14 +488,9 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 #' @param n Number of sequences to check
 #' @noRd
 .detect_seq_type <- function(seqs, n = 100) {
-
-  dna <- c("A", "T", "G", "C")
-  rna <- c("A", "U", "G", "C")
-
-  aa  <- c(
-    "A", "R", "N", "D", "C", "Q", "E", "G", "H", "I",
-    "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"
-  )
+  dna <- Biostrings::DNA_BASES
+  rna <- Biostrings::RNA_BASES
+  aa  <- Biostrings::AA_STANDARD
 
   # Take first n sequences and split into residues
   seqs <- na.omit(seqs)
@@ -447,7 +501,7 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
   # Check intersection with known characters
   int <- intersect(nts, c(dna, rna, aa))
 
-  if (length(int) == 0) stop("Could not determine sequence type")
+  if (length(int) == 0) cli::cli_abort("Could not determine sequence type")
 
   # Check if any characters overlap with aa and not dna, rna
   int <- setdiff(intersect(nts, aa), c(dna, rna))
@@ -460,4 +514,3 @@ plot_motifs <- function(input, data_col = "cdr3", cluster_col = NULL,
 
   res
 }
-

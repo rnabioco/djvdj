@@ -47,11 +47,15 @@ so <- splen_so |>
 
 ## Calculating gene usage
 
-The `calc_gene_usage()` function will calculate the number of cells ('freq') and percentage of cells ('pct') with each gene in the `data_cols` column(s). The 'n_cells' column shows the total number of cells used for calculating percentages. A data.frame is returned summarizing the results.
+The `calc_gene_usage()` function will calculate the number of cells ('freq') and percentage of cells ('pct') with each gene in the `data_cols` column(s). The 'n_cells' column shows the total number of cells used for calculating percentages. By default these results are added to the object meta.data,
+to return a data.frame set `return_df` to `TRUE`.
 
 ```{r}
 so |>
-  calc_gene_usage(data_cols = "v_gene")
+  calc_gene_usage(
+    data_cols = "v_gene",
+    return_df = TRUE
+  )
 ```
 
 To perform gene usage calculations separately for cell clusters (or samples), provide the meta.data column containing cluster labels to the `cluster_col` argument. Here we see that the MD4 samples almost exclusively use a single V segment (IGKV5-43), which is expected since MD4 B cells are monoclonal.
@@ -59,8 +63,9 @@ To perform gene usage calculations separately for cell clusters (or samples), pr
 ```{r}
 so |>
   calc_gene_usage(
-    data_cols = "v_gene",
-    cluster_col = "sample"
+    data_cols   = "v_gene",
+    cluster_col = "sample",
+    return_df   = TRUE
   )
 ```
 
@@ -71,7 +76,8 @@ so |>
   calc_gene_usage(
     data_cols   = "v_gene",
     cluster_col = "sample",
-    chain       = "IGK"
+    chain       = "IGK",
+    return_df   = TRUE
   )
 ```
 
@@ -80,8 +86,9 @@ If two columns are provided to the `data_cols` argument, the number of cells con
 ```{r}
 so |>
   calc_gene_usage(
-    data_cols = c("v_gene", "j_gene"),
-    cluster_col = "sample"
+    data_cols   = c("v_gene", "j_gene"),
+    cluster_col = "sample",
+    return_df   = TRUE
   )
 ```
 
@@ -89,14 +96,14 @@ so |>
 
 ## Plotting gene usage
 
-The `plot_gene_usage()` function will summarize the frequency of each gene segment. By default if a single column is passed to the `data_cols` argument, a bargraph will be returned. The number of top genes to include in the plot can be specified with the `n_genes` argument. Alternatively, a vector of gene names can be passed to the `vdj_genes` argument to plot a set of desired genes.
+The `plot_gene_usage()` function will summarize the frequency of each gene segment. By default if a single column is passed to the `data_cols` argument, a bargraph will be returned. The number of top genes to include in the plot can be specified with the `genes` argument.
 
 ```{r}
 so |>
   plot_gene_usage(
     data_cols   = "v_gene",
     cluster_col = "orig.ident",
-    n_genes     = 20
+    genes       = 20
   )
 ```
 
@@ -108,17 +115,6 @@ so |>
     data_cols   = "v_gene",
     cluster_col = "orig.ident",
     units       = "frequency"
-  )
-```
-
-If two columns are passed to the `data_cols` argument, a heatmap will be generated summarizing the usage of segment pairs. If a column is provided to the `cluster_col` argument, a separate heatmap will be generated for each cluster.
-
-```{r, fig.height = 2.5}
-so |>
-  plot_gene_usage(
-    data_cols   = c("v_gene", "j_gene"),
-    cluster_col = "orig.ident",
-    n_genes     = 15
   )
 ```
 
@@ -137,6 +133,32 @@ so |>
   theme(axis.text.x = element_text(angle = 90))
 ```
 
+If two columns are passed to the `data_cols` argument, a heatmap will be generated summarizing the usage of different pairs of segments. If a column is provided to the `cluster_col` argument, a separate heatmap will be generated for each cluster.
+
+In this example we are plotting the frequency that different heavy chain V and J segments appear together. 
+
+```{r, fig.height = 2.5}
+so |>
+  plot_gene_usage(
+    data_cols   = c("v_gene", "j_gene"),
+    cluster_col = "orig.ident",
+    chain       = "IGH",
+    genes       = 15
+  )
+```
+
+The paired gene usage for two chains can also be plotted using `plot_gene_pairs()`. In this example we are plotting the frequency that different heavy and light chain V segments appear together.
+
+```{r}
+so |>
+  plot_gene_pairs(
+    data_col    = "v_gene",
+    chains      = c("IGH", "IGK"),
+    cluster_col = "orig.ident",
+    genes       = 12
+  )
+```
+
 <br>
 
 ## Circos plot
@@ -150,7 +172,7 @@ so |>
   plot_gene_usage(
     data_cols     = c("v_gene", "j_gene"),
     method        = "circos",
-    n_genes       = 6,
+    genes         = 6,
     rotate_labels = TRUE
   )
 ```
@@ -162,7 +184,7 @@ so |>
   plot_gene_usage(
     data_cols   = c("v_gene", "j_gene"),
     method      = "circos",
-    n_genes     = 8,
+    genes       = 8,
     plot_colors = brewer.pal(10, "Spectral"),
     
     link.border = "black",  # parameters to pass to chordDiagram()
@@ -178,7 +200,7 @@ so |>
     data_cols   = c("v_gene", "j_gene"),
     method      = "circos",
     cluster_col = "sample",
-    n_genes     = 5,
+    genes       = 5,
     panel_nrow  = 2,
     scale       = TRUE
   )

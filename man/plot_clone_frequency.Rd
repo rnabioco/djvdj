@@ -6,17 +6,19 @@
 \usage{
 plot_clone_frequency(
   input,
-  data_col = "clonotype_id",
+  data_col = global$clonotype_col,
   cluster_col = NULL,
+  group_col = NULL,
+  clones = NULL,
   method = "bar",
   units = "percent",
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   trans = "identity",
-  n_clones = NULL,
-  label_aes = list(),
   panel_nrow = NULL,
   panel_scales = "free_x",
+  n_label = "corner",
+  label_params = list(),
   ...
 )
 }
@@ -28,11 +30,23 @@ data.frame is provided, the cell barcodes should be stored as row names.}
 calculating clonotype abundance}
 
 \item{cluster_col}{meta.data column containing cluster IDs to use for
-grouping cells when calculating clonotype abundance. Clonotypes will be
+grouping cells when calculating clonotype frequencies. Clonotypes will be
 plotted separately for each cluster.}
 
-\item{method}{Method to use for plotting, 'bar' will generate a bargraph,
-'line' will generate a rank-abundance plot.}
+\item{group_col}{meta.data column to use for grouping cluster IDs present in
+cluster_col. This is useful when there are multiple replicates or patients
+for each treatment condition. This is only applicable when \code{method} is
+'line'.}
+
+\item{clones}{An integer specifying the number of clonotypes to show, or
+a vector giving the names of clonotypes to include. If method
+is set to 'line', this will specify the clonotypes to label.}
+
+\item{method}{Method to use for plotting, possible values include:
+\itemize{
+\item 'bar', create a bargraph
+\item 'line', create a rank-abundance plot
+}}
 
 \item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
 
@@ -43,13 +57,6 @@ plotted separately for each cluster.}
 \item{trans}{Transformation to use for plotting data, e.g. 'log10'. By
 default values are not transformed, refer to \code{\link[ggplot2:continuous_scale]{ggplot2::continuous_scale()}}}
 
-\item{n_clones}{Number of top clonotypes to plot (default is 10). If method
-is set to 'line', this will specify the number of clonotypes to label
-(default is 3).}
-
-\item{label_aes}{Named list providing additional aesthetics (color, size,
-etc.) for clonotype labels when creating line graph}
-
 \item{panel_nrow}{The number of rows to use for arranging plot panels, use
 this when separate bar graphs are created for each cell cluster}
 
@@ -57,6 +64,20 @@ this when separate bar graphs are created for each cell cluster}
 passes a scales specification to ggplot2::facet_wrap, can be 'fixed', 'free',
 'free_x', or 'free_y'. 'fixed' will cause panels to share the same scales.
 Use this when separate bar graphs are created for each cell cluster.}
+
+\item{n_label}{Location on plot where n label should be added, this can be
+any combination of the following:
+\itemize{
+\item 'corner', display the total number of cells plotted in the top right
+corner, the position of the label can be modified by passing \code{x} and \code{y}
+specifications with the \code{label_params} argument
+\item 'legend', display the number of cells plotted for each group shown in the
+plot legend
+\item 'none', do not display the number of cells plotted
+}}
+
+\item{label_params}{Named list providing additional parameters to modify
+clonotype and n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{...}{Additional arguments to pass to ggplot2, e.g. color, fill, size,
 linetype, etc.}
@@ -104,16 +125,16 @@ plot_clone_frequency(
 # Specify the number of top clonotypes to plot
 plot_clone_frequency(
   vdj_so,
-  n_clones = 5
+  clones = 5
 )
 
 #' # Create line graph
-# use n_clones to set the number of clonotypes to label
+# use clones to set the number of clonotypes to label
 plot_clone_frequency(
   vdj_so,
   cluster_col = "orig.ident",
   method = "line",
-  n_clones = 3
+  clones = 3
 )
 
 }

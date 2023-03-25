@@ -7,10 +7,10 @@
 mutate_vdj(
   input,
   ...,
-  clonotype_col = "clonotype_id",
+  clonotype_col = global$clonotype_col,
   data_cols = NULL,
   return_df = FALSE,
-  sep = ";"
+  sep = global$sep
 )
 }
 \arguments{

@@ -101,7 +101,7 @@ so_vdj <- so |>
 
 ## Plotting clusters
 
-Clustering results can be visualized on a UMAP projection using the generic plotting function `plot_features()`. Colors can be adjusted using the `plot_colors` argument.
+Clustering results can be visualized on a UMAP projection using the generic plotting function `plot_scatter()`. Colors can be adjusted using the `plot_colors` argument.
 
 This function will often generate a warning saying that rows with missing values were removed, this is expected since some cells do not have V(D)J data and will not have UMAP coordinates.
 
@@ -109,10 +109,10 @@ This function will often generate a warning saying that rows with missing values
 clrs <- setNames(brewer.pal(11, "Paired"), 1:11)
 
 so_vdj |>
-  plot_features(
+  plot_scatter(
     x = "cdr3_UMAP_1",
     y = "cdr3_UMAP_2",
-    feature = "cdr3_cluster_0.4",
+    data_col = "cdr3_cluster_0.4",
     plot_colors = clrs
   )
 ```
@@ -130,7 +130,7 @@ so_vdj |>
 
 ```{r, echo = FALSE, eval = FALSE}
 so_vdj |>
-  plot_vdj(
+  plot_histogram(
     data_col    = "cdr3_length",
     cluster_col = "cdr3_cluster_0.4"
   ) +
@@ -139,13 +139,13 @@ so_vdj |>
 
 ```{r, echo = FALSE, eval = FALSE}
 so_vdj |>
-  plot_vdj_feature(
+  plot_scatter(
     data_col = "cdr3_length",
     chain    = "IGK"
   )
 
 so_vdj |>
-  plot_vdj_feature(
+  plot_scatter(
     data_col = "cdr3_cluster_0.4",
     chain    = "IGK"
   )
@@ -159,7 +159,7 @@ Using the `plot_motifs()` function we can generate sequence motifs for each clus
 
 As expected we see that most cells within the MD4 cluster have the exact same IGK CDR3 sequence.
 
-```{r, fig.width = 10, fig.height = 2.5}
+```{r, fig.width = 10, fig.height = 3}
 so_vdj |>
   plot_motifs(
     data_col    = "cdr3",
@@ -172,7 +172,7 @@ By default, sequences are aligned to the 5' end and trimmed based on the `width`
 
 In this example we generate motifs for the last 11 amino acids of the CDR3.
 
-```{r, fig.width = 10, fig.height = 2.5}
+```{r, fig.width = 10, fig.height = 3}
 so_vdj |>
   plot_motifs(
     data_col    = "cdr3",
@@ -185,7 +185,7 @@ so_vdj |>
 
 Plot colors can be modified using the `plot_colors` argument and the number of rows used to arrange panels can be adjusted with the `panel_nrow` argument. Like most djvdj plotting functions, `plot_motifs()` will return a ggplot2 object that can be modified with other ggplot2 functions.
 
-```{r, fig.height = 6}
+```{r, fig.height = 7}
 so_vdj |>
   plot_motifs(
     data_col    = "cdr3",

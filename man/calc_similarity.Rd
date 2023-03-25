@@ -10,10 +10,10 @@ calc_similarity(
   cluster_col,
   method = abdiv::jaccard,
   chain = NULL,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   prefix = NULL,
   return_mat = FALSE,
-  sep = ";"
+  sep = global$sep
 )
 }
 \arguments{
@@ -26,12 +26,11 @@ calculating pairwise similarity between clusters, e.g. 'clonotype_id'}
 \item{cluster_col}{meta.data column containing cluster IDs to use for
 calculating repertoire overlap}
 
-\item{method}{Method to use for comparing clusters, possible values are:
+\item{method}{Method to use for comparing clusters, possible values include:
 \itemize{
 \item 'count', count the number of clonotypes overlapping between each cluster
 \item A function that takes two numeric vectors containing counts for each
-unique value in the column provided to the data_col column, e.g.
-\code{\link[abdiv:jaccard]{abdiv::jaccard()}}
+unique value in data_col, e.g. \code{\link[abdiv:jaccard]{abdiv::jaccard()}}
 }}
 
 \item{chain}{Chain to use for comparing clusters. To perform calculations

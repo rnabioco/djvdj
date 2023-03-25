@@ -11,14 +11,14 @@ plot_similarity(
   group_col = NULL,
   method = abdiv::jaccard,
   chain = NULL,
-  chain_col = "chains",
+  chain_col = global$chain_col,
+  cluster_heatmap = TRUE,
+  sep = global$sep,
   plot_colors = NULL,
   plot_lvls = names(plot_colors),
   rotate_labels = FALSE,
-  cluster_heatmap = TRUE,
   remove_upper_triangle = FALSE,
   remove_diagonal = remove_upper_triangle,
-  sep = ";",
   ...
 )
 }
@@ -52,6 +52,11 @@ per-chain data such as CDR3 sequences. Set to NULL to include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
 
+\item{cluster_heatmap}{If FALSE, rows and columns of heatmap will not be
+clustered.}
+
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
+
 \item{plot_colors}{Character vector containing colors for plotting}
 
 \item{plot_lvls}{Levels to use for ordering clusters}
@@ -59,15 +64,10 @@ per-chain data such as CDR3 sequences. Set to NULL to include all chains.}
 \item{rotate_labels}{Should labels on circos plot be rotated to reduce
 overlapping text}
 
-\item{cluster_heatmap}{If FALSE, rows and columns of heatmap will not be
-clustered.}
-
 \item{remove_upper_triangle}{If TRUE, upper triangle for heatmap will not
 be shown.}
 
 \item{remove_diagonal}{If TRUE, diagonal for heatmap will not be shown.}
-
-\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{...}{Additional arguments to pass to plotting function,
 \code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap()}} for heatmap, \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for

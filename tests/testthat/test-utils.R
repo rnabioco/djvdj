@@ -40,19 +40,19 @@ test_that("fetch_vdj sep", {
         filter_cells  = FALSE,
         sep           = "BAD"
       ),
-    "was not identified in any columns specified"
+    "was not found in umis or reads"
   )
 })
 
 # Check filter_cells
 test_that("fetch_vdj filter_cells", {
   expect_error(
-    res <- vdj_so |>
+    vdj_so |>
       fetch_vdj(
-        data_cols     = c("umis", "reads"),
+        # data_cols     = c("umis", "reads"),
         filter_cells = TRUE
       ),
-    "clonotype_col must be provided"
+    "`clonotype_col` must be.+provided"
   )
 
   res <- vdj_so |>
@@ -97,7 +97,7 @@ test_that(".filter_chains", {
         data_cols = c("umis", "nCount_RNA"),
         chain = "IGK"
       ),
-    "To filter based on chain, all columns must contain per-chain data"
+    "Some columns do not contain per-chain"
   )
 
   dat <- vdj_so |>
@@ -160,7 +160,7 @@ test_that(".filter_chains", {
         data_cols = c("umis", "nCount_RNA"),
         chain = "IGK"
       ),
-    "To filter based on chain, all columns must contain per-chain data"
+    "Some columns do not contain per-chain"
   )
 
   dat <- vdj_so |>

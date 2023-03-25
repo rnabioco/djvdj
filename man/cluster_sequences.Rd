@@ -13,10 +13,10 @@ cluster_sequences(
   k = 10,
   dist_method = NULL,
   run_umap = TRUE,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   prefix = paste0(data_col, "_"),
   return_df = FALSE,
-  sep = ";",
+  sep = global$sep,
   ...
 )
 }
@@ -31,7 +31,7 @@ Levenshtein distance.}
 of the provided chain will be excluded from the analysis. If NULL, sequences
 for cells with multiple chains will be concatenated.}
 
-\item{method}{Method to use for clustering, possible values are:
+\item{method}{Method to use for clustering, possible values include:
 \itemize{
 \item 'louvain', multi-level optimization of modality implemented with
 \code{\link[igraph:cluster_louvain]{igraph::cluster_louvain()}}
@@ -82,11 +82,11 @@ res <- cluster_sequences(
   data_col = "cdr3"
 )
 
-plot_features(
+plot_scatter(
   res,
   x = "cdr3_UMAP_1",
   y = "cdr3_UMAP_2",
-  feature = "cdr3_cluster_0.5"
+  data_col = "cdr3_cluster_0.5"
 )
 
 # Cluster cells based on sequences for a specific chain

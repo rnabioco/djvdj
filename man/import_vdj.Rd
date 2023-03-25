@@ -14,6 +14,7 @@ import_vdj(
   define_clonotypes = NULL,
   include_mutations = FALSE,
   aggr_dir = NULL,
+  quiet = FALSE,
   sep = ";"
 )
 }
@@ -70,6 +71,8 @@ specified in the cellranger aggr config file. In addition, if loading
 mutation data, sample paths provided to the vdj_dir argument must also be in
 the same order as the samples were specified in the cellranger aggr config
 file.}
+
+\item{quiet}{If \code{TRUE} progress updates will not be displayed}
 
 \item{sep}{Separator to use for storing per cell V(D)J data}
 }

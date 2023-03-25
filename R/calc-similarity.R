@@ -6,12 +6,11 @@
 #' calculating pairwise similarity between clusters, e.g. 'clonotype_id'
 #' @param cluster_col meta.data column containing cluster IDs to use for
 #' calculating repertoire overlap
-#' @param method Method to use for comparing clusters, possible values are:
+#' @param method Method to use for comparing clusters, possible values include:
 #'
 #' - 'count', count the number of clonotypes overlapping between each cluster
 #' - A function that takes two numeric vectors containing counts for each
-#' unique value in the column provided to the data_col column, e.g.
-#' [abdiv::jaccard()]
+#' unique value in data_col, e.g. [abdiv::jaccard()]
 #'
 #' @param chain Chain to use for comparing clusters. To perform calculations
 #' using a single chain, the column passed to the data_col argument must contain
@@ -58,20 +57,19 @@
 #' @export
 calc_similarity <- function(input, data_col, cluster_col,
                             method = abdiv::jaccard, chain = NULL,
-                            chain_col = "chains", prefix = NULL,
-                            return_mat = FALSE, sep = ";") {
+                            chain_col = global$chain_col, prefix = NULL,
+                            return_mat = FALSE, sep = global$sep) {
 
-  # Check inputs
-  is_counts <- identical(method, "count")
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_col, cluster_col, chain = chain, chain_col = chain_col
+  )
 
-  if (!is.function(method) && !is_counts) {
-    stop(
-      "method must be 'count' or a function to use for comparing ",
-      "clusters, e.g. method = abdiv::jaccard."
-    )
-  }
+  # Check input classes
+  .check_args(method = list(Class = list(c("character", "function"))))
 
-  if (is_counts) {
+  # Check input values
+  if (identical(method, "count")) {
     method <- function(x, y) length(x[x > 0 & y > 0])
     prefix <- prefix %||% "count_"
   }
@@ -109,12 +107,12 @@ calc_similarity <- function(input, data_col, cluster_col,
 
   # Check number of clusters after filtering
   vdj <- dplyr::filter(vdj, !is.na(!!sym(data_col)))
-  vdj <- dplyr::select(vdj, all_of(c(CELL_COL, data_col, cluster_col)))
+  vdj <- dplyr::select(vdj, all_of(c(global$cell_col, data_col, cluster_col)))
 
   n_clsts <- dplyr::n_distinct(vdj[[cluster_col]])
 
   if (n_clsts < 2) {
-    stop("cluster_col must contain at least two unique groups.")
+    cli::cli_abort("`cluster_col` must contain at least two unique clusters")
   }
 
   # Count number of occurrences of each value in data_col
@@ -122,7 +120,7 @@ calc_similarity <- function(input, data_col, cluster_col,
 
   vdj <- dplyr::summarize(
     vdj,
-    n = dplyr::n_distinct(!!sym(CELL_COL)), .groups = "drop"
+    n = dplyr::n_distinct(!!sym(global$cell_col)), .groups = "drop"
   )
 
   clsts <- unique(vdj[[cluster_col]])
@@ -231,16 +229,18 @@ calc_similarity <- function(input, data_col, cluster_col,
 #' using a single chain, the column passed to the data_col argument must contain
 #' per-chain data such as CDR3 sequences. Set to NULL to include all chains.
 #' @param chain_col meta.data column containing chains for each cell
+#' @param cluster_heatmap If FALSE, rows and columns of heatmap will not be
+#' clustered.
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
+#'
+#'
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters
 #' @param rotate_labels Should labels on circos plot be rotated to reduce
 #' overlapping text
-#' @param cluster_heatmap If FALSE, rows and columns of heatmap will not be
-#' clustered.
 #' @param remove_upper_triangle If TRUE, upper triangle for heatmap will not
 #' be shown.
 #' @param remove_diagonal If TRUE, diagonal for heatmap will not be shown.
-#' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to plotting function,
 #' [ComplexHeatmap::Heatmap()] for heatmap, [circlize::chordDiagram()] for
 #' circos plot
@@ -283,20 +283,33 @@ calc_similarity <- function(input, data_col, cluster_col,
 #'
 #' @export
 plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
-                            method = abdiv::jaccard, chain = NULL,
-                            chain_col = "chains", plot_colors = NULL,
+                            method = abdiv::jaccard,
+                            chain = NULL,
+                            chain_col = global$chain_col,
+                            cluster_heatmap = TRUE,
+                            sep = global$sep,
+                            plot_colors = NULL,
                             plot_lvls = names(plot_colors),
-                            rotate_labels = FALSE, cluster_heatmap = TRUE,
+                            rotate_labels = FALSE,
                             remove_upper_triangle = FALSE,
-                            remove_diagonal = remove_upper_triangle, sep = ";",
+                            remove_diagonal = remove_upper_triangle,
                             ...) {
 
-  # Check inputs
+  # Check that columns are present in object
+  .check_obj_cols(
+    input,
+    data_col, cluster_col, group_col, chain = chain, chain_col = chain_col
+  )
+
+  # Check input classes
+  .check_args(method = list(Class = list(c("character", "function"))))
+
+  # Check input values
   is_circ <- identical(method, "circos")
 
   if (is_circ) method <- "count"
 
-  .chk_group_cols(cluster_col, group_col, input)
+  .check_group_cols(cluster_col, group_col, input)
 
   # Calculate similarity
   plt_dat <- calc_similarity(
@@ -383,9 +396,7 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 #' will be added to the input object.
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with MDS coordinates
-#' @importFrom MASS isoMDS
-#' @seealso [plot_mds()], [calc_similarity()], [plot_similarity()],
-#' [MASS::isoMDS()]
+#' @seealso [plot_mds()], [calc_similarity()], [plot_similarity()]
 #'
 #' @examples
 #' # Calculate MDS coordinates
@@ -412,35 +423,33 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 #' )
 #'
 #' @export
-calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
-                     chain = NULL, chain_col = "chains", prefix = "",
-                     return_df = FALSE, sep = ";") {
+calc_mds <- function(input, data_col, cluster_col, method = "jaccard",
+                     chain = NULL, chain_col = global$chain_col, prefix = "",
+                     return_df = FALSE, sep = global$sep) {
 
-  # Check inputs
-  if (length(method) != 1) stop("method must be a single value.")
+  # Check for installed packages
+  .check_packages("MASS")
 
-  mets <- c(
-    "jaccard" = abdiv::jaccard,
-    "horn_morisita" = abdiv::horn_morisita
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_col, cluster_col, chain = chain, chain_col = chain_col
   )
 
-  if (is.character(method)) {
-    if (!method %in% names(mets)) {
-      stop("method must be 'jaccard' or 'horn_morisita'.")
-    }
+  # Check input classes
+  .check_args()
 
-    method <- mets[[method]]
+  # Check input values
+  mets <- c(
+    "jaccard" = abdiv::jaccard, "horn_morisita" = abdiv::horn_morisita
+  )
 
-  } else if (is.function(method)) {
-    good <- purrr::map_lgl(mets, ~ identical(method, .x))
-    good <- any(good)
-
-    if (!good) stop("method must be abdiv::jaccard or abdiv::horn_morisita.")
-
-  } else {
-    stop("method must be abdiv::jaccard or abdiv::horn_morisita.")
+  if (!method %in% names(mets)) {
+    cli::cli_abort("`method` must be {.or {names(mets)}}")
   }
 
+  method <- mets[[method]]
+
+  # Calculate similarity
   res <- calc_similarity(
     input,
     data_col    = data_col,
@@ -454,7 +463,7 @@ calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
 
   # Must have at least 3 clusters
   if (nrow(res) < 3) {
-    stop("cluster_col must contain at least three unique groups.")
+    cli::cli_abort("`cluster_col` must contain at least three unique clusters")
   }
 
   # Calculate MDS
@@ -520,12 +529,22 @@ calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
 #' [abdiv::horn_morisita()]
 #'
 #' @param chain Chain to use for comparing clusters. To perform calculations
-#' using a single chain, the column passed to the data_col argument must contain
-#' per-chain data such as CDR3 sequences. Set to NULL to include all chains.
+#' using a single chain, the column passed to `data_col` must contain
+#' per-chain data such as CDR3 sequences. Set to `NULL` to include all chains.
 #' @param chain_col meta.data column containing chains for each cell
 #' @param plot_colors Character vector containing colors for plotting
 #' @param plot_lvls Levels to use for ordering clusters
 #' @param label_points Label points on plot
+#' @param n_label Location on plot where n label should be added, this can be
+#' any combination of the following:
+#'
+#' - 'corner', display the total number of points plotted in the top right
+#'   corner, the position of the label can be modified by passing `x` and `y`
+#'   specifications with the `label_params` argument
+#' - 'none', do not display the number of points plotted
+#'
+#' @param label_params Named list providing additional parameters to modify
+#' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @param ... Additional arguments to pass to [ggplot2::geom_point()]
 #' @return ggplot object
@@ -558,39 +577,58 @@ calc_mds <- function(input, data_col, cluster_col, method = abdiv::jaccard,
 #'
 #' @export
 plot_mds <- function(input, data_col, cluster_col,
-                     method = abdiv::jaccard, chain = NULL,
-                     chain_col = "chains", plot_colors = NULL,
+                     method = "jaccard", chain = NULL,
+                     chain_col = global$chain_col, plot_colors = NULL,
                      plot_lvls = names(plot_colors), label_points = TRUE,
-                     sep = ";", ...) {
+                     n_label = "none", label_params = list(),
+                     sep = global$sep, ...) {
 
-    # Calculate MDS
-    plt_dat <- calc_mds(
-      input       = input,
-      data_col    = data_col,
-      cluster_col = cluster_col,
-      method      = method,
-      chain       = chain,
-      chain_col   = chain_col,
-      prefix      = "",
-      return_df  = TRUE,
-      sep         = sep
-    )
+  # Check that columns are present in object
+  .check_obj_cols(
+    input, data_col, cluster_col, chain = chain, chain_col = chain_col
+  )
 
-    # Create MDS plot
-    res <- plot_features(
-      plt_dat,
-      x = "MDS_1",
-      y = "MDS_2",
-      feature     = cluster_col,
-      plot_colors = plot_colors,
-      plot_lvls   = plot_lvls,
-      ...
-    )
+  # Check input classes
+  .check_args()
 
-    if (label_points) {
-      res <- res +
-        ggrepel::geom_text_repel(ggplot2::aes(label = !!sym(cluster_col)))
-    }
+  # Calculate MDS
+  plt_dat <- calc_mds(
+    input       = input,
+    data_col    = data_col,
+    cluster_col = cluster_col,
+    method      = method,
+    chain       = chain,
+    chain_col   = chain_col,
+    prefix      = "",
+    return_df   = TRUE,
+    sep         = sep
+  )
 
-    res
+  # Create MDS plot
+  lab_args <- .get_uniq_text_args(label_params, "geom_text")
+
+  res <- plot_scatter(
+    plt_dat,
+    x = "MDS_1",
+    y = "MDS_2",
+    data_col     = cluster_col,
+    plot_colors  = plot_colors,
+    plot_lvls    = plot_lvls,
+    n_label      = n_label,
+    label_params = lab_args,
+    ...
+  )
+
+  if (label_points) {
+    lab_args <- .get_uniq_text_args(label_params, "geom_text_repel")
+
+    lab_args$mapping <- ggplot2::aes(label = !!sym(cluster_col))
+
+    if (!is.null(lab_args$size)) lab_args$size <- lab_args$size / ggplot2::.pt
+
+    res <- res +
+      lift(ggrepel::geom_text_repel)(lab_args)
   }
+
+  res
+}

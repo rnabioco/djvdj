@@ -8,12 +8,12 @@ calc_mds(
   input,
   data_col,
   cluster_col,
-  method = abdiv::jaccard,
+  method = "jaccard",
   chain = NULL,
-  chain_col = "chains",
+  chain_col = global$chain_col,
   prefix = "",
   return_df = FALSE,
-  sep = ";"
+  sep = global$sep
 )
 }
 \arguments{
@@ -79,6 +79,5 @@ res <- calc_mds(
 
 }
 \seealso{
-\code{\link[=plot_mds]{plot_mds()}}, \code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[=plot_similarity]{plot_similarity()}},
-\code{\link[MASS:isoMDS]{MASS::isoMDS()}}
+\code{\link[=plot_mds]{plot_mds()}}, \code{\link[=calc_similarity]{calc_similarity()}}, \code{\link[=plot_similarity]{plot_similarity()}}
 }

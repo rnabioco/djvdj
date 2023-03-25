@@ -48,24 +48,56 @@ so <- splen_so |>
 
 <br>
 
-## Plotting numerical data
+## Histograms
 
-The `plot_vdj()` function can be used to plot numerical V(D)J data present in the object. By default, this will plot the values present in the `data_col` column for every chain. The `trans` argument can be used to specify an axis transformation.
+The `plot_histogram()` function can be used to plot numerical V(D)J data present in the object. By default, this will plot the values present in the `data_col` column for every cell. If `data_col` contains per-chain data (i.e. the column contains the character specified by `sep`, default is ';'), the values will be summarized for each cell. By default the mean will be calculated. Cells that lack V(D)J data are removed before plotting, so for this example we have `r nrow(na.omit(so@meta.data))` cells with V(D)J data. The `trans` argument can be used to specify an x-axis transformation.
+
+In the example below, the mean number of UMIs per cell is plotted.
 
 ```{r}
 so |>
-  plot_vdj(
+  plot_histogram(
+    data_col = "umis",
+    trans    = "log10"
+  )
+```
+
+<br>
+
+To color cells based on an additional variable present in the object, specify the column name to the `cluster_col` argument.
+
+```{r}
+so |>
+  plot_histogram(
     data_col    = "umis",
     cluster_col = "orig.ident",
     trans       = "log10"
   )
 ```
 
-To only plot values for a specific chain, the `chain` argument can be used. In this example we are plotting of the number of UMIs for each IGK chain.
+<br>
+
+The function used to summarize per-chain values can be changed using the `summary_fn` argument. The per-chain values can also be plotted separately using the `per_chain` argument.
+
+In the example below, the value for each chain is plotted.
 
 ```{r}
 so |>
-  plot_vdj(
+  plot_histogram(
+    data_col    = "umis",
+    cluster_col = "orig.ident",
+    per_chain   = TRUE,
+    trans       = "log10"
+  )
+```
+
+<br>
+
+To only plot values for a specific chain, the `chain` argument can be used. In this example the mean number of UMIs is shown for each IGK chain.
+
+```{r}
+so |>
+  plot_histogram(
     data_col    = "umis",
     cluster_col = "orig.ident",
     chain       = "IGK",
@@ -73,69 +105,121 @@ so |>
   )
 ```
 
-The `method` argument can be used to generate other types of plots including boxplots.
+<br>
 
-```{r}
-so |>
-  plot_vdj(
-    data_col    = "reads",
+## Violin plots
+
+The `plot_violin()` function has similar functionality as `plot_histogram()` but will generate violin plots or boxplots. For all djvdj plotting functions, additional arguments can be passed directly to ggplot2 to further modify plot aesthetics. By default clusters are arranged highest to lowest based on the values in `data_col`. This ordering can be modified using the `plot_lvls` argument"
+
+```{r, fig.height = 3}
+vln <- so |>
+  plot_violin(
+    data_col    = "nCount_RNA",
     cluster_col = "sample",
-    method      = "boxplot",
-    trans       = "log10"
-  )
-```
-
-Instead of plotting values for each chain, per-chain values can be summarized and plotted for each cell. In this example we are plotting the mean number of reads for each cell.
-
-```{r}
-so |>
-  plot_vdj(
-    data_col    = "reads",
-    cluster_col = "sample",
-    method      = "violin",
     trans       = "log10",
     
-    per_cell    = TRUE,
-    summary_fn  = mean
+    draw_quantiles = c("0.25", "0.75")  # parameter for ggplot2::geom_violin()
   )
+
+bx <- so |>
+  plot_violin(
+    data_col    = "nFeature_RNA",
+    cluster_col = "sample",
+    method      = "boxplot"
+  )
+
+vln + bx
 ```
 
 <br>
 
 ## UMAP projections
 
-To plot V(D)J information on UMAP projections, the `plot_vdj_feature()` can be used. A summary function to use for summarizing per-chain values for each cell must be specified using the `summary_fn` argument. In this example we are plotting the mean number of mutations for each cell.
+To plot V(D)J information on UMAP projections, the `plot_scatter()` function can be used. By default this function will plot the 'UMAP_1' and 'UMAP_2' columns on the x- and y-axis. A function to use for summarizing per-chain values for each cell must be specified using the `summary_fn` argument, by default this is `mean()` for numeric data. Cells that lack V(D)J data are stored as `NA`s in the object and will be shown on the plot as light grey. The color used for plotting `NA`s can be modified with the `na_color` argument.
+
+In the example below, the mean number of mismatch mutations for each cell is shown.
 
 ```{r, fig.width = 5, fig.height = 4}
 so |>
-  plot_vdj_feature(
-    data_col   = "all_mis",
-    summary_fn = mean
-  )
-```
-
-Instead of summarizing the per-chain values for each cell, we can also specify a specific chain to use for plotting. In this example we are plotting the CDR3 length for IGK chains. If a cell does not have an IGK chain or has multiple IGK chains, it will be plotted as an `NA`.
-
-```{r, fig.width = 5.5, fig.height = 4}
-so |>
-  plot_vdj_feature(
-    data_col = "cdr3_length",
-    chain    = "IGK"
-  )
-```
-
-Like `plot_vdj()`, the scale can also be transformed using the `trans` argument.
-
-```{r, fig.width = 5.25, fig.height = 4}
-so |>
-  plot_vdj_feature(
-    data_col    = "umis",
-    trans       = "log10",
-    plot_colors = c("#fd8d3c", "black")
+  plot_scatter(
+    data_col = "all_mis",
+    na_color = "lightgrey"
   )
 ```
 
 <br>
+
+Instead of summarizing the per-chain values for each cell, we can also specify a chain to use for plotting. In this example we are plotting the CDR3 length for IGK chains. If a cell does not have an IGK chain or has multiple IGK chains, it will be plotted as an `NA`. Like other plotting functions, values can be transformed using the `trans` argument.
+
+```{r, fig.width = 5.15, fig.height = 4}
+so |>
+  plot_scatter(
+    data_col = "reads",
+    chain    = "IGK",
+    trans    = "log10"
+  )
+```
+
+<br>
+
+## Splitting plots
+
+Plots can be split into separate panels based on an additional grouping variable using the `group_col` argument. The arrangement of plot panels and the axis scales used for each panel can be adjusted using the `panel_nrow` and `panel_scales` arguments.
+
+```{r}
+so |>
+  plot_histogram(
+    data_col    = "reads",
+    cluster_col = "orig.ident",
+    group_col   = "seurat_clusters",
+    trans       = "log10",
+    
+    panel_nrow = 2,
+    panel_scales = "free_x"
+  )
+```
+
+<br>
+
+## Plot aesthetics
+
+Plot colors can be specified using the `plot_colors` argument. This should be a vector of colors, to specify colors by cluster name, a named vector can be passed. By default clusters are ordered with the most abundant clusters on top. To modify this ordering, a character vector can be passed to the `plot_lvls` argument.
+
+```{r, fig.width = 5.2, fig.height = 4}
+so |>
+  plot_scatter(
+    data_col = "orig.ident",
+    plot_colors = c(MD4 = "red", BL6 = "lightblue")
+  )
+```
+
+<br>
+
+To only modify the color of a few clusters, a vector only containing the clusters of interest can be passed. The same is true for the `plot_lvls` argument, the name of a single cluster can be passed to plot it on top.
+
+In the example below we keep all the default colors except for clusters 3 and 4 and we specifically plot these clusters on top.
+
+```{r, fig.width = 5.5, fig.height = 4}
+so |>
+  plot_scatter(
+    data_col    = "seurat_clusters",
+    plot_colors = c("4" = "darkred", "3" = "red"),
+    plot_lvls   = c("3", "4")
+  )
+```
+
+<br>
+
+By default the number of data points plotted will be shown in the top right corner, plot legend, and/or x-axis. The location of the label can be specified using the `n_label` argument. Label appearance can be modified by passing a named list of aesthetic parameters to the `label_params` argument.
+
+```{r, fig.width = 5.5, fig.height = 4}
+so |>
+  plot_scatter(
+    data_col = "seurat_clusters",
+    n_label  = "corner",
+    label_params = list(color = "darkred", fontface = "bold")
+  )
+```
 
 ## Session info
 

@@ -16,9 +16,10 @@
 #' and data_cols are NULL, all columns are included.
 #' @param filter_cells Remove cells that do not have V(D)J data, clonotype_col
 #' must be provided to determine which cells to filter.
-#' @param per_cell Return per-cell data instead of per-chain data.
-#' @param unnest If FALSE, a nested data.frame is returned where each row
-#' represents a cell and V(D)J data is stored as list-cols. If TRUE, columns
+#' @param per_chain If `TRUE` return per-chain data, i.e. each row represents a
+#' chain.
+#' @param unnest If `FALSE`, a nested data.frame is returned where each row
+#' represents a cell and V(D)J data is stored as list-cols. If `TRUE`, columns
 #' are unnested so each row represents a single chain.
 #' @param sep Separator used for storing per cell V(D)J data. This is used to
 #' identify columns containing per-chain data that can be unnested.
@@ -45,23 +46,34 @@
 #'
 #' @export
 fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
-                      filter_cells = FALSE, per_cell = FALSE, unnest = TRUE,
-                      sep = ";") {
+                      filter_cells = FALSE, per_chain = TRUE, unnest = TRUE,
+                      sep = global$sep) {
+
+  # Check that columns are present in object
+  .check_obj_cols(input, data_cols, clonotype_col)
+
+  # Check input classes
+  .check_args(data_cols = list(len_one = FALSE, allow_null = TRUE))
 
   # Format input data
   meta <- .get_meta(input)
 
   # Filter cells
   if (filter_cells) {
-    if (is.null(clonotype_col)) {
-      stop("clonotype_col must be provided to determine which cells to filter.")
+    if (is.null(data_cols) && is.null(clonotype_col)) {
+      cli::cli_abort(
+        "When `filter_cells` is `TRUE`, `data_cols` or `clonotype_col` must be
+         provided to determine which cells to filter"
+      )
     }
 
-    meta <- dplyr::filter(meta, !is.na(!!sym(clonotype_col)))
+    filt_cols <- clonotype_col %||% data_cols
+
+    meta <- dplyr::filter(meta, dplyr::if_all(all_of(filt_cols), ~ !is.na(.x)))
   }
 
   # If NULL sep or per_cell, return meta.data
-  if (is.null(sep) || per_cell) return(meta)
+  if (is.null(sep) || !per_chain) return(meta)
 
   # Identify columns with V(D)J data
   col_list <- .get_vdj_cols(
@@ -74,10 +86,7 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
   sep_cols <- col_list$sep
 
   if (purrr::is_empty(sep_cols)) {
-    warning(
-      "The separator '", sep, "' was not identified in any columns specified ",
-      "by data_cols."
-    )
+    cli::cli_warn("`sep` ({sep}) was not found in {.or {data_cols}}")
 
     return(meta)
   }
@@ -168,8 +177,14 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
 #' head(slot(res, "meta.data"), 3)
 #'
 #' @export
-mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
-                       data_cols = NULL, return_df = FALSE, sep = ";") {
+mutate_vdj <- function(input, ..., clonotype_col = global$clonotype_col,
+                       data_cols = NULL, return_df = FALSE, sep = global$sep) {
+
+  # Check that columns are present in object
+  .check_obj_cols(input, data_cols, clonotype_col)
+
+  # Check input classes
+  .check_args(data_cols = list(len_one = FALSE, allow_null = TRUE))
 
   # Format input data
   meta <- .get_meta(input)
@@ -188,7 +203,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
 
   # Allow sep to be NULL so user can skip .unnest_vdj
   if (!is.null(sep) && purrr::is_empty(sep_cols)) {
-    warning("The separator '", sep, "' is not present in the data")
+    cli::cli_warn("`sep` ('{sep}') is not present in the data")
   }
 
   # Create list-cols for V(D)J columns that contain sep
@@ -210,9 +225,7 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
   # Re-nest list-cols
   res <- .nest_vdj(vdj, sep_cols = NULL, sep = sep)
 
-  if (return_df) {
-    input <- res
-  }
+  if (return_df) input <- res
 
   res <- .add_meta(input, meta = res)
 
@@ -327,8 +340,14 @@ mutate_vdj <- function(input, ..., clonotype_col = "clonotype_id",
 #'
 #' @export
 summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
-                          chain_col = "chains", sep = ";", col_names = "{.col}",
-                          return_df = FALSE) {
+                          chain_col = global$chain_col, col_names = "{.col}",
+                          return_df = FALSE, sep = global$sep) {
+
+  # Check that columns are present in object
+  .check_obj_cols(input, data_cols, chain = chain, chain_col = chain_col)
+
+  # Check input classes
+  .check_args()
 
   # Names of new columns
   new_cols <- gsub("\\{.col\\}", "{data_cols}", col_names)
@@ -363,9 +382,7 @@ summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
     fn <- mean
 
     if (!is_num) {
-      if (is.null(chain)) {
-        return(input)
-      }
+      if (is.null(chain)) return(input)
 
       fn <- ~ paste0(.x, collapse = sep)
     }
@@ -401,11 +418,9 @@ summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
       )
 
     } else {
-      not_lst <- paste0(not_lst, collapse = ", ")
-
-      warning(
-        not_lst, " does not contain per-chain V(D)J data, can only filter ",
-        "based on chain if all data_cols contain per-chain data."
+      cli::cli_warn(
+        "Some columns do not contain per-chain V(D)J data, can only filter
+         based on `chain` if all `data_cols` contain per-chain data: {not_lst}"
       )
     }
   }
@@ -453,9 +468,7 @@ summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
       x[[j]] <- r
     }
 
-    if (length_one) {
-      x <- unlist(x)
-    }
+    if (length_one) x <- unlist(x)
 
     res[[new_clmn]] <- x
   }
@@ -548,8 +561,10 @@ summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
 #' @export
 mutate_meta <- function(input, fn, ...) {
 
+  psbl_fns <- c("function", "formula")
+
   if (!purrr::is_function(fn) && !purrr::is_formula(fn)) {
-    stop("fn must be either a function or a formula")
+    cli::cli_abort("`fn` must be a {.or {psbl_fns}}")
   }
 
   meta <- .get_meta(input)

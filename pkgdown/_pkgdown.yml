@@ -51,6 +51,7 @@ reference:
 - title: Gene Usage
   contents:
   - ends_with("_gene_usage")
+  - ends_with("_gene_pairs")
 
 - title: CDR3 Clustering
   contents:
@@ -67,8 +68,9 @@ reference:
 
 - title: Plotting
   contents:
-  - ends_with("_features")
-  - plot_vdj
+  - plot_violin
+  - plot_histogram
+  - plot_scatter
   - djvdj_theme
 
 - title: Data

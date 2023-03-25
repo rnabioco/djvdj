@@ -9,25 +9,32 @@ calc_gene_usage(
   data_cols,
   cluster_col = NULL,
   chain = NULL,
-  chain_col = "chains",
-  sep = ";"
+  chain_col = global$chain_col,
+  prefix = paste0(data_cols[1], "_"),
+  return_df = FALSE,
+  sep = global$sep
 )
 }
 \arguments{
 \item{input}{Object containing V(D)J data. If a data.frame is provided, the
 cell barcodes should be stored as row names.}
 
-\item{data_cols}{meta.data column containing V(D)J genes identified for each
-clonotype. If multiple columns are provided, paired usage of genes will be
-calculated.}
+\item{data_cols}{meta.data column(s) containing V(D)J genes identified for
+each clonotype. If multiple columns are provided, paired usage of genes will
+be calculated.}
 
 \item{cluster_col}{meta.data column containing cell clusters to use when
 calculating gene usage}
 
-\item{chain}{Chain to use for calculating gene usage. Set to NULL to include
-all chains.}
+\item{chain}{Chain(s) to use for calculating gene usage. Set to \code{NULL} to
+include all chains.}
 
 \item{chain_col}{meta.data column containing chains for each cell}
+
+\item{prefix}{Prefix to add to new columns}
+
+\item{return_df}{Return results as a data.frame. If \code{FALSE}, results will be
+added to the input object.}
 
 \item{sep}{Separator used for storing per cell V(D)J data}
 }
@@ -35,7 +42,10 @@ all chains.}
 data.frame containing gene usage summary
 }
 \description{
-Calculate V(D)J segment usage
+Quantify the usage of different V(D)J segments for each cell cluster. The
+usage of two V(D)J segments can also be calculated for a single chain.
+For example, calc_gene_usage() can calculate the frequency that different
+heavy chain V and J segments appear together.
 }
 \examples{
 # Calculate V(D)J segment usage for all cells
@@ -66,5 +76,5 @@ calc_gene_usage(
 
 }
 \seealso{
-\code{\link[=plot_gene_usage]{plot_gene_usage()}}
+\code{\link[=plot_gene_usage]{plot_gene_usage()}}, \code{\link[=calc_gene_pairs]{calc_gene_pairs()}}, \code{\link[=plot_gene_pairs]{plot_gene_pairs()}}
 }

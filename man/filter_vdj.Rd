@@ -9,8 +9,8 @@ filter_vdj(
   filt,
   data_cols = NULL,
   clonotype_col = "clonotype_id",
-  sep = ";",
-  per_cell = FALSE
+  sep = global$sep,
+  per_chain = TRUE
 )
 }
 \arguments{
@@ -32,11 +32,10 @@ columns that have NAs in the same rows as clonotype_col.}
 \item{clonotype_col}{meta.data column containing clonotype IDs. This column
 is used to determine which columns contain V(D)J data.}
 
-\item{sep}{Separator used for storing per cell V(D)J data. If NULL, per_cell
-will be set TRUE.}
+\item{sep}{Separator used for storing per cell V(D)J data.}
 
-\item{per_cell}{If TRUE, per-chain data will not be parsed and values
-in each meta.data column will be filtered as is.}
+\item{per_chain}{If \code{TRUE} per-chain data will be parsed so values for
+individual chains can be filtered, if \code{FALSE} values will be filtered as is.}
 }
 \value{
 Object with filtered meta.data

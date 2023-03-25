@@ -7,70 +7,38 @@ library(stringr)
 library(SingleCellExperiment)
 library(djvdj)
 
+vdj_dirs <- c(
+  BL6 = system.file("extdata/splen/BL6_BCR", package = "djvdj"),
+  MD4 = system.file("extdata/splen/MD4_BCR", package = "djvdj")
+)
+
+test_so <- splen_so |>
+  import_vdj(vdj_dirs, define_clonotypes = "cdr3_gene")
+
 test_check("djvdj")
 
 
 
 
 
-### TESTING LARGE DATA ###
-#
-# # generating test data
-# load("data/avid/so_avid.rda")
-#
-# test_vdj <- so_avid %>%
-#   import_vdj("data/avid/bcr/")
-#
+# ### TESTING LARGE DATA ###
+# 
+# # Generate test data
+# n_reps <- 10
+# 
+# vdj_dirs <- c(
+#   BL6 = system.file("extdata/splen/BL6_BCR", package = "djvdj"),
+#   MD4 = system.file("extdata/splen/MD4_BCR", package = "djvdj")
+# )
+# 
+# test_vdj <- splen_so |>
+#   import_vdj(vdj_dirs, define_clonotypes = "cdr3_gene")
+# 
 # test_vdj <- test_vdj@meta.data
-#
-# walk(1:5, ~ {
+# 
+# walk(seq_len(n_reps), ~ {
 #   test_vdj <<- bind_rows(test_vdj, test_vdj)
 # })
-#
+# 
 # test_vdj <- test_vdj %>%
-#   mutate(clonotype_id = str_c(clonotype_id, row_number(clonotype_id) %% 5))
-#
-# # testing functions
-# test_vdj %>%
-#   calc_abundance(cluster_col = "seurat_clusters")
-#
-# test_vdj %>%
-#   plot_abundance(
-#     cluster_col = "seurat_clusters",
-#     type = "line",
-#     n_clonotypes = 2
-#   )
-#
-# test_vdj %>%
-#   plot_similarity(
-#     cluster_col = "seurat_clusters"
-#   )
-#
-# test_vdj %>%
-#   plot_diversity(
-#     cluster_col = "seurat_clusters",
-#   )
-#
-# clmns <- c(
-#   "v_gene", "d_gene", "chains",
-#   "umis", "reads", "cdr3_length",
-#   "cdr3_nt_length", "productive",
-#   "full_length"
-# )
-#
-# tictoc::tic()
-# x <- fetch_vdj(test_vdj, clmns)
-# tictoc::toc()
-#
-# tictoc::tic()
-# y <- summarize_vdj(test_vdj, clmns)
-# tictoc::toc()
-#
-# tictoc::tic()
-# x <- fetch_vdj(test_vdj, clonotype_col = NULL)
-# tictoc::toc()
-#
-# tictoc::tic()
-# y <- fetch_vdj(test_vdj, clonotype_col = "clonotype_id")
-# tictoc::toc()
-
+#   mutate(clonotype_id = str_c(clonotype_id, row_number(clonotype_id) %% n_reps))

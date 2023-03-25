@@ -10,10 +10,10 @@ summarize_vdj(
   fn = NULL,
   ...,
   chain = NULL,
-  chain_col = "chains",
-  sep = ";",
+  chain_col = global$chain_col,
   col_names = "{.col}",
-  return_df = FALSE
+  return_df = FALSE,
+  sep = global$sep
 )
 }
 \arguments{
@@ -34,14 +34,14 @@ non-numeric columns will be combined into a single string.}
 
 \item{chain_col}{meta.data column(s) containing chains for each cell}
 
-\item{sep}{Separator used for storing per cell V(D)J data}
-
 \item{col_names}{A glue specification that describes how to name the output
 columns, use \{.col\} to refer to the original column name. If col_names is
 NULL, the original column names will be used.}
 
 \item{return_df}{Return results as a data.frame. If FALSE, results will be
 added to the input object.}
+
+\item{sep}{Separator used for storing per cell V(D)J data}
 }
 \value{
 Object containing V(D)J data summarized for each cell

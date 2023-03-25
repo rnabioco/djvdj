@@ -17,10 +17,9 @@
 #' columns that have NAs in the same rows as clonotype_col.
 #' @param clonotype_col meta.data column containing clonotype IDs. This column
 #' is used to determine which columns contain V(D)J data.
-#' @param per_cell If TRUE, per-chain data will not be parsed and values
-#' in each meta.data column will be filtered as is.
-#' @param sep Separator used for storing per cell V(D)J data. If NULL, per_cell
-#' will be set TRUE.
+#' @param per_chain If `TRUE` per-chain data will be parsed so values for
+#' individual chains can be filtered, if `FALSE` values will be filtered as is.
+#' @param sep Separator used for storing per cell V(D)J data.
 #' @return Object with filtered meta.data
 #'
 #' @examples
@@ -54,12 +53,18 @@
 #'
 #' @export
 filter_vdj <- function(input, filt, data_cols = NULL,
-                       clonotype_col = "clonotype_id", sep = ";",
-                       per_cell = FALSE) {
+                       clonotype_col = "clonotype_id", sep = global$sep,
+                       per_chain = TRUE) {
 
-  if (per_cell) sep <- NULL
+  # Check that columns are present in object
+  .check_obj_cols(input, data_cols, clonotype_col)
+
+  # Check input classes
+  .check_args(data_cols = list(len_one = FALSE, allow_null = TRUE))
 
   # Format input data
+  if (!per_chain) sep <- NULL
+
   meta <- vdj <- .get_meta(input)
 
   # Identify columns with V(D)J data
@@ -74,7 +79,7 @@ filter_vdj <- function(input, filt, data_cols = NULL,
   sep_cols <- col_list$sep
 
   if (!is.null(sep) && purrr::is_empty(sep_cols)) {
-    warning("The separator '", sep, "' is not present in the data")
+    cli::cli_warn("`sep` ({sep}) is not present in the data")
   }
 
   # Create list-cols for V(D)J columns that contain sep
@@ -104,9 +109,11 @@ filter_vdj <- function(input, filt, data_cols = NULL,
   # If vectors in keep_rows are all length 1, filter cells
   if (length_one) {
     keep_rows <- unlist(keep_rows)
-    vdj_cols  <- vdj_cols[vdj_cols != CELL_COL]
+    vdj_cols  <- vdj_cols[vdj_cols != global$cell_col]
 
-    vdj <- dplyr::mutate(meta, across(all_of(vdj_cols), .add_na, !keep_rows))
+    vdj <- dplyr::mutate(meta, dplyr::across(
+      all_of(vdj_cols), ~ .add_na(.x, !keep_rows)
+    ))
 
     res <- .add_meta(input, vdj)
 
@@ -119,9 +126,9 @@ filter_vdj <- function(input, filt, data_cols = NULL,
 
     x <- purrr::map2_chr(x, keep_rows, ~ {
       if (!all(is.na(.x)) && length(.x) != length(.y)) {
-        stop(
-          "Filtering condition must return TRUE/FALSE for each chain, ",
-          "or a single TRUE/FALSE for each cell."
+        cli::cli_abort(
+          "Filtering condition must return `TRUE`/`FALSE` for each chain,
+           or a single `TRUE`/`FALSE` for each cell."
         )
       }
 
@@ -139,7 +146,9 @@ filter_vdj <- function(input, filt, data_cols = NULL,
   other_cols <- vdj_cols[!vdj_cols %in% sep_cols]
   na_rows    <- purrr::map_lgl(keep_rows, ~ !any(.x))
 
-  vdj <- dplyr::mutate(vdj, dplyr::across(all_of(other_cols), .add_na, na_rows))
+  vdj <- dplyr::mutate(vdj, dplyr::across(
+    all_of(other_cols), ~ .add_na(.x, na_rows)
+  ))
 
   # Format results
   res <- .add_meta(input, vdj)
