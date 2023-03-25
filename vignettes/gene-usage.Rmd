@@ -163,7 +163,7 @@ so |>
 
 ## Circos plot
 
-A circos plot can be created by setting the `method` argument to 'circos'. This plot will summarize the number of cells containing the different segment pairs. The number of cells is shown as the axis labels for each sample.
+A circos plot can be created by setting the `method` argument to 'circos'. This plot will summarize the number of cells containing different gene pairs, which is shown as the axis labels for each sample. This requires the circlize package to be installed.
 
 In this example, we are summarizing the segment usage for the entire dataset (BL6 and MD4 cells combined). The `cluster_col` argument can be used to create a separate plot for each sample. Labels can be rotated to eliminate overlapping text using the `rotate_labels` argument.
 

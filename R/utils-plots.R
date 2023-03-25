@@ -108,6 +108,8 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   scale_clr  <- is.character(.color)
   scale_fill <- is.character(.fill)
 
+  if (!scale_clr && !scale_fill) clrs <- clrs[1]
+
   if (scale_clr && scale_fill && !identical(.fill, .color)) {
     cli::cli_abort(
       "If both `.color` and `.fill` are provided,
@@ -1359,6 +1361,15 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
     top      <- top[1]
     n_top    <- top %||% ifelse(n_grps > 50, 10, 20)
     top_grps <- head(rnk, n_top)
+
+    # Warn user when top is automatically set
+    if (is.null(top) && n_grps > n_top) {
+      cli::cli_warn(
+        "The top {n_top} groups are shown, the remaining data points are
+         labeled as \'{other_label}\'. This behavior can be modified using the
+         {.code top} argument."
+      )
+    }
   }
 
   res <- df_in
