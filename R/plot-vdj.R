@@ -28,7 +28,6 @@
 #' @param other_label Label to use for 'other' cells when `top` is specified, if
 #' `NULL` all cell groups will be shown.
 #'
-#' ## Aesthetics
 #'
 #' @param plot_colors Character vector specifying colors to use for cell
 #' clusters specified by cluster_col. When cluster_col is `NULL`, plot colors
@@ -63,7 +62,6 @@
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #'
-#' ## VDJ arguments
 #'
 #' @param per_chain If `TRUE` values will be plotted for each chain, i.e. each
 #' data point represents a chain. If `FALSE` values will be summarized for each
@@ -80,6 +78,23 @@
 #' @seealso [summarize_vdj()] for more examples on how per-chain data can be
 #' summarized for each cell
 #' @return ggplot object
+#'
+#' @examples
+#' # Create histogram
+#' plot_histogram(
+#'   vdj_so,
+#'   data_col    = "reads",
+#'   cluster_col = "orig.ident",
+#'   trans       = "log10"
+#' )
+#'
+#' # Create violin plots
+#' plot_violin(
+#'   vdj_sce,
+#'   data_col    = "nFeature_RNA",
+#'   cluster_col = "orig.ident"
+#' )
+#'
 #' @name plot_numerical
 NULL
 
@@ -254,7 +269,6 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
 #' @param other_label Label to use for 'other' cells when `top` is specified, if
 #' `NULL` all cell groups will be shown.
 #'
-#' ## Aesthetics
 #'
 #' @param plot_colors Character vector specifying colors to use for cell
 #' clusters specified by cluster_col.
@@ -289,7 +303,6 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
 #' @param ... Additional arguments to pass to [ggplot2::geom_point()], or
 #' [ggtrace::geom_point_trace()] if `outline = TRUE`, e.g. color, size, etc.
 #'
-#' ## VDJ arguments
 #'
 #' @param chain Chain(s) to use for filtering data before plotting. If NULL
 #' data will not be filtered based on chain.
@@ -304,6 +317,17 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
 #' summarized for each cell
 #' @return ggplot object
 #' @importFrom ggtrace geom_point_trace
+#'
+#' @examples
+#' # Create scatter plot
+#' plot_scatter(
+#'   vdj_sce,
+#'   data_col = "reads",
+#'   x        = "UMAP_1",
+#'   y        = "UMAP_2",
+#'   trans    = "log10"
+#' )
+#'
 #' @export
 plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
                          group_col = NULL, data_slot = "data", top = NULL,
@@ -346,7 +370,6 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
     x            = x,
     y            = y,
     .color       = data_col,
-    .fill        = data_col,
     grp          = group_col,
     clrs         = plot_colors,
     trans_clr    = trans,
@@ -363,6 +386,7 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
     gg_args <- .standardize_aes(gg_args)
 
     gg_args$fn     <- ggtrace::geom_point_trace
+    gg_args$.fill  <- data_col
     gg_args$colour <- gg_args$colour %||% "black"
   }
 
@@ -381,14 +405,12 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
     plt_dat <- .set_lims(plt_dat, data_col, min_q, max_q)
   }
 
-  # If not all levels are specified by plot_lvls, use ordering set by
-  # .format_plot_data, reverse legend so top ranked levels are listed first
-  # ACTUALLY SHOULD ALWAYS REVERSE LEGEND
+  # reverse legend so top ranked levels are listed first
   lvls <- stats::na.omit(levels(plt_dat[[data_col]]))
 
   rev_lgnd <- !identical(data_col, group_col)
 
-  if (!identical(data_col, group_col)) lvls <- rev(lvls)
+  if (rev_lgnd) lvls <- rev(lvls)
 
   # Set default colors
   plot_colors <- .set_colors(plt_dat, data_col, plot_colors, lvls,
@@ -406,8 +428,13 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
 
     if (rev_lgnd) lgnd_args$reverse <- TRUE
 
+    lgnd_args <- lift(ggplot2::guide_legend)(lgnd_args)
+
+    if (outline) lgnd_args <- list(fill = lgnd_args)
+    else         lgnd_args <- list(color = lgnd_args)
+
     res <- res +
-      ggplot2::guides(color = lift(ggplot2::guide_legend)(lgnd_args))
+      lift(ggplot2::guides)(lgnd_args)
   }
 
   res
