@@ -401,7 +401,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   # Check for NAs in data, additional NAs would indicate malformed input
   if (!all(stats::complete.cases(contigs))) {
-    cli::cli_abort("Malformed input data, `NA`s are present, check input files")
+    cli::cli_abort(
+      "Malformed input data, {.code NA}s are present, check input files"
+    )
   }
 
   # Check if sep is already present in sep_cols
@@ -464,11 +466,17 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   }
 
   # Check for duplicated cell barcodes
-  if (any(duplicated(meta$barcode))) {
-    cli::cli_abort(
-      "Malformed input data, multiple clonotype_ids
-       are associated with the same cell barcode"
+  bc_dups <- meta$barcode
+  bc_dups <- unique(bc_dups[duplicated(bc_dups)])
+  n_dups  <- length(bc_dups)
+
+  if (n_dups > 0) {
+    cli::cli_warn(
+      "{n_dups} cell barcode{?s} h{?as/ave} more than one clonotype_id,
+       th{?is/ese} cell{?s} will be removed."
     )
+
+    meta <- dplyr::filter(meta, !.data$barcode %in% bc_dups)
   }
 
   # Allow user to redefine clonotypes
