@@ -13,42 +13,44 @@ NULL
 
 #' Theme for djvdj plotting functions
 #'
-#' @param ttl_size Size of axis titles
-#' @param txt_size Size of axis text
-#' @param ln_size Size of axis lines
-#' @param txt_col Color of axis text
-#' @param ln_col Color of axis lines
+#' @param base_size base font size in pts
+#' @param base_family base font family
+#' @param base_line_size base size for line elements
+#' @param base_rect_size base size for rect element
+#' @param line_color color for line elements
 #' @return ggplot theme
-#'
 #' @examples
 #'
 #' plot_scatter(vdj_so, data_col = "seurat_clusters") +
 #'   djvdj_theme()
 #'
 #' @export
-djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
-                        txt_col = "black", ln_col = "grey85") {
+djvdj_theme <- function(base_size = 11, base_family = "",
+                        base_line_size = base_size / 22,
+                        base_rect_size = base_size / 22,
+                        line_color = "grey85") {
 
-  res <- ggplot2::theme(
-    strip.background  = ggplot2::element_blank(),
-    strip.text        = ggplot2::element_text(size = ttl_size),
+  ggplot2::theme_classic(
+    base_size      = base_size,
+    base_family    = base_family,
+    base_line_size = base_line_size,
+    base_rect_size = base_rect_size
+  ) %+replace%
+    ggplot2::theme(
+      strip.background  = ggplot2::element_blank(),
+      strip.text        = ggplot2::element_text(size = base_size),
 
-    panel.border      = ggplot2::element_rect(
-      fill = NA, color = ln_col, linewidth = ln_size
-    ),
+      panel.border = ggplot2::element_rect(fill = NA, color = line_color),
+      panel.background  = ggplot2::element_blank(),
 
-    panel.background  = ggplot2::element_blank(),
-    legend.background = ggplot2::element_blank(),
-    legend.title      = ggplot2::element_text(size = ttl_size),
-    legend.key        = ggplot2::element_blank(),
-    legend.text       = ggplot2::element_text(size = txt_size, color = txt_col),
-    axis.line         = ggplot2::element_blank(),
-    axis.ticks        = ggplot2::element_line(linewidth = ln_size,  color = ln_col),
-    axis.text         = ggplot2::element_text(size = txt_size, color = txt_col),
-    axis.title        = ggplot2::element_text(size = ttl_size, color = txt_col)
-  )
+      legend.background = ggplot2::element_blank(),
+      legend.key        = ggplot2::element_blank(),
 
-  res
+      axis.line         = ggplot2::element_blank(),
+      axis.ticks        = ggplot2::element_line(color = line_color),
+
+      complete = TRUE
+    )
 }
 
 

@@ -5,23 +5,23 @@
 \title{Theme for djvdj plotting functions}
 \usage{
 djvdj_theme(
-  ttl_size = 12,
-  txt_size = 8,
-  ln_size = 0.5,
-  txt_col = "black",
-  ln_col = "grey85"
+  base_size = 11,
+  base_family = "",
+  base_line_size = base_size/22,
+  base_rect_size = base_size/22,
+  line_color = "grey85"
 )
 }
 \arguments{
-\item{ttl_size}{Size of axis titles}
+\item{base_size}{base font size in pts}
 
-\item{txt_size}{Size of axis text}
+\item{base_family}{base font family}
 
-\item{ln_size}{Size of axis lines}
+\item{base_line_size}{base size for line elements}
 
-\item{txt_col}{Color of axis text}
+\item{base_rect_size}{base size for rect element}
 
-\item{ln_col}{Color of axis lines}
+\item{line_color}{color for line elements}
 }
 \value{
 ggplot theme
