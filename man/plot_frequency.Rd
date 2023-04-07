@@ -9,6 +9,7 @@ plot_frequency(
   data_col,
   cluster_col = NULL,
   group_col = NULL,
+  method = "bar",
   stack = NULL,
   units = "percent",
   top = NULL,
@@ -18,6 +19,7 @@ plot_frequency(
   na_color = "grey80",
   trans = "identity",
   show_points = TRUE,
+  show_zeros = TRUE,
   n_label = NULL,
   label_params = list(),
   ...,
@@ -41,6 +43,9 @@ will be performed separately for each cluster.}
 \item{group_col}{meta.data column to use for grouping cluster IDs present in
 cluster_col. This is useful when there are multiple replicates or patients
 for each treatment condition.}
+
+\item{method}{Method to use for plotting when \code{group_col} is provided,
+possible values are 'bar' or 'boxplot'}
 
 \item{stack}{If \code{TRUE}, stacked bargraphs will be generated, otherwise grouped
 bargraphs will be generated}
@@ -71,6 +76,9 @@ for more options. Values can only be transformed when stack is \code{FALSE}}
 
 \item{show_points}{If \code{TRUE} data points will be shown on boxplots, the point
 size can be adjusted using the \code{point.size} parameter}
+
+\item{show_zeros}{If \code{TRUE} cell labels that are missing from a cluster will
+still be shown on the plot}
 
 \item{n_label}{Location on plot where n label should be added, this can be
 any combination of the following:

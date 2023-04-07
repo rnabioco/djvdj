@@ -2,6 +2,7 @@
 % Please edit documentation in R/utils-plots.R
 \name{djvdj_theme}
 \alias{djvdj_theme}
+\alias{\%+replace\%}
 \title{Theme for djvdj plotting functions}
 \usage{
 djvdj_theme(

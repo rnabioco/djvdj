@@ -22,6 +22,7 @@ plot_gene_usage(
   rotate_labels = FALSE,
   panel_nrow = NULL,
   show_points = TRUE,
+  show_zeros = TRUE,
   n_label = NULL,
   label_params = list(),
   ...
@@ -48,6 +49,8 @@ a vector giving the names of genes to include.}
 \itemize{
 \item 'bar', create a bargraph, this is the default when a single column is
 passed to the data_cols argument
+\item 'boxplot', create boxplots, this can only be used when group_col is
+provided
 \item 'heatmap', create a heatmap, this is the default when two columns are
 passed to the data_cols argument
 \item 'circos', create a circos plot, this requires two columns to be provided
@@ -84,6 +87,9 @@ return_list is FALSE}
 
 \item{show_points}{If \code{TRUE} data points will be shown on boxplots, the point
 size can be adjusted using the \code{point.size} parameter}
+
+\item{show_zeros}{If \code{TRUE} cell labels that are missing from a cluster will
+still be shown on the plot}
 
 \item{n_label}{Location on plot where n label should be added, this is only
 applicable when \code{method} is 'bar' and can be any combination of the
