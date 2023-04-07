@@ -495,7 +495,8 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
             !!sym(cluster_col),
             ymin = .data$diversity - .data$stderr,
             ymax = .data$diversity + .data$stderr
-          )
+          ),
+          size = gg_args$size %||% 1
         )
     }
 

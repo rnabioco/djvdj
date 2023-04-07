@@ -210,6 +210,8 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #'
 #' - 'bar', create a bargraph, this is the default when a single column is
 #' passed to the data_cols argument
+#' - 'boxplot', create boxplots, this can only be used when group_col is
+#' provided
 #' - 'heatmap', create a heatmap, this is the default when two columns are
 #' passed to the data_cols argument
 #' - 'circos', create a circos plot, this requires two columns to be provided
@@ -234,6 +236,8 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' return_list is FALSE
 #' @param show_points If `TRUE` data points will be shown on boxplots, the point
 #' size can be adjusted using the `point.size` parameter
+#' @param show_zeros If `TRUE` cell labels that are missing from a cluster will
+#' still be shown on the plot
 #' @param n_label Location on plot where n label should be added, this is only
 #' applicable when `method` is 'bar' and can be any combination of the
 #' following:
@@ -342,6 +346,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
                             plot_colors = NULL, plot_lvls = NULL,
                             trans = "identity", rotate_labels = FALSE,
                             panel_nrow = NULL, show_points = TRUE,
+                            show_zeros = TRUE,
                             n_label = NULL, label_params = list(), ...) {
 
   # Check that columns are present in object
@@ -439,6 +444,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   # Create plot for single usage
   gg_args$grp_col      <- group_col
   gg_args$show_points  <- show_points
+  gg_args$show_zeros   <- show_zeros
   gg_args$n_label      <- n_label
   gg_args$label_params <- label_params
 
@@ -607,6 +613,10 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' @param method Method to use for generating plot
 #' @param clrs Plot colors
 #' @param lvls Levels for ordering clusters
+#' @param show_points If `TRUE` data points will be shown on boxplots, the point
+#' size can be adjusted using the `point.size` parameter
+#' @param show_zeros If `TRUE` cell labels that are missing from a cluster will
+#' still be shown on the plot
 #' @param trans Method to use for transforming data
 #' @param ttl Title for y-axis or legend depending on type of graph
 #' @param order Should genes be ordered based on usage
@@ -615,8 +625,8 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' @noRd
 .plot_single_usage <- function(df_in, gn_col, dat_col, method, clst_col = NULL,
                                grp_col = NULL, lvls = NULL, show_points = TRUE,
-                               n_label = NULL, n_row = 1, ttl = dat_col,
-                               order = TRUE, ...) {
+                               show_zeros = TRUE, n_label = NULL, n_row = 1,
+                               ttl = dat_col, order = TRUE, ...) {
 
   # Order clusters based on plot_lvls
   lvl_col <- grp_col %||% clst_col
@@ -658,12 +668,18 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 
   n_lab_dat$legend <- n_lab_dat$axis <- n_lab_dat$corner
 
-  if ((!is.null(grp_col) || !is.null(clst_col)) && identical(method, "bar")) {
+  if (
+    (!is.null(grp_col) || !is.null(clst_col)) &&
+    (identical(method, "bar") || identical(method, "boxplot"))
+  ) {
     n_lab_dat$axis <- dplyr::rename(df_in, .n = .data$freq)
   }
 
   # Set common arguments
-  gg_args <- list(n_label = n_label, label_data = n_lab_dat, n_fn = sum, ...)
+  gg_args <- list(
+    df_in = df_in,
+    n_label = n_label, label_data = n_lab_dat, n_fn = sum, ...
+  )
 
   if (identical(method, "bar") || !is.null(grp_col)) {
     gg_args$x <- gn_col
@@ -671,17 +687,16 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
   }
 
   # Create grouped boxplot
-  if (identical(method, "bar") && !is.null(grp_col)) {
-    gg_args$df_in       <- df_in
-    gg_args$.color      <- gg_args$.fill <- grp_col
-    gg_args$alpha       <- gg_args$alpha %||% 0.5
-    gg_args$show_points <- show_points
+  if (!is.null(grp_col) && !identical(method, "heatmap")) {
+
+    gg_args$grp <- gg_args$.color <- gg_args$.fill <- grp_col
+
+    gg_args$method      <- method
     gg_args$y_ttl       <- ttl
+    gg_args$show_points <- show_points
+    gg_args$show_zeros  <- show_zeros
 
-    res <- lift(.create_boxes)(gg_args)
-
-    res <- res +
-      theme(legend.position = "right")
+    res <- lift(.create_grouped_plot)(gg_args)
 
     return(res)
 
@@ -689,10 +704,12 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
   } else if (identical(method, "bar")) {
 
     # Remove zeros from data
-    df_in <- dplyr::filter(df_in, !!sym(dat_col) > 0)
+    if (!show_zeros) {
+      df_in <- dplyr::filter(df_in, !!sym(dat_col) > 0)
+    }
 
     gg_args$df_in <- df_in
-    gg_args$.fill <- clst_col
+    gg_args$.fill <- gg_args$.color <- clst_col
     gg_args$y_ttl <- ttl
 
     res <- lift(.create_bars)(gg_args)
@@ -701,7 +718,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
   }
 
   # Create heatmap
-  gg_args$df_in   <- df_in
+  # heatmap can be generated for both grouped and ungrouped plots
   gg_args$x       <- clst_col
   gg_args$y       <- gn_col
   gg_args$grp     <- grp_col
@@ -986,7 +1003,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 .check_usage_args <- function(method, gn_cols, grp_col, units, paired) {
 
   .check_possible_values(
-    method = c("heatmap", "bar", "circos"),
+    method = c("heatmap", "bar", "boxplot", "circos"),
     units  = c("percent", "frequency")
   )
 

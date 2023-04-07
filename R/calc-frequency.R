@@ -215,11 +215,13 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
 
   if (cluster) grp_cols <- unique(c(grp_cols, clst_nm, cluster_col))
 
+  tot_cells <- dplyr::n_distinct(df_in[[global$cell_col]])
+
   res <- dplyr::group_by(res, !!!syms(grp_cols))
 
   res <- dplyr::mutate(
     res,
-    n_cells = dplyr::n_distinct(df_in[[global$cell_col]]),
+    n_cells = tot_cells,
     freq    = dplyr::n_distinct(!!sym(global$cell_col))
   )
 
@@ -231,38 +233,31 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
     res <- dplyr::distinct(res)
   }
 
-  # Identify shared groups
-  if (cluster) {
-    res <- dplyr::group_by(res, !!!syms(data_cols))
-    res <- dplyr::mutate(res, shared = dplyr::n_distinct(!!sym(clst_nm)) > 1)
-    res <- dplyr::ungroup(res)
-  }
-
   # Report zeros for missing groups
-  # Need to remove original cluster_col and then add back
+  # Need to remove original cluster_col
+  # Need to make sure clst_nm is present, when cluster_col is length 1 it
+  # is the same as clst_nm
   if (include_zeros) {
     res <- dplyr::select(res, -all_of(cluster_col), dplyr::all_of(clst_nm))
 
-    res <- tidyr::pivot_wider(
+    res <- tidyr::complete(
       res,
-      names_from  = all_of(clst_nm),
-      values_from = "freq",
-      values_fill = 0
-    )
-
-    res <- tidyr::pivot_longer(
-      res,
-      cols      = all_of(clsts),
-      names_to  = clst_nm,
-      values_to = "freq"
+      !!!syms(c(data_cols, clst_nm)),
+      fill     = list(freq = 0, n_cells = tot_cells),
+      explicit = FALSE
     )
 
     res <- dplyr::left_join(res, clst_key, by = clst_nm)
   }
 
+  # Identify shared groups
+  if (cluster) {
+    res <- dplyr::group_by(res, !!!syms(data_cols))
+    res <- dplyr::mutate(res, shared = length(freq[freq > 0]) > 1)
+    res <- dplyr::ungroup(res)
+  }
+
   # Calculate percentage used
-  # Need to make sure clst_nm is present, when cluster_col is length 1 it
-  # is the same as clst_nm
   if (cluster) {
     res <- dplyr::mutate(
       res, n_cells = as.numeric(clst_counts[!!sym(clst_nm)])
@@ -323,6 +318,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
   uniq_x <- sort(uniq_x)
 
   # Divide into groups
+  # SHOULD REVISE TO USE cut()
   labs <- tibble::tibble(
     x   = uniq_x,
     grp = dplyr::ntile(uniq_x, n_grps)
@@ -680,6 +676,8 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' @param group_col meta.data column to use for grouping cluster IDs present in
 #' cluster_col. This is useful when there are multiple replicates or patients
 #' for each treatment condition.
+#' @param method Method to use for plotting when `group_col` is provided,
+#' possible values are 'bar' or 'boxplot'
 #' @param stack If `TRUE`, stacked bargraphs will be generated, otherwise grouped
 #' bargraphs will be generated
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
@@ -703,6 +701,8 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' for more options. Values can only be transformed when stack is `FALSE`
 #' @param show_points If `TRUE` data points will be shown on boxplots, the point
 #' size can be adjusted using the `point.size` parameter
+#' @param show_zeros If `TRUE` cell labels that are missing from a cluster will
+#' still be shown on the plot
 #' @param n_label Location on plot where n label should be added, this can be
 #' any combination of the following:
 #'
@@ -763,12 +763,13 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #'
 #' @export
 plot_frequency <- function(input, data_col, cluster_col = NULL,
-                           group_col = NULL,
+                           group_col = NULL, method = "bar",
                            stack = NULL, units = "percent",
                            top = NULL, other_label = "other",
                            plot_colors = NULL,
                            plot_lvls = NULL, na_color = "grey80",
                            trans = "identity", show_points = TRUE,
+                           show_zeros = TRUE,
                            n_label = NULL,
                            label_params = list(),
                            ...,
@@ -831,6 +832,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     per_chain   = per_chain,
     nest        = !per_chain,
     na_remove   = FALSE,
+    return_df   = FALSE,
     prefix      = ".",
     sep         = sep
   )
@@ -845,7 +847,10 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   meta    <- dplyr::select(meta, -any_of(freq_cols))
   plt_dat <- dplyr::left_join(meta, plt_dat, by = global$cell_col)
 
-  # Identify data columns that the user should have access to
+  # Identify data columns that the user should have access to when plotting
+  # This should only include columns that do not split data_col or cluster_col
+  # i.e. variables that are not present in multiple groups found in data_col or
+  # cluster_col
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
@@ -905,6 +910,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     .color       = clr_col,
     .fill        = clr_col,
     clrs         = plot_colors,
+    y_ttl        = y_lab,
     na_clr       = na_color,
     trans        = trans,
     n_label      = n_label,
@@ -916,22 +922,31 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
   # Create grouped boxplot
   if (!is.null(group_col)) {
-    gg_args$alpha <- gg_args$alpha %||% 0.5
+    gg_args$grp         <- group_col
+    gg_args$method      <- method
     gg_args$show_points <- show_points
+    gg_args$show_zeros  <- show_zeros
 
-    res <- lift(.create_boxes)(gg_args) +
-      ggplot2::labs(y = y_lab) +
-      ggplot2::theme(legend.position = "right")
+    res <- lift(.create_grouped_plot)(gg_args)
 
   # Create bar graph
   } else {
-    gg_args$y_ttl  <- y_lab
     gg_args$x_ang  <- 45
     gg_args$x_hjst <- 1
 
     # Set bar position
-    if (stack) gg_pos <- ggplot2::position_stack()
-    else       gg_pos <- ggplot2::position_dodge2(preserve = "single")
+    # fill in missing values with 0s
+    if (stack) {
+      gg_pos <- ggplot2::position_stack()
+
+    } else {
+      if (show_zeros) {
+        plt_dat <- .add_missing_zeros(plt_dat, abun_col, c(x_col, clr_col))
+        gg_args$df_in <- plt_dat
+      }
+
+      gg_pos <- ggplot2::position_dodge2(preserve = "single")
+    }
 
     gg_args$position <- gg_args$position %||% gg_pos
 

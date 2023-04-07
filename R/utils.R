@@ -15,7 +15,7 @@ NULL
 #' stats imports
 #'
 #' @importFrom stats median complete.cases as.formula as.dist hclust cutree
-#' @importFrom stats na.omit
+#' @importFrom stats na.omit sd
 #' @noRd
 NULL
 

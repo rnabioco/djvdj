@@ -19,6 +19,9 @@ NULL
 #' @param base_rect_size base size for rect element
 #' @param line_color color for line elements
 #' @return ggplot theme
+#' @importFrom ggplot2 %+replace%
+#' @aliases %+replace%
+#' @export %+replace%
 #' @examples
 #'
 #' plot_scatter(vdj_so, data_col = "seurat_clusters") +
@@ -249,6 +252,69 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 }
 
 
+#' Create a grouped plot summarizing replicates
+#'
+#' @param df_in data.frame
+#' @param x Variable to plot on x-axis
+#' @param y Variable to plot on y-axis
+#' @param grp Variable to use for grouping data, e.g. healthy and disease
+#' @param method Method to use for generating plot, can be 'bar' or 'boxplot'
+#' @param show_points Should data points be shown on boxplot
+#' @param show_zeros If `TRUE` cell labels that are missing from a cluster will
+#' still be shown on the plot
+#' @param ... Additional arguments to pass to plotting function
+#' @return ggplot object
+#' @noRd
+.create_grouped_plot <- function(df_in, x, y, grp, method = "bar",
+                                 show_points = TRUE, show_zeros = TRUE, ...) {
+
+  # Add zeros for missing groups
+  df_in <- .add_missing_zeros(df_in, dat_col = y, grp_cols = c(x, grp))
+
+  if (!show_zeros) {
+    df_in <- dplyr::group_by(df_in, !!!syms(c(x, grp)))
+    df_in <- dplyr::filter(df_in, !all(!!sym(y) == 0))
+  }
+
+  # Plot arguments
+  gg_args <- list(
+    df_in = df_in,
+    x     = x,
+    y     = y,
+    ...
+  )
+
+  # Create boxplots
+  if (identical(method, "boxplot")) {
+    gg_args$show_points <- show_points
+
+    res <- lift(.create_boxes)(gg_args) +
+      ggplot2::theme(legend.position = "right")
+
+  # Create bar graphs
+  } else {
+    df_in <- dplyr::group_by(df_in, !!!syms(c(x, grp)))
+
+    df_in <- dplyr::summarize(
+      df_in,
+      .sd       = stats::sd(!!sym(y)),
+      !!sym(y) := mean(!!sym(y)),
+      .groups   = "drop"
+    )
+
+    gg_args$df_in <- df_in
+    gg_args$err   <- ".sd"
+
+    gg_args$position <- gg_args$position %||%
+      ggplot2::position_dodge2(preserve = "single", width = 0.8)
+
+    res <- lift(.create_bars)(gg_args)
+  }
+
+  res
+}
+
+
 #' Create ggplot scatter plot
 #'
 #' @param x Variable to plot on x-axis
@@ -288,6 +354,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @param df_in data.frame
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
+#' @param err Variable to use for error bars
 #' @param trans Method to use for transforming y-axis
 #' @param y_ttl Title for y-axis
 #' @param x_ang Angle of x-axis text
@@ -296,8 +363,9 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @param ... Additional arguments to pass to `.create_plot()`
 #' @return ggplot object
 #' @noRd
-.create_bars <- function(df_in, x = NULL, y, trans = "identity", y_ttl = y,
-                         x_ang = NULL, x_hjst = NULL, n_label = NULL, ...) {
+.create_bars <- function(df_in, x = NULL, y, err = NULL, trans = "identity",
+                         y_ttl = y, x_ang = NULL, x_hjst = NULL, n_label = NULL,
+                         ...) {
 
   # Check input values
   if (!is.null(x) && is.numeric(df_in[[x]])) {
@@ -321,13 +389,35 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     ...
   )
 
+  gg_args$alpha <- gg_args$alpha %||% 0.5
+
   if (is.null(gg_args$position)) {
     gg_args$position <- ggplot2::position_dodge2(
-      preserve = "single", padding = 0
+      preserve = "single", padding = 0.05
     )
   }
 
   res <- lift(.create_plot)(gg_args)
+
+  # Add error bars
+  if (!is.null(err)) {
+    gg_args <- .standardize_aes(gg_args)
+
+    err_args <- list(
+      position = ggplot2::position_dodge2(width = 0.9),
+      show.legend = FALSE
+    )
+
+    err_args$colour <- gg_args$colour
+    err_args$size   <- gg_args$size %||% 1
+
+    err_args$mapping <- ggplot2::aes(
+      !!sym(x), ymin = !!sym(y) - !!sym(err), ymax = !!sym(y) + !!sym(err)
+    )
+
+    res <- res +
+      lift(ggplot2::geom_linerange)(err_args)
+  }
 
   # Adjust theme
   if (!is.null(x) && dplyr::n_distinct(df_in[[x]]) > 6) {
@@ -398,6 +488,8 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     n_label  = n_label,
     ...
   )
+
+  gg_args$alpha <- gg_args$alpha %||% 0.5
 
   if (identical(method, "violin")) pos <- ggplot2::position_dodge()
   else pos <- ggplot2::position_dodge2(preserve = "single")
@@ -487,8 +579,6 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     units  = c("frequency", "percent")
   )
 
-  plt_fn <- plt_fns[[method]]
-
   # Set n label
   if (is.null(n_label)) {
     n_label <- "corner"
@@ -511,8 +601,9 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   gg_aes$x <- sym(x)
 
   # Create histogram
-  res <- .create_plot(
-    df_in, plt_fn,
+  gg_args <- list(
+    df_in   = df_in,
+    fn      = plt_fns[[method]],
     mapping = gg_aes,
     x       = x,
     .color  = .color,
@@ -521,6 +612,10 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     n_label = n_label,
     ...
   )
+
+  gg_args$alpha <- gg_args$alpha %||% 0.5
+
+  res <- lift(.create_plot)(gg_args)
 
   if (identical(method, "histogram")) {
     res <- res +
@@ -1406,6 +1501,25 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res
 }
 
+#' Add zeros for missing groups
+#'
+#' @param df_in data.frame or tibble
+#' @param dat_col Column containing data
+#' @param grp_cols Columns to group by when identifying missing groups. All
+#' combinations of these columns will be in the new data.frame.
+#' @noRd
+.add_missing_zeros <- function(df_in, dat_col, grp_cols) {
+  res <- dplyr::group_by(df_in, !!!syms(grp_cols))
+  res <- dplyr::mutate(res, rep = row_number())
+
+  all <- dplyr::ungroup(res)
+  all <- tidyr::expand(all, !!!syms(c(grp_cols, "rep")))
+
+  res <- dplyr::right_join(res, all, by = c(grp_cols, "rep"))
+  res <- dplyr::mutate(res, !!sym(dat_col) := tidyr::replace_na(!!sym(dat_col), 0))
+
+  res
+}
 
 #' Get arguments used solely by provided text function
 #'
