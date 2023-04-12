@@ -259,6 +259,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @param y Variable to plot on y-axis
 #' @param grp Variable to use for grouping data, e.g. healthy and disease
 #' @param method Method to use for generating plot, can be 'bar' or 'boxplot'
+#' @param p_label Should p-values be shown on plot.
 #' @param show_points Should data points be shown on boxplot
 #' @param show_zeros If `TRUE` cell labels that are missing from a cluster will
 #' still be shown on the plot
@@ -266,21 +267,44 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @return ggplot object
 #' @noRd
 .create_grouped_plot <- function(df_in, x, y, grp, method = "bar",
+                                 n_label = NULL, p_label = TRUE,
                                  show_points = TRUE, show_zeros = TRUE, ...) {
 
   # Add zeros for missing groups
   df_in <- .add_missing_zeros(df_in, dat_col = y, grp_cols = c(x, grp))
 
+  # Calculate p-values
+  add_p <- is.numeric(p_label) || p_label
+
+  if (add_p) {
+    if (is.numeric(p_label)) p_cuts <- p_label
+    else                     p_cuts <- NULL
+
+    p <- .calc_pvalue(
+      df_in,
+      data_col = y, cluster_col = grp, group_col = x, method = NULL
+    )
+
+    p <- dplyr::distinct(p, !!sym(x), p_adj)
+    p <- dplyr::rowwise(p)
+    p <- dplyr::mutate(p, p_adj = .format_pvalue(p_adj, cutoffs = p_cuts))
+    p <- dplyr::ungroup(p)
+    p <- dplyr::filter(p, !is.na(p_adj))
+  }
+
+  # Remove labels in grp that have all zeros
   if (!show_zeros) {
     df_in <- dplyr::group_by(df_in, !!!syms(c(x, grp)))
     df_in <- dplyr::filter(df_in, !all(!!sym(y) == 0))
+    df_in <- dplyr::ungroup(df_in)
   }
 
   # Plot arguments
   gg_args <- list(
-    df_in = df_in,
-    x     = x,
-    y     = y,
+    df_in   = df_in,
+    x       = x,
+    y       = y,
+    n_label = n_label,
     ...
   )
 
@@ -309,6 +333,23 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       ggplot2::position_dodge2(preserve = "single", width = 0.8)
 
     res <- lift(.create_bars)(gg_args)
+  }
+
+  # Add p-values
+  if (add_p) {
+    res <- res +
+      ggplot2::geom_text(
+        aes(x = !!sym(x), y = Inf, label = p_adj, fill = NULL),
+        data  = p,
+        parse = is.logical(p_label),  # only parse when p_label is logical
+        color = "black",
+        vjust = 1.5
+      )
+
+    if (!"corner" %in% n_label) {
+      res <- res +
+        ggplot2::scale_y_continuous(expand = .n_label_expansion)
+    }
   }
 
   res

@@ -657,16 +657,19 @@ NULL
 #' Check possible values for argument
 #'
 #' @param ... Name value pairs providing argument name and possible values
+#' @param .internal Internal error
 #' @return Error if argument does not match one of the provided values
 #' @noRd
-.check_possible_values <- function(...) {
+.check_possible_values <- function(..., .internal = FALSE) {
   envir <- parent.frame()
   vals  <- list(...)
 
   purrr::iwalk(vals, ~ {
     val <- eval(sym(.y), envir = envir)
 
-    if (!all(val %in% .x)) cli::cli_abort("`{.y}` must be {.or {.x}}")
+    if (!all(val %in% .x)) {
+      cli::cli_abort("`{.y}` must be {.or {.x}}", .internal = .internal)
+    }
   })
 }
 

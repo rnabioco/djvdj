@@ -715,6 +715,12 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #'   plot legend
 #' - 'none', do not display the number of cells plotted
 #'
+#' @param p_label If `TRUE` p-values will be shown on plot when `group_col`
+#' is specified. A named vector can also be passed to include custom labels for
+#' different p-value cutoffs, e.g. `c('*' = 0.05, '**' = 0.01, '***' = 0.001)`.
+#' When comparing two groups a t-test will be performed, when
+#' comparing more than two groups the Kruskal-Wallis test will be performed.
+#' p-values are adjusted for multiple testing using the Bonferroni correction.
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
@@ -771,6 +777,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
                            trans = "identity", show_points = TRUE,
                            show_zeros = TRUE,
                            n_label = NULL,
+                           p_label = TRUE,
                            label_params = list(),
                            ...,
                            per_chain = FALSE,
@@ -926,6 +933,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     gg_args$method      <- method
     gg_args$show_points <- show_points
     gg_args$show_zeros  <- show_zeros
+    gg_args$p_label     <- p_label
 
     res <- lift(.create_grouped_plot)(gg_args)
 
