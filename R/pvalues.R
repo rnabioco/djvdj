@@ -1,6 +1,6 @@
 #' Calculate p-value for provided data
 #'
-#' @param input Single cell object or data.frame
+#' @param df_in data.frame
 #' @param data_col Column containing data to use for test
 #' @param cluster_col Column containing clusters to compare
 #' @param group_col Column containing labels to use for grouping data, a
@@ -13,14 +13,12 @@
 #' * 'anova', Kruskal-Wallis rank sum test
 #'
 #' @noRd
-.calc_pvalue <- function(input, data_col, cluster_col, group_col,
-                         method = NULL) {
+.calc_pvalue <- function(df_in, data_col, cluster_col, group_col,
+                         method = NULL, file = NULL) {
 
   # Set method based on number of clusters for comparison
-  meta <- .get_meta(input)
-
   if (is.null(method)) {
-    n_clsts <- n_distinct(meta[[cluster_col]])
+    n_clsts <- n_distinct(df_in[[cluster_col]])
 
     method <- dplyr::case_when(
       n_clsts == 1 ~ "none",
@@ -38,25 +36,35 @@
   )
 
   # Calculate p-values
-  meta <- dplyr::group_by(meta, !!sym(group_col))
+  p_clmn <- paste0(method, "_pval")
+
+  df_in <- dplyr::group_by(df_in, !!sym(group_col))
 
   res <- dplyr::mutate(
-    meta,
-    p_value = p_fn(!!sym(data_col), !!sym(cluster_col))
+    df_in,
+    !!sym(p_clmn) := p_fn(!!sym(data_col), !!sym(cluster_col))
   )
 
   res <- dplyr::ungroup(res)
 
   # Multiple testing correction
-  p_res <- dplyr::distinct(res, !!sym(group_col), p_value)
+  p_res <- dplyr::distinct(res, !!sym(group_col), !!sym(p_clmn))
 
   p_res <- dplyr::mutate(
-    p_res, p_adj = stats::p.adjust(p_value, method = "bonferroni")
+    p_res, p_adj = stats::p.adjust(!!sym(p_clmn), method = "bonferroni")
   )
 
   p_res <- purrr::set_names(p_res$p_adj, p_res[[group_col]])
 
-  res <- dplyr::mutate(res, p_adj = p_res[!!sym(group_col)])
+  res <- dplyr::mutate(res, p_adj = p_res[as.character(!!sym(group_col))])
+
+  # Write table
+  if (!is.null(file)) {
+    p_tbl <- dplyr::arrange(res, p_adj, !!!syms(c(group_col, cluster_col)))
+    # p_tbl <- dplyr::relocate(p_tbl, !!!syms(c(group_col, cluster_col)))
+
+    readr::write_csv(p_tbl, file, progress = FALSE)
+  }
 
   res
 }
@@ -84,12 +92,17 @@
   if (!is.finite(p)) return(as.character(NA))
 
   if (!is.null(cutoffs)) {
-    if (is.null(names(cutoffs))) {
-      cli::cli_abort("Names must be provided if p_label is a character vector.")
-    }
-
     if (any(duplicated(cutoffs))) {
       cli::cli_abort("If p_label is a vector each cutoff value must be unique.")
+    }
+
+    # Set default labels when not provided by user
+    if (is.null(names(cutoffs))) {
+      cutoffs <- sort(cutoffs, decreasing = TRUE)
+
+      names(cutoffs) <- purrr::imap_chr(
+        cutoffs, ~ paste0(rep("*", .y), collapse = "")
+      )
     }
 
     cutoffs <- sort(cutoffs)
@@ -106,7 +119,8 @@
     return(p_label)
   }
 
-  if (p >= 0.01) return(as.character(round(p, digits = 2)))
+  # Format p-value label
+  # if (p >= 0.01) return(as.character(round(p, digits = 2)))
 
   p <- scales::label_scientific(digits = digits)(p)
 
@@ -124,6 +138,32 @@
 }
 
 
+#' Parse label params
+#' divide params based on prefix, e.g. 'n.' or 'p.'
+#' this allows user to adjust aesthetics for a specific label
+#' @noRd
+.parse_label_params <- function(l, prfxs = c("n", "p"), sep = ".") {
+  nms   <- names(l)
+  prfxs <- purrr::set_names(paste0("^", prfxs, "\\", sep), prfxs)
+  idxs  <- purrr::map(prfxs, ~ grepl(.x, nms))
+
+  shared <- purrr::reduce(idxs, ~ !.x & !.y)
+  shared <- l[shared]
+
+  res <- purrr::imap(idxs, ~ {
+    prfx <- .y
+    prms <- l[.x]
+
+    names(prms) <- purrr::map_chr(names(prms), ~ sub(prfxs[[prfx]], "", .x))
+
+    prms <- append(prms, shared)
+    prms <- .standardize_aes(prms)
+
+    prms
+  })
+
+  res
+}
 
 
 
