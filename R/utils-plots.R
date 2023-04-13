@@ -123,7 +123,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   }
 
   # Set aesthetics and geom arguments
-  num_clr  <- scale_clr && is.numeric(df_in[[.color]])
+  num_clr  <- scale_clr  && is.numeric(df_in[[.color]])
   num_fill <- scale_fill && is.numeric(df_in[[.fill]])
 
   gg_aes  <- ggplot2::aes()

@@ -1233,13 +1233,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   )
 
   res <- list(
-    "Status"   = status,
-    "Sample"   = nm,
-    "# cells"  = n_obj_cells,
-    "# VDJ"    = n_met_cells,
-    "# paired" = n_met_pair,
-    "Overlap"  = n_overlap,
-    "Percent"  = pct_overlap
+    "Status"    = status,
+    "Sample"    = nm,
+    "# cells"   = n_obj_cells,
+    "# VDJ"     = n_met_cells,
+    "# paired"  = n_met_pair,
+    "# overlap" = n_overlap,
+    "% overlap" = pct_overlap
   )
 
   res
@@ -1263,12 +1263,12 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   clmn_wdth <- imap(clmn_wdth, ~ max(nchar(c(.x, .y))))
 
   nms <- names(clmn_wdth)
-  nms <- nms[!nms %in% c("Status", "Percent")]
+  nms <- nms[nms != "Status"]
 
   # Format header
   header <- purrr::map2(nms, clmn_wdth[nms], .add_padding)
-  header <- paste0(header, collapse = "\u00a0|\u00a0")
-  header <- paste0("\u00a0\u00a0", header, "\u00a0|")
+  header <- paste0(header, collapse = "\u00a0\u00a0\u00a0")
+  header <- paste0("\u00a0\u00a0", header, "\u00a0")
 
   cli::cli_rule()
   cli::cli_text(header)
@@ -1276,14 +1276,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # Format rows
   purrr::walk(stats, ~ {
     rw  <- .x[nms]
-    pct <- .x$Percent
 
-    if (!identical(pct, "NA")) pct <- paste0(pct, "%")
+    add_pct     <- grepl("^%", names(rw)) & names(rw) != "NA"
+    rw[add_pct] <- paste0(rw[add_pct], "%")
+    rw          <- purrr::map2(rw, clmn_wdth[names(rw)], .add_padding)
+    rw[add_pct] <- cli::col_blue(rw[add_pct])
 
-    padded <- purrr::map2(rw, clmn_wdth[names(rw)], .add_padding)
-
-    res <- paste0(padded, collapse = " | ")
-    res <- paste0(res, " | ", cli::col_blue(pct))
+    res <- paste0(rw, collapse = " | ")
 
     names(res) <- .x$Status
 
@@ -1295,16 +1294,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
 .add_padding <- function(x, n) {
   n_pad <- n - nchar(x)
-
-  pad <- paste0(rep("\u00a0", n_pad), collapse = "")
-
-  if (is.numeric(x) || identical(x, "NA")) {
-    res <- paste0(pad, x)
-
-  } else {
-    res <- paste0(x, pad)
-  }
-
+  pad   <- paste0(rep("\u00a0", n_pad), collapse = "")
+  res   <- paste0(pad, x)
   res
 }
 

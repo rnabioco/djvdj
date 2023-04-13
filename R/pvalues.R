@@ -61,7 +61,6 @@
   # Write table
   if (!is.null(file)) {
     p_tbl <- dplyr::arrange(res, p_adj, !!!syms(c(group_col, cluster_col)))
-    # p_tbl <- dplyr::relocate(p_tbl, !!!syms(c(group_col, cluster_col)))
 
     readr::write_csv(p_tbl, file, progress = FALSE)
   }
