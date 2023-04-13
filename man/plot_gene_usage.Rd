@@ -24,6 +24,7 @@ plot_gene_usage(
   show_points = TRUE,
   show_zeros = TRUE,
   n_label = NULL,
+  p_label = TRUE,
   label_params = list(),
   ...
 )
@@ -103,12 +104,23 @@ plot legend
 \item 'none', do not display the number of cells plotted
 }}
 
+\item{p_label}{If \code{TRUE} p-values <0.05 will be shown on plot when
+\code{group_col} is specified. A named vector can also be passed to include custom
+labels for different p-value cutoffs,
+e.g. \code{c('*' = 0.05, '**' = 0.01, '***' = 0.001)}.
+When comparing two groups a t-test will be performed, when
+comparing more than two groups the Kruskal-Wallis test will be performed.
+p-values are adjusted for multiple testing using the Bonferroni correction.}
+
 \item{label_params}{Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{...}{Additional arguments to pass to plotting function,
 \code{\link[ggplot2:geom_bar]{ggplot2::geom_col()}} for bargraph, \code{\link[ggplot2:geom_tile]{ggplot2::geom_tile()}} for heatmap,
 \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for circos plot}
+
+\item{p_file}{File path to save table containing p-values for each
+comparison.}
 }
 \value{
 ggplot object
@@ -136,20 +148,6 @@ plot_gene_usage(
   vdj_so,
   data_cols = "v_gene",
   chain = c("IGH", "IGK")
-)
-
-# Plot gene usage for a specific chain
-plot_gene_usage(
-  vdj_sce,
-  data_cols = "v_gene",
-  chain = c("IGH", "IGK")
-)
-
-# Create a heatmap
-plot_gene_usage(
-  vdj_so,
-  data_cols = "v_gene",
-  type = "heatmap"
 )
 
 # Plot paired usage of V(D)J segments
@@ -187,13 +185,6 @@ plot_gene_usage(
   vdj_sce,
   data_cols = "v_gene",
   genes = 10
-)
-
-# Plot the frequency of each V(D)J segment instead of percent
-plot_gene_usage(
-  vdj_so,
-  data_cols = "v_gene",
-  units = "frequency"
 )
 
 }

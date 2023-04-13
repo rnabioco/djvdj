@@ -249,6 +249,15 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #'   plot legend
 #' - 'none', do not display the number of cells plotted
 #'
+#' @param p_label If `TRUE` p-values <0.05 will be shown on plot when
+#' `group_col` is specified. A named vector can also be passed to include custom
+#' labels for different p-value cutoffs,
+#' e.g. `c('*' = 0.05, '**' = 0.01, '***' = 0.001)`.
+#' When comparing two groups a t-test will be performed, when
+#' comparing more than two groups the Kruskal-Wallis test will be performed.
+#' p-values are adjusted for multiple testing using the Bonferroni correction.
+#' @param p_file File path to save table containing p-values for each
+#' comparison.
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to plotting function,
@@ -276,20 +285,6 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #'   vdj_so,
 #'   data_cols = "v_gene",
 #'   chain = c("IGH", "IGK")
-#' )
-#'
-#' # Plot gene usage for a specific chain
-#' plot_gene_usage(
-#'   vdj_sce,
-#'   data_cols = "v_gene",
-#'   chain = c("IGH", "IGK")
-#' )
-#'
-#' # Create a heatmap
-#' plot_gene_usage(
-#'   vdj_so,
-#'   data_cols = "v_gene",
-#'   type = "heatmap"
 #' )
 #'
 #' # Plot paired usage of V(D)J segments
@@ -329,13 +324,6 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #'   genes = 10
 #' )
 #'
-#' # Plot the frequency of each V(D)J segment instead of percent
-#' plot_gene_usage(
-#'   vdj_so,
-#'   data_cols = "v_gene",
-#'   units = "frequency"
-#' )
-#'
 #' @export
 plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
                             group_col = NULL, genes = 20, method = NULL,
@@ -347,7 +335,8 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
                             trans = "identity", rotate_labels = FALSE,
                             panel_nrow = NULL, show_points = TRUE,
                             show_zeros = TRUE,
-                            n_label = NULL, label_params = list(), ...) {
+                            n_label = NULL, p_label = TRUE,
+                            label_params = list(), ...) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -446,6 +435,8 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   gg_args$show_points  <- show_points
   gg_args$show_zeros   <- show_zeros
   gg_args$n_label      <- n_label
+  gg_args$p_label      <- p_label
+  gg_args$p_file       <- p_file
   gg_args$label_params <- label_params
 
   res <- lift(.plot_single_usage)(gg_args)
@@ -617,6 +608,10 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' size can be adjusted using the `point.size` parameter
 #' @param show_zeros If `TRUE` cell labels that are missing from a cluster will
 #' still be shown on the plot
+#' @param n_label n label specification
+#' @param p_label p label specification
+#' @param p_file File to save p-values
+#' @param label_params List of parameters to modify label aesthetics
 #' @param trans Method to use for transforming data
 #' @param ttl Title for y-axis or legend depending on type of graph
 #' @param order Should genes be ordered based on usage
@@ -625,7 +620,9 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' @noRd
 .plot_single_usage <- function(df_in, gn_col, dat_col, method, clst_col = NULL,
                                grp_col = NULL, lvls = NULL, show_points = TRUE,
-                               show_zeros = TRUE, n_label = NULL, n_row = 1,
+                               show_zeros = TRUE, n_label = NULL,
+                               p_label = TRUE, p_file = NULL,
+                               label_params = list(), n_row = 1,
                                ttl = dat_col, order = TRUE, ...) {
 
   # Order clusters based on plot_lvls
@@ -677,8 +674,12 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 
   # Set common arguments
   gg_args <- list(
-    df_in = df_in,
-    n_label = n_label, label_data = n_lab_dat, n_fn = sum, ...
+    df_in        = df_in,
+    n_label      = n_label,
+    label_data   = n_lab_dat,
+    label_params = label_params,
+    n_fn         = sum,
+    ...
   )
 
   if (identical(method, "bar") || !is.null(grp_col)) {
@@ -695,6 +696,8 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
     gg_args$y_ttl       <- ttl
     gg_args$show_points <- show_points
     gg_args$show_zeros  <- show_zeros
+    gg_args$p_label     <- p_label
+    gg_args$p_file      <- p_file
 
     res <- lift(.create_grouped_plot)(gg_args)
 

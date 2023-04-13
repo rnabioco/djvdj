@@ -43,7 +43,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       strip.background  = ggplot2::element_blank(),
       strip.text        = ggplot2::element_text(size = base_size),
 
-      panel.border = ggplot2::element_rect(fill = NA, color = line_color),
+      panel.border      = ggplot2::element_rect(fill = NA, color = line_color),
       panel.background  = ggplot2::element_blank(),
 
       legend.background = ggplot2::element_blank(),
@@ -259,7 +259,10 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @param y Variable to plot on y-axis
 #' @param grp Variable to use for grouping data, e.g. healthy and disease
 #' @param method Method to use for generating plot, can be 'bar' or 'boxplot'
+#' @param n_label n label specification
 #' @param p_label Should p-values be shown on plot.
+#' @param label_params Named list with specifications to modify label
+#' aesthetics
 #' @param show_points Should data points be shown on boxplot
 #' @param show_zeros If `TRUE` cell labels that are missing from a cluster will
 #' still be shown on the plot
@@ -268,13 +271,17 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @noRd
 .create_grouped_plot <- function(df_in, x, y, grp, method = "bar",
                                  n_label = NULL, p_label = TRUE,
-                                 show_points = TRUE, show_zeros = TRUE, ...) {
+                                 label_params = list(), show_points = TRUE,
+                                 show_zeros = TRUE, p_file = NULL, ...) {
 
   # Add zeros for missing groups
   df_in <- .add_missing_zeros(df_in, dat_col = y, grp_cols = c(x, grp))
 
-  # Calculate p-values
-  add_p <- is.numeric(p_label) || p_label
+  # Calculate/format p-value labels
+  # only when p_label is TRUE or user provides vector of p labels
+  # only show p-values <0.05
+  user_p <- is.numeric(p_label)
+  add_p  <- user_p || p_label
 
   if (add_p) {
     if (is.numeric(p_label)) p_cuts <- p_label
@@ -282,14 +289,17 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
     p <- .calc_pvalue(
       df_in,
-      data_col = y, cluster_col = grp, group_col = x, method = NULL
+      data_col = y, cluster_col = grp, group_col = x,
+      method = NULL, file = p_file
     )
 
     p <- dplyr::distinct(p, !!sym(x), p_adj)
-    p <- dplyr::rowwise(p)
-    p <- dplyr::mutate(p, p_adj = .format_pvalue(p_adj, cutoffs = p_cuts))
-    p <- dplyr::ungroup(p)
     p <- dplyr::filter(p, !is.na(p_adj))
+    p <- dplyr::rowwise(p)
+    p <- dplyr::mutate(p, p_lab = .format_pvalue(p_adj, cutoffs = p_cuts))
+    p <- dplyr::ungroup(p)
+
+    if (!user_p) p <- dplyr::filter(p, p_adj < 0.05)
   }
 
   # Remove labels in grp that have all zeros
@@ -301,10 +311,11 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
   # Plot arguments
   gg_args <- list(
-    df_in   = df_in,
-    x       = x,
-    y       = y,
-    n_label = n_label,
+    df_in        = df_in,
+    x            = x,
+    y            = y,
+    n_label      = n_label,
+    label_params = label_params,
     ...
   )
 
@@ -336,15 +347,35 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   }
 
   # Add p-values
+  # only parse p_label when p_label is logical since custom labels are not used
   if (add_p) {
-    res <- res +
-      ggplot2::geom_text(
-        aes(x = !!sym(x), y = Inf, label = p_adj, fill = NULL),
-        data  = p,
-        parse = is.logical(p_label),  # only parse when p_label is logical
-        color = "black",
-        vjust = 1.5
+    label_params <- .parse_label_params(label_params)$p
+
+    label_params$mapping <- ggplot2::aes(
+      x = !!sym(x), y = Inf, label = p_lab, fill = NULL
+    )
+
+    label_params$data   <- p
+    label_params$parse  <- is.logical(p_label)
+    label_params$colour <- label_params$colour %||% "black"
+    label_params$vjust  <- label_params$vjust %||% 1.5
+
+    # Set default label size
+    # set larger font size for symbols, e.g. '*'
+    if (is.null(label_params$size)) {
+      sym_p <- user_p && !any(grepl("[a-zA-Z0-9]", names(p_label)))
+
+      label_params$size <- ifelse(
+        sym_p,
+        global$base_size * 1.3,
+        global$base_size * 0.8
       )
+    }
+
+    label_params$size <- label_params$size / ggplot2::.pt
+
+    res <- res +
+      lift(ggplot2::geom_text)(label_params)
 
     if (!"corner" %in% n_label) {
       res <- res +
@@ -530,6 +561,8 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     ...
   )
 
+  gg_args <- .standardize_aes(gg_args)
+
   gg_args$alpha <- gg_args$alpha %||% 0.5
 
   if (identical(method, "violin")) pos <- ggplot2::position_dodge()
@@ -545,10 +578,10 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
   # Add additional points
   if (show_points) {
-    pt_args       <- list()
-    pt_args$alpha <- 1
-    pt_args$size  <- point.size %||% 1
-    pt_args$color <- point.color %||% gg_args$color
+    pt_args        <- list()
+    pt_args$alpha  <- 1
+    pt_args$size   <- point.size %||% 1
+    pt_args$colour <- point.color %||% gg_args$colour
 
     if (identical(method, "violin")) {
       pt_args$geom <- "point"
@@ -1164,7 +1197,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
   n_label <- unique(c("none", n_label))
 
-  lab_args <- .standardize_aes(lab_args)
+  lab_args <- .parse_label_params(lab_args)$n
 
   if (!is.data.frame(df_in) && is.list(df_in)) {
     crnr_dat <- df_in$corner
@@ -1233,7 +1266,8 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     hjust = 1 + (1 / .data$hjust * (just * char_h_w))
   )
 
-  if (!is.null(lab_args$size)) lab_args$size <- lab_args$size / ggplot2::.pt
+  lab_args$size <- lab_args$size %||% global$base_size
+  lab_args$size <- lab_args$size / ggplot2::.pt
 
   lab_args$mapping     <- ggplot2::aes(label = .data$label, hjust = .data$hjust)
   lab_args$data        <- dat
@@ -1263,13 +1297,11 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
   if (identical(axis, "x")) {
     res <- gg_in +
-      ggplot2::scale_x_discrete(labels = dat_labs) +
-      ggplot2::theme(axis.text.x = lift(ggplot2::element_text)(lab_args))
+      ggplot2::scale_x_discrete(labels = dat_labs)
 
   } else if (identical(axis, "y")) {
     res <- gg_in +
-      ggplot2::scale_y_discrete(labels = dat_labs) +
-      ggplot2::theme(axis.text.y = lift(ggplot2::element_text)(lab_args))
+      ggplot2::scale_y_discrete(labels = dat_labs)
 
   } else {
     cli::cli_abort("`axis` must be x or y")
@@ -1557,7 +1589,13 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   all <- tidyr::expand(all, !!!syms(c(grp_cols, "rep")))
 
   res <- dplyr::right_join(res, all, by = c(grp_cols, "rep"))
-  res <- dplyr::mutate(res, !!sym(dat_col) := tidyr::replace_na(!!sym(dat_col), 0))
+
+  res <- dplyr::mutate(
+    res,
+    !!sym(dat_col) := tidyr::replace_na(!!sym(dat_col), 0)
+  )
+
+  res <- dplyr::select(res, -rep)
 
   res
 }
@@ -1843,7 +1881,6 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
 
 #' Standardize aesthetics
-#'
 #' e.g. color and colour
 #' @noRd
 .standardize_aes <- function(aes_list) {

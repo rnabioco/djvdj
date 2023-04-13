@@ -16,6 +16,9 @@ global$cdr3_col <- "cdr3"
 # Default chain separator
 global$sep <- ";"
 
+# Base font size for plot labels
+global$base_size <- 11
+
 # Default argument classes to use with .check_args()
 global$arg_classes <- list(
   data_col      = list(),

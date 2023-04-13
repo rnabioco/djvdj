@@ -21,6 +21,8 @@ plot_frequency(
   show_points = TRUE,
   show_zeros = TRUE,
   n_label = NULL,
+  p_label = TRUE,
+  p_file = NULL,
   label_params = list(),
   ...,
   per_chain = FALSE,
@@ -92,6 +94,17 @@ x-axis
 plot legend
 \item 'none', do not display the number of cells plotted
 }}
+
+\item{p_label}{If \code{TRUE} p-values <0.05 will be shown on plot when
+\code{group_col} is specified. A named vector can also be passed to include custom
+labels for different p-value cutoffs,
+e.g. \code{c('*' = 0.05, '**' = 0.01, '***' = 0.001)}.
+When comparing two groups a t-test will be performed, when
+comparing more than two groups the Kruskal-Wallis test will be performed.
+p-values are adjusted for multiple testing using the Bonferroni correction.}
+
+\item{p_file}{File path to save table containing p-values for each
+comparison.}
 
 \item{label_params}{Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")}

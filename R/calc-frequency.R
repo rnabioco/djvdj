@@ -81,7 +81,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
   )
 
   # Check arguments
-  # .check_args()
+  .check_args()
 
   # Format input data
   vdj_cols <- c(global$cell_col, data_col, cluster_col)
@@ -260,7 +260,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
   # Calculate percentage used
   if (cluster) {
     res <- dplyr::mutate(
-      res, n_cells = as.numeric(clst_counts[!!sym(clst_nm)])
+      res, n_cells = as.numeric(clst_counts[as.character(!!sym(clst_nm))])
     )
   }
 
@@ -623,13 +623,14 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     gg_args$linewidth <- gg_args$linewidth %||% 1
 
     if (clones > 0) {
-      gg_args$label_params <- .get_uniq_text_args(label_params, "geom_text")
+      n_params             <- .parse_label_params(label_params)$n
+      gg_args$label_params <- .get_uniq_text_args(n_params, "geom_text")
     }
 
     res <- lift(.create_plot)(gg_args) +
       labs(y = .get_axis_label(units))
 
-    # Add clonotype labels
+    # Add clonotype labels with ggrepel
     lab_args <- label_params
 
     if (clones > 0) {
@@ -715,12 +716,15 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #'   plot legend
 #' - 'none', do not display the number of cells plotted
 #'
-#' @param p_label If `TRUE` p-values will be shown on plot when `group_col`
-#' is specified. A named vector can also be passed to include custom labels for
-#' different p-value cutoffs, e.g. `c('*' = 0.05, '**' = 0.01, '***' = 0.001)`.
+#' @param p_label If `TRUE` p-values <0.05 will be shown on plot when
+#' `group_col` is specified. A named vector can also be passed to include custom
+#' labels for different p-value cutoffs,
+#' e.g. `c('*' = 0.05, '**' = 0.01, '***' = 0.001)`.
 #' When comparing two groups a t-test will be performed, when
 #' comparing more than two groups the Kruskal-Wallis test will be performed.
 #' p-values are adjusted for multiple testing using the Bonferroni correction.
+#' @param p_file File path to save table containing p-values for each
+#' comparison.
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
@@ -776,8 +780,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
                            plot_lvls = NULL, na_color = "grey80",
                            trans = "identity", show_points = TRUE,
                            show_zeros = TRUE,
-                           n_label = NULL,
-                           p_label = TRUE,
+                           n_label = NULL, p_label = TRUE, p_file = NULL,
                            label_params = list(),
                            ...,
                            per_chain = FALSE,
@@ -934,6 +937,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     gg_args$show_points <- show_points
     gg_args$show_zeros  <- show_zeros
     gg_args$p_label     <- p_label
+    gg_args$p_file      <- p_file
 
     res <- lift(.create_grouped_plot)(gg_args)
 
