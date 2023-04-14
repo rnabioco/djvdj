@@ -270,36 +270,33 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @return ggplot object
 #' @noRd
 .create_grouped_plot <- function(df_in, x, y, grp, method = "bar",
-                                 n_label = NULL, p_label = TRUE,
+                                 n_label = NULL, p_label = c("value" = 0.05),
+                                 p_method = NULL, p_file = NULL,
                                  label_params = list(), show_points = TRUE,
-                                 show_zeros = TRUE, p_file = NULL, ...) {
+                                 show_zeros = TRUE, ...) {
 
   # Add zeros for missing groups
   df_in <- .add_missing_zeros(df_in, dat_col = y, grp_cols = c(x, grp))
 
   # Calculate/format p-value labels
-  # only when p_label is TRUE or user provides vector of p labels
-  # only show p-values <0.05
-  user_p <- is.numeric(p_label)
-  add_p  <- user_p || p_label
+  add_p <- !is.null(p_label)
 
   if (add_p) {
-    if (is.numeric(p_label)) p_cuts <- p_label
-    else                     p_cuts <- NULL
-
     p <- .calc_pvalue(
       df_in,
       data_col = y, cluster_col = grp, group_col = x,
-      method = NULL, file = p_file
+      method = p_method, file = p_file
     )
 
-    p <- dplyr::distinct(p, !!sym(x), p_adj)
-    p <- dplyr::filter(p, !is.na(p_adj))
+    p <- dplyr::distinct(p, !!sym(x), p_value)
     p <- dplyr::rowwise(p)
-    p <- dplyr::mutate(p, p_lab = .format_pvalue(p_adj, cutoffs = p_cuts))
-    p <- dplyr::ungroup(p)
 
-    if (!user_p) p <- dplyr::filter(p, p_adj < 0.05)
+    p <- dplyr::mutate(
+      p, p_lab = .format_pvalue(p_value, cutoffs = p_label)
+    )
+
+    p <- dplyr::filter(p, !is.na(p_lab))
+    p <- dplyr::ungroup(p)
   }
 
   # Remove labels in grp that have all zeros
@@ -349,6 +346,8 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   # Add p-values
   # only parse p_label when p_label is logical since custom labels are not used
   if (add_p) {
+    all_sym <- !any(grepl("[a-zA-Z0-9]", names(p_label)))
+
     label_params <- .parse_label_params(label_params)$p
 
     label_params$mapping <- ggplot2::aes(
@@ -356,17 +355,15 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     )
 
     label_params$data   <- p
-    label_params$parse  <- is.logical(p_label)
+    label_params$parse  <- TRUE
     label_params$colour <- label_params$colour %||% "black"
     label_params$vjust  <- label_params$vjust %||% 1.5
 
     # Set default label size
     # set larger font size for symbols, e.g. '*'
     if (is.null(label_params$size)) {
-      sym_p <- user_p && !any(grepl("[a-zA-Z0-9]", names(p_label)))
-
       label_params$size <- ifelse(
-        sym_p,
+        all_sym,
         global$base_size * 1.3,
         global$base_size * 0.8
       )
@@ -1582,11 +1579,15 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' combinations of these columns will be in the new data.frame.
 #' @noRd
 .add_missing_zeros <- function(df_in, dat_col, grp_cols) {
-  res <- dplyr::group_by(df_in, !!!syms(grp_cols))
-  res <- dplyr::mutate(res, rep = row_number())
 
-  all <- dplyr::ungroup(res)
-  all <- tidyr::expand(all, !!!syms(c(grp_cols, "rep")))
+  grp_cols <- unique(grp_cols)
+
+  res <- dplyr::mutate(df_in, dplyr::across(all_of(grp_cols), as.character))
+  res <- dplyr::group_by(res, !!!syms(grp_cols))
+  res <- dplyr::mutate(res, rep = row_number())
+  res <- dplyr::ungroup(res)
+
+  all <- tidyr::expand(res, !!!syms(grp_cols), rep)
 
   res <- dplyr::right_join(res, all, by = c(grp_cols, "rep"))
 

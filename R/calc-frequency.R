@@ -780,7 +780,8 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
                            plot_lvls = NULL, na_color = "grey80",
                            trans = "identity", show_points = TRUE,
                            show_zeros = TRUE,
-                           n_label = NULL, p_label = TRUE, p_file = NULL,
+                           n_label = NULL, p_label = c(value = 0.05),
+                           p_method = NULL, p_file = NULL,
                            label_params = list(),
                            ...,
                            per_chain = FALSE,
@@ -788,7 +789,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
                            chain_col = global$chain_col, sep = global$sep) {
 
   # Check that columns are present in object
-  .check_obj_cols(input, data_col, cluster_col)
+  .check_obj_cols(input, data_col, cluster_col, group_col)
 
   # Check input classes
   .check_args()
@@ -931,12 +932,28 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   )
 
   # Create grouped boxplot
+  # Set edgeR as the default p_method unless per_chain is TRUE
+  # Do not use edgeR for per_chain since there will be more total 'counts' than
+  # the number of cells (i.e. multiple values get counted for each cell)
   if (!is.null(group_col)) {
+    if (is.null(p_method)) {
+      p_method  <- "edgeR"
+      gg_args$y <- ".freq"
+
+    } else if (per_chain && identical(p_method, "edgeR")) {
+      cli::cli_warn(
+        "edgeR can not be used to calculate p-values when per_chain is `TRUE`."
+      )
+
+      p_method <- NULL  # method will be automatically set later based on groups
+    }
+
     gg_args$grp         <- group_col
     gg_args$method      <- method
     gg_args$show_points <- show_points
     gg_args$show_zeros  <- show_zeros
     gg_args$p_label     <- p_label
+    gg_args$p_method    <- p_method
     gg_args$p_file      <- p_file
 
     res <- lift(.create_grouped_plot)(gg_args)
