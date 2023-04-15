@@ -257,7 +257,10 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @param df_in data.frame
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
-#' @param grp Variable to use for grouping data, e.g. healthy and disease
+#' @param clst Variable containing cluster IDs, e.g. healthy-1, healthy-2,
+#' disease-1, disease-2
+#' @param grp Variable to use for grouping clusters IDs, e.g. healthy and
+#' disease
 #' @param method Method to use for generating plot, can be 'bar' or 'boxplot'
 #' @param n_label n label specification
 #' @param p_label Should p-values be shown on plot.
@@ -269,23 +272,41 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @param ... Additional arguments to pass to plotting function
 #' @return ggplot object
 #' @noRd
-.create_grouped_plot <- function(df_in, x, y, grp, method = "bar",
-                                 n_label = NULL, p_label = c("value" = 0.05),
+.create_grouped_plot <- function(df_in, x, y, clst, grp, method = "bar",
+                                 n_label = NULL, p_label = c(value = 0.05),
                                  p_method = NULL, p_file = NULL,
                                  label_params = list(), show_points = TRUE,
                                  show_zeros = TRUE, ...) {
 
+  # Check arguments
+  if (!is.numeric(p_label)) {
+    .check_args(
+      p_label = list(Class = "character", len_one = TRUE)
+    )
+
+    .check_possible_values(p_label = c("all", "none"))
+  }
+
   # Add zeros for missing groups
-  df_in <- .add_missing_zeros(df_in, dat_col = y, grp_cols = c(x, grp))
+  df_in <- .add_missing_zeros(
+    df_in,
+    dat_cols   = y,
+    expand_col = x,
+    clst_col   = clst,
+    grp_col    = grp
+  )
 
   # Calculate/format p-value labels
-  add_p <- !is.null(p_label)
+  # by default only show significant p-values
+  if (identical(p_label, "all")) p_label <- c(value = Inf)
+
+  add_p <- !identical(p_label, "none")
 
   if (add_p) {
     p <- .calc_pvalue(
       df_in,
       data_col = y, cluster_col = grp, group_col = x,
-      method = p_method, file = p_file
+      p_method = p_method, file = p_file
     )
 
     p <- dplyr::distinct(p, !!sym(x), p_value)
@@ -297,6 +318,8 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
     p <- dplyr::filter(p, !is.na(p_lab))
     p <- dplyr::ungroup(p)
+
+    if (nrow(p) == 0) add_p <- FALSE
   }
 
   # Remove labels in grp that have all zeros
@@ -357,7 +380,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     label_params$data   <- p
     label_params$parse  <- TRUE
     label_params$colour <- label_params$colour %||% "black"
-    label_params$vjust  <- label_params$vjust %||% 1.5
+    label_params$vjust  <- label_params$vjust  %||% 1.5
 
     # Set default label size
     # set larger font size for symbols, e.g. '*'
@@ -1573,30 +1596,53 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
 #' Add zeros for missing groups
 #'
+#' This adds zeros for combinations of groups that do not have any cells.
+#' This is allows missing groups to be plotted as zeros.
+#'
 #' @param df_in data.frame or tibble
-#' @param dat_col Column containing data
-#' @param grp_cols Columns to group by when identifying missing groups. All
-#' combinations of these columns will be in the new data.frame.
+#' @param dat_col Columns containing data to add zeros
+#' @param expand_col Column containing variable to expand for each group
+#' @param clst_col Column containing cluster IDs, such as patient IDs,
+#' e.g. healthy-1, healthy-2, disease-1, disease-2.
+#' @param grp_col Column containing variable to use for grouping cluster IDs,
+#' e.g. health and disease.
+#' data.frame is expanded so each group has all variables in expand_col and
+#' clst_col. However, clst_col is expanded for each group separately since
+#' groups are expected to have different values for clst_col.
 #' @noRd
-.add_missing_zeros <- function(df_in, dat_col, grp_cols) {
+.add_missing_zeros <- function(df_in, dat_cols, expand_col, clst_col, grp_col) {
 
-  grp_cols <- unique(grp_cols)
-
-  res <- dplyr::mutate(df_in, dplyr::across(all_of(grp_cols), as.character))
-  res <- dplyr::group_by(res, !!!syms(grp_cols))
-  res <- dplyr::mutate(res, rep = row_number())
-  res <- dplyr::ungroup(res)
-
-  all <- tidyr::expand(res, !!!syms(grp_cols), rep)
-
-  res <- dplyr::right_join(res, all, by = c(grp_cols, "rep"))
-
-  res <- dplyr::mutate(
-    res,
-    !!sym(dat_col) := tidyr::replace_na(!!sym(dat_col), 0)
+  # Get all combinations
+  # make expand_col factor so all groups get all values of expand_col
+  all <- dplyr::mutate(
+    df_in,
+    dplyr::across(all_of(c(clst_col, grp_col)), as.character)
   )
 
-  res <- dplyr::select(res, -rep)
+  all <- dplyr::mutate(all, !!sym(expand_col) := as.factor(!!sym(expand_col)))
+  all <- split(all, all[[grp_col]])
+
+  all <- purrr::map(
+    all, tidyr::expand, !!!syms(c(expand_col, clst_col, grp_col))
+  )
+
+  all <- dplyr::bind_rows(all)
+
+  # Add original levels to combinations to maintain ordering
+  lvls <- purrr::map(df_in, levels)
+  lvls <- purrr::discard(lvls, is.null)
+
+  all <- dplyr::mutate(all, dplyr::across(
+    all_of(names(lvls)),
+    ~ factor(.x, levels = lvls[[dplyr::cur_column()]])
+  ))
+
+  # Add zeros for combinations that are expected but have no cells
+  res <- dplyr::right_join(df_in, all, by = c(expand_col, clst_col, grp_col))
+
+  res <- dplyr::mutate(
+    res, dplyr::across(all_of(dat_cols), tidyr::replace_na, 0)
+  )
 
   res
 }

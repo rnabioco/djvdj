@@ -14,33 +14,33 @@
 #'
 #' @noRd
 .calc_pvalue <- function(df_in, data_col, cluster_col, group_col,
-                         method = NULL, adj_method = "bonferroni",
+                         p_method = NULL, adj_method = "bonferroni",
                          file = NULL) {
 
   # Set method based on number of clusters for comparison
   n_clsts <- n_distinct(df_in[[cluster_col]])
 
-  if (n_clsts > 2 && !identical(method, "kruskal")) {
+  if (n_clsts > 2 && !identical(p_method, "kruskal")) {
     cli::cli_warn(
       "p-values will be calculated using the Kruskal-Wallis test
        since more than two groups are being compared."
     )
   }
 
-  method <- dplyr::case_when(
+  p_method <- dplyr::case_when(
     n_clsts == 1 ~ "none",
     n_clsts > 2  ~ "kruskal",
-    TRUE         ~ method %||% "t"
+    TRUE         ~ p_method %||% "t"
   )
 
   # Calculate p-values
-  if (identical(method, "edgeR")) {
+  if (identical(p_method, "edgeR")) {
     res <- .calc_edgeR(df_in, data_col, cluster_col, group_col)
 
     adj_method <- NULL
 
   } else {
-    res <- .calc_p(df_in, data_col, cluster_col, group_col, method = method)
+    res <- .calc_p(df_in, data_col, cluster_col, group_col, method = p_method)
   }
 
   # Multiple testing correction
@@ -53,20 +53,23 @@
       p_res, p_adj = stats::p.adjust(!!sym(p_clmn), method = adj_method)
     )
 
-    p_res  <- purrr::set_names(p_res$p_adj, p_res[[group_col]])
-    res    <- dplyr::mutate(res, p_adj = p_res[as.character(!!sym(group_col))])
+    res <- dplyr::left_join(res, p_res, by = c("p_value", group_col))
+
     p_clmn <- "p_adj"
   }
 
   # Write table
   if (!is.null(file)) {
+    p_clmns <- unique(c(data_col, cluster_col, group_col, "p_value", p_clmn))
+
     p_tbl <- dplyr::arrange(res, !!!syms(c(p_clmn, group_col, cluster_col)))
-    p_tbl <- dplyr::mutate(p_tbl, method = method)
+    p_tbl <- dplyr::mutate(p_tbl, method = p_method)
+    p_tbl <- dplyr::select(p_tbl, all_of(p_clmns))
 
     readr::write_csv(p_tbl, file, progress = FALSE)
   }
 
-  res <- dplyr::rename(res, p_value = !!sym(p_clmn))
+  res <- dplyr::mutate(res, p_value = !!sym(p_clmn))
 
   res
 }
@@ -235,6 +238,8 @@
   }
 
   # Format p-value label
+  if (p >= 0.1) return(as.character(round(p, 1)))
+
   p <- scales::label_scientific(digits = digits)(p)
 
   ex <- .str_extract_all(p, "[+\\-][0-9]+$")

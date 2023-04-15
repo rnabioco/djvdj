@@ -249,13 +249,26 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #'   plot legend
 #' - 'none', do not display the number of cells plotted
 #'
-#' @param p_label If `TRUE` p-values <0.05 will be shown on plot when
-#' `group_col` is specified. A named vector can also be passed to include custom
-#' labels for different p-value cutoffs,
-#' e.g. `c('*' = 0.05, '**' = 0.01, '***' = 0.001)`.
-#' When comparing two groups a t-test will be performed, when
-#' comparing more than two groups the Kruskal-Wallis test will be performed.
-#' p-values are adjusted for multiple testing using the Bonferroni correction.
+#' @param p_label Specification indicating how p-values should be labeled on
+#' plot, this can one of the following:
+#'
+#' - 'none', do not display p-values
+#' - 'all', show p-values for all groups
+#' - A named vector providing p-value cutoffs and labels to display,
+#'   e.g. `c('*' = 0.05, '**' = 0.01, '***' = 0.001)`. The keyword 'value' can
+#'   be used to display the p-value for those less than a certain cutoff,
+#'   e.g. `c(value = 0.05, ns = Inf)` will show significant p-values, all others
+#'   will be labeled 'ns'.
+#'
+#' @param p_method Method to use for calculating p-values. By default when
+#' comparing two groups a t-test will be performed, when comparing more than
+#' two groups the Kruskal-Wallis test will be used. p-values are adjusted for
+#' multiple testing using Bonferroni correction. Possible methods include:
+#'
+#' - 't', two sample t-test performed with `stats::t.test()`
+#' - 'wilcox', Wilcoxon rank sum test performed with `stats::wilcox.test()`
+#' - 'kruskal', Kruskal-Wallis test performed with `stats::kruskal.test()`
+#'
 #' @param p_file File path to save table containing p-values for each
 #' comparison.
 #' @param label_params Named list providing additional parameters to modify
@@ -335,7 +348,8 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
                             trans = "identity", rotate_labels = FALSE,
                             panel_nrow = NULL, show_points = TRUE,
                             show_zeros = TRUE,
-                            n_label = NULL, p_label = TRUE,
+                            n_label = NULL, p_label = c(value = 0.05),
+                            p_method = NULL, p_file = NULL,
                             label_params = list(), ...) {
 
   # Check that columns are present in object
@@ -431,11 +445,13 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   }
 
   # Create plot for single usage
+  gg_args$clst_col     <- cluster_col
   gg_args$grp_col      <- group_col
   gg_args$show_points  <- show_points
   gg_args$show_zeros   <- show_zeros
   gg_args$n_label      <- n_label
   gg_args$p_label      <- p_label
+  gg_args$p_method     <- p_method
   gg_args$p_file       <- p_file
   gg_args$label_params <- label_params
 
@@ -610,6 +626,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' still be shown on the plot
 #' @param n_label n label specification
 #' @param p_label p label specification
+#' @param p_method Method to calculate p-values
 #' @param p_file File to save p-values
 #' @param label_params List of parameters to modify label aesthetics
 #' @param trans Method to use for transforming data
@@ -621,8 +638,8 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 .plot_single_usage <- function(df_in, gn_col, dat_col, method, clst_col = NULL,
                                grp_col = NULL, lvls = NULL, show_points = TRUE,
                                show_zeros = TRUE, n_label = NULL,
-                               p_label = TRUE, p_file = NULL,
-                               label_params = list(), n_row = 1,
+                               p_label = c(value = 0.05), p_method = NULL,
+                               p_file = NULL, label_params = list(), n_row = 1,
                                ttl = dat_col, order = TRUE, ...) {
 
   # Order clusters based on plot_lvls
@@ -689,14 +706,17 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 
   # Create grouped boxplot
   if (!is.null(grp_col) && !identical(method, "heatmap")) {
+    .check_possible_values(p_method = c("t", "wilcox", "kruskal"))
 
     gg_args$grp <- gg_args$.color <- gg_args$.fill <- grp_col
 
+    gg_args$clst        <- cluster_col
     gg_args$method      <- method
     gg_args$y_ttl       <- ttl
     gg_args$show_points <- show_points
     gg_args$show_zeros  <- show_zeros
     gg_args$p_label     <- p_label
+    gg_args$p_method    <- p_method
     gg_args$p_file      <- p_file
 
     res <- lift(.create_grouped_plot)(gg_args)

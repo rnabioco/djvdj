@@ -716,13 +716,28 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #'   plot legend
 #' - 'none', do not display the number of cells plotted
 #'
-#' @param p_label If `TRUE` p-values <0.05 will be shown on plot when
-#' `group_col` is specified. A named vector can also be passed to include custom
-#' labels for different p-value cutoffs,
-#' e.g. `c('*' = 0.05, '**' = 0.01, '***' = 0.001)`.
-#' When comparing two groups a t-test will be performed, when
-#' comparing more than two groups the Kruskal-Wallis test will be performed.
-#' p-values are adjusted for multiple testing using the Bonferroni correction.
+#' @param p_label Specification indicating how p-values should be labeled on
+#' plot, this can one of the following:
+#'
+#' - 'none', do not display p-values
+#' - 'all', show p-values for all groups
+#' - A named vector providing p-value cutoffs and labels to display,
+#'   e.g. `c('*' = 0.05, '**' = 0.01, '***' = 0.001)`. The keyword 'value' can
+#'   be used to display the p-value for those less than a certain cutoff,
+#'   e.g. `c(value = 0.05, ns = 1.1)` will show significant p-values, all others
+#'   will be labeled 'ns'.
+#'
+#' @param p_method Method to use for calculating p-values, by default when
+#' comparing two groups a t-test will be used.
+#' When comparing more than two groups the Kruskal-Wallis test will be used.
+#' With the exception of the edgeR method, p-values are adjusted for
+#' multiple testing using Bonferroni correction. Possible methods include:
+#'
+#' - 't', two sample t-test performed with `stats::t.test()`
+#' - 'wilcox', Wilcoxon rank sum test performed with `stats::wilcox.test()`
+#' - 'kruskal', Kruskal-Wallis test performed with `stats::kruskal.test()`
+#' - 'edgeR', differential abundance calculated with the edgeR package
+#'
 #' @param p_file File path to save table containing p-values for each
 #' comparison.
 #' @param label_params Named list providing additional parameters to modify
@@ -936,8 +951,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   # Do not use edgeR for per_chain since there will be more total 'counts' than
   # the number of cells (i.e. multiple values get counted for each cell)
   if (!is.null(group_col)) {
-    if (is.null(p_method)) {
-      p_method  <- "edgeR"
+    if (identical(p_method, "edgeR")) {
       gg_args$y <- ".freq"
 
     } else if (per_chain && identical(p_method, "edgeR")) {
@@ -948,6 +962,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
       p_method <- NULL  # method will be automatically set later based on groups
     }
 
+    gg_args$clst        <- cluster_col
     gg_args$grp         <- group_col
     gg_args$method      <- method
     gg_args$show_points <- show_points
@@ -970,7 +985,14 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
     } else {
       if (show_zeros) {
-        plt_dat <- .add_missing_zeros(plt_dat, abun_col, c(x_col, clr_col))
+        plt_dat <- .add_missing_zeros(
+          plt_dat,
+          dat_cols   = abun_col,
+          expand_col = x_col,
+          clst_col   = cluster_col,
+          group_col  = clr_col
+        )
+
         gg_args$df_in <- plt_dat
       }
 
