@@ -309,7 +309,15 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       p_method = p_method, file = p_file
     )
 
-    p <- dplyr::distinct(p, !!sym(x), p_value)
+    # Determine min and max y for adding p-value labels
+    p <- dplyr::group_by(p, !!sym(x), p_value)
+
+    p <- dplyr::summarize(
+      p, y_min = min(!!sym(y)), y_max = max(!!sym(y)),
+      .groups = "drop"
+    )
+
+    # Format p-values
     p <- dplyr::rowwise(p)
 
     p <- dplyr::mutate(
@@ -357,6 +365,24 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       .groups   = "drop"
     )
 
+    # Need to adjust y_max based on mean and sd to position p-value label
+    if (add_p) {
+      y_dat <- dplyr::group_by(df_in, !!sym(x))
+
+      y_dat <- dplyr::mutate(
+        y_dat,
+        y_min = 0,
+        y_max = !!sym(y) + .sd,
+        y_max = max(y_max)
+      )
+
+      y_dat <- dplyr::ungroup(y_dat)
+      y_dat <- dplyr::distinct(y_dat, !!sym(x), y_min, y_max)
+
+      p <- dplyr::select(p, -y_max, -y_min)
+      p <- dplyr::left_join(p, y_dat, by = x)
+    }
+
     gg_args$df_in <- df_in
     gg_args$err   <- ".sd"
 
@@ -369,18 +395,24 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   # Add p-values
   # only parse p_label when p_label is logical since custom labels are not used
   if (add_p) {
+    p <- dplyr::mutate(
+      p,
+      gap = (max(y_max) - min(y_min)) * 0.05,
+      y   = y_max + gap
+    )
+
     all_sym <- !any(grepl("[a-zA-Z0-9]", names(p_label)))
 
     label_params <- .parse_label_params(label_params)$p
 
     label_params$mapping <- ggplot2::aes(
-      x = !!sym(x), y = Inf, label = p_lab, fill = NULL
+      x = !!sym(x), y = y, label = p_lab, fill = NULL
     )
 
     label_params$data   <- p
     label_params$parse  <- TRUE
     label_params$colour <- label_params$colour %||% "black"
-    label_params$vjust  <- label_params$vjust  %||% 1.5
+    label_params$vjust  <- label_params$vjust  %||% 0  # used to be 1.5
 
     # Set default label size
     # set larger font size for symbols, e.g. '*'
@@ -1172,268 +1204,6 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
   res
 }
-
-
-#' Add n label to plot
-#'
-#' @param gg_in ggplot2 object
-#' @param df_in data.frame to use for counting number of values plotted. For
-#' `.add_n_label()` can also be named list providing separate data.frames for
-#' corner, axis, and legend labels.
-#' @param grp Variable to use for grouping data when counting the number of
-#' values
-#' @param n_label Vector indicating where n labels should be added
-#' @param crnr_col Column in `df_in` containing groups that will be shown for
-#' the corner label
-#' @param axis_col Column in `df_in` containing groups that will be shown on the
-#' x-axis
-#' @param lgnd_col Column in `df_in` containing groups that will be shown in
-#' the legend
-#' @param lgnd_clrs Colors to pass to `ggplot2::scale_fill_manual()` and
-#' `ggplot2::scale_color_manual()`, only applicable when adding legend label
-#' @param na_clr Color to use for `NA` value, only applicable when adding legend
-#' label
-#' @param y_exp y-axis expansion, only applicable when adding corner label
-#' @param n_fn Function to use for calculating number of values plotted. By
-#' default this is `dplyr::n` which will just count the number of rows for
-#' each group. If another function is provided, it should take a vector as
-#' input. The function will be applied to the `n_col` column in `df_in`. e.g.
-#' `sum` will sum the values in `n_col` for each group, this is useful if the
-#' number of cells has already been counted for each group.
-#' @param n_col Column to store n values, this also specifies the column that
-#' should be modified when a function is provided to the `n_fn`.
-#' @param lab_args named list with aesthetic parameters to used for modifying
-#' n label
-#' @param axis Should label be added to the x- or y-axis, only applicable when
-#' adding axis label
-#' @param ... Absorbs unused arguments passed to label functions
-#' @param sep Separator to use when creating n label
-#' @return ggplot object with n labels added
-#' @noRd
-.add_n_label <- function(gg_in, df_in, n_label, crnr_col = NULL,
-                         axis_col = NULL, lgnd_col = NULL, lgnd_clrs = NULL,
-                         na_clr = "grey80", y_exp = .n_label_expansion,
-                         n_fn = dplyr::n, lab_args = list()) {
-
-  n_label <- unique(c("none", n_label))
-
-  lab_args <- .parse_label_params(lab_args)$n
-
-  if (!is.data.frame(df_in) && is.list(df_in)) {
-    crnr_dat <- df_in$corner
-    axis_dat <- df_in$axis
-    lgnd_dat <- df_in$legend
-
-  } else {
-    crnr_dat <- axis_dat <- lgnd_dat <- df_in
-  }
-
-  # Named list containing possible label functions, group columns, and data
-  lab_fns <- list(
-    none   = list(.add_no_label, NULL, NULL),
-    corner = list(.add_corner_label, crnr_col, crnr_dat)
-  )
-
-  if (!is.null(axis_col) && !is.null(axis_dat)) {
-    lab_fns$axis <- list(.add_axis_label, axis_col, axis_dat)
-  }
-
-  if (!is.null(lgnd_col) && !is.null(lgnd_dat)) {
-    lab_fns$legend <- list(.add_legend_label, lgnd_col, lgnd_dat)
-  }
-
-  if (any(!n_label %in% names(lab_fns))) {
-    cli::cli_abort("`n_label` can be any combination of {names(lab_fns)}")
-  }
-
-  lab_fns <- lab_fns[unique(n_label)]
-
-  res <- gg_in
-
-  for (fn in lab_fns) {
-    f <- fn[[1]]
-    g <- fn[[2]]
-    d <- fn[[3]]
-
-    dat <- .calc_n(df_in = d, grp = g, n_fn = n_fn)
-
-    res <- f(
-      res, dat,
-      grp       = g,
-      lgnd_clrs = lgnd_clrs,
-      na_clr    = na_clr,
-      y_exp     = y_exp,
-      lab_args  = lab_args
-    )
-  }
-
-  res
-}
-
-.add_corner_label <- function(gg_in, df_in, lab_args,
-                              y_exp = .n_label_expansion, ...) {
-
-  # Automatically adjust label position based on length of string
-  just <- 0.5
-  char_h_w <- 1.5
-
-  dat <- .format_n_label(df_in)
-
-  dat <- dplyr::mutate(
-    dat,
-    label = lab_args$label %||% .data$label,
-    hjust = nchar(.data$label),
-    hjust = 1 + (1 / .data$hjust * (just * char_h_w))
-  )
-
-  lab_args$size <- lab_args$size %||% global$base_size
-  lab_args$size <- lab_args$size / ggplot2::.pt
-
-  lab_args$mapping     <- ggplot2::aes(label = .data$label, hjust = .data$hjust)
-  lab_args$data        <- dat
-  lab_args$inherit.aes <- FALSE
-  lab_args$x           <- lab_args$x %||% Inf
-  lab_args$y           <- lab_args$y %||% Inf
-  lab_args$vjust       <- lab_args$vjust %||% 1 + just
-
-  res <- gg_in +
-    lift(ggplot2::geom_text)(lab_args)
-
-  if (!is.null(y_exp)) {
-    res <- res +
-      ggplot2::scale_y_continuous(expand = y_exp)
-  }
-
-  res
-}
-
-.add_axis_label <- function(gg_in, df_in, grp, axis = "x", lab_args, ...) {
-
-  if (is.null(grp)) return(gg_in)
-
-  dat <- .format_n_label(df_in, grp)
-
-  dat_labs <- purrr::set_names(dat$label, dat[[grp]])
-
-  if (identical(axis, "x")) {
-    res <- gg_in +
-      ggplot2::scale_x_discrete(labels = dat_labs)
-
-  } else if (identical(axis, "y")) {
-    res <- gg_in +
-      ggplot2::scale_y_discrete(labels = dat_labs)
-
-  } else {
-    cli::cli_abort("`axis` must be x or y")
-  }
-
-  res
-}
-
-.add_legend_label <- function(gg_in, df_in, grp, lab_args, lgnd_clrs = NULL,
-                              na_clr = "grey80", ...) {
-
-  if (is.null(grp)) return(gg_in)
-
-  dat <- .format_n_label(df_in, grp)
-
-  dat_labs <- purrr::set_names(dat$label, dat[[grp]])
-
-  # Scale arguments
-  gg_args <- list(labels = dat_labs)
-
-  if (!is.null(lgnd_clrs)) {
-    gg_args$values   <- lgnd_clrs
-    gg_args$na.value <- na_clr
-
-    res <- gg_in +
-      lift(ggplot2::scale_color_manual)(gg_args) +
-      lift(ggplot2::scale_fill_manual)(gg_args)
-
-  } else {
-    res <- gg_in +
-      lift(ggplot2::scale_color_discrete)(gg_args) +
-      lift(ggplot2::scale_fill_discrete)(gg_args)
-  }
-
-  res
-}
-
-.add_no_label <- function(gg_in, ...) gg_in
-
-.format_n_label <- function(df_in, grp = NULL, sep = "\n", n_col = ".n") {
-  res <- dplyr::mutate(
-    df_in,
-    label = scales::label_comma()(!!sym(n_col)),
-    label = paste0("n = ", .data$label)
-  )
-
-  if (!is.null(grp)) {
-    res <- dplyr::mutate(
-      res,
-      label = paste0(!!sym(grp), sep, .data$label)
-    )
-  }
-
-  res
-}
-
-.calc_n <- function(df_in, grp = NULL, n_fn = dplyr::n, n_col = ".n") {
-  res <- df_in
-
-  if (is.null(df_in)) return(df_in)
-
-  if (!is.null(grp)) res <- dplyr::group_by(res, !!sym(grp))
-
-  if (identical(n_fn, dplyr::n)) {
-    res <- dplyr::summarize(res, !!sym(n_col) := n_fn(), .groups = "drop")
-
-  } else {
-    res <- dplyr::summarize(
-      res, !!sym(n_col) := n_fn(!!sym(n_col)), .groups = "drop"
-    )
-  }
-
-  res
-}
-
-.n_label_expansion <- ggplot2::expansion(c(0.05, 0.1))
-
-
-#' Get axis label based on axis units
-#'
-#' @param units Units for axis
-#' @param sffx Suffix to include in label
-#' @return Axis label
-#' @noRd
-.get_axis_label <- function(units, sfx = "cells") {
-  res <- switch(
-    units,
-    frequency = paste0("number of ", sfx),
-    percent   = paste0("% of ", sfx)
-  )
-
-  res
-}
-
-
-#' Trim long labels
-#'
-#' @param x Character vector containing labels to trim
-#' @param max_len Maximum number of characters to allow
-#' @param ellipsis Ellipsis to add to indicate label has been trimmed
-#' @noRd
-trim_lab <- function(x, max_len = 25, ellipsis = "...") {
-  len <- nchar(x)
-
-  trim_me <- len > max_len
-
-  x[trim_me] <- strtrim(x[trim_me], max_len)
-  x[trim_me] <- paste0(x[trim_me], ellipsis)
-
-  x
-}
-
 
 #' Set 'other' groups
 #'
