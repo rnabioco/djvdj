@@ -9,13 +9,10 @@ plot_gene_usage(
   data_cols,
   cluster_col = NULL,
   group_col = NULL,
-  genes = 20,
   method = NULL,
-  chain = NULL,
-  chain_col = global$chain_col,
   units = "percent",
+  genes = 20,
   return_list = FALSE,
-  sep = global$sep,
   plot_colors = NULL,
   plot_lvls = NULL,
   trans = "identity",
@@ -28,7 +25,10 @@ plot_gene_usage(
   p_method = NULL,
   p_file = NULL,
   label_params = list(),
-  ...
+  ...,
+  chain = NULL,
+  chain_col = global$chain_col,
+  sep = global$sep
 )
 }
 \arguments{
@@ -45,9 +45,6 @@ calculating gene usage}
 cluster_col. This is useful when there are multiple replicates or patients
 for each treatment condition.}
 
-\item{genes}{An integer specifying the number of genes to plot, or
-a vector giving the names of genes to include.}
-
 \item{method}{Method to use for plotting, possible values are:
 \itemize{
 \item 'bar', create a bargraph, this is the default when a single column is
@@ -60,17 +57,13 @@ passed to the data_cols argument
 to the data_cols argument
 }}
 
-\item{chain}{Chain to use for calculating gene usage, set to NULL to include
-all chains}
-
-\item{chain_col}{meta.data column containing chains for each cell}
-
 \item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
+
+\item{genes}{An integer specifying the number of genes to plot, or
+a vector giving the names of genes to include.}
 
 \item{return_list}{Should a list of plots be returned, if FALSE plots will be
 combined and arranged into panels}
-
-\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{plot_colors}{Character vector containing colors to use for plot. If a
 bar graph is created this will specify how to color cell clusters. For a
@@ -137,6 +130,13 @@ n label aesthetics, e.g. list(size = 4, color = "red")}
 \item{...}{Additional arguments to pass to plotting function,
 \code{\link[ggplot2:geom_bar]{ggplot2::geom_col()}} for bargraph, \code{\link[ggplot2:geom_tile]{ggplot2::geom_tile()}} for heatmap,
 \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for circos plot}
+
+\item{chain}{Chain to use for calculating gene usage, set to NULL to include
+all chains}
+
+\item{chain_col}{meta.data column containing chains for each cell}
+
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 }
 \value{
 ggplot object

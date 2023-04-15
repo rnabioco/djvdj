@@ -203,9 +203,6 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' for each treatment condition.
 #' @param genes An integer specifying the number of genes to plot, or
 #' a vector giving the names of genes to include.
-#' @param chain Chain to use for calculating gene usage, set to NULL to include
-#' all chains
-#' @param chain_col meta.data column containing chains for each cell
 #' @param method Method to use for plotting, possible values are:
 #'
 #' - 'bar', create a bargraph, this is the default when a single column is
@@ -220,7 +217,6 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
 #' @param return_list Should a list of plots be returned, if FALSE plots will be
 #' combined and arranged into panels
-#' @param sep Separator used for storing per-chain V(D)J data for each cell
 #'
 #'
 #' @param plot_colors Character vector containing colors to use for plot. If a
@@ -276,6 +272,10 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' @param ... Additional arguments to pass to plotting function,
 #' [ggplot2::geom_col()] for bargraph, [ggplot2::geom_tile()] for heatmap,
 #' [circlize::chordDiagram()] for circos plot
+#' @param chain Chain to use for calculating gene usage, set to NULL to include
+#' all chains
+#' @param chain_col meta.data column containing chains for each cell
+#' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @seealso [calc_gene_usage()], [calc_gene_pairs()], [plot_gene_pairs()]
 #' @return ggplot object
 #'
@@ -339,18 +339,20 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #'
 #' @export
 plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
-                            group_col = NULL, genes = 20, method = NULL,
-                            chain = NULL,
-                            chain_col = global$chain_col,
-                            units = "percent", return_list = FALSE,
-                            sep = global$sep,
+                            group_col = NULL, method = NULL,
+                            units = "percent", genes = 20,
+                            return_list = FALSE,
                             plot_colors = NULL, plot_lvls = NULL,
                             trans = "identity", rotate_labels = FALSE,
                             panel_nrow = NULL, show_points = TRUE,
                             show_zeros = TRUE,
                             n_label = NULL, p_label = c(value = 0.05),
                             p_method = NULL, p_file = NULL,
-                            label_params = list(), ...) {
+                            label_params = list(),
+                            ...,
+                            chain = NULL,
+                            chain_col = global$chain_col,
+                            sep = global$sep) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -710,7 +712,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 
     gg_args$grp <- gg_args$.color <- gg_args$.fill <- grp_col
 
-    gg_args$clst        <- cluster_col
+    gg_args$clst        <- clst_col
     gg_args$method      <- method
     gg_args$y_ttl       <- ttl
     gg_args$show_points <- show_points

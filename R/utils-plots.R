@@ -1612,14 +1612,19 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 #' @noRd
 .add_missing_zeros <- function(df_in, dat_cols, expand_col, clst_col, grp_col) {
 
-  # Get all combinations
-  # make expand_col factor so all groups get all values of expand_col
-  all <- dplyr::mutate(
+  # Save original levels to combinations to maintain ordering
+  # convert all factors to character to allow correct merging at the end
+  lvls <- purrr::map(df_in, levels)
+  lvls <- purrr::discard(lvls, is.null)
+
+  df_in <- dplyr::mutate(
     df_in,
-    dplyr::across(all_of(c(clst_col, grp_col)), as.character)
+    dplyr::across(all_of(c(expand_col, clst_col, grp_col)), as.character)
   )
 
-  all <- dplyr::mutate(all, !!sym(expand_col) := as.factor(!!sym(expand_col)))
+  # Get all combinations
+  # make expand_col factor so all groups get all values of expand_col
+  all <- dplyr::mutate(df_in, !!sym(expand_col) := factor(!!sym(expand_col)))
   all <- split(all, all[[grp_col]])
 
   all <- purrr::map(
@@ -1628,14 +1633,11 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
   all <- dplyr::bind_rows(all)
 
-  # Add original levels to combinations to maintain ordering
-  lvls <- purrr::map(df_in, levels)
-  lvls <- purrr::discard(lvls, is.null)
-
-  all <- dplyr::mutate(all, dplyr::across(
-    all_of(names(lvls)),
-    ~ factor(.x, levels = lvls[[dplyr::cur_column()]])
-  ))
+  # Convert expand_col back to character to allow for correct merging of NAs
+  # which might be present when plotting VDJ data
+  all <- dplyr::mutate(
+    all, !!sym(expand_col) := as.character(!!sym(expand_col))
+  )
 
   # Add zeros for combinations that are expected but have no cells
   res <- dplyr::right_join(df_in, all, by = c(expand_col, clst_col, grp_col))
@@ -1643,6 +1645,11 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res <- dplyr::mutate(
     res, dplyr::across(all_of(dat_cols), tidyr::replace_na, 0)
   )
+
+  res <- dplyr::mutate(res, dplyr::across(
+    all_of(names(lvls)),
+    ~ factor(.x, levels = lvls[[dplyr::cur_column()]], exclude = NULL)
+  ))
 
   res
 }

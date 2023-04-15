@@ -60,7 +60,7 @@
 
   # Write table
   if (!is.null(file)) {
-    p_clmns <- unique(c(data_col, cluster_col, group_col, "p_value", p_clmn))
+    p_clmns <- unique(c(group_col, cluster_col, data_col, "p_value", p_clmn))
 
     p_tbl <- dplyr::arrange(res, !!!syms(c(p_clmn, group_col, cluster_col)))
     p_tbl <- dplyr::mutate(p_tbl, method = p_method)
