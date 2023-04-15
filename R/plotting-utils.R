@@ -1387,9 +1387,11 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   lvls <- purrr::map(df_in, levels)
   lvls <- purrr::discard(lvls, is.null)
 
+  all_cols <- unique(c(expand_col, clst_col, grp_col))
+
   df_in <- dplyr::mutate(
     df_in,
-    dplyr::across(all_of(c(expand_col, clst_col, grp_col)), as.character)
+    dplyr::across(all_of(all_cols), as.character)
   )
 
   # Get all combinations
@@ -1398,7 +1400,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   all <- split(all, all[[grp_col]])
 
   all <- purrr::map(
-    all, tidyr::expand, !!!syms(c(expand_col, clst_col, grp_col))
+    all, tidyr::expand, !!!syms(all_cols)
   )
 
   all <- dplyr::bind_rows(all)
@@ -1410,7 +1412,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   )
 
   # Add zeros for combinations that are expected but have no cells
-  res <- dplyr::right_join(df_in, all, by = c(expand_col, clst_col, grp_col))
+  res <- dplyr::right_join(df_in, all, by = all_cols)
 
   res <- dplyr::mutate(
     res, dplyr::across(all_of(dat_cols), tidyr::replace_na, 0)

@@ -483,12 +483,15 @@
 #' divide params based on prefix, e.g. 'n.' or 'p.'
 #' this allows user to adjust aesthetics for a specific label
 #' @noRd
-.parse_label_params <- function(l, prfxs = c("n", "p"), sep = ".") {
+.parse_label_params <- function(l, prfxs = c("n", "p", "clone"), sep = ".") {
   nms   <- names(l)
   prfxs <- purrr::set_names(paste0("^", prfxs, "\\", sep), prfxs)
   idxs  <- purrr::map(prfxs, ~ grepl(.x, nms))
 
-  shared <- purrr::reduce(idxs, ~ !.x & !.y)
+  # Identify params that do not have any of the prefixes and
+  # should be included in all
+  shared <- purrr::map(idxs, `!`)       # do not have the prefix
+  shared <- purrr::reduce(shared, `&`)  # do not have any of the prfxs
   shared <- l[shared]
 
   res <- purrr::imap(idxs, ~ {
@@ -502,6 +505,8 @@
 
     prms
   })
+
+  res$other <- shared
 
   res
 }

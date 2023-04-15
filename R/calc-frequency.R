@@ -631,7 +631,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
       labs(y = .get_axis_label(units))
 
     # Add clonotype labels with ggrepel
-    lab_args <- label_params
+    label_params <- .parse_label_params(label_params)$clone
 
     if (clones > 0) {
       if (!all(n_label == "none")) {
@@ -990,7 +990,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
           dat_cols   = abun_col,
           expand_col = x_col,
           clst_col   = cluster_col,
-          group_col  = clr_col
+          grp_col    = clr_col
         )
 
         gg_args$df_in <- plt_dat
