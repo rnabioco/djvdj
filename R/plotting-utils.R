@@ -310,7 +310,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     )
 
     # Determine min and max y for adding p-value labels
-    p <- dplyr::group_by(p, !!sym(x), p_value)
+    p <- dplyr::group_by(p, !!sym(x), .data$p_value)
 
     p <- dplyr::summarize(
       p, y_min = min(!!sym(y)), y_max = max(!!sym(y)),
@@ -321,10 +321,10 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     p <- dplyr::rowwise(p)
 
     p <- dplyr::mutate(
-      p, p_lab = .format_pvalue(p_value, cutoffs = p_label)
+      p, p_lab = .format_pvalue(.data$p_value, cutoffs = p_label)
     )
 
-    p <- dplyr::filter(p, !is.na(p_lab))
+    p <- dplyr::filter(p, !is.na(.data$p_lab))
     p <- dplyr::ungroup(p)
 
     if (nrow(p) == 0) add_p <- FALSE
@@ -372,14 +372,14 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       y_dat <- dplyr::mutate(
         y_dat,
         y_min = 0,
-        y_max = !!sym(y) + .sd,
-        y_max = max(y_max)
+        y_max = !!sym(y) + .data$.sd,
+        y_max = max(.data$y_max)
       )
 
       y_dat <- dplyr::ungroup(y_dat)
-      y_dat <- dplyr::distinct(y_dat, !!sym(x), y_min, y_max)
+      y_dat <- dplyr::distinct(y_dat, !!sym(x), .data$y_min, .data$y_max)
 
-      p <- dplyr::select(p, -y_max, -y_min)
+      p <- dplyr::select(p, -.data$y_max, -.data$y_min)
       p <- dplyr::left_join(p, y_dat, by = x)
     }
 
@@ -397,8 +397,8 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   if (add_p) {
     p <- dplyr::mutate(
       p,
-      gap = (max(y_max) - min(y_min)) * 0.05,
-      y   = y_max + gap
+      gap = (max(.data$y_max) - min(.data$y_min)) * 0.05,
+      y   = .data$y_max + .data$gap
     )
 
     all_sym <- !any(grepl("[a-zA-Z0-9]", names(p_label)))
@@ -406,7 +406,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     label_params <- .parse_label_params(label_params)$p
 
     label_params$mapping <- ggplot2::aes(
-      x = !!sym(x), y = y, label = p_lab, fill = NULL
+      x = !!sym(x), y = .data$y, label = .data$p_lab, fill = NULL
     )
 
     label_params$data   <- p

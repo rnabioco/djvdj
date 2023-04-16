@@ -53,6 +53,7 @@ Suggests:
     circlize,
     covr,
     dbscan,
+    edgeR,
     ggseqlogo,
     here,
     igraph (>= 1.3.0),

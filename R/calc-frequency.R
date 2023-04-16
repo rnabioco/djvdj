@@ -253,7 +253,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
   # Identify shared groups
   if (cluster) {
     res <- dplyr::group_by(res, !!!syms(data_cols))
-    res <- dplyr::mutate(res, shared = length(freq[freq > 0]) > 1)
+    res <- dplyr::mutate(res, shared = length(.data$freq[.data$freq > 0]) > 1)
     res <- dplyr::ungroup(res)
   }
 

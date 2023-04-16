@@ -64,7 +64,7 @@
 
     p_tbl <- dplyr::arrange(res, !!!syms(c(p_clmn, group_col, cluster_col)))
     p_tbl <- dplyr::mutate(p_tbl, method = p_method)
-    p_tbl <- dplyr::select(p_tbl, all_of(p_clmns))
+    p_tbl <- dplyr::select(p_tbl, all_of(p_clmns), .data$method)
 
     readr::write_csv(p_tbl, file, progress = FALSE)
   }
@@ -130,6 +130,8 @@
 #' @noRd
 .calc_edgeR <- function(df_in, data_col, cluster_col, group_col) {
 
+  .check_packages("edgeR", db = "Bioconductor")
+
   # Format input data
   dat <- dplyr::select(df_in, all_of(c(data_col, cluster_col, group_col)))
   dat <- dplyr::filter(dat, !is.na(as.character(!!sym(group_col))))
@@ -139,19 +141,21 @@
   dat <- dplyr::mutate(
     dat,
     .pool   = row_number(),
-    .sample = paste0(!!sym(cluster_col), "_", .pool)
+    .sample = paste0(!!sym(cluster_col), "_", .data$.pool)
   )
 
   dat <- dplyr::ungroup(dat)
 
   # data.frame of sample info
-  sam_info <- dplyr::distinct(dat, !!sym(cluster_col), .sample, .pool)
+  sam_info <- dplyr::distinct(
+    dat, !!sym(cluster_col), .data$.sample, .data$.pool
+  )
 
   # Counts matrix
   mat <- dplyr::select(dat, all_of(c(group_col, ".sample", data_col)))
 
   mat <- tidyr::pivot_wider(
-    mat, names_from = .sample,
+    mat, names_from = .data$.sample,
     values_from = !!sym(data_col), values_fill = 0
   )
 
@@ -174,7 +178,9 @@
   de_l <- edgeR::estimateDisp(de_l, design, trend = "none")
 
   # Fit glm
-  de_fit <- edgeR::glmQLFit(de_l, design, robust = TRUE, abundance.trend = FALSE)
+  de_fit <- edgeR::glmQLFit(
+    de_l, design, robust = TRUE, abundance.trend = FALSE
+  )
 
   # Test for differential abundance
   pvals <- edgeR::glmQLFTest(de_fit, coef = ncol(design))
