@@ -20,7 +20,7 @@
   # Set method based on number of clusters for comparison
   n_clsts <- n_distinct(df_in[[cluster_col]])
 
-  if (n_clsts > 2 && !identical(p_method, "kruskal")) {
+  if (n_clsts > 2 && !is.null(p_method) && !identical(p_method, "kruskal")) {
     cli::cli_warn(
       "p-values will be calculated using the Kruskal-Wallis test
        since more than two groups are being compared."
