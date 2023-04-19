@@ -429,8 +429,8 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   n_lab_dat <- plt_dat
 
   # Identify data columns that the user should have access to
-  keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
-  keep_cols <- c(cluster_col, data_col, keep_cols)
+  keep_cols <- .get_matching_clmns(plt_dat, c(all_div_cols, cluster_col))
+  keep_cols <- c(all_div_cols, cluster_col, keep_cols)
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
 
   plt_dat <- tidyr::pivot_longer(plt_dat, all_of(all_div_cols))
@@ -458,6 +458,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
     df_in        = plt_dat,
     x            = x_col,
     y            = "diversity",
+    .color       = clr_col,
     .fill        = clr_col,
     clrs         = plot_colors,
     nrow         = panel_nrow,
@@ -472,12 +473,8 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   if (!is.null(group_col)) {
     gg_args$alpha         <- gg_args$alpha %||% 0.5
     gg_args$outlier.color <- gg_args$outlier.color %||% NA
-    gg_args$.color        <- clr_col
 
-    res <- lift(.create_boxes)(gg_args) +
-      ggplot2::geom_jitter(
-        position = ggplot2::position_jitterdodge(jitter.width = 0.05)
-      )
+    res <- lift(.create_boxes)(gg_args)
 
   # Create bar graphs
   # only add error bars if n_boots > 1
@@ -486,19 +483,9 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
       gg_args$position <- ggplot2::position_identity()
     }
 
-    res <- lift(.create_bars)(gg_args)
+    if (n_boots > 1) gg_args$err <- "stderr"
 
-    if (n_boots > 1) {
-      res <- res +
-        ggplot2::geom_linerange(
-          aes(
-            !!sym(cluster_col),
-            ymin = .data$diversity - .data$stderr,
-            ymax = .data$diversity + .data$stderr
-          ),
-          size = gg_args$size %||% 1
-        )
-    }
+    res <- lift(.create_bars)(gg_args)
 
     if (!include_x_labs) {
       res <- res +
