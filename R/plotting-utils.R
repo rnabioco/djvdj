@@ -254,6 +254,8 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
 #' Create a grouped plot summarizing replicates
 #'
+#' Currently this can only be used to plot frequency data
+#'
 #' @param df_in data.frame
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
@@ -264,18 +266,28 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @param method Method to use for generating plot, can be 'bar' or 'boxplot'
 #' @param n_label n label specification
 #' @param p_label Should p-values be shown on plot.
+#' @param p_method Method to calculate p-values
+#' @param p_grp Variable to use for grouping samples when calculating p-values.
+#' A separate p-value will be calculated for each label in p_grp.
+#' @param p_corner Should p-value be shown in the top right corner, if `FALSE`
+#' p-value will be shown above each group
+#' @param p_file File path to save p-value csv
 #' @param label_params Named list with specifications to modify label
 #' aesthetics
 #' @param show_points Should data points be shown on boxplot
+#' @param add_zeros If `TRUE` zeros will be added for missing variables, this
+#' should only be used when plotting frequency data. This is useful if missing
+#' data should be plotted as a zero.
 #' @param show_zeros If `TRUE` cell labels that are missing from a cluster will
-#' still be shown on the plot
+#' still be shown on the plot.
 #' @param ... Additional arguments to pass to plotting function
 #' @return ggplot object
 #' @noRd
 .create_grouped_plot <- function(df_in, x, y, clst, grp, method = "bar",
                                  n_label = NULL, p_label = c(value = 0.05),
-                                 p_method = NULL, p_file = NULL,
-                                 label_params = list(), show_points = TRUE,
+                                 p_method = NULL, p_grp = x, p_file = NULL,
+                                 p_corner = FALSE, label_params = list(),
+                                 show_points = TRUE, add_zeros = TRUE,
                                  show_zeros = TRUE, ...) {
 
   # Check arguments
@@ -288,29 +300,34 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   }
 
   # Add zeros for missing groups
-  df_in <- .add_missing_zeros(
-    df_in,
-    dat_cols   = y,
-    expand_col = x,
-    clst_col   = clst,
-    grp_col    = grp
-  )
+  # this is only necessary when plotting frequency
+  # if plotting another metric, e.g. diversity, this should be FALSE
+  if (add_zeros) {
+    df_in <- .add_missing_zeros(
+      df_in,
+      dat_cols   = y,
+      expand_col = x,
+      clst_col   = clst,
+      grp_col    = grp
+    )
+  }
 
   # Calculate/format p-value labels
   # by default only show significant p-values
   if (identical(p_label, "all")) p_label <- c(value = Inf)
 
-  add_p <- !identical(p_label, "none")
+  add_p    <- !identical(p_label, "none")
+  p_corner <- add_p && (p_corner || is.null(p_grp))
 
   if (add_p) {
     p <- .calc_pvalue(
       df_in,
-      data_col = y, cluster_col = grp, group_col = x,
+      data_col = y, cluster_col = grp, group_col = p_grp,
       p_method = p_method, file = p_file
     )
 
     # Determine min and max y for adding p-value labels
-    p <- dplyr::group_by(p, !!sym(x), .data$p_value)
+    p <- dplyr::group_by(p, !!!syms(c(p_grp, "p_value")))
 
     p <- dplyr::summarize(
       p, y_min = min(!!sym(y)), y_max = max(!!sym(y)),
@@ -328,9 +345,15 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     p <- dplyr::ungroup(p)
 
     if (nrow(p) == 0) add_p <- FALSE
+
+    # If only a single p-value plot in upper corner
+    if (p_corner) {
+      p <- dplyr::mutate(p, p_lab = paste0("italic(p) == ", .data$p_lab))
+    }
   }
 
   # Remove labels in grp that have all zeros
+  # only should be used when plotting frequency data
   if (!show_zeros) {
     df_in <- dplyr::group_by(df_in, !!!syms(c(x, grp)))
     df_in <- dplyr::filter(df_in, !all(!!sym(y) == 0))
@@ -356,7 +379,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
   # Create bar graphs
   } else {
-    df_in <- dplyr::group_by(df_in, !!!syms(c(x, grp)))
+    df_in <- dplyr::group_by(df_in, !!!syms(unique(c(x, grp, p_grp))))
 
     df_in <- dplyr::summarize(
       df_in,
@@ -366,8 +389,8 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     )
 
     # Need to adjust y_max based on mean and sd to position p-value label
-    if (add_p) {
-      y_dat <- dplyr::group_by(df_in, !!sym(x))
+    if (add_p && !p_corner) {
+      y_dat <- dplyr::group_by(df_in, !!sym(p_grp))
 
       y_dat <- dplyr::mutate(
         y_dat,
@@ -377,10 +400,10 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       )
 
       y_dat <- dplyr::ungroup(y_dat)
-      y_dat <- dplyr::distinct(y_dat, !!sym(x), .data$y_min, .data$y_max)
+      y_dat <- dplyr::distinct(y_dat, !!sym(p_grp), .data$y_min, .data$y_max)
 
       p <- dplyr::select(p, -.data$y_max, -.data$y_min)
-      p <- dplyr::left_join(p, y_dat, by = x)
+      p <- dplyr::left_join(p, y_dat, by = p_grp)
     }
 
     gg_args$df_in <- df_in
@@ -393,13 +416,14 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   }
 
   # Add p-values
-  # only parse p_label when p_label is logical since custom labels are not used
   if (add_p) {
-    p <- dplyr::mutate(
-      p,
-      gap = (max(.data$y_max) - min(.data$y_min)) * 0.05,
-      y   = .data$y_max + .data$gap
-    )
+    if (!p_corner) {
+      p <- dplyr::mutate(
+        p,
+        gap = (max(.data$y_max) - min(.data$y_min)) * 0.05,
+        y   = .data$y_max + .data$gap
+      )
+    }
 
     all_sym <- !any(grepl("[a-zA-Z0-9]", names(p_label)))
 
@@ -409,10 +433,17 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       x = !!sym(x), y = .data$y, label = .data$p_lab, fill = NULL
     )
 
+    # If only one p-value calculated for plot, position in top right corner
+    if (p_corner) {
+      label_params$mapping$x <- label_params$mapping$y <- Inf
+      label_params$hjust     <- label_params$hjust %||% .get_label_just(p$p_lab)
+      label_params$vjust     <- label_params$vjust %||% 1.5
+    }
+
     label_params$data   <- p
     label_params$parse  <- TRUE
     label_params$colour <- label_params$colour %||% "black"
-    label_params$vjust  <- label_params$vjust  %||% 0  # used to be 1.5
+    label_params$vjust  <- label_params$vjust  %||% 0
 
     # Set default label size
     # set larger font size for symbols, e.g. '*'
@@ -429,7 +460,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     res <- res +
       lift(ggplot2::geom_text)(label_params)
 
-    if (!"corner" %in% n_label) {
+    if (p_corner && !"corner" %in% n_label) {
       res <- res +
         ggplot2::scale_y_continuous(expand = .n_label_expansion)
     }

@@ -471,10 +471,19 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
   # Create grouped boxplot
   if (!is.null(group_col)) {
-    gg_args$alpha         <- gg_args$alpha %||% 0.5
-    gg_args$outlier.color <- gg_args$outlier.color %||% NA
+    # gg_args$alpha         <- gg_args$alpha %||% 0.5
+    # gg_args$outlier.color <- gg_args$outlier.color %||% NA
 
-    res <- lift(.create_boxes)(gg_args)
+    gg_args$clst      <- cluster_col
+    gg_args$grp       <- group_col
+    gg_args$add_zeros <- FALSE
+    gg_args$p_label   <- "all"
+    gg_args$p_corner  <- TRUE
+    gg_args           <- append(gg_args, list(p_grp = NULL))
+
+    if (length(method) > 1) gg_args$p_grp <- "met"
+
+    res <- lift(.create_grouped_plot)(gg_args)
 
   # Create bar graphs
   # only add error bars if n_boots > 1
@@ -499,7 +508,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   # Create facets
   if (length(method) > 1) {
     res <- res +
-      ggplot2::facet_wrap(~ met, nrow = panel_nrow, scales = "free") +
+      ggplot2::facet_wrap(~ met, nrow = panel_nrow, scales = panel_scales) +
       ggplot2::theme(axis.title.y = ggplot2::element_blank())
 
   } else {

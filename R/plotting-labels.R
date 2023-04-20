@@ -6,14 +6,19 @@
 #' @param group_col Column containing labels to use for grouping data, a
 #' p-value will be calculated for each group. Each group should have at least
 #' two clusters from `cluster_col`
-#' @param method Method to use for calculating p-value, possible values include:
+#' @param p_method Method to use for calculating p-value, possible values
+#' include:
 #'
 #' * 't', two sample t-test
 #' * 'wilcox', Wilcoxon rank sum test
-#' * 'anova', Kruskal-Wallis rank sum test
+#' * 'kruskal', Kruskal-Wallis rank sum test
+#' * 'edgeR', test for differential abundance using edgeR
 #'
+#' @param adj_method Method to use for multiple testing correction
+#' @param file File path to use for saving p-value csv
+#' @param ... Not used, absorbs extra arguments
 #' @noRd
-.calc_pvalue <- function(df_in, data_col, cluster_col, group_col,
+.calc_pvalue <- function(df_in, data_col, cluster_col, group_col = NULL,
                          p_method = NULL, adj_method = "bonferroni",
                          file = NULL) {
 
@@ -35,13 +40,18 @@
 
   # Calculate p-values
   if (identical(p_method, "edgeR")) {
-    res <- .calc_edgeR(df_in, data_col, cluster_col, group_col)
+    p_fn <- .calc_edgeR
 
     adj_method <- NULL
 
   } else {
-    res <- .calc_p(df_in, data_col, cluster_col, group_col, method = p_method)
+    p_fn <- .calc_p
   }
+
+  res <- p_fn(
+    df_in, data_col = data_col,
+    cluster_col = cluster_col, group_col = group_col, p_method = p_method
+  )
 
   # Multiple testing correction
   p_clmn <- "p_value"
@@ -74,13 +84,11 @@
   res
 }
 
-#' Calculate p-value for specified groups
-#' @noRd
-.calc_p <- function(df_in, data_col, cluster_col, group_col,
-                    method = "t") {
+.calc_p <- function(df_in, data_col, cluster_col, group_col = NULL,
+                    p_method = "t") {
 
   # Helper to perform selected test
-  .calc_test <- function(x, g, method) {
+  .calc_test <- function(x, g, p_method) {
     p <- split(x, g, drop = TRUE)
 
     if (length(p) != 2) {
@@ -89,29 +97,29 @@
       )
     }
 
-    p <- method(p[[1]], p[[2]])
+    p <- p_method(p[[1]], p[[2]])
     p <- p$p.value
 
     p
   }
 
-  # Return NAs if method is "none"
-  if (identical(method, "none")) {
+  # Return NAs if p_method is "none"
+  if (identical(p_method, "none")) {
     res <- dplyr::mutate(df_in, p_value = as.numeric(NA))
 
     return(res)
   }
 
-  # Set testing method
+  # Set testing p_method
   p_fn <- switch(
-    method,
-    t       = function(x, ...) .calc_test(x, ..., method = stats::t.test),
-    wilcox  = function(x, ...) .calc_test(x, ..., method = stats::wilcox.test),
+    p_method,
+    t       = function(x, ...) .calc_test(x, ..., p_method = stats::t.test),
+    wilcox  = function(x, ...) .calc_test(x, ..., p_method = stats::wilcox.test),
     kruskal = function(x, ...) (stats::kruskal.test(x, ...))$p.value,
   )
 
   # Calculate p-values
-  df_in <- dplyr::group_by(df_in, !!sym(group_col))
+  if (!is.null(group_col)) df_in <- dplyr::group_by(df_in, !!sym(group_col))
 
   res <- dplyr::mutate(
     df_in, p_value = p_fn(!!sym(data_col), !!sym(cluster_col))
@@ -126,9 +134,7 @@
   res
 }
 
-#' Test for differential abundance using edgeR
-#' @noRd
-.calc_edgeR <- function(df_in, data_col, cluster_col, group_col) {
+.calc_edgeR <- function(df_in, data_col, cluster_col, group_col, ...) {
 
   .check_packages("edgeR", db = "Bioconductor")
 
@@ -359,19 +365,15 @@
                               y_exp = .n_label_expansion, ...) {
 
   # Automatically adjust label position based on length of string
-  just <- 0.5
-  char_h_w <- 1.5
-
   dat <- .format_n_label(df_in)
 
   dat <- dplyr::mutate(
     dat,
     label = lab_args$label %||% .data$label,
-    hjust = nchar(.data$label),
-    hjust = 1 + (1 / .data$hjust * (just * char_h_w))
+    hjust = .get_label_just(.data$label)
   )
 
-  lab_args$size <- lab_args$size %||% global$base_size
+  lab_args$size <- lab_args$size %||% global$base_size * 0.8
   lab_args$size <- lab_args$size / ggplot2::.pt
 
   lab_args$mapping     <- ggplot2::aes(label = .data$label, hjust = .data$hjust)
@@ -379,7 +381,7 @@
   lab_args$inherit.aes <- FALSE
   lab_args$x           <- lab_args$x %||% Inf
   lab_args$y           <- lab_args$y %||% Inf
-  lab_args$vjust       <- lab_args$vjust %||% 1 + just
+  lab_args$vjust       <- lab_args$vjust %||% 1.5
 
   res <- gg_in +
     lift(ggplot2::geom_text)(lab_args)
@@ -534,6 +536,25 @@
   res
 }
 
+#' Set label justification based on length of label
+#'
+#' This allows labels of different lengths to be positioned the same distance
+#' from the edge of the plot area
+#'
+#' @param x character vector of labels
+#' @param base base justification, increase this value to increase spacing
+#' @return numeric vector of justification values
+#' @noRd
+.get_label_just <- function(x, base = 0.5) {
+
+  # Assumed height x width ratio
+  char_h_w <- 1.5
+
+  len <- nchar(x)
+  res <- 1 + (1 / len * (base * char_h_w))
+
+  res
+}
 
 #' Trim long labels
 #'
