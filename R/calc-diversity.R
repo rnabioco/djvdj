@@ -471,14 +471,12 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
   # Create grouped boxplot
   if (!is.null(group_col)) {
-    # gg_args$alpha         <- gg_args$alpha %||% 0.5
-    # gg_args$outlier.color <- gg_args$outlier.color %||% NA
-
     gg_args$clst      <- cluster_col
     gg_args$grp       <- group_col
     gg_args$add_zeros <- FALSE
     gg_args$p_label   <- "all"
     gg_args$p_corner  <- TRUE
+    gg_args$method    <- "boxplot"
     gg_args           <- append(gg_args, list(p_grp = NULL))
 
     if (length(method) > 1) gg_args$p_grp <- "met"
