@@ -34,6 +34,13 @@
 #' to vdj_dir. If include_mutations is TRUE, filter_chains is also
 #' automatically set TRUE since indel data is only available for productive
 #' chains.
+#' @param include_constant If the constant region should be included in the
+#' "all" mutation count. If TRUE, the constant region will be included in
+#' the "all" mutation count and the length of the V + J + D + C regions
+#' will be used to calculate the "all_freq". If FALSE (the default), any
+#' mutations in the c region will not be counted in the "all" mutation count
+#' and only the length of the V + J + D region will be used to calculate
+#' the frequency.
 #' @param aggr_dir Path to cellranger aggr output. To include mutation
 #' information for each chain, also provide paths to the original cellranger
 #' vdj output directories using the vdj_dir argument.
@@ -112,8 +119,8 @@
 import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
                        data_cols = NULL, filter_chains = TRUE,
                        filter_paired = FALSE, define_clonotypes = NULL,
-                       include_mutations = FALSE, aggr_dir = NULL,
-                       quiet = FALSE, sep = ";") {
+                       include_mutations = FALSE, include_constant = FALSE,
+                       aggr_dir = NULL, quiet = FALSE, sep = ";") {
 
   # Set global variables based on prefix
   global$chain_col     <- paste0(prefix, "chains")
@@ -286,7 +293,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     })
 
     # Load mutation data
-    indels <- .load_muts(vdj_dir, prfxs, sfxs)
+    indels <- .load_muts(vdj_dir, prfxs, sfxs,
+                         include_constant = include_constant)
 
     if (!is.null(indels)) {
       if (!is.null(aggr_dir)) indels <- list(dplyr::bind_rows(indels))
@@ -730,7 +738,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   res <- dplyr::mutate(
     df_in,
-    dplyr::across(all_of(clmns), ~ {
+    dplyr::across(dplyr::all_of(clmns), ~ {
       as.logical(stringr::str_replace(.x, "^None$", "FALSE"))
     })
   )
@@ -751,7 +759,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @noRd
 .load_muts <- function(vdj_dir, cell_prfxs, cell_sfxs,
                        bam_file  = "concat_ref.bam",
-                       airr_file = "airr_rearrangement.tsv") {
+                       airr_file = "airr_rearrangement.tsv",
+                       include_constant = FALSE) {
 
   # Retrieve bam and airr file paths
   file_paths <- c(bam = bam_file, airr = airr_file)
@@ -781,7 +790,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   vdj_coords <- purrr::map(file_paths$airr, .extract_vdj_coords)
 
   # Map mutations to VDJ segments
-  res <- purrr::map2(mut_coords, vdj_coords, .map_muts)
+  res <- purrr::map2(mut_coords, vdj_coords, .map_muts,
+                     include_constant = include_constant)
 
   # Extract cell barcode from contig_id
   id_re <- "^.+(?=_contig_[0-9]+$)"
@@ -916,10 +926,18 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   res
 }
 
-.map_muts <- function(mut_coords, vdj_coords) {
+.map_muts <- function(mut_coords, vdj_coords, include_constant = FALSE) {
 
   mut_key <- c(I = "ins", D = "del", X = "mis")
 
+  # Get the full length sequence of the vdj region with and without c region
+  vdj_coords <- vdj_coords %>%
+    dplyr::mutate(new_len = ifelse(seg == "c", 0, len)) %>%
+    dplyr::group_by(contig_id) %>%
+    dplyr::mutate(full_len = sum(len),
+                  full_len_vdj = sum(new_len)) %>%
+    dplyr::select(!new_len)
+  
   mut_coords <- dplyr::mutate(
     mut_coords,
     type = dplyr::recode(.data$type, !!!mut_key)
@@ -945,7 +963,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # left_join + mutate is much faster than valr::bed_intersect, probably due
   # to the extreme number of "chromosomes"
   vdj_muts <- dplyr::left_join(
-    mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg")
+    mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg"),
+    relationship = "many-to-many"
   )
 
   vdj_muts <- dplyr::filter(
@@ -994,7 +1013,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   # Summarize mutation counts
   vdj_muts <- dplyr::group_by(
-    vdj_muts, .data$contig_id, .data$len, .data$type, .data$seg
+    vdj_muts, .data$contig_id, .data$len, .data$full_len_vdj, .data$full_len,
+    .data$type, .data$seg
   )
 
   vdj_muts <- dplyr::summarize(vdj_muts, n = sum(.data$n), .groups = "drop")
@@ -1004,10 +1024,18 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   all_muts <- dplyr::filter(vdj_muts, !.data$seg %in% c("vd", "dj"))
   all_muts <- dplyr::group_by(all_muts, .data$contig_id, .data$type)
 
+  if(include_constant){
+    sum_column <- "full_len"
+  } else {
+    all_muts <- all_muts %>%
+      dplyr::filter(seg != "c")
+    sum_column <- "full_len_vdj"
+  }
+  
   all_muts <- dplyr::summarize(
     all_muts,
     n       = sum(.data$n),
-    len     = sum(.data$len),
+    len     = unique(.data[[sum_column]]),
     seg     = "all",
     .groups = "drop"
   )
