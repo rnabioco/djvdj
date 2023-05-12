@@ -963,8 +963,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # left_join + mutate is much faster than valr::bed_intersect, probably due
   # to the extreme number of "chromosomes"
   vdj_muts <- dplyr::left_join(
-    mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg"),
-    relationship = "many-to-many"
+    mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg")
   )
 
   vdj_muts <- dplyr::filter(
