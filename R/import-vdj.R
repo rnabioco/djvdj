@@ -932,11 +932,11 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   # Get the full length sequence of the vdj region with and without c region
   vdj_coords <- vdj_coords %>%
-    dplyr::mutate(new_len = ifelse(seg == "c", 0, len)) %>%
-    dplyr::group_by(contig_id) %>%
-    dplyr::mutate(full_len = sum(len),
-                  full_len_vdj = sum(new_len)) %>%
-    dplyr::select(!new_len)
+    dplyr::mutate(new_len = ifelse(.data$seg == "c", 0, .data$len)) %>%
+    dplyr::group_by(.data$contig_id) %>%
+    dplyr::mutate(full_len = sum(.data$len),
+                  full_len_vdj = sum(.data$new_len)) %>%
+    dplyr::select(!"new_len")
   
   mut_coords <- dplyr::mutate(
     mut_coords,
@@ -962,10 +962,17 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # some annotations overlap each other! Example: AAACCTGAGAACTGTA-1_contig_1
   # left_join + mutate is much faster than valr::bed_intersect, probably due
   # to the extreme number of "chromosomes"
-  vdj_muts <- dplyr::left_join(
-    mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg"),
-    relationship = "many-to-many"
-  )
+  if (utils::packageVersion("dplyr") > "1.1.1") { 
+    # relationship argument gained in 1.1.1 https://dplyr.tidyverse.org/news/index.html
+    vdj_muts <- dplyr::left_join(
+      mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg"),
+      relationship = "many-to-many"
+    )
+  } else {
+    vdj_muts <- dplyr::left_join(
+        mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg")
+        )
+  }
 
   vdj_muts <- dplyr::filter(
     vdj_muts, .data$start < .data$end.seg & .data$end > .data$start.seg
@@ -1028,7 +1035,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     sum_column <- "full_len"
   } else {
     all_muts <- all_muts %>%
-      dplyr::filter(seg != "c")
+      dplyr::filter(.data$seg != "c")
     sum_column <- "full_len_vdj"
   }
   
