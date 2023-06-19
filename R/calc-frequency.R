@@ -952,7 +952,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   # the number of cells (i.e. multiple values get counted for each cell)
   if (!is.null(group_col)) {
     if (identical(p_method, "edgeR")) {
-      gg_args$y <- ".freq"
+      gg_args$p_y <- ".freq"
 
     } else if (per_chain && identical(p_method, "edgeR")) {
       cli::cli_warn(

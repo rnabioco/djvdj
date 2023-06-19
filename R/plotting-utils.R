@@ -144,6 +144,11 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     if (.fill)  gg_args$fill   <- gg_args$fill   %||% clrs
   }
 
+  # Allow alpha to be adjusted by passing new mapping
+  # override alpha specification in gg_args otherwise
+  # new alpha mapping will be ignored
+  if ("alpha" %in% names(gg_args$mapping)) gg_args$alpha <- NULL
+
   # Create plot
   res <- ggplot2::ggplot(df_in, gg_aes) +
     lift(fn)(gg_args) +
@@ -259,6 +264,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @param df_in data.frame
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
+#' @param p_y Variable to use for calculating p-values
 #' @param clst Variable containing cluster IDs, e.g. healthy-1, healthy-2,
 #' disease-1, disease-2
 #' @param grp Variable to use for grouping clusters IDs, e.g. healthy and
@@ -285,7 +291,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @noRd
 .create_grouped_plot <- function(df_in, x, y, clst, grp, method = "bar",
                                  n_label = NULL, p_label = c(value = 0.05),
-                                 p_method = NULL, p_grp = x, p_file = NULL,
+                                 p_y = y, p_method = NULL, p_grp = x, p_file = NULL,
                                  p_corner = FALSE, label_params = list(),
                                  show_points = TRUE, add_zeros = TRUE,
                                  show_zeros = TRUE, ...) {
@@ -305,7 +311,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   if (add_zeros) {
     df_in <- .add_missing_zeros(
       df_in,
-      dat_cols   = y,
+      dat_cols   = c(y, p_y),
       expand_col = x,
       clst_col   = clst,
       grp_col    = grp
@@ -322,7 +328,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   if (add_p) {
     p <- .calc_pvalue(
       df_in,
-      data_col = y, cluster_col = grp, group_col = p_grp,
+      data_col = p_y, cluster_col = grp, group_col = p_grp,
       p_method = p_method, file = p_file
     )
 
@@ -1446,7 +1452,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   res <- dplyr::right_join(df_in, all, by = all_cols)
 
   res <- dplyr::mutate(
-    res, dplyr::across(all_of(dat_cols), tidyr::replace_na, 0)
+    res, dplyr::across(all_of(unique(dat_cols)), tidyr::replace_na, 0)
   )
 
   res <- dplyr::mutate(res, dplyr::across(
