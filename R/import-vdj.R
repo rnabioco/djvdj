@@ -313,7 +313,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       # contigs that did not have any mutations will have NAs
       indel_ctigs <- purrr::map(
         indel_ctigs,
-        ~ mutate(.x, dplyr::across(all_of(indel_cols), tidyr::replace_na, 0))
+        ~ mutate(.x, dplyr::across(all_of(indel_cols), ~ tidyr::replace_na(.x, 0)))
       )
 
       contigs    <- indel_ctigs
