@@ -659,7 +659,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
   n_lab_dat$legend <- n_lab_dat$axis <- n_lab_dat$corner
 
   if ((!is.null(grp_col) || !is.null(clst_col)) && identical(method, "bar")) {
-    n_lab_dat$axis <- dplyr::rename(df_in, .n = .data$freq)
+    n_lab_dat$axis <- dplyr::rename(df_in, .n = "freq")
   }
 
   # Set common arguments
