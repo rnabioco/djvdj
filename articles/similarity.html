@@ -15,8 +15,8 @@
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.6/font.css" rel="stylesheet">
-<link href="../deps/Source_Code_Pro-0.4.6/font.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.7/font.css" rel="stylesheet">
+<link href="../deps/Source_Code_Pro-0.4.7/font.css" rel="stylesheet">
 <!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Repertoire Similarity</h1>
             
-            <h4 data-toc-skip class="date">May 08 2023</h4>
+            <h4 data-toc-skip class="date">August 29 2023</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/rnabioco/djvdj/blob/HEAD/vignettes/similarity.Rmd" class="external-link"><code>vignettes/similarity.Rmd</code></a></small>
       <div class="d-none name"><code>similarity.Rmd</code></div>
@@ -329,9 +329,9 @@ e.g. <code>size</code>, <code>shape</code>, etc.</p>
 <div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<pre><code><span><span class="co">#&gt; R version 4.3.0 (2023-04-21)</span></span>
+<pre><code><span><span class="co">#&gt; R version 4.3.1 (2023-06-16)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu (64-bit)</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 22.04.2 LTS</span></span>
+<span><span class="co">#&gt; Running under: Ubuntu 22.04.3 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
 <span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
@@ -350,89 +350,89 @@ e.g. <code>size</code>, <code>shape</code>, etc.</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] RColorBrewer_1.1-3 ggplot2_3.4.2      SeuratObject_4.1.3</span></span>
-<span><span class="co">#&gt; [4] Seurat_4.3.0       djvdj_0.1.0       </span></span>
+<span><span class="co">#&gt; [1] RColorBrewer_1.1-3 ggplot2_3.4.3      SeuratObject_4.1.3</span></span>
+<span><span class="co">#&gt; [4] Seurat_4.3.0.1     djvdj_0.1.0       </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] RcppAnnoy_0.0.20            splines_4.3.0              </span></span>
+<span><span class="co">#&gt;   [1] RcppAnnoy_0.0.21            splines_4.3.1              </span></span>
 <span><span class="co">#&gt;   [3] later_1.3.1                 bitops_1.0-7               </span></span>
 <span><span class="co">#&gt;   [5] tibble_3.2.1                polyclip_1.10-4            </span></span>
 <span><span class="co">#&gt;   [7] lifecycle_1.0.3             doParallel_1.0.17          </span></span>
 <span><span class="co">#&gt;   [9] rprojroot_2.0.3             globals_0.16.2             </span></span>
 <span><span class="co">#&gt;  [11] lattice_0.21-8              vroom_1.6.3                </span></span>
-<span><span class="co">#&gt;  [13] MASS_7.3-58.4               backports_1.4.1            </span></span>
-<span><span class="co">#&gt;  [15] magrittr_2.0.3              plotly_4.10.1              </span></span>
-<span><span class="co">#&gt;  [17] sass_0.4.6                  rmarkdown_2.21             </span></span>
+<span><span class="co">#&gt;  [13] MASS_7.3-60                 backports_1.4.1            </span></span>
+<span><span class="co">#&gt;  [15] magrittr_2.0.3              plotly_4.10.2              </span></span>
+<span><span class="co">#&gt;  [17] sass_0.4.7                  rmarkdown_2.24             </span></span>
 <span><span class="co">#&gt;  [19] jquerylib_0.1.4             yaml_2.3.7                 </span></span>
-<span><span class="co">#&gt;  [21] httpuv_1.6.9                sctransform_0.3.5          </span></span>
-<span><span class="co">#&gt;  [23] sp_1.6-0                    spatstat.sparse_3.0-1      </span></span>
-<span><span class="co">#&gt;  [25] reticulate_1.28             cowplot_1.1.1              </span></span>
-<span><span class="co">#&gt;  [27] pbapply_1.7-0               abind_1.4-5                </span></span>
+<span><span class="co">#&gt;  [21] httpuv_1.6.11               sctransform_0.3.5          </span></span>
+<span><span class="co">#&gt;  [23] sp_2.0-0                    spatstat.sparse_3.0-2      </span></span>
+<span><span class="co">#&gt;  [25] reticulate_1.31             cowplot_1.1.1              </span></span>
+<span><span class="co">#&gt;  [27] pbapply_1.7-2               abind_1.4-5                </span></span>
 <span><span class="co">#&gt;  [29] zlibbioc_1.46.0             Rtsne_0.16                 </span></span>
-<span><span class="co">#&gt;  [31] GenomicRanges_1.52.0        purrr_1.0.1                </span></span>
+<span><span class="co">#&gt;  [31] GenomicRanges_1.52.0        purrr_1.0.2                </span></span>
 <span><span class="co">#&gt;  [33] BiocGenerics_0.46.0         RCurl_1.98-1.12            </span></span>
 <span><span class="co">#&gt;  [35] circlize_0.4.15             GenomeInfoDbData_1.2.10    </span></span>
-<span><span class="co">#&gt;  [37] IRanges_2.34.0              S4Vectors_0.38.1           </span></span>
+<span><span class="co">#&gt;  [37] IRanges_2.34.1              S4Vectors_0.38.1           </span></span>
 <span><span class="co">#&gt;  [39] ggrepel_0.9.3               irlba_2.3.5.1              </span></span>
-<span><span class="co">#&gt;  [41] listenv_0.9.0               spatstat.utils_3.0-2       </span></span>
-<span><span class="co">#&gt;  [43] goftest_1.2-3               spatstat.random_3.1-4      </span></span>
-<span><span class="co">#&gt;  [45] fitdistrplus_1.1-11         parallelly_1.35.0          </span></span>
+<span><span class="co">#&gt;  [41] listenv_0.9.0               spatstat.utils_3.0-3       </span></span>
+<span><span class="co">#&gt;  [43] goftest_1.2-3               spatstat.random_3.1-5      </span></span>
+<span><span class="co">#&gt;  [45] fitdistrplus_1.1-11         parallelly_1.36.0          </span></span>
 <span><span class="co">#&gt;  [47] pkgdown_2.0.7               leiden_0.4.3               </span></span>
-<span><span class="co">#&gt;  [49] codetools_0.2-19            DelayedArray_0.26.2        </span></span>
+<span><span class="co">#&gt;  [49] codetools_0.2-19            DelayedArray_0.26.7        </span></span>
 <span><span class="co">#&gt;  [51] tidyselect_1.2.0            shape_1.4.6                </span></span>
-<span><span class="co">#&gt;  [53] farver_2.1.1                matrixStats_0.63.0         </span></span>
-<span><span class="co">#&gt;  [55] stats4_4.3.0                spatstat.explore_3.1-0     </span></span>
-<span><span class="co">#&gt;  [57] jsonlite_1.8.4              GetoptLong_1.0.5           </span></span>
+<span><span class="co">#&gt;  [53] farver_2.1.1                matrixStats_1.0.0          </span></span>
+<span><span class="co">#&gt;  [55] stats4_4.3.1                spatstat.explore_3.2-1     </span></span>
+<span><span class="co">#&gt;  [57] jsonlite_1.8.7              GetoptLong_1.0.5           </span></span>
 <span><span class="co">#&gt;  [59] ellipsis_0.3.2              ggtrace_0.2.0              </span></span>
-<span><span class="co">#&gt;  [61] progressr_0.13.0            ggridges_0.5.4             </span></span>
+<span><span class="co">#&gt;  [61] progressr_0.14.0            ggridges_0.5.4             </span></span>
 <span><span class="co">#&gt;  [63] survival_3.5-5              iterators_1.0.14           </span></span>
 <span><span class="co">#&gt;  [65] systemfonts_1.0.4           foreach_1.5.2              </span></span>
-<span><span class="co">#&gt;  [67] tools_4.3.0                 ragg_1.2.5                 </span></span>
-<span><span class="co">#&gt;  [69] ica_1.0-3                   Rcpp_1.0.10                </span></span>
+<span><span class="co">#&gt;  [67] tools_4.3.1                 ragg_1.2.5                 </span></span>
+<span><span class="co">#&gt;  [69] ica_1.0-3                   Rcpp_1.0.11                </span></span>
 <span><span class="co">#&gt;  [71] glue_1.6.2                  gridExtra_2.3              </span></span>
-<span><span class="co">#&gt;  [73] xfun_0.39                   MatrixGenerics_1.12.0      </span></span>
-<span><span class="co">#&gt;  [75] GenomeInfoDb_1.36.0         dplyr_1.1.2                </span></span>
+<span><span class="co">#&gt;  [73] xfun_0.40                   MatrixGenerics_1.12.3      </span></span>
+<span><span class="co">#&gt;  [75] GenomeInfoDb_1.36.2         dplyr_1.1.2                </span></span>
 <span><span class="co">#&gt;  [77] withr_2.5.0                 fastmap_1.1.1              </span></span>
 <span><span class="co">#&gt;  [79] boot_1.3-28.1               fansi_1.0.4                </span></span>
-<span><span class="co">#&gt;  [81] digest_0.6.31               R6_2.5.1                   </span></span>
+<span><span class="co">#&gt;  [81] digest_0.6.33               R6_2.5.1                   </span></span>
 <span><span class="co">#&gt;  [83] mime_0.12                   textshaping_0.3.6          </span></span>
-<span><span class="co">#&gt;  [85] colorspace_2.1-0            scattermore_1.0            </span></span>
+<span><span class="co">#&gt;  [85] colorspace_2.1-0            scattermore_1.2            </span></span>
 <span><span class="co">#&gt;  [87] tensor_1.5                  spatstat.data_3.0-1        </span></span>
 <span><span class="co">#&gt;  [89] utf8_1.2.3                  tidyr_1.3.0                </span></span>
 <span><span class="co">#&gt;  [91] generics_0.1.3              data.table_1.14.8          </span></span>
-<span><span class="co">#&gt;  [93] httr_1.4.5                  htmlwidgets_1.6.2          </span></span>
-<span><span class="co">#&gt;  [95] S4Arrays_1.0.1              uwot_0.1.14                </span></span>
-<span><span class="co">#&gt;  [97] pkgconfig_2.0.3             gtable_0.3.3               </span></span>
+<span><span class="co">#&gt;  [93] httr_1.4.7                  htmlwidgets_1.6.2          </span></span>
+<span><span class="co">#&gt;  [95] S4Arrays_1.0.5              uwot_0.1.16                </span></span>
+<span><span class="co">#&gt;  [97] pkgconfig_2.0.3             gtable_0.3.4               </span></span>
 <span><span class="co">#&gt;  [99] ComplexHeatmap_2.16.0       lmtest_0.9-40              </span></span>
 <span><span class="co">#&gt; [101] SingleCellExperiment_1.22.0 XVector_0.40.0             </span></span>
-<span><span class="co">#&gt; [103] htmltools_0.5.5             clue_0.3-64                </span></span>
+<span><span class="co">#&gt; [103] htmltools_0.5.6             clue_0.3-64                </span></span>
 <span><span class="co">#&gt; [105] scales_1.2.1                Biobase_2.60.0             </span></span>
-<span><span class="co">#&gt; [107] png_0.1-8                   knitr_1.42                 </span></span>
-<span><span class="co">#&gt; [109] tzdb_0.3.0                  reshape2_1.4.4             </span></span>
+<span><span class="co">#&gt; [107] png_0.1-8                   knitr_1.43                 </span></span>
+<span><span class="co">#&gt; [109] tzdb_0.4.0                  reshape2_1.4.4             </span></span>
 <span><span class="co">#&gt; [111] rjson_0.2.21                nlme_3.1-162               </span></span>
 <span><span class="co">#&gt; [113] cachem_1.0.8                zoo_1.8-12                 </span></span>
 <span><span class="co">#&gt; [115] GlobalOptions_0.1.2         stringr_1.5.0              </span></span>
-<span><span class="co">#&gt; [117] KernSmooth_2.23-20          parallel_4.3.0             </span></span>
+<span><span class="co">#&gt; [117] KernSmooth_2.23-21          parallel_4.3.1             </span></span>
 <span><span class="co">#&gt; [119] miniUI_0.1.1.1              desc_1.4.2                 </span></span>
-<span><span class="co">#&gt; [121] pillar_1.9.0                grid_4.3.0                 </span></span>
-<span><span class="co">#&gt; [123] vctrs_0.6.2                 RANN_2.6.1                 </span></span>
-<span><span class="co">#&gt; [125] promises_1.2.0.1            xtable_1.8-4               </span></span>
-<span><span class="co">#&gt; [127] cluster_2.1.4               evaluate_0.20              </span></span>
+<span><span class="co">#&gt; [121] pillar_1.9.0                grid_4.3.1                 </span></span>
+<span><span class="co">#&gt; [123] vctrs_0.6.3                 RANN_2.6.1                 </span></span>
+<span><span class="co">#&gt; [125] promises_1.2.1              xtable_1.8-4               </span></span>
+<span><span class="co">#&gt; [127] cluster_2.1.4               evaluate_0.21              </span></span>
 <span><span class="co">#&gt; [129] readr_2.1.4                 cli_3.6.1                  </span></span>
-<span><span class="co">#&gt; [131] compiler_4.3.0              rlang_1.1.1                </span></span>
+<span><span class="co">#&gt; [131] compiler_4.3.1              rlang_1.1.1                </span></span>
 <span><span class="co">#&gt; [133] crayon_1.5.2                abdiv_0.2.0                </span></span>
-<span><span class="co">#&gt; [135] future.apply_1.10.0         labeling_0.4.2             </span></span>
-<span><span class="co">#&gt; [137] plyr_1.8.8                  fs_1.6.2                   </span></span>
+<span><span class="co">#&gt; [135] future.apply_1.11.0         labeling_0.4.2             </span></span>
+<span><span class="co">#&gt; [137] plyr_1.8.8                  fs_1.6.3                   </span></span>
 <span><span class="co">#&gt; [139] stringi_1.7.12              viridisLite_0.4.2          </span></span>
-<span><span class="co">#&gt; [141] deldir_1.0-6                munsell_0.5.0              </span></span>
-<span><span class="co">#&gt; [143] lazyeval_0.2.2              spatstat.geom_3.1-0        </span></span>
-<span><span class="co">#&gt; [145] Matrix_1.5-4                hms_1.1.3                  </span></span>
-<span><span class="co">#&gt; [147] patchwork_1.1.2             bit64_4.0.5                </span></span>
-<span><span class="co">#&gt; [149] future_1.32.0               shiny_1.7.4                </span></span>
-<span><span class="co">#&gt; [151] highr_0.10                  SummarizedExperiment_1.30.1</span></span>
-<span><span class="co">#&gt; [153] ROCR_1.0-11                 igraph_1.4.2               </span></span>
-<span><span class="co">#&gt; [155] broom_1.0.4                 memoise_2.0.1              </span></span>
-<span><span class="co">#&gt; [157] bslib_0.4.2                 bit_4.0.5</span></span></code></pre>
+<span><span class="co">#&gt; [141] deldir_1.0-9                munsell_0.5.0              </span></span>
+<span><span class="co">#&gt; [143] lazyeval_0.2.2              spatstat.geom_3.2-4        </span></span>
+<span><span class="co">#&gt; [145] Matrix_1.5-4.1              hms_1.1.3                  </span></span>
+<span><span class="co">#&gt; [147] patchwork_1.1.3             bit64_4.0.5                </span></span>
+<span><span class="co">#&gt; [149] future_1.33.0               shiny_1.7.5                </span></span>
+<span><span class="co">#&gt; [151] SummarizedExperiment_1.30.2 highr_0.10                 </span></span>
+<span><span class="co">#&gt; [153] ROCR_1.0-11                 igraph_1.5.1               </span></span>
+<span><span class="co">#&gt; [155] broom_1.0.5                 memoise_2.0.1              </span></span>
+<span><span class="co">#&gt; [157] bslib_0.5.1                 bit_4.0.5</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
