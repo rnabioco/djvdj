@@ -118,6 +118,45 @@ test_that("import_vdj number of chains represented by each column", {
 #   expect_identical(colnames(res), colnames(splen_so))
 # })
 
+# Check include_constant
+test_that("import_vdj include_mutations", {
+  
+  check_constant <- function(splen_so, include_constant){
+    res <- splen_so |>
+      import_vdj(
+        vdj_dir = ctigs,
+        prefix  = "PREFIX_",
+        include_mutations = TRUE,
+        include_constant = include_constant
+      )
+
+    dat <- res@meta.data
+    types <- c("ins", "del", "mis")
+
+    all_types <- lapply(types, function(type){
+      dat_all <- dat[ , grepl(paste0("PREFIX_all_", type, "$"), colnames(dat))]
+      suppressWarnings(dat_all <- as.double(dat_all))
+      dat_all[is.na(dat_all)] <- 0
+      if(include_constant){
+        dat_ind <- dat[ , grepl(paste0("PREFIX_[v|d|j|c]_", type, "$"), colnames(dat))]
+      } else {
+        dat_ind <- dat[ , grepl(paste0("PREFIX_[v|d|j]_", type, "$"), colnames(dat))]
+      }
+      suppressWarnings(dat_ind <- apply(dat_ind, 2, as.double))
+      dat_ind[is.na(dat_ind)] <- 0
+
+      return(data.frame(sum_val = rowSums(dat_ind), all_val = dat_all))
+    })
+    all_types <- do.call(rbind, all_types)
+    return(all_types)
+  }
+
+  constant_included <- check_constant(splen_so, include_constant = TRUE)
+  constant_excluded <- check_constant(splen_so, include_constant = FALSE)
+  expect_identical(constant_included$sum_val, constant_included$all_val)
+  expect_identical(constant_included$sum_val, constant_included$all_val)
+})
+
 # Check arguments for data.frame input
 test_that("import_vdj data.frame", {
   res <- df_1 |>

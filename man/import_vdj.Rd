@@ -13,6 +13,7 @@ import_vdj(
   filter_paired = FALSE,
   define_clonotypes = NULL,
   include_mutations = FALSE,
+  include_constant = FALSE,
   aggr_dir = NULL,
   quiet = FALSE,
   sep = ";"
@@ -60,6 +61,14 @@ concat_ref.bam file from cellranger vdj to be present the directory provided
 to vdj_dir. If include_mutations is TRUE, filter_chains is also
 automatically set TRUE since indel data is only available for productive
 chains.}
+
+\item{include_constant}{If the constant region should be included in the
+"all" mutation count. If TRUE, the constant region will be included in
+the "all" mutation count and the length of the V + J + D + C regions
+will be used to calculate the "all_freq". If FALSE (the default), any
+mutations in the c region will not be counted in the "all" mutation count
+and only the length of the V + J + D region will be used to calculate
+the frequency.}
 
 \item{aggr_dir}{Path to cellranger aggr output. To include mutation
 information for each chain, also provide paths to the original cellranger

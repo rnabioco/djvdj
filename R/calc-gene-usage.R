@@ -688,7 +688,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
     (!is.null(grp_col) || !is.null(clst_col)) &&
     (identical(method, "bar") || identical(method, "boxplot"))
   ) {
-    n_lab_dat$axis <- dplyr::rename(df_in, .n = .data$freq)
+    n_lab_dat$axis <- dplyr::rename(df_in, .n = "freq")
   }
 
   # Set common arguments
