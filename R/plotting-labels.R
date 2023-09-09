@@ -402,17 +402,16 @@
 
   dat_labs <- purrr::set_names(dat$label, dat[[grp]])
 
-  if (identical(axis, "x")) {
-    res <- gg_in +
-      ggplot2::scale_x_discrete(labels = dat_labs)
+  ax_fn <- switch(
+    axis,
+    x = ggplot2::scale_x_discrete,
+    y = ggplot2::scale_y_discrete
+  )
 
-  } else if (identical(axis, "y")) {
-    res <- gg_in +
-      ggplot2::scale_y_discrete(labels = dat_labs)
+  if (is.null(ax_fn)) cli::cli_abort("`axis` must be x or y")
 
-  } else {
-    cli::cli_abort("`axis` must be x or y")
-  }
+  res <- gg_in +
+    ax_fn(labels = dat_labs)
 
   res
 }

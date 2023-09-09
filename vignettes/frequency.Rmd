@@ -237,10 +237,10 @@ Label aesthetics can be modified by passing a named list of aesthetic parameters
 ```{r}
 so |>
   plot_frequency(
-    data_col    = "isotype",
-    cluster_col = "sample",
-    group_col   = "orig.ident",
-    n_label     = "corner",
+    data_col     = "isotype",
+    cluster_col  = "sample",
+    group_col    = "orig.ident",
+    n_label      = "corner",
     label_params = list(p.color = "red")
   )
 ```
