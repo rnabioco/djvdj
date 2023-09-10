@@ -275,8 +275,8 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @param p_method Method to calculate p-values
 #' @param p_grp Variable to use for grouping samples when calculating p-values.
 #' A separate p-value will be calculated for each label in p_grp.
-#' @param p_corner Should p-value be shown in the top right corner, if `FALSE`
-#' p-value will be shown above each group
+#' @param p_x Manually set x coordinate for p-label, provide x specification or
+#' 'right', 'left', or 'center'.
 #' @param p_file File path to save p-value csv
 #' @param label_params Named list with specifications to modify label
 #' aesthetics
@@ -292,7 +292,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 .create_grouped_plot <- function(df_in, x, y, clst, grp, method = "bar",
                                  n_label = NULL, p_label = c(value = 0.05),
                                  p_y = y, p_method = NULL, p_grp = x, p_file = NULL,
-                                 p_corner = FALSE, label_params = list(),
+                                 p_x = NULL, label_params = list(),
                                  show_points = TRUE, add_zeros = TRUE,
                                  show_zeros = TRUE, ...) {
 
@@ -322,8 +322,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   # by default only show significant p-values
   if (identical(p_label, "all")) p_label <- c(value = Inf)
 
-  add_p    <- !identical(p_label, "none")
-  p_corner <- add_p && (p_corner || is.null(p_grp))
+  add_p <- !identical(p_label, "none")
 
   if (add_p) {
     p <- .calc_pvalue(
@@ -336,8 +335,13 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     p <- dplyr::group_by(p, !!!syms(c(p_grp, "p_value")))
 
     p <- dplyr::summarize(
-      p, y_min = min(!!sym(y)), y_max = max(!!sym(y)),
-      .groups = "drop"
+      p,
+      y_min = min(!!sym(y)),
+      y_max = max(!!sym(y)),
+      gap   = (max(.data$y_max) - min(.data$y_min)) * 0.05,
+      y     = .data$y_max + .data$gap,
+      n_x   = dplyr::n_distinct(!!sym(x)),  # number of x-axis groups for each
+      .groups = "drop"                      # p-value plotted, used for p_x
     )
 
     # Format p-values
@@ -352,9 +356,20 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
     if (nrow(p) == 0) add_p <- FALSE
 
-    # If only a single p-value plot in upper corner
-    if (p_corner) {
-      p <- dplyr::mutate(p, p_lab = paste0("italic(p) == ", .data$p_lab))
+    # Adjust p_x
+    if (is.null(p_x) && is.null(p_grp)) p_x <- "center"
+
+    if (!is.null(p_x)) {
+      p <- dplyr::mutate(
+        p,
+        !!sym(x) := switch(
+          as.character(p_x),  # EXPR should evaluate to character
+          right  = Inf,
+          left   = -Inf,
+          center = (n_x / 2) + 0.5,
+          p_x
+        )
+      )
     }
   }
 
@@ -395,7 +410,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     )
 
     # Need to adjust y_max based on mean and sd to position p-value label
-    if (add_p && !p_corner) {
+    if (add_p && is.null(p_x)) {
       y_dat <- dplyr::group_by(df_in, !!sym(p_grp))
 
       y_dat <- dplyr::mutate(
@@ -423,14 +438,6 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
   # Add p-values
   if (add_p) {
-    if (!p_corner) {
-      p <- dplyr::mutate(
-        p,
-        gap = (max(.data$y_max) - min(.data$y_min)) * 0.05,
-        y   = .data$y_max + .data$gap
-      )
-    }
-
     all_sym <- !any(grepl("[a-zA-Z0-9]", names(p_label)))
 
     label_params <- .parse_label_params(label_params)$p
@@ -439,11 +446,28 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       x = !!sym(x), y = .data$y, label = .data$p_lab, fill = NULL
     )
 
-    # If only one p-value calculated for plot, position in top right corner
-    if (p_corner) {
-      label_params$mapping$x <- label_params$mapping$y <- Inf
-      label_params$hjust     <- label_params$hjust %||% .get_label_just(p$p_lab)
+    # If only one p-value calculated for plot, position center of panel
+    # include 'p = ' when setting hjust for p label
+    if (!is.null(p_x)) {
+      label_params$mapping$y <- Inf
       label_params$vjust     <- label_params$vjust %||% 1.5
+
+      p_just <- ifelse(all_sym, p$p_lab, paste0("p = ", p$p_lab))
+
+      p <- dplyr::mutate(
+        p,
+        hjust = case_when(
+          orig.ident == Inf  ~ .get_label_just(p_just),
+          orig.ident == -Inf ~ .get_label_just(p_just, side = "left"),
+          TRUE               ~ 0.5
+        )
+      )
+
+      label_params$mapping$hjust <- sym("hjust")
+
+      if (!all_sym) {
+        p <- dplyr::mutate(p, p_lab = paste0("italic(p) == ", .data$p_lab))
+      }
     }
 
     label_params$data   <- p
@@ -466,7 +490,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     res <- res +
       lift(ggplot2::geom_text)(label_params)
 
-    if (p_corner && !"corner" %in% n_label) {
+    if (!is.null(p_x) && !"corner" %in% n_label) {
       res <- res +
         ggplot2::scale_y_continuous(expand = .n_label_expansion)
     }

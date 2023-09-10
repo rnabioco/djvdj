@@ -542,15 +542,31 @@
 #'
 #' @param x character vector of labels
 #' @param base base justification, increase this value to increase spacing
+#' @param exclude regular expression specifying characters/patterns to remove
+#' from x before calculating justification
+#' @param side side of label to add padding
 #' @return numeric vector of justification values
 #' @noRd
-.get_label_just <- function(x, base = 0.5) {
+.get_label_just <- function(x, base = 0.5, exclude = NULL, side = "right") {
+
+  .check_possible_values(side = c("right", "left"), .internal = TRUE)
+
+  # Remove excluded characters from x
+  if (!is.null(exclude)) x <- gsub(exclude, "", x)
 
   # Assumed height x width ratio
   char_h_w <- 1.5
 
   len <- nchar(x)
-  res <- 1 + (1 / len * (base * char_h_w))
+
+  # calculate hjust based on side
+  jst <- (1 / len * (base * char_h_w))
+
+  res <- switch(
+    side,
+    right = 1 + jst,
+    left  = 0 - jst
+  )
 
   res
 }

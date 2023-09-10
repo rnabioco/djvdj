@@ -286,6 +286,29 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'   plot legend
 #' - 'none', do not display the number of cells plotted
 #'
+#' @param p_label Specification indicating how p-values should be labeled on
+#' plot, this can one of the following:
+#'
+#' - 'none', do not display p-values
+#' - 'all', show p-values for all groups
+#' - A named vector providing p-value cutoffs and labels to display,
+#'   e.g. `c('*' = 0.05, '**' = 0.01, '***' = 0.001)`. The keyword 'value' can
+#'   be used to display the p-value for those less than a certain cutoff,
+#'   e.g. `c(value = 0.05, ns = 1.1)` will show significant p-values, all others
+#'   will be labeled 'ns'.
+#'
+#' @param p_method Method to use for calculating p-values, by default when
+#' comparing two groups a t-test will be used.
+#' When comparing more than two groups the Kruskal-Wallis test will be used.
+#' p-values are adjusted for
+#' multiple testing using Bonferroni correction. Possible methods include:
+#'
+#' - 't', two sample t-test performed with `stats::t.test()`
+#' - 'wilcox', Wilcoxon rank sum test performed with `stats::wilcox.test()`
+#' - 'kruskal', Kruskal-Wallis test performed with `stats::kruskal.test()`
+#'
+#' @param p_file File path to save table containing p-values for each
+#' comparison.
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
@@ -360,7 +383,8 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
                            plot_colors = NULL,
                            plot_lvls = names(plot_colors), panel_nrow = NULL,
                            panel_scales = "free", n_label = NULL,
-                           label_params = list(), ...) {
+                           p_label = "all", p_method = NULL,
+                           p_file = NULL, label_params = list(), ...) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -377,6 +401,8 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   }
 
   .check_group_cols(cluster_col, group_col, input)
+
+  .check_possible_values(p_method = c("t", "wilcox", "kruskal"))
 
   if (length(method) == 1 && is.null(names(method))) {
     nm <- as.character(substitute(method))
@@ -474,8 +500,12 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
     gg_args$clst      <- cluster_col
     gg_args$grp       <- group_col
     gg_args$add_zeros <- FALSE
-    gg_args$p_label   <- "all"
-    gg_args$p_corner  <- TRUE
+
+    gg_args$p_label   <- p_label
+    gg_args$p_method  <- p_method
+    gg_args$p_file    <- p_file
+    gg_args$p_x       <- "center"
+
     gg_args$method    <- "boxplot"
     gg_args           <- append(gg_args, list(p_grp = NULL))
 
