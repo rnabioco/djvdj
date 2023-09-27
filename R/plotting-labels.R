@@ -22,6 +22,9 @@
                          p_method = NULL, adj_method = "bonferroni",
                          file = NULL) {
 
+  # Check input values
+  .check_possible_values(p_method = c("t", "wilcox", "kruskal", "edgeR"))
+
   # Set method based on number of clusters for comparison
   n_clsts <- n_distinct(df_in[[cluster_col]])
 
@@ -146,8 +149,9 @@
 
   dat <- dplyr::mutate(
     dat,
-    .pool   = row_number(),
-    .sample = paste0(!!sym(cluster_col), "_", .data$.pool)
+    !!sym(cluster_col) := as.character(!!sym(cluster_col)),
+    .pool               = row_number(),
+    .sample             = paste0(!!sym(cluster_col), "_", .data$.pool)
   )
 
   dat <- dplyr::ungroup(dat)
@@ -167,6 +171,7 @@
 
   mat <- tibble::column_to_rownames(mat, group_col)
   mat <- as.matrix(mat)
+  mat <- mat[, sam_info$.sample]  # ensure columns are in correct order
 
   # Create DE list
   de_l <- edgeR::DGEList(mat, samples = sam_info)
@@ -181,15 +186,15 @@
   design <- stats::model.matrix(stats::as.formula(frm), de_l$samples)
 
   # Estimage dispersion
-  de_l <- edgeR::estimateDisp(de_l, design, trend = "none")
+  de_l <- edgeR::estimateDisp(y = de_l, design = design, trend = "none")
 
   # Fit glm
   de_fit <- edgeR::glmQLFit(
-    de_l, design, robust = TRUE, abundance.trend = FALSE
+    y = de_l, design = design, abundance.trend = FALSE
   )
 
   # Test for differential abundance
-  pvals <- edgeR::glmQLFTest(de_fit, coef = ncol(design))
+  pvals <- edgeR::glmQLFTest(glmfit = de_fit)
   pvals <- pvals$table
   pvals <- purrr::set_names(pvals$PValue, rownames(pvals))
 

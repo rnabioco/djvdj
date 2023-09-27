@@ -147,7 +147,8 @@ lift <- function(..f, ..., .unnamed = FALSE) {
 
     cli::cli_abort(
       "Some columns do not contain per-chain V(D)J data, can only filter
-       based on `chain` if all `data_cols` contain per-chain data: {bad_cols}"
+       based on `chain` if all `data_cols` contain per-chain data: {bad_cols}",
+      call = NULL
     )
   }
 
@@ -157,7 +158,8 @@ lift <- function(..f, ..., .unnamed = FALSE) {
       cli::cli_abort(
         "The number of chains per cell present in the {chain_col} column differs
          from the number of per-chain values present in `data_cols`, are you
-         using the correct `chain_col`?"
+         using the correct `chain_col`?",
+        call = NULL
       )
     }
 
@@ -559,7 +561,10 @@ NULL
 
   if (!is.null(chain)) {
     if (is.null(chain_col)) {
-      cli::cli_abort("`chain_col` must be provided when `chain` is specified")
+      cli::cli_abort(
+        "`chain_col` must be provided when `chain` is specified",
+        call = NULL
+      )
     }
 
     if (chain_col %in% dat_cols) {
@@ -569,7 +574,8 @@ NULL
 
       if (!chns) {
         cli::cli_abort(
-          "The specified chain ({chain}) is not present in {chain_col}"
+          "The specified chain ({chain}) is not present in {chain_col}",
+          call = NULL
         )
       }
     }
@@ -594,7 +600,7 @@ NULL
       )
     }
 
-    cli::cli_abort(msg)
+    cli::cli_abort(msg, call = NULL)
   }
 }
 
@@ -616,11 +622,15 @@ NULL
   val <- eval(sym(arg), envir = envir)
   len <- length(val)
 
-  if (!allow_null && is.null(val)) cli::cli_abort("`{arg}` cannot be `NULL`")
+  if (!allow_null && is.null(val)) {
+    cli::cli_abort("`{arg}` cannot be `NULL`", call = NULL)
+  }
 
   if (is.null(val)) return(invisible())
 
-  if (len_one && len != 1) cli::cli_abort("`{arg}` must be length 1")
+  if (len_one && len != 1) {
+    cli::cli_abort("`{arg}` must be length 1", call = NULL)
+  }
 
   if (is.list(val) && identical(Class, "list")) return(invisible())
 
@@ -633,7 +643,9 @@ NULL
     # val must be one of the classes specified to Class
     chk <- purrr::map_lgl(Class, ~ methods::is(val, .x))
 
-    if (!any(chk)) cli::cli_abort("`{arg}` must be class {.or {Class}}")
+    if (!any(chk)) {
+      cli::cli_abort("`{arg}` must be class {.or {Class}}", call = NULL)
+    }
   })
 }
 
@@ -668,7 +680,9 @@ NULL
     val <- eval(sym(.y), envir = envir)
 
     if (!all(val %in% .x)) {
-      cli::cli_abort("`{.y}` must be {.or {.x}}", .internal = .internal)
+      cli::cli_abort(
+        "`{.y}` must be {.or {.x}}", .internal = .internal, call = NULL
+      )
     }
   })
 }

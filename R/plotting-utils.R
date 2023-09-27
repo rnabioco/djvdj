@@ -305,6 +305,8 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     .check_possible_values(p_label = c("all", "none"))
   }
 
+  .check_possible_values(method = c("bar", "boxplot"))
+
   # Add zeros for missing groups
   # this is only necessary when plotting frequency
   # if plotting another metric, e.g. diversity, this should be FALSE
@@ -1442,6 +1444,10 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' groups are expected to have different values for clst_col.
 #' @noRd
 .add_missing_zeros <- function(df_in, dat_cols, expand_col, clst_col, grp_col) {
+
+  # If expand_col and grp_col are the same, no need to add zeros since each
+  # group contains a single value
+  if (identical(expand_col, grp_col)) return(df_in)
 
   # Save original levels to combinations to maintain ordering
   # convert all factors to character to allow correct merging at the end
