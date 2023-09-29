@@ -40,7 +40,6 @@ Imports:
     rlang (>= 0.4.11),
     S4Vectors,
     scales,
-    Seurat (>= 4.0.0),
     SingleCellExperiment,
     stats,
     stringr,
@@ -48,6 +47,7 @@ Imports:
     tidyr,
     utils
 Suggests: 
+    Seurat (>= 4.0.0),
     Biostrings,
     circlize,
     covr,

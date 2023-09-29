@@ -263,7 +263,7 @@ write_so <- function(dat_dir, write_dir, file, n_grps = 5) {
     preprocess_so()
 
   # Add mock groups
-  splen_so <- so %>%
+  so <- so %>%
     mutate_meta(~ {
       .x %>%
         group_by(orig.ident) %>%
@@ -271,8 +271,10 @@ write_so <- function(dat_dir, write_dir, file, n_grps = 5) {
         ungroup()
     })
 
-  # Save Seurat object
-  usethis::use_data(splen_so, compress = "xz")
+  splen_meta <- so@meta.data
+
+  # Save Seurat meta.data
+  usethis::use_data(splen_meta, compress = "xz")
 }
 
 

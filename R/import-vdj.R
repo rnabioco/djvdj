@@ -57,11 +57,21 @@
 #' @return Single cell object or data.frame with added V(D)J data
 #'
 #' @examples
+#' Load GEX data
+#' data_dir <- system.file("extdata/splen", package = "djvdj")
+#'
+#' gex_dirs <- c(
+#'   BL6 = file.path(data_dir, "BL6_GEX/filtered_feature_bc_matrix"),
+#'   MD4 = file.path(data_dir, "MD4_GEX/filtered_feature_bc_matrix")
+#' )
+#'
+#' splen_so <- gex_dirs |>
+#'   Seurat::Read10X() |>
+#'   Seurat::CreateSeuratObject()
+#'
 #' # Loading multiple datasets
 #' # to ensure cell barcodes for the V(D)J data match those in the object
 #' # load the datasets in the same order as the gene expression data
-#' data_dir <- system.file("extdata/splen", package = "djvdj")
-#'
 #' vdj_dirs <- c(
 #'   file.path(data_dir, "BL6_BCR"),
 #'   file.path(data_dir, "MD4_BCR")
@@ -937,7 +947,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     dplyr::mutate(full_len = sum(.data$len),
                   full_len_vdj = sum(.data$new_len)) %>%
     dplyr::select(!"new_len")
-  
+
   mut_coords <- dplyr::mutate(
     mut_coords,
     type = dplyr::recode(.data$type, !!!mut_key)
@@ -962,7 +972,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # some annotations overlap each other! Example: AAACCTGAGAACTGTA-1_contig_1
   # left_join + mutate is much faster than valr::bed_intersect, probably due
   # to the extreme number of "chromosomes"
-  if (utils::packageVersion("dplyr") > "1.1.1") { 
+  if (utils::packageVersion("dplyr") > "1.1.1") {
     # relationship argument gained in 1.1.1 https://dplyr.tidyverse.org/news/index.html
     vdj_muts <- dplyr::left_join(
       mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg"),
@@ -1038,7 +1048,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       dplyr::filter(.data$seg != "c")
     sum_column <- "full_len_vdj"
   }
-  
+
   all_muts <- dplyr::summarize(
     all_muts,
     n       = sum(.data$n),

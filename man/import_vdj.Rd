@@ -92,11 +92,21 @@ Single cell object or data.frame with added V(D)J data
 Import V(D)J data
 }
 \examples{
+Load GEX data
+data_dir <- system.file("extdata/splen", package = "djvdj")
+
+gex_dirs <- c(
+  BL6 = file.path(data_dir, "BL6_GEX/filtered_feature_bc_matrix"),
+  MD4 = file.path(data_dir, "MD4_GEX/filtered_feature_bc_matrix")
+)
+
+splen_so <- gex_dirs |>
+  Seurat::Read10X() |>
+  Seurat::CreateSeuratObject()
+
 # Loading multiple datasets
 # to ensure cell barcodes for the V(D)J data match those in the object
 # load the datasets in the same order as the gene expression data
-data_dir <- system.file("extdata/splen", package = "djvdj")
-
 vdj_dirs <- c(
   file.path(data_dir, "BL6_BCR"),
   file.path(data_dir, "MD4_BCR")

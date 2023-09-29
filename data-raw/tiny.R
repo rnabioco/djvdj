@@ -247,7 +247,5 @@ vdj_sce <- tiny_sce %>%
   )
 
 # Save objects
-use_data(tiny_so,  overwrite = TRUE)
-use_data(vdj_so,   overwrite = TRUE)
 use_data(tiny_sce, overwrite = TRUE)
 use_data(vdj_sce,  overwrite = TRUE)
