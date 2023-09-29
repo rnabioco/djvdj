@@ -10,6 +10,9 @@
 \alias{as_label}
 \alias{\%||\%}
 \title{Tidy eval helpers}
+\value{
+Nothing
+}
 \description{
 This page lists the tidy eval tools reexported in this package from
 rlang. To learn about using tidy eval in scripts and packages at a
