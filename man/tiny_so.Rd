@@ -10,6 +10,9 @@ A Seurat object with 200 features, 200 cells, and 1 assay
 \usage{
 tiny_so
 }
+\value{
+A tiny Seurat object
+}
 \description{
 A tiny Seurat object
 }

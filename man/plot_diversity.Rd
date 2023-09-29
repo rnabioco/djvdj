@@ -48,8 +48,8 @@ list(simpson = abdiv::simpson, shannon = abdiv::shannon)}
 \item{downsample}{Downsample clusters to the same size when calculating
 diversity metrics}
 
-\item{n_boots}{Number of bootstrap replicates for calculating standard error,
-if n_boots is 0 this will be skipped.}
+\item{n_boots}{Number of bootstrap replicates for calculating standard
+deviation, if n_boots is 0 this will be skipped.}
 
 \item{chain}{Chain to use for calculating diversity. To calculate diversity
 for a single chain, the column passed to the data_col argument must contain

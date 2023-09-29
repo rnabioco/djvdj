@@ -24,7 +24,6 @@
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with diversity metrics
 #' @importFrom abdiv simpson
-#' @importFrom broom tidy
 #' @importFrom boot boot
 #' @seealso [plot_diversity()]
 #'
@@ -234,10 +233,9 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
     res
   }
 
-  bt  <- boot::boot(x, fn, R = n_bts)
-  res <- broom::tidy(bt)
+  bt <- boot::boot(x, fn, R = n_bts)
 
-  if (n_bts == 0) res <- tibble::tibble(statistic = bt$t0, std.error = NA)
+  res <- tibble::tibble(statistic = bt$t0, std.error = stats::sd(bt$t))
 
   res
 }
@@ -259,8 +257,8 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 #' @param downsample Downsample clusters to the same size when calculating
 #' diversity metrics
-#' @param n_boots Number of bootstrap replicates for calculating standard error,
-#' if n_boots is 0 this will be skipped.
+#' @param n_boots Number of bootstrap replicates for calculating standard
+#' deviation, if n_boots is 0 this will be skipped.
 #' @param chain Chain to use for calculating diversity. To calculate diversity
 #' for a single chain, the column passed to the data_col argument must contain
 #' per-chain data such as CDR3 sequences. Set to NULL to include all chains.

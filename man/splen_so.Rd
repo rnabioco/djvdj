@@ -10,6 +10,9 @@ A Seurat object with 1000 features, 500 cells, and 1 assay
 \usage{
 splen_so
 }
+\value{
+A small Seurat object containing downsampled splenocyte data
+}
 \description{
 A small Seurat object containing downsampled splenocyte data
 }

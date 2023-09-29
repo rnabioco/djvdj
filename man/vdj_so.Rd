@@ -10,6 +10,9 @@ A Seurat object with 200 features, 200 cells, and 1 assay
 \usage{
 vdj_so
 }
+\value{
+A tiny Seurat object with V(D)J data
+}
 \description{
 A tiny Seurat object with V(D)J data
 }
