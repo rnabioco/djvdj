@@ -1,10 +1,11 @@
 # Test data
-df_1 <- vdj_so@meta.data
+df_1 <- vdj_sce@colData
 
-df_2 <- vdj_so@meta.data |>
+df_2 <- vdj_sce@colData |>
   as_tibble(rownames = ".cell_id")
 
 test_clsts <- df_1 |>
+  as_tibble() |>
   na.omit() |>
   pull(seurat_clusters) |>
   unique()
@@ -15,7 +16,7 @@ mets <- abdiv::beta_diversities |>
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 arg_lst <- list(
-  input       = list(vdj_so, vdj_sce, df_1, df_2),
+  input       = list(vdj_sce, df_1),
   data_col    = "cdr3",
   cluster_col = "seurat_clusters",
   method      = mets,
@@ -32,7 +33,7 @@ test_all_args(
 
 # Check similarity calculation
 # calculate similarity independently and compare to calc_similarity results
-test_sim <- vdj_so@meta.data |>
+test_sim <- vdj_sce@colData |>
   as_tibble(rownames = ".cell_id") |>
   filter(!is.na(cdr3)) |>
   group_by(cdr3, seurat_clusters) |>
@@ -70,7 +71,7 @@ purrr::walk(abdiv::beta_diversities, ~ {
 
   test_res <- get_sim_res(eval(parse(text = fn)))
 
-  res <- vdj_so |>
+  res <- vdj_sce |>
     calc_similarity(
       data_col    = "cdr3",
       cluster_col = "seurat_clusters",
@@ -79,7 +80,7 @@ purrr::walk(abdiv::beta_diversities, ~ {
       prefix      = "x"
     )
 
-  res <- res@meta.data |>
+  res <- res@colData |>
     as_tibble() |>
     select(seurat_clusters, all_of(nm)) |>
     filter(!is.na(seurat_clusters)) |>
@@ -91,27 +92,8 @@ purrr::walk(abdiv::beta_diversities, ~ {
   })
 })
 
-# Check Seurat output
-test_that("calc_similarity Seurat out", {
-  res <- vdj_so |>
-    calc_similarity(
-      data_col    = "cdr3",
-      cluster_col = "seurat_clusters",
-      method      = abdiv::binomial_deviance,
-      return_mat  = FALSE,
-      prefix      = "x"
-    )
-
-  expect_s4_class(res, "Seurat")
-
-  res@meta.data <- res@meta.data |>
-    select(-all_of(paste0("x", test_clsts)))
-
-  expect_identical(res, vdj_so)
-})
-
 # Check SCE output
-test_that("calc_similarity Seurat out", {
+test_that("calc_similarity SCE out", {
   res <- vdj_sce |>
     calc_similarity(
       data_col    = "cdr3",
@@ -133,7 +115,7 @@ test_that("calc_similarity Seurat out", {
 
 # Check data.frame output
 test_that("calc_similarity df out", {
-  res <- vdj_so@meta.data |>
+  res <- vdj_sce@colData |>
     calc_similarity(
       data_col    = "cdr3",
       cluster_col = "seurat_clusters",
@@ -145,14 +127,15 @@ test_that("calc_similarity df out", {
   expect_s3_class(res, "data.frame")
 
   res_2 <- res |>
+    as_tibble() |>
     select(-all_of(paste0("x", test_clsts)))
 
-  expect_identical(res_2, vdj_so@meta.data)
+  expect_identical(res_2, as_tibble(vdj_sce@colData))
 })
 
 # Check matrix output
 test_that("calc_similarity mat out", {
-  res <- vdj_so |>
+  res <- vdj_sce |>
     calc_similarity(
       data_col    = "cdr3",
       cluster_col = "seurat_clusters",

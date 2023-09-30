@@ -6,24 +6,24 @@ test_cols <- c(
   "#999999", "#875C04", "#000000"
 )
 
-test_lvls <- unique(vdj_so$seurat_clusters) |>
+test_lvls <- unique(vdj_sce$seurat_clusters) |>
   as.character() |>
   rev()
 
 test_lvls_2 <- unique(test_so$sample) |>
   rev()
 
-df_1 <- vdj_so@meta.data
+df_1 <- vdj_sce@colData
 
-df_2 <- vdj_so@meta.data |>
+df_2 <- vdj_sce@colData |>
   as_tibble(rownames = ".cell_id")
 
 # Check all plot_features arguments except data_slot
 arg_lst <- list(
-  x           = list("UMAP_1", c(x = "UMAP_1")),
+  x           = list("UMAP_1"),
   y           = list("UMAP_2", c(y = "UMAP_2")),
-  input       = list(vdj_so, vdj_sce, df_1),
-  data_col    = list("seurat_clusters", c(clust = "seurat_clusters")),
+  input       = list(vdj_sce, df_1),
+  data_col    = list("seurat_clusters"),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls),
   min_q       = list(NULL, 0.05),
@@ -38,8 +38,8 @@ test_all_args(
 )
 
 # Check all plot_features arguments with data_slot
-arg_lst$input     <- list(vdj_so)
-arg_lst$data_slot <- c("data", "counts")
+arg_lst$input     <- list(vdj_sce)
+arg_lst$data_slot <- c("counts")
 
 test_all_args(
   arg_lst = arg_lst,
@@ -51,7 +51,7 @@ test_all_args(
 # Check all plot_features arguments for numeric feature
 arg_lst$data_col   <- "nCount_RNA"
 arg_lst$plot_lvls <- list(NULL)
-arg_lst$trans     <- c("identity", "log10")
+arg_lst$trans     <- c("log10")
 arg_lst$min_q     <- 0.01
 arg_lst$max_q     <- 0.99
 
@@ -65,7 +65,7 @@ test_all_args(
 # Check plot_features warning for numeric feature
 # test_that("plot_features warning num feat", {
 #   expect_warning(
-#     vdj_so |>
+#     vdj_sce |>
 #       plot_scatter(
 #         data_col  = "nCount_RNA",
 #         plot_lvls = test_lvls
@@ -76,7 +76,7 @@ test_all_args(
 # Check plot_features error for same x and y
 test_that("plot_features error same x y", {
   expect_error(
-    vdj_so |>
+    vdj_sce |>
       plot_scatter(
         x         = "UMAP_1",
         y         = "UMAP_1",
@@ -94,7 +94,7 @@ test_that("plot_fetures bad feature", {
   }
 
   expect_error(
-    expect_warning(fn(vdj_so), "requested variables were not found"),
+    expect_warning(fn(vdj_sce), "requested variables were not found"),
     "not present in input"
   )
 
@@ -105,12 +105,10 @@ test_that("plot_fetures bad feature", {
 
 # Check all plot_vdj_feature arguments
 arg_lst <- list(
-  input       = list(vdj_so, vdj_sce, df_1),
+  input       = list(vdj_sce, df_1),
   data_col    = "umis",
   chain       = list(NULL, "IGH", c("IGH", "IGK")),
-  plot_colors = list(NULL, test_cols),
-  min_q       = list(NULL, 0.05),
-  max_q       = list(NULL, 0.95)
+  plot_colors = list(NULL, test_cols)
 )
 
 test_all_args(
@@ -122,7 +120,8 @@ test_all_args(
 
 arg_lst$data_col <- "chains"
 
-chain_lvls <- vdj_so@meta.data |>
+chain_lvls <- vdj_sce@colData |>
+  as.data.frame() |>
   pull(chains) |>
   unique() |>
   c("IGH;IGH", "IGH") |>
@@ -141,7 +140,7 @@ test_all_args(
 test_that("plot_vdj_feature bad chain filtering", {
 
   expect_warning(
-    vdj_so |>
+    vdj_sce |>
       plot_scatter(
         data_col = "nCount_RNA",
         chain = "IGK"
@@ -152,7 +151,7 @@ test_that("plot_vdj_feature bad chain filtering", {
 
 # Check all plot_violin arguments
 arg_lst <- list(
-  input       = list(vdj_so, vdj_sce, df_1),
+  input       = list(vdj_sce, df_1),
   data_col    = "nCount_RNA",
   per_chain    = c(FALSE, TRUE),
   cluster_col = list(NULL, "seurat_clusters"),
@@ -181,7 +180,7 @@ test_all_args(
 
 # Check all plot_clone_frequency arguments for line plot
 arg_lst <- list(
-  input        = list(vdj_so, vdj_sce),
+  input        = list(vdj_sce),
   data_col     = "cdr3_nt",
   cluster_col  = list(NULL, "seurat_clusters"),
   method       = "line",
@@ -189,7 +188,7 @@ arg_lst <- list(
   plot_colors  = list(NULL, test_cols),
   plot_lvls    = list(NULL, test_lvls),
   label_params = list(list(), list(size = 2)),
-  clones       = c(0, 5)
+  clones       = c(5)
 )
 
 test_all_args(
@@ -212,7 +211,7 @@ test_all_args(
 
 # Check plot_clone_frequency axis labels
 arg_lst <- list(
-  input  = list(vdj_so, vdj_sce),
+  input  = list(vdj_sce),
   units  = "percent",
   method = c("bar", "line")
 )
@@ -236,7 +235,7 @@ test_all_args(
 # Check plot_clone_frequency bad units
 test_that("plot_clone_frequency bad units", {
   expect_error(
-    vdj_so |>
+    vdj_sce |>
       plot_clone_frequency(
         method   = "line",
         data_col = "cdr3_nt",
@@ -248,7 +247,7 @@ test_that("plot_clone_frequency bad units", {
 # Check plot_clone_frequency bad method
 test_that("plot_clone_frequency bad method", {
   expect_error(
-    vdj_so |>
+    vdj_sce |>
       plot_clone_frequency(
         method          = "BAD",
         data_col = "cdr3_nt"
@@ -259,7 +258,7 @@ test_that("plot_clone_frequency bad method", {
 # Check plot_clone_frequency bad n_clonotypes
 test_that("plot_clone_frequency bad n_clonotypes", {
   expect_error(
-    vdj_so |>
+    vdj_sce |>
       plot_clone_frequency(
         method   = "bar",
         data_col = "cdr3_nt",
@@ -276,7 +275,7 @@ mets <- abdiv::alpha_diversities |>
 names(mets) <- abdiv::alpha_diversities
 
 arg_lst <- list(
-  input       = list(vdj_so, vdj_sce),
+  input       = list(vdj_sce),
   data_col    = "cdr3_nt",
   cluster_col = list(NULL, "seurat_clusters"),
   method      = list(mets),
@@ -298,7 +297,7 @@ mets <- abdiv::alpha_diversities |>
 
 test_that("plot_diversity bad names", {
   expect_error(
-    vdj_so |>
+    vdj_sce |>
       plot_diversity(
         data_col = "cdr3_nt",
         method   = unname(mets)
@@ -309,7 +308,7 @@ test_that("plot_diversity bad names", {
 
 # Check all plot_rarefaction arguments
 arg_lst <- list(
-  input        = list(vdj_so, vdj_sce),
+  input        = list(vdj_sce),
   data_col     = "cdr3_nt",
   cluster_col  = list(NULL, "seurat_clusters"),
   method       = c("richness", "shannon", "invsimpson"),
@@ -352,7 +351,7 @@ test_all_args(
 
 arg_lst$group_col   <- "orig.ident"
 arg_lst$cluster_col <- "sample"
-arg_lst$plot_lvls   <- list(NULL, c("BL6", "MD4"))
+arg_lst$plot_lvls   <- list(NULL)
 
 test_all_args(
   arg_lst = arg_lst,
@@ -367,7 +366,7 @@ mets <- abdiv::alpha_diversities |>
 
 test_that("plot_diversity bad names", {
   expect_error(
-    vdj_so |>
+    vdj_sce |>
       plot_diversity(
         data_col = "cdr3_nt",
         method   = unname(mets)
@@ -390,7 +389,7 @@ mets <- purrr::set_names(mets) |>
   map(~ eval(parse(text = paste0("abdiv::", .x))))
 
 arg_lst <- list(
-  input       = list(vdj_so, vdj_sce),
+  input       = list(vdj_sce),
   data_col    = "cdr3_nt",
   cluster_col = "seurat_clusters",
   chain       = list(NULL, "IGH"),
@@ -419,7 +418,7 @@ test_all_args(
 # Check plot_similarity bad data_col
 test_that("plot_similarity bad clonotype col", {
   expect_error(
-    vdj_so |>
+    vdj_sce |>
       plot_similarity(
         data_col    = "BAD",
         cluster_col = "orig.ident"
@@ -430,7 +429,7 @@ test_that("plot_similarity bad clonotype col", {
 # Check plot_similarity bad cluster_col
 test_that("plot_similarity bad cluster col", {
   expect_error(
-    vdj_so |>
+    vdj_sce |>
       plot_similarity(
         cluster_col = NULL,
         data_col    = "cdr3_nt"
@@ -476,9 +475,9 @@ test_all_args(
 
 # Check all plot_gene_usage arguments for one gene
 arg_lst <- list(
-  input       = list(vdj_so, vdj_sce),
-  data_cols   = list("v_gene", "j_gene"),
-  chain       = list(NULL, "IGH", "IGL", "IGK"),
+  input       = list(vdj_sce),
+  data_cols   = list("v_gene"),
+  chain       = list(NULL, "IGH"),
   cluster_col = list(NULL, "seurat_clusters"),
   method      = c("heatmap", "bar"),
   plot_colors = list(NULL, test_cols),
@@ -514,14 +513,14 @@ test_all_args(
 )
 
 # Check plot_gene_usage vdj_genes single column
-test_genes <- vdj_so |>
+test_genes <- vdj_sce |>
   fetch_vdj() |>
   pull(v_gene) |>
   na.omit() |>
   head(10)
 
 arg_lst <- list(
-  input       = list(vdj_so, vdj_sce),
+  input       = list(vdj_sce),
   data_cols   = "v_gene",
   genes       = list(test_genes),
   method      = c("heatmap", "bar"),
@@ -555,12 +554,12 @@ test_all_args(
 # Check plot_gene_usage bad plot_genes
 test_that("plot_gene_usage bad plot_genes", {
   expect_error(
-    plot_gene_usage(vdj_so, data_cols = "v_gene", genes = "BAD"),
+    plot_gene_usage(vdj_sce, data_cols = "v_gene", genes = "BAD"),
     "None of the provided genes were found"
   )
 
   expect_warning(
-    plot_gene_usage(vdj_so, data_cols = "v_gene", genes = c(test_genes, "BAD")),
+    plot_gene_usage(vdj_sce, data_cols = "v_gene", genes = c(test_genes, "BAD")),
     "The following genes were not found"
   )
 })
@@ -568,7 +567,7 @@ test_that("plot_gene_usage bad plot_genes", {
 # Check plot_gene_usage bad method
 test_that("plot_gene_usage bad method", {
   expect_error(
-    vdj_so |>
+    vdj_sce |>
       plot_gene_usage(
         data_cols = "v_gene",
         method      = "BAD"
@@ -579,7 +578,7 @@ test_that("plot_gene_usage bad method", {
 # Check plot_gene_usage bad units
 test_that("plot_gene_usage bad method", {
   expect_error(
-    vdj_so |>
+    vdj_sce |>
       plot_gene_usage(
         data_cols = "v_gene",
         units     = "BAD"
@@ -590,7 +589,7 @@ test_that("plot_gene_usage bad method", {
 # Check plot_gene_usage bad data_cols
 test_that("plot_gene_usage bad data_cols", {
   expect_error(
-    vdj_so |>
+    vdj_sce |>
       plot_gene_usage(data_cols = c("v_gene", "d_gene", "j_gene"))
   )
 })

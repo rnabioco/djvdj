@@ -9,8 +9,20 @@
 # )
 # bad_ctigs <- system.file("extdata/bad_bcr_1/outs", package = "djvdj")
 
+# Load GEX data
 data_dir <- system.file("extdata/splen", package = "djvdj")
 
+gex_dirs <- c(
+  BL6 = file.path(data_dir, "BL6_GEX/filtered_feature_bc_matrix"),
+  MD4 = file.path(data_dir, "MD4_GEX/filtered_feature_bc_matrix")
+)
+
+splen_so <- gex_dirs |>
+  Read10X() |>
+  CreateSeuratObject() |>
+  AddMetaData(splen_meta)
+
+# Contig paths
 ctigs <- c(
   file.path(data_dir, "BL6_BCR"),
   file.path(data_dir, "MD4_BCR")
@@ -34,9 +46,9 @@ vdj_cols <- c(
   "productive",  "full_length"
 )
 
-df_1 <- splen_so@meta.data
+df_1 <- splen_meta
 
-df_2 <- splen_so@meta.data |>
+df_2 <- splen_meta |>
   as_tibble(rownames = ".cell_id")
 
 # Check arguments for different path inputs with Seurat
@@ -120,7 +132,7 @@ test_that("import_vdj number of chains represented by each column", {
 
 # Check include_constant
 test_that("import_vdj include_mutations", {
-  
+
   check_constant <- function(splen_so, include_constant){
     res <- splen_so |>
       import_vdj(
@@ -385,7 +397,7 @@ test_that("import_vdj BCR and TCR", {
 
 # Check .classify_vdj
 test_that(".classify_vdj", {
-  dat <- vdj_so |>
+  dat <- vdj_sce |>
     fetch_vdj(data_cols = "chains")
 
   expect_error(

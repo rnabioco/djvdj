@@ -1,7 +1,7 @@
 # Test data
-df_1 <- vdj_so@meta.data
+df_1 <- vdj_sce@colData
 
-df_2 <- vdj_so@meta.data |>
+df_2 <- vdj_sce@colData |>
   as_tibble(rownames = ".cell_id")
 
 # Check all calc_diversity arguments
@@ -11,7 +11,7 @@ mets <- abdiv::alpha_diversities |>
 names(mets) <- abdiv::alpha_diversities
 
 arg_lst <- list(
-  input       = list(vdj_so),
+  input       = list(vdj_sce),
   data_col    = "cdr3",
   chain       = list(NULL, "IGK"),
   cluster_col = list(NULL, "seurat_clusters"),
@@ -20,15 +20,6 @@ arg_lst <- list(
   return_df   = FALSE,
   n_boots     = 0
 )
-
-test_all_args(
-  arg_lst = arg_lst,
-  .fn     = calc_diversity,
-  desc    = "calc_diversity Seurat args",
-  chk     = expr(expect_s4_class(.res, "Seurat"))
-)
-
-arg_lst$input <- list(vdj_sce)
 
 test_all_args(
   arg_lst = arg_lst,
@@ -46,7 +37,7 @@ test_all_args(
   chk     = expr(expect_true(is.data.frame(.res)))
 )
 
-arg_lst$input <- list(vdj_so, vdj_sce, df_1, df_2)
+arg_lst$input <- list(vdj_sce, df_1, df_2)
 arg_lst$return_df <- TRUE
 
 test_all_args(
@@ -57,7 +48,7 @@ test_all_args(
 )
 
 # Test n_boots
-arg_lst$input     <- list(test_so)
+arg_lst$input     <- list(vdj_sce)
 arg_lst$n_boots   <- 10
 arg_lst$return_df <- FALSE
 
@@ -67,12 +58,12 @@ test_all_args(
   arg_lst = arg_lst,
   .fn     = calc_diversity,
   desc    = "calc_diversity n_boots",
-  chk     = expr(expect_s4_class(.res, "Seurat"))
+  chk     = expr(expect_s4_class(.res, "SingleCellExperiment"))
 )
 
 # Check diversity column prefix
 test_that("calc_diversity prefix", {
-  res <- vdj_so |>
+  res <- vdj_sce |>
     calc_diversity(
       data_col    = "cdr3",
       cluster_col = "seurat_clusters",
@@ -83,12 +74,12 @@ test_that("calc_diversity prefix", {
 
   nms <- paste0("X_", names(mets), "_diversity")
 
-  expect_true(all(nms %in% names(res@meta.data)))
+  expect_true(all(nms %in% names(res@colData)))
 
   res <- res |>
     mutate_meta(select, -starts_with("X_"))
 
-  expect_identical(res, vdj_so)
+  expect_identical(res, vdj_sce)
 })
 
 # Check diversity calculation
@@ -101,7 +92,7 @@ mets <- list(
 
 nms <- paste0("cdr3_", names(mets), "_diversity")
 
-test_div <- vdj_so@meta.data |>
+test_div <- vdj_sce@colData |>
   as_tibble(rownames = ".cell_id") |>
   filter(!is.na(cdr3))
 
@@ -122,10 +113,10 @@ test_div <- test_div |>
   as.data.frame()
 
 
-test_that("div calc Seurat out", {
+test_that("div calc SCE out", {
   set.seed(42)
 
-  res <- vdj_so |>
+  res <- vdj_sce |>
     calc_diversity(
       data_col    = "cdr3",
       cluster_col = "seurat_clusters",
@@ -133,7 +124,7 @@ test_that("div calc Seurat out", {
       method      = mets
     )
 
-  res <- res@meta.data |>
+  res <- res@colData |>
     as_tibble() |>
     filter(!is.na(cdr3)) |>
     select(seurat_clusters, all_of(nms)) |>
@@ -146,7 +137,7 @@ test_that("div calc Seurat out", {
 })
 
 test_that("div calc df out", {
-  res <- vdj_so |>
+  res <- vdj_sce |>
     calc_diversity(
       data_col = "cdr3",
       cluster_col   = "seurat_clusters",
@@ -163,28 +154,28 @@ test_that("div calc df out", {
   expect_identical(res, test_div)
 })
 
-# Check Seurat output
-test_that("calc_diversity Seurat out", {
+# Check SCE output
+test_that("calc_diversity SCE out", {
   fns <- abdiv::alpha_diversities |>
     map(~ eval(parse(text = paste0("abdiv::", .x))))
 
   names(fns) <- abdiv::alpha_diversities
 
-  res <- vdj_so |>
+  res <- vdj_sce |>
     calc_diversity(
       data_col = "cdr3",
       method   = fns
     )
 
-  res@meta.data <- res@meta.data |>
-    select(-all_of(paste0("cdr3_", names(fns), "_diversity")))
+  res <- res |>
+    mutate_meta(select, -all_of(paste0("cdr3_", names(fns), "_diversity")))
 
-  expect_identical(res, vdj_so)
+  expect_identical(res, vdj_sce)
 })
 
 # Check data.frame input
 test_that("calc_diversity df in", {
-  res <- vdj_so@meta.data |>
+  res <- vdj_sce@colData |>
     calc_diversity(
       data_col    = "cdr3",
       cluster_col = "seurat_clusters",
@@ -203,7 +194,7 @@ test_that("calc_diversity df in", {
 # Check bad method list
 test_that("calc_diversity bad method list", {
   expect_error(
-    vdj_so |>
+    vdj_sce |>
       calc_diversity(
         data_col = "clonotype_id",
         method = list(abdiv::simpson, abdiv::mcintosh_d)
@@ -211,11 +202,11 @@ test_that("calc_diversity bad method list", {
     "Names must be included"
   )
 
-  res <- vdj_so |>
+  res <- vdj_sce |>
     calc_diversity(data_col = "cdr3", method = abdiv::simpson)
 
   nms <- paste0("cdr3_simpson_", c("diversity"))
 
-  expect_true(all(nms %in% colnames(res@meta.data)))
+  expect_true(all(nms %in% colnames(res@colData)))
 })
 

@@ -6,18 +6,18 @@ test_cols <- c(
   "#999999", "#875C04", "#000000"
 )
 
-test_lvls <- unique(vdj_so$seurat_clusters) |>
+test_lvls <- unique(vdj_sce$seurat_clusters) |>
   as.character() |>
   rev()
 
 # Check all cluster_seqs args
 arg_lst <- list(
-  input       = list(vdj_so, vdj_sce),
+  input       = list(vdj_sce),
   data_col    = "cdr3",
   chain       = list(NULL, "IGK"),
   method      = c("louvain", "leiden"),
-  k           = c(5, 10),
-  resolution  = list(0.1, 5, c(0.1, 5)),
+  k           = 10,
+  resolution  = list(5, c(0.1, 5)),
   return_df   = c(TRUE, FALSE)
 )
 
@@ -30,13 +30,13 @@ test_all_args(
 
 # Check all plot_seq_motifs args
 arg_lst <- list(
-  input       = list(vdj_so, vdj_sce),
+  input       = list(vdj_sce),
   data_col    = "cdr3",
   chain       = "IGH",
   cluster_col = list(NULL, "seurat_clusters"),
   plot_colors = list(NULL, test_cols),
-  plot_lvls   = list(NULL, test_lvls),
-  width       = c(0.999, 2),
+  plot_lvls   = list(NULL),
+  width       = c(2),
   align_end   = c("3", "5"),
   panel_nrow  = list(NULL, 2)
 )

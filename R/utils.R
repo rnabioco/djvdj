@@ -702,6 +702,6 @@ NULL
     cli::cli_abort(paste0(
       "Package{?s} {missing} must be installed to use this function.
        Th{?is/ese} package{?s} {?is/are} available on ", db, "."
-    ))
+    ), call = NULL)
   }
 }

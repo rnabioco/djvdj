@@ -7,12 +7,26 @@ library(stringr)
 library(SingleCellExperiment)
 library(djvdj)
 
+
+# Load GEX data
+data_dir <- system.file("extdata/splen", package = "djvdj")
+
+gex_dirs <- c(
+  BL6 = file.path(data_dir, "BL6_GEX/filtered_feature_bc_matrix"),
+  MD4 = file.path(data_dir, "MD4_GEX/filtered_feature_bc_matrix")
+)
+
+so <- gex_dirs |>
+  Read10X() |>
+  CreateSeuratObject() |>
+  AddMetaData(splen_meta)
+
 vdj_dirs <- c(
   BL6 = system.file("extdata/splen/BL6_BCR", package = "djvdj"),
   MD4 = system.file("extdata/splen/MD4_BCR", package = "djvdj")
 )
 
-test_so <- splen_so |>
+test_so <- so |>
   import_vdj(vdj_dirs, define_clonotypes = "cdr3_gene")
 
 test_check("djvdj")

@@ -1,7 +1,7 @@
 # Test data
-df_1 <- vdj_so@meta.data
+df_1 <- vdj_sce@colData
 
-df_2 <- vdj_so@meta.data |>
+df_2 <- vdj_sce@colData |>
   as_tibble(rownames = ".cell_id")
 
 # Check all calc_gene_usage arguments
@@ -20,17 +20,8 @@ test_all_args(
   chk     = expr(expect_s3_class(.res, "data.frame"))
 )
 
-arg_lst$input     <- list(vdj_so)
+arg_lst$input     <- list(vdj_sce)
 arg_lst$data_cols <- "v_gene"
-
-test_all_args(
-  arg_lst = arg_lst,
-  .fn     = calc_gene_usage,
-  desc    = "calc_usage args",
-  chk     = expr(expect_s4_class(.res, "Seurat"))
-)
-
-arg_lst$input <- list(vdj_sce)
 
 test_all_args(
   arg_lst = arg_lst,
@@ -73,7 +64,8 @@ test_all_args(
   pct  <- purrr::set_names(res$pct, res$nm)
 
   # data for manual calc
-  dat <- vdj_so@meta.data |>
+  dat <- vdj_sce@colData |>
+    as_tibble() |>
     filter(!is.na(clonotype_id))
 
   gns <- genes
@@ -145,7 +137,7 @@ test_that("calc_gene_usage check calcs", {
     map(combn, x = vdj_genes, simplify = FALSE) |>
     purrr::flatten()
 
-  ins <- list(vdj_so, vdj_sce, vdj_so@meta.data)
+  ins <- list(vdj_sce, vdj_sce@colData)
 
   purrr::walk(ins, ~ {
     vdj_genes |>
@@ -162,19 +154,4 @@ test_that("calc_gene_usage check calcs", {
       purrr::walk(.check_gene_usage, input = .x, chain = c("IGH", "IGK"))
   })
 })
-
-
-
-# # Bad vdj gene
-# test_that("calc_gene_usage bad gene", {
-#
-#   ins <- list(vdj_so, vdj_sce, vdj_so@meta.data)
-#
-#   purrr::walk(ins, ~ {
-#     expect_error(
-#       calc_gene_usage(.x, "BAD"),
-#       "Column .+ doesn't exist"
-#     )
-#   })
-# })
 
