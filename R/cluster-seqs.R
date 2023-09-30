@@ -380,10 +380,17 @@ plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
   }
 
   if (!is.null(plot_colors)) {
-    suppressMessages({
-      res <- res +
-        scale_fill_manual(values = plot_colors)
-    })
+    res <- withCallingHandlers(
+      expr = res + scale_fill_manual(values = plot_colors),
+
+      message = function(msg) {
+        if (!grepl("Scale for.+fill.+is already present", msg)) {
+          cli::cli_alert(msg)
+        }
+
+        tryInvokeRestart("muffleMessage")
+      }
+    )
   }
 
   res
