@@ -20,7 +20,7 @@ gex_dirs <- c(
 so <- gex_dirs |>
   Read10X() |>
   CreateSeuratObject() |>
-  AddMetaData(djvdj::splen_meta)
+  AddMetaData(splen_meta)
 
 vdj_dirs <- c(
   BL6 = system.file("extdata/splen/BL6_BCR", package = "djvdj"),
