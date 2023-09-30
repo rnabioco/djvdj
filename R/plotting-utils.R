@@ -425,7 +425,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       y_dat <- dplyr::ungroup(y_dat)
       y_dat <- dplyr::distinct(y_dat, !!sym(p_grp), .data$y_min, .data$y_max)
 
-      p <- dplyr::select(p, -.data$y_max, -.data$y_min)
+      p <- dplyr::select(p, -dplyr::all_of(c("y_max", "y_min")))
       p <- dplyr::left_join(p, y_dat, by = p_grp)
     }
 
@@ -556,7 +556,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
   # Check input values
   if (!is.null(x) && is.numeric(df_in[[x]])) {
-    cli::cli_abort("`x` cannot refer to a numeric column")
+    cli::cli_abort("`x` cannot refer to a numeric column", call = NULL)
   }
 
   # Set n label
@@ -595,8 +595,8 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       show.legend = FALSE
     )
 
-    err_args$colour <- gg_args$colour
-    err_args$size   <- gg_args$size %||% 1
+    err_args$colour    <- gg_args$colour
+    err_args$linewidth <- gg_args$linewidth %||% 1
 
     err_args$mapping <- ggplot2::aes(
       !!sym(x), ymin = !!sym(y) - !!sym(err), ymax = !!sym(y) + !!sym(err)
@@ -1482,7 +1482,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   res <- dplyr::right_join(df_in, all, by = all_cols)
 
   res <- dplyr::mutate(
-    res, dplyr::across(all_of(unique(dat_cols)), tidyr::replace_na, 0)
+    res, dplyr::across(all_of(unique(dat_cols)), ~ tidyr::replace_na(.x, 0))
   )
 
   res <- dplyr::mutate(res, dplyr::across(

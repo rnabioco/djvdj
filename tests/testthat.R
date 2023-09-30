@@ -6,6 +6,7 @@ library(tibble)
 library(stringr)
 library(SingleCellExperiment)
 library(djvdj)
+library(Seurat)
 
 
 # Load GEX data
