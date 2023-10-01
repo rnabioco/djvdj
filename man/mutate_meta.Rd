@@ -27,21 +27,21 @@ Modify object meta.data
 # all additional arguments provided to mutate_meta() are passed directly to
 # the function (in this case, dplyr::mutate())
 res <- mutate_meta(
-  tiny_so,
+  tiny_sce,
   dplyr::mutate,
   NEW = nCount_RNA + nFeature_RNA
 )
 
-head(slot(res, "meta.data"), 1)
+head(slot(res, "colData"), 1)
 
 # Pass a purrr-style lambda
 # this produces the same result as the previous example
 res <- mutate_meta(
-  tiny_so,
+  tiny_sce,
   ~ dplyr::mutate(.x, NEW = nCount_RNA + nFeature_RNA)
 )
 
-head(slot(res, "meta.data"), 1)
+head(slot(res, "colData"), 1)
 
 # Modify multiple meta.data columns
 res <- mutate_meta(
@@ -57,12 +57,12 @@ head(slot(res, "colData"), 1)
 # any function can be passed to mutate_meta(), in this example
 # dplyr::select() is used to remove columns
 res <- mutate_meta(
-  tiny_so,
+  tiny_sce,
   dplyr::select,
   -UMAP_1
 )
 
-head(slot(res, "meta.data"), 1)
+head(slot(res, "colData"), 1)
 
 # Perform grouped operations using dplyr
 # multi-line commands can be passed using brackets, just refer to the

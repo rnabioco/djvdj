@@ -32,7 +32,7 @@ Theme for djvdj plotting functions
 }
 \examples{
 
-plot_scatter(vdj_so, data_col = "seurat_clusters") +
+plot_scatter(vdj_sce, data_col = "seurat_clusters") +
   djvdj_theme()
 
 }

@@ -31,11 +31,11 @@
 #' @examples
 #' # Calculate clonotype abundance using all cells
 #' res <- calc_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col = "clonotype_id"
 #' )
 #'
-#' head(slot(res, "meta.data"), 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # Group cells based on meta.data column before calculating abundance
 #' res <- calc_frequency(
@@ -50,12 +50,12 @@
 #' # this is useful if multiple abundance calculations are stored in the
 #' # meta.data
 #' res <- calc_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col = "clonotype_id",
 #'   prefix = "bcr_"
 #' )
 #'
-#' head(slot(res, "meta.data"), 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # Return a data.frame instead of adding the results to the input object
 #' res <- calc_frequency(
@@ -419,14 +419,12 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
-#' @importFrom ggrepel geom_text_repel
-#' @importFrom methods formalArgs
 #' @seealso [calc_frequency()], [plot_frequency()]
 #'
 #' @examples
 #' # Plot clonotype abundance using all cells
 #' plot_clone_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col = "clonotype_id"
 #' )
 #'
@@ -445,7 +443,7 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 #'
 #' # Specify colors to use for each cell cluster
 #' plot_clone_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   cluster_col = "orig.ident",
 #'   plot_colors = c(avid_1 = "blue", avid_2 = "red")
 #' )
@@ -459,14 +457,14 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 #'
 #' # Specify the number of top clonotypes to plot
 #' plot_clone_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   clones = 5
 #' )
 #'
 #' #' # Create line graph
 #' # use clones to set the number of clonotypes to label
 #' plot_clone_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   cluster_col = "orig.ident",
 #'   method = "line",
 #'   clones = 3
@@ -628,7 +626,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     }
 
     res <- lift(.create_plot)(gg_args) +
-      labs(y = .get_axis_label(units))
+      ggplot2::labs(y = .get_axis_label(units))
 
     # Add clonotype labels with ggrepel
     label_params <- .parse_label_params(label_params)$clone
@@ -759,7 +757,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' @examples
 #' # Plot frequency of different isotypes
 #' plot_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col = "isotype"
 #' )
 #'
@@ -780,7 +778,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #'
 #' # Plot number of cells on the y-axis
 #' plot_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col    = "seurat_clusters",
 #'   cluster_col = "orig.ident",
 #'   units       = "frequency"

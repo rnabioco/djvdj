@@ -82,7 +82,7 @@
 #' @examples
 #' # Create histogram
 #' plot_histogram(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col    = "reads",
 #'   cluster_col = "orig.ident",
 #'   trans       = "log10"
@@ -316,7 +316,6 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
 #' @seealso [summarize_vdj()] for more examples on how per-chain data can be
 #' summarized for each cell
 #' @return ggplot object
-#' @importFrom ggtrace geom_point_trace
 #'
 #' @examples
 #' # Create scatter plot

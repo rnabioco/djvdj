@@ -78,7 +78,7 @@ Cluster cells based on CDR3 sequences
 \examples{
 # Cluster cells based on CDR3 amino acid sequences and plot results
 res <- cluster_sequences(
-  vdj_so,
+  vdj_sce,
   data_col = "cdr3"
 )
 
@@ -98,21 +98,21 @@ res <- cluster_sequences(
 
 # Use Levenschtein distance for clustering
 res <- cluster_sequences(
-  vdj_so,
+  vdj_sce,
   data_col    = "cdr3",
   dist_method = "levenshtein"
 )
 
 # Cluster cells using the Leiden algorithm
 res <- cluster_sequences(
-  vdj_so,
+  vdj_sce,
   data_col = "cdr3",
   method   = "leiden"
 )
 
 # Adjust clustering resolution
 res <- cluster_sequences(
-  vdj_so,
+  vdj_sce,
   data_col   = "cdr3",
   resolution = c(0.5, 1)
 )

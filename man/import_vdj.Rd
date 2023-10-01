@@ -92,7 +92,7 @@ Single cell object or data.frame with added V(D)J data
 Import V(D)J data
 }
 \examples{
-Load GEX data
+# Load GEX data
 data_dir <- system.file("extdata/splen", package = "djvdj")
 
 gex_dirs <- c(

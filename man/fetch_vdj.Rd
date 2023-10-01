@@ -51,7 +51,7 @@ such as CDR3 length or the number of insertions/deletions.
 }
 \examples{
 # Fetch per-chain V(D)J data
-fetch_vdj(vdj_so)
+fetch_vdj(vdj_sce)
 
 # To increase performance, specify which columns to return per-chain data,
 # per-cell data will be returned for all other columns
@@ -63,7 +63,7 @@ fetch_vdj(
 # Only include cells that have V(D)J data
 # clonotype_col must be specified to identify cells with V(D)J data
 fetch_vdj(
-  vdj_so,
+  vdj_sce,
   filter_cells = TRUE,
   clonotype_col = "clonotype_id"
 )

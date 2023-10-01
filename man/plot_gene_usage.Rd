@@ -148,7 +148,7 @@ usage of two V(D)J segments can also be plotted for a single chain.
 \examples{
 # Plot V(D)J segment usage for all cells
 plot_gene_usage(
-  vdj_so,
+  vdj_sce,
   data_cols = "v_gene"
 )
 
@@ -161,7 +161,7 @@ plot_gene_usage(
 
 # Plot gene usage for a specific chain
 plot_gene_usage(
-  vdj_so,
+  vdj_sce,
   data_cols = "v_gene",
   chain = c("IGH", "IGK")
 )
@@ -175,7 +175,7 @@ plot_gene_usage(
 
 # Specify colors to use for each cell cluster
 plot_gene_usage(
-  vdj_so,
+  vdj_sce,
   data_cols = "v_gene",
   cluster_col = "orig.ident",
   plot_colors = c(avid_2 = "blue", avid_1 = "green")
@@ -191,7 +191,7 @@ plot_gene_usage(
 
 # Specify certain V(D)J genes to include in plot
 plot_gene_usage(
-  vdj_so,
+  vdj_sce,
   data_cols = "v_gene",
   vdj_genes = c("IGKV5-43", "IGLV1", "IGHV1-64")
 )

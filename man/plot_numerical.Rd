@@ -155,7 +155,7 @@ separately for each chain or summarized and plotted for each cell.
 \examples{
 # Create histogram
 plot_histogram(
-  vdj_so,
+  vdj_sce,
   data_col    = "reads",
   cluster_col = "orig.ident",
   trans       = "log10"

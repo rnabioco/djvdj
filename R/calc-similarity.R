@@ -21,19 +21,18 @@
 #' FALSE, results will be added to the input object.
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with similarity values
-#' @importFrom abdiv jaccard
 #' @seealso [plot_similarity()], [calc_mds()], [plot_mds()]
 #'
 #' @examples
 #' # Calculate repertoire overlap
 #' res <- calc_similarity(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
 #'   method      = abdiv::jaccard
 #' )
 #'
-#' head(slot(res, "meta.data"), 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # Add a prefix to the new columns
 #' # this is useful if multiple calculations are stored in the meta.data
@@ -48,7 +47,7 @@
 #'
 #' # Return a matrix instead of adding the results to the input object
 #' calc_similarity(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
 #'   return_mat  = TRUE
@@ -245,14 +244,13 @@ calc_similarity <- function(input, data_col, cluster_col,
 #' [ComplexHeatmap::Heatmap()] for heatmap, [circlize::chordDiagram()] for
 #' circos plot
 #' @return heatmap or circos plot
-#' @importFrom abdiv jaccard
 #' @seealso [calc_similarity()], [calc_mds()], [plot_mds()]
 #'
 #' @examples
 #' # Plot repertoire overlap
 #' # use clonotype IDs present in 'clonotype_id' column for calculations
 #' plot_similarity(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident"
 #' )
@@ -267,7 +265,7 @@ calc_similarity <- function(input, data_col, cluster_col,
 #'
 #' # Specify colors to use for heatmap
 #' plot_similarity(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
 #'   plot_color  = c("white", "red")
@@ -275,7 +273,7 @@ calc_similarity <- function(input, data_col, cluster_col,
 #'
 #' # Create circos plot
 #' plot_similarity(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
 #'   method      = "circos"
@@ -401,7 +399,7 @@ plot_similarity <- function(input, data_col, cluster_col, group_col = NULL,
 #' @examples
 #' # Calculate MDS coordinates
 #' res <- calc_mds(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col = "clonotype_id",
 #'   cluster_col = "isotype"
 #' )
@@ -470,7 +468,7 @@ calc_mds <- function(input, data_col, cluster_col, method = "jaccard",
   clmns <- c("MDS_1", "MDS_2")
 
   mds_fn <- purrr::quietly(MASS::isoMDS)
-  res    <- mds_fn(as.dist(res))
+  res    <- mds_fn(stats::as.dist(res))
   res    <- res$result$points
 
   colnames(res) <- clmns
@@ -554,7 +552,7 @@ calc_mds <- function(input, data_col, cluster_col, method = "jaccard",
 #' @examples
 #' # Calculate MDS coordinates
 #' plot_mds(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col = "clonotype_id",
 #'   cluster_col = "isotype"
 #' )
@@ -569,7 +567,7 @@ calc_mds <- function(input, data_col, cluster_col, method = "jaccard",
 #'
 #' # Calculate repertoire similarity using the Horn-Morisita index
 #' plot_mds(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col    = "clonotype_id",
 #'   cluster_col = "isotype",
 #'   method      = "horn_morisita"

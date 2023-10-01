@@ -1,16 +1,3 @@
-#' ggplot2 imports
-#'
-#' @importFrom ggplot2 ggplot aes geom_point geom_line geom_histogram
-#' @importFrom ggplot2 geom_density geom_tile geom_boxplot geom_violin geom_col
-#' @importFrom ggplot2 scale_x_discrete scale_y_continuous scale_x_continuous
-#' @importFrom ggplot2 position_dodge2 scale_color_manual scale_fill_manual
-#' @importFrom ggplot2 scale_color_gradientn scale_fill_gradientn stat_summary
-#' @importFrom ggplot2 facet_wrap guides guide_legend labs theme element_blank
-#' @importFrom ggplot2 element_text element_line expansion after_stat
-#' @noRd
-NULL
-
-
 #' Theme for djvdj plotting functions
 #'
 #' @param base_size base font size in pts
@@ -24,7 +11,7 @@ NULL
 #' @export %+replace%
 #' @examples
 #'
-#' plot_scatter(vdj_so, data_col = "seurat_clusters") +
+#' plot_scatter(vdj_sce, data_col = "seurat_clusters") +
 #'   djvdj_theme()
 #'
 #' @export
@@ -97,7 +84,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   # Only remove NAs for numeric columns since character or factor NAs can be
   # plotted
   chk_na <- purrr::set_names(c(x, y))
-  chk_na <- map_lgl(chk_na, ~ is.numeric(df_in[[.x]]))
+  chk_na <- purrr::map_lgl(chk_na, ~ is.numeric(df_in[[.x]]))
   chk_na <- names(chk_na[chk_na])
   n_orig <- nrow(df_in)
 
@@ -248,8 +235,8 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   if (is.null(x)) {
     res <- res +
       ggplot2::theme(
-        axis.text.x  = element_blank(),
-        axis.ticks.x = element_blank()
+        axis.text.x  = ggplot2::element_blank(),
+        axis.ticks.x = ggplot2::element_blank()
       )
   }
 
@@ -368,7 +355,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
           as.character(p_x),  # EXPR should evaluate to character
           right  = Inf,
           left   = -Inf,
-          center = (n_x / 2) + 0.5,
+          center = (.data$n_x / 2) + 0.5,
           p_x
         )
       )
@@ -622,7 +609,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
   if (!is.null(x)) {
     res <- res +
-      theme(axis.text.x = ggplot2::element_text(angle = x_ang, hjust = x_hjst))
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = x_ang, hjust = x_hjst))
   }
 
   res
@@ -871,7 +858,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       axis.ticks  = ggplot2::element_blank(),
       axis.text.x = ggplot2::element_text(angle = x_ang, hjust = x_hjst)
     ) +
-    labs(title = plt_ttl, fill = lgd_ttl)
+    ggplot2::labs(title = plt_ttl, fill = lgd_ttl)
 
   res
 }
@@ -889,8 +876,6 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @param rm_diag If TRUE, diagonal for heatmap will not be shown and
 #' rows/columns will not be clustered.
 #' @param ... Aditional arguments to pass to ComplexHeatmap::Heatmap()
-#' @importFrom grid grid.rect
-#' @importFrom ComplexHeatmap Heatmap
 #' @noRd
 .create_heatmap <- function(mat_in, clrs = NULL, na_color = NA, lvls = NULL,
                             lgd_ttl = NULL, rm_upper = FALSE, rm_diag = FALSE,
@@ -1078,8 +1063,6 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 #' @param rotate_labels Should labels be rotated to reduce overlapping text
 #' @param plt_ttl Plot title
 #' @param ... Additional arguments to pass to circlize::chordDiagram()
-#' @importFrom scales hue_pal
-#' @importFrom graphics title strwidth
 #' @noRd
 .create_circos <- function(mat_in, clrs = NULL, na_color = "grey90",
                            lvls = NULL, grps = NULL, rotate_labels = FALSE,
@@ -1171,7 +1154,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       circos_fun <- function(...) {
         circlize::chordDiagram(
           preAllocateTracks = list(
-            track.height = max(strwidth(unlist(dimnames(mat_in))))
+            track.height = max(graphics::strwidth(unlist(dimnames(mat_in))))
           ),
           ...
         )
@@ -1319,15 +1302,15 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       stats::na.omit(!!sym(val_col)),
       do.conf = FALSE, do.out = FALSE
     )),
-    med = median(!!sym(val_col), na.rm = TRUE),
+    med = stats::median(!!sym(val_col), na.rm = TRUE),
     max = max(!!sym(val_col), na.rm = TRUE),
     .groups = "drop"
   )
 
   res <- dplyr::mutate(
     res,
-    q3 = map_dbl(.data$met, ~ .x$stats[4]),
-    q4 = map_dbl(.data$met, ~ .x$stats[5])
+    q3 = purrr::map_dbl(.data$met, ~ .x$stats[4]),
+    q4 = purrr::map_dbl(.data$met, ~ .x$stats[5])
   )
 
   if (rev) {
@@ -1383,7 +1366,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
     top      <- top[1]
     n_top    <- top %||% ifelse(n_grps > 50, 10, 20)
-    top_grps <- head(rnk, n_top)
+    top_grps <- utils::head(rnk, n_top)
 
     # Warn user when top is automatically set
     if (is.null(top) && n_grps > n_top) {
@@ -1517,11 +1500,11 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   # Get args unique for each function
   uniq_args <- .get_unique_args(
     geom_text = c(
-      formalArgs(ggplot2::geom_text),
+      methods::formalArgs(ggplot2::geom_text),
       names(ggplot2::GeomText$default_aes)
     ),
     geom_text_repel = c(
-      formalArgs(ggrepel::geom_text_repel),
+      methods::formalArgs(ggrepel::geom_text_repel),
       names(ggrepel::GeomTextRepel$default_aes)
     )
   )

@@ -38,11 +38,11 @@ present in the provided columns
 \examples{
 # Define clonotypes using the CDR3 nucleotide sequence
 res <- define_clonotypes(
-  vdj_so,
+  vdj_sce,
   data_cols = "cdr3_nt"
 )
 
-head(slot(res, "meta.data"), 1)
+head(slot(res, "colData"), 1)
 
 # Define clonotypes based on the combination of the CDR3 nucleotide sequence
 # and the V and J genes
@@ -55,12 +55,12 @@ head(slot(res, "colData"), 1)
 
 # Modify the name of the column used to store clonotype IDs
 res <- define_clonotypes(
-  vdj_so,
+  vdj_sce,
   data_cols = "cdr3_nt",
   clonotype_col = "NEW_clonotype_id"
 )
 
-head(slot(res, "meta.data"), 1)
+head(slot(res, "colData"), 1)
 
 # When defining clonotypes only use chains that are productive
 res <- define_clonotypes(

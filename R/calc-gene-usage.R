@@ -25,7 +25,7 @@
 #' @examples
 #' # Calculate V(D)J segment usage for all cells
 #' calc_gene_usage(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_cols = "v_gene"
 #' )
 #'
@@ -38,7 +38,7 @@
 #'
 #' # Calculate gene usage for a specific chain(s)
 #' calc_gene_usage(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_cols = "v_gene",
 #'   chain = c("IGK", "IGL")
 #' )
@@ -282,7 +282,7 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' @examples
 #' # Plot V(D)J segment usage for all cells
 #' plot_gene_usage(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_cols = "v_gene"
 #' )
 #'
@@ -295,7 +295,7 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #'
 #' # Plot gene usage for a specific chain
 #' plot_gene_usage(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_cols = "v_gene",
 #'   chain = c("IGH", "IGK")
 #' )
@@ -309,7 +309,7 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #'
 #' # Specify colors to use for each cell cluster
 #' plot_gene_usage(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_cols = "v_gene",
 #'   cluster_col = "orig.ident",
 #'   plot_colors = c(avid_2 = "blue", avid_1 = "green")
@@ -325,7 +325,7 @@ calc_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #'
 #' # Specify certain V(D)J genes to include in plot
 #' plot_gene_usage(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_cols = "v_gene",
 #'   vdj_genes = c("IGKV5-43", "IGLV1", "IGHV1-64")
 #' )
@@ -773,8 +773,6 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 #' combined
 #' @param n_row Number of rows to use for arranging plots
 #' @param ... Additional parameters to pass to plotting function
-#' @importFrom grid unit viewport
-#' @importFrom graphics par plot.new
 #' @noRd
 .plot_paired_usage <- function(df_in, gn_col, dat_col, clst_col = NULL,
                                method, clrs = NULL, lvls = NULL,
@@ -794,7 +792,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 
   # Format data for plotting
   # sort level order, ascending order for y
-  res <- map(res, ~ {
+  res <- purrr::map(res, ~ {
     .x <- dplyr::select(.x, dplyr::all_of(c(gn_col, dat_col)))
     d  <- tidyr::expand(.x, !!!syms(gn_col))
     d  <- dplyr::left_join(d, .x, by = gn_col)

@@ -1,31 +1,3 @@
-#' tibble imports
-#'
-#' @importFrom tibble tibble as_tibble column_to_rownames rownames_to_column
-#' @noRd
-NULL
-
-#' purrr imports
-#'
-#' @importFrom purrr map imap map_dfr imap_dfr map_lgl map_chr map2_int map_dbl
-#' @importFrom purrr map_int iwalk pwalk reduce keep is_empty is_function
-#' @importFrom purrr is_formula as_mapper
-#' @noRd
-NULL
-
-#' stats imports
-#'
-#' @importFrom stats median complete.cases as.formula as.dist hclust cutree
-#' @importFrom stats na.omit sd
-#' @noRd
-NULL
-
-#' cli imports
-#'
-#' @importFrom cli cli_abort cli_warn cli_alert
-#' @noRd
-NULL
-
-
 #' Helper to test all combinations of provided arguments
 #'
 #' @param arg_lst Named list of arguments to test
@@ -204,8 +176,6 @@ NULL
 
 #' @rdname .add_meta
 #' @return Object with added meta.data
-#' @importFrom S4Vectors DataFrame
-#' @importFrom methods slot
 #' @noRd
 .add_meta <- function(input, meta, row_col) {
 
@@ -274,7 +244,6 @@ NULL
 #' @param input Object containing single cell data
 #' @param row_col New column to store meta.data rownames
 #' @return tibble containing meta.data pulled from object
-#' @importFrom SingleCellExperiment colData
 #' @noRd
 .get_meta <- function(input, row_col) {
 
@@ -398,8 +367,6 @@ NULL
 #' @param unnest Should columns be unnested after splitting into vectors
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame with V(D)J data
-#' @importFrom readr guess_parser
-#' @importFrom utils head
 #' @noRd
 .unnest_vdj <- function(df_in, sep_cols, unnest = TRUE, sep = global$sep) {
 
@@ -447,7 +414,7 @@ NULL
   # and then converting
   # strsplit is faster than str_split_n used by separate_rows
   .str_convert      <- function(x, fn) do.call(fn, list(x = x))
-  .str_convert_list <- function(l, fn) map(l, .str_convert, fn = fn)
+  .str_convert_list <- function(l, fn) purrr::map(l, .str_convert, fn = fn)
 
   res <- purrr::modify_at(
     df_in, sep_cols,
@@ -690,7 +657,6 @@ NULL
 
 #' Check that package is installed
 #'
-#' @importFrom rlang is_installed
 #' @noRd
 .check_packages <- function(pkgs, db = "CRAN") {
   chks <- purrr::map_lgl(pkgs, rlang::is_installed)

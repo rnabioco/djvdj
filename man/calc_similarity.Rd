@@ -55,13 +55,13 @@ Calculate repertoire similarity
 \examples{
 # Calculate repertoire overlap
 res <- calc_similarity(
-  vdj_so,
+  vdj_sce,
   data_col    = "clonotype_id",
   cluster_col = "orig.ident",
   method      = abdiv::jaccard
 )
 
-head(slot(res, "meta.data"), 1)
+head(slot(res, "colData"), 1)
 
 # Add a prefix to the new columns
 # this is useful if multiple calculations are stored in the meta.data
@@ -76,7 +76,7 @@ head(slot(res, "colData"), 1)
 
 # Return a matrix instead of adding the results to the input object
 calc_similarity(
-  vdj_so,
+  vdj_sce,
   data_col    = "clonotype_id",
   cluster_col = "orig.ident",
   return_mat  = TRUE

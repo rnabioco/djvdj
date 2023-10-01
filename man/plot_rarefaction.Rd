@@ -94,7 +94,7 @@ bootstrapped 95\% confidence interval will also be plotted.
 \examples{
 # Plot rarefaction curve using all cells
 plot_rarefaction(
-  vdj_so,
+  vdj_sce,
   data_col = "clonotype_id"
 )
 
@@ -107,14 +107,14 @@ plot_rarefaction(
 
 # Plot separate curves for each cell cluster
 plot_rarefaction(
-  vdj_so,
+  vdj_sce,
   data_col    = "clonotype_id",
   cluster_col = "orig.ident"
 )
 
 # Specify colors to use for each cell cluster
 plot_rarefaction(
-  vdj_so,
+  vdj_sce,
   data_col    = "clonotype_id",
   cluster_col = "orig.ident",
   plot_colors = c(avid_1 = "green", avid_2 = "purple")

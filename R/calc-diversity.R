@@ -23,60 +23,18 @@
 #' added to the input object.
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with diversity metrics
-#' @importFrom abdiv simpson
-#' @importFrom boot boot
 #' @seealso [plot_diversity()]
 #'
 #' @examples
-#' # Calculate diversity using all cells
-#' res <- calc_diversity(
-#'   vdj_so,
-#'   data_col = "clonotype_id",
-#'   method   = abdiv::simpson
-#' )
-#'
-#' head(slot(res, "meta.data"), 1)
-#'
-#' # Group cells based on meta.data column before calculating diversity
+#' # Calculate diversity for each cell cluster
 #' res <- calc_diversity(
 #'   vdj_sce,
 #'   data_col    = "clonotype_id",
-#'   cluster_col = "orig.ident"
+#'   cluster_col = "orig.ident",
+#'   method      = abdiv::simpson
 #' )
 #'
 #' head(slot(res, "colData"), 1)
-#'
-#' # Add a prefix to the new columns
-#' # this is useful if multiple diversity calculations are stored in the
-#' # meta.data
-#' res <- calc_diversity(
-#'   vdj_so,
-#'   data_col = "clonotype_id",
-#'   prefix   = "bcr_"
-#' )
-#'
-#' head(slot(res, "meta.data"), 1)
-#'
-#' # Calculate multiple metrics
-#' res <- calc_diversity(
-#'   vdj_sce,
-#'   data_col = "clonotype_id",
-#'   method = list(
-#'     simpson = abdiv::simpson,
-#'     shannon = abdiv::shannon
-#'   )
-#' )
-#'
-#' head(slot(res, "colData"), 1)
-#'
-#' # Return a data.frame instead of adding the results to the input object
-#' res <- calc_diversity(
-#'   vdj_so,
-#'   data_col  = "clonotype_id",
-#'   return_df = TRUE
-#' )
-#'
-#' head(res, 1)
 #'
 #' @export
 calc_diversity <- function(input, data_col, cluster_col = NULL,
@@ -312,16 +270,9 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
-#' @importFrom abdiv simpson
 #' @seealso [calc_diversity()], [plot_rarefaction()]
 #'
 #' @examples
-#' # Plot diversity using all cells
-#' plot_diversity(
-#'   vdj_so,
-#'   data_col = "clonotype_id"
-#')
-#'
 #' # Specify method to use for calculating repertoire diversity
 #' plot_diversity(
 #'   vdj_sce,
@@ -331,7 +282,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'
 #' # Plot diversity separately for each cell cluster
 #' plot_diversity(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident"
 #' )
@@ -351,7 +302,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'
 #' # Specify colors to use for each cell cluster
 #' plot_diversity(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident",
 #'   plot_colors = c(avid_2 = "green", avid_1 = "purple")
@@ -367,7 +318,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'
 #' # Specify how to organize panels when plotting multiple metrics
 #' plot_diversity(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col   = "clonotype_id",
 #'   method     = mets,
 #'   panel_nrow = 2
@@ -601,45 +552,16 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill,
 #' linetype, etc.
 #' @return ggplot object
-#' @importFrom stringr str_to_lower
 #' @seealso [calc_diversity()], [plot_diversity()]
 #'
 #' @examples
-#' # Plot rarefaction curve using all cells
+#' # Plot rarefaction curve for each cluster
 #' plot_rarefaction(
-#'   vdj_so,
-#'   data_col = "clonotype_id"
+#'   vdj_sce,
+#'   data_col    = "clonotype_id",
+#'   cluster_col = "orig.ident",
+#'   method      = "shannon"
 #')
-#'
-#' # Specify method to use for calculating repertoire diversity
-#' plot_rarefaction(
-#'   vdj_sce,
-#'   data_col = "clonotype_id",
-#'   method   = "shannon"
-#' )
-#'
-#' # Plot separate curves for each cell cluster
-#' plot_rarefaction(
-#'   vdj_so,
-#'   data_col    = "clonotype_id",
-#'   cluster_col = "orig.ident"
-#' )
-#'
-#' # Specify colors to use for each cell cluster
-#' plot_rarefaction(
-#'   vdj_so,
-#'   data_col    = "clonotype_id",
-#'   cluster_col = "orig.ident",
-#'   plot_colors = c(avid_1 = "green", avid_2 = "purple")
-#' )
-#'
-#' # Specify order to use for plotting cell clusters
-#' plot_rarefaction(
-#'   vdj_sce,
-#'   data_col    = "clonotype_id",
-#'   cluster_col = "orig.ident",
-#'   plot_lvls   = c("avid_2", "avid_1")
-#' )
 #'
 #' @export
 plot_rarefaction <- function(input, data_col, cluster_col = NULL,
@@ -779,7 +701,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
     lift(ggplot2::geom_line)(gg_args) +
     ggplot2::scale_linetype_manual(values = c(1, 2)) +
     djvdj_theme() +
-    labs(x = "sample size")
+    ggplot2::labs(x = "sample size")
 
   if (!is.null(plot_colors)) {
     res <- res +
@@ -799,7 +721,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
 
   } else {
     res <- res +
-      labs(y = names(method))
+      ggplot2::labs(y = names(method))
   }
 
   # Add n label

@@ -24,7 +24,7 @@
 #'
 #' @examples
 #' # Only include V(D)J data for productive chains
-#' res <- filter_vdj(vdj_so, productive)
+#' res <- filter_vdj(vdj_sce, productive)
 #'
 #' # Only include V(D)J data for cells with paired chains
 #' res <- filter_vdj(vdj_sce, paired)
@@ -32,7 +32,7 @@
 #' # Only include V(D)J data for cells with at least one heavy and one light
 #' # chain
 #' res <- filter_vdj(
-#'   vdj_so,
+#'   vdj_sce,
 #'   "IGH" %in% chains && any(c("IGK", "IGL") %in% chains)
 #' )
 #'
@@ -43,13 +43,13 @@
 #' )
 #'
 #' # Only include V(D)J data for heavy chains
-#' res <- filter_vdj(vdj_so, chains == "IGH")
+#' res <- filter_vdj(vdj_sce, chains == "IGH")
 #'
 #' # Remove chains that only have 1 UMI for support
 #' res <- filter_vdj(vdj_sce, umis > 1)
 #'
 #' # Filter based on cell barcode
-#' res <- filter_vdj(vdj_so, .cell_id == "1_ACGGAGACATGCTGGC-1")
+#' res <- filter_vdj(vdj_sce, .cell_id == "1_ACGGAGACATGCTGGC-1")
 #'
 #' @export
 filter_vdj <- function(input, filt, data_cols = NULL,
@@ -157,7 +157,6 @@ filter_vdj <- function(input, filt, data_cols = NULL,
 }
 
 #' Insert NAs based on logical index
-#' @importFrom methods as
 #' @noRd
 .add_na <- function(x, lgl_idx) {
   typ <- typeof(x)

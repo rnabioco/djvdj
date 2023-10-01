@@ -119,7 +119,7 @@ test_that(".filter_chains", {
     )
 
   new_chains <- res$chains |>
-    reduce(c) |>
+    purrr::reduce(c) |>
     unique() |>
     na.omit() |>
     as.character()
@@ -133,7 +133,7 @@ test_that(".filter_chains", {
     )
 
   new_chains <- res$chains |>
-    reduce(c) |>
+    purrr::reduce(c) |>
     unique() |>
     na.omit() |>
     as.character() |>
@@ -182,7 +182,7 @@ test_that(".filter_chains", {
     )
 
   new_chains <- res$chains |>
-    reduce(c) |>
+    purrr::reduce(c) |>
     unique() |>
     na.omit() |>
     as.character()
@@ -196,7 +196,7 @@ test_that(".filter_chains", {
     )
 
   new_chains <- res$chains |>
-    reduce(c) |>
+    purrr::reduce(c) |>
     unique() |>
     na.omit() |>
     as.character() |>

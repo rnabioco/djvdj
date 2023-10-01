@@ -83,7 +83,7 @@ Plot repertoire similarity
 # Plot repertoire overlap
 # use clonotype IDs present in 'clonotype_id' column for calculations
 plot_similarity(
-  vdj_so,
+  vdj_sce,
   data_col    = "clonotype_id",
   cluster_col = "orig.ident"
 )
@@ -98,7 +98,7 @@ plot_similarity(
 
 # Specify colors to use for heatmap
 plot_similarity(
-  vdj_so,
+  vdj_sce,
   data_col    = "clonotype_id",
   cluster_col = "orig.ident",
   plot_color  = c("white", "red")
@@ -106,7 +106,7 @@ plot_similarity(
 
 # Create circos plot
 plot_similarity(
-  vdj_so,
+  vdj_sce,
   data_col    = "clonotype_id",
   cluster_col = "orig.ident",
   method      = "circos"

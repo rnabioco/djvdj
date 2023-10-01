@@ -55,9 +55,12 @@
 #' @param quiet If `TRUE` progress updates will not be displayed
 #' @param sep Separator to use for storing per cell V(D)J data
 #' @return Single cell object or data.frame with added V(D)J data
+#' @importFrom utils head
+#' @importFrom methods slot
+#' @importFrom stats na.omit
 #'
 #' @examples
-#' Load GEX data
+#' # Load GEX data
 #' data_dir <- system.file("extdata/splen", package = "djvdj")
 #'
 #' gex_dirs <- c(
@@ -551,7 +554,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @param chk_none Value of 'None' will be replaced with FALSE for the
 #' specified columns and converted to logical
 #' @return List containing one data.frame for each path provided to vdj_dir
-#' @importFrom readr read_csv cols
 #' @noRd
 .load_vdj_data <- function(vdj_dir, cell_prfxs, cell_sfxs,
                            contig_file = "filtered_contig_annotations.csv",
@@ -662,7 +664,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @param bc_col Column containing cell barcodes
 #' @param prfxs Named vector containing new cell prefixes
 #' @return data.frame with formatted barcodes
-#' @importFrom stringr str_remove
 #' @noRd
 .format_cell_prefixes <- function(df_in, bc_col = "barcode", cell_prfxs,
                                   cell_sfxs) {
@@ -728,7 +729,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
 .extract_pattern <- function(x, pattern) {
   res <- .str_extract_all(x, pattern)
-  res <- map_chr(res, ~ ifelse(purrr::is_empty(.x), "", .x))
+  res <- purrr::map_chr(res, ~ ifelse(purrr::is_empty(.x), "", .x))
 
   res
 }
@@ -738,11 +739,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @param df_in data.frame
 #' @param clmns Columns to replace 'None' and convert to logical
 #' @return data.frame
-#' @importFrom stringr str_replace
 #' @noRd
 .replace_none <- function(df_in, clmns) {
 
-  clmns <- clmns[!map_lgl(df_in[clmns], is.logical)]
+  clmns <- clmns[!purrr::map_lgl(df_in[clmns], is.logical)]
 
   if (purrr::is_empty(clmns)) return(df_in)
 
@@ -1180,7 +1180,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   df_in <- dplyr::select(df_in, all_of(sep_cols))
   res   <- stats::na.omit(df_in)
 
-  if (!is.null(n_rows)) res <- head(res, n_rows)
+  if (!is.null(n_rows)) res <- utils::head(res, n_rows)
 
   res <- grepl(sep, res, fixed = TRUE)
 
@@ -1216,7 +1216,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   n_chains <- table(as.character(n_chains))
 
   # Error if no chains match
-  if (is_empty(n_chains)) {
+  if (purrr::is_empty(n_chains)) {
     chains <- unlist(chains, use.names = FALSE)
 
     cli::cli_abort(
@@ -1292,12 +1292,12 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
 .print_import_summary <- function(stats) {
 
-  stats <- purrr::map(stats, ~ map(.x, ~ {
+  stats <- purrr::map(stats, ~ purrr::map(.x, ~ {
     if (is.na(.x)) .x <- "NA"
     .x
   }))
 
-  stats <- map(stats, ~ {
+  stats <- purrr::map(stats, ~ {
     names(.x)[names(.x) == "Sample"] <- "\u00a0"
     .x
   })
@@ -1305,7 +1305,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # Calculate maximum char width for header and values in each column
   # exclude sample from header
   clmn_wdth <- dplyr::bind_rows(stats)
-  clmn_wdth <- imap(clmn_wdth, ~ max(nchar(c(.x, .y))))
+  clmn_wdth <- purrr::imap(clmn_wdth, ~ max(nchar(c(.x, .y))))
 
   nms <- names(clmn_wdth)
   nms <- nms[nms != "Status"]
@@ -1474,11 +1474,11 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @examples
 #' # Define clonotypes using the CDR3 nucleotide sequence
 #' res <- define_clonotypes(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_cols = "cdr3_nt"
 #' )
 #'
-#' head(slot(res, "meta.data"), 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # Define clonotypes based on the combination of the CDR3 nucleotide sequence
 #' # and the V and J genes
@@ -1491,12 +1491,12 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #'
 #' # Modify the name of the column used to store clonotype IDs
 #' res <- define_clonotypes(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_cols = "cdr3_nt",
 #'   clonotype_col = "NEW_clonotype_id"
 #' )
 #'
-#' head(slot(res, "meta.data"), 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # When defining clonotypes only use chains that are productive
 #' res <- define_clonotypes(

@@ -151,7 +151,7 @@ different samples, cell types, clonotypes, isotypes, etc.
 \examples{
 # Plot frequency of different isotypes
 plot_frequency(
-  vdj_so,
+  vdj_sce,
   data_col = "isotype"
 )
 
@@ -172,7 +172,7 @@ plot_frequency(
 
 # Plot number of cells on the y-axis
 plot_frequency(
-  vdj_so,
+  vdj_sce,
   data_col    = "seurat_clusters",
   cluster_col = "orig.ident",
   units       = "frequency"

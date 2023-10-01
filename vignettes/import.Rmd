@@ -38,9 +38,9 @@ library(djvdj)
 library(Seurat)
 library(dplyr)
 
+# Create Seurat object
 data_dir <- system.file("extdata/splen", package = "djvdj")
 
-# Create Seurat object
 so <- file.path(data_dir, "BL6_GEX/filtered_feature_bc_matrix") |>
   Read10X() |>
   CreateSeuratObject()
