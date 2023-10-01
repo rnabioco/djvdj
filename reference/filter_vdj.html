@@ -129,7 +129,7 @@ individual chains can be filtered, if <code>FALSE</code> values will be filtered
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Only include V(D)J data for productive chains</span></span></span>
-<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">filter_vdj</span><span class="op">(</span><span class="va">vdj_so</span>, <span class="va">productive</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">filter_vdj</span><span class="op">(</span><span class="va">vdj_sce</span>, <span class="va">productive</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Only include V(D)J data for cells with paired chains</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">filter_vdj</span><span class="op">(</span><span class="va">vdj_sce</span>, <span class="va">paired</span><span class="op">)</span></span></span>
@@ -137,7 +137,7 @@ individual chains can be filtered, if <code>FALSE</code> values will be filtered
 <span class="r-in"><span><span class="co"># Only include V(D)J data for cells with at least one heavy and one light</span></span></span>
 <span class="r-in"><span><span class="co"># chain</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">filter_vdj</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">vdj_so</span>,</span></span>
+<span class="r-in"><span>  <span class="va">vdj_sce</span>,</span></span>
 <span class="r-in"><span>  <span class="st">"IGH"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">chains</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/any.html" class="external-link">any</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"IGK"</span>, <span class="st">"IGL"</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">chains</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
@@ -148,13 +148,13 @@ individual chains can be filtered, if <code>FALSE</code> values will be filtered
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Only include V(D)J data for heavy chains</span></span></span>
-<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">filter_vdj</span><span class="op">(</span><span class="va">vdj_so</span>, <span class="va">chains</span> <span class="op">==</span> <span class="st">"IGH"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">filter_vdj</span><span class="op">(</span><span class="va">vdj_sce</span>, <span class="va">chains</span> <span class="op">==</span> <span class="st">"IGH"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Remove chains that only have 1 UMI for support</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">filter_vdj</span><span class="op">(</span><span class="va">vdj_sce</span>, <span class="va">umis</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Filter based on cell barcode</span></span></span>
-<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">filter_vdj</span><span class="op">(</span><span class="va">vdj_so</span>, <span class="va">.cell_id</span> <span class="op">==</span> <span class="st">"1_ACGGAGACATGCTGGC-1"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">filter_vdj</span><span class="op">(</span><span class="va">vdj_sce</span>, <span class="va">.cell_id</span> <span class="op">==</span> <span class="st">"1_ACGGAGACATGCTGGC-1"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

@@ -85,6 +85,9 @@
 <span>  panel_nrow <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  panel_scales <span class="op">=</span> <span class="st">"free"</span>,</span>
 <span>  n_label <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  p_label <span class="op">=</span> <span class="st">"all"</span>,</span>
+<span>  p_method <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  p_file <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  label_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -125,8 +128,8 @@ diversity metrics</p></dd>
 
 
 <dt>n_boots</dt>
-<dd><p>Number of bootstrap replicates for calculating standard error,
-if n_boots is 0 this will be skipped.</p></dd>
+<dd><p>Number of bootstrap replicates for calculating standard
+deviation, if n_boots is 0 this will be skipped.</p></dd>
 
 
 <dt>chain</dt>
@@ -174,6 +177,34 @@ plot legend</p></li>
 </ul></dd>
 
 
+<dt>p_label</dt>
+<dd><p>Specification indicating how p-values should be labeled on
+plot, this can one of the following:</p><ul><li><p>'none', do not display p-values</p></li>
+<li><p>'all', show p-values for all groups</p></li>
+<li><p>A named vector providing p-value cutoffs and labels to display,
+e.g. <code>c('*' = 0.05, '**' = 0.01, '***' = 0.001)</code>. The keyword 'value' can
+be used to display the p-value for those less than a certain cutoff,
+e.g. <code>c(value = 0.05, ns = 1.1)</code> will show significant p-values, all others
+will be labeled 'ns'.</p></li>
+</ul></dd>
+
+
+<dt>p_method</dt>
+<dd><p>Method to use for calculating p-values, by default when
+comparing two groups a t-test will be used.
+When comparing more than two groups the Kruskal-Wallis test will be used.
+p-values are adjusted for
+multiple testing using Bonferroni correction. Possible methods include:</p><ul><li><p>'t', two sample t-test performed with <code><a href="https://rdrr.io/r/stats/t.test.html" class="external-link">stats::t.test()</a></code></p></li>
+<li><p>'wilcox', Wilcoxon rank sum test performed with <code><a href="https://rdrr.io/r/stats/wilcox.test.html" class="external-link">stats::wilcox.test()</a></code></p></li>
+<li><p>'kruskal', Kruskal-Wallis test performed with <code><a href="https://rdrr.io/r/stats/kruskal.test.html" class="external-link">stats::kruskal.test()</a></code></p></li>
+</ul></dd>
+
+
+<dt>p_file</dt>
+<dd><p>File path to save table containing p-values for each
+comparison.</p></dd>
+
+
 <dt>label_params</dt>
 <dd><p>Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")</p></dd>
@@ -197,28 +228,21 @@ linetype, etc.</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Plot diversity using all cells</span></span></span>
-<span class="r-in"><span><span class="fu">plot_diversity</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">vdj_so</span>,</span></span>
-<span class="r-in"><span>  data_col <span class="op">=</span> <span class="st">"clonotype_id"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="plot_diversity-1.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Specify method to use for calculating repertoire diversity</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Specify method to use for calculating repertoire diversity</span></span></span>
 <span class="r-in"><span><span class="fu">plot_diversity</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">vdj_sce</span>,</span></span>
 <span class="r-in"><span>  data_col <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span></span>
 <span class="r-in"><span>  method   <span class="op">=</span> <span class="fu">abdiv</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/abdiv/man/shannon.html" class="external-link">shannon</a></span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="plot_diversity-2.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_diversity-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot diversity separately for each cell cluster</span></span></span>
 <span class="r-in"><span><span class="fu">plot_diversity</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">vdj_so</span>,</span></span>
+<span class="r-in"><span>  <span class="va">vdj_sce</span>,</span></span>
 <span class="r-in"><span>  data_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span></span>
 <span class="r-in"><span>  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="plot_diversity-3.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_diversity-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot multiple diversity metrics</span></span></span>
 <span class="r-in"><span><span class="va">mets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
@@ -232,16 +256,16 @@ linetype, etc.</p></dd>
 <span class="r-in"><span>  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span></span>
 <span class="r-in"><span>  method      <span class="op">=</span> <span class="va">mets</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="plot_diversity-4.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_diversity-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Specify colors to use for each cell cluster</span></span></span>
 <span class="r-in"><span><span class="fu">plot_diversity</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">vdj_so</span>,</span></span>
+<span class="r-in"><span>  <span class="va">vdj_sce</span>,</span></span>
 <span class="r-in"><span>  data_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span></span>
 <span class="r-in"><span>  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span></span>
 <span class="r-in"><span>  plot_colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>avid_2 <span class="op">=</span> <span class="st">"green"</span>, avid_1 <span class="op">=</span> <span class="st">"purple"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="plot_diversity-5.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_diversity-4.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Specify order to use for plotting cell clusters</span></span></span>
 <span class="r-in"><span><span class="fu">plot_diversity</span><span class="op">(</span></span></span>
@@ -250,16 +274,16 @@ linetype, etc.</p></dd>
 <span class="r-in"><span>  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span></span>
 <span class="r-in"><span>  plot_lvls   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"avid_2"</span>, <span class="st">"avid_1"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="plot_diversity-6.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_diversity-5.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Specify how to organize panels when plotting multiple metrics</span></span></span>
 <span class="r-in"><span><span class="fu">plot_diversity</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">vdj_so</span>,</span></span>
+<span class="r-in"><span>  <span class="va">vdj_sce</span>,</span></span>
 <span class="r-in"><span>  data_col   <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span></span>
 <span class="r-in"><span>  method     <span class="op">=</span> <span class="va">mets</span>,</span></span>
 <span class="r-in"><span>  panel_nrow <span class="op">=</span> <span class="fl">2</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="plot_diversity-7.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_diversity-6.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

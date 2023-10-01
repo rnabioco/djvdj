@@ -127,7 +127,7 @@
     <loc>https://rnabioco.github.io/djvdj/reference/plot_similarity.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/splen_so.html</loc>
+    <loc>https://rnabioco.github.io/djvdj/reference/splen_meta.html</loc>
   </url>
   <url>
     <loc>https://rnabioco.github.io/djvdj/reference/summarize_vdj.html</loc>
@@ -139,12 +139,6 @@
     <loc>https://rnabioco.github.io/djvdj/reference/tiny_sce.html</loc>
   </url>
   <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/tiny_so.html</loc>
-  </url>
-  <url>
     <loc>https://rnabioco.github.io/djvdj/reference/vdj_sce.html</loc>
-  </url>
-  <url>
-    <loc>https://rnabioco.github.io/djvdj/reference/vdj_so.html</loc>
   </url>
 </urlset>

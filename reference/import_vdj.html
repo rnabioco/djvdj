@@ -180,11 +180,29 @@ file.</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Loading multiple datasets</span></span></span>
-<span class="r-in"><span><span class="co"># to ensure cell barcodes for the V(D)J data match those in the object</span></span></span>
-<span class="r-in"><span><span class="co"># load the datasets in the same order as the gene expression data</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Load GEX data</span></span></span>
 <span class="r-in"><span><span class="va">data_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">gex_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_GEX/filtered_feature_bc_matrix"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"MD4_GEX/filtered_feature_bc_matrix"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">splen_so</span> <span class="op">&lt;-</span> <span class="va">gex_dirs</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">Seurat</span><span class="fu">::</span><span class="fu"><a href="https://satijalab.org/seurat/reference/Read10X.html" class="external-link">Read10X</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">Seurat</span><span class="fu">::</span><span class="fu"><a href="https://mojaveazure.github.io/seurat-object/reference/CreateSeuratObject.html" class="external-link">CreateSeuratObject</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> The legacy packages maptools, rgdal, and rgeos, underpinning the sp package,</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> which was just loaded, will retire in October 2023.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Please refer to R-spatial evolution reports for details, especially</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> https://r-spatial.org/r/2023/05/15/evolution4.html.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> It may be desirable to make the sf package available;</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> package maintainers should consider adding sf to Suggests:.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> The sp package is now running under evolution status 2</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>      (status 2 uses the sf package in place of rgdal)</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Loading multiple datasets</span></span></span>
+<span class="r-in"><span><span class="co"># to ensure cell barcodes for the V(D)J data match those in the object</span></span></span>
+<span class="r-in"><span><span class="co"># load the datasets in the same order as the gene expression data</span></span></span>
 <span class="r-in"><span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_BCR"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"MD4_BCR"</span><span class="op">)</span></span></span>
@@ -193,24 +211,20 @@ file.</p></dd>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="va">splen_so</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">import_vdj</span><span class="op">(</span>vdj_dir <span class="op">=</span> <span class="va">vdj_dirs</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading V(D)J data</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Loading V(D)J data <span style="color: #B2B2B2;">[225ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Loading V(D)J data <span style="color: #B2B2B2;">[291ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Formatting V(D)J data</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Formatting V(D)J data <span style="color: #B2B2B2;">[151ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Formatting V(D)J data <span style="color: #B2B2B2;">[158ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────────────</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     | # cells | # VDJ | # paired | Overlap |</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 1 |     500 |   170 |       67 |     170 | <span style="color: #0000BB;">100%</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2 |     500 |   159 |        7 |     159 | <span style="color: #0000BB;">100%</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>       # cells   # VDJ   # paired   # overlap   % overlap </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 1 |     500 |   170 |       67 |       170 | <span style="color: #0000BB;">     100%</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2 |     500 |   159 |        7 |       159 | <span style="color: #0000BB;">     100%</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────────────</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">slot</span><span class="op">(</span><span class="va">res</span>, <span class="st">"meta.data"</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        orig.ident nCount_RNA nFeature_RNA RNA_snn_res.1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1        BL6        202           25             0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        seurat_clusters    UMAP_1    UMAP_2           type</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1               0 -1.741044 0.8840749 B cells (B.T3)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                r cell_type sample clonotype_id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1 0.6256432   B cells  BL6-1         &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        orig.ident nCount_RNA nFeature_RNA clonotype_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1        BL6        202           25         &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                        exact_subclonotype_id chains n_chains cdr3 cdr3_nt</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                        cdr3_length cdr3_nt_length v_gene d_gene j_gene</span>
@@ -230,24 +244,20 @@ file.</p></dd>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="va">splen_so</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">import_vdj</span><span class="op">(</span>vdj_dir <span class="op">=</span> <span class="va">vdj_dirs</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading V(D)J data</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Loading V(D)J data <span style="color: #B2B2B2;">[89ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Loading V(D)J data <span style="color: #B2B2B2;">[95ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Formatting V(D)J data</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Formatting V(D)J data <span style="color: #B2B2B2;">[155ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Formatting V(D)J data <span style="color: #B2B2B2;">[164ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────────────</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>        | # cells | # VDJ | # paired | Overlap |</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> BL6_ |     500 |   170 |       67 |     170 | <span style="color: #0000BB;">100%</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> MD4_ |     500 |   159 |        7 |     159 | <span style="color: #0000BB;">100%</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>          # cells   # VDJ   # paired   # overlap   % overlap </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> BL6_ |     500 |   170 |       67 |       170 | <span style="color: #0000BB;">     100%</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> MD4_ |     500 |   159 |        7 |       159 | <span style="color: #0000BB;">     100%</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────────────</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">slot</span><span class="op">(</span><span class="va">res</span>, <span class="st">"meta.data"</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        orig.ident nCount_RNA nFeature_RNA RNA_snn_res.1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1        BL6        202           25             0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        seurat_clusters    UMAP_1    UMAP_2           type</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1               0 -1.741044 0.8840749 B cells (B.T3)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                r cell_type sample clonotype_id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1 0.6256432   B cells  BL6-1         &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        orig.ident nCount_RNA nFeature_RNA clonotype_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1        BL6        202           25         &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                        exact_subclonotype_id chains n_chains cdr3 cdr3_nt</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                        cdr3_length cdr3_nt_length v_gene d_gene j_gene</span>
@@ -264,24 +274,20 @@ file.</p></dd>
 <span class="r-in"><span>    filter_paired <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading V(D)J data</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Loading V(D)J data <span style="color: #B2B2B2;">[86ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Loading V(D)J data <span style="color: #B2B2B2;">[114ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Formatting V(D)J data</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Formatting V(D)J data <span style="color: #B2B2B2;">[134ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Formatting V(D)J data <span style="color: #B2B2B2;">[136ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────────────</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>        | # cells | # VDJ | # paired | Overlap |</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> BL6_ |     500 |   170 |       67 |     170 | <span style="color: #0000BB;">100%</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> MD4_ |     500 |   159 |        7 |     159 | <span style="color: #0000BB;">100%</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>          # cells   # VDJ   # paired   # overlap   % overlap </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> BL6_ |     500 |   170 |       67 |       170 | <span style="color: #0000BB;">     100%</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> MD4_ |     500 |   159 |        7 |       159 | <span style="color: #0000BB;">     100%</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────────────</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">slot</span><span class="op">(</span><span class="va">res</span>, <span class="st">"meta.data"</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        orig.ident nCount_RNA nFeature_RNA RNA_snn_res.1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1        BL6        202           25             0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        seurat_clusters    UMAP_1    UMAP_2           type</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1               0 -1.741044 0.8840749 B cells (B.T3)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                r cell_type sample clonotype_id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1 0.6256432   B cells  BL6-1         &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        orig.ident nCount_RNA nFeature_RNA clonotype_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1        BL6        202           25         &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                        exact_subclonotype_id chains n_chains cdr3 cdr3_nt</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                        cdr3_length cdr3_nt_length v_gene d_gene j_gene</span>
@@ -300,35 +306,31 @@ file.</p></dd>
 <span class="r-in"><span>    define_clonotypes <span class="op">=</span> <span class="st">"cdr3_gene"</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading V(D)J data</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Loading V(D)J data <span style="color: #B2B2B2;">[104ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Loading V(D)J data <span style="color: #B2B2B2;">[92ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Formatting V(D)J data</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Formatting V(D)J data <span style="color: #B2B2B2;">[133ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Formatting V(D)J data <span style="color: #B2B2B2;">[141ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Defining clonotypes</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Defining clonotypes <span style="color: #B2B2B2;">[161ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Defining clonotypes <span style="color: #B2B2B2;">[175ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────────────</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>        | # cells | # VDJ | # paired | Overlap |</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> BL6_ |     500 |   170 |       67 |     170 | <span style="color: #0000BB;">100%</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> MD4_ |     500 |   159 |        7 |     159 | <span style="color: #0000BB;">100%</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>          # cells   # VDJ   # paired   # overlap   % overlap </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> BL6_ |     500 |   170 |       67 |       170 | <span style="color: #0000BB;">     100%</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> MD4_ |     500 |   159 |        7 |       159 | <span style="color: #0000BB;">     100%</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────────────</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">slot</span><span class="op">(</span><span class="va">res</span>, <span class="st">"meta.data"</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        orig.ident nCount_RNA nFeature_RNA RNA_snn_res.1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1        BL6        202           25             0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        seurat_clusters    UMAP_1    UMAP_2           type</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1               0 -1.741044 0.8840749 B cells (B.T3)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                r cell_type sample exact_subclonotype_id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1 0.6256432   B cells  BL6-1                    NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        chains n_chains cdr3 cdr3_nt cdr3_length</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;        &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        cdr3_nt_length v_gene d_gene j_gene c_gene isotype</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1           &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        reads umis productive full_length paired</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;     NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        clonotype_id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1         &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        orig.ident nCount_RNA nFeature_RNA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1        BL6        202           25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        exact_subclonotype_id chains n_chains cdr3 cdr3_nt</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        cdr3_length cdr3_nt_length v_gene d_gene j_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1        &lt;NA&gt;           &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        c_gene isotype reads umis productive full_length</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1   &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        paired clonotype_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1     NA         &lt;NA&gt;</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Include mutation information for each chain</span></span></span>
 <span class="r-in"><span><span class="co"># this information will be included if the file concat_ref.bam is present</span></span></span>
@@ -339,27 +341,23 @@ file.</p></dd>
 <span class="r-in"><span>    include_mutations <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading V(D)J data</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Loading V(D)J data <span style="color: #B2B2B2;">[397ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Loading V(D)J data <span style="color: #B2B2B2;">[418ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Calculating mutation frequencies</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Calculating mutation frequencies <span style="color: #B2B2B2;">[528ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Calculating mutation frequencies <span style="color: #B2B2B2;">[610ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Formatting V(D)J data</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Formatting V(D)J data <span style="color: #B2B2B2;">[267ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Formatting V(D)J data <span style="color: #B2B2B2;">[272ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────────────</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>        | # cells | # VDJ | # paired | Overlap |</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> BL6_ |     500 |   170 |       67 |     170 | <span style="color: #0000BB;">100%</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> MD4_ |     500 |   159 |        7 |     159 | <span style="color: #0000BB;">100%</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>          # cells   # VDJ   # paired   # overlap   % overlap </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> BL6_ |     500 |   170 |       67 |       170 | <span style="color: #0000BB;">     100%</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> MD4_ |     500 |   159 |        7 |       159 | <span style="color: #0000BB;">     100%</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────────────</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">slot</span><span class="op">(</span><span class="va">res</span>, <span class="st">"meta.data"</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        orig.ident nCount_RNA nFeature_RNA RNA_snn_res.1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1        BL6        202           25             0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        seurat_clusters    UMAP_1    UMAP_2           type</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1               0 -1.741044 0.8840749 B cells (B.T3)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                r cell_type sample clonotype_id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1 0.6256432   B cells  BL6-1         &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        orig.ident nCount_RNA nFeature_RNA clonotype_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1        BL6        202           25         &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                        exact_subclonotype_id chains n_chains cdr3 cdr3_nt</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> BL6_AAACGGGGTTCTGTTT-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                        cdr3_length cdr3_nt_length v_gene d_gene j_gene</span>

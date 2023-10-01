@@ -133,52 +133,78 @@ containing V(D)J data will not be converted to vectors for filtering.</p></dd>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Calculate mean reads and UMIs per cell</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">mutate_vdj</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">vdj_so</span>,</span></span>
+<span class="r-in"><span>  <span class="va">vdj_sce</span>,</span></span>
 <span class="r-in"><span>  mean_umis  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">umis</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  mean_reads <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">reads</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">slot</span><span class="op">(</span><span class="va">res</span>, <span class="st">"meta.data"</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1     avid_1          0            0               0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1     avid_1          6            4               0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1     avid_1         15            4               0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters     UMAP_1     UMAP_2 clonotype_id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1               0 -5.9770541 -2.4181081         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1               0  1.2829828 -0.7000686         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1               0 -0.5371633  0.1332597         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      exact_subclonotype_id chains n_chains cdr3 cdr3_nt</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      cdr3_length cdr3_nt_length v_gene d_gene j_gene</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1        &lt;NA&gt;           &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1        &lt;NA&gt;           &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1        &lt;NA&gt;           &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      c_gene isotype reads umis productive full_length</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1   &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1   &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1   &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      paired v_ins v_del v_mis d_ins d_del d_mis j_ins</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1     NA  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1     NA  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1     NA  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      j_del j_mis c_ins c_del c_mis all_ins all_del</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      all_mis vd_ins vd_del dj_ins dj_del v_mis_freq</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1    &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1    &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1    &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      d_mis_freq j_mis_freq c_mis_freq all_mis_freq</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      mean_umis mean_reads</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1        NA         NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1        NA         NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1        NA         NA</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">slot</span><span class="op">(</span><span class="va">res</span>, <span class="st">"colData"</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 3 rows and 51 columns</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt;  &lt;numeric&gt;    &lt;integer&gt;        &lt;factor&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1      avid_1          0            0               0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1      avid_1          6            4               0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1      avid_1         15            4               0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters    UMAP_1    UMAP_2 clonotype_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                             &lt;factor&gt; &lt;numeric&gt; &lt;numeric&gt;  &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1               0 -5.977054 -2.418108           NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1               0  1.282983 -0.700069           NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1               0 -0.537163  0.133260           NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      exact_subclonotype_id      chains  n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                  &lt;numeric&gt; &lt;character&gt; &lt;integer&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1                    NA          NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1                    NA          NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1                    NA          NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                             cdr3     cdr3_nt cdr3_length cdr3_nt_length</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt;    &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA             NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA             NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA             NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                           v_gene      d_gene      j_gene      c_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                          isotype       reads        umis  productive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      full_length    paired       v_ins       v_del</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;logical&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA        NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA        NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA        NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                            v_mis       d_ins       d_del       d_mis</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                            j_ins       j_del       j_mis       c_ins</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                            c_del       c_mis     all_ins     all_del</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                          all_mis      vd_ins      vd_del      dj_ins</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                           dj_del  v_mis_freq  d_mis_freq  j_mis_freq</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       c_mis_freq all_mis_freq mean_umis mean_reads</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt;  &lt;character&gt; &lt;numeric&gt;  &lt;numeric&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA           NA        NA         NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA           NA        NA         NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA           NA        NA         NA</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Calculate the total number of insertions + deletions for each chain</span></span></span>
 <span class="r-in"><span><span class="co"># we have to wrap our expression in list() since a value is returned for</span></span></span>
@@ -258,51 +284,77 @@ containing V(D)J data will not be converted to vectors for filtering.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a new column showing the unique chains for each cell</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">mutate_vdj</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">vdj_so</span>,</span></span>
+<span class="r-in"><span>  <span class="va">vdj_sce</span>,</span></span>
 <span class="r-in"><span>  unique_chains <span class="op">=</span> <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_c.html" class="external-link">str_c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">chains</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"_"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">slot</span><span class="op">(</span><span class="va">res</span>, <span class="st">"meta.data"</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1     avid_1          0            0               0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1     avid_1          6            4               0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1     avid_1         15            4               0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters     UMAP_1     UMAP_2 clonotype_id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1               0 -5.9770541 -2.4181081         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1               0  1.2829828 -0.7000686         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1               0 -0.5371633  0.1332597         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      exact_subclonotype_id chains n_chains cdr3 cdr3_nt</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      cdr3_length cdr3_nt_length v_gene d_gene j_gene</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1        &lt;NA&gt;           &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1        &lt;NA&gt;           &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1        &lt;NA&gt;           &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      c_gene isotype reads umis productive full_length</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1   &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1   &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1   &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      paired v_ins v_del v_mis d_ins d_del d_mis j_ins</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1     NA  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1     NA  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1     NA  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      j_del j_mis c_ins c_del c_mis all_ins all_del</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      all_mis vd_ins vd_del dj_ins dj_del v_mis_freq</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1    &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1    &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1    &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      d_mis_freq j_mis_freq c_mis_freq all_mis_freq</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      unique_chains</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          &lt;NA&gt;</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">slot</span><span class="op">(</span><span class="va">res</span>, <span class="st">"colData"</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 3 rows and 50 columns</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt;  &lt;numeric&gt;    &lt;integer&gt;        &lt;factor&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1      avid_1          0            0               0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1      avid_1          6            4               0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1      avid_1         15            4               0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters    UMAP_1    UMAP_2 clonotype_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                             &lt;factor&gt; &lt;numeric&gt; &lt;numeric&gt;  &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1               0 -5.977054 -2.418108           NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1               0  1.282983 -0.700069           NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1               0 -0.537163  0.133260           NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      exact_subclonotype_id      chains  n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                  &lt;numeric&gt; &lt;character&gt; &lt;integer&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1                    NA          NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1                    NA          NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1                    NA          NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                             cdr3     cdr3_nt cdr3_length cdr3_nt_length</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt;    &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA             NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA             NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA             NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                           v_gene      d_gene      j_gene      c_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                          isotype       reads        umis  productive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      full_length    paired       v_ins       v_del</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;logical&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA        NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA        NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA        NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                            v_mis       d_ins       d_del       d_mis</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                            j_ins       j_del       j_mis       c_ins</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                            c_del       c_mis     all_ins     all_del</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                          all_mis      vd_ins      vd_del      dj_ins</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                           dj_del  v_mis_freq  d_mis_freq  j_mis_freq</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       c_mis_freq all_mis_freq unique_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt;  &lt;character&gt;   &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA           NA            NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA           NA            NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA           NA            NA</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Determine which cells have both an IGK and IGL chain</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">mutate_vdj</span><span class="op">(</span></span></span>
@@ -354,51 +406,77 @@ containing V(D)J data will not be converted to vectors for filtering.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Determine which cells have multiple light chains</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">mutate_vdj</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">vdj_so</span>,</span></span>
+<span class="r-in"><span>  <span class="va">vdj_sce</span>,</span></span>
 <span class="r-in"><span>  multi_light <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">chains</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"IGK"</span>, <span class="st">"IGL"</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">1</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">slot</span><span class="op">(</span><span class="va">res</span>, <span class="st">"meta.data"</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1     avid_1          0            0               0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1     avid_1          6            4               0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1     avid_1         15            4               0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters     UMAP_1     UMAP_2 clonotype_id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1               0 -5.9770541 -2.4181081         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1               0  1.2829828 -0.7000686         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1               0 -0.5371633  0.1332597         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      exact_subclonotype_id chains n_chains cdr3 cdr3_nt</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1                    NA   &lt;NA&gt;       NA &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      cdr3_length cdr3_nt_length v_gene d_gene j_gene</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1        &lt;NA&gt;           &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1        &lt;NA&gt;           &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1        &lt;NA&gt;           &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      c_gene isotype reads umis productive full_length</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1   &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1   &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1   &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt; &lt;NA&gt;       &lt;NA&gt;        &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      paired v_ins v_del v_mis d_ins d_del d_mis j_ins</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1     NA  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1     NA  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1     NA  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      j_del j_mis c_ins c_del c_mis all_ins all_del</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      all_mis vd_ins vd_del dj_ins dj_del v_mis_freq</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1    &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1    &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1    &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      d_mis_freq j_mis_freq c_mis_freq all_mis_freq</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      multi_light</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1       FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1       FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1       FALSE</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">slot</span><span class="op">(</span><span class="va">res</span>, <span class="st">"colData"</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 3 rows and 50 columns</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt;  &lt;numeric&gt;    &lt;integer&gt;        &lt;factor&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1      avid_1          0            0               0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1      avid_1          6            4               0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1      avid_1         15            4               0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      seurat_clusters    UMAP_1    UMAP_2 clonotype_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                             &lt;factor&gt; &lt;numeric&gt; &lt;numeric&gt;  &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1               0 -5.977054 -2.418108           NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1               0  1.282983 -0.700069           NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1               0 -0.537163  0.133260           NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      exact_subclonotype_id      chains  n_chains</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                  &lt;numeric&gt; &lt;character&gt; &lt;integer&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1                    NA          NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1                    NA          NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1                    NA          NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                             cdr3     cdr3_nt cdr3_length cdr3_nt_length</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt;    &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA             NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA             NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA             NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                           v_gene      d_gene      j_gene      c_gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                          isotype       reads        umis  productive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      full_length    paired       v_ins       v_del</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;logical&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA        NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA        NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA        NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                            v_mis       d_ins       d_del       d_mis</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                            j_ins       j_del       j_mis       c_ins</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                            c_del       c_mis     all_ins     all_del</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                          all_mis      vd_ins      vd_del      dj_ins</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                           dj_del  v_mis_freq  d_mis_freq  j_mis_freq</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA          NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       c_mis_freq all_mis_freq multi_light</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;character&gt;  &lt;character&gt;   &lt;logical&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AAGCCGCAGCTTATCG-1          NA           NA       FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_AATCCAGCATTACGAC-1          NA           NA       FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1_ACAGCTAGTCTGGTCG-1          NA           NA       FALSE</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

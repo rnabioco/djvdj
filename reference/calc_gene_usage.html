@@ -145,13 +145,22 @@ added to the input object.</p></dd>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Calculate V(D)J segment usage for all cells</span></span></span>
 <span class="r-in"><span><span class="fu">calc_gene_usage</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">vdj_so</span>,</span></span>
+<span class="r-in"><span>  <span class="va">vdj_sce</span>,</span></span>
 <span class="r-in"><span>  data_cols <span class="op">=</span> <span class="st">"v_gene"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 200 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 54 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> class: SingleCellExperiment </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> dim: 200 200 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> metadata(0):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> assays(1): counts</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rownames(200): Gm48486 Trav19 ... Hkdc1 Wdr62</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rowData names(0):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colnames(200): 1_AAGCCGCAGCTTATCG-1 1_AATCCAGCATTACGAC-1 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2_TTCTACAAGGCCCTTG-1 2_TTTGTCATCCAAAGTC-1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(51): orig.ident nCount_RNA ... v_gene_freq</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   v_gene_pct</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> reducedDimNames(0):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mainExpName: NULL</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> altExpNames(0):</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Calculate gene usage separately for cell clusters</span></span></span>
 <span class="r-in"><span><span class="fu">calc_gene_usage</span><span class="op">(</span></span></span>
@@ -175,14 +184,23 @@ added to the input object.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Calculate gene usage for a specific chain(s)</span></span></span>
 <span class="r-in"><span><span class="fu">calc_gene_usage</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">vdj_so</span>,</span></span>
+<span class="r-in"><span>  <span class="va">vdj_sce</span>,</span></span>
 <span class="r-in"><span>  data_cols <span class="op">=</span> <span class="st">"v_gene"</span>,</span></span>
 <span class="r-in"><span>  chain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"IGK"</span>, <span class="st">"IGL"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 200 features across 200 samples within 1 assay </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Active assay: RNA (200 features, 54 variable features)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2 dimensional reductions calculated: pca, umap</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> class: SingleCellExperiment </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> dim: 200 200 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> metadata(0):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> assays(1): counts</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rownames(200): Gm48486 Trav19 ... Hkdc1 Wdr62</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rowData names(0):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colnames(200): 1_AAGCCGCAGCTTATCG-1 1_AATCCAGCATTACGAC-1 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2_TTCTACAAGGCCCTTG-1 2_TTTGTCATCCAAAGTC-1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(51): orig.ident nCount_RNA ... v_gene_freq</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   v_gene_pct</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> reducedDimNames(0):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mainExpName: NULL</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> altExpNames(0):</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Calculate paired usage of V(D)J segments</span></span></span>
 <span class="r-in"><span><span class="fu">calc_gene_usage</span><span class="op">(</span></span></span>

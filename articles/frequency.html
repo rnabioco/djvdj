@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Clonotype Frequencies</h1>
             
-            <h4 data-toc-skip class="date">August 29 2023</h4>
+            <h4 data-toc-skip class="date">October 01 2023</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/rnabioco/djvdj/blob/HEAD/vignettes/frequency.Rmd" class="external-link"><code>vignettes/frequency.Rmd</code></a></small>
       <div class="d-none name"><code>frequency.Rmd</code></div>
@@ -114,13 +114,26 @@ egg lysozyme.</p>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># Load GEX data</span></span>
+<span><span class="va">data_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">gex_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"BL6_GEX/filtered_feature_bc_matrix"</span><span class="op">)</span>,</span>
+<span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"MD4_GEX/filtered_feature_bc_matrix"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">gex_dirs</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://satijalab.org/seurat/reference/Read10X.html" class="external-link">Read10X</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://mojaveazure.github.io/seurat-object/reference/CreateSeuratObject.html" class="external-link">CreateSeuratObject</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://mojaveazure.github.io/seurat-object/reference/AddMetaData.html" class="external-link">AddMetaData</a></span><span class="op">(</span><span class="va">splen_meta</span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># Add V(D)J data to object</span></span>
 <span><span class="va">vdj_dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  BL6 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/BL6_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span>,</span>
 <span>  MD4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/splen/MD4_BCR"</span>, package <span class="op">=</span> <span class="st">"djvdj"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">splen_so</span> <span class="op">|&gt;</span></span>
+<span><span class="va">so</span> <span class="op">&lt;-</span> <span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/import_vdj.html">import_vdj</a></span><span class="op">(</span><span class="va">vdj_dirs</span>, define_clonotypes <span class="op">=</span> <span class="st">"cdr3_gene"</span><span class="op">)</span></span></code></pre></div>
 <p><br></p>
 <div class="section level2">
@@ -312,21 +325,84 @@ set the <code>stack</code> argument to <code>FALSE</code>.</p>
 <span>    stack       <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="frequency_files/figure-html/unnamed-chunk-12-1.png" width="768"></p>
-<p>Frequency plots can also be separated based on an additional grouping
-variable such as treatment group (e.g. placebo vs drug) or disease
-status (e.g. healthy vs disease). This will generate boxplots with each
-point representing a label present in the <code>cluster_col</code>
-column. In this example we have 3 BL6 and 3 MD4 samples, so there are 3
-points shown for each boxplot.</p>
+<p>Clusters can also be grouped based on an additional variable such as
+treatment group (e.g. placebo vs drug) or disease status (e.g. healthy
+vs disease). This will generate bargraphs (or boxplots) showing the mean
+and standard deviation for each group. In this example we are comparing
+the 3 BL6 and 3 MD4 samples. You will also notice that there is a group
+labeled as <code>NA</code>, these are cells that lacked V(D)J data and
+thus did not have an assigned isotype.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plot_frequency.html">plot_frequency</a></span><span class="op">(</span></span>
-<span>    data_col    <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    data_col    <span class="op">=</span> <span class="st">"isotype"</span>,</span>
 <span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>    group_col   <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
 <span>    plot_colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>MD4 <span class="op">=</span> <span class="st">"#fec44f"</span>, BL6 <span class="op">=</span> <span class="st">"#3182bd"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="frequency_files/figure-html/unnamed-chunk-13-1.png" width="480"></p>
+<p><br></p>
+</div>
+<div class="section level2">
+<h2 id="p-values">p-values<a class="anchor" aria-label="anchor" href="#p-values"></a>
+</h2>
+<p>p-values can be calculated and shown on plots generated by
+<code><a href="../reference/plot_frequency.html">plot_frequency()</a></code> and <code><a href="../reference/plot_gene_usage.html">plot_gene_usage()</a></code>. To do
+this, you must pass a grouping variable to the <code>group_col</code>
+argument, which is used to group the clusters found in
+<code>cluster_col</code>. This is best used when you have a set of
+samples that can be divided into distinct groups. The cluster names
+should be unique for each treatment group, e.g. healthy: healthy-1,
+healthy-2; disease: disease-1, disease-2.</p>
+<p>The method used to calculate p-values can be specified with the
+<code>p_method</code> argument. By default a t-test will be performed,
+if more than two groups are compared the Kruskal-Wallis test will be
+used. A summary table of the calculated p-values can also be saved by
+passing a path to the <code>p_file</code> argument.</p>
+<p>The <code>p_label</code> argument can be used to modify which
+p-values are shown on the plot, by default only significant p-values are
+shown. In this example we display all p-values calculated using a
+t-test.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/plot_frequency.html">plot_frequency</a></span><span class="op">(</span></span>
+<span>    data_col    <span class="op">=</span> <span class="st">"isotype"</span>,</span>
+<span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
+<span>    group_col   <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
+<span>    </span>
+<span>    p_label     <span class="op">=</span> <span class="st">"all"</span>,</span>
+<span>    p_method    <span class="op">=</span> <span class="st">"t"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<p><img src="frequency_files/figure-html/unnamed-chunk-14-1.png" width="768"></p>
+<p>Custom labels for different p-value cutoffs can be specified by
+passing a named vector to the <code>p_label</code> argument. To display
+the actual p-value when it is below a certain threshold, use the keyword
+‘value’. Symbols can also be displayed by including the unicode symbol
+code. In this example we display p-values &lt;0.05, print a soccer ball
+for &lt;0.1, and all others are labeled as ‘ns’.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/plot_frequency.html">plot_frequency</a></span><span class="op">(</span></span>
+<span>    data_col    <span class="op">=</span> <span class="st">"isotype"</span>,</span>
+<span>    cluster_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
+<span>    group_col   <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
+<span>    p_label     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>value <span class="op">=</span> <span class="fl">0.05</span>, <span class="st">"\\u26BD"</span> <span class="op">=</span> <span class="fl">0.1</span>, ns <span class="op">=</span> <span class="cn">Inf</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<p><img src="frequency_files/figure-html/unnamed-chunk-15-1.png" width="768"></p>
+<p>Label aesthetics can be modified by passing a named list of aesthetic
+parameters to the <code>label_params</code> argument. These parameters
+will also modify the n-label, to specifically modify the p-value label,
+prefix each parameter with ‘p.’, e.g. <code>p.size = 14</code>.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">so</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/plot_frequency.html">plot_frequency</a></span><span class="op">(</span></span>
+<span>    data_col     <span class="op">=</span> <span class="st">"isotype"</span>,</span>
+<span>    cluster_col  <span class="op">=</span> <span class="st">"sample"</span>,</span>
+<span>    group_col    <span class="op">=</span> <span class="st">"orig.ident"</span>,</span>
+<span>    n_label      <span class="op">=</span> <span class="st">"corner"</span>,</span>
+<span>    label_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>p.color <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<p><img src="frequency_files/figure-html/unnamed-chunk-16-1.png" width="768"></p>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -353,90 +429,52 @@ points shown for each boxplot.</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] ggplot2_3.4.3      SeuratObject_4.1.3 Seurat_4.3.0.1    </span></span>
+<span><span class="co">#&gt; [1] ggplot2_3.4.3      SeuratObject_4.1.4 Seurat_4.4.0      </span></span>
 <span><span class="co">#&gt; [4] djvdj_0.1.0       </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] RcppAnnoy_0.0.21            splines_4.3.1              </span></span>
-<span><span class="co">#&gt;   [3] later_1.3.1                 bitops_1.0-7               </span></span>
-<span><span class="co">#&gt;   [5] tibble_3.2.1                polyclip_1.10-4            </span></span>
-<span><span class="co">#&gt;   [7] lifecycle_1.0.3             doParallel_1.0.17          </span></span>
-<span><span class="co">#&gt;   [9] rprojroot_2.0.3             globals_0.16.2             </span></span>
-<span><span class="co">#&gt;  [11] lattice_0.21-8              vroom_1.6.3                </span></span>
-<span><span class="co">#&gt;  [13] MASS_7.3-60                 backports_1.4.1            </span></span>
-<span><span class="co">#&gt;  [15] magrittr_2.0.3              plotly_4.10.2              </span></span>
-<span><span class="co">#&gt;  [17] sass_0.4.7                  rmarkdown_2.24             </span></span>
-<span><span class="co">#&gt;  [19] jquerylib_0.1.4             yaml_2.3.7                 </span></span>
-<span><span class="co">#&gt;  [21] httpuv_1.6.11               sctransform_0.3.5          </span></span>
-<span><span class="co">#&gt;  [23] sp_2.0-0                    spatstat.sparse_3.0-2      </span></span>
-<span><span class="co">#&gt;  [25] reticulate_1.31             cowplot_1.1.1              </span></span>
-<span><span class="co">#&gt;  [27] pbapply_1.7-2               RColorBrewer_1.1-3         </span></span>
-<span><span class="co">#&gt;  [29] abind_1.4-5                 zlibbioc_1.46.0            </span></span>
-<span><span class="co">#&gt;  [31] Rtsne_0.16                  GenomicRanges_1.52.0       </span></span>
-<span><span class="co">#&gt;  [33] purrr_1.0.2                 BiocGenerics_0.46.0        </span></span>
-<span><span class="co">#&gt;  [35] RCurl_1.98-1.12             circlize_0.4.15            </span></span>
-<span><span class="co">#&gt;  [37] GenomeInfoDbData_1.2.10     IRanges_2.34.1             </span></span>
-<span><span class="co">#&gt;  [39] S4Vectors_0.38.1            ggrepel_0.9.3              </span></span>
-<span><span class="co">#&gt;  [41] irlba_2.3.5.1               listenv_0.9.0              </span></span>
-<span><span class="co">#&gt;  [43] spatstat.utils_3.0-3        goftest_1.2-3              </span></span>
-<span><span class="co">#&gt;  [45] spatstat.random_3.1-5       fitdistrplus_1.1-11        </span></span>
-<span><span class="co">#&gt;  [47] parallelly_1.36.0           pkgdown_2.0.7              </span></span>
-<span><span class="co">#&gt;  [49] leiden_0.4.3                codetools_0.2-19           </span></span>
-<span><span class="co">#&gt;  [51] DelayedArray_0.26.7         tidyselect_1.2.0           </span></span>
-<span><span class="co">#&gt;  [53] shape_1.4.6                 farver_2.1.1               </span></span>
-<span><span class="co">#&gt;  [55] matrixStats_1.0.0           stats4_4.3.1               </span></span>
-<span><span class="co">#&gt;  [57] spatstat.explore_3.2-1      jsonlite_1.8.7             </span></span>
-<span><span class="co">#&gt;  [59] GetoptLong_1.0.5            ellipsis_0.3.2             </span></span>
-<span><span class="co">#&gt;  [61] ggtrace_0.2.0               progressr_0.14.0           </span></span>
-<span><span class="co">#&gt;  [63] ggridges_0.5.4              survival_3.5-5             </span></span>
-<span><span class="co">#&gt;  [65] iterators_1.0.14            systemfonts_1.0.4          </span></span>
-<span><span class="co">#&gt;  [67] foreach_1.5.2               tools_4.3.1                </span></span>
-<span><span class="co">#&gt;  [69] ragg_1.2.5                  ica_1.0-3                  </span></span>
-<span><span class="co">#&gt;  [71] Rcpp_1.0.11                 glue_1.6.2                 </span></span>
-<span><span class="co">#&gt;  [73] gridExtra_2.3               xfun_0.40                  </span></span>
-<span><span class="co">#&gt;  [75] MatrixGenerics_1.12.3       GenomeInfoDb_1.36.2        </span></span>
-<span><span class="co">#&gt;  [77] dplyr_1.1.2                 withr_2.5.0                </span></span>
-<span><span class="co">#&gt;  [79] fastmap_1.1.1               boot_1.3-28.1              </span></span>
-<span><span class="co">#&gt;  [81] fansi_1.0.4                 digest_0.6.33              </span></span>
-<span><span class="co">#&gt;  [83] R6_2.5.1                    mime_0.12                  </span></span>
-<span><span class="co">#&gt;  [85] textshaping_0.3.6           colorspace_2.1-0           </span></span>
-<span><span class="co">#&gt;  [87] scattermore_1.2             tensor_1.5                 </span></span>
-<span><span class="co">#&gt;  [89] spatstat.data_3.0-1         utf8_1.2.3                 </span></span>
-<span><span class="co">#&gt;  [91] tidyr_1.3.0                 generics_0.1.3             </span></span>
-<span><span class="co">#&gt;  [93] data.table_1.14.8           httr_1.4.7                 </span></span>
-<span><span class="co">#&gt;  [95] htmlwidgets_1.6.2           S4Arrays_1.0.5             </span></span>
-<span><span class="co">#&gt;  [97] uwot_0.1.16                 pkgconfig_2.0.3            </span></span>
-<span><span class="co">#&gt;  [99] gtable_0.3.4                ComplexHeatmap_2.16.0      </span></span>
-<span><span class="co">#&gt; [101] lmtest_0.9-40               SingleCellExperiment_1.22.0</span></span>
-<span><span class="co">#&gt; [103] XVector_0.40.0              htmltools_0.5.6            </span></span>
-<span><span class="co">#&gt; [105] clue_0.3-64                 scales_1.2.1               </span></span>
-<span><span class="co">#&gt; [107] Biobase_2.60.0              png_0.1-8                  </span></span>
-<span><span class="co">#&gt; [109] knitr_1.43                  tzdb_0.4.0                 </span></span>
-<span><span class="co">#&gt; [111] reshape2_1.4.4              rjson_0.2.21               </span></span>
-<span><span class="co">#&gt; [113] nlme_3.1-162                cachem_1.0.8               </span></span>
-<span><span class="co">#&gt; [115] zoo_1.8-12                  GlobalOptions_0.1.2        </span></span>
-<span><span class="co">#&gt; [117] stringr_1.5.0               KernSmooth_2.23-21         </span></span>
-<span><span class="co">#&gt; [119] parallel_4.3.1              miniUI_0.1.1.1             </span></span>
-<span><span class="co">#&gt; [121] desc_1.4.2                  pillar_1.9.0               </span></span>
-<span><span class="co">#&gt; [123] grid_4.3.1                  vctrs_0.6.3                </span></span>
-<span><span class="co">#&gt; [125] RANN_2.6.1                  promises_1.2.1             </span></span>
-<span><span class="co">#&gt; [127] xtable_1.8-4                cluster_2.1.4              </span></span>
-<span><span class="co">#&gt; [129] evaluate_0.21               readr_2.1.4                </span></span>
-<span><span class="co">#&gt; [131] cli_3.6.1                   compiler_4.3.1             </span></span>
-<span><span class="co">#&gt; [133] rlang_1.1.1                 crayon_1.5.2               </span></span>
-<span><span class="co">#&gt; [135] abdiv_0.2.0                 future.apply_1.11.0        </span></span>
-<span><span class="co">#&gt; [137] labeling_0.4.2              plyr_1.8.8                 </span></span>
-<span><span class="co">#&gt; [139] fs_1.6.3                    stringi_1.7.12             </span></span>
-<span><span class="co">#&gt; [141] viridisLite_0.4.2           deldir_1.0-9               </span></span>
-<span><span class="co">#&gt; [143] munsell_0.5.0               lazyeval_0.2.2             </span></span>
-<span><span class="co">#&gt; [145] spatstat.geom_3.2-4         Matrix_1.5-4.1             </span></span>
-<span><span class="co">#&gt; [147] hms_1.1.3                   patchwork_1.1.3            </span></span>
-<span><span class="co">#&gt; [149] bit64_4.0.5                 future_1.33.0              </span></span>
-<span><span class="co">#&gt; [151] shiny_1.7.5                 highr_0.10                 </span></span>
-<span><span class="co">#&gt; [153] SummarizedExperiment_1.30.2 ROCR_1.0-11                </span></span>
-<span><span class="co">#&gt; [155] igraph_1.5.1                broom_1.0.5                </span></span>
-<span><span class="co">#&gt; [157] memoise_2.0.1               bslib_0.5.1                </span></span>
-<span><span class="co">#&gt; [159] bit_4.0.5</span></span></code></pre>
+<span><span class="co">#&gt;   [1] RColorBrewer_1.1-3     jsonlite_1.8.7         magrittr_2.0.3        </span></span>
+<span><span class="co">#&gt;   [4] spatstat.utils_3.0-3   farver_2.1.1           rmarkdown_2.25        </span></span>
+<span><span class="co">#&gt;   [7] fs_1.6.3               ragg_1.2.5             vctrs_0.6.3           </span></span>
+<span><span class="co">#&gt;  [10] ROCR_1.0-11            memoise_2.0.1          spatstat.explore_3.2-3</span></span>
+<span><span class="co">#&gt;  [13] htmltools_0.5.6        sass_0.4.7             sctransform_0.4.0     </span></span>
+<span><span class="co">#&gt;  [16] parallelly_1.36.0      KernSmooth_2.23-21     bslib_0.5.1           </span></span>
+<span><span class="co">#&gt;  [19] htmlwidgets_1.6.2      desc_1.4.2             ica_1.0-3             </span></span>
+<span><span class="co">#&gt;  [22] plyr_1.8.8             plotly_4.10.2          zoo_1.8-12            </span></span>
+<span><span class="co">#&gt;  [25] cachem_1.0.8           igraph_1.5.1           mime_0.12             </span></span>
+<span><span class="co">#&gt;  [28] lifecycle_1.0.3        pkgconfig_2.0.3        Matrix_1.6-1.1        </span></span>
+<span><span class="co">#&gt;  [31] R6_2.5.1               fastmap_1.1.1          fitdistrplus_1.1-11   </span></span>
+<span><span class="co">#&gt;  [34] future_1.33.0          shiny_1.7.5            digest_0.6.33         </span></span>
+<span><span class="co">#&gt;  [37] colorspace_2.1-0       patchwork_1.1.3        rprojroot_2.0.3       </span></span>
+<span><span class="co">#&gt;  [40] tensor_1.5             irlba_2.3.5.1          textshaping_0.3.6     </span></span>
+<span><span class="co">#&gt;  [43] labeling_0.4.3         progressr_0.14.0       fansi_1.0.4           </span></span>
+<span><span class="co">#&gt;  [46] spatstat.sparse_3.0-2  httr_1.4.7             polyclip_1.10-6       </span></span>
+<span><span class="co">#&gt;  [49] abind_1.4-5            compiler_4.3.1         bit64_4.0.5           </span></span>
+<span><span class="co">#&gt;  [52] withr_2.5.1            MASS_7.3-60            tools_4.3.1           </span></span>
+<span><span class="co">#&gt;  [55] lmtest_0.9-40          httpuv_1.6.11          future.apply_1.11.0   </span></span>
+<span><span class="co">#&gt;  [58] goftest_1.2-3          glue_1.6.2             nlme_3.1-162          </span></span>
+<span><span class="co">#&gt;  [61] promises_1.2.1         grid_4.3.1             Rtsne_0.16            </span></span>
+<span><span class="co">#&gt;  [64] cluster_2.1.4          reshape2_1.4.4         generics_0.1.3        </span></span>
+<span><span class="co">#&gt;  [67] gtable_0.3.4           spatstat.data_3.0-1    tzdb_0.4.0            </span></span>
+<span><span class="co">#&gt;  [70] tidyr_1.3.0            data.table_1.14.8      hms_1.1.3             </span></span>
+<span><span class="co">#&gt;  [73] sp_2.0-0               utf8_1.2.3             spatstat.geom_3.2-5   </span></span>
+<span><span class="co">#&gt;  [76] RcppAnnoy_0.0.21       ggrepel_0.9.3          RANN_2.6.1            </span></span>
+<span><span class="co">#&gt;  [79] pillar_1.9.0           stringr_1.5.0          vroom_1.6.3           </span></span>
+<span><span class="co">#&gt;  [82] later_1.3.1            splines_4.3.1          dplyr_1.1.3           </span></span>
+<span><span class="co">#&gt;  [85] lattice_0.21-8         bit_4.0.5              survival_3.5-5        </span></span>
+<span><span class="co">#&gt;  [88] deldir_1.0-9           tidyselect_1.2.0       miniUI_0.1.1.1        </span></span>
+<span><span class="co">#&gt;  [91] pbapply_1.7-2          knitr_1.44             gridExtra_2.3         </span></span>
+<span><span class="co">#&gt;  [94] scattermore_1.2        xfun_0.40              matrixStats_1.0.0     </span></span>
+<span><span class="co">#&gt;  [97] stringi_1.7.12         lazyeval_0.2.2         yaml_2.3.7            </span></span>
+<span><span class="co">#&gt; [100] evaluate_0.21          codetools_0.2-19       tibble_3.2.1          </span></span>
+<span><span class="co">#&gt; [103] cli_3.6.1              uwot_0.1.16            xtable_1.8-4          </span></span>
+<span><span class="co">#&gt; [106] reticulate_1.32.0      systemfonts_1.0.4      munsell_0.5.0         </span></span>
+<span><span class="co">#&gt; [109] jquerylib_0.1.4        Rcpp_1.0.11            globals_0.16.2        </span></span>
+<span><span class="co">#&gt; [112] spatstat.random_3.1-6  png_0.1-8              parallel_4.3.1        </span></span>
+<span><span class="co">#&gt; [115] ellipsis_0.3.2         pkgdown_2.0.7          readr_2.1.4           </span></span>
+<span><span class="co">#&gt; [118] listenv_0.9.0          viridisLite_0.4.2      scales_1.2.1          </span></span>
+<span><span class="co">#&gt; [121] ggridges_0.5.4         crayon_1.5.2           leiden_0.4.3          </span></span>
+<span><span class="co">#&gt; [124] purrr_1.0.2            rlang_1.1.1            cowplot_1.1.1</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

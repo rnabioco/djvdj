@@ -184,7 +184,7 @@ circos plot</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Plot repertoire overlap</span></span></span>
 <span class="r-in"><span><span class="co"># use clonotype IDs present in 'clonotype_id' column for calculations</span></span></span>
 <span class="r-in"><span><span class="fu">plot_similarity</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">vdj_so</span>,</span></span>
+<span class="r-in"><span>  <span class="va">vdj_sce</span>,</span></span>
 <span class="r-in"><span>  data_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span></span>
 <span class="r-in"><span>  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
@@ -201,7 +201,7 @@ circos plot</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Specify colors to use for heatmap</span></span></span>
 <span class="r-in"><span><span class="fu">plot_similarity</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">vdj_so</span>,</span></span>
+<span class="r-in"><span>  <span class="va">vdj_sce</span>,</span></span>
 <span class="r-in"><span>  data_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span></span>
 <span class="r-in"><span>  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span></span>
 <span class="r-in"><span>  plot_color  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"white"</span>, <span class="st">"red"</span><span class="op">)</span></span></span>
@@ -210,7 +210,7 @@ circos plot</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create circos plot</span></span></span>
 <span class="r-in"><span><span class="fu">plot_similarity</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">vdj_so</span>,</span></span>
+<span class="r-in"><span>  <span class="va">vdj_sce</span>,</span></span>
 <span class="r-in"><span>  data_col    <span class="op">=</span> <span class="st">"clonotype_id"</span>,</span></span>
 <span class="r-in"><span>  cluster_col <span class="op">=</span> <span class="st">"orig.ident"</span>,</span></span>
 <span class="r-in"><span>  method      <span class="op">=</span> <span class="st">"circos"</span></span></span>
