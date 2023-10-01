@@ -55,11 +55,11 @@ meta.data.
 # Summarize numeric columns
 # by default the mean will be calculated for numeric columns
 res <- summarize_vdj(
-  vdj_so,
+  vdj_sce,
   data_cols = c("all_del", "all_ins")
 )
 
-head(slot(res, "meta.data"), 3)
+head(slot(res, "colData"), 3)
 
 # Specifying a different summary function
 # this calculates the median number of insertions and deletions for each
@@ -74,12 +74,12 @@ head(slot(res, "colData"), 3)
 
 # Summarize values for a specific chain
 res <- summarize_vdj(
-  vdj_so,
+  vdj_sce,
   data_cols = c("all_del", "all_ins"),
   chain = "IGK"
 )
 
-head(slot(res, "meta.data"), 3)
+head(slot(res, "colData"), 3)
 
 # Specifying new names for summarized columns
 # use {.col} to refer to the original column name
@@ -94,7 +94,7 @@ head(slot(res, "colData"), 1)
 
 # Return a data.frame instead of adding the results to the input object
 res <- summarize_vdj(
-  vdj_so,
+  vdj_sce,
   data_cols = c("all_del", "all_ins"),
   return_df = TRUE
 )
@@ -117,7 +117,7 @@ head(slot(res, "colData"), 3)
 # this creates a column indicating which cells have no insertions
 # the V(D)J data can be filtered based on this new column
 res <- summarize_vdj(
-  vdj_so,
+  vdj_sce,
   data_cols = "all_ins",
   fn = ~ all(.x == 0),
   col_names = "no_insertions"
@@ -128,6 +128,6 @@ res <- filter_vdj(
   filt = no_insertions
 )
 
-head(slot(res, "meta.data"), 3)
+head(slot(res, "colData"), 3)
 
 }

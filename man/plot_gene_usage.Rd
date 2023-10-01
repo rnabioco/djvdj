@@ -9,22 +9,26 @@ plot_gene_usage(
   data_cols,
   cluster_col = NULL,
   group_col = NULL,
-  genes = 20,
   method = NULL,
-  chain = NULL,
-  chain_col = global$chain_col,
   units = "percent",
+  genes = 20,
   return_list = FALSE,
-  sep = global$sep,
   plot_colors = NULL,
   plot_lvls = NULL,
   trans = "identity",
   rotate_labels = FALSE,
   panel_nrow = NULL,
   show_points = TRUE,
+  show_zeros = TRUE,
   n_label = NULL,
+  p_label = c(value = 0.05),
+  p_method = NULL,
+  p_file = NULL,
   label_params = list(),
-  ...
+  ...,
+  chain = NULL,
+  chain_col = global$chain_col,
+  sep = global$sep
 )
 }
 \arguments{
@@ -41,30 +45,25 @@ calculating gene usage}
 cluster_col. This is useful when there are multiple replicates or patients
 for each treatment condition.}
 
-\item{genes}{An integer specifying the number of genes to plot, or
-a vector giving the names of genes to include.}
-
 \item{method}{Method to use for plotting, possible values are:
 \itemize{
 \item 'bar', create a bargraph, this is the default when a single column is
 passed to the data_cols argument
+\item 'boxplot', create boxplots, this can only be used when group_col is
+provided
 \item 'heatmap', create a heatmap, this is the default when two columns are
 passed to the data_cols argument
 \item 'circos', create a circos plot, this requires two columns to be provided
 to the data_cols argument
 }}
 
-\item{chain}{Chain to use for calculating gene usage, set to NULL to include
-all chains}
-
-\item{chain_col}{meta.data column containing chains for each cell}
-
 \item{units}{Units to plot on the y-axis, either 'frequency' or 'percent'}
+
+\item{genes}{An integer specifying the number of genes to plot, or
+a vector giving the names of genes to include.}
 
 \item{return_list}{Should a list of plots be returned, if FALSE plots will be
 combined and arranged into panels}
-
-\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 
 \item{plot_colors}{Character vector containing colors to use for plot. If a
 bar graph is created this will specify how to color cell clusters. For a
@@ -85,6 +84,9 @@ return_list is FALSE}
 \item{show_points}{If \code{TRUE} data points will be shown on boxplots, the point
 size can be adjusted using the \code{point.size} parameter}
 
+\item{show_zeros}{If \code{TRUE} cell labels that are missing from a cluster will
+still be shown on the plot}
+
 \item{n_label}{Location on plot where n label should be added, this is only
 applicable when \code{method} is 'bar' and can be any combination of the
 following:
@@ -97,12 +99,44 @@ plot legend
 \item 'none', do not display the number of cells plotted
 }}
 
+\item{p_label}{Specification indicating how p-values should be labeled on
+plot, this can one of the following:
+\itemize{
+\item 'none', do not display p-values
+\item 'all', show p-values for all groups
+\item A named vector providing p-value cutoffs and labels to display,
+e.g. \code{c('*' = 0.05, '**' = 0.01, '***' = 0.001)}. The keyword 'value' can
+be used to display the p-value for those less than a certain cutoff,
+e.g. \code{c(value = 0.05, ns = Inf)} will show significant p-values, all others
+will be labeled 'ns'.
+}}
+
+\item{p_method}{Method to use for calculating p-values. By default when
+comparing two groups a t-test will be performed, when comparing more than
+two groups the Kruskal-Wallis test will be used. p-values are adjusted for
+multiple testing using Bonferroni correction. Possible methods include:
+\itemize{
+\item 't', two sample t-test performed with \code{stats::t.test()}
+\item 'wilcox', Wilcoxon rank sum test performed with \code{stats::wilcox.test()}
+\item 'kruskal', Kruskal-Wallis test performed with \code{stats::kruskal.test()}
+}}
+
+\item{p_file}{File path to save table containing p-values for each
+comparison.}
+
 \item{label_params}{Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")}
 
 \item{...}{Additional arguments to pass to plotting function,
 \code{\link[ggplot2:geom_bar]{ggplot2::geom_col()}} for bargraph, \code{\link[ggplot2:geom_tile]{ggplot2::geom_tile()}} for heatmap,
 \code{\link[circlize:chordDiagram]{circlize::chordDiagram()}} for circos plot}
+
+\item{chain}{Chain to use for calculating gene usage, set to NULL to include
+all chains}
+
+\item{chain_col}{meta.data column containing chains for each cell}
+
+\item{sep}{Separator used for storing per-chain V(D)J data for each cell}
 }
 \value{
 ggplot object
@@ -114,7 +148,7 @@ usage of two V(D)J segments can also be plotted for a single chain.
 \examples{
 # Plot V(D)J segment usage for all cells
 plot_gene_usage(
-  vdj_so,
+  vdj_sce,
   data_cols = "v_gene"
 )
 
@@ -127,23 +161,9 @@ plot_gene_usage(
 
 # Plot gene usage for a specific chain
 plot_gene_usage(
-  vdj_so,
-  data_cols = "v_gene",
-  chain = c("IGH", "IGK")
-)
-
-# Plot gene usage for a specific chain
-plot_gene_usage(
   vdj_sce,
   data_cols = "v_gene",
   chain = c("IGH", "IGK")
-)
-
-# Create a heatmap
-plot_gene_usage(
-  vdj_so,
-  data_cols = "v_gene",
-  type = "heatmap"
 )
 
 # Plot paired usage of V(D)J segments
@@ -155,7 +175,7 @@ plot_gene_usage(
 
 # Specify colors to use for each cell cluster
 plot_gene_usage(
-  vdj_so,
+  vdj_sce,
   data_cols = "v_gene",
   cluster_col = "orig.ident",
   plot_colors = c(avid_2 = "blue", avid_1 = "green")
@@ -171,7 +191,7 @@ plot_gene_usage(
 
 # Specify certain V(D)J genes to include in plot
 plot_gene_usage(
-  vdj_so,
+  vdj_sce,
   data_cols = "v_gene",
   vdj_genes = c("IGKV5-43", "IGLV1", "IGHV1-64")
 )
@@ -181,13 +201,6 @@ plot_gene_usage(
   vdj_sce,
   data_cols = "v_gene",
   genes = 10
-)
-
-# Plot the frequency of each V(D)J segment instead of percent
-plot_gene_usage(
-  vdj_so,
-  data_cols = "v_gene",
-  units = "frequency"
 )
 
 }

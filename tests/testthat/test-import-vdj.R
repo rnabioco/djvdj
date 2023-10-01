@@ -1,16 +1,18 @@
 # Test data
-# ctigs <- c(
-#   system.file("extdata/bcr_1/outs", package = "djvdj"),
-#   system.file("extdata/bcr_2/outs", package = "djvdj")
-# )
-# ctigs <- c(
+# # Load GEX data
+# data_dir <- system.file("extdata/splen", package = "djvdj")
+#
+# gex_dirs <- c(
 #   BL6 = file.path(data_dir, "BL6_GEX/filtered_feature_bc_matrix"),
 #   MD4 = file.path(data_dir, "MD4_GEX/filtered_feature_bc_matrix")
 # )
-# bad_ctigs <- system.file("extdata/bad_bcr_1/outs", package = "djvdj")
+#
+# splen_so <- gex_dirs |>
+#   Read10X() |>
+#   CreateSeuratObject() |>
+#   AddMetaData(splen_meta)
 
-data_dir <- system.file("extdata/splen", package = "djvdj")
-
+# Contig paths
 ctigs <- c(
   file.path(data_dir, "BL6_BCR"),
   file.path(data_dir, "MD4_BCR")
@@ -34,47 +36,36 @@ vdj_cols <- c(
   "productive",  "full_length"
 )
 
-df_1 <- splen_so@meta.data
+df_1 <- splen_meta
 
-df_2 <- splen_so@meta.data |>
+df_2 <- splen_meta |>
   as_tibble(rownames = ".cell_id")
 
 # Check arguments for different path inputs with Seurat
 arg_lst <- list(
-  # single = list(
-  #   input          = list(splen_so),
-  #   vdj_dir        = ctigs_2[1],
-  #   filter_paired  = c(TRUE, FALSE),
-  #   include_mutations = FALSE
-  # ),
-  multi = list(
-    input          = list(splen_so),
-    vdj_dir        = list(ctigs, ctigs_2),
-    filter_paired  = c(TRUE, FALSE),
-    include_mutations = FALSE
-  )
+  input          = list(so),
+  vdj_dir        = list(ctigs, ctigs_2),
+  filter_paired  = c(TRUE, FALSE),
+  include_mutations = FALSE
 )
 
 arg_lst |>
-  iwalk(~ {
-    test_all_args(
-      arg_lst = .x,
-      .fn     = import_vdj,
-      desc    = paste("import_vdj", .y, "path class"),
-      chk     = expr(expect_s4_class(.res, "Seurat"))
-    )
+  test_all_args(
+    .fn     = import_vdj,
+    desc    = paste("import_vdj multi path class"),
+    chk     = expr(expect_s4_class(.res, "Seurat"))
+  )
 
-    test_all_args(
-      arg_lst = .x,
-      .fn     = import_vdj,
-      desc    = paste("import_vdj", .y, "path cells"),
-      chk     = expr(expect_identical(colnames(.res), colnames(splen_so)))
-    )
-  })
+arg_lst |>
+  test_all_args(
+    .fn     = import_vdj,
+    desc    = paste("import_vdj multi path cells"),
+    chk     = expr(expect_identical(colnames(.res), colnames(so)))
+  )
 
 # Check CDR3 length calculation
 test_that("import_vdj CDR3 lengths", {
-  res <- splen_so@meta.data |>
+  res <- so@meta.data |>
     import_vdj(ctigs, include_mutations = FALSE)
 
   dat    <- fetch_vdj(res)
@@ -89,7 +80,7 @@ test_that("import_vdj CDR3 lengths", {
 
 # Check number of chains represented in each column
 test_that("import_vdj number of chains represented by each column", {
-  res <- splen_so@meta.data |>
+  res <- so@meta.data |>
     import_vdj(ctigs, include_mutations = FALSE)
 
   dat <- res |>
@@ -101,28 +92,11 @@ test_that("import_vdj number of chains represented by each column", {
     purrr::reduce(expect_identical)
 })
 
-# Check include_mutations
-# test_that("import_vdj include_mutations", {
-#   res <- splen_so |>
-#     import_vdj(
-#       vdj_dir = ctigs,
-#       prefix  = "PREFIX_",
-#       include_mutations = TRUE
-#     )
-#
-#   dat <- res@meta.data
-#   dat <- dat[, !grepl("PREFIX_", colnames(dat))]
-#
-#   expect_identical(dat, splen_so@meta.data)
-#   expect_s4_class(res, "Seurat")
-#   expect_identical(colnames(res), colnames(splen_so))
-# })
-
 # Check include_constant
 test_that("import_vdj include_mutations", {
-  
-  check_constant <- function(splen_so, include_constant){
-    res <- splen_so |>
+
+  check_constant <- function(so, include_constant){
+    res <- so |>
       import_vdj(
         vdj_dir = ctigs,
         prefix  = "PREFIX_",
@@ -151,8 +125,8 @@ test_that("import_vdj include_mutations", {
     return(all_types)
   }
 
-  constant_included <- check_constant(splen_so, include_constant = TRUE)
-  constant_excluded <- check_constant(splen_so, include_constant = FALSE)
+  constant_included <- check_constant(so, include_constant = TRUE)
+  constant_excluded <- check_constant(so, include_constant = FALSE)
   expect_identical(constant_included$sum_val, constant_included$all_val)
   expect_identical(constant_included$sum_val, constant_included$all_val)
 })
@@ -190,7 +164,7 @@ test_that("import_vdj data.frame", {
 # Check bad path
 test_that("import_vdj bad path", {
   fn <- function() {
-    res <- splen_so |>
+    res <- so |>
       import_vdj(vdj_dir = "BAD_PATH")
   }
 
@@ -202,7 +176,7 @@ test_that("import_vdj column prefix", {
   prfx     <- "TEST_"
   new_cols <- paste0(prfx, vdj_cols)
 
-  res <- splen_so |>
+  res <- so |>
     import_vdj(
       vdj_dir = ctigs,
       prefix  = prfx,
@@ -215,16 +189,16 @@ test_that("import_vdj column prefix", {
 
 # Check filtered contigs
 test_that("import_vdj filter_chains", {
-  res <- splen_so |>
+  res <- so |>
     import_vdj(ctigs, include_mutations = FALSE)
 
   expect_false(any(grepl("FALSE", res$productive)))
   expect_false(any(grepl("FALSE", res$full_length)))
   expect_s4_class(res, "Seurat")
-  expect_identical(colnames(res), colnames(splen_so))
+  expect_identical(colnames(res), colnames(so))
 
   fn <- function() {
-    splen_so |>
+    so |>
       import_vdj(
         vdj_dir       = ctigs,
         filter_chains = FALSE,
@@ -237,7 +211,7 @@ test_that("import_vdj filter_chains", {
 
 # Check filter_paired
 test_that("import_vdj filter_paired", {
-  res <- splen_so |>
+  res <- so |>
     import_vdj(
       vdj_dir       = ctigs,
       filter_paired = TRUE,
@@ -247,9 +221,9 @@ test_that("import_vdj filter_paired", {
   expect_true(all(res$n_chains > 1, na.rm = TRUE))
   expect_true(all(res$paired, na.rm = TRUE))
   expect_s4_class(res, "Seurat")
-  expect_identical(colnames(res), colnames(splen_so))
+  expect_identical(colnames(res), colnames(so))
 
-  res <- splen_so |>
+  res <- so |>
     import_vdj(
       vdj_dir       = ctigs,
       filter_paired = FALSE,
@@ -258,7 +232,7 @@ test_that("import_vdj filter_paired", {
 
   expect_true(any(!res$paired, na.rm = TRUE))
   expect_s4_class(res, "Seurat")
-  expect_identical(colnames(res), colnames(splen_so))
+  expect_identical(colnames(res), colnames(so))
 })
 
 # Check define_clonotypes options
@@ -267,7 +241,7 @@ test_that("import_vdj define_clonotypes options", {
 
   opts |>
     iwalk(~ {
-      res <- splen_so |>
+      res <- so |>
         import_vdj(
           vdj_dir = ctigs,
           define_clonotypes = .x,
@@ -276,10 +250,10 @@ test_that("import_vdj define_clonotypes options", {
 
       expect_identical(n_distinct(res$clonotype_id), n_distinct(res[[.y]]))
       expect_s4_class(res, "Seurat")
-      expect_identical(colnames(res), colnames(splen_so))
+      expect_identical(colnames(res), colnames(so))
     })
 
-  res <- splen_so |>
+  res <- so |>
     import_vdj(
       vdj_dir = ctigs,
       define_clonotypes = "cdr3_gene",
@@ -291,13 +265,13 @@ test_that("import_vdj define_clonotypes options", {
 
   expect_identical(x, y)
   expect_s4_class(res, "Seurat")
-  expect_identical(colnames(res), colnames(splen_so))
+  expect_identical(colnames(res), colnames(so))
 })
 
 # Check define_clonotypes bad define_clonotypes
 test_that("import_vdj bad define_clonotypes", {
   expect_error(
-    splen_so |>
+    so |>
       import_vdj(
         vdj_dir = ctigs,
         define_clonotypes = "BAD",
@@ -319,46 +293,17 @@ test_that("import_vdj bad prefixes", {
   dat <- setNames(ctigs, c("A", "B"))
 
   fn <- function() {
-    res <- splen_so |>
+    res <- so |>
       import_vdj(vdj_dir = dat)
   }
 
   expect_error(fn(), "do not match those in the input")
 })
 
-# # Check low overlap warning
-# test_that("import_vdj low overlap", {
-#   dat <- c("1" = bad_ctigs)
-#
-#   fn <- function() {
-#     res <- splen_so |>
-#       import_vdj(
-#         vdj_dir = dat,
-#         include_mutations = FALSE
-#       )
-#   }
-#
-#   expect_warning(fn(), "Only.+cell barcodes overlap.+")
-# })
-
-# Check missing clonotype_id warning
-# test_that("import_vdj missing clonotype_id", {
-#   fn <- function() {
-#     res <- splen_so |>
-#       import_vdj(
-#         vdj_dir        = bad_ctigs,
-#         filter_chains  = FALSE,
-#         include_mutations = FALSE
-#       )
-#   }
-#
-#   expect_warning(fn(), "contigs do not have an assigned clonotype_id, these contigs will be removed")
-# })
-
 # Check bad separator
 test_that("import_vdj bad sep", {
   fn <- function() {
-    res <- splen_so |>
+    res <- so |>
       import_vdj(
         vdj_dir = ctigs,
         sep     = "A",
@@ -373,7 +318,7 @@ test_that("import_vdj bad sep", {
 # SHOULD ALSO CHECK WHEN TOO MANY VDJ DIRS ARE PROVIDED
 test_that("import_vdj BCR and TCR", {
   fn <- function() {
-    res <- splen_so |>
+    res <- so |>
       import_vdj(
         vdj_dir        = c(tcr_ctigs[1], ctigs[1]),
         include_mutations = FALSE
@@ -385,7 +330,7 @@ test_that("import_vdj BCR and TCR", {
 
 # Check .classify_vdj
 test_that(".classify_vdj", {
-  dat <- vdj_so |>
+  dat <- vdj_sce |>
     fetch_vdj(data_cols = "chains")
 
   expect_error(

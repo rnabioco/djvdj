@@ -41,8 +41,10 @@
 #' @examples
 #' # Cluster cells based on CDR3 amino acid sequences and plot results
 #' res <- cluster_sequences(
-#'   vdj_so,
-#'   data_col = "cdr3"
+#'   vdj_sce,
+#'   data_col   = "cdr3",
+#'   chain      = "IGK",
+#'   resolution = c(0.5, 1)
 #' )
 #'
 #' plot_scatter(
@@ -50,34 +52,6 @@
 #'   x = "cdr3_UMAP_1",
 #'   y = "cdr3_UMAP_2",
 #'   data_col = "cdr3_cluster_0.5"
-#' )
-#'
-#' # Cluster cells based on sequences for a specific chain
-#' res <- cluster_sequences(
-#'   vdj_sce,
-#'   data_col = "cdr3",
-#'   chain    = "IGK"
-#' )
-#'
-#' # Use Levenschtein distance for clustering
-#' res <- cluster_sequences(
-#'   vdj_so,
-#'   data_col    = "cdr3",
-#'   dist_method = "levenshtein"
-#' )
-#'
-#' # Cluster cells using the Leiden algorithm
-#' res <- cluster_sequences(
-#'   vdj_so,
-#'   data_col = "cdr3",
-#'   method   = "leiden"
-#' )
-#'
-#' # Adjust clustering resolution
-#' res <- cluster_sequences(
-#'   vdj_so,
-#'   data_col   = "cdr3",
-#'   resolution = c(0.5, 1)
 #' )
 #'
 #' @export
@@ -133,7 +107,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 
   dist_args$method <- dist_method
 
-  dist_mat <- lift(Biostrings::stringDist)(dist_args)
+  dist_mat <- .lift(Biostrings::stringDist)(dist_args)
 
   # Calculate UMAP
   if (run_umap) {
@@ -193,7 +167,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
   res <- purrr::imap_dfc(resolution, ~ {
     clst_args[rsln_arg] <- .x
 
-    clsts <- lift(clst_method)(clst_args)
+    clsts <- .lift(clst_method)(clst_args)
     clsts <- igraph::membership(clsts)
 
     tibble(!!sym(.y) := as.character(clsts))
@@ -259,13 +233,12 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 #' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional parameters to pass to [ggseqlogo::geom_logo()]
 #' @return ggplot object
-#' @importFrom stringr str_trunc
 #' @seealso [cluster_sequences()]
 #'
 #' @examples
 #' # Cluster cells based on CDR3 amino acid sequences and plot sequence motifs
 #' res <- cluster_sequences(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col = "cdr3"
 #' )
 #'
@@ -360,7 +333,7 @@ plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
   )
 
   # Create logos
-  res <- ggplot() +
+  res <- ggplot2::ggplot() +
     ggseqlogo::geom_logo(seqs, ...) +
     djvdj_theme()
 
@@ -380,10 +353,17 @@ plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
   }
 
   if (!is.null(plot_colors)) {
-    suppressMessages({
-      res <- res +
-        scale_fill_manual(values = plot_colors)
-    })
+    res <- withCallingHandlers(
+      expr = res + ggplot2::scale_fill_manual(values = plot_colors),
+
+      message = function(msg) {
+        if (!grepl("Scale for.+fill.+is already present", msg)) {
+          cli::cli_alert(msg)
+        }
+
+        tryInvokeRestart("muffleMessage")
+      }
+    )
   }
 
   res
@@ -398,7 +378,6 @@ plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
 #' than one of the provided chain will be excluded from the analysis.
 #' @param chain_col meta.data column containing chains for each cell.
 #' @param sep Separator used for storing per cell V(D)J data
-#' @importFrom stringr str_remove_all
 #' @noRd
 .fetch_seqs <- function(input, seq_col, chain, chain_col, sep = global$sep) {
 
@@ -493,7 +472,7 @@ plot_motifs <- function(input, data_col = global$cdr3_col, cluster_col = NULL,
   aa  <- Biostrings::AA_STANDARD
 
   # Take first n sequences and split into residues
-  seqs <- na.omit(seqs)
+  seqs <- stats::na.omit(seqs)
   seqs <- utils::head(seqs, n)
   nts  <- purrr::map(seqs, strsplit, "")
   nts  <- unlist(nts)

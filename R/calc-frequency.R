@@ -31,11 +31,11 @@
 #' @examples
 #' # Calculate clonotype abundance using all cells
 #' res <- calc_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col = "clonotype_id"
 #' )
 #'
-#' head(slot(res, "meta.data"), 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # Group cells based on meta.data column before calculating abundance
 #' res <- calc_frequency(
@@ -50,12 +50,12 @@
 #' # this is useful if multiple abundance calculations are stored in the
 #' # meta.data
 #' res <- calc_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col = "clonotype_id",
 #'   prefix = "bcr_"
 #' )
 #'
-#' head(slot(res, "meta.data"), 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # Return a data.frame instead of adding the results to the input object
 #' res <- calc_frequency(
@@ -81,7 +81,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
   )
 
   # Check arguments
-  # .check_args()
+  .check_args()
 
   # Format input data
   vdj_cols <- c(global$cell_col, data_col, cluster_col)
@@ -215,11 +215,13 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
 
   if (cluster) grp_cols <- unique(c(grp_cols, clst_nm, cluster_col))
 
+  tot_cells <- dplyr::n_distinct(df_in[[global$cell_col]])
+
   res <- dplyr::group_by(res, !!!syms(grp_cols))
 
   res <- dplyr::mutate(
     res,
-    n_cells = dplyr::n_distinct(df_in[[global$cell_col]]),
+    n_cells = tot_cells,
     freq    = dplyr::n_distinct(!!sym(global$cell_col))
   )
 
@@ -231,41 +233,34 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
     res <- dplyr::distinct(res)
   }
 
-  # Identify shared groups
-  if (cluster) {
-    res <- dplyr::group_by(res, !!!syms(data_cols))
-    res <- dplyr::mutate(res, shared = dplyr::n_distinct(!!sym(clst_nm)) > 1)
-    res <- dplyr::ungroup(res)
-  }
-
   # Report zeros for missing groups
-  # Need to remove original cluster_col and then add back
+  # Need to remove original cluster_col
+  # Need to make sure clst_nm is present, when cluster_col is length 1 it
+  # is the same as clst_nm
   if (include_zeros) {
     res <- dplyr::select(res, -all_of(cluster_col), dplyr::all_of(clst_nm))
 
-    res <- tidyr::pivot_wider(
+    res <- tidyr::complete(
       res,
-      names_from  = all_of(clst_nm),
-      values_from = "freq",
-      values_fill = 0
-    )
-
-    res <- tidyr::pivot_longer(
-      res,
-      cols      = all_of(clsts),
-      names_to  = clst_nm,
-      values_to = "freq"
+      !!!syms(c(data_cols, clst_nm)),
+      fill     = list(freq = 0, n_cells = tot_cells),
+      explicit = FALSE
     )
 
     res <- dplyr::left_join(res, clst_key, by = clst_nm)
   }
 
+  # Identify shared groups
+  if (cluster) {
+    res <- dplyr::group_by(res, !!!syms(data_cols))
+    res <- dplyr::mutate(res, shared = length(.data$freq[.data$freq > 0]) > 1)
+    res <- dplyr::ungroup(res)
+  }
+
   # Calculate percentage used
-  # Need to make sure clst_nm is present, when cluster_col is length 1 it
-  # is the same as clst_nm
   if (cluster) {
     res <- dplyr::mutate(
-      res, n_cells = as.numeric(clst_counts[!!sym(clst_nm)])
+      res, n_cells = as.numeric(clst_counts[as.character(!!sym(clst_nm))])
     )
   }
 
@@ -323,6 +318,7 @@ calc_frequency <- function(input, data_col, cluster_col = NULL,
   uniq_x <- sort(uniq_x)
 
   # Divide into groups
+  # SHOULD REVISE TO USE cut()
   labs <- tibble::tibble(
     x   = uniq_x,
     grp = dplyr::ntile(uniq_x, n_grps)
@@ -423,14 +419,12 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
-#' @importFrom ggrepel geom_text_repel
-#' @importFrom methods formalArgs
 #' @seealso [calc_frequency()], [plot_frequency()]
 #'
 #' @examples
 #' # Plot clonotype abundance using all cells
 #' plot_clone_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col = "clonotype_id"
 #' )
 #'
@@ -449,7 +443,7 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 #'
 #' # Specify colors to use for each cell cluster
 #' plot_clone_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   cluster_col = "orig.ident",
 #'   plot_colors = c(avid_1 = "blue", avid_2 = "red")
 #' )
@@ -463,14 +457,14 @@ fetch_top_clones <- function(input, data_cols, cluster_col = NULL,
 #'
 #' # Specify the number of top clonotypes to plot
 #' plot_clone_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   clones = 5
 #' )
 #'
 #' #' # Create line graph
 #' # use clones to set the number of clonotypes to label
 #' plot_clone_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   cluster_col = "orig.ident",
 #'   method = "line",
 #'   clones = 3
@@ -609,7 +603,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     gg_args$x_hjst <- 1
     gg_args$trans  <- trans
 
-    res <- lift(.create_bars)(gg_args)
+    res <- .lift(.create_bars)(gg_args)
 
     # Format clonotype labels
     res <- res +
@@ -627,14 +621,15 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     gg_args$linewidth <- gg_args$linewidth %||% 1
 
     if (clones > 0) {
-      gg_args$label_params <- .get_uniq_text_args(label_params, "geom_text")
+      n_params             <- .parse_label_params(label_params)$n
+      gg_args$label_params <- .get_uniq_text_args(n_params, "geom_text")
     }
 
-    res <- lift(.create_plot)(gg_args) +
-      labs(y = .get_axis_label(units))
+    res <- .lift(.create_plot)(gg_args) +
+      ggplot2::labs(y = .get_axis_label(units))
 
-    # Add clonotype labels
-    lab_args <- label_params
+    # Add clonotype labels with ggrepel
+    label_params <- .parse_label_params(label_params)$clone
 
     if (clones > 0) {
       if (!all(n_label == "none")) {
@@ -656,7 +651,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
       }
 
       res <- res +
-        lift(ggrepel::geom_text_repel)(label_params)
+        .lift(ggrepel::geom_text_repel)(label_params)
     }
   }
 
@@ -680,6 +675,8 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' @param group_col meta.data column to use for grouping cluster IDs present in
 #' cluster_col. This is useful when there are multiple replicates or patients
 #' for each treatment condition.
+#' @param method Method to use for plotting when `group_col` is provided,
+#' possible values are 'bar' or 'boxplot'
 #' @param stack If `TRUE`, stacked bargraphs will be generated, otherwise grouped
 #' bargraphs will be generated
 #' @param units Units to plot on the y-axis, either 'frequency' or 'percent'
@@ -703,6 +700,8 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' for more options. Values can only be transformed when stack is `FALSE`
 #' @param show_points If `TRUE` data points will be shown on boxplots, the point
 #' size can be adjusted using the `point.size` parameter
+#' @param show_zeros If `TRUE` cell labels that are missing from a cluster will
+#' still be shown on the plot
 #' @param n_label Location on plot where n label should be added, this can be
 #' any combination of the following:
 #'
@@ -715,6 +714,30 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #'   plot legend
 #' - 'none', do not display the number of cells plotted
 #'
+#' @param p_label Specification indicating how p-values should be labeled on
+#' plot, this can one of the following:
+#'
+#' - 'none', do not display p-values
+#' - 'all', show p-values for all groups
+#' - A named vector providing p-value cutoffs and labels to display,
+#'   e.g. `c('*' = 0.05, '**' = 0.01, '***' = 0.001)`. The keyword 'value' can
+#'   be used to display the p-value for those less than a certain cutoff,
+#'   e.g. `c(value = 0.05, ns = 1.1)` will show significant p-values, all others
+#'   will be labeled 'ns'.
+#'
+#' @param p_method Method to use for calculating p-values, by default when
+#' comparing two groups a t-test will be used.
+#' When comparing more than two groups the Kruskal-Wallis test will be used.
+#' With the exception of the edgeR method, p-values are adjusted for
+#' multiple testing using Bonferroni correction. Possible methods include:
+#'
+#' - 't', two sample t-test performed with `stats::t.test()`
+#' - 'wilcox', Wilcoxon rank sum test performed with `stats::wilcox.test()`
+#' - 'kruskal', Kruskal-Wallis test performed with `stats::kruskal.test()`
+#' - 'edgeR', differential abundance calculated with the edgeR package
+#'
+#' @param p_file File path to save table containing p-values for each
+#' comparison.
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
@@ -734,7 +757,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #' @examples
 #' # Plot frequency of different isotypes
 #' plot_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col = "isotype"
 #' )
 #'
@@ -755,7 +778,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #'
 #' # Plot number of cells on the y-axis
 #' plot_frequency(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col    = "seurat_clusters",
 #'   cluster_col = "orig.ident",
 #'   units       = "frequency"
@@ -763,13 +786,15 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
 #'
 #' @export
 plot_frequency <- function(input, data_col, cluster_col = NULL,
-                           group_col = NULL,
+                           group_col = NULL, method = "bar",
                            stack = NULL, units = "percent",
                            top = NULL, other_label = "other",
                            plot_colors = NULL,
                            plot_lvls = NULL, na_color = "grey80",
                            trans = "identity", show_points = TRUE,
-                           n_label = NULL,
+                           show_zeros = TRUE,
+                           n_label = NULL, p_label = c(value = 0.05),
+                           p_method = NULL, p_file = NULL,
                            label_params = list(),
                            ...,
                            per_chain = FALSE,
@@ -777,7 +802,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
                            chain_col = global$chain_col, sep = global$sep) {
 
   # Check that columns are present in object
-  .check_obj_cols(input, data_col, cluster_col)
+  .check_obj_cols(input, data_col, cluster_col, group_col)
 
   # Check input classes
   .check_args()
@@ -831,6 +856,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     per_chain   = per_chain,
     nest        = !per_chain,
     na_remove   = FALSE,
+    return_df   = FALSE,
     prefix      = ".",
     sep         = sep
   )
@@ -845,7 +871,10 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   meta    <- dplyr::select(meta, -any_of(freq_cols))
   plt_dat <- dplyr::left_join(meta, plt_dat, by = global$cell_col)
 
-  # Identify data columns that the user should have access to
+  # Identify data columns that the user should have access to when plotting
+  # This should only include columns that do not split data_col or cluster_col
+  # i.e. variables that are not present in multiple groups found in data_col or
+  # cluster_col
   keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
   keep_cols <- c(cluster_col, data_col, keep_cols)
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
@@ -905,6 +934,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     .color       = clr_col,
     .fill        = clr_col,
     clrs         = plot_colors,
+    y_ttl        = y_lab,
     na_clr       = na_color,
     trans        = trans,
     n_label      = n_label,
@@ -915,27 +945,61 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
   )
 
   # Create grouped boxplot
+  # Set edgeR as the default p_method unless per_chain is TRUE
+  # Do not use edgeR for per_chain since there will be more total 'counts' than
+  # the number of cells (i.e. multiple values get counted for each cell)
   if (!is.null(group_col)) {
-    gg_args$alpha <- gg_args$alpha %||% 0.5
-    gg_args$show_points <- show_points
+    if (identical(p_method, "edgeR")) {
+      gg_args$p_y <- ".freq"
 
-    res <- lift(.create_boxes)(gg_args) +
-      ggplot2::labs(y = y_lab) +
-      ggplot2::theme(legend.position = "right")
+    } else if (per_chain && identical(p_method, "edgeR")) {
+      cli::cli_warn(
+        "edgeR can not be used to calculate p-values when per_chain is `TRUE`."
+      )
+
+      p_method <- NULL  # method will be automatically set later based on groups
+    }
+
+    gg_args$clst        <- cluster_col
+    gg_args$grp         <- group_col
+    gg_args$method      <- method
+    gg_args$show_points <- show_points
+    gg_args$show_zeros  <- show_zeros
+    gg_args$p_label     <- p_label
+    gg_args$p_method    <- p_method
+    gg_args$p_file      <- p_file
+
+    res <- .lift(.create_grouped_plot)(gg_args)
 
   # Create bar graph
   } else {
-    gg_args$y_ttl  <- y_lab
     gg_args$x_ang  <- 45
     gg_args$x_hjst <- 1
 
     # Set bar position
-    if (stack) gg_pos <- ggplot2::position_stack()
-    else       gg_pos <- ggplot2::position_dodge2(preserve = "single")
+    # fill in missing values with 0s
+    if (stack) {
+      gg_pos <- ggplot2::position_stack()
+
+    } else {
+      if (show_zeros) {
+        plt_dat <- .add_missing_zeros(
+          plt_dat,
+          dat_cols   = abun_col,
+          expand_col = x_col,
+          clst_col   = cluster_col,
+          grp_col    = clr_col
+        )
+
+        gg_args$df_in <- plt_dat
+      }
+
+      gg_pos <- ggplot2::position_dodge2(preserve = "single")
+    }
 
     gg_args$position <- gg_args$position %||% gg_pos
 
-    res <- lift(.create_bars)(gg_args)
+    res <- .lift(.create_bars)(gg_args)
   }
 
   res

@@ -11,6 +11,9 @@ assay
 \usage{
 vdj_sce
 }
+\value{
+A tiny SingleCellExperiment object with V(D)J data
+}
 \description{
 A tiny SingleCellExperiment object with V(D)J data
 }

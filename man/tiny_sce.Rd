@@ -11,6 +11,9 @@ assay
 \usage{
 tiny_sce
 }
+\value{
+A tiny SingleCellExperiment object
+}
 \description{
 A tiny SingleCellExperiment object
 }

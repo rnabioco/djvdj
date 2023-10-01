@@ -56,7 +56,7 @@ Calculate MDS coordinates based on a beta diversity metric.
 \examples{
 # Calculate MDS coordinates
 res <- calc_mds(
-  vdj_so,
+  vdj_sce,
   data_col = "clonotype_id",
   cluster_col = "isotype"
 )

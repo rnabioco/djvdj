@@ -1,54 +1,46 @@
-#' ggplot2 imports
-#'
-#' @importFrom ggplot2 ggplot aes geom_point geom_line geom_histogram
-#' @importFrom ggplot2 geom_density geom_tile geom_boxplot geom_violin geom_col
-#' @importFrom ggplot2 scale_x_discrete scale_y_continuous scale_x_continuous
-#' @importFrom ggplot2 position_dodge2 scale_color_manual scale_fill_manual
-#' @importFrom ggplot2 scale_color_gradientn scale_fill_gradientn stat_summary
-#' @importFrom ggplot2 facet_wrap guides guide_legend labs theme element_blank
-#' @importFrom ggplot2 element_text element_line expansion after_stat
-#' @noRd
-NULL
-
-
 #' Theme for djvdj plotting functions
 #'
-#' @param ttl_size Size of axis titles
-#' @param txt_size Size of axis text
-#' @param ln_size Size of axis lines
-#' @param txt_col Color of axis text
-#' @param ln_col Color of axis lines
+#' @param base_size base font size in pts
+#' @param base_family base font family
+#' @param base_line_size base size for line elements
+#' @param base_rect_size base size for rect element
+#' @param line_color color for line elements
 #' @return ggplot theme
-#'
+#' @importFrom ggplot2 %+replace%
+#' @aliases %+replace%
+#' @export %+replace%
 #' @examples
 #'
-#' plot_scatter(vdj_so, data_col = "seurat_clusters") +
+#' plot_scatter(vdj_sce, data_col = "seurat_clusters") +
 #'   djvdj_theme()
 #'
 #' @export
-djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
-                        txt_col = "black", ln_col = "grey85") {
+djvdj_theme <- function(base_size = 11, base_family = "",
+                        base_line_size = base_size / 22,
+                        base_rect_size = base_size / 22,
+                        line_color = "grey85") {
 
-  res <- ggplot2::theme(
-    strip.background  = ggplot2::element_blank(),
-    strip.text        = ggplot2::element_text(size = ttl_size),
+  ggplot2::theme_classic(
+    base_size      = base_size,
+    base_family    = base_family,
+    base_line_size = base_line_size,
+    base_rect_size = base_rect_size
+  ) %+replace%
+    ggplot2::theme(
+      strip.background  = ggplot2::element_blank(),
+      strip.text        = ggplot2::element_text(size = base_size),
 
-    panel.border      = ggplot2::element_rect(
-      fill = NA, color = ln_col, linewidth = ln_size
-    ),
+      panel.border      = ggplot2::element_rect(fill = NA, color = line_color),
+      panel.background  = ggplot2::element_blank(),
 
-    panel.background  = ggplot2::element_blank(),
-    legend.background = ggplot2::element_blank(),
-    legend.title      = ggplot2::element_text(size = ttl_size),
-    legend.key        = ggplot2::element_blank(),
-    legend.text       = ggplot2::element_text(size = txt_size, color = txt_col),
-    axis.line         = ggplot2::element_blank(),
-    axis.ticks        = ggplot2::element_line(linewidth = ln_size,  color = ln_col),
-    axis.text         = ggplot2::element_text(size = txt_size, color = txt_col),
-    axis.title        = ggplot2::element_text(size = ttl_size, color = txt_col)
-  )
+      legend.background = ggplot2::element_blank(),
+      legend.key        = ggplot2::element_blank(),
 
-  res
+      axis.line         = ggplot2::element_blank(),
+      axis.ticks        = ggplot2::element_line(color = line_color),
+
+      complete = TRUE
+    )
 }
 
 
@@ -92,7 +84,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   # Only remove NAs for numeric columns since character or factor NAs can be
   # plotted
   chk_na <- purrr::set_names(c(x, y))
-  chk_na <- map_lgl(chk_na, ~ is.numeric(df_in[[.x]]))
+  chk_na <- purrr::map_lgl(chk_na, ~ is.numeric(df_in[[.x]]))
   chk_na <- names(chk_na[chk_na])
   n_orig <- nrow(df_in)
 
@@ -118,7 +110,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   }
 
   # Set aesthetics and geom arguments
-  num_clr  <- scale_clr && is.numeric(df_in[[.color]])
+  num_clr  <- scale_clr  && is.numeric(df_in[[.color]])
   num_fill <- scale_fill && is.numeric(df_in[[.fill]])
 
   gg_aes  <- ggplot2::aes()
@@ -139,9 +131,14 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     if (.fill)  gg_args$fill   <- gg_args$fill   %||% clrs
   }
 
+  # Allow alpha to be adjusted by passing new mapping
+  # override alpha specification in gg_args otherwise
+  # new alpha mapping will be ignored
+  if ("alpha" %in% names(gg_args$mapping)) gg_args$alpha <- NULL
+
   # Create plot
   res <- ggplot2::ggplot(df_in, gg_aes) +
-    lift(fn)(gg_args) +
+    .lift(fn)(gg_args) +
     djvdj_theme()
 
   # Transform x-axis
@@ -158,7 +155,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 
   if (!purrr::is_empty(y_args)) {
     res <- res +
-      lift(ggplot2::scale_y_continuous)(y_args)
+      .lift(ggplot2::scale_y_continuous)(y_args)
   }
 
   # Set colors
@@ -238,9 +235,254 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   if (is.null(x)) {
     res <- res +
       ggplot2::theme(
-        axis.text.x  = element_blank(),
-        axis.ticks.x = element_blank()
+        axis.text.x  = ggplot2::element_blank(),
+        axis.ticks.x = ggplot2::element_blank()
       )
+  }
+
+  res
+}
+
+
+#' Create a grouped plot summarizing replicates
+#'
+#' Currently this can only be used to plot frequency data
+#'
+#' @param df_in data.frame
+#' @param x Variable to plot on x-axis
+#' @param y Variable to plot on y-axis
+#' @param p_y Variable to use for calculating p-values
+#' @param clst Variable containing cluster IDs, e.g. healthy-1, healthy-2,
+#' disease-1, disease-2
+#' @param grp Variable to use for grouping clusters IDs, e.g. healthy and
+#' disease
+#' @param method Method to use for generating plot, can be 'bar' or 'boxplot'
+#' @param n_label n label specification
+#' @param p_label Should p-values be shown on plot.
+#' @param p_method Method to calculate p-values
+#' @param p_grp Variable to use for grouping samples when calculating p-values.
+#' A separate p-value will be calculated for each label in p_grp.
+#' @param p_x Manually set x coordinate for p-label, provide x specification or
+#' 'right', 'left', or 'center'.
+#' @param p_file File path to save p-value csv
+#' @param label_params Named list with specifications to modify label
+#' aesthetics
+#' @param show_points Should data points be shown on boxplot
+#' @param add_zeros If `TRUE` zeros will be added for missing variables, this
+#' should only be used when plotting frequency data. This is useful if missing
+#' data should be plotted as a zero.
+#' @param show_zeros If `TRUE` cell labels that are missing from a cluster will
+#' still be shown on the plot.
+#' @param ... Additional arguments to pass to plotting function
+#' @return ggplot object
+#' @noRd
+.create_grouped_plot <- function(df_in, x, y, clst, grp, method = "bar",
+                                 n_label = NULL, p_label = c(value = 0.05),
+                                 p_y = y, p_method = NULL, p_grp = x, p_file = NULL,
+                                 p_x = NULL, label_params = list(),
+                                 show_points = TRUE, add_zeros = TRUE,
+                                 show_zeros = TRUE, ...) {
+
+  # Check arguments
+  if (!is.numeric(p_label)) {
+    .check_args(
+      p_label = list(Class = "character", len_one = TRUE)
+    )
+
+    .check_possible_values(p_label = c("all", "none"))
+  }
+
+  .check_possible_values(method = c("bar", "boxplot"))
+
+  # Add zeros for missing groups
+  # this is only necessary when plotting frequency
+  # if plotting another metric, e.g. diversity, this should be FALSE
+  if (add_zeros) {
+    df_in <- .add_missing_zeros(
+      df_in,
+      dat_cols   = c(y, p_y),
+      expand_col = x,
+      clst_col   = clst,
+      grp_col    = grp
+    )
+  }
+
+  # Calculate/format p-value labels
+  # by default only show significant p-values
+  if (identical(p_label, "all")) p_label <- c(value = Inf)
+
+  add_p <- !identical(p_label, "none")
+
+  if (add_p) {
+    p <- .calc_pvalue(
+      df_in,
+      data_col = p_y, cluster_col = grp, group_col = p_grp,
+      p_method = p_method, file = p_file
+    )
+
+    # Determine min and max y for adding p-value labels
+    p <- dplyr::group_by(p, !!!syms(c(p_grp, "p_value")))
+
+    p <- dplyr::summarize(
+      p,
+      y_min = min(!!sym(y)),
+      y_max = max(!!sym(y)),
+      gap   = (max(.data$y_max) - min(.data$y_min)) * 0.05,
+      y     = .data$y_max + .data$gap,
+      n_x   = dplyr::n_distinct(!!sym(x)),  # number of x-axis groups for each
+      .groups = "drop"                      # p-value plotted, used for p_x
+    )
+
+    # Format p-values
+    p <- dplyr::rowwise(p)
+
+    p <- dplyr::mutate(
+      p, p_lab = .format_pvalue(.data$p_value, cutoffs = p_label)
+    )
+
+    p <- dplyr::filter(p, !is.na(.data$p_lab))
+    p <- dplyr::ungroup(p)
+
+    if (nrow(p) == 0) add_p <- FALSE
+
+    # Adjust p_x
+    if (is.null(p_x) && is.null(p_grp)) p_x <- "center"
+
+    if (!is.null(p_x)) {
+      p <- dplyr::mutate(
+        p,
+        !!sym(x) := switch(
+          as.character(p_x),  # EXPR should evaluate to character
+          right  = Inf,
+          left   = -Inf,
+          center = (.data$n_x / 2) + 0.5,
+          p_x
+        )
+      )
+    }
+  }
+
+  # Remove labels in grp that have all zeros
+  # only should be used when plotting frequency data
+  if (!show_zeros) {
+    df_in <- dplyr::group_by(df_in, !!!syms(c(x, grp)))
+    df_in <- dplyr::filter(df_in, !all(!!sym(y) == 0))
+    df_in <- dplyr::ungroup(df_in)
+  }
+
+  # Plot arguments
+  gg_args <- list(
+    df_in        = df_in,
+    x            = x,
+    y            = y,
+    n_label      = n_label,
+    label_params = label_params,
+    ...
+  )
+
+  # Create boxplots
+  if (identical(method, "boxplot")) {
+    gg_args$show_points <- show_points
+
+    res <- .lift(.create_boxes)(gg_args) +
+      ggplot2::theme(legend.position = "right")
+
+  # Create bar graphs
+  } else {
+    df_in <- dplyr::group_by(df_in, !!!syms(unique(c(x, grp, p_grp))))
+
+    df_in <- dplyr::summarize(
+      df_in,
+      .sd       = stats::sd(!!sym(y)),
+      !!sym(y) := mean(!!sym(y)),
+      .groups   = "drop"
+    )
+
+    # Need to adjust y_max based on mean and sd to position p-value label
+    if (add_p && is.null(p_x)) {
+      y_dat <- dplyr::group_by(df_in, !!sym(p_grp))
+
+      y_dat <- dplyr::mutate(
+        y_dat,
+        y_min = 0,
+        y_max = !!sym(y) + .data$.sd,
+        y_max = max(.data$y_max)
+      )
+
+      y_dat <- dplyr::ungroup(y_dat)
+      y_dat <- dplyr::distinct(y_dat, !!sym(p_grp), .data$y_min, .data$y_max)
+
+      p <- dplyr::select(p, -dplyr::all_of(c("y_max", "y_min")))
+      p <- dplyr::left_join(p, y_dat, by = p_grp)
+    }
+
+    gg_args$df_in <- df_in
+    gg_args$err   <- ".sd"
+
+    gg_args$position <- gg_args$position %||%
+      ggplot2::position_dodge2(preserve = "single", width = 0.8)
+
+    res <- .lift(.create_bars)(gg_args)
+  }
+
+  # Add p-values
+  if (add_p) {
+    all_sym <- !any(grepl("[a-zA-Z0-9]", names(p_label)))
+
+    label_params <- .parse_label_params(label_params)$p
+
+    label_params$mapping <- ggplot2::aes(
+      x = !!sym(x), y = .data$y, label = .data$p_lab, fill = NULL
+    )
+
+    # If only one p-value calculated for plot, position center of panel
+    # include 'p = ' when setting hjust for p label
+    if (!is.null(p_x)) {
+      label_params$mapping$y <- Inf
+      label_params$vjust     <- label_params$vjust %||% 1.5
+
+      p_just <- ifelse(all_sym, p$p_lab, paste0("p = ", p$p_lab))
+
+      p <- dplyr::mutate(
+        p,
+        hjust = case_when(
+          orig.ident == Inf  ~ .get_label_just(p_just),
+          orig.ident == -Inf ~ .get_label_just(p_just, side = "left"),
+          TRUE               ~ 0.5
+        )
+      )
+
+      label_params$mapping$hjust <- sym("hjust")
+
+      if (!all_sym) {
+        p <- dplyr::mutate(p, p_lab = paste0("italic(p) == ", .data$p_lab))
+      }
+    }
+
+    label_params$data   <- p
+    label_params$parse  <- TRUE
+    label_params$colour <- label_params$colour %||% "black"
+    label_params$vjust  <- label_params$vjust  %||% 0
+
+    # Set default label size
+    # set larger font size for symbols, e.g. '*'
+    if (is.null(label_params$size)) {
+      label_params$size <- ifelse(
+        all_sym,
+        global$base_size * 1.3,
+        global$base_size * 0.8
+      )
+    }
+
+    label_params$size <- label_params$size / ggplot2::.pt
+
+    res <- res +
+      .lift(ggplot2::geom_text)(label_params)
+
+    if (!is.null(p_x) && !"corner" %in% n_label) {
+      res <- res +
+        ggplot2::scale_y_continuous(expand = .n_label_expansion)
+    }
   }
 
   res
@@ -286,6 +528,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 #' @param df_in data.frame
 #' @param x Variable to plot on x-axis
 #' @param y Variable to plot on y-axis
+#' @param err Variable to use for error bars
 #' @param trans Method to use for transforming y-axis
 #' @param y_ttl Title for y-axis
 #' @param x_ang Angle of x-axis text
@@ -294,12 +537,13 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 #' @param ... Additional arguments to pass to `.create_plot()`
 #' @return ggplot object
 #' @noRd
-.create_bars <- function(df_in, x = NULL, y, trans = "identity", y_ttl = y,
-                         x_ang = NULL, x_hjst = NULL, n_label = NULL, ...) {
+.create_bars <- function(df_in, x = NULL, y, err = NULL, trans = "identity",
+                         y_ttl = y, x_ang = NULL, x_hjst = NULL, n_label = NULL,
+                         ...) {
 
   # Check input values
   if (!is.null(x) && is.numeric(df_in[[x]])) {
-    cli::cli_abort("`x` cannot refer to a numeric column")
+    cli::cli_abort("`x` cannot refer to a numeric column", call = NULL)
   }
 
   # Set n label
@@ -319,13 +563,35 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     ...
   )
 
+  gg_args$alpha <- gg_args$alpha %||% 0.5
+
   if (is.null(gg_args$position)) {
     gg_args$position <- ggplot2::position_dodge2(
-      preserve = "single", padding = 0
+      preserve = "single", padding = 0.05
     )
   }
 
-  res <- lift(.create_plot)(gg_args)
+  res <- .lift(.create_plot)(gg_args)
+
+  # Add error bars
+  if (!is.null(err)) {
+    gg_args <- .standardize_aes(gg_args)
+
+    err_args <- list(
+      position = ggplot2::position_dodge2(width = 0.9),
+      show.legend = FALSE
+    )
+
+    err_args$colour    <- gg_args$colour
+    err_args$linewidth <- gg_args$linewidth %||% 1
+
+    err_args$mapping <- ggplot2::aes(
+      !!sym(x), ymin = !!sym(y) - !!sym(err), ymax = !!sym(y) + !!sym(err)
+    )
+
+    res <- res +
+      .lift(ggplot2::geom_linerange)(err_args)
+  }
 
   # Adjust theme
   if (!is.null(x) && dplyr::n_distinct(df_in[[x]]) > 6) {
@@ -343,7 +609,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 
   if (!is.null(x)) {
     res <- res +
-      theme(axis.text.x = ggplot2::element_text(angle = x_ang, hjust = x_hjst))
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = x_ang, hjust = x_hjst))
   }
 
   res
@@ -397,6 +663,10 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     ...
   )
 
+  gg_args <- .standardize_aes(gg_args)
+
+  gg_args$alpha <- gg_args$alpha %||% 0.5
+
   if (identical(method, "violin")) pos <- ggplot2::position_dodge()
   else pos <- ggplot2::position_dodge2(preserve = "single")
 
@@ -406,27 +676,27 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   # allow user to set point size and color
   if (show_points && identical(method, "boxplot")) gg_args$outlier.color <- NA
 
-  res <- lift(.create_plot)(gg_args)
+  res <- .lift(.create_plot)(gg_args)
 
   # Add additional points
   if (show_points) {
-    pt_args       <- list()
-    pt_args$alpha <- 1
-    pt_args$size  <- point.size %||% 1
-    pt_args$color <- point.color %||% gg_args$color
+    pt_args        <- list()
+    pt_args$alpha  <- 1
+    pt_args$size   <- point.size %||% 1
+    pt_args$colour <- point.color %||% gg_args$colour
 
     if (identical(method, "violin")) {
       pt_args$geom <- "point"
       pt_args$fun  <- stats::median
 
       res <- res +
-        lift(ggplot2::stat_summary)(pt_args)
+        .lift(ggplot2::stat_summary)(pt_args)
 
     } else {
       pt_args$position <- ggplot2::position_jitterdodge(jitter.width = 0.05)
 
       res <- res +
-        lift(ggplot2::geom_jitter)(pt_args)
+        .lift(ggplot2::geom_jitter)(pt_args)
     }
   }
 
@@ -485,8 +755,6 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     units  = c("frequency", "percent")
   )
 
-  plt_fn <- plt_fns[[method]]
-
   # Set n label
   if (is.null(n_label)) {
     n_label <- "corner"
@@ -509,8 +777,9 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   gg_aes$x <- sym(x)
 
   # Create histogram
-  res <- .create_plot(
-    df_in, plt_fn,
+  gg_args <- list(
+    df_in   = df_in,
+    fn      = plt_fns[[method]],
     mapping = gg_aes,
     x       = x,
     .color  = .color,
@@ -519,6 +788,10 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     n_label = n_label,
     ...
   )
+
+  gg_args$alpha <- gg_args$alpha %||% 0.5
+
+  res <- .lift(.create_plot)(gg_args)
 
   if (identical(method, "histogram")) {
     res <- res +
@@ -585,7 +858,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
       axis.ticks  = ggplot2::element_blank(),
       axis.text.x = ggplot2::element_text(angle = x_ang, hjust = x_hjst)
     ) +
-    labs(title = plt_ttl, fill = lgd_ttl)
+    ggplot2::labs(title = plt_ttl, fill = lgd_ttl)
 
   res
 }
@@ -603,8 +876,6 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 #' @param rm_diag If TRUE, diagonal for heatmap will not be shown and
 #' rows/columns will not be clustered.
 #' @param ... Aditional arguments to pass to ComplexHeatmap::Heatmap()
-#' @importFrom grid grid.rect
-#' @importFrom ComplexHeatmap Heatmap
 #' @noRd
 .create_heatmap <- function(mat_in, clrs = NULL, na_color = NA, lvls = NULL,
                             lgd_ttl = NULL, rm_upper = FALSE, rm_diag = FALSE,
@@ -717,7 +988,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     plt_args$clustering_distance_columns %||% dist_fn
 
   # Create heatmap
-  res <- lift(ComplexHeatmap::Heatmap)(plt_args)
+  res <- .lift(ComplexHeatmap::Heatmap)(plt_args)
 
   res
 }
@@ -792,8 +1063,6 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
 #' @param rotate_labels Should labels be rotated to reduce overlapping text
 #' @param plt_ttl Plot title
 #' @param ... Additional arguments to pass to circlize::chordDiagram()
-#' @importFrom scales hue_pal
-#' @importFrom graphics title strwidth
 #' @noRd
 .create_circos <- function(mat_in, clrs = NULL, na_color = "grey90",
                            lvls = NULL, grps = NULL, rotate_labels = FALSE,
@@ -885,7 +1154,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
       circos_fun <- function(...) {
         circlize::chordDiagram(
           preAllocateTracks = list(
-            track.height = max(strwidth(unlist(dimnames(mat_in))))
+            track.height = max(graphics::strwidth(unlist(dimnames(mat_in))))
           ),
           ...
         )
@@ -900,7 +1169,7 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
     }
   }
 
-  lift(circos_fun)(plt_args)
+  .lift(circos_fun)(plt_args)
 
   # Add axis track
   if (adj_axis) {
@@ -982,269 +1251,6 @@ djvdj_theme <- function(ttl_size = 12, txt_size = 8, ln_size = 0.5,
   res
 }
 
-
-#' Add n label to plot
-#'
-#' @param gg_in ggplot2 object
-#' @param df_in data.frame to use for counting number of values plotted. For
-#' `.add_n_label()` can also be named list providing separate data.frames for
-#' corner, axis, and legend labels.
-#' @param grp Variable to use for grouping data when counting the number of
-#' values
-#' @param n_label Vector indicating where n labels should be added
-#' @param crnr_col Column in `df_in` containing groups that will be shown for
-#' the corner label
-#' @param axis_col Column in `df_in` containing groups that will be shown on the
-#' x-axis
-#' @param lgnd_col Column in `df_in` containing groups that will be shown in
-#' the legend
-#' @param lgnd_clrs Colors to pass to `ggplot2::scale_fill_manual()` and
-#' `ggplot2::scale_color_manual()`, only applicable when adding legend label
-#' @param na_clr Color to use for `NA` value, only applicable when adding legend
-#' label
-#' @param y_exp y-axis expansion, only applicable when adding corner label
-#' @param n_fn Function to use for calculating number of values plotted. By
-#' default this is `dplyr::n` which will just count the number of rows for
-#' each group. If another function is provided, it should take a vector as
-#' input. The function will be applied to the `n_col` column in `df_in`. e.g.
-#' `sum` will sum the values in `n_col` for each group, this is useful if the
-#' number of cells has already been counted for each group.
-#' @param n_col Column to store n values, this also specifies the column that
-#' should be modified when a function is provided to the `n_fn`.
-#' @param lab_args named list with aesthetic parameters to used for modifying
-#' n label
-#' @param axis Should label be added to the x- or y-axis, only applicable when
-#' adding axis label
-#' @param ... Absorbs unused arguments passed to label functions
-#' @param sep Separator to use when creating n label
-#' @return ggplot object with n labels added
-#' @noRd
-.add_n_label <- function(gg_in, df_in, n_label, crnr_col = NULL,
-                         axis_col = NULL, lgnd_col = NULL, lgnd_clrs = NULL,
-                         na_clr = "grey80", y_exp = .n_label_expansion,
-                         n_fn = dplyr::n, lab_args = list()) {
-
-  n_label <- unique(c("none", n_label))
-
-  lab_args <- .standardize_aes(lab_args)
-
-  if (!is.data.frame(df_in) && is.list(df_in)) {
-    crnr_dat <- df_in$corner
-    axis_dat <- df_in$axis
-    lgnd_dat <- df_in$legend
-
-  } else {
-    crnr_dat <- axis_dat <- lgnd_dat <- df_in
-  }
-
-  # Named list containing possible label functions, group columns, and data
-  lab_fns <- list(
-    none   = list(.add_no_label, NULL, NULL),
-    corner = list(.add_corner_label, crnr_col, crnr_dat)
-  )
-
-  if (!is.null(axis_col) && !is.null(axis_dat)) {
-    lab_fns$axis <- list(.add_axis_label, axis_col, axis_dat)
-  }
-
-  if (!is.null(lgnd_col) && !is.null(lgnd_dat)) {
-    lab_fns$legend <- list(.add_legend_label, lgnd_col, lgnd_dat)
-  }
-
-  if (any(!n_label %in% names(lab_fns))) {
-    cli::cli_abort("`n_label` can be any combination of {names(lab_fns)}")
-  }
-
-  lab_fns <- lab_fns[unique(n_label)]
-
-  res <- gg_in
-
-  for (fn in lab_fns) {
-    f <- fn[[1]]
-    g <- fn[[2]]
-    d <- fn[[3]]
-
-    dat <- .calc_n(df_in = d, grp = g, n_fn = n_fn)
-
-    res <- f(
-      res, dat,
-      grp       = g,
-      lgnd_clrs = lgnd_clrs,
-      na_clr    = na_clr,
-      y_exp     = y_exp,
-      lab_args  = lab_args
-    )
-  }
-
-  res
-}
-
-.add_corner_label <- function(gg_in, df_in, lab_args,
-                              y_exp = .n_label_expansion, ...) {
-
-  # Automatically adjust label position based on length of string
-  just <- 0.5
-  char_h_w <- 1.5
-
-  dat <- .format_n_label(df_in)
-
-  dat <- dplyr::mutate(
-    dat,
-    label = lab_args$label %||% .data$label,
-    hjust = nchar(.data$label),
-    hjust = 1 + (1 / .data$hjust * (just * char_h_w))
-  )
-
-  if (!is.null(lab_args$size)) lab_args$size <- lab_args$size / ggplot2::.pt
-
-  lab_args$mapping     <- ggplot2::aes(label = .data$label, hjust = .data$hjust)
-  lab_args$data        <- dat
-  lab_args$inherit.aes <- FALSE
-  lab_args$x           <- lab_args$x %||% Inf
-  lab_args$y           <- lab_args$y %||% Inf
-  lab_args$vjust       <- lab_args$vjust %||% 1 + just
-
-  res <- gg_in +
-    lift(ggplot2::geom_text)(lab_args)
-
-  if (!is.null(y_exp)) {
-    res <- res +
-      ggplot2::scale_y_continuous(expand = y_exp)
-  }
-
-  res
-}
-
-.add_axis_label <- function(gg_in, df_in, grp, axis = "x", lab_args, ...) {
-
-  if (is.null(grp)) return(gg_in)
-
-  dat <- .format_n_label(df_in, grp)
-
-  dat_labs <- purrr::set_names(dat$label, dat[[grp]])
-
-  if (identical(axis, "x")) {
-    res <- gg_in +
-      ggplot2::scale_x_discrete(labels = dat_labs) +
-      ggplot2::theme(axis.text.x = lift(ggplot2::element_text)(lab_args))
-
-  } else if (identical(axis, "y")) {
-    res <- gg_in +
-      ggplot2::scale_y_discrete(labels = dat_labs) +
-      ggplot2::theme(axis.text.y = lift(ggplot2::element_text)(lab_args))
-
-  } else {
-    cli::cli_abort("`axis` must be x or y")
-  }
-
-  res
-}
-
-.add_legend_label <- function(gg_in, df_in, grp, lab_args, lgnd_clrs = NULL,
-                              na_clr = "grey80", ...) {
-
-  if (is.null(grp)) return(gg_in)
-
-  dat <- .format_n_label(df_in, grp)
-
-  dat_labs <- purrr::set_names(dat$label, dat[[grp]])
-
-  # Scale arguments
-  gg_args <- list(labels = dat_labs)
-
-  if (!is.null(lgnd_clrs)) {
-    gg_args$values   <- lgnd_clrs
-    gg_args$na.value <- na_clr
-
-    res <- gg_in +
-      lift(ggplot2::scale_color_manual)(gg_args) +
-      lift(ggplot2::scale_fill_manual)(gg_args)
-
-  } else {
-    res <- gg_in +
-      lift(ggplot2::scale_color_discrete)(gg_args) +
-      lift(ggplot2::scale_fill_discrete)(gg_args)
-  }
-
-  res
-}
-
-.add_no_label <- function(gg_in, ...) gg_in
-
-.format_n_label <- function(df_in, grp = NULL, sep = "\n", n_col = ".n") {
-  res <- dplyr::mutate(
-    df_in,
-    label = scales::label_comma()(!!sym(n_col)),
-    label = paste0("n = ", .data$label)
-  )
-
-  if (!is.null(grp)) {
-    res <- dplyr::mutate(
-      res,
-      label = paste0(!!sym(grp), sep, .data$label)
-    )
-  }
-
-  res
-}
-
-.calc_n <- function(df_in, grp = NULL, n_fn = dplyr::n, n_col = ".n") {
-  res <- df_in
-
-  if (is.null(df_in)) return(df_in)
-
-  if (!is.null(grp)) res <- dplyr::group_by(res, !!sym(grp))
-
-  if (identical(n_fn, dplyr::n)) {
-    res <- dplyr::summarize(res, !!sym(n_col) := n_fn(), .groups = "drop")
-
-  } else {
-    res <- dplyr::summarize(
-      res, !!sym(n_col) := n_fn(!!sym(n_col)), .groups = "drop"
-    )
-  }
-
-  res
-}
-
-.n_label_expansion <- ggplot2::expansion(c(0.05, 0.1))
-
-
-#' Get axis label based on axis units
-#'
-#' @param units Units for axis
-#' @param sffx Suffix to include in label
-#' @return Axis label
-#' @noRd
-.get_axis_label <- function(units, sfx = "cells") {
-  res <- switch(
-    units,
-    frequency = paste0("number of ", sfx),
-    percent   = paste0("% of ", sfx)
-  )
-
-  res
-}
-
-
-#' Trim long labels
-#'
-#' @param x Character vector containing labels to trim
-#' @param max_len Maximum number of characters to allow
-#' @param ellipsis Ellipsis to add to indicate label has been trimmed
-#' @noRd
-trim_lab <- function(x, max_len = 25, ellipsis = "...") {
-  len <- nchar(x)
-
-  trim_me <- len > max_len
-
-  x[trim_me] <- strtrim(x[trim_me], max_len)
-  x[trim_me] <- paste0(x[trim_me], ellipsis)
-
-  x
-}
-
-
 #' Set 'other' groups
 #'
 #' Label groups that are not among the most frequent as 'other'
@@ -1296,15 +1302,15 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
       stats::na.omit(!!sym(val_col)),
       do.conf = FALSE, do.out = FALSE
     )),
-    med = median(!!sym(val_col), na.rm = TRUE),
+    med = stats::median(!!sym(val_col), na.rm = TRUE),
     max = max(!!sym(val_col), na.rm = TRUE),
     .groups = "drop"
   )
 
   res <- dplyr::mutate(
     res,
-    q3 = map_dbl(.data$met, ~ .x$stats[4]),
-    q4 = map_dbl(.data$met, ~ .x$stats[5])
+    q3 = purrr::map_dbl(.data$met, ~ .x$stats[4]),
+    q4 = purrr::map_dbl(.data$met, ~ .x$stats[5])
   )
 
   if (rev) {
@@ -1360,7 +1366,7 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
     top      <- top[1]
     n_top    <- top %||% ifelse(n_grps > 50, 10, 20)
-    top_grps <- head(rnk, n_top)
+    top_grps <- utils::head(rnk, n_top)
 
     # Warn user when top is automatically set
     if (is.null(top) && n_grps > n_top) {
@@ -1404,6 +1410,71 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   res
 }
 
+#' Add zeros for missing groups
+#'
+#' This adds zeros for combinations of groups that do not have any cells.
+#' This is allows missing groups to be plotted as zeros.
+#'
+#' @param df_in data.frame or tibble
+#' @param dat_col Columns containing data to add zeros
+#' @param expand_col Column containing variable to expand for each group
+#' @param clst_col Column containing cluster IDs, such as patient IDs,
+#' e.g. healthy-1, healthy-2, disease-1, disease-2.
+#' @param grp_col Column containing variable to use for grouping cluster IDs,
+#' e.g. health and disease.
+#' data.frame is expanded so each group has all variables in expand_col and
+#' clst_col. However, clst_col is expanded for each group separately since
+#' groups are expected to have different values for clst_col.
+#' @noRd
+.add_missing_zeros <- function(df_in, dat_cols, expand_col, clst_col, grp_col) {
+
+  # If expand_col and grp_col are the same, no need to add zeros since each
+  # group contains a single value
+  if (identical(expand_col, grp_col)) return(df_in)
+
+  # Save original levels to combinations to maintain ordering
+  # convert all factors to character to allow correct merging at the end
+  lvls <- purrr::map(df_in, levels)
+  lvls <- purrr::discard(lvls, is.null)
+
+  all_cols <- unique(c(expand_col, clst_col, grp_col))
+
+  df_in <- dplyr::mutate(
+    df_in,
+    dplyr::across(all_of(all_cols), as.character)
+  )
+
+  # Get all combinations
+  # make expand_col factor so all groups get all values of expand_col
+  all <- dplyr::mutate(df_in, !!sym(expand_col) := factor(!!sym(expand_col)))
+  all <- split(all, all[[grp_col]])
+
+  all <- purrr::map(
+    all, tidyr::expand, !!!syms(all_cols)
+  )
+
+  all <- dplyr::bind_rows(all)
+
+  # Convert expand_col back to character to allow for correct merging of NAs
+  # which might be present when plotting VDJ data
+  all <- dplyr::mutate(
+    all, !!sym(expand_col) := as.character(!!sym(expand_col))
+  )
+
+  # Add zeros for combinations that are expected but have no cells
+  res <- dplyr::right_join(df_in, all, by = all_cols)
+
+  res <- dplyr::mutate(
+    res, dplyr::across(all_of(unique(dat_cols)), ~ tidyr::replace_na(.x, 0))
+  )
+
+  res <- dplyr::mutate(res, dplyr::across(
+    all_of(names(lvls)),
+    ~ factor(.x, levels = lvls[[dplyr::cur_column()]], exclude = NULL)
+  ))
+
+  res
+}
 
 #' Get arguments used solely by provided text function
 #'
@@ -1429,11 +1500,11 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
   # Get args unique for each function
   uniq_args <- .get_unique_args(
     geom_text = c(
-      formalArgs(ggplot2::geom_text),
+      methods::formalArgs(ggplot2::geom_text),
       names(ggplot2::GeomText$default_aes)
     ),
     geom_text_repel = c(
-      formalArgs(ggrepel::geom_text_repel),
+      methods::formalArgs(ggrepel::geom_text_repel),
       names(ggrepel::GeomTextRepel$default_aes)
     )
   )
@@ -1686,7 +1757,6 @@ trim_lab <- function(x, max_len = 25, ellipsis = "...") {
 
 
 #' Standardize aesthetics
-#'
 #' e.g. color and colour
 #' @noRd
 .standardize_aes <- function(aes_list) {

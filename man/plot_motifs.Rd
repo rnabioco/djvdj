@@ -84,7 +84,7 @@ Plot CDR3 sequence motifs
 \examples{
 # Cluster cells based on CDR3 amino acid sequences and plot sequence motifs
 res <- cluster_sequences(
-  vdj_so,
+  vdj_sce,
   data_col = "cdr3"
 )
 

@@ -56,11 +56,11 @@ different samples, cell types, clonotypes, isotypes, etc.
 \examples{
 # Calculate clonotype abundance using all cells
 res <- calc_frequency(
-  vdj_so,
+  vdj_sce,
   data_col = "clonotype_id"
 )
 
-head(slot(res, "meta.data"), 1)
+head(slot(res, "colData"), 1)
 
 # Group cells based on meta.data column before calculating abundance
 res <- calc_frequency(
@@ -75,12 +75,12 @@ head(slot(res, "colData"), 1)
 # this is useful if multiple abundance calculations are stored in the
 # meta.data
 res <- calc_frequency(
-  vdj_so,
+  vdj_sce,
   data_col = "clonotype_id",
   prefix = "bcr_"
 )
 
-head(slot(res, "meta.data"), 1)
+head(slot(res, "colData"), 1)
 
 # Return a data.frame instead of adding the results to the input object
 res <- calc_frequency(

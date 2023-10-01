@@ -20,6 +20,9 @@ plot_diversity(
   panel_nrow = NULL,
   panel_scales = "free",
   n_label = NULL,
+  p_label = "all",
+  p_method = NULL,
+  p_file = NULL,
   label_params = list(),
   ...
 )
@@ -45,8 +48,8 @@ list(simpson = abdiv::simpson, shannon = abdiv::shannon)}
 \item{downsample}{Downsample clusters to the same size when calculating
 diversity metrics}
 
-\item{n_boots}{Number of bootstrap replicates for calculating standard error,
-if n_boots is 0 this will be skipped.}
+\item{n_boots}{Number of bootstrap replicates for calculating standard
+deviation, if n_boots is 0 this will be skipped.}
 
 \item{chain}{Chain to use for calculating diversity. To calculate diversity
 for a single chain, the column passed to the data_col argument must contain
@@ -79,6 +82,32 @@ plot legend
 \item 'none', do not display the number of cells plotted
 }}
 
+\item{p_label}{Specification indicating how p-values should be labeled on
+plot, this can one of the following:
+\itemize{
+\item 'none', do not display p-values
+\item 'all', show p-values for all groups
+\item A named vector providing p-value cutoffs and labels to display,
+e.g. \code{c('*' = 0.05, '**' = 0.01, '***' = 0.001)}. The keyword 'value' can
+be used to display the p-value for those less than a certain cutoff,
+e.g. \code{c(value = 0.05, ns = 1.1)} will show significant p-values, all others
+will be labeled 'ns'.
+}}
+
+\item{p_method}{Method to use for calculating p-values, by default when
+comparing two groups a t-test will be used.
+When comparing more than two groups the Kruskal-Wallis test will be used.
+p-values are adjusted for
+multiple testing using Bonferroni correction. Possible methods include:
+\itemize{
+\item 't', two sample t-test performed with \code{stats::t.test()}
+\item 'wilcox', Wilcoxon rank sum test performed with \code{stats::wilcox.test()}
+\item 'kruskal', Kruskal-Wallis test performed with \code{stats::kruskal.test()}
+}}
+
+\item{p_file}{File path to save table containing p-values for each
+comparison.}
+
 \item{label_params}{Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")}
 
@@ -92,12 +121,6 @@ ggplot object
 Plot repertoire diversity
 }
 \examples{
-# Plot diversity using all cells
-plot_diversity(
-  vdj_so,
-  data_col = "clonotype_id"
-)
-
 # Specify method to use for calculating repertoire diversity
 plot_diversity(
   vdj_sce,
@@ -107,7 +130,7 @@ plot_diversity(
 
 # Plot diversity separately for each cell cluster
 plot_diversity(
-  vdj_so,
+  vdj_sce,
   data_col    = "clonotype_id",
   cluster_col = "orig.ident"
 )
@@ -127,7 +150,7 @@ plot_diversity(
 
 # Specify colors to use for each cell cluster
 plot_diversity(
-  vdj_so,
+  vdj_sce,
   data_col    = "clonotype_id",
   cluster_col = "orig.ident",
   plot_colors = c(avid_2 = "green", avid_1 = "purple")
@@ -143,7 +166,7 @@ plot_diversity(
 
 # Specify how to organize panels when plotting multiple metrics
 plot_diversity(
-  vdj_so,
+  vdj_sce,
   data_col   = "clonotype_id",
   method     = mets,
   panel_nrow = 2

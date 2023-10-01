@@ -27,7 +27,7 @@
 #'
 #' @examples
 #' # Fetch per-chain V(D)J data
-#' fetch_vdj(vdj_so)
+#' fetch_vdj(vdj_sce)
 #'
 #' # To increase performance, specify which columns to return per-chain data,
 #' # per-cell data will be returned for all other columns
@@ -39,7 +39,7 @@
 #' # Only include cells that have V(D)J data
 #' # clonotype_col must be specified to identify cells with V(D)J data
 #' fetch_vdj(
-#'   vdj_so,
+#'   vdj_sce,
 #'   filter_cells = TRUE,
 #'   clonotype_col = "clonotype_id"
 #' )
@@ -135,12 +135,12 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
 #' @examples
 #' # Calculate mean reads and UMIs per cell
 #' res <- mutate_vdj(
-#'   vdj_so,
+#'   vdj_sce,
 #'   mean_umis  = mean(umis),
 #'   mean_reads = mean(reads)
 #' )
 #'
-#' head(slot(res, "meta.data"), 3)
+#' head(slot(res, "colData"), 3)
 #'
 #' # Calculate the total number of insertions + deletions for each chain
 #' # we have to wrap our expression in list() since a value is returned for
@@ -154,11 +154,11 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
 #'
 #' # Create a new column showing the unique chains for each cell
 #' res <- mutate_vdj(
-#'   vdj_so,
+#'   vdj_sce,
 #'   unique_chains = stringr::str_c(unique(chains), collapse = "_")
 #' )
 #'
-#' head(slot(res, "meta.data"), 3)
+#' head(slot(res, "colData"), 3)
 #'
 #' # Determine which cells have both an IGK and IGL chain
 #' res <- mutate_vdj(
@@ -170,11 +170,11 @@ fetch_vdj <- function(input, data_cols = NULL, clonotype_col = NULL,
 #'
 #' # Determine which cells have multiple light chains
 #' res <- mutate_vdj(
-#'   vdj_so,
+#'   vdj_sce,
 #'   multi_light = sum(chains %in% c("IGK", "IGL")) > 1
 #' )
 #'
-#' head(slot(res, "meta.data"), 3)
+#' head(slot(res, "colData"), 3)
 #'
 #' @export
 mutate_vdj <- function(input, ..., clonotype_col = global$clonotype_col,
@@ -257,17 +257,16 @@ mutate_vdj <- function(input, ..., clonotype_col = global$clonotype_col,
 #' added to the input object.
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return Object containing V(D)J data summarized for each cell
-#' @importFrom glue glue
 #'
 #' @examples
 #' # Summarize numeric columns
 #' # by default the mean will be calculated for numeric columns
 #' res <- summarize_vdj(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_cols = c("all_del", "all_ins")
 #' )
 #'
-#' head(slot(res, "meta.data"), 3)
+#' head(slot(res, "colData"), 3)
 #'
 #' # Specifying a different summary function
 #' # this calculates the median number of insertions and deletions for each
@@ -282,12 +281,12 @@ mutate_vdj <- function(input, ..., clonotype_col = global$clonotype_col,
 #'
 #' # Summarize values for a specific chain
 #' res <- summarize_vdj(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_cols = c("all_del", "all_ins"),
 #'   chain = "IGK"
 #' )
 #'
-#' head(slot(res, "meta.data"), 3)
+#' head(slot(res, "colData"), 3)
 #'
 #' # Specifying new names for summarized columns
 #' # use {.col} to refer to the original column name
@@ -302,7 +301,7 @@ mutate_vdj <- function(input, ..., clonotype_col = global$clonotype_col,
 #'
 #' # Return a data.frame instead of adding the results to the input object
 #' res <- summarize_vdj(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_cols = c("all_del", "all_ins"),
 #'   return_df = TRUE
 #' )
@@ -325,7 +324,7 @@ mutate_vdj <- function(input, ..., clonotype_col = global$clonotype_col,
 #' # this creates a column indicating which cells have no insertions
 #' # the V(D)J data can be filtered based on this new column
 #' res <- summarize_vdj(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_cols = "all_ins",
 #'   fn = ~ all(.x == 0),
 #'   col_names = "no_insertions"
@@ -336,7 +335,7 @@ mutate_vdj <- function(input, ..., clonotype_col = global$clonotype_col,
 #'   filt = no_insertions
 #' )
 #'
-#' head(slot(res, "meta.data"), 3)
+#' head(slot(res, "colData"), 3)
 #'
 #' @export
 summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
@@ -508,21 +507,21 @@ summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
 #' # all additional arguments provided to mutate_meta() are passed directly to
 #' # the function (in this case, dplyr::mutate())
 #' res <- mutate_meta(
-#'   tiny_so,
+#'   tiny_sce,
 #'   dplyr::mutate,
 #'   NEW = nCount_RNA + nFeature_RNA
 #' )
 #'
-#' head(slot(res, "meta.data"), 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # Pass a purrr-style lambda
 #' # this produces the same result as the previous example
 #' res <- mutate_meta(
-#'   tiny_so,
+#'   tiny_sce,
 #'   ~ dplyr::mutate(.x, NEW = nCount_RNA + nFeature_RNA)
 #' )
 #'
-#' head(slot(res, "meta.data"), 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # Modify multiple meta.data columns
 #' res <- mutate_meta(
@@ -538,12 +537,12 @@ summarize_vdj <- function(input, data_cols, fn = NULL, ..., chain = NULL,
 #' # any function can be passed to mutate_meta(), in this example
 #' # dplyr::select() is used to remove columns
 #' res <- mutate_meta(
-#'   tiny_so,
+#'   tiny_sce,
 #'   dplyr::select,
 #'   -UMAP_1
 #' )
 #'
-#' head(slot(res, "meta.data"), 1)
+#' head(slot(res, "colData"), 1)
 #'
 #' # Perform grouped operations using dplyr
 #' # multi-line commands can be passed using brackets, just refer to the
@@ -570,7 +569,7 @@ mutate_meta <- function(input, fn, ...) {
   meta <- .get_meta(input)
 
   if (purrr::is_formula(fn)) {
-    fn <- as_mapper(fn, ...)
+    fn <- purrr::as_mapper(fn, ...)
   }
 
   res <- fn(meta, ...)

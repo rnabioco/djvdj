@@ -23,61 +23,18 @@
 #' added to the input object.
 #' @param sep Separator used for storing per-chain V(D)J data for each cell
 #' @return Single cell object or data.frame with diversity metrics
-#' @importFrom abdiv simpson
-#' @importFrom broom tidy
-#' @importFrom boot boot
 #' @seealso [plot_diversity()]
 #'
 #' @examples
-#' # Calculate diversity using all cells
-#' res <- calc_diversity(
-#'   vdj_so,
-#'   data_col = "clonotype_id",
-#'   method   = abdiv::simpson
-#' )
-#'
-#' head(slot(res, "meta.data"), 1)
-#'
-#' # Group cells based on meta.data column before calculating diversity
+#' # Calculate diversity for each cell cluster
 #' res <- calc_diversity(
 #'   vdj_sce,
 #'   data_col    = "clonotype_id",
-#'   cluster_col = "orig.ident"
+#'   cluster_col = "orig.ident",
+#'   method      = abdiv::simpson
 #' )
 #'
 #' head(slot(res, "colData"), 1)
-#'
-#' # Add a prefix to the new columns
-#' # this is useful if multiple diversity calculations are stored in the
-#' # meta.data
-#' res <- calc_diversity(
-#'   vdj_so,
-#'   data_col = "clonotype_id",
-#'   prefix   = "bcr_"
-#' )
-#'
-#' head(slot(res, "meta.data"), 1)
-#'
-#' # Calculate multiple metrics
-#' res <- calc_diversity(
-#'   vdj_sce,
-#'   data_col = "clonotype_id",
-#'   method = list(
-#'     simpson = abdiv::simpson,
-#'     shannon = abdiv::shannon
-#'   )
-#' )
-#'
-#' head(slot(res, "colData"), 1)
-#'
-#' # Return a data.frame instead of adding the results to the input object
-#' res <- calc_diversity(
-#'   vdj_so,
-#'   data_col  = "clonotype_id",
-#'   return_df = TRUE
-#' )
-#'
-#' head(res, 1)
 #'
 #' @export
 calc_diversity <- function(input, data_col, cluster_col = NULL,
@@ -234,10 +191,9 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
     res
   }
 
-  bt  <- boot::boot(x, fn, R = n_bts)
-  res <- broom::tidy(bt)
+  bt <- boot::boot(x, fn, R = n_bts)
 
-  if (n_bts == 0) res <- tibble::tibble(statistic = bt$t0, std.error = NA)
+  res <- tibble::tibble(statistic = bt$t0, std.error = stats::sd(bt$t))
 
   res
 }
@@ -259,8 +215,8 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #' list(simpson = abdiv::simpson, shannon = abdiv::shannon)
 #' @param downsample Downsample clusters to the same size when calculating
 #' diversity metrics
-#' @param n_boots Number of bootstrap replicates for calculating standard error,
-#' if n_boots is 0 this will be skipped.
+#' @param n_boots Number of bootstrap replicates for calculating standard
+#' deviation, if n_boots is 0 this will be skipped.
 #' @param chain Chain to use for calculating diversity. To calculate diversity
 #' for a single chain, the column passed to the data_col argument must contain
 #' per-chain data such as CDR3 sequences. Set to NULL to include all chains.
@@ -286,21 +242,37 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'   plot legend
 #' - 'none', do not display the number of cells plotted
 #'
+#' @param p_label Specification indicating how p-values should be labeled on
+#' plot, this can one of the following:
+#'
+#' - 'none', do not display p-values
+#' - 'all', show p-values for all groups
+#' - A named vector providing p-value cutoffs and labels to display,
+#'   e.g. `c('*' = 0.05, '**' = 0.01, '***' = 0.001)`. The keyword 'value' can
+#'   be used to display the p-value for those less than a certain cutoff,
+#'   e.g. `c(value = 0.05, ns = 1.1)` will show significant p-values, all others
+#'   will be labeled 'ns'.
+#'
+#' @param p_method Method to use for calculating p-values, by default when
+#' comparing two groups a t-test will be used.
+#' When comparing more than two groups the Kruskal-Wallis test will be used.
+#' p-values are adjusted for
+#' multiple testing using Bonferroni correction. Possible methods include:
+#'
+#' - 't', two sample t-test performed with `stats::t.test()`
+#' - 'wilcox', Wilcoxon rank sum test performed with `stats::wilcox.test()`
+#' - 'kruskal', Kruskal-Wallis test performed with `stats::kruskal.test()`
+#'
+#' @param p_file File path to save table containing p-values for each
+#' comparison.
 #' @param label_params Named list providing additional parameters to modify
 #' n label aesthetics, e.g. list(size = 4, color = "red")
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill, size,
 #' linetype, etc.
 #' @return ggplot object
-#' @importFrom abdiv simpson
 #' @seealso [calc_diversity()], [plot_rarefaction()]
 #'
 #' @examples
-#' # Plot diversity using all cells
-#' plot_diversity(
-#'   vdj_so,
-#'   data_col = "clonotype_id"
-#')
-#'
 #' # Specify method to use for calculating repertoire diversity
 #' plot_diversity(
 #'   vdj_sce,
@@ -310,7 +282,7 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'
 #' # Plot diversity separately for each cell cluster
 #' plot_diversity(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col    = "clonotype_id",
 #'   cluster_col = "orig.ident"
 #' )
@@ -328,25 +300,9 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'   method      = mets
 #' )
 #'
-#' # Specify colors to use for each cell cluster
-#' plot_diversity(
-#'   vdj_so,
-#'   data_col    = "clonotype_id",
-#'   cluster_col = "orig.ident",
-#'   plot_colors = c(avid_2 = "green", avid_1 = "purple")
-#' )
-#'
-#' # Specify order to use for plotting cell clusters
-#' plot_diversity(
-#'   vdj_sce,
-#'   data_col    = "clonotype_id",
-#'   cluster_col = "orig.ident",
-#'   plot_lvls   = c("avid_2", "avid_1")
-#' )
-#'
 #' # Specify how to organize panels when plotting multiple metrics
 #' plot_diversity(
-#'   vdj_so,
+#'   vdj_sce,
 #'   data_col   = "clonotype_id",
 #'   method     = mets,
 #'   panel_nrow = 2
@@ -360,7 +316,8 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
                            plot_colors = NULL,
                            plot_lvls = names(plot_colors), panel_nrow = NULL,
                            panel_scales = "free", n_label = NULL,
-                           label_params = list(), ...) {
+                           p_label = "all", p_method = NULL,
+                           p_file = NULL, label_params = list(), ...) {
 
   # Check that columns are present in object
   .check_obj_cols(
@@ -377,6 +334,8 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   }
 
   .check_group_cols(cluster_col, group_col, input)
+
+  .check_possible_values(p_method = c("t", "wilcox", "kruskal"))
 
   if (length(method) == 1 && is.null(names(method))) {
     nm <- as.character(substitute(method))
@@ -429,8 +388,8 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   n_lab_dat <- plt_dat
 
   # Identify data columns that the user should have access to
-  keep_cols <- .get_matching_clmns(plt_dat, c(data_col, cluster_col))
-  keep_cols <- c(cluster_col, data_col, keep_cols)
+  keep_cols <- .get_matching_clmns(plt_dat, c(all_div_cols, cluster_col))
+  keep_cols <- c(all_div_cols, cluster_col, keep_cols)
   plt_dat   <- dplyr::distinct(plt_dat, !!!syms(keep_cols))
 
   plt_dat <- tidyr::pivot_longer(plt_dat, all_of(all_div_cols))
@@ -458,6 +417,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
     df_in        = plt_dat,
     x            = x_col,
     y            = "diversity",
+    .color       = clr_col,
     .fill        = clr_col,
     clrs         = plot_colors,
     nrow         = panel_nrow,
@@ -470,14 +430,21 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
   # Create grouped boxplot
   if (!is.null(group_col)) {
-    gg_args$alpha         <- gg_args$alpha %||% 0.5
-    gg_args$outlier.color <- gg_args$outlier.color %||% NA
-    gg_args$.color        <- clr_col
+    gg_args$clst      <- cluster_col
+    gg_args$grp       <- group_col
+    gg_args$add_zeros <- FALSE
 
-    res <- lift(.create_boxes)(gg_args) +
-      ggplot2::geom_jitter(
-        position = ggplot2::position_jitterdodge(jitter.width = 0.05)
-      )
+    gg_args$p_label   <- p_label
+    gg_args$p_method  <- p_method
+    gg_args$p_file    <- p_file
+    gg_args$p_x       <- "center"
+
+    gg_args$method    <- "boxplot"
+    gg_args           <- append(gg_args, list(p_grp = NULL))
+
+    if (length(method) > 1) gg_args$p_grp <- "met"
+
+    res <- .lift(.create_grouped_plot)(gg_args)
 
   # Create bar graphs
   # only add error bars if n_boots > 1
@@ -486,18 +453,9 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
       gg_args$position <- ggplot2::position_identity()
     }
 
-    res <- lift(.create_bars)(gg_args)
+    if (n_boots > 1) gg_args$err <- "stderr"
 
-    if (n_boots > 1) {
-      res <- res +
-        ggplot2::geom_linerange(
-          aes(
-            !!sym(cluster_col),
-            ymin = .data$diversity - .data$stderr,
-            ymax = .data$diversity + .data$stderr
-          )
-        )
-    }
+    res <- .lift(.create_bars)(gg_args)
 
     if (!include_x_labs) {
       res <- res +
@@ -511,7 +469,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
   # Create facets
   if (length(method) > 1) {
     res <- res +
-      ggplot2::facet_wrap(~ met, nrow = panel_nrow, scales = "free") +
+      ggplot2::facet_wrap(~ met, nrow = panel_nrow, scales = panel_scales) +
       ggplot2::theme(axis.title.y = ggplot2::element_blank())
 
   } else {
@@ -578,45 +536,16 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 #' @param ... Additional arguments to pass to ggplot2, e.g. color, fill,
 #' linetype, etc.
 #' @return ggplot object
-#' @importFrom stringr str_to_lower
 #' @seealso [calc_diversity()], [plot_diversity()]
 #'
 #' @examples
-#' # Plot rarefaction curve using all cells
+#' # Plot rarefaction curve for each cluster
 #' plot_rarefaction(
-#'   vdj_so,
-#'   data_col = "clonotype_id"
+#'   vdj_sce,
+#'   data_col    = "clonotype_id",
+#'   cluster_col = "orig.ident",
+#'   method      = "shannon"
 #')
-#'
-#' # Specify method to use for calculating repertoire diversity
-#' plot_rarefaction(
-#'   vdj_sce,
-#'   data_col = "clonotype_id",
-#'   method   = "shannon"
-#' )
-#'
-#' # Plot separate curves for each cell cluster
-#' plot_rarefaction(
-#'   vdj_so,
-#'   data_col    = "clonotype_id",
-#'   cluster_col = "orig.ident"
-#' )
-#'
-#' # Specify colors to use for each cell cluster
-#' plot_rarefaction(
-#'   vdj_so,
-#'   data_col    = "clonotype_id",
-#'   cluster_col = "orig.ident",
-#'   plot_colors = c(avid_1 = "green", avid_2 = "purple")
-#' )
-#'
-#' # Specify order to use for plotting cell clusters
-#' plot_rarefaction(
-#'   vdj_sce,
-#'   data_col    = "clonotype_id",
-#'   cluster_col = "orig.ident",
-#'   plot_lvls   = c("avid_2", "avid_1")
-#' )
 #'
 #' @export
 plot_rarefaction <- function(input, data_col, cluster_col = NULL,
@@ -740,7 +669,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
     rib_args$fill <- gg_args$colour
 
     res <- res +
-      lift(ggplot2::geom_ribbon)(rib_args)
+      .lift(ggplot2::geom_ribbon)(rib_args)
   }
 
   # Add curves
@@ -753,10 +682,10 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
   gg_args$mapping <- gg_aes
 
   res <- res +
-    lift(ggplot2::geom_line)(gg_args) +
+    .lift(ggplot2::geom_line)(gg_args) +
     ggplot2::scale_linetype_manual(values = c(1, 2)) +
     djvdj_theme() +
-    labs(x = "sample size")
+    ggplot2::labs(x = "sample size")
 
   if (!is.null(plot_colors)) {
     res <- res +
@@ -776,7 +705,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
 
   } else {
     res <- res +
-      labs(y = names(method))
+      ggplot2::labs(y = names(method))
   }
 
   # Add n label

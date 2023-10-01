@@ -75,7 +75,7 @@ Calculate MDS coordinates based on a beta diversity metric and plot results.
 \examples{
 # Calculate MDS coordinates
 plot_mds(
-  vdj_so,
+  vdj_sce,
   data_col = "clonotype_id",
   cluster_col = "isotype"
 )
@@ -90,7 +90,7 @@ plot_mds(
 
 # Calculate repertoire similarity using the Horn-Morisita index
 plot_mds(
-  vdj_so,
+  vdj_sce,
   data_col    = "clonotype_id",
   cluster_col = "isotype",
   method      = "horn_morisita"

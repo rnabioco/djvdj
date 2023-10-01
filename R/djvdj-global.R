@@ -16,6 +16,9 @@ global$cdr3_col <- "cdr3"
 # Default chain separator
 global$sep <- ";"
 
+# Base font size for plot labels
+global$base_size <- 11
+
 # Default argument classes to use with .check_args()
 global$arg_classes <- list(
   data_col      = list(),
@@ -36,6 +39,9 @@ global$arg_classes <- list(
   panel_nrow    = list(Class = "numeric", allow_null = TRUE),
   panel_scales  = list(),
   n_label       = list(len_one = FALSE, allow_null = TRUE),
+  p_label       = list(
+    Class = list(c("numeric", "character")), len_one = FALSE
+  ),
   label_params  = list(Class = "list", len_one = FALSE),
   units         = list(),
   trans         = list(),

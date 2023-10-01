@@ -50,7 +50,7 @@ heavy chain V and J segments appear together.
 \examples{
 # Calculate V(D)J segment usage for all cells
 calc_gene_usage(
-  vdj_so,
+  vdj_sce,
   data_cols = "v_gene"
 )
 
@@ -63,7 +63,7 @@ calc_gene_usage(
 
 # Calculate gene usage for a specific chain(s)
 calc_gene_usage(
-  vdj_so,
+  vdj_sce,
   data_cols = "v_gene",
   chain = c("IGK", "IGL")
 )

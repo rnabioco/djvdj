@@ -1,12 +1,13 @@
 # Test data
-df_1 <- vdj_so@meta.data
+df_1 <- vdj_sce@colData
 
-df_2 <- vdj_so@meta.data |>
+df_2 <- df_1 |>
+  as.data.frame() |>
   as_tibble(rownames = ".cell_id")
 
 # Check fetch_vdj arguments
 arg_lst <- list(
-  input         = list(vdj_so, vdj_sce, df_1, df_2),
+  input         = list(vdj_sce, df_1, df_2),
   data_cols      = list(NULL, c("umis", "reads")),
   clonotype_col = list(NULL, "clonotype_id"),
   unnest        = c(TRUE, FALSE),
@@ -22,7 +23,7 @@ test_all_args(
 
 # Check sep
 test_that("fetch_vdj sep", {
-  res <- vdj_so |>
+  res <- vdj_sce |>
     fetch_vdj(
       data_cols      = c("umis", "reads"),
       clonotype_col = "clonotype_id",
@@ -30,10 +31,13 @@ test_that("fetch_vdj sep", {
       sep           = NULL
     )
 
-  expect_identical(res, as_tibble(vdj_so@meta.data, rownames = ".cell_id"))
+  expect_identical(
+    res,
+    as_tibble(as.data.frame(vdj_sce@colData), rownames = ".cell_id")
+  )
 
   expect_warning(
-    res <- vdj_so |>
+    res <- vdj_sce |>
       fetch_vdj(
         data_cols      = c("umis", "reads"),
         clonotype_col = "clonotype_id",
@@ -47,7 +51,7 @@ test_that("fetch_vdj sep", {
 # Check filter_cells
 test_that("fetch_vdj filter_cells", {
   expect_error(
-    vdj_so |>
+    vdj_sce |>
       fetch_vdj(
         # data_cols     = c("umis", "reads"),
         filter_cells = TRUE
@@ -55,23 +59,24 @@ test_that("fetch_vdj filter_cells", {
     "`clonotype_col` must be.+provided"
   )
 
-  res <- vdj_so |>
+  res <- vdj_sce |>
     fetch_vdj(
       data_cols      = c("umis", "reads"),
       clonotype_col = "clonotype_id",
       filter_cells  = FALSE
     )
 
-  expect_identical(unique(res$.cell_id), colnames(vdj_so))
+  expect_identical(unique(res$.cell_id), colnames(vdj_sce))
 
-  res <- vdj_so |>
+  res <- vdj_sce |>
     fetch_vdj(
       data_cols      = c("umis", "reads"),
       clonotype_col = "clonotype_id",
       filter_cells  = TRUE
     )
 
-  no_na <- vdj_so@meta.data |>
+  no_na <- vdj_sce@colData |>
+    as.data.frame() |>
     filter(!is.na(clonotype_id)) |>
     rownames()
 
@@ -80,7 +85,7 @@ test_that("fetch_vdj filter_cells", {
 
 # Check .filter_chains
 test_that(".filter_chains", {
-  dat <- vdj_so |>
+  dat <- vdj_sce |>
     fetch_vdj(unnest = FALSE)
 
   res <- dat |>
@@ -100,7 +105,7 @@ test_that(".filter_chains", {
     "Some columns do not contain per-chain"
   )
 
-  dat <- vdj_so |>
+  dat <- vdj_sce |>
     fetch_vdj(unnest = TRUE)
 
   res <- dat |>
@@ -118,7 +123,7 @@ test_that(".filter_chains", {
     )
 
   new_chains <- res$chains |>
-    reduce(c) |>
+    purrr::reduce(c) |>
     unique() |>
     na.omit() |>
     as.character()
@@ -132,7 +137,7 @@ test_that(".filter_chains", {
     )
 
   new_chains <- res$chains |>
-    reduce(c) |>
+    purrr::reduce(c) |>
     unique() |>
     na.omit() |>
     as.character() |>
@@ -143,7 +148,7 @@ test_that(".filter_chains", {
 
 # Check .filter_chains
 test_that(".filter_chains", {
-  dat <- vdj_so |>
+  dat <- vdj_sce |>
     fetch_vdj(unnest = FALSE)
 
   res <- dat |>
@@ -163,7 +168,7 @@ test_that(".filter_chains", {
     "Some columns do not contain per-chain"
   )
 
-  dat <- vdj_so |>
+  dat <- vdj_sce |>
     fetch_vdj(unnest = TRUE)
 
   res <- dat |>
@@ -181,7 +186,7 @@ test_that(".filter_chains", {
     )
 
   new_chains <- res$chains |>
-    reduce(c) |>
+    purrr::reduce(c) |>
     unique() |>
     na.omit() |>
     as.character()
@@ -195,7 +200,7 @@ test_that(".filter_chains", {
     )
 
   new_chains <- res$chains |>
-    reduce(c) |>
+    purrr::reduce(c) |>
     unique() |>
     na.omit() |>
     as.character() |>
@@ -208,7 +213,8 @@ test_that(".filter_chains", {
 test_that(".get_vdj_cols", {
   clmns <- c("reads", "nCount_RNA")
 
-  res <- vdj_so@meta.data |>
+  res <- vdj_sce@colData |>
+    as.data.frame() |>
     .get_vdj_cols(
       clone_col = NULL,
       cols_in = clmns,
@@ -218,7 +224,8 @@ test_that(".get_vdj_cols", {
   expect_identical(res$vdj, clmns)
   expect_identical(res$sep, "reads")
 
-  res <- vdj_so@meta.data |>
+  res <- vdj_sce@colData |>
+    as.data.frame() |>
     .get_vdj_cols(
       clone_col = NULL,
       cols_in = clmns,

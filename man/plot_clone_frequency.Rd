@@ -91,7 +91,7 @@ Plot clonotype frequency
 \examples{
 # Plot clonotype abundance using all cells
 plot_clone_frequency(
-  vdj_so,
+  vdj_sce,
   data_col = "clonotype_id"
 )
 
@@ -110,7 +110,7 @@ plot_clone_frequency(
 
 # Specify colors to use for each cell cluster
 plot_clone_frequency(
-  vdj_so,
+  vdj_sce,
   cluster_col = "orig.ident",
   plot_colors = c(avid_1 = "blue", avid_2 = "red")
 )
@@ -124,14 +124,14 @@ plot_clone_frequency(
 
 # Specify the number of top clonotypes to plot
 plot_clone_frequency(
-  vdj_so,
+  vdj_sce,
   clones = 5
 )
 
 #' # Create line graph
 # use clones to set the number of clonotypes to label
 plot_clone_frequency(
-  vdj_so,
+  vdj_sce,
   cluster_col = "orig.ident",
   method = "line",
   clones = 3

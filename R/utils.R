@@ -1,31 +1,3 @@
-#' tibble imports
-#'
-#' @importFrom tibble tibble as_tibble column_to_rownames rownames_to_column
-#' @noRd
-NULL
-
-#' purrr imports
-#'
-#' @importFrom purrr map imap map_dfr imap_dfr map_lgl map_chr map2_int map_dbl
-#' @importFrom purrr map_int iwalk pwalk reduce keep is_empty is_function
-#' @importFrom purrr is_formula as_mapper
-#' @noRd
-NULL
-
-#' stats imports
-#'
-#' @importFrom stats median complete.cases as.formula as.dist hclust cutree
-#' @importFrom stats na.omit
-#' @noRd
-NULL
-
-#' cli imports
-#'
-#' @importFrom cli cli_abort cli_warn cli_alert
-#' @noRd
-NULL
-
-
 #' Helper to test all combinations of provided arguments
 #'
 #' @param arg_lst Named list of arguments to test
@@ -54,12 +26,12 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
     test_that(paste(desc, n), {
       if (is.call(chk)) {
-        .res <- lift(.fn)(test_args)
+        .res <- .lift(.fn)(test_args)
 
         return(eval(chk))
       }
 
-      chk(lift(.fn)(test_args))
+      chk(.lift(.fn)(test_args))
     })
   })
 }
@@ -76,7 +48,7 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 #' be be matched by position instead.
 #' @return A function.
 #' @noRd
-lift <- function(..f, ..., .unnamed = FALSE) {
+.lift <- function(..f, ..., .unnamed = FALSE) {
   force(..f)
 
   defaults <- list(...)
@@ -147,7 +119,8 @@ lift <- function(..f, ..., .unnamed = FALSE) {
 
     cli::cli_abort(
       "Some columns do not contain per-chain V(D)J data, can only filter
-       based on `chain` if all `data_cols` contain per-chain data: {bad_cols}"
+       based on `chain` if all `data_cols` contain per-chain data: {bad_cols}",
+      call = NULL
     )
   }
 
@@ -157,7 +130,8 @@ lift <- function(..f, ..., .unnamed = FALSE) {
       cli::cli_abort(
         "The number of chains per cell present in the {chain_col} column differs
          from the number of per-chain values present in `data_cols`, are you
-         using the correct `chain_col`?"
+         using the correct `chain_col`?",
+        call = NULL
       )
     }
 
@@ -202,8 +176,6 @@ NULL
 
 #' @rdname .add_meta
 #' @return Object with added meta.data
-#' @importFrom S4Vectors DataFrame
-#' @importFrom methods slot
 #' @noRd
 .add_meta <- function(input, meta, row_col) {
 
@@ -272,7 +244,6 @@ NULL
 #' @param input Object containing single cell data
 #' @param row_col New column to store meta.data rownames
 #' @return tibble containing meta.data pulled from object
-#' @importFrom SingleCellExperiment colData
 #' @noRd
 .get_meta <- function(input, row_col) {
 
@@ -396,8 +367,6 @@ NULL
 #' @param unnest Should columns be unnested after splitting into vectors
 #' @param sep Separator used for storing per cell V(D)J data
 #' @return data.frame with V(D)J data
-#' @importFrom readr guess_parser
-#' @importFrom utils head
 #' @noRd
 .unnest_vdj <- function(df_in, sep_cols, unnest = TRUE, sep = global$sep) {
 
@@ -445,7 +414,7 @@ NULL
   # and then converting
   # strsplit is faster than str_split_n used by separate_rows
   .str_convert      <- function(x, fn) do.call(fn, list(x = x))
-  .str_convert_list <- function(l, fn) map(l, .str_convert, fn = fn)
+  .str_convert_list <- function(l, fn) purrr::map(l, .str_convert, fn = fn)
 
   res <- purrr::modify_at(
     df_in, sep_cols,
@@ -559,7 +528,10 @@ NULL
 
   if (!is.null(chain)) {
     if (is.null(chain_col)) {
-      cli::cli_abort("`chain_col` must be provided when `chain` is specified")
+      cli::cli_abort(
+        "`chain_col` must be provided when `chain` is specified",
+        call = NULL
+      )
     }
 
     if (chain_col %in% dat_cols) {
@@ -569,7 +541,8 @@ NULL
 
       if (!chns) {
         cli::cli_abort(
-          "The specified chain ({chain}) is not present in {chain_col}"
+          "The specified chain ({chain}) is not present in {chain_col}",
+          call = NULL
         )
       }
     }
@@ -594,7 +567,7 @@ NULL
       )
     }
 
-    cli::cli_abort(msg)
+    cli::cli_abort(msg, call = NULL)
   }
 }
 
@@ -616,11 +589,15 @@ NULL
   val <- eval(sym(arg), envir = envir)
   len <- length(val)
 
-  if (!allow_null && is.null(val)) cli::cli_abort("`{arg}` cannot be `NULL`")
+  if (!allow_null && is.null(val)) {
+    cli::cli_abort("`{arg}` cannot be `NULL`", call = NULL)
+  }
 
   if (is.null(val)) return(invisible())
 
-  if (len_one && len != 1) cli::cli_abort("`{arg}` must be length 1")
+  if (len_one && len != 1) {
+    cli::cli_abort("`{arg}` must be length 1", call = NULL)
+  }
 
   if (is.list(val) && identical(Class, "list")) return(invisible())
 
@@ -633,7 +610,9 @@ NULL
     # val must be one of the classes specified to Class
     chk <- purrr::map_lgl(Class, ~ methods::is(val, .x))
 
-    if (!any(chk)) cli::cli_abort("`{arg}` must be class {.or {Class}}")
+    if (!any(chk)) {
+      cli::cli_abort("`{arg}` must be class {.or {Class}}", call = NULL)
+    }
   })
 }
 
@@ -657,23 +636,27 @@ NULL
 #' Check possible values for argument
 #'
 #' @param ... Name value pairs providing argument name and possible values
+#' @param .internal Internal error
 #' @return Error if argument does not match one of the provided values
 #' @noRd
-.check_possible_values <- function(...) {
+.check_possible_values <- function(..., .internal = FALSE) {
   envir <- parent.frame()
   vals  <- list(...)
 
   purrr::iwalk(vals, ~ {
     val <- eval(sym(.y), envir = envir)
 
-    if (!all(val %in% .x)) cli::cli_abort("`{.y}` must be {.or {.x}}")
+    if (!all(val %in% .x)) {
+      cli::cli_abort(
+        "`{.y}` must be {.or {.x}}", .internal = .internal, call = NULL
+      )
+    }
   })
 }
 
 
 #' Check that package is installed
 #'
-#' @importFrom rlang is_installed
 #' @noRd
 .check_packages <- function(pkgs, db = "CRAN") {
   chks <- purrr::map_lgl(pkgs, rlang::is_installed)
@@ -683,8 +666,8 @@ NULL
 
   if (any(!chks)) {
     cli::cli_abort(paste0(
-      "Package{?s} {cli::qty(missing)} must be installed to use this function.
+      "Package{?s} {missing} must be installed to use this function.
        Th{?is/ese} package{?s} {?is/are} available on ", db, "."
-    ))
+    ), call = NULL)
   }
 }

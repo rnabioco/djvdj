@@ -9,6 +9,7 @@ plot_frequency(
   data_col,
   cluster_col = NULL,
   group_col = NULL,
+  method = "bar",
   stack = NULL,
   units = "percent",
   top = NULL,
@@ -18,7 +19,11 @@ plot_frequency(
   na_color = "grey80",
   trans = "identity",
   show_points = TRUE,
+  show_zeros = TRUE,
   n_label = NULL,
+  p_label = c(value = 0.05),
+  p_method = NULL,
+  p_file = NULL,
   label_params = list(),
   ...,
   per_chain = FALSE,
@@ -41,6 +46,9 @@ will be performed separately for each cluster.}
 \item{group_col}{meta.data column to use for grouping cluster IDs present in
 cluster_col. This is useful when there are multiple replicates or patients
 for each treatment condition.}
+
+\item{method}{Method to use for plotting when \code{group_col} is provided,
+possible values are 'bar' or 'boxplot'}
 
 \item{stack}{If \code{TRUE}, stacked bargraphs will be generated, otherwise grouped
 bargraphs will be generated}
@@ -72,6 +80,9 @@ for more options. Values can only be transformed when stack is \code{FALSE}}
 \item{show_points}{If \code{TRUE} data points will be shown on boxplots, the point
 size can be adjusted using the \code{point.size} parameter}
 
+\item{show_zeros}{If \code{TRUE} cell labels that are missing from a cluster will
+still be shown on the plot}
+
 \item{n_label}{Location on plot where n label should be added, this can be
 any combination of the following:
 \itemize{
@@ -84,6 +95,33 @@ x-axis
 plot legend
 \item 'none', do not display the number of cells plotted
 }}
+
+\item{p_label}{Specification indicating how p-values should be labeled on
+plot, this can one of the following:
+\itemize{
+\item 'none', do not display p-values
+\item 'all', show p-values for all groups
+\item A named vector providing p-value cutoffs and labels to display,
+e.g. \code{c('*' = 0.05, '**' = 0.01, '***' = 0.001)}. The keyword 'value' can
+be used to display the p-value for those less than a certain cutoff,
+e.g. \code{c(value = 0.05, ns = 1.1)} will show significant p-values, all others
+will be labeled 'ns'.
+}}
+
+\item{p_method}{Method to use for calculating p-values, by default when
+comparing two groups a t-test will be used.
+When comparing more than two groups the Kruskal-Wallis test will be used.
+With the exception of the edgeR method, p-values are adjusted for
+multiple testing using Bonferroni correction. Possible methods include:
+\itemize{
+\item 't', two sample t-test performed with \code{stats::t.test()}
+\item 'wilcox', Wilcoxon rank sum test performed with \code{stats::wilcox.test()}
+\item 'kruskal', Kruskal-Wallis test performed with \code{stats::kruskal.test()}
+\item 'edgeR', differential abundance calculated with the edgeR package
+}}
+
+\item{p_file}{File path to save table containing p-values for each
+comparison.}
 
 \item{label_params}{Named list providing additional parameters to modify
 n label aesthetics, e.g. list(size = 4, color = "red")}
@@ -113,7 +151,7 @@ different samples, cell types, clonotypes, isotypes, etc.
 \examples{
 # Plot frequency of different isotypes
 plot_frequency(
-  vdj_so,
+  vdj_sce,
   data_col = "isotype"
 )
 
@@ -134,7 +172,7 @@ plot_frequency(
 
 # Plot number of cells on the y-axis
 plot_frequency(
-  vdj_so,
+  vdj_sce,
   data_col    = "seurat_clusters",
   cluster_col = "orig.ident",
   units       = "frequency"
