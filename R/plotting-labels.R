@@ -389,7 +389,7 @@
   lab_args$vjust       <- lab_args$vjust %||% 1.5
 
   res <- gg_in +
-    lift(ggplot2::geom_text)(lab_args)
+    .lift(ggplot2::geom_text)(lab_args)
 
   if (!is.null(y_exp)) {
     res <- res +
@@ -438,13 +438,13 @@
     gg_args$na.value <- na_clr
 
     res <- gg_in +
-      lift(ggplot2::scale_color_manual)(gg_args) +
-      lift(ggplot2::scale_fill_manual)(gg_args)
+      .lift(ggplot2::scale_color_manual)(gg_args) +
+      .lift(ggplot2::scale_fill_manual)(gg_args)
 
   } else {
     res <- gg_in +
-      lift(ggplot2::scale_color_discrete)(gg_args) +
-      lift(ggplot2::scale_fill_discrete)(gg_args)
+      .lift(ggplot2::scale_color_discrete)(gg_args) +
+      .lift(ggplot2::scale_fill_discrete)(gg_args)
   }
 
   res

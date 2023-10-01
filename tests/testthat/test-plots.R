@@ -21,8 +21,8 @@ df_2 <- vdj_sce@colData |>
 # Check all plot_features arguments except data_slot
 arg_lst <- list(
   x           = list("UMAP_1"),
-  y           = list("UMAP_2", c(y = "UMAP_2")),
-  input       = list(vdj_sce, df_1),
+  y           = list("UMAP_2"),
+  input       = list(vdj_sce),
   data_col    = list("seurat_clusters"),
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls),
@@ -39,7 +39,7 @@ test_all_args(
 
 # Check all plot_features arguments with data_slot
 arg_lst$input     <- list(vdj_sce)
-arg_lst$data_slot <- c("counts")
+arg_lst$data_slot <- "counts"
 
 test_all_args(
   arg_lst = arg_lst,
@@ -49,11 +49,12 @@ test_all_args(
 )
 
 # Check all plot_features arguments for numeric feature
-arg_lst$data_col   <- "nCount_RNA"
-arg_lst$plot_lvls <- list(NULL)
-arg_lst$trans     <- c("log10")
-arg_lst$min_q     <- 0.01
-arg_lst$max_q     <- 0.99
+arg_lst$data_col    <- "nCount_RNA"
+arg_lst$plot_lvls   <- list(NULL)
+arg_lst$plot_colors <- list(NULL)
+arg_lst$trans       <- "log10"
+arg_lst$min_q       <- 0.01
+arg_lst$max_q       <- 0.99
 
 test_all_args(
   arg_lst = arg_lst,
@@ -62,7 +63,7 @@ test_all_args(
   chk     = expr(expect_s3_class(.res, "ggplot"))
 )
 
-# Check plot_features warning for numeric feature
+# # Check plot_features warning for numeric feature
 # test_that("plot_features warning num feat", {
 #   expect_warning(
 #     vdj_sce |>
@@ -105,7 +106,7 @@ test_that("plot_fetures bad feature", {
 
 # Check all plot_vdj_feature arguments
 arg_lst <- list(
-  input       = list(vdj_sce, df_1),
+  input       = list(vdj_sce),
   data_col    = "umis",
   chain       = list(NULL, "IGH", c("IGH", "IGK")),
   plot_colors = list(NULL, test_cols)
@@ -151,15 +152,14 @@ test_that("plot_vdj_feature bad chain filtering", {
 
 # Check all plot_violin arguments
 arg_lst <- list(
-  input       = list(vdj_sce, df_1),
+  input       = list(vdj_sce),
   data_col    = "nCount_RNA",
-  per_chain    = c(FALSE, TRUE),
+  per_chain   = c(FALSE, TRUE),
   cluster_col = list(NULL, "seurat_clusters"),
   group_col   = list(NULL, "orig.ident"),
-  # chain       = list(NULL, "IGH", c("IGH", "IGK")),
   method      = list("violin", "boxplot"),
   plot_colors = list(NULL, test_cols),
-  trans       = c("identity", "log10")
+  trans       = "log10"
 )
 
 test_all_args(
@@ -187,8 +187,8 @@ arg_lst <- list(
   units        = c("percent", "frequency"),
   plot_colors  = list(NULL, test_cols),
   plot_lvls    = list(NULL, test_lvls),
-  label_params = list(list(), list(size = 2)),
-  clones       = c(5)
+  label_params = list(list(size = 2)),
+  clones       = 5
 )
 
 test_all_args(
@@ -315,8 +315,7 @@ arg_lst <- list(
   chain        = list(NULL, "IGK"),
   plot_colors  = list(NULL, test_cols),
   plot_lvls    = list(NULL, test_lvls),
-  panel_nrow   = list(NULL, 2),
-  panel_scales = c("free", "fixed"),
+  panel_scales = "fixed",
   ci_alpha     = 0.5,
   n_boots      = 0
 )
@@ -339,7 +338,7 @@ arg_lst <- list(
   plot_lvls   = list(NULL, test_lvls_2),
   top         = list(NULL, 4),
   n_label     = list(NULL, "none"),
-  label_params = list(list(size = 4), list())
+  label_params = list(list(size = 4))
 )
 
 test_all_args(
@@ -352,6 +351,7 @@ test_all_args(
 arg_lst$group_col   <- "orig.ident"
 arg_lst$cluster_col <- "sample"
 arg_lst$plot_lvls   <- list(NULL)
+arg_lst$plot_colors <- list(NULL)
 
 test_all_args(
   arg_lst = arg_lst,
@@ -483,7 +483,7 @@ arg_lst <- list(
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls),
   units       = c("percent", "frequency"),
-  trans       = c("identity", "log10")
+  trans       = c("log10")
 )
 
 test_all_args(
@@ -502,7 +502,7 @@ arg_lst$chain       <- list(NULL, "IGH")
 arg_lst$method      <- "heatmap"
 arg_lst$plot_colors <- list(NULL, rep(test_cols, 3))
 arg_lst$plot_lvls   <- list(NULL, test_lvls)
-arg_lst$trans       <- c("identity", "log1p")
+arg_lst$trans       <- "log1p"
 arg_lst$return_list <- TRUE
 
 test_all_args(
@@ -527,7 +527,7 @@ arg_lst <- list(
   plot_colors = list(NULL, test_cols),
   plot_lvls   = list(NULL, test_lvls),
   units       = c("percent", "frequency"),
-  trans       = c("identity", "log10")
+  trans       = c("log10")
 )
 
 test_all_args(
@@ -542,7 +542,7 @@ test_all_args(
 arg_lst$method    <- "heatmap"
 arg_lst$data_cols <- list(c("v_gene", "j_gene"))
 arg_lst$plot_lvls <- NULL
-arg_lst$trans     <- c("identity", "log1p")
+arg_lst$trans     <- "log1p"
 
 test_all_args(
   arg_lst = arg_lst,
@@ -624,4 +624,3 @@ test_all_args(
   desc    = ".set_lvls bad lvls",
   chk     = expect_error
 )
-

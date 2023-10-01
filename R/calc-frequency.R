@@ -603,7 +603,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
     gg_args$x_hjst <- 1
     gg_args$trans  <- trans
 
-    res <- lift(.create_bars)(gg_args)
+    res <- .lift(.create_bars)(gg_args)
 
     # Format clonotype labels
     res <- res +
@@ -625,7 +625,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
       gg_args$label_params <- .get_uniq_text_args(n_params, "geom_text")
     }
 
-    res <- lift(.create_plot)(gg_args) +
+    res <- .lift(.create_plot)(gg_args) +
       ggplot2::labs(y = .get_axis_label(units))
 
     # Add clonotype labels with ggrepel
@@ -651,7 +651,7 @@ plot_clone_frequency <- function(input, data_col = global$clonotype_col,
       }
 
       res <- res +
-        lift(ggrepel::geom_text_repel)(label_params)
+        .lift(ggrepel::geom_text_repel)(label_params)
     }
   }
 
@@ -969,7 +969,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
     gg_args$p_method    <- p_method
     gg_args$p_file      <- p_file
 
-    res <- lift(.create_grouped_plot)(gg_args)
+    res <- .lift(.create_grouped_plot)(gg_args)
 
   # Create bar graph
   } else {
@@ -999,7 +999,7 @@ plot_frequency <- function(input, data_col, cluster_col = NULL,
 
     gg_args$position <- gg_args$position %||% gg_pos
 
-    res <- lift(.create_bars)(gg_args)
+    res <- .lift(.create_bars)(gg_args)
   }
 
   res

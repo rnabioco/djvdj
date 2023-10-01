@@ -300,22 +300,6 @@ calc_diversity <- function(input, data_col, cluster_col = NULL,
 #'   method      = mets
 #' )
 #'
-#' # Specify colors to use for each cell cluster
-#' plot_diversity(
-#'   vdj_sce,
-#'   data_col    = "clonotype_id",
-#'   cluster_col = "orig.ident",
-#'   plot_colors = c(avid_2 = "green", avid_1 = "purple")
-#' )
-#'
-#' # Specify order to use for plotting cell clusters
-#' plot_diversity(
-#'   vdj_sce,
-#'   data_col    = "clonotype_id",
-#'   cluster_col = "orig.ident",
-#'   plot_lvls   = c("avid_2", "avid_1")
-#' )
-#'
 #' # Specify how to organize panels when plotting multiple metrics
 #' plot_diversity(
 #'   vdj_sce,
@@ -460,7 +444,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
     if (length(method) > 1) gg_args$p_grp <- "met"
 
-    res <- lift(.create_grouped_plot)(gg_args)
+    res <- .lift(.create_grouped_plot)(gg_args)
 
   # Create bar graphs
   # only add error bars if n_boots > 1
@@ -471,7 +455,7 @@ plot_diversity <- function(input, data_col, cluster_col = NULL,
 
     if (n_boots > 1) gg_args$err <- "stderr"
 
-    res <- lift(.create_bars)(gg_args)
+    res <- .lift(.create_bars)(gg_args)
 
     if (!include_x_labs) {
       res <- res +
@@ -685,7 +669,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
     rib_args$fill <- gg_args$colour
 
     res <- res +
-      lift(ggplot2::geom_ribbon)(rib_args)
+      .lift(ggplot2::geom_ribbon)(rib_args)
   }
 
   # Add curves
@@ -698,7 +682,7 @@ plot_rarefaction <- function(input, data_col, cluster_col = NULL,
   gg_args$mapping <- gg_aes
 
   res <- res +
-    lift(ggplot2::geom_line)(gg_args) +
+    .lift(ggplot2::geom_line)(gg_args) +
     ggplot2::scale_linetype_manual(values = c(1, 2)) +
     djvdj_theme() +
     ggplot2::labs(x = "sample size")

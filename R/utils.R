@@ -26,12 +26,12 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 
     test_that(paste(desc, n), {
       if (is.call(chk)) {
-        .res <- lift(.fn)(test_args)
+        .res <- .lift(.fn)(test_args)
 
         return(eval(chk))
       }
 
-      chk(lift(.fn)(test_args))
+      chk(.lift(.fn)(test_args))
     })
   })
 }
@@ -48,7 +48,7 @@ test_all_args <- function(arg_lst, .fn, desc, chk, dryrun = FALSE) {
 #' be be matched by position instead.
 #' @return A function.
 #' @noRd
-lift <- function(..f, ..., .unnamed = FALSE) {
+.lift <- function(..f, ..., .unnamed = FALSE) {
   force(..f)
 
   defaults <- list(...)

@@ -441,7 +441,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
     gg_args$rotate_labels <- rotate_labels
     gg_args$return_list   <- return_list
 
-    res <- lift(.plot_paired_usage)(gg_args)
+    res <- .lift(.plot_paired_usage)(gg_args)
 
     return(invisible())
   }
@@ -457,7 +457,7 @@ plot_gene_usage <- function(input, data_cols, cluster_col = NULL,
   gg_args$p_file       <- p_file
   gg_args$label_params <- label_params
 
-  res <- lift(.plot_single_usage)(gg_args)
+  res <- .lift(.plot_single_usage)(gg_args)
 
   res
 }
@@ -609,7 +609,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
   gg_args$rotate_labels <- rotate_labels
   gg_args$return_list   <- return_list
 
-  lift(.plot_paired_usage)(gg_args)
+  .lift(.plot_paired_usage)(gg_args)
 }
 
 #' Plot usage for single gene column
@@ -721,7 +721,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
     gg_args$p_method    <- p_method
     gg_args$p_file      <- p_file
 
-    res <- lift(.create_grouped_plot)(gg_args)
+    res <- .lift(.create_grouped_plot)(gg_args)
 
     return(res)
 
@@ -737,7 +737,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
     gg_args$.fill <- gg_args$.color <- clst_col
     gg_args$y_ttl <- ttl
 
-    res <- lift(.create_bars)(gg_args)
+    res <- .lift(.create_bars)(gg_args)
 
     return(res)
   }
@@ -752,7 +752,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
   gg_args$nrow    <- n_row
   gg_args$scales  <- "free_x"
 
-  res <- lift(.create_gg_heatmap)(gg_args)
+  res <- .lift(.create_gg_heatmap)(gg_args)
 
   res
 }
@@ -837,7 +837,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 
       if (add_ttl) plt_args$plt_ttl <- .y
 
-      lift(.create_gg_heatmap)(plt_args)
+      .lift(.create_gg_heatmap)(plt_args)
     })
 
     if (length(res) == 1) return(res[[1]])
@@ -889,7 +889,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 
     if (add_ttl) plt_args$plt_ttl <- .y
 
-    lift(.create_circos)(plt_args)
+    .lift(.create_circos)(plt_args)
   })
 
   return(invisible())
@@ -914,7 +914,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 
   # Filter for single gene column
   if (length(gn_col) == 1) {
-    top <- lift(.get_top_genes)(gn_args)
+    top <- .lift(.get_top_genes)(gn_args)
     res <- dplyr::filter(df_in, !!sym(gn_col) %in% top)
 
     return(res)
@@ -927,7 +927,7 @@ plot_gene_pairs <- function(input, data_col, chains, cluster_col = NULL,
 
   top_genes <- purrr::map(gn_col, ~ {
     gn_args$gn_col <- .x
-    lift(.get_top_genes)(gn_args)
+    .lift(.get_top_genes)(gn_args)
   })
 
   gn_1  <- sym(gn_col[1])

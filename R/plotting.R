@@ -171,7 +171,7 @@ plot_histogram <- function(input, data_col, cluster_col = NULL,
     units, sfx = ifelse(per_chain, "chains", "cells")
   )
 
-  res <- lift(.create_hist)(gg_args)
+  res <- .lift(.create_hist)(gg_args)
 
   res
 }
@@ -237,7 +237,7 @@ plot_violin <- function(input, data_col, cluster_col = NULL, group_col = NULL,
   gg_args$point.size <- gg_args$point.size %||% 1
   gg_args$alpha      <- gg_args$alpha %||% 0.5
 
-  res <- lift(.create_boxes)(gg_args)
+  res <- .lift(.create_boxes)(gg_args)
 
   res
 }
@@ -391,7 +391,7 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
 
   # If no data_col provided, return scatter plot
   if (is.null(data_col)) {
-    res <- lift(.create_scatter)(gg_args)
+    res <- .lift(.create_scatter)(gg_args)
 
     return(res)
   }
@@ -419,7 +419,7 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
   gg_args$df_in <- plt_dat
   gg_args$clrs  <- plot_colors
 
-  res <- lift(.create_scatter)(gg_args)
+  res <- .lift(.create_scatter)(gg_args)
 
   # Adjust legend point size
   if (!is_num) {
@@ -427,13 +427,13 @@ plot_scatter <- function(input, data_col = NULL, x = "UMAP_1", y = "UMAP_2",
 
     if (rev_lgnd) lgnd_args$reverse <- TRUE
 
-    lgnd_args <- lift(ggplot2::guide_legend)(lgnd_args)
+    lgnd_args <- .lift(ggplot2::guide_legend)(lgnd_args)
 
     if (outline) lgnd_args <- list(fill = lgnd_args)
     else         lgnd_args <- list(color = lgnd_args)
 
     res <- res +
-      lift(ggplot2::guides)(lgnd_args)
+      .lift(ggplot2::guides)(lgnd_args)
   }
 
   res

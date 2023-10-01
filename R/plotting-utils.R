@@ -138,7 +138,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
   # Create plot
   res <- ggplot2::ggplot(df_in, gg_aes) +
-    lift(fn)(gg_args) +
+    .lift(fn)(gg_args) +
     djvdj_theme()
 
   # Transform x-axis
@@ -155,7 +155,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
   if (!purrr::is_empty(y_args)) {
     res <- res +
-      lift(ggplot2::scale_y_continuous)(y_args)
+      .lift(ggplot2::scale_y_continuous)(y_args)
   }
 
   # Set colors
@@ -384,7 +384,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   if (identical(method, "boxplot")) {
     gg_args$show_points <- show_points
 
-    res <- lift(.create_boxes)(gg_args) +
+    res <- .lift(.create_boxes)(gg_args) +
       ggplot2::theme(legend.position = "right")
 
   # Create bar graphs
@@ -422,7 +422,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     gg_args$position <- gg_args$position %||%
       ggplot2::position_dodge2(preserve = "single", width = 0.8)
 
-    res <- lift(.create_bars)(gg_args)
+    res <- .lift(.create_bars)(gg_args)
   }
 
   # Add p-values
@@ -477,7 +477,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     label_params$size <- label_params$size / ggplot2::.pt
 
     res <- res +
-      lift(ggplot2::geom_text)(label_params)
+      .lift(ggplot2::geom_text)(label_params)
 
     if (!is.null(p_x) && !"corner" %in% n_label) {
       res <- res +
@@ -571,7 +571,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     )
   }
 
-  res <- lift(.create_plot)(gg_args)
+  res <- .lift(.create_plot)(gg_args)
 
   # Add error bars
   if (!is.null(err)) {
@@ -590,7 +590,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     )
 
     res <- res +
-      lift(ggplot2::geom_linerange)(err_args)
+      .lift(ggplot2::geom_linerange)(err_args)
   }
 
   # Adjust theme
@@ -676,7 +676,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
   # allow user to set point size and color
   if (show_points && identical(method, "boxplot")) gg_args$outlier.color <- NA
 
-  res <- lift(.create_plot)(gg_args)
+  res <- .lift(.create_plot)(gg_args)
 
   # Add additional points
   if (show_points) {
@@ -690,13 +690,13 @@ djvdj_theme <- function(base_size = 11, base_family = "",
       pt_args$fun  <- stats::median
 
       res <- res +
-        lift(ggplot2::stat_summary)(pt_args)
+        .lift(ggplot2::stat_summary)(pt_args)
 
     } else {
       pt_args$position <- ggplot2::position_jitterdodge(jitter.width = 0.05)
 
       res <- res +
-        lift(ggplot2::geom_jitter)(pt_args)
+        .lift(ggplot2::geom_jitter)(pt_args)
     }
   }
 
@@ -791,7 +791,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
 
   gg_args$alpha <- gg_args$alpha %||% 0.5
 
-  res <- lift(.create_plot)(gg_args)
+  res <- .lift(.create_plot)(gg_args)
 
   if (identical(method, "histogram")) {
     res <- res +
@@ -988,7 +988,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     plt_args$clustering_distance_columns %||% dist_fn
 
   # Create heatmap
-  res <- lift(ComplexHeatmap::Heatmap)(plt_args)
+  res <- .lift(ComplexHeatmap::Heatmap)(plt_args)
 
   res
 }
@@ -1169,7 +1169,7 @@ djvdj_theme <- function(base_size = 11, base_family = "",
     }
   }
 
-  lift(circos_fun)(plt_args)
+  .lift(circos_fun)(plt_args)
 
   # Add axis track
   if (adj_axis) {

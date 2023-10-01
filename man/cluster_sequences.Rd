@@ -79,7 +79,9 @@ Cluster cells based on CDR3 sequences
 # Cluster cells based on CDR3 amino acid sequences and plot results
 res <- cluster_sequences(
   vdj_sce,
-  data_col = "cdr3"
+  data_col   = "cdr3",
+  chain      = "IGK",
+  resolution = c(0.5, 1)
 )
 
 plot_scatter(
@@ -87,34 +89,6 @@ plot_scatter(
   x = "cdr3_UMAP_1",
   y = "cdr3_UMAP_2",
   data_col = "cdr3_cluster_0.5"
-)
-
-# Cluster cells based on sequences for a specific chain
-res <- cluster_sequences(
-  vdj_sce,
-  data_col = "cdr3",
-  chain    = "IGK"
-)
-
-# Use Levenschtein distance for clustering
-res <- cluster_sequences(
-  vdj_sce,
-  data_col    = "cdr3",
-  dist_method = "levenshtein"
-)
-
-# Cluster cells using the Leiden algorithm
-res <- cluster_sequences(
-  vdj_sce,
-  data_col = "cdr3",
-  method   = "leiden"
-)
-
-# Adjust clustering resolution
-res <- cluster_sequences(
-  vdj_sce,
-  data_col   = "cdr3",
-  resolution = c(0.5, 1)
 )
 
 }

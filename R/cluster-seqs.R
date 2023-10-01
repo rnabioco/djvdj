@@ -107,7 +107,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
 
   dist_args$method <- dist_method
 
-  dist_mat <- lift(Biostrings::stringDist)(dist_args)
+  dist_mat <- .lift(Biostrings::stringDist)(dist_args)
 
   # Calculate UMAP
   if (run_umap) {
@@ -167,7 +167,7 @@ cluster_sequences <- function(input, data_col = "cdr3", chain = NULL,
   res <- purrr::imap_dfc(resolution, ~ {
     clst_args[rsln_arg] <- .x
 
-    clsts <- lift(clst_method)(clst_args)
+    clsts <- .lift(clst_method)(clst_args)
     clsts <- igraph::membership(clsts)
 
     tibble(!!sym(.y) := as.character(clsts))

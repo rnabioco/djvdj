@@ -59,32 +59,12 @@ Single cell object or data.frame with diversity metrics
 Calculate repertoire diversity
 }
 \examples{
-# Calculate diversity using all cells
-res <- calc_diversity(
-  vdj_sce,
-  data_col = "clonotype_id",
-  method   = abdiv::simpson
-)
-
-head(slot(res, "colData"), 1)
-
-# Group cells based on meta.data column before calculating diversity
+# Calculate diversity for each cell cluster
 res <- calc_diversity(
   vdj_sce,
   data_col    = "clonotype_id",
-  cluster_col = "orig.ident"
-)
-
-head(slot(res, "colData"), 1)
-
-# Calculate multiple metrics
-res <- calc_diversity(
-  vdj_sce,
-  data_col = "clonotype_id",
-  method = list(
-    simpson = abdiv::simpson,
-    shannon = abdiv::shannon
-  )
+  cluster_col = "orig.ident",
+  method      = abdiv::simpson
 )
 
 head(slot(res, "colData"), 1)

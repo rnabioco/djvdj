@@ -625,7 +625,7 @@ plot_mds <- function(input, data_col, cluster_col,
     if (!is.null(lab_args$size)) lab_args$size <- lab_args$size / ggplot2::.pt
 
     res <- res +
-      lift(ggrepel::geom_text_repel)(lab_args)
+      .lift(ggrepel::geom_text_repel)(lab_args)
   }
 
   res
