@@ -1,7 +1,8 @@
 # Test data
 df_1 <- vdj_sce@colData
 
-df_2 <- vdj_sce@colData |>
+df_2 <- df_1 |>
+  as.data.frame() |>
   as_tibble(rownames = ".cell_id")
 
 # Check fetch_vdj arguments
@@ -30,7 +31,10 @@ test_that("fetch_vdj sep", {
       sep           = NULL
     )
 
-  expect_identical(res, as_tibble(vdj_sce@colData, rownames = ".cell_id"))
+  expect_identical(
+    res,
+    as_tibble(as.data.frame(vdj_sce@colData), rownames = ".cell_id")
+  )
 
   expect_warning(
     res <- vdj_sce |>

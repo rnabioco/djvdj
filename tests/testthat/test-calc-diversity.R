@@ -2,6 +2,7 @@
 df_1 <- vdj_sce@colData
 
 df_2 <- vdj_sce@colData |>
+  as.data.frame() %>%
   as_tibble(rownames = ".cell_id")
 
 # Check all calc_diversity arguments
@@ -93,6 +94,7 @@ mets <- list(
 nms <- paste0("cdr3_", names(mets), "_diversity")
 
 test_div <- vdj_sce@colData |>
+  as.data.frame() |>
   as_tibble(rownames = ".cell_id") |>
   filter(!is.na(cdr3))
 

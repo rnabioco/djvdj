@@ -15,7 +15,8 @@ test_lvls_2 <- unique(test_so$sample) |>
 
 df_1 <- vdj_sce@colData
 
-df_2 <- vdj_sce@colData |>
+df_2 <- df_1 |>
+  as.data.frame() |>
   as_tibble(rownames = ".cell_id")
 
 # Check all plot_features arguments except data_slot

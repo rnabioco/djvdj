@@ -2,6 +2,7 @@
 df_1 <- vdj_sce@colData
 
 df_2 <- vdj_sce@colData |>
+  as.data.frame() |>
   as_tibble(rownames = ".cell_id")
 
 test_clsts <- df_1 |>
@@ -34,6 +35,7 @@ test_all_args(
 # Check similarity calculation
 # calculate similarity independently and compare to calc_similarity results
 test_sim <- vdj_sce@colData |>
+  as.data.frame() |>
   as_tibble(rownames = ".cell_id") |>
   filter(!is.na(cdr3)) |>
   group_by(cdr3, seurat_clusters) |>

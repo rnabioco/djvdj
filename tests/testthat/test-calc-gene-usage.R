@@ -2,6 +2,7 @@
 df_1 <- vdj_sce@colData
 
 df_2 <- vdj_sce@colData |>
+  as.data.frame() |>
   as_tibble(rownames = ".cell_id")
 
 # Check all calc_gene_usage arguments
