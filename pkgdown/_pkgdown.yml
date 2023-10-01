@@ -75,5 +75,5 @@ reference:
 
 - title: Data
   contents:
-  - ends_with("_so")
   - ends_with("_sce")
+  - ends_with("_meta")
