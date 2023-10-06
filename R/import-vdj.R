@@ -256,12 +256,14 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       if (length(vdj_dir) > 1) prfxs <- paste0(seq_along(vdj_dir), "_")
     }
 
-    sfxs <- rep("-1", length(vdj_dir))
-  }
+    sfxs <- rep("-1", length(vdj_dir))  # for cellranger data sfx will be "-1"
+  }                                     # for each sample
 
   # Load V(D)J data and add cell prefixes
   if (!is.null(aggr_dir)) {
     cell_cols <- c(cell_cols, aggr_cols)
+
+    if (is.null(input)) prfxs <- sfxs <- NULL
 
     contigs <- .load_aggr_data(aggr_dir, prfxs, sfxs)
     contigs <- list(contigs)
@@ -667,6 +669,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @noRd
 .format_cell_prefixes <- function(df_in, bc_col = "barcode", cell_prfxs,
                                   cell_sfxs) {
+
+  if (is.null(cell_prfxs) || is.null(cell_sfxs)) return(df_in)
 
   # Extract current cell prefixes
   bcs <- df_in[[bc_col]]
@@ -1322,7 +1326,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   purrr::walk(stats, ~ {
     rw  <- .x[nms]
 
-    add_pct     <- grepl("^%", names(rw)) & names(rw) != "NA"
+    add_pct     <- grepl("^%", names(rw)) & unname(rw) != "NA"
     rw[add_pct] <- paste0(rw[add_pct], "%")
     rw          <- purrr::map2(rw, clmn_wdth[names(rw)], .add_padding)
     rw[add_pct] <- cli::col_blue(rw[add_pct])
