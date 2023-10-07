@@ -308,8 +308,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     })
 
     # Load mutation data
-    indels <- .load_muts(vdj_dir, prfxs, sfxs,
-                         include_constant = include_constant)
+    indels <- .load_muts(
+      vdj_dir, prfxs, sfxs, include_constant = include_constant
+    )
 
     if (!is.null(indels)) {
       if (!is.null(aggr_dir)) indels <- list(dplyr::bind_rows(indels))
@@ -321,14 +322,27 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       # SHOULD CHECK BARCODE OVERLAP HERE!!!
       # IF BARCODES DO NOT OVERLAP HERE, WILL RETURN ALL 0s
       indel_ctigs <- purrr::map2(
-        contigs, indels, dplyr::left_join, by = "contig_id"
+        contigs, indels, dplyr::left_join, by = "contig_id",
+        relationship = "many-to-one"
       )
+
+      purrr::walk2(contigs, indels, ~ {
+        indel_ovlp <- sum(.y$contig_id %in% .x$contig_id) / nrow(.y)
+
+        if (indel_ovlp < 1) {
+          cli::cli_abort(
+            "Barcodes from mutation data do not match, check your input files."
+          )
+        }
+      })
 
       # Replace NAs with 0
       # contigs that did not have any mutations will have NAs
       indel_ctigs <- purrr::map(
         indel_ctigs,
-        ~ mutate(.x, dplyr::across(all_of(indel_cols), ~ tidyr::replace_na(.x, 0)))
+        ~ mutate(.x, dplyr::across(
+          all_of(indel_cols), ~ tidyr::replace_na(.x, 0)
+        ))
       )
 
       contigs    <- indel_ctigs
@@ -804,8 +818,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   vdj_coords <- purrr::map(file_paths$airr, .extract_vdj_coords)
 
   # Map mutations to VDJ segments
-  res <- purrr::map2(mut_coords, vdj_coords, .map_muts,
-                     include_constant = include_constant)
+  res <- purrr::map2(
+    mut_coords, vdj_coords,
+    .map_muts, include_constant = include_constant
+  )
 
   # Extract cell barcode from contig_id
   id_re <- "^.+(?=_contig_[0-9]+$)"
@@ -945,12 +961,15 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   mut_key <- c(I = "ins", D = "del", X = "mis")
 
   # Get the full length sequence of the vdj region with and without c region
-  vdj_coords <- vdj_coords %>%
-    dplyr::mutate(new_len = ifelse(.data$seg == "c", 0, .data$len)) %>%
-    dplyr::group_by(.data$contig_id) %>%
-    dplyr::mutate(full_len = sum(.data$len),
-                  full_len_vdj = sum(.data$new_len)) %>%
-    dplyr::select(!"new_len")
+  vdj_coords <- dplyr::group_by(vdj_coords, .data$contig_id)
+
+  vdj_coords <- dplyr::mutate(
+    vdj_coords,
+    vdj_len  = sum(.data$len[.data$seg != "c"]),
+    vdjc_len = sum(.data$len)
+  )
+
+  vdj_len_cols <- c("len", "vdj_len", "vdjc_len")
 
   mut_coords <- dplyr::mutate(
     mut_coords,
@@ -973,20 +992,14 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   }
 
   # Intersect mutations with VDJ gene coordinates for each contig
-  # some annotations overlap each other! Example: AAACCTGAGAACTGTA-1_contig_1
+  # some annotations from cellranger overlap each other!
+  # Example: AAACCTGAGAACTGTA-1_contig_1
   # left_join + mutate is much faster than valr::bed_intersect, probably due
   # to the extreme number of "chromosomes"
-  if (utils::packageVersion("dplyr") > "1.1.1") {
-    # relationship argument gained in 1.1.1 https://dplyr.tidyverse.org/news/index.html
-    vdj_muts <- dplyr::left_join(
-      mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg"),
-      relationship = "many-to-many"
-    )
-  } else {
-    vdj_muts <- dplyr::left_join(
-        mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg")
-        )
-  }
+  vdj_muts <- dplyr::left_join(
+    mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg"),
+    relationship = "many-to-many"
+  )
 
   vdj_muts <- dplyr::filter(
     vdj_muts, .data$start < .data$end.seg & .data$end > .data$start.seg
@@ -1032,10 +1045,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   vdj_muts <- bind_rows(vdj_muts, jxn_muts)
 
-  # Summarize mutation counts
+  # Summarize mutation counts for each segment for each contig
   vdj_muts <- dplyr::group_by(
-    vdj_muts, .data$contig_id, .data$len, .data$full_len_vdj, .data$full_len,
-    .data$type, .data$seg
+    vdj_muts, .data$contig_id, !!!syms(vdj_len_cols), .data$type, .data$seg
   )
 
   vdj_muts <- dplyr::summarize(vdj_muts, n = sum(.data$n), .groups = "drop")
@@ -1043,26 +1055,30 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # Summarize total mutations and total length per contig
   # for each mutation type, sum total for v, d, j, and c segments, exclude jxns
   all_muts <- dplyr::filter(vdj_muts, !.data$seg %in% c("vd", "dj"))
-  all_muts <- dplyr::group_by(all_muts, .data$contig_id, .data$type)
 
-  if(include_constant){
-    sum_column <- "full_len"
+  if (include_constant) {
+    vdj_len_col <- "vdjc_len"
+
   } else {
-    all_muts <- all_muts %>%
-      dplyr::filter(.data$seg != "c")
-    sum_column <- "full_len_vdj"
+    all_muts <- dplyr::filter(all_muts, .data$seg != "c")
+
+    vdj_len_col <- "vdj_len"
   }
+
+  all_muts <- dplyr::group_by(
+    all_muts, !!!syms(c("contig_id", "type", vdj_len_col))
+  )
 
   all_muts <- dplyr::summarize(
     all_muts,
     n       = sum(.data$n),
-    len     = unique(.data[[sum_column]]),
     seg     = "all",
     .groups = "drop"
   )
 
   vdj_muts <- dplyr::bind_rows(vdj_muts, all_muts)
-  res      <- tidyr::unite(
+
+  res <- tidyr::unite(
     vdj_muts, "type", all_of(c("seg", "type")), sep = "_"
   )
 
@@ -1084,13 +1100,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   freq <- dplyr::mutate(
     freq,
-    n    = round(.data$n / .data$len, 6),
+    n    = round(.data$n / !!sym(vdj_len_col), digits = 6),
     type = paste0(.data$type, "_freq"),
     len  = NULL
   )
 
   res <- dplyr::bind_rows(res, freq)
-  res <- dplyr::select(res, -"len")
+  res <- dplyr::select(res, -dplyr::all_of(vdj_len_cols))
 
   res <- tidyr::pivot_wider(
     res,
@@ -1098,6 +1114,11 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     values_from = "n",
     values_fill = 0
   )
+
+  # Check for duplicated rows, should be 1 row per contig_id
+  if (any(duplicated(res$contig_id))) {
+    cli::cli_abort("Some contigs have duplicated stats", .internal = TRUE)
+  }
 
   # Add 0s for missing columns and set column order
   # these are segments with no mutations for any chain
