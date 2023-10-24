@@ -8,7 +8,6 @@ library(SingleCellExperiment)
 library(djvdj)
 library(Seurat)
 
-
 # Load GEX data
 data_dir <- system.file("extdata/splen", package = "djvdj")
 

@@ -169,9 +169,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     filter_chains <- TRUE
 
     cli::cli_warn(
-      "When `include_mutations` is `TRUE`, `filter_chains` is also
+      "When `include_mutations` is `TRUE`, `filter_chains` is
        automatically set `TRUE` since mutation data is only available for
-       productive chains."
+       productive chains"
     )
   }
 
@@ -193,7 +193,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   len_cols   <- paste0(seq_cols, "_length")
 
   # Columns containing per-cell info
-  # cell_cols <- c("barcode", "clonotype_id")
   cell_cols <- c("barcode", "clonotype_id", "paired")
 
   # Optional aggr columns
@@ -256,12 +255,14 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       if (length(vdj_dir) > 1) prfxs <- paste0(seq_along(vdj_dir), "_")
     }
 
-    sfxs <- rep("-1", length(vdj_dir))
-  }
+    sfxs <- rep("-1", length(vdj_dir))  # for cellranger data sfx will be "-1"
+  }                                     # for each sample
 
   # Load V(D)J data and add cell prefixes
   if (!is.null(aggr_dir)) {
     cell_cols <- c(cell_cols, aggr_cols)
+
+    if (is.null(input)) prfxs <- sfxs <- NULL
 
     contigs <- .load_aggr_data(aggr_dir, prfxs, sfxs)
     contigs <- list(contigs)
@@ -306,8 +307,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     })
 
     # Load mutation data
-    indels <- .load_muts(vdj_dir, prfxs, sfxs,
-                         include_constant = include_constant)
+    indels <- .load_muts(
+      vdj_dir, prfxs, sfxs, include_constant = include_constant
+    )
 
     if (!is.null(indels)) {
       if (!is.null(aggr_dir)) indels <- list(dplyr::bind_rows(indels))
@@ -316,17 +318,29 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       indel_cols <- indel_cols[indel_cols != "contig_id"]
 
       # Join indel data
-      # SHOULD CHECK BARCODE OVERLAP HERE!!!
-      # IF BARCODES DO NOT OVERLAP HERE, WILL RETURN ALL 0s
+      # check that barcodes match
+      # if barcodes do not match, 0s will get added for mutation columns
       indel_ctigs <- purrr::map2(
-        contigs, indels, dplyr::left_join, by = "contig_id"
+        contigs, indels, dplyr::left_join, by = "contig_id",
+        relationship = "many-to-one"
       )
 
-      # Replace NAs with 0
+      purrr::walk2(contigs, indels, ~ {
+        if (any(!.y$contig_id %in% .x$contig_id)) {
+          .malformed_data_error(
+            "cell barcodes from concat_ref.bam and
+             filtered_contig_annotations.csv do not match"
+          )
+        }
+      })
+
+      # Replace NAs with 0s
       # contigs that did not have any mutations will have NAs
       indel_ctigs <- purrr::map(
         indel_ctigs,
-        ~ mutate(.x, dplyr::across(all_of(indel_cols), ~ tidyr::replace_na(.x, 0)))
+        ~ mutate(.x, dplyr::across(
+          all_of(indel_cols), ~ tidyr::replace_na(.x, 0)
+        ))
       )
 
       contigs    <- indel_ctigs
@@ -525,9 +539,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     .data$clonotype_id != "None", !is.na(.data$clonotype_id)
   )
 
-  if (nrow(res) == 0) {
-    .malformed_data_error("no valid clonotypes present")
-  }
+  if (nrow(res) == 0) .malformed_data_error("no valid clonotypes present")
 
   # Add prefix to V(D)J columns
   res <- dplyr::rename_with(res, ~ paste0(prefix, .x))
@@ -668,6 +680,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 .format_cell_prefixes <- function(df_in, bc_col = "barcode", cell_prfxs,
                                   cell_sfxs) {
 
+  if (is.null(cell_prfxs) || is.null(cell_sfxs)) return(df_in)
+
   # Extract current cell prefixes
   bcs <- df_in[[bc_col]]
 
@@ -800,8 +814,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   vdj_coords <- purrr::map(file_paths$airr, .extract_vdj_coords)
 
   # Map mutations to VDJ segments
-  res <- purrr::map2(mut_coords, vdj_coords, .map_muts,
-                     include_constant = include_constant)
+  res <- purrr::map2(
+    mut_coords, vdj_coords,
+    .map_muts, include_constant = include_constant
+  )
 
   # Extract cell barcode from contig_id
   id_re <- "^.+(?=_contig_[0-9]+$)"
@@ -916,7 +932,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   )
 
   if (ncol(res) == 1) {
-    cli::cli_abort("V(D)J coordinates not found, check {.file airr_file}")
+    msg <- "columns containing V(D)J coordinates were not found in "
+
+    .malformed_data_error(paste0(msg, basename(airr_file)))
   }
 
   res <- tidyr::pivot_longer(res, -"contig_id")
@@ -941,12 +959,15 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   mut_key <- c(I = "ins", D = "del", X = "mis")
 
   # Get the full length sequence of the vdj region with and without c region
-  vdj_coords <- vdj_coords %>%
-    dplyr::mutate(new_len = ifelse(.data$seg == "c", 0, .data$len)) %>%
-    dplyr::group_by(.data$contig_id) %>%
-    dplyr::mutate(full_len = sum(.data$len),
-                  full_len_vdj = sum(.data$new_len)) %>%
-    dplyr::select(!"new_len")
+  vdj_coords <- dplyr::group_by(vdj_coords, .data$contig_id)
+
+  vdj_coords <- dplyr::mutate(
+    vdj_coords,
+    vdj_len  = sum(.data$len[.data$seg != "c"]),
+    vdjc_len = sum(.data$len)
+  )
+
+  vdj_len_cols <- c("len", "vdj_len", "vdjc_len")
 
   mut_coords <- dplyr::mutate(
     mut_coords,
@@ -969,20 +990,14 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   }
 
   # Intersect mutations with VDJ gene coordinates for each contig
-  # some annotations overlap each other! Example: AAACCTGAGAACTGTA-1_contig_1
+  # some annotations from cellranger overlap each other!
+  # Example: AAACCTGAGAACTGTA-1_contig_1
   # left_join + mutate is much faster than valr::bed_intersect, probably due
   # to the extreme number of "chromosomes"
-  if (utils::packageVersion("dplyr") > "1.1.1") {
-    # relationship argument gained in 1.1.1 https://dplyr.tidyverse.org/news/index.html
-    vdj_muts <- dplyr::left_join(
-      mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg"),
-      relationship = "many-to-many"
-    )
-  } else {
-    vdj_muts <- dplyr::left_join(
-        mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg")
-        )
-  }
+  vdj_muts <- dplyr::left_join(
+    mut_coords, vdj_coords, by = "contig_id", suffix = c("", ".seg"),
+    relationship = "many-to-many"
+  )
 
   vdj_muts <- dplyr::filter(
     vdj_muts, .data$start < .data$end.seg & .data$end > .data$start.seg
@@ -1028,10 +1043,9 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   vdj_muts <- bind_rows(vdj_muts, jxn_muts)
 
-  # Summarize mutation counts
+  # Summarize mutation counts for each segment for each contig
   vdj_muts <- dplyr::group_by(
-    vdj_muts, .data$contig_id, .data$len, .data$full_len_vdj, .data$full_len,
-    .data$type, .data$seg
+    vdj_muts, .data$contig_id, !!!syms(vdj_len_cols), .data$type, .data$seg
   )
 
   vdj_muts <- dplyr::summarize(vdj_muts, n = sum(.data$n), .groups = "drop")
@@ -1039,26 +1053,30 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # Summarize total mutations and total length per contig
   # for each mutation type, sum total for v, d, j, and c segments, exclude jxns
   all_muts <- dplyr::filter(vdj_muts, !.data$seg %in% c("vd", "dj"))
-  all_muts <- dplyr::group_by(all_muts, .data$contig_id, .data$type)
 
-  if(include_constant){
-    sum_column <- "full_len"
+  if (include_constant) {
+    vdj_len_col <- "vdjc_len"
+
   } else {
-    all_muts <- all_muts %>%
-      dplyr::filter(.data$seg != "c")
-    sum_column <- "full_len_vdj"
+    all_muts <- dplyr::filter(all_muts, .data$seg != "c")
+
+    vdj_len_col <- "vdj_len"
   }
+
+  all_muts <- dplyr::group_by(
+    all_muts, !!!syms(c("contig_id", "type", vdj_len_col))
+  )
 
   all_muts <- dplyr::summarize(
     all_muts,
     n       = sum(.data$n),
-    len     = unique(.data[[sum_column]]),
     seg     = "all",
     .groups = "drop"
   )
 
   vdj_muts <- dplyr::bind_rows(vdj_muts, all_muts)
-  res      <- tidyr::unite(
+
+  res <- tidyr::unite(
     vdj_muts, "type", all_of(c("seg", "type")), sep = "_"
   )
 
@@ -1080,13 +1098,13 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   freq <- dplyr::mutate(
     freq,
-    n    = round(.data$n / .data$len, 6),
+    n    = round(.data$n / !!sym(vdj_len_col), digits = 6),
     type = paste0(.data$type, "_freq"),
     len  = NULL
   )
 
   res <- dplyr::bind_rows(res, freq)
-  res <- dplyr::select(res, -"len")
+  res <- dplyr::select(res, -dplyr::all_of(vdj_len_cols))
 
   res <- tidyr::pivot_wider(
     res,
@@ -1094,6 +1112,11 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     values_from = "n",
     values_fill = 0
   )
+
+  # Check for duplicated rows, should be 1 row per contig_id
+  if (any(duplicated(res$contig_id))) {
+    cli::cli_abort("Some contigs have duplicated stats", .internal = TRUE)
+  }
 
   # Add 0s for missing columns and set column order
   # these are segments with no mutations for any chain
@@ -1322,7 +1345,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   purrr::walk(stats, ~ {
     rw  <- .x[nms]
 
-    add_pct     <- grepl("^%", names(rw)) & names(rw) != "NA"
+    add_pct     <- grepl("^%", names(rw)) & unname(rw) != "NA"
     rw[add_pct] <- paste0(rw[add_pct], "%")
     rw          <- purrr::map2(rw, clmn_wdth[names(rw)], .add_padding)
     rw[add_pct] <- cli::col_blue(rw[add_pct])
@@ -1444,13 +1467,14 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' Malformed data error
 #'
 #' @noRd
-.malformed_data_error <- function(msg) {
+.malformed_data_error <- function(msg, call = NULL) {
   cli::cli_abort(
     "Malformed input data, {msg}. Did you modify the `cellranger` output
      files? {.fn import_vdj} requires files that are in the format generated by
      `cellranger`.
      If you are having trouble loading your data, please file an issue at
-     {.url https://github.com/rnabioco/djvdj/issues}."
+     {.url https://github.com/rnabioco/djvdj/issues}.",
+    call = call
   )
 }
 

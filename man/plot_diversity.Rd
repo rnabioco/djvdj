@@ -148,22 +148,6 @@ plot_diversity(
   method      = mets
 )
 
-# Specify colors to use for each cell cluster
-plot_diversity(
-  vdj_sce,
-  data_col    = "clonotype_id",
-  cluster_col = "orig.ident",
-  plot_colors = c(avid_2 = "green", avid_1 = "purple")
-)
-
-# Specify order to use for plotting cell clusters
-plot_diversity(
-  vdj_sce,
-  data_col    = "clonotype_id",
-  cluster_col = "orig.ident",
-  plot_lvls   = c("avid_2", "avid_1")
-)
-
 # Specify how to organize panels when plotting multiple metrics
 plot_diversity(
   vdj_sce,

@@ -1,17 +1,4 @@
 # Test data
-# # Load GEX data
-# data_dir <- system.file("extdata/splen", package = "djvdj")
-#
-# gex_dirs <- c(
-#   BL6 = file.path(data_dir, "BL6_GEX/filtered_feature_bc_matrix"),
-#   MD4 = file.path(data_dir, "MD4_GEX/filtered_feature_bc_matrix")
-# )
-#
-# splen_so <- gex_dirs |>
-#   Read10X() |>
-#   CreateSeuratObject() |>
-#   AddMetaData(splen_meta)
-
 # Contig paths
 ctigs <- c(
   file.path(data_dir, "BL6_BCR"),
@@ -92,10 +79,29 @@ test_that("import_vdj number of chains represented by each column", {
     purrr::reduce(expect_identical)
 })
 
-# Check include_constant
+# Check include_mutations
+# this checks for bug that duplicated read and umi counts with include_mutations
 test_that("import_vdj include_mutations", {
+  res_1 <- import_vdj(
+    vdj_dir = ctigs,
+    include_mutations = TRUE
+  )
 
-  check_constant <- function(so, include_constant){
+  res_1 <- res_1 |>
+    dplyr::select(-matches("^(all|[vdjc]+)_(ins|del|mis)"))
+
+  res_2 <- import_vdj(
+    vdj_dir = ctigs,
+    include_mutations = FALSE
+  )
+
+  expect_identical(res_1, res_2)
+})
+
+# Check include_constant
+test_that("import_vdj include_mutations include_constant", {
+
+  check_constant <- function(so, include_constant) {
     res <- so |>
       import_vdj(
         vdj_dir = ctigs,
@@ -107,28 +113,35 @@ test_that("import_vdj include_mutations", {
     dat <- res@meta.data
     types <- c("ins", "del", "mis")
 
-    all_types <- lapply(types, function(type){
-      dat_all <- dat[ , grepl(paste0("PREFIX_all_", type, "$"), colnames(dat))]
+    all_types <- lapply(types, function(type) {
+      dat_all <- dat[, grepl(paste0("PREFIX_all_", type, "$"), colnames(dat))]
+
       suppressWarnings(dat_all <- as.double(dat_all))
+
       dat_all[is.na(dat_all)] <- 0
+
       if(include_constant){
         dat_ind <- dat[ , grepl(paste0("PREFIX_[v|d|j|c]_", type, "$"), colnames(dat))]
+
       } else {
         dat_ind <- dat[ , grepl(paste0("PREFIX_[v|d|j]_", type, "$"), colnames(dat))]
       }
+
       suppressWarnings(dat_ind <- apply(dat_ind, 2, as.double))
       dat_ind[is.na(dat_ind)] <- 0
 
       return(data.frame(sum_val = rowSums(dat_ind), all_val = dat_all))
     })
+
     all_types <- do.call(rbind, all_types)
     return(all_types)
   }
 
   constant_included <- check_constant(so, include_constant = TRUE)
   constant_excluded <- check_constant(so, include_constant = FALSE)
+
   expect_identical(constant_included$sum_val, constant_included$all_val)
-  expect_identical(constant_included$sum_val, constant_included$all_val)
+  expect_identical(constant_excluded$sum_val, constant_excluded$all_val)
 })
 
 # Check arguments for data.frame input
@@ -315,7 +328,6 @@ test_that("import_vdj bad sep", {
 })
 
 # Check BCR and TCR
-# SHOULD ALSO CHECK WHEN TOO MANY VDJ DIRS ARE PROVIDED
 test_that("import_vdj BCR and TCR", {
   fn <- function() {
     res <- so |>
@@ -327,6 +339,19 @@ test_that("import_vdj BCR and TCR", {
 
   expect_error(fn(), "Multiple data types detected")
 })
+
+# # SHOULD ALSO CHECK WHEN TOO MANY VDJ DIRS ARE PROVIDED
+# test_that("import_vdj too may vdj_dirs provided", {
+#   fn <- function() {
+#     res <- so |>
+#       import_vdj(
+#         vdj_dir        = c(tcr_ctigs[1], ctigs[1], ctigs[2]),
+#         include_mutations = FALSE
+#       )
+#   }
+#
+#   expect_error(fn(), "Multiple data types detected")
+# })
 
 # Check .classify_vdj
 test_that(".classify_vdj", {
