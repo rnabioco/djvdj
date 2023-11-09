@@ -222,6 +222,15 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     prfxs <- prfx_df$prfx
     sfxs  <- prfx_df$sfx
 
+    if (length(vdj_dir) > nrow(prfx_df)) {
+      cli::cli_abort(
+        "Too many V(D)J samples provided, each V(D)J sample must match a sample
+         already present in the object. {length(vdj_dir)} V(D)J
+         sample{?s} w{?as/ere} provided, but there {?is/are} only
+         {nrow(prfx_df)} sample{?s} present in the object."
+      )
+    }
+
     if (!is.null(names(vdj_dir))) {
       non_empty <- names(vdj_dir) != ""
 
@@ -623,8 +632,6 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     cell_prfxs = cell_prfxs,
     cell_sfxs  = cell_sfxs
   )
-
-  browser()
 
   res <- purrr::pmap(prfx_args, ~ {
     .format_cell_prefixes(..., bc_col = "barcode")
