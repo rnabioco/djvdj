@@ -223,12 +223,20 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     sfxs  <- prfx_df$sfx
 
     if (!is.null(names(vdj_dir))) {
-      vdj_prfxs <- names(vdj_dir) <- paste0(names(vdj_dir), "_")
+      non_empty <- names(vdj_dir) != ""
+
+      # Only add '_' separator for non-empty prefixes
+      # an empty prefix will result in no cell prefix being added for the sample
+      names(vdj_dir)[non_empty] <- paste0(names(vdj_dir)[non_empty], "_")
+
+      vdj_prfxs <- names(vdj_dir)
+      vdj_prfxs <- paste0("'", vdj_prfxs, "'")
+      obj_prfxs <- paste0("'", prfxs, "'")
 
       if (any(duplicated(prfxs))) {
         cli::cli_abort(
           "To match the provided cell prefixes ({vdj_prfxs}) with those
-           in the object ({prfxs}), the cell prefixes in the object
+           in the object ({obj_prfxs}), the cell prefixes in the input object
            cannot be duplicated"
         )
       }
@@ -236,16 +244,19 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       if (!all(names(vdj_dir) %in% prfxs)) {
         cli::cli_abort(
           "The provided cell prefixes ({vdj_prfxs}) do not match
-           those in the input object ({prfxs})"
+           those in the input object ({obj_prfxs})"
         )
       }
 
+      # Ensure that prefixes and suffixes are in the same order specified by
+      # vdj_dir
       sfxs  <- sfxs[match(names(vdj_dir), prfxs)]
       prfxs <- names(vdj_dir)
     }
 
-  # If no prefixes, auto-generate, do not add prefix if only one sample
-  # Read10X() will add the prefix, "1_", "2_", "3_", etc. for each sample
+  # If no input object, auto-generate prefixes, do not add prefix if there is
+  # only one sample
+  # Read10X() will add the prefix, "1_", "2_", "3_", etc for each sample
   } else if (!is.null(vdj_dir)) {
     prfxs <- names(vdj_dir)
 
@@ -328,7 +339,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       purrr::walk2(contigs, indels, ~ {
         if (any(!.y$contig_id %in% .x$contig_id)) {
           .malformed_data_error(
-            "cell barcodes from concat_ref.bam and
+            "Cell barcodes from concat_ref.bam and
              filtered_contig_annotations.csv do not match"
           )
         }
@@ -536,7 +547,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   # cells with missing clonotype have a clonotype_id of 'None'
   res <- dplyr::filter(
     res,
-    .data$clonotype_id != "None", !is.na(.data$clonotype_id)
+    .data$clonotype_id != "None" & !is.na(.data$clonotype_id)
   )
 
   if (nrow(res) == 0) .malformed_data_error("no valid clonotypes present")
@@ -613,6 +624,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     cell_sfxs  = cell_sfxs
   )
 
+  browser()
+
   res <- purrr::pmap(prfx_args, ~ {
     .format_cell_prefixes(..., bc_col = "barcode")
   })
@@ -672,9 +685,12 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
 #' Format cell barcode prefixes
 #'
-#' @param df_in data.frame
+#' Adjust cell prefixes for V(D)J data so they match prefixes present in object
+#'
+#' @param df_in data.frame containing data for a single V(D)J sample
 #' @param bc_col Column containing cell barcodes
-#' @param prfxs Named vector containing new cell prefixes
+#' @param cell_prfxs Vector containing new cell prefixes to add to V(D)J data
+#' @param cell_sfxs Vector containing new cell suffixes to add to V(D)J data
 #' @return data.frame with formatted barcodes
 #' @noRd
 .format_cell_prefixes <- function(df_in, bc_col = "barcode", cell_prfxs,
