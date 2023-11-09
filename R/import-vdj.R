@@ -272,8 +272,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     if (is.null(prfxs)) {
       prfxs <- ""
 
-      if (length(vdj_dir) > 1) prfxs <- paste0(seq_along(vdj_dir), "_")
+      if (length(vdj_dir) > 1) prfxs <- seq_along(vdj_dir)
     }
+
+    prfxs[prfxs != ""] <- paste0(prfxs[prfxs != ""], "_")
 
     sfxs <- rep("-1", length(vdj_dir))  # for cellranger data sfx will be "-1"
   }                                     # for each sample
