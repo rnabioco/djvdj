@@ -53,6 +53,10 @@
 #' file.
 #'
 #' @param quiet If `TRUE` progress updates will not be displayed
+#' @param debug Set `TRUE` to debug issues related to matching the
+#' V(D)J cell barcodes with those already present in the input object.
+#' This will return a data.frame showing the cell prefixes that have the
+#' strongest cell barcode overlap.
 #' @param sep Separator to use for storing per cell V(D)J data
 #' @return Single cell object or data.frame with added V(D)J data
 #' @importFrom utils head
@@ -133,7 +137,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
                        data_cols = NULL, filter_chains = TRUE,
                        filter_paired = FALSE, define_clonotypes = NULL,
                        include_mutations = FALSE, include_constant = FALSE,
-                       aggr_dir = NULL, quiet = FALSE, sep = ";") {
+                       aggr_dir = NULL, quiet = FALSE, sep = ";", debug = FALSE
+                       ) {
 
   # Set global variables based on prefix
   global$chain_col     <- paste0(prefix, "chains")
@@ -216,8 +221,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   if (!is.null(input)) {
     bcs <- .get_meta(input)[[global$cell_col]]
 
-    prfx_df <- .extract_cell_prefix(bcs, strip_bcs = FALSE)
-    prfx_df <- dplyr::distinct(prfx_df, .data$prfx, .data$sfx)
+    input_obj_prfxs <- .extract_cell_prefix(bcs, strip_bcs = FALSE)
+    prfx_df         <- dplyr::distinct(input_obj_prfxs, .data$prfx, .data$sfx)
 
     prfxs <- prfx_df$prfx
     sfxs  <- prfx_df$sfx
@@ -291,6 +296,14 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 
   } else {
     contigs <- .load_vdj_data(vdj_dir, prfxs, sfxs)
+  }
+
+  # Debug mode to return detailed stats on cell barcode overlap between object
+  # and contigs
+  if (!is.null(input) && debug) {
+    debug_stats <- .debug_overlap(input, contigs)
+
+    return(debug_stats)
   }
 
   # vdj_cols should have all columns that should be included in output
@@ -399,12 +412,11 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     .print_import_summary(overlap_stats)
 
     cli::cli_abort(
-      "Cell barcodes do not match those in the object,
+      "Cell barcodes do not match those in the input object,
        this will occur if you are loading the samples in the wrong order or are
-       providing the wrong cell barcode prefixes. If loading results
-       from `cellranger aggr`, check that gene expression data for each sample
-       was loaded into the object in the same order as the samples were
-       specified in the `cellranger aggr` config file."
+       providing the wrong cell barcode prefixes.
+       Rerun with {.code debug = TRUE} to view the cell barcode prefixes
+       with the strongest overlap."
     )
   }
 
@@ -700,6 +712,12 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @param bc_col Column containing cell barcodes
 #' @param cell_prfxs Vector containing new cell prefixes to add to V(D)J data
 #' @param cell_sfxs Vector containing new cell suffixes to add to V(D)J data
+#' @param bcs Vector of cell barcodes
+#' @param strip_bcs Should prefixes and suffixes be removed from cell barcodes
+#' @param return_bcs Instead of returning a data.frame, just return a vector
+#' of barcodes
+#' @param bc_len Expected length of the cell barcode, this is used to
+#' extract cell barcode prefixes and suffixes
 #' @return data.frame with formatted barcodes
 #' @noRd
 .format_cell_prefixes <- function(df_in, bc_col = "barcode", cell_prfxs,
@@ -740,7 +758,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   df_in
 }
 
-.extract_cell_prefix <- function(bcs, strip_bcs, bc_len = 16) {
+.extract_cell_prefix <- function(bcs, strip_bcs, return_bcs = FALSE,
+                                 bc_len = 16) {
   bc_re  <- paste0("[ATGCN]{", bc_len, "}")
   sep_re <- "[^[:alnum:]]"
 
@@ -762,6 +781,8 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
       bc = stringr::str_remove(.data$bc, paste0(.data$sfx, "$"))
     )
   }
+
+  if (return_bcs) res <- res$bc
 
   res
 }
@@ -1302,11 +1323,10 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
 #' @noRd
 .calc_overlap <- function(input, meta, nm, pct_min = 25) {
 
-  met_dat <- dplyr::distinct(meta, .data$barcode, .data$paired)
-
+  met_dat     <- dplyr::distinct(meta, .data$barcode, .data$paired)
   met_cells   <- met_dat$barcode
   n_met_cells <- length(met_cells)
-  n_met_pair  <- length(met_cells[met_dat$paired])
+  n_met_pair  <- sum(met_dat$paired)
 
   if (is.null(input)) {
     n_obj_cells <- n_overlap <- pct_overlap <- NA
@@ -1315,7 +1335,7 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
     obj_meta    <- .get_meta(input)
     obj_cells   <- obj_meta[[global$cell_col]]
     n_obj_cells <- length(obj_cells)
-    n_overlap   <- length(obj_cells[obj_cells %in% met_cells])
+    n_overlap   <- sum(obj_cells %in% met_cells)
     pct_overlap <- round(n_overlap / n_met_cells, 2) * 100
   }
 
@@ -1392,6 +1412,47 @@ import_vdj <- function(input = NULL, vdj_dir = NULL, prefix = "",
   res
 }
 
+#' Format data.frame showing cell barcode overlap between each V(D)J and each
+#' sample present in input object
+#'
+#' @param input Single cell object
+#' @param contigs Named list of data.frames with V(D)J data
+#' @return data.frame showing overlap stats
+#' @noRd
+.debug_overlap <- function(input, contigs) {
+  bcs <- .get_meta(input)[[global$cell_col]]
+  res <- .extract_cell_prefix(bcs, strip_bcs = TRUE)
+
+  contig_bcs <- purrr::map(contigs, ~ {
+    .extract_cell_prefix(.x$barcode, strip_bcs = TRUE, return_bcs = TRUE)
+  })
+
+  res <- dplyr::group_by(res, .data$prfx, .data$sfx)
+
+  res <- purrr::imap_dfr(contig_bcs, ~ {
+    dplyr::summarize(
+      res,
+      vdj_prefix  = stringr::str_remove(.y, "_$"),
+      n_overlap   = sum(.x %in% .data$bc),
+      pct_overlap = (.data$n_overlap / length(.x)) * 100,
+      .groups     = "drop"
+    )
+  })
+
+  res <- dplyr::mutate(res, prfx = stringr::str_remove(.data$prfx, "_$"))
+
+  res <- dplyr::rename(
+    res, bc_prefix = .data$prfx, bc_suffix = .data$sfx
+  )
+
+  res <- dplyr::relocate(res, .data$vdj_prefix, .before = 1)
+
+  res <- dplyr::group_by(res, .data$vdj_prefix)
+  res <- dplyr::arrange(res, dplyr::desc(.data$pct_overlap), .by_group = TRUE)
+  res <- dplyr::ungroup(res)
+
+  res
+}
 
 #' Identify clonotypes with paired chains
 #'

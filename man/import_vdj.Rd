@@ -16,7 +16,8 @@ import_vdj(
   include_constant = FALSE,
   aggr_dir = NULL,
   quiet = FALSE,
-  sep = ";"
+  sep = ";",
+  debug = FALSE
 )
 }
 \arguments{
@@ -84,6 +85,11 @@ file.}
 \item{quiet}{If \code{TRUE} progress updates will not be displayed}
 
 \item{sep}{Separator to use for storing per cell V(D)J data}
+
+\item{debug}{Set \code{TRUE} to debug issues related to matching the
+V(D)J cell barcodes with those already present in the input object.
+This will return a data.frame showing the cell prefixes that have the
+strongest cell barcode overlap.}
 }
 \value{
 Single cell object or data.frame with added V(D)J data
