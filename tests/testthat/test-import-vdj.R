@@ -310,7 +310,7 @@ test_that("import_vdj bad prefixes", {
       import_vdj(vdj_dir = dat)
   }
 
-  expect_error(fn(), "do not match those in the input")
+  expect_error(fn(), "do not match those")
 })
 
 # Check bad separator

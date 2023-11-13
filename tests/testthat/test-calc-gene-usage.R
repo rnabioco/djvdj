@@ -77,14 +77,14 @@ test_all_args(
 
   x <- gns |>
     purrr::set_names() |>
-    map(~ {
+    purrr::map(~ {
       dat[[.x]] |>
-        map(stringr::str_split, ";") |>
+        purrr::map(stringr::str_split, ";") |>
         purrr::flatten()
     })
 
   # Get total n cells
-  n_cells <- map_int(x, length) |>
+  n_cells <- purrr::map_int(x, length) |>
     unique()
 
   stopifnot(length(n_cells) == 1)
@@ -94,12 +94,12 @@ test_all_args(
     chns <- x$chains
 
     chns <- chns |>
-      map(~ .x %in% chain)
+      purrr::map(~ .x %in% chain)
 
     x <- x[names(x) != "chains"]
 
     x <- x |>
-      map(~ purrr::map2(.x, chns, ~ .x[.y])) |>
+      purrr::map(~ purrr::map2(.x, chns, ~ .x[.y])) |>
       map(~ map(.x, ~ {
         if (purrr::is_empty(.x)) .x <- "None"
         .x
